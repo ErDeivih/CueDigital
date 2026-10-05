@@ -858,6 +858,15 @@ const RESPUESTAS = {
       // Al pie del cuaderno, cuántos apuntes están firmados (30/09/2026).
       firmados: "{cuantos} firmados",
       firmados_uno: "1 firmado",
+      // Y **lo que falta por saber, cuando un pie suma** (A14, 05/10/2026): las sumas de los pies y de las
+      // tarjetas del panel ya no convierten un hueco en un cero, y dicen cuántos apuntes, tierras o ventas
+      // no traen su número. Con sus dos formas, que es lo que exige el guardián del singular.
+      tierras_sin_hectareas: "{cuantas} tierras sin decir sus hectáreas",
+      tierras_sin_hectareas_uno: "1 tierra sin decir sus hectáreas",
+      apuntes_sin_hectareas: "{cuantas} apuntes sin decir sus hectáreas",
+      apuntes_sin_hectareas_uno: "1 apunte sin decir sus hectáreas",
+      ventas_sin_kilos: "{cuantas} ventas sin decir sus kilos",
+      ventas_sin_kilos_uno: "1 venta sin decir sus kilos",
       // La tabla de los años del cuaderno y la de las facturas (30/09/2026).
       anos_etiqueta: "Los años de tu cuaderno, en una tabla",
       ano: "Año",

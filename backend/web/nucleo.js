@@ -437,6 +437,42 @@ export function primerAvisoBloqueante(respuesta) {
 }
 
 /**
+ * Suma lo que se sabe **y cuenta lo que no**, en vez de convertir el hueco en un cero.
+ *
+ * POR QUÉ EXISTE (A14 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026)
+ * ====================================================================
+ * Media aplicación sumaba así: `suma + (Number(lo_que_sea) || 0)`. Y eso hace dos cosas malas a la vez:
+ * el hueco (`null`, que en este programa quiere decir **«no lo sé»**) **suma cero**, y una cifra que no
+ * se puede leer (`"por ahí"` → `NaN`) también. El resultado es un total que **parece completo** cuando le
+ * falta un dato: 60 tierras de las que 3 no traen su superficie dan una cifra que el agricultor lee como
+ * la de su finca entera.
+ *
+ * Devuelve `{suma, sin_decir}`: la suma de lo que sí consta y **cuántos elementos no lo traen**, que es
+ * lo que hace falta para poder decirlo en la pantalla («Sin hectáreas dichas: 3»). No devuelve solo la
+ * suma a propósito: quien la use **tiene que poder decir lo que falta**, y para eso hay que contarlo.
+ *
+ * Qué cuenta como «no se sabe»: `null` (el hueco del programa), `undefined` (el campo que no vino) y la
+ * cadena vacía (el campo en blanco). Todo lo demás se convierte a número, y si no es un número —`NaN`—
+ * también cuenta como no sabido: **no se inventa un cero**.
+ */
+export function sumandoLoQueSeSabe(lista, deDonde = (uno) => uno) {
+  return (lista || []).reduce(
+    (cuenta, uno) => {
+      const crudo = deDonde(uno);
+      if (crudo === null || crudo === undefined || crudo === "") {
+        cuenta.sin_decir += 1;
+      } else {
+        const valor = Number(crudo);
+        if (Number.isFinite(valor)) cuenta.suma += valor;
+        else cuenta.sin_decir += 1;
+      }
+      return cuenta;
+    },
+    { suma: 0, sin_decir: 0 },
+  );
+}
+
+/**
  * El motivo que da el servidor cuando dice que no, **sea de las dos formas que usa este programa**.
  *
  * POR QUÉ HACÍA FALTA

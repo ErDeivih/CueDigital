@@ -28,6 +28,7 @@ import {
   queSePuedeRepetir,
   rellena,
   repetirUltimo,
+  sumandoLoQueSeSabe,
   tierrasQueCasen,
   ultimoDeLaFinca,
   validaPaso,
@@ -1846,22 +1847,37 @@ function datosDelPanelDeMando() {
   //
   // **Las hectáreas tratadas** son la suma de las de todos los apuntes del año, y el detalle dice sobre
   // cuántas se está contando: un número sin su total al lado no dice si es mucho o poco.
-  const hectareasTratadas = apuntes.reduce(
-    (suma, apunte) => suma + (Number(apunte.hectareas) || 0),
-    0,
-  );
-  const hectareasDeLaFinca = (estado.parcelas || []).reduce(
-    (suma, parcela) => suma + (Number(parcela.superficie_ha) || 0),
-    0,
-  );
+  //
+  // **Y lo que no se sabe NO suma cero** (A14 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Aquí
+  // ponía `suma + (Number(...) || 0)`, y eso convierte un hueco en un cero: un apunte sin hectáreas
+  // —o una venta sin kilos— **rebajaba el total sin decirlo**, y el número que el agricultor lee en su
+  // panel de mando parecía completo. Ahora se suma lo que se sabe y **se dice cuántos faltan**, que es la
+  // misma regla que el pie de la tabla de tierras. La cuenta la hace `sumandoLoQueSeSabe` (`nucleo.js`),
+  // que es de donde la usan todas las pantallas: una sola forma de sumar en todo el programa.
+  const tratadas = sumandoLoQueSeSabe(apuntes, (apunte) => apunte.hectareas);
   const ventas = estado.ventas || [];
-  const kilos = ventas.reduce((suma, venta) => suma + (venta.kilos || 0), 0);
+  const vendido = sumandoLoQueSeSabe(ventas, (venta) => venta.kilos);
+  // **Las hectáreas de la finca las dice el servidor**, que ya cuenta aparte las tierras sin superficie
+  // (`cuaderno.py` → `superficie_total_ha` y `tierras_sin_superficie`). Sumarlas aquí a mano era el otro
+  // sitio donde un hueco valía cero, y además podía decir un número distinto del que dice el cuaderno.
+  const resumen = estado.resumen || {};
+  const hectareasDeLaFinca = sumandoLoQueSeSabe(estado.parcelas, (parcela) => parcela.superficie_ha);
 
   // Las tierras a las que les falta decir qué tienen este año: es la cuenta que se viene a hacer aquí, y la
   // que lleva al botón que lo arregla. Si el servidor no ha contestado, **no se dice nada**.
   const dichas = estado.cultivos || {};
   const faltanCultivos =
     dichas.parcelas === undefined ? null : (dichas.parcelas || []).filter((una) => una.falta_decirlo).length;
+
+  // Lo que hay que decir cuando falta un dato, con su singular y su plural. Si el servidor no ha
+  // contestado (`estado.resumen`), se usan las tierras que hay en memoria, que es lo que se está viendo.
+  const tierrasSinSuperficie =
+    resumen.tierras_sin_superficie === undefined
+      ? hectareasDeLaFinca.sin_decir
+      : Number(resumen.tierras_sin_superficie);
+  // Las tres frases viven en `TABLA` y se piden con `conCuenta`, que elige el singular: ver el porqué
+  // escrito en `textos.py` (y por qué no en los textos del panel de mando).
+  const faltaPorSaber = (base, cuantos) => (cuantos ? conCuenta(t("tabla", {}), base, cuantos) : "");
 
   const numeros = [
     {
@@ -1871,15 +1887,27 @@ function datosDelPanelDeMando() {
     },
     {
       etiqueta: p("hectareas"),
-      valor: `${formateaNumero(hectareasTratadas, 2)} ${r("hectareas_corto")}`,
-      detalle: hectareasDeLaFinca
-        ? rellena(p("hectareas_detalle"), { hectareas: formateaNumero(hectareasDeLaFinca, 2) })
-        : "",
+      valor: `${formateaNumero(tratadas.suma, 2)} ${r("hectareas_corto")}`,
+      detalle: [
+        // De cuántas hectáreas de la finca se está contando, con lo que no se sabe dicho aparte.
+        hectareasDeLaFinca.suma
+          ? rellena(p("hectareas_detalle"), { hectareas: formateaNumero(hectareasDeLaFinca.suma, 2) })
+          : "",
+        faltaPorSaber("apuntes_sin_hectareas", tratadas.sin_decir),
+        faltaPorSaber("tierras_sin_hectareas", tierrasSinSuperficie),
+      ]
+        .filter(Boolean)
+        .join(" · "),
     },
     {
       etiqueta: p("vendido"),
-      valor: `${formateaNumero(kilos, 0)} ${r("kilos_corto")}`,
-      detalle: ventas.length ? conCuenta(t("venta", {}), "cuantas", ventas.length) : "",
+      valor: `${formateaNumero(vendido.suma, 0)} ${r("kilos_corto")}`,
+      detalle: [
+        ventas.length ? conCuenta(t("venta", {}), "cuantas", ventas.length) : "",
+        faltaPorSaber("ventas_sin_kilos", vendido.sin_decir),
+      ]
+        .filter(Boolean)
+        .join(" · "),
     },
     {
       etiqueta: p("tierras"),
@@ -2347,8 +2375,13 @@ function datosDelCuaderno() {
   });
 
   // --- 3. Lo que se ha vendido -----------------------------------------------------------
+  //
+  // **Lo que no se sabe no suma cero** (A14, 05/10/2026): se suma lo que trae kilos y se cuenta lo que no,
+  // para poder decirlo. Antes, `(venta.kilos || 0)` hacía que una venta sin kilos pareciera una venta de
+  // cero kilos, y el total se leía como completo.
   const ventas = estado.ventas || [];
-  const kilos = ventas.reduce((total, venta) => total + (venta.kilos || 0), 0);
+  const sinKilos = sumandoLoQueSeSabe(ventas, (venta) => venta.kilos).sin_decir;
+  const kilos = sumandoLoQueSeSabe(ventas, (venta) => venta.kilos).suma;
 
   // --- 4. Las medidas preventivas --------------------------------------------------------
   const datosMedidas = estado.medidas;
@@ -8074,16 +8107,33 @@ function tablaDeTierras(tierras, buscando) {
     ],
   }));
 
-  const hectareas = ordenadas.reduce((suma, tierra) => suma + (Number(tierra.superficie_ha) || 0), 0);
-  const resumen = buscando
-    ? rellena(col("resumen_filtrado"), {
-        cuantas: ordenadas.length,
-        total: estado.parcelas.length,
-        hectareas: formateaNumero(hectareas, 2),
-      })
-    : resumenDeLaTabla("resumen_tierras", ordenadas.length, {
-        hectareas: formateaNumero(hectareas, 2),
-      });
+  // **El pie suma lo que se sabe y dice cuántas tierras no traen su superficie** (A14, 05/10/2026). Antes
+  // era `Number(tierra.superficie_ha) || 0`: la tierra sin hectáreas sumaba cero y el pie daba un total
+  // que parecía completo. El dato de cuántas faltan lo tiene la propia lista (la columna conserva el
+  // hueco, ver `superficie_ha: parcela.superficie_ha === undefined ? null : …`), así que se cuenta aquí
+  // —sobre las que se están viendo, que con un filtro puesto no son todas— y se dice con la misma frase
+  // que usa la pantalla nueva de tierras.
+  const sumando = sumandoLoQueSeSabe(ordenadas, (tierra) => tierra.superficie_ha);
+  const hectareas = sumando.suma;
+  const sinSuSuperficie = sumando.sin_decir
+    ? conCuenta(t("tabla", {}), "tierras_sin_hectareas", sumando.sin_decir)
+    : "";
+  const resumen = [
+    buscando
+      ? rellena(col("resumen_filtrado"), {
+          cuantas: ordenadas.length,
+          total: estado.parcelas.length,
+          hectareas: formateaNumero(hectareas, 2),
+        })
+      : resumenDeLaTabla("resumen_tierras", ordenadas.length, {
+          hectareas: formateaNumero(hectareas, 2),
+        }),
+    // Y lo que no se sabe, en el mismo pie: «Sin hectáreas dichas: 3». Si no se dijera, el total de
+    // arriba se leería como el de la finca entera cuando es el de las tierras que lo traen.
+    sinSuSuperficie,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return {
     clave: "tierras",
@@ -8241,15 +8291,21 @@ function tablaDeApuntes(fichas) {
     acciones: ficha.acciones || [],
   }));
 
-  const hectareas = ordenadas.reduce((suma, ficha) => suma + (Number(ficha.hectareas) || 0), 0);
+  const hectareas = sumandoLoQueSeSabe(ordenadas, (ficha) => ficha.hectareas).suma;
   // **Y al pie, los que están firmados** (30/09/2026): lo pide el diseño de escritorio del cuaderno
   // (`docs/stitch/escritorio/cuaderno.png`) y es lo que mira una inspección —un apunte firmado no se puede
   // borrar, se anula—. Solo se dice cuando hay alguno: «0 firmados» sería una noticia que nadie ha pedido.
   const firmados = ordenadas.filter((ficha) => ficha.firmado).length;
+  // **Y lo mismo que en el pie de las tierras** (A14, 05/10/2026): la suma de hectáreas es la de los
+  // apuntes que la traen, así que se dice cuántos no la traen. La frase es **la misma** que usa el panel de
+  // mando (`tabla.apuntes_sin_hectareas`, con su singular): es el mismo dato dicho igual, y tener la misma
+  // frase escrita en dos diccionarios es la forma de que un día digan cosas distintas.
+  const sinHectareas = sumandoLoQueSeSabe(ordenadas, (ficha) => ficha.hectareas).sin_decir;
   const resumen = [
     resumenDeLaTabla("resumen_apuntes", ordenadas.length, {
       hectareas: formateaNumero(hectareas, 2),
     }),
+    sinHectareas ? conCuenta(t("tabla", {}), "apuntes_sin_hectareas", sinHectareas) : "",
     firmados ? conCuenta(t("tabla", {}), "firmados", firmados) : "",
   ]
     .filter(Boolean)
@@ -10999,9 +11055,17 @@ function pantallaCultivos() {
     return {
       parcela_id: parcela.parcela_id,
       alias: parcela.alias,
-      detalle:
-        `${formateaNumero(parcela.superficie_ha, 2)} ${t("rotulos.hectareas_corto", "")}` +
-        (parcela.sistema ? ` · ${etiquetaDeValor("sistemas", parcela.sistema)}` : ""),
+      // Si no se sabe la superficie, **no se enseña un cero ni una unidad suelta**: se dice solo lo que sí
+      // se sabe (el sistema). `formateaNumero(null)` devuelve vacío, así que sin esta comprobación la línea
+      // salía como « ha · Secano», que es un hueco disfrazado de dato (A14, 05/10/2026).
+      detalle: [
+        parcela.superficie_ha === null || parcela.superficie_ha === undefined
+          ? ""
+          : `${formateaNumero(parcela.superficie_ha, 2)} ${t("rotulos.hectareas_corto", "")}`,
+        parcela.sistema ? etiquetaDeValor("sistemas", parcela.sistema) : "",
+      ]
+        .filter(Boolean)
+        .join(" · "),
       tiene_cultivo: Boolean(actual),
       // La etiqueta de estado de cada tierra (diseño de Stitch de esta pantalla, ronda 90): con más de
       // cincuenta tierras, lo que se viene a buscar aquí es **a cuáles les falta decirlo**, y eso no se
@@ -11019,7 +11083,11 @@ function pantallaCultivos() {
       // **Lo mismo, en crudo, para la tabla del ordenador** (30/09/2026): la misma lista que las tarjetas,
       // mirada de otra forma. Es la tabla que faltaba: con 64 tierras, en el ordenador se veían tres
       // tarjetas por pantalla.
-      superficie_ha: Number(parcela.superficie_ha) || 0,
+      // **El hueco se queda hueco** (A14, 05/10/2026). Aquí ponía `Number(parcela.superficie_ha) || 0`, que
+      // es exactamente lo que A7 arregló en la tabla de tierras (`app.js`: `parcela.superficie_ha ===
+      // undefined ? null : …`) y que en esta pantalla se había quedado sin arreglar: la tierra sin
+      // hectáreas salía con un **cero** en la columna, y `formateaNumero(null)` ya sabe pintar el vacío.
+      superficie_ha: parcela.superficie_ha === undefined ? null : parcela.superficie_ha,
       especie: actual ? actual.especie || "" : "",
       variedad: actual ? actual.variedad || "" : "",
       // El botón de la fila: el mismo que el de la tarjeta, con su etiqueta corta cuando ya hay cultivo.
@@ -12390,12 +12458,26 @@ function pantallaPlanGuardado() {
  * (`filasDeLaVenta`) se retiró con ella: era la otra forma de enseñar lo mismo, y dos listas que enseñan lo
  * mismo acaban diciendo cosas distintas.
  */
+/**
+ * Los kilos de las ventas de la finca, **sumando solo las que traen su peso** (A14, 05/10/2026).
+ *
+ * Devuelve la suma y cuántas ventas no lo traen, por el mismo motivo que en el pie de las tierras: una
+ * venta sin kilos sumaba cero en silencio y el total de la pantalla parecía el de todas las entregas
+ * cuando era el de las que traen su peso. Quien lo enseña tiene que poder decir cuántas faltan.
+ */
+function kilosDeLasVentas() {
+  return sumandoLoQueSeSabe(estado.ventas, (venta) => venta.kilos);
+}
+
 function pantallaVentas() {
   const v = (clave) => t(`venta.${clave}`, "");
   const suya = estado.ventasTabla || { columnas: [], filas: [], totales: {} };
   // `estado.ordenDeLaTabla` se crea con el resto del estado y puede no estar en una sesión vieja: se
   // prueba antes de tocarlo, que es lo que hace que esta pantalla no se quede en blanco por eso.
   const orden = (estado.ordenDeLaTabla || {}).ventas || { campo: "", sentido: -1 };
+  // **Una sola vez**, y no tres: la suma de kilos y las ventas que no lo traen se cuentan aquí y se usan
+  // en el pie (A14, 05/10/2026).
+  const losKilos = kilosDeLasVentas();
 
   // **La tabla se prepara aquí y el componente solo la coloca** (es la regla de la pieza `Tabla`): las
   // columnas con su rótulo —que viene del servidor—, cada fila con sus celdas ya escritas, y **una
@@ -12462,11 +12544,17 @@ function pantallaVentas() {
       // El resumen de cuántas hay, con singular y plural del servidor: «1 entregas» se lee fatal y es
       // lo primero que hace desconfiar de un programa.
       resumen: cuantas
-        ? `${cuantas === 1 ? v("cuantas_una") : rellena(v("cuantas"), { cuantas })} · ` +
-          `${formateaNumero((estado.ventas || []).reduce((suma, venta) => suma + (venta.kilos || 0), 0), 0)} ${t(
-            "rotulos.kilos_corto",
-            "",
-          )}`
+        ? [
+            `${cuantas === 1 ? v("cuantas_una") : rellena(v("cuantas"), { cuantas })} · ` +
+              `${formateaNumero(losKilos.suma, 0)} ${t("rotulos.kilos_corto", "")}`,
+            // Y lo que no trae kilos, dicho aparte (A14, 05/10/2026): si no, el total de arriba parece el
+            // de todas las entregas cuando es el de las que traen su peso.
+            losKilos.sin_decir
+              ? conCuenta(t("tabla", {}), "ventas_sin_kilos", losKilos.sin_decir)
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")
         : "",
       // Y lo que se acaba de hacer, si se viene de guardar algo del dinero: se dice una vez y se olvida.
       aviso: estado.avisoVentas || "",

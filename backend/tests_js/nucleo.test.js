@@ -28,6 +28,7 @@ import {
   repetirUltimo,
   sinTildes,
   sumaDias,
+  sumandoLoQueSeSabe,
   tierrasQueCasen,
   ultimoDeLaFinca,
   validaPaso,
@@ -597,4 +598,58 @@ test("el singular vale escrito con «uno» y con «una»", () => {
   // Y `_uno` manda cuando están las dos (no hay dos textos distintos para lo mismo).
   const lasDos = { cuantas: "{cuantas} ventas", cuantas_uno: "una venta", cuantas_una: "1 venta apuntada" };
   assert.equal(conCuenta(lasDos, "cuantas", 1), "una venta");
+});
+
+// ---------------------------------------------------------------------------
+// Lo que no se sabe no suma cero (A14, 05/10/2026)
+//
+// El defecto que estas pruebas vigilan estaba en seis sitios de la interfaz y era siempre el mismo:
+// `suma + (Number(...) || 0)`. Un hueco —`null`, que en este programa quiere decir «no lo sé»— sumaba
+// cero, y el total se leía como si estuviera completo. La cuenta se hace ahora en un solo sitio
+// (`sumandoLoQueSeSabe`) y estas pruebas son las que impiden que vuelva a hacerse a mano.
+// ---------------------------------------------------------------------------
+
+test("suma lo que se sabe y cuenta lo que no, en vez de contar el hueco como cero", () => {
+  const tierras = [
+    { superficie_ha: 4.9 },
+    { superficie_ha: null }, // «no lo sé», no «0 ha»
+    { superficie_ha: 3.2 },
+    { superficie_ha: undefined }, // el campo que no vino
+    { superficie_ha: "" }, // el campo en blanco
+  ];
+  const cuenta = sumandoLoQueSeSabe(tierras, (tierra) => tierra.superficie_ha);
+  // **La comparación va redondeada, y no es un descuido**: `4.9 + 3.2` en coma flotante da
+  // `8.100000000000001`, y eso es cierto en cualquier programa. Lo que se comprueba aquí es la **cuenta**
+  // (que el hueco no suma y se cuenta), no la aritmética del ordenador; en pantalla el número se pinta con
+  // `formateaNumero`, que ya lo redondea a los decimales que se enseñan.
+  assert.equal(Number(cuenta.suma.toFixed(4)), 8.1, "la suma son las que lo traen, y ni un cero de más");
+  assert.equal(cuenta.sin_decir, 3, "y hay que poder decir cuántas faltan");
+});
+
+test("una cifra que no se puede leer tampoco se convierte en cero", () => {
+  // Es la otra mitad del mismo defecto: `Number("por ahí")` es `NaN`, y `NaN || 0` es 0. Con eso, un dato
+  // ilegible entraba en el total como un cero silencioso.
+  const cuenta = sumandoLoQueSeSabe([{ kilos: "por ahí" }, { kilos: 100 }], (venta) => venta.kilos);
+  assert.equal(cuenta.suma, 100);
+  assert.equal(cuenta.sin_decir, 1);
+});
+
+test("un número escrito como texto sí se suma, y el cero de verdad es un cero", () => {
+  // Y para que lo de arriba no se pase de listo: «2,5»… no, la coma no: aquí los números llegan del
+  // servidor como números o como texto con punto. Y un 0 **de verdad** —una venta de cero kilos, que es
+  // un dato— suma lo que es: cero, y no cuenta como «no se sabe».
+  const cuenta = sumandoLoQueSeSabe([{ kilos: "2.5" }, { kilos: 0 }], (venta) => venta.kilos);
+  assert.equal(cuenta.suma, 2.5);
+  assert.equal(cuenta.sin_decir, 0, "un cero dicho es un dato, no un hueco");
+});
+
+test("una lista vacía o que no llegó no es un error: es cero y nada sin decir", () => {
+  assert.deepEqual(sumandoLoQueSeSabe([], (uno) => uno), { suma: 0, sin_decir: 0 });
+  assert.deepEqual(sumandoLoQueSeSabe(null, (uno) => uno), { suma: 0, sin_decir: 0 });
+  assert.deepEqual(sumandoLoQueSeSabe(undefined), { suma: 0, sin_decir: 0 });
+});
+
+test("sin decir de dónde coger el número, suma la lista tal cual", () => {
+  // El caso de una lista de números: `sumandoLoQueSeSabe([1, 2, null])` no necesita el segundo argumento.
+  assert.deepEqual(sumandoLoQueSeSabe([1, 2, null]), { suma: 3, sin_decir: 1 });
 });

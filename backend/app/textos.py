@@ -4768,6 +4768,24 @@ TABLA: dict[str, str] = {
     # que valgan: la frase es la misma con uno y con veinte.
     "firmados": "{cuantos} firmados",
     "firmados_uno": "1 firmado",
+    # ── **Lo que falta por saber, cuando el pie de una tabla suma** (A14 de `docs/T02_VALORES_POR_DEFECTO.md`,
+    #    05/10/2026) ──
+    #
+    # Por qué existen. Los pies de las tablas y las dos tarjetas del panel de mando sumaban con
+    # `Number(...) || 0`: un apunte sin hectáreas, una tierra sin superficie dicha o una venta sin kilos
+    # **sumaban cero en silencio**, y el total se leía como si estuviera completo. Ahora se suma lo que se
+    # sabe y **se dice cuánto falta**, con la cuenta delante.
+    #
+    # Están en `TABLA` y no en los textos del panel de mando porque **`app.js` lee los dos sitios** y
+    # `TABLA` se sirve en `/api/interfaz` (los del panel también, pero el mismo dato dicho en dos
+    # diccionarios acaba diciéndose de dos maneras). Y con sus dos formas: «1 tierra sin decir sus
+    # hectáreas» es lo primero que hace desconfiar de un programa; hay una prueba que exige las dos.
+    "tierras_sin_hectareas": "{cuantas} tierras sin decir sus hectáreas",
+    "tierras_sin_hectareas_uno": "1 tierra sin decir sus hectáreas",
+    "apuntes_sin_hectareas": "{cuantas} apuntes sin decir sus hectáreas",
+    "apuntes_sin_hectareas_uno": "1 apunte sin decir sus hectáreas",
+    "ventas_sin_kilos": "{cuantas} ventas sin decir sus kilos",
+    "ventas_sin_kilos_uno": "1 venta sin decir sus kilos",
     # ── La tabla de los años del cuaderno ──
     "anos_etiqueta": "Los años de tu cuaderno, en una tabla",
     "ano": "Año",
