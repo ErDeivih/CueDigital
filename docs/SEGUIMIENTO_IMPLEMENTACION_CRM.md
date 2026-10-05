@@ -4936,3 +4936,63 @@ escriban ficheros con PowerShell.
 | Repositorio | **5 commits locales**, sin remoto, árbol limpio |
 | Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), y **no se ha abierto** |
 | PostgreSQL | **bloqueado** por el motor de Docker; sin tocar volúmenes |
+
+---
+
+## 49. Ronda 41 (05/10/2026) — **A10 y A11 intentados, medidos, y devueltos para no dejar el árbol rojo**
+
+Esta ronda iba a cerrar A10 y A11. **Está hecho el diagnóstico y el arreglo, y no está integrado**: al
+aplicarlo salieron **21 pruebas en rojo** por dos familias de dependencias que hay que tocar a la vez, y con el
+presupuesto de la ronda agotado lo correcto era **devolver el árbol al último commit verde** —que ya incluye
+A12/A13— y dejar escrito lo que falta, en vez de entregar un árbol roto.
+
+### 49.1 Lo que hay que cambiar, ya medido (esto ahorra la mitad del trabajo la próxima vez)
+
+**Los cuatro campos y sus sitios exactos:**
+
+| Defecto | Modelo | Entradas | **Salidas** (esto es lo que se olvida) |
+|---|---|---|---|
+| **A10** `sistema = "secano"` | `parcelas.sistema`, `parcela_cultivos.sistema`, `grupos_parcelas.sistema` | `schemas.py`: **cinco** (`ParcelaEntrada`, `ParcelaDesdeSigpac`, `VariasParcelasDesdeSigpac`, `CultivoEntrada`, `GrupoEntrada`) | `schemas.py`: cuatro sitios con `sistema: str`, y el dataclass de `cuaderno_cyl.py` (que también lo declara obligatorio) |
+| **A11** `titularidad = "propia"` | `equipos_aplicacion.titularidad` | `schemas.py`: **tres** | — |
+
+**Y la consecuencia que de verdad importa, que está en la exportación de la Junta:**
+
+- `cuaderno_cyl_exportar.py`: la casilla del sistema **escribía «S» (secano) para cualquier cosa que no fuera
+  «regadio», incluido el hueco**: es decir, el fichero que se presenta a la Junta **afirmaba** algo que nadie
+  había declarado, y una tierra de regadío sin el dato salía como secano. La hoja admite la casilla vacía, y
+  `cuaderno_cyl._lee_sistema` **ya se niega** a ponerlo por defecto al importar (con el motivo escrito y
+  contando las líneas en `sin_secano_regadio`): era la exportación la que lo rompía. El arreglo es una función
+  `_la_casilla_del_sistema(sistema)` que devuelve «R», «S» o **«»**, y que ya está escrita y probada por dentro
+  (se ha devuelto con el resto, no se ha perdido el criterio).
+- La titularidad hacía `(equipo.titularidad or "propia") != "no_roma"`: una máquina de la que **no constaba
+  nada** se daba por propia. Con el tercer estado, lo honesto es **seguir pidiendo** el ROMA y la última
+  inspección —es el lado conservador— pero **diciendo por qué**: «no consta de quién es».
+
+**Y las dos familias de pruebas que se ponen rojas a la vez** (esto es lo que hay que arreglar en el mismo
+paso, y es exactamente lo mismo que pasó con A12/A13):
+
+1. **`test_aceptacion_copia_y_migracion.py`**: su fixture construye una **instalación vieja** y se apoya en el
+   valor por defecto del modelo para rellenar las columnas. Al quitar el defecto, la instalación vieja tiene
+   que **decir lo que de verdad tenía** (`sistema="secano"`, `titularidad="propia"`), igual que ya hace con
+   `autorizado=0` y con las tres de A12/A13. Es el mismo patrón, ya resuelto dos veces.
+2. **`test_cuaderno_cyl.py`** (dos pruebas de «traer las tierras»): el importador del cuaderno de la Junta y el
+   alta desde él tienen que decir qué hacen cuando la línea **no trae el sistema**, ahora que el hueco puede
+   llegar hasta el final.
+
+**Las cuatro columnas entran en `COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS`** (quedarían **20 en siete tablas**),
+por el mismo motivo que las tres de A12/A13: en una base ya creada siguen siendo `NOT NULL`.
+
+### 49.2 Y los tres frentes, con código en el repositorio
+
+Los tres subagentes siguen trabajando y **sus ficheros ya existen** (`app/gastos.py`, `app/extractos.py`,
+`app/trabajos.py`): quedan **commiteados** en esta ronda para que el «en curso» de la tabla se pueda comprobar
+con un `git log` y no con mi palabra. Sus propuestas de cambios compartidos llegarán en sus informes
+(`docs/T13_GASTOS.md`, `docs/T20_EXTRACTOS.md`, `docs/T15_TRABAJOS.md`) y las integro yo, por turnos.
+
+### 49.3 Lo que dice esta ronda del método, y no es cómodo
+
+**Un cambio de tres estados no se puede hacer en un fichero:** toca modelo, entradas, **salidas**,
+exportación, migración y las pruebas que simulan instalaciones viejas. Medido: cuatro campos → 21 pruebas en
+rojo repartidas en tres ficheros. **La lección no es «no lo intentes», es «empieza por las pruebas que fijan el
+contrato viejo»** —el fixture de la instalación vieja y el importador del cuaderno—, que es justo el orden que
+sí funcionó con A12 y A13. El árbol queda **verde** y el diagnóstico, escrito.
