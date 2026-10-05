@@ -770,17 +770,37 @@ class TestElEquipoDeEcharProductoNoEsLaMaquinaria:
     def test_las_tablas_que_usan_una_maquina_son_las_de_hoy(self):
         """La cuenta que decide si una máquina se puede quitar, contra las tablas de verdad.
 
-        Hoy **ninguna** tabla del cuaderno apunta a una máquina fuera de su propia ficha (las
-        obligaciones, las inspecciones y las averías son parte de ella: ver
-        `maquinaria_api.TABLAS_QUE_SON_PARTE_DE_LA_MAQUINA`). El día que una labor diga con qué tractor
-        se hizo, esta prueba se pone roja y obliga a decidir: contarla como dependencia —y contestar 409—
-        o escribir por qué no.
+        Hasta el 05/10/2026 **ninguna** tabla del cuaderno apuntaba a una máquina fuera de su propia
+        ficha (las obligaciones, las inspecciones y las averías son parte de ella: ver
+        `maquinaria_api.TABLAS_QUE_SON_PARTE_DE_LA_MAQUINA`), y esta prueba lo decía así.
+
+        **Las tres de las cuentas (T13, E7) son las que obligaron a decidir**, que es exactamente
+        para lo que está esta prueba:
+
+          · **`gastos`**: la reparación que se apunta con `maquina_id` (el coste de las averías que el
+            T14 dejó declarado como del T13). Es una **dependencia**, no parte de la ficha: la
+            reparación existe aunque la máquina se venda.
+          · **`inversiones_de_la_finca`**: la compra del tractor o del apero.
+          · **`repartos_de_coste`**: el trozo de un gasto o de una inversión que se lleva **a esa
+            máquina**, para poder saber lo que cuesta cada una.
+
+        Y la decisión es la misma en los tres casos: **no son parte de la máquina** —no se van con
+        ella—, así que `_tablas_que_usan_una_maquina()` las devuelve y **borrar una máquina que las
+        tiene contesta 409**: se corrige o se anula, que es lo que de verdad quiere quien se ha
+        equivocado al escribirla. Borrarla dejaría esas filas diciendo a qué máquina se refieren sin
+        que exista (y la base de datos no lo admitiría).
         """
         from app import correcciones
 
         todas = [modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("maquina_id")]
-        assert set(todas) == set(maquinaria_api.TABLAS_QUE_SON_PARTE_DE_LA_MAQUINA)
-        assert maquinaria_api._tablas_que_usan_una_maquina() == []
+        assert set(todas) == set(maquinaria_api.TABLAS_QUE_SON_PARTE_DE_LA_MAQUINA) | {
+            "gastos",
+            "inversiones_de_la_finca",
+            "repartos_de_coste",
+        }, "hay una tabla nueva que usa una máquina: hay que decidir si es parte de ella o depende"
+        assert [
+            modelo.__tablename__ for modelo in maquinaria_api._tablas_que_usan_una_maquina()
+        ] == ["gastos", "inversiones_de_la_finca", "repartos_de_coste"]
 
 
 # --------------------------------------------------------------------------

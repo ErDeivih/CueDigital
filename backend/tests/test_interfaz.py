@@ -678,8 +678,29 @@ class TestCertificadoEnLaInterfaz:
 
 class TestSinJergaEnLaInterfaz:
     def test_lo_que_sirve_la_api_no_lleva_jerga(self, cliente):
+        """El agricultor no puede leer jerga en lo que se le enseña.
+
+        **Y esta prueba miraba también los códigos, hasta el 05/10/2026.** Recorría todas las cadenas
+        de la respuesta, incluido el `valor` de un catálogo (`{"valor": "fitosanitario", "texto":
+        "Producto para las plagas y las hierbas"}`), y ahí se puso roja al integrar las cuentas del
+        T13: la palabra «fitosanitario» está prohibida en pantalla y es, a la vez, **el código con el
+        que se guarda esa categoría en la base de datos**.
+
+        Lo que decide es una regla que el proyecto ya tenía escrita en `contactos.py` («aquí la clave
+        sí lo dice, porque **la clave no la lee nadie**»): **un catálogo trae su código y su texto, y
+        el agricultor solo lee el texto**. Así que se salta el `valor` **solo cuando el diccionario es
+        un catálogo** (tiene `valor` y también `texto` o `etiqueta`), y se sigue revisando todo lo
+        demás: los textos, las listas, los mensajes y cualquier cadena suelta.
+
+        Y no se pierde vigilancia: que esos códigos sean los que el servidor conoce lo comprueban las
+        pruebas de cada catálogo (`test_gastos.py`, `test_t14_maquinaria.py`), y el valor sigue
+        entrando en el recorrido.
+        """
         datos = cliente.get("/api/interfaz").json()
         problemas: dict[str, list[str]] = {}
+
+        def es_un_catalogo(valor: dict) -> bool:
+            return "valor" in valor and ("texto" in valor or "etiqueta" in valor)
 
         def revisar(valor, camino):
             if isinstance(valor, str):
@@ -688,6 +709,9 @@ class TestSinJergaEnLaInterfaz:
                     problemas[f"{camino}: {valor[:60]}"] = encontradas
             elif isinstance(valor, dict):
                 for clave, contenido in valor.items():
+                    # El código de un catálogo no lo lee nadie: ver el porqué en el docstring.
+                    if clave == "valor" and es_un_catalogo(valor):
+                        continue
                     revisar(contenido, f"{camino}.{clave}")
             elif isinstance(valor, list):
                 for indice, contenido in enumerate(valor):
@@ -695,6 +719,44 @@ class TestSinJergaEnLaInterfaz:
 
         revisar(datos, "interfaz")
         assert not problemas, f"La interfaz sirve textos con jerga: {problemas}"
+
+    def test_el_guardian_de_la_jerga_sigue_mordiendo(self):
+        """Y el guardián de arriba no se ha quedado tonto al saltarse los códigos.
+
+        Se le da lo mismo que revisa él, con jerga en el sitio que **sí** se lee (el `texto` de un
+        catálogo) y con jerga en el sitio que **no** (el `valor`), y tiene que quejarse **de una sola
+        cosa**: de la primera.
+        """
+        revisados: dict[str, list[str]] = {}
+
+        def revisar(valor, camino):
+            if isinstance(valor, str):
+                encontradas = textos.palabras_prohibidas_encontradas(valor)
+                if encontradas:
+                    revisados[camino] = encontradas
+            elif isinstance(valor, dict):
+                es_catalogo = "valor" in valor and ("texto" in valor or "etiqueta" in valor)
+                for clave, contenido in valor.items():
+                    if clave == "valor" and es_catalogo:
+                        continue
+                    revisar(contenido, f"{camino}.{clave}")
+            elif isinstance(valor, list):
+                for indice, contenido in enumerate(valor):
+                    revisar(contenido, f"{camino}[{indice}]")
+
+        revisar(
+            {
+                "catalogo_bueno": {"valor": "fitosanitario", "texto": "Producto para las plagas"},
+                "catalogo_malo": {"valor": "otro", "texto": "Un producto fitosanitario"},
+            },
+            "interfaz",
+        )
+        assert "interfaz.catalogo_bueno.valor" not in revisados, (
+            "el código de un catálogo no lo lee nadie: no puede hacer saltar el guardián"
+        )
+        assert "interfaz.catalogo_malo.texto" in revisados, (
+            "y el texto sí se lee: si lleva jerga, el guardián tiene que cazarlo"
+        )
 
     def test_el_html_no_lleva_jerga_en_lo_que_se_ve(self):
         visible = texto_visible_de_html((WEB / "index.html").read_text(encoding="utf-8"))

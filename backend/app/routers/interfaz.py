@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from .. import catalogos, contactos, legal, maquinaria, semillas, sigpac, textos, ventas
+from .. import catalogos, contactos, gastos, legal, maquinaria, semillas, sigpac, textos, ventas
 
 router = APIRouter(prefix="/api", tags=["interfaz"])
 
@@ -212,6 +212,39 @@ def interfaz() -> dict:
         # decirlo sin abrir ninguna máquina: es la receta de `AGENTS.md`, y sin esto el agricultor
         # creería que una fecha que no aparece es un fallo del programa en vez de un dato que falta.
         "maquinaria_que_falta": list(maquinaria.QUE_FALTA),
+        # **Las cuentas de la explotación (T13, E7, 05/10/2026).** Las palabras de la pantalla nueva:
+        # sus tarjetas, sus estados, sus cuatro métodos de reparto y sus frases de «no lo sé». Va
+        # aquí —y no solo dentro de las respuestas de la API— por el mismo motivo que las del almacén
+        # y las de la maquinaria: **esto se guarda en el móvil**, y las cuentas se miran en el
+        # despacho y también de pie en la parcela, que es donde peor va la cobertura.
+        #
+        # Y hay una razón más, que es la del ticket: la pantalla tiene que poder decir **«no lo sé»**
+        # aunque el servidor no conteste. Si esas frases vivieran solo en la respuesta, la pantalla se
+        # quedaría muda justo en el caso que más importa.
+        "gastos": textos.GASTOS,
+        # Las cuatro listas cerradas, **con su orden y con su nombre**. El orden no se saca de las
+        # claves del diccionario: unos botones que cambian de sitio se pulsan mal.
+        "categorias_de_gasto": [
+            {"valor": clave, "texto": textos.GASTOS["categorias_de_gasto"][clave]}
+            for clave in gastos.CATEGORIAS_DE_GASTO
+        ],
+        "categorias_de_inversion": [
+            {"valor": clave, "texto": textos.GASTOS["categorias_de_inversion"][clave]}
+            for clave in gastos.CATEGORIAS_DE_INVERSION
+        ],
+        "metodos_de_reparto": [
+            {"valor": clave, "texto": textos.GASTOS["metodos_de_reparto"][clave]}
+            for clave in gastos.METODOS_DE_REPARTO
+        ],
+        "formas_de_pago": [
+            {"valor": clave, "texto": textos.GASTOS["formas_de_pago"][clave]}
+            for clave in ventas.FORMAS_DE_COBRO
+        ],
+        # Y lo que el programa **todavía no sabe calcular** de las cuentas (la amortización, el
+        # extracto del banco y el resumen del IVA), con lo que es, para qué haría falta y de quién
+        # depende. Sin esto, el agricultor creería que una cifra que no aparece es un fallo del
+        # programa en vez de un dato que falta (la receta de `AGENTS.md`).
+        "gastos_que_falta": list(gastos.QUE_FALTA),
         # **Las tierras en el mapa y en la tabla, y lo que ha sido una tierra** (T06, 03/10/2026): las
         # palabras de las dos pantallas nuevas. Se sirven aquí —y no solo dentro de
         # `/api/parcelas/vista`— por un motivo que se vio al escribirlas: la ficha de una tierra con sus

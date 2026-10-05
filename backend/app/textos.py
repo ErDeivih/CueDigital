@@ -1254,6 +1254,7 @@ ACCIONES: dict[str, str] = {
     "si": "Sí",
     "no": "No",
     "no_se": "No lo sé",
+    "ver_las_cuentas": "MIS CUENTAS",
 }
 
 PANTALLA_CUADERNO: dict = {
@@ -4910,7 +4911,18 @@ TABLA: dict[str, str] = {
     "resumen_maquinaria": "{cuantas} máquinas",
     "resumen_maquinaria_filtrado": "{cuantas} de {total} máquinas",
     "resumen_maquinaria_avisos_uno": "1 con algo que mirar",
-    "resumen_maquinaria_avisos": "{cuantas} con algo que mirar",
+    "cuentas_concepto": "Qué fue",
+    "cuentas_coste": "Lo que costó",
+    "cuentas_va_a": "Va a",
+    "cuentas_pagado": "Pagado",
+    "cuentas_pendiente": "Falta por pagar",
+    "cuentas_estado": "Cómo está",
+    "cuentas_acciones": "Acciones",
+    "cuentas_tierra": "Una tierra",
+    "cuentas_cultivo": "Un cultivo",
+    "resumen_cuentas": "{cuantas} gastos · {total} de coste conocido",
+    "resumen_cuentas_uno": "1 gasto · {total} de coste conocido",
+    "resumen_cuentas_filtrado": "{cuantas} de {total} gastos",
 }
 
 # ── El panel de detalle, al lado de la tabla (fase 3, 30/09/2026) ──
@@ -5515,6 +5527,12 @@ def textos_visibles() -> list[str]:
     textos.extend(TABLA.values())
     textos.extend(MAQUINARIA_DE_LA_FINCA.values())
     textos.extend(MENSAJES_DE_LA_MAQUINARIA.values())
+    # Las cuentas de la explotación (T13, E7, 05/10/2026): lo que ha costado, a qué va, cuánto se ha
+    # pagado y qué falta por saber. Se recogen enteros, y con `_recoger` y no con `.values()` porque
+    # dentro llevan cuatro diccionarios (las categorías, los métodos de reparto, las formas de pago y
+    # los estados de una ayuda): con `.values()` esos textos llegarían al test de jerga como
+    # diccionarios en vez de como frases, y son justo los que más se leen.
+    textos.extend(_recoger(GASTOS))
     return textos
 
 
@@ -7062,3 +7080,440 @@ MENSAJES_DE_LA_MAQUINARIA: dict[str, str] = {
 
 MENSAJES.update(MENSAJES_DE_LA_MAQUINARIA)
 
+
+# --------------------------------------------------------------------------
+# Las cuentas de la explotación (T13, E7, 05/10/2026)
+# --------------------------------------------------------------------------
+#
+# POR QUÉ ESTE VOCABULARIO ES TAN LARGO, Y POR QUÉ ESO ES LO CORRECTO AQUÍ. Esta pantalla es la
+# primera del programa donde hay que decir **«no lo sé»** muchas veces y de muchas maneras: falta el
+# importe de un gasto, falta la superficie de una tierra, falta saber a qué va un coste, falta saber
+# si una ayuda se ha cobrado. Cada una de esas cosas se dice con su frase y **dice qué hacer**, que es
+# la regla de la casa: describir el problema y callarse no vale.
+#
+# Y las listas cerradas (las categorías, los métodos de reparto, las formas de pago) llevan **su
+# orden y su nombre**, y el orden no se saca de las claves del diccionario: unos botones que cambian
+# de sitio se pulsan mal.
+
+GASTOS: dict = {
+    "titulo": "Mis cuentas",
+    "explica": (
+        "Aquí está lo que te ha costado, a qué va y cuánto te queda por pagar. Lo que no sepas se "
+        "queda en blanco y el programa te lo dice: un hueco no es un cero."
+    ),
+    "cuantas": "Tienes {cuantos} gastos apuntados.",
+    "cuantas_uno": "Tienes 1 gasto apuntado.",
+    "sin_gastos": (
+        "Todavía no has apuntado ningún gasto. Empieza por el que tengas el papel a mano: el abono, "
+        "el gasóleo o la reparación. Si no sabes lo que costó, apúntalo igual y se queda en blanco."
+    ),
+    "sin_resultados": (
+        "Ningún gasto coincide con lo que buscas. Prueba con otras letras o pulsa VER TODAS para "
+        "verlos todos otra vez."
+    ),
+    "nuevo": "APUNTAR UN GASTO",
+    "nuevo_pago": "APUNTAR UN PAGO",
+    "nueva_inversion": "APUNTAR UNA INVERSIÓN",
+    "nueva_ayuda": "APUNTAR UNA AYUDA",
+    "buscar": "BUSCAR",
+    "buscar_pista": "Escribe las primeras letras del concepto o del proveedor",
+    "ver_todas": "VER TODAS",
+    "abrir": "VER ESTE GASTO",
+    "corregir": "CORREGIR",
+    "anular": "ANULAR",
+    "anular_motivo": "¿Por qué lo anulas?",
+    "rellenar": "RELLENAR EL IMPORTE",
+    "importe": "Lo que costó",
+    "pagado": "Pagado",
+    "pendiente": "Falta por pagar",
+    "como_esta": "Cómo está",
+    "proveedor": "Proveedor:",
+    "su_tierra": "Va a",
+    "su_cuenta": "La cuenta de este gasto",
+    "no_se_sabe": "No lo sé",
+    "sin_asignar_corto": "Sin asignar",
+    "sin_asignar_explica": (
+        "Lo que está sin asignar es un coste que ya sabes que existe pero todavía no está en ninguna "
+        "tierra. Sigue contando en tus cuentas: lo único que falta es decir a dónde va."
+    ),
+    "estado_sin_importe": "Falta saber lo que costó",
+    "estado_sin_pagar": "Sin pagar",
+    "estado_pagado_en_parte": "Pagado a medias",
+    "estado_pagado": "Pagado",
+    "estado_vencido": "Vencido",
+    "estado_anulado": "Anulado",
+    "esta_anulado": "Esto está anulado, con su motivo. Sigue aquí para que sepas que estuvo.",
+    "esta_anulada": "Esta compra está anulada.",
+    "cuadre_titulo": "Las cuentas de este gasto",
+    "cuadre_entero": "Lo que costó",
+    "cuadre_repartido": "En tierras, cultivos o máquinas",
+    "cuadre_sin_asignar": "Sin asignar",
+    "cuadre_no_cierra": (
+        "Estas cuentas no cierran: hay una parte del gasto que no está ni en un sitio ni en el otro. "
+        "Míralo y repártelo otra vez."
+    ),
+    "todavia_sin_reparto": (
+        "Todavía no has dicho a qué tierra o cultivo va este gasto. Sigue contando en tus cuentas, "
+        "pero está sin asignar."
+    ),
+    "reparto_metodo": "Se repartió",
+    "reparto_quitar": "QUITARLO DE AQUÍ",
+    "repartir": "REPARTIRLO",
+    "dejarlo_sin_asignar": "DEJARLO SIN ASIGNAR",
+    "metodo_area": "por hectáreas",
+    "metodo_horas": "por horas",
+    "metodo_consumo": "por lo que se gastó en cada sitio",
+    "metodo_manual": "a mano",
+    "coste_titulo": "Lo que te ha costado",
+    "coste_explica": (
+        "Lo directo es lo que dice el papel de un gasto de esa tierra. Lo repartido lo has repartido "
+        "tú. Y lo sin asignar es un coste que existe y todavía no va a ningún sitio."
+    ),
+    "coste_directo": "Directo",
+    "coste_repartido": "Repartido",
+    "coste_sin_asignar": "Sin asignar",
+    "coste_total_conocido": "Total conocido",
+    "cuantos_sin_importe": "Gastos de los que no sabes el importe",
+    "sin_importe_explica": "De esos no se puede hacer la cuenta hasta que apuntes lo que costaron",
+    "caja_titulo": "La caja",
+    "caja_explica": (
+        "Esto es el dinero que ha entrado y salido de verdad. No es lo mismo que el margen: puedes "
+        "haber vendido mucho y no haber cobrado nada todavía."
+    ),
+    "caja_entrado": "Ha entrado",
+    "caja_salido": "Ha salido",
+    "caja_saldo": "Queda",
+    "caja_por_pagar": "Falta por pagar",
+    "ayudas_cobradas": "Ayudas cobradas",
+    "ayudas_previstas": "Ayudas pedidas o concedidas, sin cobrar",
+    "prevision_no_es_ingreso": "Esto no se suma a lo que ha entrado: todavía no es dinero tuyo",
+    "margen_titulo": "El margen de cada cultivo",
+    "margen_explica": (
+        "Lo que has ingresado menos lo que te ha costado. Si falta el importe de un gasto, el margen "
+        "no se puede calcular y aquí se dice por qué, en vez de enseñar una cifra que no es."
+    ),
+    "ingresos": "Has ingresado",
+    "coste_conocido": "Te ha costado",
+    "margen": "Margen",
+    "margen_incompleto": (
+        "De este cultivo no se puede calcular el margen: falta el importe de algún gasto o de algún "
+        "ingreso. Apunta lo que falta y vuelve a mirarlo."
+    ),
+    "inversiones_titulo": "Las inversiones",
+    "inversiones_explica": (
+        "Un tractor o una nave no son un gasto del año: duran años. Lo que de ellos le toca a esta "
+        "campaña lo dices tú, y lo que no digas se queda sin asignar y se ve aquí."
+    ),
+    "inversion_en_la_campana": "De esto le toca a esta campaña",
+    "una_inversion_no_es_un_gasto": (
+        "Una inversión no entra entera en el año en que se compra: lo que le toca a cada campaña lo "
+        "dices con un reparto."
+    ),
+    "ayudas_titulo": "Las ayudas",
+    "ayudas_explica": (
+        "Lo que has pedido, lo que te han concedido y lo que has cobrado son tres cosas distintas, y "
+        "aquí van separadas. Lo que todavía no has cobrado no es dinero que tengas."
+    ),
+    "ayuda_prevista": "Pedido",
+    "ayuda_concedida": "Concedido",
+    "ayuda_cobrada": "Cobrado",
+    "ayuda_estado_prevista": "Pedida, sin resolver",
+    "ayuda_estado_concedida": "Concedida, sin cobrar",
+    "ayuda_estado_cobrada": "Cobrada",
+    "pagos_titulo": "Los pagos",
+    "pagos_explica": "El dinero que ha salido, y a qué gastos va.",
+    "sin_pagos": "Todavía no has apuntado ningún pago.",
+    "pago_aplicado": "Va a gastos por",
+    "pago_sin_conciliar": "Sin saber a qué va",
+    "pago_conciliar": "DECIR A QUÉ VA",
+    "pago_deshacer": "DESHACER ESTO",
+    "sin_conciliar_titulo": "Dinero que salió y todavía no sabes a qué va",
+    "sin_conciliar_explica": (
+        "Ese dinero está apuntado y no se ha perdido: lo único que falta es decir contra qué gasto "
+        "va. Cuando lo digas, se descuenta de lo que debes."
+    ),
+    "sus_pagos": "Los pagos de este gasto",
+    "que_falta_titulo": "Lo que este programa todavía no calcula",
+    "que_falta_explica": (
+        "Se dice para que no te fíes de una cifra que no está: cuando el programa no tiene el dato, "
+        "no se lo inventa."
+    ),
+    "que_falta_para_que": "Para qué haría falta",
+    "que_falta_depende": "De quién depende",
+    "el_traspaso_no_se_guarda": (
+        "Un traspaso de una cuenta tuya a otra no es un ingreso ni un gasto, así que no se apunta ni "
+        "en los ingresos ni en los gastos. Guardarlo junto al extracto del banco es el trabajo "
+        "siguiente: hoy el programa solo te dice cómo quedan los dos movimientos."
+    ),
+    "form_nuevo_titulo": "Apuntar un gasto",
+    "form_nuevo_pista": (
+        "Con el concepto y lo que costó ya queda apuntado. Lo que no sepas se deja en blanco: un "
+        "hueco se queda en blanco y no se escribe un cero."
+    ),
+    "form_corregir_titulo": "Corregir este gasto",
+    "form_corregir_pista": (
+        "Está puesto lo que apuntaste. Cambia lo que esté mal: lo que había antes queda guardado en "
+        "el historial del cuaderno."
+    ),
+    "form_repartir_titulo": "Repartir este gasto",
+    "form_repartir_pista": (
+        "Elige cómo lo repartes. Si no sabes a qué va, déjalo sin asignar: se queda dicho y sigue "
+        "contando en tus cuentas."
+    ),
+    "form_pago_titulo": "Apuntar un pago",
+    "form_pago_pista": (
+        "Lo que ha salido de tu cuenta y, si lo sabes, contra qué gasto va. Si no lo sabes, apúntalo "
+        "igual: se queda esperando a que lo digas."
+    ),
+    "form_inversion_titulo": "Apuntar una inversión",
+    "form_inversion_pista": (
+        "Lo que has comprado para que dure. Su precio no entra entero en este año: después le dices "
+        "qué parte le toca a cada campaña."
+    ),
+    "form_ayuda_titulo": "Apuntar una ayuda",
+    "form_ayuda_pista": (
+        "Lo que has pedido, lo que te han concedido y lo que has cobrado. Rellena solo lo que sepas: "
+        "lo demás se queda en blanco."
+    ),
+    "form_anular_titulo": "Anular",
+    "guardar": "GUARDAR",
+    "cancelar": "VOLVER SIN GUARDAR",
+    "guardando": "Guardando…",
+    "anular_confirmar": "ANULARLO CON ESTE MOTIVO",
+    "campo_concepto": "¿Qué fue?",
+    "campo_concepto_pista": "«Gasóleo», «abono del trigo», «reparación del remolque»",
+    "campo_categoria": "¿De qué es?",
+    "campo_categoria_pista": "Para agrupar tus gastos. Si no lo tienes claro, «otro»",
+    "campo_importe": "¿Cuánto costó?",
+    "campo_importe_pista": "Si no lo sabes, déjalo en blanco: el programa no escribe un cero",
+    "campo_base": "Lo que cuesta sin el IVA",
+    "campo_cuota": "El IVA",
+    "campo_fecha": "¿Cuándo fue?",
+    "campo_vencimiento": "¿Cuándo hay que pagarlo?",
+    "campo_vencimiento_pista": "Si lo tienes pactado. Si no, déjalo en blanco",
+    "campo_proveedor": "¿A quién se lo compraste?",
+    "campo_metodo": "¿Cómo lo reparto?",
+    "campo_destino": "¿A qué se reparte?",
+    "campo_pesos": "¿Cuánto en cada sitio?",
+    "campo_horas": "Horas",
+    "campo_litros": "Litros o kilos",
+    "campo_motivo": "¿Por qué lo anulas?",
+    "categorias_de_gasto": {
+        "abono": "Abono",
+        "fitosanitario": "Producto para las plagas y las hierbas",
+        "semilla": "Semilla",
+        "gasoleo": "Gasóleo",
+        "reparacion": "Reparación",
+        "servicio": "Trabajo de otro",
+        "alquiler": "Alquiler",
+        "seguro": "Seguro",
+        "impuesto": "Impuesto",
+        "cuota": "Cuota",
+        "otro": "Otra cosa",
+    },
+    "categorias_de_inversion": {
+        "maquinaria": "Máquina",
+        "apero": "Apero",
+        "instalacion": "Nave o instalación",
+        "vehiculo": "Vehículo",
+        "terreno": "Tierra",
+        "otro": "Otra cosa",
+    },
+    "metodos_de_reparto": {
+        "area": "Por hectáreas",
+        "horas": "Por horas",
+        "consumo": "Por lo que se gastó en cada sitio",
+        "manual": "A mano",
+    },
+    # **La misma lista que la del cobro** (`ventas.FORMAS_DE_COBRO`): no puede haber dos verdades
+    # sobre cómo se mueve el dinero.
+    "formas_de_pago": {
+        "transferencia": "Transferencia",
+        "efectivo": "Efectivo",
+        "cheque": "Cheque",
+        "confirming": "Confirming",
+        "otro": "Otra forma",
+    },
+    "estados_de_una_subvencion": {
+        "prevista": "Pedida, sin resolver",
+        "concedida": "Concedida, sin cobrar",
+        "cobrada": "Cobrada",
+    },
+}
+
+
+# Y los mensajes. **Los que bloquean llevan «qué pasa + qué hago ahora»**, que es la estructura
+# obligatoria de este programa: decir el problema y callarse no vale.
+MENSAJES.update(
+    {
+        "G1_el_gasto_de_cero_euros_no_es_un_gasto": (
+            "Un gasto de cero euros no es un gasto. Si lo que pasa es que no sabes lo que costó, deja "
+            "el importe en blanco y el programa lo apuntará como que falta por saber."
+        ),
+        "G2_esa_categoria_no_es_ninguna_de_las_que_hay": (
+            "«{valor}» no es ninguna de las categorías que hay ({lista}). Elige una de la lista o "
+            "apúntalo como «Otra cosa» y escribe en el concepto lo que fue."
+        ),
+        "G3_el_pago_tiene_que_ser_mayor_que_cero": (
+            "Un pago tiene que ser mayor que cero. Escribe lo que de verdad ha salido de tu cuenta."
+        ),
+        "G4_un_pago_no_puede_aplicarse_mas_de_lo_que_se_debe": (
+            "A «{concepto}» le faltan {pendiente} por pagar y has puesto {quiere}. Baja el importe "
+            "hasta lo que se debe, o apunta primero lo que falte del gasto."
+        ),
+        "G5_ese_metodo_de_reparto_no_es_ninguno_de_los_cuatro": (
+            "«{valor}» no es ninguna de las formas de repartir ({lista}). Elige una de la lista."
+        ),
+        "G6_no_se_puede_repartir_porque_falta_la_superficie": (
+            "No se ha podido repartir porque a una de las tierras le falta la superficie, y sin ella "
+            "no se sabe qué parte le toca. El gasto se ha quedado sin asignar: mira la superficie de "
+            "la tierra y vuelve a repartirlo."
+        ),
+        "G7_el_reparto_a_mano_suma_mas_que_el_gasto": (
+            "Lo que has repartido suma más de lo que costó el gasto. Repasa los importes: la suma no "
+            "puede pasar de lo que costó."
+        ),
+        "G8_ese_pago_ya_no_tiene_dinero_libre": (
+            "De ese pago ya está todo dicho a qué va. Si quieres cambiar a qué va, deshaz primero lo "
+            "que tiene puesto."
+        ),
+        "G9_el_gasto_no_tiene_importe_y_no_se_puede_repartir": (
+            "Este gasto no tiene importe, así que no se puede repartir: no se sabe cuánto llevar a "
+            "cada sitio. Apunta lo que costó y vuelve a repartirlo."
+        ),
+        "G10_esa_forma_de_pago_no_es_ninguna_de_las_que_hay": (
+            "«{valor}» no es ninguna de las formas de pago ({lista}). Elige una de la lista."
+        ),
+        "G11_ese_importe_no_cabe": (
+            "Ese importe («{importe}») no cabe donde se guarda: parece un número de más al teclearlo. "
+            "Míralo y vuelve a escribirlo."
+        ),
+        "G12_la_inversion_de_cero_euros_no_es_una_inversion": (
+            "Una inversión de cero euros no es una inversión. Si no sabes lo que costó, deja el "
+            "importe en blanco: se queda como que falta por saber."
+        ),
+        "G15_eso_no_es_un_importe": (
+            "«{importe}» no es un importe. Escríbelo con números, por ejemplo 121,50."
+        ),
+        "G16_el_gasto_necesita_saber_que_es": (
+            "Un gasto tiene que decir qué fue. Escribe dos o tres palabras —«gasóleo», «abono del "
+            "trigo»— y guárdalo otra vez."
+        ),
+        "G17_el_gasto_se_ha_guardado_sin_importe": (
+            "Se ha guardado, pero sin el importe: hasta que no sepas lo que costó, esta cuenta no "
+            "entra en el margen. Apúntalo cuando tengas el papel."
+        ),
+        "G18_no_se_pueden_comprobar_las_cuentas": (
+            "No se han podido comprobar las cuentas del papel porque falta {faltan}. Si lo tienes "
+            "delante, apúntalo: el programa no lo supone."
+        ),
+        "G19_las_cuentas_del_gasto_no_cuadran": (
+            "Las cuentas de este gasto no cuadran: la base más el IVA no da el total, se llevan "
+            "{diferencia}. El programa guarda lo que has escrito, pero míralo en el papel."
+        ),
+        "G20_el_gasto_todavia_no_esta_en_ninguna_tierra": (
+            "El gasto está apuntado y todavía no está en ninguna tierra: sigue contando en tus "
+            "cuentas, pero aparece como sin asignar. Dile a qué va cuando puedas."
+        ),
+        "G21_eso_esta_anulado_y_no_se_corrige": (
+            "Esto está anulado, así que no se puede corregir. Si te has equivocado al anularlo, "
+            "apunta el gasto otra vez."
+        ),
+        "G22_para_anular_hace_falta_el_motivo": (
+            "Para anularlo hace falta el motivo: dentro de un año, ese motivo es lo único que "
+            "explicará por qué está tachado. Escríbelo y vuelve a pulsar el botón."
+        ),
+        "G23_su_gasto_se_anulo": "Su gasto se anuló",
+        "G24_gasto_anulado": (
+            "Anulado, con su motivo («{motivo}»). Sigue en tu cuaderno, tachado, y deja de contar en "
+            "las cuentas."
+        ),
+        "G25_el_dinero_ha_vuelto_a_estar_sin_conciliar": (
+            "El dinero que estaba puesto en este gasto ha vuelto a quedar sin decir a qué va ({cuantos} "
+            "apuntes). Dilo cuando sepas a qué gasto va."
+        ),
+        "G26_eso_no_es_un_sitio_donde_repartir": (
+            "«{valor}» no es un sitio donde se pueda repartir un gasto ({lista}). Elige uno de la "
+            "lista."
+        ),
+        "G27_queda_parte_sin_asignar": (
+            "Queda {importe} sin asignar: está apuntado y sigue contando en tus cuentas, pero "
+            "todavía no va a ninguna tierra."
+        ),
+        "G28_el_reparto_no_cuadra": (
+            "Este reparto no cuadra: hay {falta} del gasto que no están ni repartidos ni sin asignar. "
+            "Repártelo otra vez para que la suma sea la del gasto."
+        ),
+        "G29_el_gasto_se_queda_sin_asignar_diciendolo": (
+            "El gasto se queda sin asignar, y así se dice. Sigue contando en tus cuentas: solo falta "
+            "decir a dónde va."
+        ),
+        "G30_la_inversion_necesita_saber_que_es": (
+            "Una inversión tiene que decir qué es. Escribe dos o tres palabras —«tractor», «nave del "
+            "grano»— y guárdala otra vez."
+        ),
+        "G31_esa_categoria_de_inversion_no_existe": (
+            "«{valor}» no es ninguna de las categorías de inversión que hay ({lista}). Elige una de "
+            "la lista."
+        ),
+        "G32_una_inversion_no_es_un_gasto_del_ano": (
+            "Apuntada. Ojo con una cosa: su precio no entra entero en el año en que se compró. Dile "
+            "qué parte le toca a cada campaña y lo que no digas se queda sin asignar."
+        ),
+        "G33_la_inversion_se_ha_guardado_sin_importe": (
+            "Se ha guardado sin el importe. Mientras no sepas lo que costó, no se puede decir qué "
+            "parte le toca a cada campaña."
+        ),
+        "G34_inversion_anulada": (
+            "Anulada, con su motivo («{motivo}»). Sus repartos dejan de contar."
+        ),
+        "G35_hay_gastos_sin_importe_y_no_se_les_aplica_el_dinero": (
+            "Hay {cuantos} gastos de los que no sabes el importe, así que este dinero no se les ha "
+            "podido aplicar: no se sabe cuánto deben. Apunta lo que costaron y vuelve a decir a qué "
+            "va este pago."
+        ),
+        "G36_una_parte_del_pago_queda_sin_conciliar": (
+            "Se ha aplicado lo que se debía y quedan {importe} sin decir a qué van: están apuntados y "
+            "esperando. Dilo cuando sepas contra qué gasto van."
+        ),
+        "G37_a_este_gasto_no_se_le_puede_aplicar_dinero_sin_saber_lo_que_costo": (
+            "A «{concepto}» no se le puede aplicar dinero porque no se sabe lo que costó. Apunta "
+            "primero su importe y después dile a qué va el pago."
+        ),
+        "G38_ese_pago_no_tiene_tanto_dinero_libre": (
+            "De este pago solo quedan {libre} sin decir a qué van y has puesto {quiere}. Baja el "
+            "importe o deshaz antes lo que tenga puesto."
+        ),
+        "G39_ese_pago_esta_anulado": (
+            "Ese pago está anulado, así que no se le puede decir a qué va. Si te has equivocado al "
+            "anularlo, apúntalo otra vez."
+        ),
+        "G40_el_pago_sigue_apuntado_y_sin_conciliar": (
+            "Deshecho. El pago sigue apuntado con todo su importe y otra vez sin decir a qué va: el "
+            "dinero no se ha borrado."
+        ),
+        "G41_pago_anulado": (
+            "Pago anulado, con su motivo («{motivo}»). Los gastos que saldaba vuelven a estar "
+            "pendientes."
+        ),
+        "G42_la_ayuda_necesita_saber_de_que_es": (
+            "Una ayuda tiene que decir de qué es. Escribe dos o tres palabras —«ayuda a la cosecha de "
+            "cereal»— y guárdala otra vez."
+        ),
+        "G43_una_ayuda_prevista_no_es_un_ingreso": (
+            "Apuntada. Recuerda que una ayuda pedida o concedida **no es dinero que hayas cobrado**: "
+            "no se suma a lo que ha entrado hasta que te la ingresen."
+        ),
+        "G44_ayuda_anulada": (
+            "Anulada, con su motivo («{motivo}»). Deja de contar como ingreso."
+        ),
+        "G45_un_traspaso_a_la_misma_cuenta_no_es_un_traspaso": (
+            "Ese traspaso sale y entra en la misma cuenta, así que no es un traspaso. Mira de qué "
+            "cuenta sale y a cuál entra."
+        ),
+        "G46_faltan_importes_por_saber_uno": "Falta 1 importe por saber",
+        "G46_faltan_importes_por_saber_varios": "Faltan {cuantos} importes por saber",
+        "G47_gastos_sin_saber_a_donde_van_uno": "1 gasto sin saber a dónde va",
+        "G47_gastos_sin_saber_a_donde_van_varios": "{cuantos} gastos sin saber a dónde van",
+    }
+)

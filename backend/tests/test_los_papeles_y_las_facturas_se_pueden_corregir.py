@@ -1085,6 +1085,13 @@ class TestLoQueSeCuentaAntesDeBorrar:
             sin la factura, el albarán se quedaría sin decir de qué compra salió. Contesta 409 — y lo
             que sí se puede hacer siempre es **anular** la factura, que no toca el albarán ni la
             mercancía que entró: la factura no es lo que metía la mercancía en el almacén.
+          · **`gastos`** y **`inversiones_de_la_finca`** (T13, E7, 05/10/2026), que entran por el
+            mismo motivo que la fertilización: el gasto del gasóleo o la reparación dice **de qué
+            factura salió** (`factura_id`), y la inversión también. Son dependencias de verdad —sin la
+            factura, la fila se queda sin decir con qué papel se justifica, y la base de datos no la
+            admitiría—, así que contestan 409 igual que el abono. Y lo que **no** se hace es crear un
+            gasto desde una factura: el gasto la *apunta*, y contar el coste por los dos lados sería
+            contar la compra dos veces.
 
         Esta prueba obliga a decidir el día que aparezca otra tabla que apunte a una factura.
         """
@@ -1092,11 +1099,11 @@ class TestLoQueSeCuentaAntesDeBorrar:
 
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("factura_id")
-        ] == ["fertilizaciones", "lineas_de_factura", "recepciones"]
+        ] == ["fertilizaciones", "gastos", "inversiones_de_la_finca", "lineas_de_factura", "recepciones"]
         assert [
             modelo.__tablename__
             for modelo in facturas_api._tablas_que_apuntan_a_una_factura()
-        ] == ["fertilizaciones", "recepciones"]
+        ] == ["fertilizaciones", "gastos", "inversiones_de_la_finca", "recepciones"]
 
     def test_lo_que_apunta_a_un_papel_es_la_inspeccion_de_una_maquina(self):
         """**Desde el T14 (03/10/2026) hay una tabla que apunta a un papel, y es la que había que decidir.**

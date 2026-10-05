@@ -1355,6 +1355,16 @@ class TestLoQueSeCuentaAntesDeBorrar:
         decirlo— y está clasificada en `OTRAS_COSAS`. **El cobro NO está aquí, y también es una
         decisión**: el dinero entra un día y salda una factura, que es quien tiene la campaña; el
         porqué entero está en `models.Cobro`, y su prueba en `test_el_dinero_de_las_ventas.py`.
+
+        **Y las cuatro de las cuentas** (T13, E7, 05/10/2026), que son las que esta prueba pidió al
+        integrarlas: `gastos`, `inversiones_de_la_finca`, `repartos_de_coste` y `subvenciones`. Las
+        cuatro cuelgan del año a propósito —un gasto es de la campaña en la que se consumió, una
+        inversión es una compra de ese año y su reparto a la campaña se perdería con él, un reparto es
+        a dónde fue cada trozo y una ayuda se pide y se cobra en un año— y las cuatro están
+        clasificadas en `OTRAS_COSAS`. **El pago (`pagos_de_gasto`) NO está aquí, y es la misma
+        decisión que con el cobro**: el dinero sale un día y salda un gasto, y es el gasto quien tiene
+        la campaña; colgarlo del año obligaría a decidir de qué año es un pago de enero que salda la
+        compra de diciembre, y esa decisión no la tiene el programa (`models.PagoDeGasto`).
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("campana_id")
@@ -1365,10 +1375,14 @@ class TestLoQueSeCuentaAntesDeBorrar:
             "facturas_emitidas",
             "fertilizaciones",
             "firmas",
+            "gastos",
             "grupos_parcelas",
+            "inversiones_de_la_finca",
             "labores",
             "parcela_cultivos",
             "planes_abonado",
+            "repartos_de_coste",
+            "subvenciones",
             "tratamientos",
             "ventas_de_cosecha",
             "versiones_de_recinto",

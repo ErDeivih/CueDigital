@@ -125,15 +125,24 @@ def _el_rastro(
     )
 
 
-def _de_la_lista(valor: str | None, lista: tuple[str, ...], *, codigo: str, **extra) -> str:
+def _de_la_lista(valor: str | None, posibles: tuple[str, ...], *, codigo: str, **extra) -> str:
     """Comprueba que lo que llega es una de las respuestas posibles, y lo dice en cristiano.
 
     La lista cerrada del esquema daría un mensaje en inglés que habla de «input», y aquí el que lee
     es un agricultor. Y se comprueba **aquí y no en el formulario**: el formulario es una comodidad,
     no una puerta; la puerta es esta.
+
+    **El segundo argumento se llama `posibles` y no `lista` a propósito, y esto es un defecto
+    arreglado al integrar** (05/10/2026). Las llamadas le pasan la lista de valores posibles **de
+    posición** y además le pasan `lista="…"` como palabra clave, que es el texto que sale en el
+    aviso («las que hay son: mineral, organico…»). Con el parámetro llamado `lista`, esa palabra
+    clave chocaba con él y **las trece pruebas del recorrido reventaban** con `TypeError: … got
+    multiple values for argument 'lista'`. No se vio antes porque el router no se podía ni importar
+    sin las tablas que integra el coordinador: es exactamente lo que pasa con el código que nadie ha
+    ejecutado todavía.
     """
     limpio = (valor or "").strip().lower()
-    if limpio not in lista:
+    if limpio not in posibles:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=textos.mensaje(codigo, valor=valor, **extra),
@@ -184,7 +193,7 @@ def _lo_pagado(db: Db, explotacion_id: int, gasto_id: int) -> Decimal:
 
 def _el_cuadre_del_reparto(gasto: models.Gasto, repartos) -> gastos.CuadreDelReparto:
     """El cuadre que el contrato pide, con los repartos que hay apuntados."""
-    return gastos.cuadre_del_reparto(
+    cuadre = gastos.cuadre_del_reparto(
         gasto.importe,
         [
             {
@@ -196,6 +205,15 @@ def _el_cuadre_del_reparto(gasto: models.Gasto, repartos) -> gastos.CuadreDelRep
             for reparto in repartos
         ],
     )
+    # **El motivo por el que no se pudo repartir se lee del trozo que lo guarda** (05/10/2026). El
+    # cuadre se recalcula al abrir el gasto y el motivo no se puede deducir del importe: sin esto, la
+    # pantalla enseñaría «sin asignar 663,00 €» sin decir qué falta para poder repartirlo, que es
+    # justo lo que el ticket prohíbe. Ver `models.RepartoDeCoste.no_se_reparte`.
+    if not cuadre.no_se_reparte:
+        cuadre.no_se_reparte = next(
+            (reparto.no_se_reparte for reparto in repartos if reparto.no_se_reparte), ""
+        )
+    return cuadre
 
 
 def _la_etiqueta_del_destino(reparto: models.RepartoDeCoste, nombre_de_la_tierra: str | None) -> str:
@@ -286,7 +304,12 @@ def _como_se_ve_un_gasto(db: Db, explotacion, gasto: models.Gasto) -> dict:
         "notas": gasto.notas,
         # Las claves en las que se puede estar equivocado, para que la pantalla diga qué hacer.
         "le_falta_el_importe": gasto.importe is None,
-        "esta_sin_repartir": bool(cuadre_del_reparto.sin_asignar > 0),
+        # **«Sin repartir» es que no está en ningún sitio de verdad** (05/10/2026): o no se ha
+        # repartido todavía —nada apuntado, que es el caso de un gasto recién apuntado— o se ha dicho
+        # «no sé a qué va» y el importe se ha quedado entero en «sin asignar». Se mira lo repartido y
+        # no lo sin asignar: un gasto que acaba de apuntarse tiene `sin_asignar` a cero porque nadie ha
+        # dicho nada todavía, y la pantalla tiene que poder avisar de eso mismo.
+        "esta_sin_repartir": bool(cuadre_del_reparto.repartido == dinero.CERO),
         "no_cuadra": not cuadre_del_reparto.cuadra,
     }
 
@@ -638,7 +661,9 @@ def las_cuentas(explotacion: ExplotacionActual, db: Db, campana_id: int | None =
         "por_pagar": {
             "importe": dinero.a_texto(dinero.suma(*pendientes_de_pago)),
             "texto": dinero.formatea(dinero.suma(*pendientes_de_pago)),
-            "cuantos": len([uno for uno in pendientes_de_pago if uno and uno > 0]),
+            "cuantos": len(
+                [uno for uno in pendientes_de_pago if uno is not None and Decimal(uno) > 0]
+            ),
             "sin_importe": len([fila for fila in filas if not fila["anulado"] and fila["importe"] is None]),
         },
         # **Lo que este programa todavía no calcula**, para que una cifra que no aparece no parezca
@@ -1266,6 +1291,10 @@ def _guardar_los_repartos(db: Db, explotacion, gasto: models.Gasto, cuadre, *, c
                 campana_id=gasto.campana_id,
                 importe=importe,
                 metodo=trozo.get("metodo") or gastos.MANUAL,
+                # **El motivo viaja con el trozo** (ver `models.RepartoDeCoste.no_se_reparte`): es lo
+                # que permite decir «sin asignar, y es porque falta la superficie de una tierra» al
+                # volver a abrir el gasto, y no solo en la respuesta del momento.
+                no_se_reparte=cuadre.no_se_reparte or None,
                 confirmado_por_el_agricultor=confirmado,
             )
         )

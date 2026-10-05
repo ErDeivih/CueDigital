@@ -142,6 +142,12 @@ RUTAS_PUBLICAS_DECLARADAS: dict[tuple[str, str], str] = {
         "«Lo que el programa todavía no sabe calcular» de la maquinaria: es la misma lista para "
         "todo el mundo y la pantalla de ayuda la enseña sin abrir ninguna máquina (T14)."
     ),
+    ("GET", "/api/gastos/que-falta"): (
+        "Lo mismo para las cuentas (T13, 05/10/2026): **la misma lista para todo el mundo**, porque "
+        "es lo que el programa todavía no calcula (la amortización, el extracto del banco y el "
+        "resumen del IVA) con lo que es y de quién depende. No lleva ni un dato de ninguna finca: la "
+        "respuesta es `gastos.QUE_FALTA`, una constante del módulo."
+    ),
     ("GET", "/api/iuws/version"): (
         "No es una ruta para personas: dice qué versión del interfaz de la Junta está configurada "
         "y la usa el técnico de la integración. **`?llamar=1` sale a la Junta sin identificarse** "
@@ -517,18 +523,19 @@ class TestElEstadoDelSigpacYaNoDiceDondeEstaLaCarpeta:
 
 
 def test_las_publicas_que_quedan_son_las_que_estan_escritas():
-    """El recuento, medido: **21 rutas sin sesión**, todas declaradas.
+    """El recuento, medido: **22 rutas sin sesión**, todas declaradas.
 
     Estaba en **26** cuando se hizo el inventario de T01. Las cinco que faltan son las cuatro que
     «deberían pedir sesión» y la búsqueda del SIGPAC; más otras dos que se han cerrado por el
-    mismo motivo (el toque en el mapa), y a cambio ha entrado una nueva que sí lo dice
-    (`GET /api/maquinaria/que-falta`, del ticket de maquinaria). El número no es el objetivo —una
-    ruta pública con motivo es tan buena como una cerrada—; lo que importa es que **esté escrito y
-    que cuadre**, y eso es lo que se comprueba aquí.
+    mismo motivo (el toque en el mapa), y a cambio han entrado dos nuevas que sí lo dicen
+    (`GET /api/maquinaria/que-falta`, del ticket de maquinaria, y `GET /api/gastos/que-falta`, de las
+    cuentas del T13: las dos son la misma lista de «lo que el programa todavía no calcula» para todo
+    el mundo). El número no es el objetivo —una ruta pública con motivo es tan buena como una
+    cerrada—; lo que importa es que **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
     """
     _, sin_sesion = _pares_con_sesion()
-    assert len(sin_sesion) == 21, (
-        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 21: "
+    assert len(sin_sesion) == 22, (
+        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 22: "
         f"{sorted(sin_sesion)}"
     )
     assert sin_sesion == set(RUTAS_PUBLICAS_DECLARADAS)

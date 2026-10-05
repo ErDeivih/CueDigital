@@ -581,15 +581,26 @@ class TestLoQueSeCuentaAntesDeBorrar:
         apuntadas no se puede borrar —se corrige— y el mensaje que sale es el mismo que para
         cualquier otro apunte (`B2_tierra_con_apuntes`). Lo que **no** se ha hecho es copiar la
         superficie de la tierra a la siembra ni al revés: son dos números distintos.
+
+        **Y las tres de las cuentas** (T13, E7, 05/10/2026), que entran por lo mismo: `gastos` cuando
+        el gasto ya dice de qué tierra es (el gasóleo de esa parcela), `inversiones_de_la_finca`
+        cuando la compra se imputa a una tierra (una nave, un pozo) y `repartos_de_coste` cuando un
+        trozo de un gasto o de una inversión se ha llevado **a esa tierra**. Las tres son
+        dependencias de verdad: sin la tierra, esas filas se quedarían sin decir a qué se referían (y
+        la base de datos no las admitiría). Así que una tierra con cuentas apuntadas **se corrige,
+        no se borra**, con el mismo mensaje que las demás.
         """
         from app.routers import parcelas
 
         assert [modelo.__tablename__ for modelo in parcelas._tablas_que_apuntan_a("parcela_id")] == [
             "analiticas",
             "fertilizaciones",
+            "gastos",
+            "inversiones_de_la_finca",
             "labores",
             "parcela_cultivos",
             "planes_abonado",
+            "repartos_de_coste",
             "siembras",
             "tratamientos",
             "ventas_de_cosecha",

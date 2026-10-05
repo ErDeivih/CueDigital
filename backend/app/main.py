@@ -31,6 +31,7 @@ from .routers import (
     facturas_api,
     fincas_api,
     firmas_api,
+    gastos_api,
     interfaz,
     iuws_api,
     maestros,
@@ -198,6 +199,11 @@ app.include_router(contactos_api.router)
 # los equipos de echar producto del cuaderno (hoja 1.3) y detrás de los papeles, porque una inspección
 # puede apuntar al papel que la demuestra.
 app.include_router(maquinaria_api.router)
+# **Las cuentas de la explotación (T13, E7, 05/10/2026).** El router de los gastos, las inversiones,
+# los repartos, los pagos y las ayudas. Va detrás del de las ventas porque comparte su vocabulario de
+# formas de pago (`ventas.FORMAS_DE_COBRO`) y porque el orden de los routers no decide nada: cada uno
+# tiene su prefijo (`/api/gastos`).
+app.include_router(gastos_api.router)
 
 
 @app.get("/health", tags=["sistema"])

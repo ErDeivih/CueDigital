@@ -3455,3 +3455,187 @@ class PapelEntrada(EntradaBase):
     papel: str = Field(min_length=1, max_length=40)
     puesto: bool = True
 
+
+# --------------------------------------------------------------------------
+# Las cuentas de la explotación (T13, E7, 05/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Lo que estos esquemas tienen de particular, y por qué**: los importes son `Decimal | None` y
+# **`None` quiere decir «no lo sé»**, no cero. Es la regla del encargo («un importe que no consta NO
+# es cero: es “no lo sé”, y así tiene que viajar de punta a punta») y empieza aquí: si el esquema
+# rechazara un importe vacío, el agricultor no podría apuntar la reparación de la que no se acuerda
+# del precio, y acabaría escribiendo un cero que es mentira.
+#
+# Los campos de texto llevan su tope **leído del modelo** (`_cabe_en_la_columna`), como los del
+# dinero del T12: un texto más largo que su columna en SQLite entra y **en PostgreSQL tumba la
+# operación entera**.
+
+
+class GastoEntrada(EntradaBase):
+    """Lo que hace falta para apuntar un gasto. **Ningún importe es obligatorio.**"""
+
+    campana_id: int | None = None
+    fecha: dt.date | None = None
+    vencimiento: dt.date | None = None
+    concepto: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Gasto, "concepto")
+    )
+    categoria: str = "otro"
+    proveedor: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Gasto, "proveedor")
+    )
+    proveedor_nif: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Gasto, "proveedor_nif")
+    )
+    contacto_id: int | None = None
+    factura_id: int | None = None
+    maquina_id: int | None = None
+    averia_id: int | None = None
+    parcela_id: int | None = None
+    cultivo: str | None = Field(default=None, max_length=_cabe_en_la_columna(models.Gasto, "cultivo"))
+    # **Los cuatro pueden venir vacíos**, cada uno por su cuenta: el total escrito manda, si no se
+    # suman base y cuota, si no se aplica el tipo a la base, y si no hay nada el gasto **no tiene
+    # importe** (`gastos.importe_de_un_gasto`).
+    base_imponible: Decimal | None = None
+    cuota_iva: Decimal | None = None
+    tipo_iva_pct: float | None = None
+    importe: Decimal | None = None
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Gasto, "clave_de_reenvio")
+    )
+
+    _lo_que_no_cabe = _revisa_lo_que_no_cabe(models.Gasto)
+
+
+class InversionEntrada(EntradaBase):
+    """Lo que hace falta para apuntar un bien que dura. **No es un gasto y no entra en el margen.**"""
+
+    campana_id: int | None = None
+    fecha: dt.date | None = None
+    concepto: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.InversionDeLaFinca, "concepto")
+    )
+    categoria: str = "otro"
+    proveedor: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.InversionDeLaFinca, "proveedor")
+    )
+    proveedor_nif: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.InversionDeLaFinca, "proveedor_nif")
+    )
+    contacto_id: int | None = None
+    factura_id: int | None = None
+    maquina_id: int | None = None
+    parcela_id: int | None = None
+    importe: Decimal | None = None
+    valor_residual: Decimal | None = None
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.InversionDeLaFinca, "clave_de_reenvio")
+    )
+
+    _lo_que_no_cabe = _revisa_lo_que_no_cabe(models.InversionDeLaFinca)
+
+
+class TrozoDeRepartoEntrada(BaseModel):
+    """Un trozo de un reparto hecho a mano: a dónde va y cuánto."""
+
+    destino_tipo: str = "tierra"
+    destino: str = ""
+    importe: Decimal | None = None
+
+
+class RepartoDeUnGastoEntrada(EntradaBase):
+    """Cómo se reparte un gasto. **El método lo confirma el agricultor**, y por eso se pregunta.
+
+    Los cuatro métodos (área, horas, consumo y manual) y lo que trae cada uno:
+
+      · **area** — `parcela_ids`. Las hectáreas las lee el servidor de cada tierra: el agricultor no
+        las teclea, y así no hay dos verdades sobre cuánto mide su parcela. **Si a una le falta la
+        superficie, el reparto no se hace y el gasto se queda sin asignar.**
+      · **horas** y **consumo** — `pesos`: las horas o los litros de cada sitio, que los dice él.
+      · **manual** — `trozos`: los importes, uno a uno.
+    """
+
+    metodo: str = "manual"
+    destino_tipo: str = "tierra"
+    parcela_ids: list[int] = Field(default_factory=list)
+    pesos: dict[str, Decimal | None] = Field(default_factory=dict)
+    trozos: list[TrozoDeRepartoEntrada] = Field(default_factory=list)
+    # Si el agricultor ha confirmado el método. **Nace en falso**: un reparto que hizo el programa y
+    # nadie ha mirado no puede parecer confirmado.
+    confirmado: bool = False
+    # Por qué se deja sin asignar. Solo lo usa la puerta de «dejarlo sin asignar».
+    porque: str = ""
+
+
+class AplicacionDePagoEntrada(BaseModel):
+    """Cuánto de un pago va contra un gasto. Sin importe, va lo que falte de ese gasto."""
+
+    gasto_id: int
+    importe: Decimal | None = None
+
+
+class PagoEntrada(EntradaBase):
+    """El dinero que sale, con lo que salda si ya se sabe.
+
+    **`aplicaciones` puede venir vacío**, y entonces el pago se queda **sin conciliar** y se dice: es
+    lo normal cuando se mira el banco antes que los papeles.
+    """
+
+    fecha: dt.date | None = None
+    # **Obligatorio y mayor que cero**: un pago de cero euros no es un pago. Lo comprueba el router
+    # con la frase del agricultor.
+    importe: Decimal | None = None
+    proveedor: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.PagoDeGasto, "proveedor")
+    )
+    contacto_id: int | None = None
+    forma: str = "transferencia"
+    referencia: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.PagoDeGasto, "referencia")
+    )
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.PagoDeGasto, "clave_de_reenvio")
+    )
+    aplicaciones: list[AplicacionDePagoEntrada] = Field(default_factory=list)
+
+    _lo_que_no_cabe = _revisa_lo_que_no_cabe(models.PagoDeGasto)
+
+
+class ConciliacionDePagoEntrada(BaseModel):
+    """Decir contra qué gastos va un dinero que ya estaba apuntado. **No crea ningún gasto.**
+
+    Con `automatico` y `gastos`, el dinero se reparte **por orden, el más antiguo primero**
+    (`gastos.reparto_de_un_pago`): así la suma de lo aplicado es exactamente el dinero disponible y no
+    hay ningún reparto por porcentaje, que es donde aparecerían los céntimos perdidos.
+    """
+
+    aplicaciones: list[AplicacionDePagoEntrada] = Field(default_factory=list)
+    automatico: bool = False
+    gastos: list[int] = Field(default_factory=list)
+
+
+class SubvencionEntrada(EntradaBase):
+    """Una ayuda, con sus tres importes. Los tres pueden venir, y ninguno es obligatorio."""
+
+    campana_id: int | None = None
+    concepto: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Subvencion, "concepto")
+    )
+    organismo: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Subvencion, "organismo")
+    )
+    fecha_solicitud: dt.date | None = None
+    fecha_concesion: dt.date | None = None
+    fecha_cobro: dt.date | None = None
+    importe_previsto: Decimal | None = None
+    importe_concedido: Decimal | None = None
+    importe_cobrado: Decimal | None = None
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Subvencion, "clave_de_reenvio")
+    )
+
+    _lo_que_no_cabe = _revisa_lo_que_no_cabe(models.Subvencion)

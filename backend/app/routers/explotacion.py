@@ -276,6 +276,31 @@ OTRAS_COSAS = (
     # decidir de qué año es un pago de enero que salda una factura de diciembre, y esa decisión no la
     # tiene el programa.
     "FacturaEmitida",
+    # **Las cuentas de la explotación (T13, E7, 05/10/2026).** Son la decimocuarta, la decimoquinta y
+    # la decimosexta tabla que cuelgan del año, y la prueba `test_todas_las_tablas_del_ano_estan_clasificadas`
+    # avisó de que había que decidir qué es (que es exactamente para lo que está). Decidido: **las
+    # tres son «las demás cosas»**. No son apuntes del cuaderno —no son un trabajo ni un producto
+    # echado— ni tierras con su cultivo dicho: son la cuenta de lo que costó el año.
+    #
+    #   · **`Gasto`**: lo que se consumió. Tiene que contar para el total, porque borrar el año se
+    #     llevaría por delante sus cuentas y sus repartos quedarían apuntando al vacío.
+    #   · **`InversionDeLaFinca`**: lo que se compró para durar. Cuenta también: aunque no entre
+    #     entera en el margen del año, sí es una compra de ese año y su reparto a la campaña se
+    #     perdería con él.
+    #   · **`RepartoDeCoste`**: a dónde fue cada trozo. Cuenta por el mismo motivo que los dos de
+    #     arriba.
+    #   · **`Subvencion`**: una ayuda se pide y se cobra en un año. Cuenta también, y su razón es la
+    #     misma que la de la inversión: es dinero de ese año y sus tres importes (el previsto, el
+    #     concedido y el cobrado) se perderían con él.
+    #
+    # **El pago (`PagoDeGasto`) NO está aquí, y es la misma decisión que con el `Cobro`**: no cuelga
+    # del año. El dinero sale un día y salda un gasto, y es el gasto quien tiene la campaña; colgarlo
+    # del año obligaría a decidir de qué año es un pago de enero que salda la compra de diciembre, y
+    # esa decisión no la tiene el programa.
+    "Gasto",
+    "InversionDeLaFinca",
+    "RepartoDeCoste",
+    "Subvencion",
 )
 
 

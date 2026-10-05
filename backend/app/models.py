@@ -2836,3 +2836,373 @@ class EnlaceDeContacto(Base):
     # sin tocar los enlaces que el agricultor ha hecho él.
     origen: Mapped[str] = mapped_column(String(20), default="a_mano")
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+# --------------------------------------------------------------------------
+# Las cuentas de la explotación (T13, E7, 05/10/2026)
+# --------------------------------------------------------------------------
+#
+# **CINCO REGISTROS QUE NO SON LO MISMO, Y POR QUÉ ESTÁN EN CINCO TABLAS.** El encargo lo exige con
+# estas palabras: «Gasto, inversión, factura, pago y movimiento bancario son registros distintos. No
+# los mezcles en una tabla ni en un nombre». Aquí eso se cumple con cinco tablas y no con una columna
+# `clase`, y el motivo es que cada uno se equivoca por su cuenta:
+#
+#   · **El gasto** es lo que se ha consumido: el gasóleo, el abono, la reparación. Es **lo único que
+#     entra en el margen de la campaña** (`gastos.APORTA_AL_COSTE`).
+#   · **La inversión** es lo que se compra para durar (el tractor, la sembradora, la nave). El
+#     contrato lo dice literal en S13: «Compra de activo no equivale automáticamente a gasto completo
+#     del cultivo». Lo que de ella va a cada campaña lo dice el agricultor con un reparto
+#     (`repartos_de_coste`) y, mientras no lo diga, **se queda sin asignar y se ve**.
+#   · **La factura** es el papel del proveedor. Ya existe en este programa (`facturas`) y **no se
+#     duplica**: el gasto la *apunta* con `factura_id`. Si la factura aportara coste por su cuenta,
+#     cada compra contaría dos veces.
+#   · **El pago** es el dinero que sale, y puede ser parcial y agrupado: por eso **no cuelga de un
+#     gasto** y vive en su tabla, con las aplicaciones aparte (`aplicaciones_de_pago`).
+#   · **El movimiento bancario** es lo que pone el extracto, y es del ticket siguiente (T20). Aquí no
+#     hay tabla para él a propósito: el traspaso entre cuentas propias se calcula
+#     (`gastos.traspaso_entre_cuentas_propias`) y **no se guarda todavía**, y eso se dice en la
+#     pantalla en vez de disimularse.
+#
+# **Y LA PROTECCIÓN QUE MANDA SOBRE TODAS:** el dinero no se cuenta dos veces. Se consigue con dos
+# decisiones que están en el esquema y no en un comentario:
+#
+#   1. **Conciliar un pago no crea un gasto.** La conciliación escribe en `aplicaciones_de_pago`, que
+#      solo dice «este dinero va contra este gasto». No hay ninguna línea, ni en el modelo ni en el
+#      router, que cree un gasto a partir de un pago.
+#   2. **Un pago no puede tener aplicado más de su importe**, y un gasto no puede tener aplicado más
+#      de lo que debe. Lo comprueba el router con la frase del agricultor y hay pruebas que lo fijan.
+#
+# **Un importe que no consta es `None` en las cinco columnas de dinero** (`importe`, `base_imponible`,
+# `cuota_iva`, `valor_residual`…), nunca `0.00`: es la regla de la casa entera y en un cuaderno de
+# cuentas es la diferencia entre «esta reparación no costó nada» y «no sé lo que costó».
+
+
+class Gasto(Base):
+    """Lo que se ha consumido: el gasóleo, el abono, la reparación, la cuota del seguro.
+
+    Es **el único registro de este bloque que entra en el margen de la campaña**, y por eso es el que
+    más cuidado tiene: el importe puede no constar (`importe` en `None`), el total que el agricultor
+    leyó en el papel **manda** sobre la suma de base y cuota, y el gasto dice a qué tierra o cultivo
+    va (`parcela_id`, `cultivo`) o se reparte después.
+
+    `averia_id` es de donde sale **el coste de las averías**, que el T14 dejó declarado como de este
+    ticket: la reparación es **un gasto** —con su factura y su pago, como cualquier otra— que además
+    dice de qué avería salió. No se guarda un importe dentro de la avería porque un importe en dos
+    sitios acaba diciendo dos cosas el día que alguien corrija una de las dos.
+    """
+
+    __tablename__ = "gastos"
+    __table_args__ = (
+        # Reenviar el mismo gasto (el móvil sin cobertura, un botón pulsado dos veces) devuelve el
+        # mismo. Parcial, por lo mismo que en las entregas: un gasto anulado deja libre su clave.
+        Index(
+            "uq_gasto_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("anulado = 0"),
+            postgresql_where=text("anulado = false"),
+        ),
+        Index("ix_gasto_fecha", "explotacion_id", "fecha"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"), index=True)
+
+    # El día de la compra o del consumo. Vacío es «no consta» (una reparación apuntada de memoria),
+    # y el vencimiento vacío quiere decir que nadie ha pactado un plazo: poner la fecha del gasto
+    # sería inventarse uno.
+    fecha: Mapped[dt.date | None] = mapped_column(Date, index=True)
+    vencimiento: Mapped[dt.date | None] = mapped_column(Date)
+
+    # Qué fue, en palabras del agricultor («abono del trigo», «reparación del remolque»). Es
+    # obligatorio en el esquema y no en la columna: una columna obligatoria no se puede añadir a una
+    # tabla que ya existe, y aquí la puerta es el esquema.
+    concepto: Mapped[str | None] = mapped_column(String(200))
+    # Nuestra categoría (`gastos.CATEGORIAS_DE_GASTO`). Agrupa y permite leer una lista de un
+    # vistazo, y **no decide nada**: no dice de qué máquina es ni si es una inversión.
+    categoria: Mapped[str] = mapped_column(String(40), default="otro", index=True)
+
+    proveedor: Mapped[str | None] = mapped_column(String(200))
+    proveedor_nif: Mapped[str | None] = mapped_column(String(20))
+    contacto_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), index=True)
+
+    # El justificante: la factura de compra que ya existe en el programa. Vacío es «este gasto no
+    # tiene factura» (un ticket de gasóleo), y eso no lo hace menos gasto.
+    factura_id: Mapped[int | None] = mapped_column(ForeignKey("facturas.id"), index=True)
+    # De qué máquina es y de qué avería salió, si se sabe. Es lo que hace que el coste de las
+    # averías y el de las máquinas salgan de las cuentas de verdad y no de un número escrito aparte.
+    maquina_id: Mapped[int | None] = mapped_column(ForeignKey("maquinas.id"), index=True)
+    averia_id: Mapped[int | None] = mapped_column(ForeignKey("averias_de_maquina.id"), index=True)
+
+    # **El coste directo**: cuando el gasto ya dice de qué tierra o de qué cultivo es. Lo que no se
+    # sabe a qué va se apunta sin estos dos campos y se reparte después (o se queda sin asignar).
+    parcela_id: Mapped[int | None] = mapped_column(ForeignKey("parcelas.id"), index=True)
+    cultivo: Mapped[str | None] = mapped_column(String(120))
+
+    # Las cuentas del papel, **cada una puede faltar** y ninguna se convierte en cero. El importe que
+    # manda es `importe`: si el agricultor leyó «121,00 €» en el papel, ese es el total aunque
+    # `base + cuota` dé 120,99 por un redondeo del proveedor. Ver `gastos.importe_de_un_gasto`.
+    base_imponible: Mapped[Decimal | None] = mapped_column(Dinero)
+    cuota_iva: Mapped[Decimal | None] = mapped_column(Dinero)
+    tipo_iva_pct: Mapped[float | None] = mapped_column(Float)
+    # **`None` es «no sé lo que costó», y es un estado de verdad** (`gastos.SIN_IMPORTE`): el
+    # agricultor sabe que pagó la reparación y no se acuerda de cuánto, y el contrato dice que «un
+    # apunte real con datos incompletos se guarda con pendientes». Un `0.00` aquí diría que salió
+    # gratis y el margen del año saldría mejor de lo que es.
+    importe: Mapped[Decimal | None] = mapped_column(Dinero)
+
+    notas: Mapped[str | None] = mapped_column(Text)
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    anulado: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class InversionDeLaFinca(Base):
+    """Un bien que se compra para durar: el tractor, la sembradora, la nave, el remolque.
+
+    **No es un gasto, y ése es el motivo de que tenga su tabla.** El contrato lo dice en S13 y el
+    encargo lo repite: comprar un activo **no** es un gasto completo del cultivo. Si el tractor de
+    60.000 € entrara como gasto del año, el margen de esa campaña diría que se perdió dinero y los
+    tres años siguientes que fue gratis, y las dos cosas serían mentira.
+
+    **Lo que NO tiene esta tabla, y es una decisión:** no hay `vida_util` ni `cuota_de_amortizacion`.
+    No hay en el programa ninguna tabla oficial de años de vida útil por tipo de bien, y este
+    proyecto tiene escrito lo que se hace cuando falta una fuente: se declara. Por eso la parte que
+    va a cada campaña **la dice el agricultor** con un reparto a la campaña, y mientras no la diga se
+    queda sin asignar. El día que haya fuente, se añade la columna y su prueba.
+    """
+
+    __tablename__ = "inversiones_de_la_finca"
+    __table_args__ = (
+        Index(
+            "uq_inversion_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("anulada = 0"),
+            postgresql_where=text("anulada = false"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"), index=True)
+
+    fecha: Mapped[dt.date | None] = mapped_column(Date, index=True)
+    concepto: Mapped[str | None] = mapped_column(String(200))
+    # Nuestra (`gastos.CATEGORIAS_DE_INVERSION`): maquinaria, apero, instalación, vehículo, terreno.
+    categoria: Mapped[str] = mapped_column(String(40), default="otro", index=True)
+
+    proveedor: Mapped[str | None] = mapped_column(String(200))
+    proveedor_nif: Mapped[str | None] = mapped_column(String(20))
+    contacto_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), index=True)
+    factura_id: Mapped[int | None] = mapped_column(ForeignKey("facturas.id"), index=True)
+    # Si el bien es una máquina de la lista de maquinaria, aquí se enlaza: así el tractor es uno solo
+    # en las tres pantallas (la inversión, la máquina y el gasto de su reparación).
+    maquina_id: Mapped[int | None] = mapped_column(ForeignKey("maquinas.id"), index=True)
+    parcela_id: Mapped[int | None] = mapped_column(ForeignKey("parcelas.id"), index=True)
+
+    # **`None` es «no sé lo que costó»**, igual que en un gasto, y no un cero.
+    importe: Mapped[Decimal | None] = mapped_column(Dinero)
+    # Lo que se espera sacar por él al final. Casi nunca se sabe, y vacío es «no lo sé».
+    valor_residual: Mapped[Decimal | None] = mapped_column(Dinero)
+
+    notas: Mapped[str | None] = mapped_column(Text)
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    anulada: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class RepartoDeCoste(Base):
+    """La parte de un gasto o de una inversión que se lleva a una tierra, un cultivo o una máquina.
+
+    **Por qué esto es una tabla y no unas columnas del gasto.** Porque un gasto se reparte entre
+    varias cosas a la vez (el seguro de la finca entre sus 12 tierras) y porque **el método con el
+    que se repartió tiene que quedar escrito**: «lo repartió el programa por hectáreas» y «lo repartió
+    el agricultor a mano» son dos cosas de fiabilidad distinta, y dentro de un año lo único que
+    explicará de dónde salió esa cifra es esta columna.
+
+    **Dos claves ajenas y no una polimórfica**: `gasto_id` o `inversion_id`, y exactamente una de las
+    dos. Con `origen_tipo`/`origen_id` la cuenta de «qué usa este gasto» no encontraría las filas
+    (`correcciones.tablas_que_apuntan_a` busca por el nombre de la columna), y borrar un gasto dejaría
+    sus repartos apuntando al vacío.
+
+    **`sin_asignar` es un destino de verdad**, y es la mitad del ticket: lo que no se sabe a qué va
+    **no se reparte a medias**, se queda aquí entero y se dice. Un coste sin asignar **sigue siendo un
+    coste conocido**: no desaparece de las cuentas, solo no está atribuido a nadie.
+    """
+
+    __tablename__ = "repartos_de_coste"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+
+    # De dónde sale este trozo: un gasto o una inversión, nunca los dos y nunca ninguno.
+    gasto_id: Mapped[int | None] = mapped_column(ForeignKey("gastos.id"), index=True)
+    inversion_id: Mapped[int | None] = mapped_column(ForeignKey("inversiones_de_la_finca.id"), index=True)
+
+    # A dónde va: `gastos.DESTINOS_DE_UN_REPARTO` (tierra, cultivo, maquina, campana, sin_asignar).
+    destino_tipo: Mapped[str] = mapped_column(String(20), index=True)
+    # El nombre o el identificador como texto. Se guarda **el texto** para que el reparto histórico no
+    # cambie si mañana se renombra la tierra, y `parcela_id` aparte para poder sumar por tierra.
+    destino: Mapped[str | None] = mapped_column(String(120))
+    parcela_id: Mapped[int | None] = mapped_column(ForeignKey("parcelas.id"), index=True)
+    campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"), index=True)
+    maquina_id: Mapped[int | None] = mapped_column(ForeignKey("maquinas.id"), index=True)
+
+    # El trozo. **Ya redondeado al céntimo y sumando exacto** con los demás trozos del mismo gasto:
+    # el céntimo del redondeo se le pone a uno y se dice a cuál (`gastos.reparto_por_peso`).
+    importe: Mapped[Decimal | None] = mapped_column(Dinero)
+    # area | horas | consumo | manual (`gastos.METODOS_DE_REPARTO`). **Se guarda: dentro de un año es
+    # lo único que explica de dónde salió esta cifra.**
+    metodo: Mapped[str] = mapped_column(String(20), default="manual")
+    # **Por qué este trozo se quedó sin asignar entero**, cuando se quedó
+    # (`gastos.NO_SE_REPARTE_PORQUE_*`: falta el importe del gasto, falta la superficie de una tierra o
+    # falta decir el método).
+    #
+    # **Esta columna se añadió al integrar el ticket (05/10/2026), y su motivo es una prueba que
+    # falló**: el motivo se calculaba, se usaba para el aviso y **se perdía al guardar**, así que la
+    # respuesta de repartir decía «sin asignar 663,00 €» sin decir qué faltaba, y al volver a abrir el
+    # gasto al día siguiente tampoco estaba. Es el mismo criterio que con `metodo`: lo que explica una
+    # cifra delante de una inspección tiene que quedar escrito y no recalculado.
+    no_se_reparte: Mapped[str | None] = mapped_column(String(40))
+    # **Si el agricultor ha confirmado el método.** Nace en falso y no en verdadero: un reparto que
+    # hizo el programa y nadie ha mirado no puede parecer confirmado.
+    confirmado_por_el_agricultor: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    notas: Mapped[str | None] = mapped_column(Text)
+    anulado: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class PagoDeGasto(Base):
+    """El dinero que sale. **No es un gasto y no cuelga de un gasto.**
+
+    Las dos decisiones que hacen que esto esté bien, y las dos tienen prueba:
+
+      · **No cuelga de un gasto** (`gasto_id` no existe aquí) porque un pago puede saldar **varios**
+        gastos (pagar la factura del taller y la del gasóleo con una transferencia) y un gasto puede
+        pagarse con **varios** pagos. Eso se dice en `aplicaciones_de_pago`, que es una tabla aparte.
+      · **No cambia el coste de nada.** El coste existe desde que se consume, se haya pagado o no; lo
+        que hace un pago es cambiar **el pendiente**, que es otra cuenta.
+
+    Un pago **sin ninguna aplicación** es un estado de verdad y no un error: es el dinero que salió y
+    todavía no se sabe a qué va (se mira el banco antes que los papeles). Se queda dicho con esa
+    palabra —«sin conciliar»— y la pantalla lo enseña en su lista, esperando.
+
+    **Sin campaña propia**, como el `Cobro` del T12 y por el mismo motivo: es dinero que sale un día,
+    no un apunte del cuaderno, y la campaña de lo que se paga la tiene el gasto al que salda.
+    """
+
+    __tablename__ = "pagos_de_gasto"
+    __table_args__ = (
+        Index(
+            "uq_pago_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("anulado = 0"),
+            postgresql_where=text("anulado = false"),
+        ),
+        Index("ix_pago_fecha", "explotacion_id", "fecha"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+
+    # El día en que salió el dinero. Vacío es «no consta», no «hoy».
+    fecha: Mapped[dt.date | None] = mapped_column(Date, index=True)
+    # **Obligatorio y mayor que cero**: un pago de cero euros no es un pago, y admitirlo llenaría la
+    # lista de renglones que no dicen nada. Es la única columna de dinero de este bloque que no
+    # admite vacío, justamente porque un pago sin importe no es nada.
+    importe: Mapped[Decimal] = mapped_column(Dinero, nullable=False)
+
+    proveedor: Mapped[str | None] = mapped_column(String(200))
+    contacto_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), index=True)
+    # transferencia | efectivo | cheque | confirming | otro (`ventas.FORMAS_DE_COBRO`, la MISMA lista
+    # que la del cobro: no puede haber dos verdades sobre cómo se mueve el dinero).
+    forma: Mapped[str] = mapped_column(String(20), default="transferencia")
+    referencia: Mapped[str | None] = mapped_column(String(120))
+    notas: Mapped[str | None] = mapped_column(Text)
+
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    anulado: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class AplicacionDeUnPago(Base):
+    """Contra qué gasto va un pago, y cuánto. **Es lo único que crea la conciliación.**
+
+    ## La regla del encargo, en una tabla
+
+    «Conciliar un pago no crea un segundo gasto.» Aquí se ve por qué está escrita así: esta tabla
+    **solo dice «este dinero va contra este gasto»**. No tiene importe propio de nada, no crea
+    ninguna fila en `gastos` y **deshacerla es borrarla a ella** (con `correcciones.borrar`, que deja
+    el rastro entero en la auditoría). El pago sigue apuntado con su importe entero y el gasto vuelve
+    a estar pendiente: es literalmente el contrato —«Deshacer conciliación no borra el movimiento
+    original»—, y es lo que hace que el dinero no desaparezca de ninguna de las dos pantallas.
+
+    **Muchos a muchos**, que es lo que el contrato pide para los pagos parciales y agrupados: varias
+    filas con el mismo `pago_id` (un pago que salda tres gastos) y varias con el mismo `gasto_id`
+    (tres pagos que saldan uno). Y las dos cantidades están comprobadas en el router: la suma de las
+    aplicaciones de un pago no pasa de su importe, y la de un gasto no pasa de lo que debe.
+    """
+
+    __tablename__ = "aplicaciones_de_pago"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    pago_id: Mapped[int] = mapped_column(ForeignKey("pagos_de_gasto.id"), index=True)
+    gasto_id: Mapped[int] = mapped_column(ForeignKey("gastos.id"), index=True)
+    importe: Mapped[Decimal] = mapped_column(Dinero, nullable=False)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class Subvencion(Base):
+    """Una ayuda: lo que se pide, lo que se concede y lo que se cobra.
+
+    ## Tres importes y no uno con un estado
+
+    El contrato lo dice en S13: «Subvención prevista, concedida y cobrada son estados distintos. **No
+    sumar previsión al ingreso cobrado**». Tres columnas y no una porque **los tres pueden convivir**:
+    se pidió una ayuda esperando 12.000 €, concedieron 9.000 y todavía no ha entrado nada. Con una
+    sola columna, apuntar la concesión borraría la previsión y el agricultor perdería la cuenta de lo
+    que pidió.
+
+    **Y el estado se deduce, no se guarda** (`gastos.estado_de_una_subvencion`): el estado más
+    avanzado de los tres que consten. Guardarlo además de los importes sería tener dos verdades sobre
+    lo mismo, y la del día que se apuntó dejaría de ser verdad al día siguiente.
+
+    **Solo el importe cobrado cuenta como ingreso.** La previsión se enseña, con su palabra, en su
+    propia tarjeta: un agricultor que ve su previsión sumada al ingreso cree que tiene un dinero que
+    todavía no ha entrado.
+    """
+
+    __tablename__ = "subvenciones"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"), index=True)
+
+    concepto: Mapped[str | None] = mapped_column(String(200))
+    organismo: Mapped[str | None] = mapped_column(String(200))
+    fecha_solicitud: Mapped[dt.date | None] = mapped_column(Date)
+    fecha_concesion: Mapped[dt.date | None] = mapped_column(Date)
+    fecha_cobro: Mapped[dt.date | None] = mapped_column(Date)
+
+    # **Cada uno puede faltar por su cuenta**, y vacío es «no consta»: una ayuda de la que no se sabe
+    # el importe concedido no tiene concedido cero euros.
+    importe_previsto: Mapped[Decimal | None] = mapped_column(Dinero)
+    importe_concedido: Mapped[Decimal | None] = mapped_column(Dinero)
+    importe_cobrado: Mapped[Decimal | None] = mapped_column(Dinero)
+
+    notas: Mapped[str | None] = mapped_column(Text)
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    anulada: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
