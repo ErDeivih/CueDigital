@@ -64,7 +64,16 @@ cuedigital.db*
 # Esto NO puede ir al repositorio: son papeles suyos, con su NIF y los datos de su finca.
 # La carpeta se crea sola la primera vez que se sube un boletín, y lo que se ignora es todo
 # su contenido. Se puede cambiar de sitio con la variable `CUEDIGITAL_ADJUNTOS`.
-datos/
+#
+# **Anclada a la raíz** (05/10/2026), y no `datos/` a secas: sin la barra del principio, la regla
+# excluía también `backend/tests/datos/`, que son **fixtures de las pruebas**
+# (`cuaderno_cyl_de_ejemplo.xlsx`, que leen tres ficheros de prueba). En un clon limpio del
+# repositorio faltarían y esas pruebas fallarían. Se cazó mirando la lista de ignorados antes del
+# primer commit (`git status --porcelain --ignored`).
+/datos/
+# Y por si algún día se cambia de sitio con `CUEDIGITAL_ADJUNTOS` y acaba dentro del proyecto: lo
+# que va dentro de una carpeta que se llama `adjuntos` no se sube nunca, esté donde esté.
+adjuntos/
 
 # Entorno
 .env
