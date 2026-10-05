@@ -130,6 +130,14 @@ def _meter_una_finca_de_verdad(motor, *, la_tierra_sabe_si_esta_en_zona: bool | 
         conexion.execute(models.Explotacion.__table__.insert().values(
             id=1, nombre="David Pérez Velasco", nif="70922320A",
             provincia="Salamanca", municipio="Peñaranda de Bracamonte",
+            # **El valor que el programa ponía solo, y que la migración tiene que poder cambiar** (A13,
+            # 05/10/2026). Antes se omitía esta columna y la rellenaba el valor por defecto del modelo
+            # (`False`); ahora el modelo **no tiene defecto a propósito** —nadie debe recibir un «no soy
+            # ecológico» que no ha dicho—, así que la instalación vieja tiene que decir lo que de verdad
+            # tenía: en una base antigua esta columna es `NOT NULL` y valía `0`, porque el programa lo
+            # escribía él. Es lo mismo que ya se hace unas líneas más abajo con `autorizado=0` y
+            # `permitido_ecologico=0`, y por el mismo motivo.
+            produccion_ecologica=0,
         ))
         conexion.execute(models.Campana.__table__.insert().values(
             id=1, explotacion_id=1, anio=2026,
@@ -139,6 +147,10 @@ def _meter_una_finca_de_verdad(motor, *, la_tierra_sabe_si_esta_en_zona: bool | 
             id=1, explotacion_id=1, alias="La Vega", provincia="Salamanca",
             municipio="Peñaranda de Bracamonte", superficie_ha=2.43,
             zona_vulnerable_nitratos=la_tierra_sabe_si_esta_en_zona,
+            # Y aquí lo mismo (A12): en una instalación vieja las dos columnas del agua son `NOT NULL` y
+            # valían `0`, porque el programa las ponía él. Es exactamente el «no» que nadie había dicho y
+            # que la migración tiene que dejar pasar a «no lo sé».
+            masa_agua_cerca=0, captacion_consumo_humano=0,
         ))
         conexion.execute(models.Fertilizante.__table__.insert().values(
             id=1, explotacion_id=1, nombre="Nitrato amónico 33,5%", tipo="mineral",

@@ -2636,6 +2636,13 @@ const CAMPOS_DE_MIS_DATOS = [
   ["municipio", "texto"],
   ["telefono", "texto"],
   ["correo", "texto"],
+  // **Los últimos dos, y el ecológico es nuevo de hoy** (A13, 05/10/2026). Hasta ahora este campo no tenía
+  // puerta: estaba en el modelo, salía en el documento que se firma y **apagaba la comprobación
+  // ecológica**, y no había ninguna pantalla donde decir «sí, mi finca es ecológica». Un dato que existe y
+  // no se puede rellenar es el fallo de siempre, y aquí además tenía consecuencias de ley.
+  // Va con tres respuestas: el tercer estado («no lo sé») se manda como `null`, y el programa avisa
+  // mientras no conste, en vez de dar por bueno que no es ecológica.
+  ["produccion_ecologica", "si_no_no_se"],
 ];
 
 /**
@@ -2651,9 +2658,22 @@ const CAMPOS_DE_MIS_DATOS = [
  */
 function pantallaMisDatos() {
   const finca = estado.miFinca || {};
-  const campos = CAMPOS_DE_MIS_DATOS.map(([campo]) => ({
+  // El valor de un campo de tres respuestas se traduce a lo que se lee en el desplegable: `true` → «si»,
+  // `false` → «no» y `null`/`undefined` → «» («no lo sé»), que es la opción que sale elegida cuando nadie
+  // ha contestado. Lo contrario se hace al guardar (`guardarMisDatos`).
+  const paraElFormulario = (campo, tipo) => {
+    const crudo = finca[campo];
+    if (tipo === "si_no_no_se") {
+      if (crudo === true) return "si";
+      if (crudo === false) return "no";
+      return "";
+    }
+    return crudo || "";
+  };
+  const campos = CAMPOS_DE_MIS_DATOS.map(([campo, tipo]) => ({
     campo,
-    valor: finca[campo] || "",
+    tipo,
+    valor: paraElFormulario(campo, tipo),
   }));
 
   // `montar()` pide el elemento dentro de un `try`: si los ficheros de React de `vendor/` no han
@@ -2681,9 +2701,18 @@ function pantallaMisDatos() {
 async function guardarMisDatos() {
   const d = (clave) => t(`mis_datos.${clave}`, "");
   const cuerpo = {};
-  for (const [campo] of CAMPOS_DE_MIS_DATOS) {
+  for (const [campo, tipo] of CAMPOS_DE_MIS_DATOS) {
     const nodo = document.getElementById(`finca-${campo}`);
-    cuerpo[campo] = nodo ? String(nodo.value || "").trim() : "";
+    const escrito = nodo ? String(nodo.value || "").trim() : "";
+    // **El campo de tres respuestas se traduce antes de mandarlo** (A13, 05/10/2026): «si» → `true`,
+    // «no» → `false`, y la opción vacía → **`null`, que es «no lo sé»**. Mandarla como cadena vacía haría
+    // que Pydantic no la reconociera como un booleano; y mandar `false` cuando nadie ha contestado es
+    // exactamente el defecto que se está arreglando.
+    if (tipo === "si_no_no_se") {
+      cuerpo[campo] = escrito === "si" ? true : escrito === "no" ? false : null;
+      continue;
+    }
+    cuerpo[campo] = escrito;
   }
   estado.errorMisDatos = "";
   estado.misDatosGuardados = false;
@@ -7241,10 +7270,17 @@ const CAMPOS = {
   // hasta ahora el campo existía en el modelo y **ninguna pantalla lo preguntaba**: el agricultor
   // que apuntaba su parcela a mano se quedaba sin poder decir qué era su tierra.
   "parcela.uso_sigpac": { campo: "uso_sigpac", tipo: "opciones", opciones: "usos_sigpac" },
+  // **Las dos del agua, con tres respuestas** (A12, 05/10/2026). Se preguntaban con `si_no`, así que la
+  // casilla nacía sin marcar y el programa leía **«no hay agua»**: de eso dependen las restricciones de
+  // abonado y la franja de seguridad de un tratamiento, o sea que un «no» que nadie ha dicho **aligeraba
+  // las reglas que le aplican al agricultor**. Es la misma decisión que la zona de nitratos, unas líneas
+  // más abajo, y por el mismo motivo: hay tres casos de verdad y el intermedio importa.
   "parcela.masa_agua_cerca": {
-    campo: "masa_agua_cerca", tipo: "si_no", ayuda: "parcela.masa_agua_cerca",
+    campo: "masa_agua_cerca", tipo: "si_no_no_se", ayuda: "parcela.masa_agua_cerca",
   },
-  "parcela.captacion_consumo_humano": { campo: "captacion_consumo_humano", tipo: "si_no" },
+  "parcela.captacion_consumo_humano": {
+    campo: "captacion_consumo_humano", tipo: "si_no_no_se",
+  },
   // La zona de nitratos: se pregunta con tres respuestas porque hay tres casos de verdad, y el
   // intermedio importa —«no lo sé» no es «no está»—. Ver `zona_vulnerable_nitratos` en el modelo.
   "parcela.zona_vulnerable_nitratos": {

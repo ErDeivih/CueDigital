@@ -8270,11 +8270,27 @@ test("mis datos se le piden a React, con los valores que ya hay guardados", asyn
   assert.equal(elemento.type.name, "PantallaMisDatos");
 
   const campos = elemento.props.campos;
-  assert.equal(campos.length, 11, `le llegan ${campos.length} campos, y son once`);
+  // **Doce desde el 05/10/2026, y once antes.** El que se ha añadido es la producción ecológica de la
+  // finca (A13 de `docs/T02_VALORES_POR_DEFECTO.md`): estaba en el modelo desde el primer día, **salía en
+  // el documento que se firma** y **apagaba la comprobación ecológica**, y no había ninguna pantalla donde
+  // contestarla. Este número se actualiza a propósito y con el motivo escrito; lo que de verdad importa
+  // —que el campo llegue, que tenga sus tres respuestas y que su valor sea el que hay guardado— se
+  // comprueba unas líneas más abajo.
+  assert.equal(campos.length, 12, `le llegan ${campos.length} campos, y son doce`);
   const porNombre = Object.fromEntries(campos.map((campo) => [campo.campo, campo.valor]));
   assert.equal(porNombre.registro_autonomico, "0837267320", "no le llega el nº de registro guardado");
   assert.ok("direccion" in porNombre, "no le llega la dirección");
   assert.equal(porNombre.localidad, "Salamanca", "no le llega la localidad guardada");
+  // **Y el campo nuevo, con sus tres estados** (A13): el valor que llega tiene que ser el que se lee en el
+  // desplegable —«si», «no» o vacío para «no lo sé»— y su tipo el que hace que se pinte con las tres
+  // opciones. Si alguien lo dejara como un campo de texto, esto se pone rojo.
+  const elEcologico = campos.find((campo) => campo.campo === "produccion_ecologica");
+  assert.ok(elEcologico, "el campo de la producción ecológica no llega a la pantalla: no tiene puerta");
+  assert.equal(elEcologico.tipo, "si_no_no_se", "el ecológico tiene que preguntarse con tres respuestas");
+  assert.ok(
+    ["si", "no", ""].includes(elEcologico.valor),
+    `el valor del ecológico no es uno de los tres: ${JSON.stringify(elEcologico.valor)}`,
+  );
 });
 
 test("los campos de mis datos llevan su id, que es como los lee el programa al guardar", async () => {

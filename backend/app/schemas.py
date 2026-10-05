@@ -123,7 +123,9 @@ class ExplotacionEntrada(EntradaBase):
     ccaa: str = "Castilla y León"
     provincia: str = ""
     municipio: str = ""
-    produccion_ecologica: bool = False
+    # **Tres estados** (A13, 05/10/2026): `None` es «no lo sé». Antes nacía en `False`, y ese «no» que nadie
+    # había dicho apagaba la comprobación ecológica y salía en el documento que se firma.
+    produccion_ecologica: bool | None = None
     # Los datos de la portada del cuaderno de la Junta (hoja 1.1). Ver `models.Explotacion`.
     registro_nacional: str | None = None
     registro_autonomico: str | None = None
@@ -142,7 +144,7 @@ class ExplotacionSalida(SalidaBase):
     ccaa: str
     provincia: str
     municipio: str
-    produccion_ecologica: bool
+    produccion_ecologica: bool | None
     registro_nacional: str | None = None
     registro_autonomico: str | None = None
     direccion: str | None = None
@@ -229,8 +231,11 @@ class ParcelaEntrada(EntradaBase):
     uso_sigpac: str | None = None
     sistema: str = "secano"
     pendiente_pct: float | None = None
-    masa_agua_cerca: bool = False
-    captacion_consumo_humano: bool = False
+    # **Los dos, con tres estados** (A12, 05/10/2026): `None` es «no lo sé», no «aquí no hay agua». De
+    # ellos dependen las restricciones de abonado y la franja de seguridad de un tratamiento, así que un
+    # `False` que nadie ha dicho aligera las reglas que le aplican al agricultor.
+    masa_agua_cerca: bool | None = None
+    captacion_consumo_humano: bool | None = None
     zona_vulnerable_nitratos: bool | None = None
     geometria: str | None = None
 
@@ -323,8 +328,8 @@ class ParcelaSalida(SalidaBase):
     # Junta, que pide las dos superficies por separado.
     superficie_sigpac_ha: float | None = None
     sistema: str
-    masa_agua_cerca: bool
-    captacion_consumo_humano: bool
+    masa_agua_cerca: bool | None
+    captacion_consumo_humano: bool | None
     zona_vulnerable_nitratos: bool | None
     pendiente_pct: float | None
     uso_sigpac: str | None

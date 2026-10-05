@@ -67,7 +67,13 @@ class Explotacion(Base):
     ccaa: Mapped[str] = mapped_column(String(60), default="Castilla y León")
     provincia: Mapped[str] = mapped_column(String(60), default="")
     municipio: Mapped[str] = mapped_column(String(120), default="")
-    produccion_ecologica: Mapped[bool] = mapped_column(Boolean, default=False)
+    # **Tres estados, y nace sin contestar** (A13 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026).
+    # Antes nacía en `False`, y ese «no» que nadie había dicho hacía dos cosas graves: **apagaba la
+    # comprobación ecológica entera** —si la finca es ecológica y nadie marca la casilla, el programa deja
+    # de avisar de que un producto no vale para ecológico, y el agricultor cree que vigila algo que ha
+    # dejado de vigilar— y **salía escrito en el documento que se firma** («En ecológico: False»). `None`
+    # es «no lo sé», y con el tercer estado el programa avisa en vez de callar.
+    produccion_ecologica: Mapped[bool | None] = mapped_column(Boolean, default=None)
 
     # Los datos de la portada del cuaderno de la Junta (hoja «1.1 DATOS GENERALES DE LA
     # EXPLOTACIÓN»). No son adorno: **sin ellos no se puede rellenar esa hoja**, y esa hoja es la
@@ -217,8 +223,13 @@ class Parcela(Base):
     # secano | regadio
     sistema: Mapped[str] = mapped_column(String(20), default="secano")
     pendiente_pct: Mapped[float | None] = mapped_column(Float)
-    masa_agua_cerca: Mapped[bool] = mapped_column(Boolean, default=False)
-    captacion_consumo_humano: Mapped[bool] = mapped_column(Boolean, default=False)
+    # **Tres estados también aquí** (A12 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Nacían en
+    # `False`, así que una tierra sin contestar se leía como «aquí no hay ni río ni toma de agua». De estos
+    # dos campos dependen las **restricciones de abonado** (Orden MAV/398/2022) y la **franja de seguridad**
+    # de un tratamiento: un «no» que nadie ha dicho **aligera las reglas que le aplican al agricultor**.
+    # `None` es «no lo sé», y entonces el programa dice que no ha podido comprobarlo.
+    masa_agua_cerca: Mapped[bool | None] = mapped_column(Boolean, default=None)
+    captacion_consumo_humano: Mapped[bool | None] = mapped_column(Boolean, default=None)
     # None = no lo sabemos (falta listado o ubicación verificable de esta parcela).
     zona_vulnerable_nitratos: Mapped[bool | None] = mapped_column(Boolean, default=None)
     # WKT. Ver la nota sobre PostGIS en database.py.

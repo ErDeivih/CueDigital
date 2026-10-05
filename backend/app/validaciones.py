@@ -64,13 +64,40 @@ def _aviso_con_cuenta(base: str, campo: str | None, bloquea: bool, *, cuantos: i
     )
 
 
-def _descripcion_agua(parcela) -> str | None:
-    """Cómo se llama el agua que hay al lado, en palabras del agricultor."""
+def _hay_agua_al_lado(parcela) -> bool | None:
+    """Si al lado de la tierra hay agua, **con tres respuestas**: sí, no y «no lo sé».
+
+    POR QUÉ ESTO NO ES UN BOOLEANO (A12 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026)
+    ===============================================================================
+    Los dos campos nacían en `False`, así que una tierra que nadie había contestado se leía como «aquí no
+    hay ni río ni toma de agua». Y de eso dependen **dos cosas de la ley**: las restricciones de abonado de
+    la Orden MAV/398/2022 y la **franja de seguridad** de un tratamiento. Es decir: un «no» que nadie ha
+    dicho **aligeraba las reglas que le aplican al agricultor**, en silencio.
+
+    Devuelve `True` si consta que hay agua, `False` si consta que no, y **`None` si no se sabe** —que no es
+    ninguna de las dos, y por eso hay que poder decirlo—. Cuando la tierra no hay ni que preguntarlo
+    (`parcela is None`), devuelve `None` también: sin tierra no se sabe, no es que no haya agua.
+    """
     if parcela is None:
         return None
-    if parcela.captacion_consumo_humano:
+    if parcela.captacion_consumo_humano is True or parcela.masa_agua_cerca is True:
+        return True
+    if parcela.captacion_consumo_humano is False and parcela.masa_agua_cerca is False:
+        return False
+    return None
+
+
+def _descripcion_agua(parcela) -> str | None:
+    """Cómo se llama el agua que hay al lado, en palabras del agricultor.
+
+    **Y `None` aquí quiere decir «no se sabe», no «no hay agua»** (A12, 05/10/2026): quien necesite
+    distinguirlo tiene `_hay_agua_al_lado`, que sí devuelve las tres respuestas.
+    """
+    if parcela is None:
+        return None
+    if parcela.captacion_consumo_humano is True:
         return "una toma de agua para beber"
-    if parcela.masa_agua_cerca:
+    if parcela.masa_agua_cerca is True:
         return "un río o un arroyo"
     return None
 
@@ -302,7 +329,20 @@ def validar_tratamiento(
             )
 
         # --- ecológico ---
-        if explotacion is not None and getattr(explotacion, "produccion_ecologica", False):
+        #
+        # **Tres estados** (A13, 05/10/2026). Antes esto era
+        # `if explotacion is not None and getattr(explotacion, "produccion_ecologica", False)`, y como el
+        # campo nacía en `False`, **la comprobación entera se apagaba** en cuanto nadie marcaba la casilla:
+        # una finca ecológica podía echar un producto que no vale para ecológico y el programa no decía
+        # nada, porque creía que la finca no era ecológica. Ahora:
+        #
+        #   · si **consta** que es ecológica, se comprueba como siempre;
+        #   · si **no se sabe**, se dice que no se ha podido comprobar (no se calla ni se da por bueno);
+        #   · y solo si **consta** que no es ecológica se calla, que es lo correcto.
+        es_ecologica = None if explotacion is None else getattr(explotacion, "produccion_ecologica", None)
+        if es_ecologica is None:
+            avisos.append(_aviso("V15_no_se_si_la_finca_es_ecologica", "producto_id", False))
+        elif es_ecologica:
             if producto.permitido_ecologico is False:
                 avisos.append(_aviso("V15_no_ecologico", "producto_id", True))
             elif producto.permitido_ecologico is None:
@@ -375,9 +415,17 @@ def validar_tratamiento(
             avisos.append(_aviso("V5_fecha_fuera_de_cultivo", "fecha", False))
 
     # --- orilla sin tratar ---
+    #
+    # **Y si no se sabe si hay agua, se dice** (A12, 05/10/2026). Antes, con los dos campos en `False` por
+    # defecto, una tierra sin contestar se leía como «aquí no hay agua»: **la franja de seguridad no se
+    # comprobaba y el programa se callaba**. Ahora, cuando no consta, se avisa de que no se ha podido
+    # comprobar —que es distinto de que no haya nada que respetar—.
     agua = _descripcion_agua(parcela)
-    if agua and getattr(datos, "franja_seguridad_respetada", None) is None:
-        avisos.append(_aviso("V11_franja_seguridad", "franja_seguridad_respetada", False, agua=agua))
+    if agua:
+        if getattr(datos, "franja_seguridad_respetada", None) is None:
+            avisos.append(_aviso("V11_franja_seguridad", "franja_seguridad_respetada", False, agua=agua))
+    elif _hay_agua_al_lado(parcela) is None:
+        avisos.append(_aviso("V11_no_se_si_hay_agua", "franja_seguridad_respetada", False))
 
     # --- días de espera: informativo y muy útil ---
     plazo = plazo_de_espera(datos, producto)

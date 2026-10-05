@@ -52,8 +52,29 @@ import { AvisoDeError, Boton, frase, html } from "../componentes.js";
  * Se usa `defaultValue` y no `value` a propósito: así el agricultor puede escribir sin que React le
  * devuelva el valor viejo en cada tecla. Lo que escriba lo lee `app.js` cuando pulsa GUARDAR.
  */
-function Campo({ campo, valor, textos }) {
+function Campo({ campo, valor, tipo, textos }) {
   const d = textos.mis_datos || {};
+  // **El campo de tres respuestas** (A13, 05/10/2026): la producción ecológica de la finca no es un sí o un
+  // no, son **tres cosas** —«sí», «no» y «no lo sé»— y el intermedio importa: mientras no conste, el
+  // programa avisa de que no ha podido comprobar si un producto vale para ecológico, en vez de dar por
+  // bueno que la finca no es ecológica (que es lo que hacía, porque el campo nacía en «no»).
+  //
+  // Es un `select` y no dos botones porque esta pantalla es un formulario de campos numerados y el
+  // agricultor la rellena de arriba abajo: un desplegable no rompe el orden y se lee con el teclado.
+  // El valor vacío es «no lo sé», y es el que sale elegido cuando nadie ha contestado.
+  if (tipo === "si_no_no_se") {
+    return html`
+      <div className="campo">
+        <label htmlFor=${`finca-${campo}`}>${frase(d[campo])}</label>
+        <select id=${`finca-${campo}`} defaultValue=${valor || ""}>
+          <option value="">No lo sé</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+        <p className="pista-campo">${frase(d[`${campo}_pista`])}</p>
+      </div>
+    `;
+  }
   return html`
     <div className="campo">
       <label htmlFor=${`finca-${campo}`}>${frase(d[campo])}</label>
@@ -92,7 +113,12 @@ export function PantallaMisDatos({ textos = {}, campos = [], guardado = false, e
         <ol className="campos-numerados">
           ${campos.map(
             (campo) => html`<li key=${campo.campo}>
-              <${Campo} campo=${campo.campo} valor=${campo.valor} textos=${textos} />
+              <${Campo}
+                campo=${campo.campo}
+                valor=${campo.valor}
+                tipo=${campo.tipo}
+                textos=${textos}
+              />
             </li>`,
           )}
         </ol>

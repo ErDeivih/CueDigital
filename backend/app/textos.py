@@ -422,8 +422,25 @@ MENSAJES: dict[str, str] = {
         "Esta parcela tiene {agua} al lado. Hay que dejar sin tratar los metros de la "
         "orilla. ¿Los has dejado?"
     ),
+    # **A12 (05/10/2026): cuando no se sabe si hay agua, se dice.** Antes, los dos campos nacían en `False`
+    # y una tierra sin contestar se leía como «aquí no hay agua»: la franja de seguridad no se comprobaba y
+    # el programa se callaba. Avisa y no bloquea: el apunte se puede guardar, pero el agricultor se entera
+    # de que **esa comprobación no se ha hecho**, que es distinto de que no haya nada que respetar.
+    "V11_no_se_si_hay_agua": (
+        "En esta tierra no consta si hay un río, un arroyo o una toma de agua al lado, así que no se ha "
+        "podido comprobar si hay que dejar sin tratar la orilla. Dilo en la ficha de la tierra y el "
+        "programa lo comprobará solo."
+    ),
     "V15_no_ecologico": (
         "Estás en ecológico y este producto no vale para ecológico. Tienes que usar otro."
+    ),
+    # **A13 (05/10/2026): la finca, en tres estados.** Este campo nacía en `False`, y ese «no» que nadie
+    # había dicho **apagaba la comprobación ecológica entera**: si la finca es ecológica y la casilla no
+    # está marcada, el programa dejaba de avisar de que un producto no vale para ecológico. Ahora, cuando
+    # no consta, se dice que no se ha podido comprobar. Avisa y no bloquea.
+    "V15_no_se_si_la_finca_es_ecologica": (
+        "No consta si tu finca es de producción ecológica, así que no se ha podido comprobar si este "
+        "producto se puede usar. Dilo en los datos de la finca y el programa lo comprobará solo."
     ),
     # El tercer estado en una finca ecológica. Antes esto no se decía nunca: el producto nacía con
     # «sí se puede en ecológico» puesto por defecto, así que la comprobación que más importa en una
@@ -5276,6 +5293,15 @@ MIS_DATOS: dict[str, str] = {
     "codigo_postal": "Código postal",
     "provincia": "Provincia",
     "municipio": "Pueblo donde tienes las tierras",
+    # **A13 (05/10/2026): la pregunta que no existía.** Este campo estaba en el modelo desde el primer día,
+    # **salía en el documento que se firma** y **apagaba la comprobación ecológica**… y no había forma de
+    # contestarlo en ninguna pantalla: nacía en `False`, o sea «no soy ecológico», sin que nadie lo hubiera
+    # dicho. Ahora se pregunta, con sus tres respuestas, y «no lo sé» es una de ellas.
+    "produccion_ecologica": "¿Tu finca es de producción ecológica?",
+    "produccion_ecologica_pista": (
+        "Si no lo sabes, déjalo en «no lo sé»: mientras no conste, el programa te avisará de que no ha "
+        "podido comprobar si un producto vale para ecológico"
+    ),
     "municipio_pista": "Si tienes tierras en varios, pon el principal",
     "telefono": "Un teléfono",
     "telefono_pista": "Por si hay que avisarte de algo del cuaderno",

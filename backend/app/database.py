@@ -264,6 +264,15 @@ COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS: tuple[tuple[str, str], ...] = (
     # superficie la superaba). Con la columna anulable, la tierra se puede tratar y el programa dice que
     # falta el dato y cómo ponerlo (proponiendo la del recinto del SIGPAC, sin escribirla).
     ("parcelas", "superficie_ha"),
+    # **A12 y A13 (05/10/2026): tres campos más que pueden decir «no lo sé».** Los tres nacieron con un
+    # `False` por defecto, y ese «no» que nadie había dicho tenía consecuencias de verdad: `produccion_ecologica`
+    # **apagaba la comprobación ecológica** y salía en el documento que se firma; y `masa_agua_cerca` y
+    # `captacion_consumo_humano` **aligeraban las restricciones de abonado** y la franja de seguridad de un
+    # tratamiento, porque el programa leía «aquí no hay agua». Sin esta reconstrucción, en una base ya creada
+    # las columnas seguirían siendo obligatorias y guardar un «no lo sé» fallaría.
+    ("explotaciones", "produccion_ecologica"),
+    ("parcelas", "masa_agua_cerca"),
+    ("parcelas", "captacion_consumo_humano"),
 )
 
 

@@ -147,7 +147,11 @@ def _texto_del_cuaderno(db, explotacion, campana) -> str:
             "Número de la finca": explotacion.codigo_siex,
             "Provincia": explotacion.provincia,
             "Pueblo": explotacion.municipio,
-            "En ecológico": explotacion.produccion_ecologica,
+            # **Con tres estados** (A13, 05/10/2026): si no consta si la finca es ecológica, esto no puede
+            # escribir «False» en un documento que se firma. `si_no_o_no_se` escribe «si» y «no» igual que
+            # siempre —así **las firmas ya hechas no cambian ni un byte**— y «no se sabe» cuando nadie lo ha
+            # dicho. Antes el campo nacía en `False`, así que firmaba un «no» que nadie había afirmado.
+            "En ecológico": firma_util.si_no_o_no_se(explotacion.produccion_ecologica),
         },
         campana={"Año": campana.anio, "Empieza": campana.fecha_inicio, "Termina": campana.fecha_fin},
         tratamientos=tratamientos,
