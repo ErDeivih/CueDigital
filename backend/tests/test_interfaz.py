@@ -620,7 +620,13 @@ class TestPantallasDeAlta:
         """La interfaz no traduce valores: se los dan traducidos."""
         datos = cliente.get("/api/interfaz").json()
         sistemas = {item["valor"]: item["texto"] for item in datos["sistemas"]}
-        assert sistemas == {"secano": "Secano", "regadio": "Regadío"}
+        # **Tres, y la tercera es «no lo sé»** (A10, 05/10/2026). Antes eran dos —secano y regadío— y
+        # el que no elegía nada se guardaba como secano, así que el programa declaraba de secano una
+        # tierra de regadío y el cuaderno de la Junta escribía una «S». El sistema decide contra qué
+        # columna del anexo III de la Orden MAV/398/2022 se compara el abonado: se ofrece la tercera
+        # respuesta y el agricultor decide. El texto lo pone el servidor (`textos.ACCIONES`), que es
+        # lo que esta prueba comprueba: la interfaz no traduce nada por su cuenta.
+        assert sistemas == {"secano": "Secano", "regadio": "Regadío", "nulo": "No lo sé"}
         tipos = {item["valor"]: item["texto"] for item in datos["tipos_abono"]}
         assert "mineral" in tipos and tipos["mineral"]
 

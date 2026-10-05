@@ -151,6 +151,27 @@ def _meter_una_finca_de_verdad(motor, *, la_tierra_sabe_si_esta_en_zona: bool | 
             # valían `0`, porque el programa las ponía él. Es exactamente el «no» que nadie había dicho y
             # que la migración tiene que dejar pasar a «no lo sé».
             masa_agua_cerca=0, captacion_consumo_humano=0,
+            # El sistema (A10, 05/10/2026): en una instalación vieja esta columna es `NOT NULL` y el
+            # programa la escribía él con `"secano"` cuando nadie decía nada, así que la tierra vieja
+            # tiene que decir «secano» —es lo que de verdad tenía— y la migración no la toca.
+            sistema="secano",
+        ))
+        conexion.execute(models.ParcelaCultivo.__table__.insert().values(
+            id=1, explotacion_id=1, parcela_id=1, campana_id=1, especie="Trigo blando",
+            # Lo mismo que en la tierra: el cultivo de la campaña viejo decía «secano» porque lo ponía
+            # el programa, no porque nadie lo hubiera declarado (A10).
+            sistema="secano", superficie_cultivada_ha=2.43, fecha_inicio=dt.date(2025, 11, 1),
+        ))
+        conexion.execute(models.GrupoParcelas.__table__.insert().values(
+            id=1, explotacion_id=1, nombre="Trigo (1 parcela)", campana_id=1,
+            cultivo="Trigo blando", sistema="secano", creado_automaticamente=0,
+        ))
+        conexion.execute(models.EquipoAplicacion.__table__.insert().values(
+            id=1, explotacion_id=1, nombre="Pulverizador del tractor", tipo="pulverizador",
+            # **Y la titularidad (A11, 05/10/2026)**: una instalación vieja la tiene `NOT NULL` y valía
+            # `"propia"` porque lo ponía el programa, que es justo el defecto que se arregla —la máquina
+            # de otro quedaba como tuya—. La fila vieja se queda como estaba.
+            titularidad="propia", numero_roma="ROMA-37070-001",
         ))
         conexion.execute(models.Fertilizante.__table__.insert().values(
             id=1, explotacion_id=1, nombre="Nitrato amónico 33,5%", tipo="mineral",

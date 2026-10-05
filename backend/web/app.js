@@ -6586,7 +6586,10 @@ function estadoDelMapa() {
       lado: MAPA_LADO_POR_DEFECTO,
       // Lo que ha respondido el SIGPAC del último punto preguntado.
       elegido: null,
-      sistema: "secano",
+      // El sistema de la tierra que se va a apuntar: **sin decir hasta que el agricultor lo diga**
+      // (A10, 05/10/2026). Aquí ponía `"secano"`, así que los botones salían con «Secano» marcado
+      // antes de preguntar y quien no lo tocara declaraba de secano una tierra de regadío.
+      sistema: null,
       cargando: false,
       buscando: false,
       // Si no se sabe por dónde empezar (sin parcelas y sin ubicación), no se pinta el mapa: se
@@ -6739,10 +6742,14 @@ function pantallaMapa() {
           [texto("zona_nitratos"), loQueSeSabeDeLosNitratos(m.elegido)],
         ].filter(Boolean),
         sistema_etiqueta: s("sistema"),
-        sistemas: ["secano", "regadio"].map((valor) => ({
-          valor,
-          texto: etiquetaDeValor("sistemas", valor),
-          elegido: (m.sistema || "secano") === valor,
+        // **Las tres respuestas, y la de «no lo sé» sale marcada cuando no se ha dicho nada** (A10):
+        // el catálogo del servidor trae secano, regadío y «no lo sé» (`catalogos.SISTEMAS_PARA_ELEGIR`).
+        // Antes se ofrecían dos y el que no tocaba nada se guardaba como secano.
+        sistemas: (t("sistemas", []) || []).map((sistema) => ({
+          valor: sistema.valor,
+          texto: sistema.texto,
+          elegido:
+            sistema.valor === "nulo" ? !m.sistema : m.sistema === sistema.valor,
         })),
         alias_etiqueta: s("alias"),
         alias: m.alias || "",
@@ -6865,7 +6872,8 @@ async function apuntarLaParcelaDelMapa() {
       body: JSON.stringify({
         ref_sigpac: m.elegido.referencia,
         alias: (m.alias || "").trim() || null,
-        sistema: m.sistema || "secano",
+        // A10: lo que no ha dicho el agricultor viaja como `null` («no lo sé»), no como «secano».
+        sistema: m.sistema || null,
         municipio: m.elegido.municipio ? m.elegido.municipio.nombre : null,
         provincia: m.elegido.municipio ? m.elegido.municipio.provincia : null,
         referencia_catastral: m.elegido.referencia_catastral || null,
@@ -6985,9 +6993,11 @@ function datosDeTraerDelSigpac() {
       sistemas: (t("sistemas", []) || []).map((sistema) => ({
         etiqueta: sistema.texto,
         valor: sistema.valor,
-        // El secano sale elegido si el agricultor no ha dicho otra cosa: es lo normal en estas tierras, y
-        // es lo que hacía la interfaz de siempre.
-        elegido: sistema.valor === (b.sistema || "secano"),
+        // **El sistema nace sin decir** (A10): antes salía «Secano» marcado «porque es lo normal en estas
+        // tierras», y eso es exactamente lo que no se puede hacer —adivinar por el agricultor un dato del
+        // que depende contra qué límite del anexo III se compara su abonado—. Lo que no se ha dicho sale
+        // como «no lo sé» marcado, y él decide si lo deja así.
+        elegido: sistema.valor === "nulo" ? !b.sistema : sistema.valor === b.sistema,
       })),
       trozos: (b.trozos || []).map((trozo) => ({
         etiqueta: rellena(s("recinto_numero"), { numero: trozo.recinto }),
@@ -7113,7 +7123,8 @@ async function traerLosMarcados() {
         alias: (b.alias || "").trim() || null,
         municipio: (b.municipio || "").trim() || null,
         provincia: (b.provincia || "").trim() || null,
-        sistema: b.sistema || "secano",
+        // A10: sin decirlo se manda `null`, no «secano».
+        sistema: b.sistema || null,
         referencia_catastral: b.referencia_catastral || null,
       }),
     });
@@ -7759,8 +7770,15 @@ function bloquesDelMaestro(claves) {
             // la opción `nulo`: al corregir una ficha que decía «no lo sé» no salía marcada ninguna
             // opción y el agricultor tenía que volver a elegir, con el riesgo de elegir otra cosa.
             // En un «sí o no» de dos estados, en cambio, `null` sí es un hueco y no se marca nada.
+            //
+            // **Y vale para cualquier lista que ofrezca «no lo sé»**, no solo para los «sí o no»
+            // (A10, 05/10/2026): el sistema de una tierra (`secano | regadio | nulo`) es una lista de
+            // catálogo, y sin esto una tierra sin sistema declarado salía con las tres opciones sin
+            // marcar —como si nadie hubiera contestado nunca— en vez de con «no lo sé» marcado, que es
+            // lo que dice la base. Se pregunta por la lista y no por el tipo: `"nulo"` es el valor de
+            // la opción de «no lo sé» en toda la aplicación (`valorDeEleccion`).
             elegido:
-              spec.tipo === "si_no_no_se" && valor === null
+              valor === null && opciones.some((cual) => cual.valor === "nulo")
                 ? opcion.valor === "nulo"
                 : String(valor) === String(opcion.valor),
           })),
@@ -11282,7 +11300,10 @@ function pantallaDecirCultivo(parcelaId, escrito = {}) {
   }
   estado.cultivoParcela = parcelaId;
   const actual = parcela.actual || {};
-  const sistema = escrito.sistema !== undefined ? escrito.sistema : actual.sistema || parcela.sistema || "secano";
+  // El sistema que sale elegido: el que acaba de elegir, y si no, el que ya estaba declarado en el
+  // cultivo o en la tierra. **Y si no lo dice nadie, ninguno** (A10): aquí ponía `|| "secano"`, así que
+  // el desplegable salía con «Secano» marcado y guardar sin tocarlo declaraba de secano la tierra.
+  const sistema = escrito.sistema !== undefined ? escrito.sistema : actual.sistema || parcela.sistema || null;
   // Lo que se enseña: lo que acaba de escribir, y si no, lo que ya estaba declarado.
   const valor = (campo, porDefecto = "") =>
     escrito[campo] !== undefined ? escrito[campo] : porDefecto;
@@ -11313,7 +11334,9 @@ function pantallaDecirCultivo(parcelaId, escrito = {}) {
       sistemas: (datos.sistemas || []).map((opcion) => ({
         valor: opcion.valor,
         texto: opcion.texto,
-        elegido: opcion.valor === sistema,
+        // Tres respuestas y la de «no lo sé» marcada cuando no se sabe (A10). El valor de esa opción es
+        // `"nulo"`, que `valorDeEleccion` convierte en `null` al guardar.
+        elegido: opcion.valor === "nulo" ? !sistema : opcion.valor === sistema,
       })),
       // **Si esta tierra ya tiene dicho qué hay sembrado este año** (ronda 93): entonces esta pantalla no
       // está diciéndolo, está **cambiándolo**, y eso cambia la etiqueta de arriba, el rótulo del botón de
@@ -11328,7 +11351,9 @@ async function guardarCultivo(parcelaId) {
   const escrito = {
     especie: valorDe("cultivo-especie").trim(),
     variedad: valorDe("cultivo-variedad").trim(),
-    sistema: valorDe("cultivo-sistema") || "secano",
+    // `|| null`: sin sistema elegido se manda «no lo sé» y no una cadena vacía, que el servidor
+    // guardaría como un sistema que no existe (A10).
+    sistema: valorDeEleccion(valorDe("cultivo-sistema")) || null,
     desde: valorDe("cultivo-desde"),
     hasta: valorDe("cultivo-hasta"),
   };

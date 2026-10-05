@@ -229,7 +229,10 @@ class ParcelaEntrada(EntradaBase):
     superficie_ha: float | None = Field(default=None, ge=0)
     superficie_oficial: bool = False
     uso_sigpac: str | None = None
-    sistema: str = "secano"
+    # secano | regadio | **None = no lo sé** (A10, 05/10/2026). Nacía en `"secano"`, así que **toda tierra
+    # nueva quedaba declarada de secano** sin que nadie lo hubiera dicho, y la exportación de la Junta
+    # escribía «S» en la casilla del sistema. Ver la nota larga en `models.Parcela.sistema`.
+    sistema: str | None = None
     pendiente_pct: float | None = None
     # **Los dos, con tres estados** (A12, 05/10/2026): `None` es «no lo sé», no «aquí no hay agua». De
     # ellos dependen las restricciones de abonado y la franja de seguridad de un tratamiento, así que un
@@ -258,7 +261,8 @@ class ParcelaDesdeSigpac(ReferenciaSigpacEntrada):
     """
 
     alias: str | None = Field(default=None, max_length=120)
-    sistema: str = "secano"
+    # A10: ver la nota de `ParcelaEntrada.sistema`. El SIGPAC no trae el sistema de explotación.
+    sistema: str | None = None
     # No se heredan de la explotación: una parcela puede estar en otro municipio.
     provincia: str | None = None
     municipio: str | None = None
@@ -302,7 +306,9 @@ class VariasParcelasDesdeSigpac(EntradaBase):
     """
 
     referencias: list[str] = Field(min_length=1, max_length=200)
-    sistema: str = "secano"
+    # A10: ver la nota de `ParcelaEntrada.sistema`. Pegar cuarenta referencias no dice de qué sistema
+    # son: el programa no lo adivina, lo pregunta.
+    sistema: str | None = None
     alias: str | None = Field(default=None, max_length=120)
     provincia: str | None = Field(default=None, max_length=60)
     municipio: str | None = Field(default=None, max_length=120)
@@ -327,7 +333,8 @@ class ParcelaSalida(SalidaBase):
     # `models.Parcela.superficie_sigpac_ha`: sirve para rellenar la hoja 2.1 del cuaderno de la
     # Junta, que pide las dos superficies por separado.
     superficie_sigpac_ha: float | None = None
-    sistema: str
+    # A10: puede ser `None` porque no se sabe, y entonces no se puede escribir «S» ni «R» en el cuaderno.
+    sistema: str | None
     masa_agua_cerca: bool | None
     captacion_consumo_humano: bool | None
     zona_vulnerable_nitratos: bool | None
@@ -365,7 +372,8 @@ class CultivoEntrada(EntradaBase):
     campana_id: int
     especie: str = Field(min_length=1, max_length=120)
     variedad: str | None = None
-    sistema: str = "secano"
+    # A10: ver la nota de `ParcelaEntrada.sistema`. Un cultivo de campaña nace sin sistema declarado.
+    sistema: str | None = None
     fecha_inicio: dt.date | None = None
     fecha_fin: dt.date | None = None
     # El ecorregimen (hoja 2.1 del cuaderno de la Junta) y la superficie cultivada de esa línea,
@@ -378,7 +386,8 @@ class GrupoEntrada(EntradaBase):
     nombre: str = Field(min_length=1, max_length=120)
     campana_id: int | None = None
     cultivo: str | None = None
-    sistema: str = "secano"
+    # A10: ver la nota de `ParcelaEntrada.sistema`. Un grupo de tierras no es de secano por nacer.
+    sistema: str | None = None
     parcela_ids: list[int] = Field(default_factory=list)
 
 
@@ -387,7 +396,8 @@ class GrupoSalida(SalidaBase):
     nombre: str
     campana_id: int | None
     cultivo: str | None
-    sistema: str
+    # A10: `None` es «no lo sé»; el grupo puede existir sin que se haya dicho el sistema.
+    sistema: str | None
     creado_automaticamente: bool
     parcela_ids: list[int] = Field(default_factory=list)
 
@@ -524,7 +534,9 @@ class EquipoEntrada(EntradaBase):
     tipo: str | None = None
     # Las tres pestañas de la app oficial: propia, ajena y equipos que no van en el ROMA. Y el tipo,
     # la marca y el modelo, que es lo que pide la nota al pie de la hoja 1.3 del cuaderno.
-    titularidad: str = "propia"
+    # **A11 (05/10/2026)**: nacía en `"propia"`, así que la máquina de otro quedaba como tuya y con
+    # ITEAF, en la lista equivocada. `None` es «no consta de quién es» y el programa lo pregunta.
+    titularidad: str | None = None
     marca: str | None = None
     modelo: str | None = None
     numero_roma: str | None = None
@@ -538,7 +550,8 @@ class EquipoSalida(SalidaBase):
     id: int
     nombre: str
     tipo: str | None = None
-    titularidad: str = "propia"
+    # A11: `None` es «no consta»; la ficha no se inventa de quién es la máquina.
+    titularidad: str | None = None
     marca: str | None = None
     modelo: str | None = None
     numero_roma: str | None
@@ -829,7 +842,8 @@ class EquipoSinFichaSalida(BaseModel):
     id: int
     nombre: str
     tipo: str | None = None
-    titularidad: str = "propia"
+    # A11: `None` es «no consta». La lista de máquinas enseña esta casilla, así que no puede mentir.
+    titularidad: str | None = None
     numero_roma: str | None = None
     fecha_proxima_iteaf: dt.date | None = None
 
@@ -3079,7 +3093,8 @@ class TierraEnLaVista(SalidaBase):
     referencia: str | None
     provincia: str
     municipio: str
-    sistema: str
+    # A10: `None` es «no lo sé». La ficha de la tierra no puede inventarse el sistema.
+    sistema: str | None
     # «No se sabe» es `None`, y `None` no es cero.
     superficie_ha: float | None
     superficie_sigpac_ha: float | None

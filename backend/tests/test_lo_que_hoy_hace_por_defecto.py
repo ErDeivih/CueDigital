@@ -1582,3 +1582,335 @@ class TestA7UnaSuperficieQueNoSeSabeYaNoEsCeroHectareas:
             ),
             2,
         ), "el total suma lo que se sabe, y no cuenta el hueco como cero"
+
+
+# --------------------------------------------------------------------------
+# A10 y A11 — el sistema de una tierra y de quién es una máquina no se inventan
+# --------------------------------------------------------------------------
+
+
+class TestA10UnSistemaQueNoSeSabeYaNoEsSecano:
+    """A10 — «`sistema = "secano"` por defecto: lo que no se sabe se declara de secano»
+    (`docs/T02_VALORES_POR_DEFECTO.md`, A10).
+
+    **EL DEFECTO.** La columna nacía con `"secano"` por defecto, en la tierra, en el cultivo de la
+    campaña y en el grupo, y el formulario ofrecía solo dos botones —secano y regadío— con el secano
+    ya marcado. Así que una tierra de regadío cuyo dueño no tocaba el botón **quedaba declarada de
+    secano** sin que nadie lo hubiera dicho, y eso no se quedaba en una lista: el sistema decide
+    **contra qué columna del anexo III de la Orden MAV/398/2022 se compara el abonado**
+    (`validaciones.py`), y la casilla «Secano/Regadío» de la hoja 2.1 del cuaderno de la Junta se
+    escribía con una **«S»** (`cuaderno_cyl_exportar.py`), que es un papel que se firma.
+
+    **LO QUE EXIGE AHORA.** `None` es «no lo sé», en los cuatro sitios donde el sistema se guarda
+    —tierra, cultivo de la campaña, grupo y el que se trae del SIGPAC o del cuaderno de la Junta—, y
+    con él:
+      · la hoja 2.1 deja la casilla **en blanco** y el informe de lo que falta dice que falta ese
+        dato (lo que no se sabe no se escribe, pero tampoco se calla);
+      · la comparación con el anexo III **no se hace**, en vez de hacerse contra la columna que no es;
+      · y quien lee el cuaderno entiende el hueco, porque `cuaderno_cyl._lee_sistema` ya decía «en
+        blanco se queda en blanco».
+    """
+
+    def test_una_tierra_apuntada_sin_decir_el_sistema_se_queda_sin_sistema(self, cliente, cuenta):
+        """Las dos formas de no decirlo —sin el campo y con el campo en blanco— dan «no lo sé».
+
+        **Las dos, y a propósito**: un formulario que no pregunta el sistema no manda el campo, y uno
+        que lo pregunta con la opción «no lo sé» manda un `null`. Si el defecto volviera por
+        cualquiera de los dos lados —el valor por defecto del esquema o el del modelo—, esta prueba
+        lo caza.
+        """
+        for cuerpo in (
+            {"alias": "Sin el campo", "superficie_ha": 2.43},
+            {"alias": "Con el campo vacío", "superficie_ha": 2.43, "sistema": None},
+        ):
+            respuesta = cliente.post("/api/parcelas", headers=cuenta["cabeceras"], json=cuerpo)
+            assert respuesta.status_code == 201, respuesta.text
+            assert respuesta.json()["sistema"] is None, (
+                f"«{cuerpo['alias']}» salía de secano sin que nadie lo hubiera dicho: el abonado se "
+                f"comparaba contra el límite que no es ({DOCUMENTO}, A10)"
+            )
+
+        # El control: cuando sí se dice, se guarda lo que se dice, y lo que no existe se rechaza.
+        dice = cliente.post(
+            "/api/parcelas",
+            headers=cuenta["cabeceras"],
+            json={"alias": "La de regadío", "superficie_ha": 2.43, "sistema": "regadio"},
+        )
+        assert dice.status_code == 201, dice.text
+        assert dice.json()["sistema"] == "regadio"
+
+        inventado = cliente.post(
+            "/api/parcelas",
+            headers=cuenta["cabeceras"],
+            json={"alias": "La del invernadero", "superficie_ha": 2.43, "sistema": "invernadero"},
+        )
+        assert inventado.status_code == 422, (
+            "«no lo sé» se admite, pero un sistema que no existe se sigue rechazando con la lista "
+            "delante: lo que se ha abierto es el tercer estado, no la puerta a cualquier cosa"
+        )
+
+    def test_una_tierra_traida_del_sigpac_no_queda_de_secano_por_no_tocarlo(
+        self, cliente, cuenta, monkeypatch
+    ):
+        """El caso que describe el documento: la tierra se trae del mapa y no se toca el sistema.
+
+        El SIGPAC **no trae** el sistema de explotación: lo dice el agricultor. Y lo que no dice se
+        queda en «no lo sé», no en el valor que más le conviene al programa.
+        """
+        import json
+        import pathlib
+
+        import httpx
+
+        ruta = (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "data"
+            / "sigpac"
+            / "recinto_de_ejemplo.json"
+        )
+        crudo = json.loads(ruta.read_text(encoding="utf-8"))
+
+        class RespuestaFalsa:
+            status_code = 200
+            text = json.dumps(crudo)
+
+            def raise_for_status(self):
+                return None
+
+        monkeypatch.setattr(httpx, "get", lambda url, **kwargs: RespuestaFalsa())
+
+        # Sin decir el sistema: es lo que manda la pantalla del mapa cuando el agricultor no toca
+        # ninguno de los botones (antes mandaba «secano» porque venía marcado).
+        respuesta = cliente.post(
+            "/api/parcelas/desde-sigpac",
+            headers=cuenta["cabeceras"],
+            json={"ref_sigpac": "37-22-0-0-501-427-1", "alias": "El Prado"},
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        assert respuesta.json()["sistema"] is None, (
+            "la tierra traída del mapa salía de secano sin que nadie lo hubiera dicho"
+        )
+
+        # Y el control: cuando sí se dice, se guarda lo que se dice. Sin esto, la prueba pasaría
+        # también si el endpoint ignorara el sistema.
+        regadio = cliente.post(
+            "/api/parcelas/desde-sigpac",
+            headers=cuenta["cabeceras"],
+            json={
+                "ref_sigpac": "37-22-0-0-501-427-2",
+                "alias": "La Vega",
+                "sistema": "regadio",
+            },
+        )
+        assert regadio.status_code == 201, regadio.text
+        assert regadio.json()["sistema"] == "regadio"
+
+    def test_el_cultivo_declarado_sin_sistema_se_queda_sin_sistema(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """El cultivo de la campaña también: la columna `parcela_cultivos.sistema` nacía en «secano»."""
+        tierra = crear_parcela(alias="La del regadío", sistema=None)
+        respuesta = cliente.post(
+            f"/api/parcelas/{tierra['id']}/cultivos",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "especie": "Maíz",
+                "superficie_cultivada_ha": 2.0,
+            },
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+        cultivos = cliente.get(
+            f"/api/parcelas/{tierra['id']}/cultivos", headers=cuenta["cabeceras"]
+        ).json()
+        assert cultivos[0]["sistema"] is None, (
+            "el cultivo de la campaña quedaba de secano sin que nadie lo hubiera declarado"
+        )
+
+    def test_la_casilla_del_cuaderno_de_la_junta_sale_en_blanco_y_se_dice_por_que(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """La hoja 2.1: «S», «R» o **en blanco**, y el informe dice que falta ese dato.
+
+        Aquí está la parte que se firma. Escribir «S» de una tierra que puede ser de regadío es
+        declarar ante la Junta algo que el agricultor no ha dicho; dejarlo en blanco es lo que el
+        propio lector del cuaderno entiende por «no lo han declarado».
+        """
+        import io
+
+        from openpyxl import load_workbook
+
+        crear_parcela(alias="La del regadío", sistema=None)
+        libro = load_workbook(
+            io.BytesIO(
+                cliente.get("/api/cuaderno-cyl/exportar", headers=cuenta["cabeceras"]).content
+            )
+        )
+        hoja = libro["2.1. DATOS PARCELAS"]
+        assert hoja["O14"].value in (None, ""), (
+            "la casilla «Secano/Regadío» se ha escrito sin saberlo: en el fichero de la Junta salía "
+            f"una «S» de una tierra que puede ser de regadío ({DOCUMENTO}, A10)"
+        )
+
+        # Y no se calla: el informe de lo que falta pide el dato, con sus palabras.
+        que_falta = " ".join(
+            falta["que_falta"]
+            for falta in cliente.get(
+                "/api/cuaderno-cyl/que-falta", headers=cuenta["cabeceras"]
+            ).json()["faltan"]
+        )
+        assert "si esa tierra es de secano o de regadío" in que_falta, (
+            "el cuaderno sale con un hueco y el agricultor no se entera hasta que lo manda"
+        )
+
+    def test_con_el_sistema_declarado_la_casilla_se_sigue_escribiendo_igual(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """El control: secano es «S» y regadío es «R», como siempre."""
+        import io
+
+        from openpyxl import load_workbook
+
+        crear_parcela(alias="La secana", sistema="secano")
+        hoja = load_workbook(
+            io.BytesIO(
+                cliente.get("/api/cuaderno-cyl/exportar", headers=cuenta["cabeceras"]).content
+            )
+        )["2.1. DATOS PARCELAS"]
+        assert hoja["O14"].value == "S"
+
+        crear_parcela(
+            alias="La de regadío", sistema="regadio", ref_sigpac="37-455-12-9", poligono=2
+        )
+        libro = load_workbook(
+            io.BytesIO(
+                cliente.get("/api/cuaderno-cyl/exportar", headers=cuenta["cabeceras"]).content
+            )
+        )
+        hoja = libro["2.1. DATOS PARCELAS"]
+        # Las tierras salen ordenadas por polígono, parcela y recinto: la de regadío es la segunda.
+        assert hoja["O14"].value == "S"
+        assert hoja["O15"].value == "R", "regadío sigue siendo «R»"
+
+    def test_la_regla_pura_no_compara_el_abono_cuando_no_se_sabe_el_sistema(self):
+        """El porqué de todo esto, en la función que decide: sin sistema no hay columna que aplicar.
+
+        `nitratos_cyl.aporte_de` devuelve `None` cuando el sistema no es ni secano ni regadío, así que
+        **no se compara contra ninguna de las dos columnas del anexo III**. Antes, con «secano» puesto
+        por defecto, la comparación se hacía contra la columna del secano sin que nadie hubiera dicho
+        que esa tierra lo fuera.
+        """
+        from app import nitratos_cyl
+
+        assert nitratos_cyl.aporte_de("Cebada", None) is None, (
+            "sin saber el sistema no se puede decir cuál es el aporte máximo que le toca"
+        )
+        assert nitratos_cyl.aporte_de("Cebada", "") is None
+        # Los dos casos conocidos siguen igual: la cebada tiene su fila en el anexo III y sus dos
+        # columnas, la del secano (105 kg) y la de regadío (135 kg).
+        assert nitratos_cyl.aporte_de("Cebada", "secano")["maximo_kg_n_ha"] == 105.0
+        assert nitratos_cyl.aporte_de("Cebada", "regadio")["maximo_kg_n_ha"] == 135.0
+
+
+class TestA11UnaMaquinaSinDuenoConocidoYaNoEsTuya:
+    """A11 — «`titularidad = "propia"` por defecto: la máquina de otro queda como tuya»
+    (`docs/T02_VALORES_POR_DEFECTO.md`, A11).
+
+    **EL DEFECTO.** El campo nacía en `"propia"`, así que dar de alta el pulverizador de la empresa
+    de servicios —el caso que el propio código describe: las tres pestañas de la app oficial son
+    «maquinaria propia», «maquinaria ajena» y «equipos NO ROMA»— lo dejaba en la lista de las
+    máquinas propias, en la hoja 1.3 del cuaderno, y con su ITEAF como si la obligación de
+    inspeccionarla fuera del agricultor.
+
+    **LO QUE EXIGE AHORA.** `None` es «no consta de quién es». De quién es una máquina **no se deduce
+    de ningún dato** (`docs/T02`, tabla de evidencias: «No se puede rellenar. Preguntar»), así que:
+      · el equipo se guarda con la titularidad sin decir, y la pantalla ofrece «no lo sé»;
+      · la ficha de la maquinaria se queda en «no se sabe» en vez de en «es tuya» — eso ya lo hacía
+        `maquinaria.py`, y ahora el dato que le llega tampoco miente—;
+      · y la hoja 1.3, que es **la de los equipos propios**, pregunta de quién es en vez de pedirle a
+        ciegas el nº de ROMA y la fecha de la inspección.
+    """
+
+    def test_una_maquina_sin_decir_de_quien_es_no_queda_como_tuya(self, cliente, cuenta):
+        """El alta: lo que no se dice se queda sin decir, y el informe lo pregunta."""
+        equipo = cliente.post(
+            "/api/equipos",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "Pulverizador de la empresa", "tipo": "Atomizador"},
+        ).json()
+        assert equipo["titularidad"] is None, (
+            "la máquina de la empresa de servicios quedaba como propia sin que nadie lo hubiera "
+            f"dicho, y en el cuaderno no se apunta igual una propia que una ajena ({DOCUMENTO}, A11)"
+        )
+
+        que_falta = " ".join(
+            falta["que_falta"]
+            for falta in cliente.get(
+                "/api/cuaderno-cyl/que-falta", headers=cuenta["cabeceras"]
+            ).json()["faltan"]
+        )
+        assert "si esa máquina es tuya, es de otro o no va inscrita en el ROMA" in que_falta, (
+            "la hoja 1.3 es la de los equipos propios y no se pregunta de quién es la máquina"
+        )
+        assert "el nº de inscripción en el ROMA" not in que_falta, (
+            "no se le puede pedir el ROMA a una máquina que puede no ir inscrita: primero se "
+            "pregunta de quién es, y con la respuesta se pide lo que toque"
+        )
+
+    def test_con_la_titularidad_dicha_si_se_le_pide_lo_que_le_toca(self, cliente, cuenta):
+        """El control, y es el que demuestra que lo de arriba no es «no preguntar nunca».
+
+        Con la máquina dicha como propia, el informe pide su nº de ROMA y su última inspección; y con
+        una mochila (un equipo NO ROMA) no pide ninguna de las dos cosas, porque no existen. Es la
+        diferencia entre las tres pestañas de la app oficial, que ya estaba y sigue igual.
+        """
+        cliente.post(
+            "/api/equipos",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "Pulverizador", "titularidad": "propia"},
+        )
+        que_falta = " ".join(
+            falta["que_falta"]
+            for falta in cliente.get(
+                "/api/cuaderno-cyl/que-falta", headers=cuenta["cabeceras"]
+            ).json()["faltan"]
+        )
+        assert "el nº de inscripción en el ROMA" in que_falta
+        assert "la fecha de la última inspección" in que_falta
+
+        cliente.post(
+            "/api/equipos",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "Mochila de la espalda", "titularidad": "no_roma"},
+        )
+        # La mochila no cambia lo que se le pide al pulverizador: se mira solo su línea.
+        que_falta = " ".join(
+            falta["que_falta"]
+            for falta in cliente.get(
+                "/api/cuaderno-cyl/que-falta", headers=cuenta["cabeceras"]
+            ).json()["faltan"]
+        )
+        assert "de la máquina «Mochila de la espalda»" not in que_falta, (
+            "a una mochila no se le pide el ROMA ni la ITEAF: no se inscribe ni se inspecciona"
+        )
+
+    def test_la_ficha_de_la_maquinaria_no_se_inventa_de_quien_es(self, cliente, cuenta, monkeypatch):
+        """Lo que ya hacía bien `maquinaria.py`, ahora con el dato bueno delante.
+
+        `POST /api/maquinaria/desde-equipo/<id>` **no copia la titularidad como propiedad** salvo
+        cuando dice «propia»: con el equipo sin decir, la ficha queda en «no lo sé». Antes esta rama
+        no se podía recorrer por el camino normal —el equipo nunca llegaba sin titularidad, porque el
+        modelo la ponía—, así que la prueba se hace aquí, con el alta de verdad.
+        """
+        equipo = cliente.post(
+            "/api/equipos",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "Atomizador de alquiler", "tipo": "Atomizador"},
+        ).json()
+        traida = cliente.post(
+            f"/api/maquinaria/desde-equipo/{equipo['id']}", headers=cuenta["cabeceras"]
+        )
+        assert traida.status_code == 201, traida.text
+        assert traida.json()["propiedad"] == "no_se", (
+            "la ficha de la maquinaria decía «es tuya» de una máquina que puede ser de otro"
+        )

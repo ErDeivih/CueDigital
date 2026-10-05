@@ -670,6 +670,12 @@ class TestElEquipoDeEcharProductoNoEsLaMaquinaria:
             json={
                 "nombre": "Pulverizador grande",
                 "tipo": "Atomizador",
+                # **La titularidad se dice** (A11, 05/10/2026). Antes no hacía falta porque el campo
+                # nacía en `"propia"` y el programa la ponía solo; desde A11 no se inventa —de quién es
+                # una máquina no se deduce de ningún dato—, así que esta prueba, que va de que se copia
+                # **lo que ya estaba escrito**, tiene que escribir de quién es. Lo que pasa cuando no se
+                # dice se comprueba justo debajo.
+                "titularidad": "propia",
                 "numero_roma": "ROMA-9876",
                 "numero_serie": "SN-1",
                 "marca": "Hardy",
@@ -701,6 +707,33 @@ class TestElEquipoDeEcharProductoNoEsLaMaquinaria:
         # Y ya no sale en la lista de «equipos sin ficha».
         tabla = cliente.get("/api/maquinaria", headers=cabeceras).json()
         assert tabla["equipos_sin_ficha"] == []
+
+    def test_si_el_equipo_no_dice_de_quien_es_la_ficha_no_lo_inventa(self, cliente, cuenta):
+        """**A11 (05/10/2026), y esta prueba es nueva a propósito.**
+
+        Antes, un equipo dado de alta sin tocar la casilla de la titularidad nacía en `"propia"`, así
+        que al traerlo la ficha decía «es tuya» sin que nadie lo hubiera dicho: dar de alta el
+        pulverizador de la empresa de servicios lo dejaba en la lista de las máquinas propias, en la
+        hoja 1.3 del cuaderno, y con su ITEAF como si la obligación fuera del agricultor.
+
+        De quién es una máquina **no se deduce de ningún dato** (`docs/T02_VALORES_POR_DEFECTO.md`),
+        así que ahora la ficha se queda en «no se sabe» y el programa lo pregunta. Es el mismo criterio
+        que con la clasificación técnica, que tampoco se deduce del nombre.
+        """
+        cabeceras = cuenta["cabeceras"]
+        equipo = cliente.post(
+            "/api/equipos",
+            headers=cabeceras,
+            json={"nombre": "Pulverizador de la empresa", "tipo": "Atomizador"},
+        ).json()
+        # Lo que se ha guardado es «no lo sé», y no una cadena vacía ni una suposición.
+        assert equipo["titularidad"] is None
+        traida = cliente.post(
+            f"/api/maquinaria/desde-equipo/{equipo['id']}", headers=cabeceras
+        ).json()
+        assert traida["propiedad"] == "no_se", "la ficha se ha inventado de quién es la máquina"
+        # Y sigue distinguiéndose de «es mía», que es lo que se dice cuando sí se sabe.
+        assert traida["propiedad"] != "propia"
 
     def test_traer_el_mismo_equipo_dos_veces_no_hace_dos_fichas(self, cliente, cuenta):
         cabeceras = cuenta["cabeceras"]

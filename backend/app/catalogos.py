@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import nitratos_cyl
+from . import textos
 
 PROVINCIAS_CYL = (
     "Ávila",
@@ -301,6 +302,23 @@ ETIQUETA_SISTEMA = {
     "regadio": "Regadío",
 }
 
+# **Las tres respuestas** del sistema de una tierra, que es lo que se le ofrece al agricultor donde se
+# elige (el mapa, la pantalla de decir el cultivo y los formularios de la tierra y del grupo).
+#
+# Nació con dos —secano y regadío— y **sin «no lo sé»**, y eso era el defecto A10 de
+# `docs/T02_VALORES_POR_DEFECTO.md`: lo que el agricultor no elegía se guardaba como secano, así que el
+# programa declaraba de secano una tierra de regadío y la casilla «Secano/Regadío» del cuaderno de la
+# Junta salía con una «S». El sistema decide **contra qué columna del anexo III** se compara el abonado
+# (Orden MAV/398/2022), así que no es una casilla decorativa.
+#
+# El valor de la tercera es `"nulo"` porque es el que viaja por la pantalla y se convierte en `null` al
+# guardar (`app.js`, `valorDeEleccion`), igual que en los campos de «sí, no o no lo sé».
+SISTEMAS_PARA_ELEGIR = (
+    {"valor": "secano", "texto": ETIQUETA_SISTEMA["secano"]},
+    {"valor": "regadio", "texto": ETIQUETA_SISTEMA["regadio"]},
+    {"valor": "nulo", "texto": textos.ACCIONES["no_se"]},
+)
+
 ETIQUETA_TIPO_ABONO = {
     "mineral": "Mineral, de fábrica",
     "organico": "Orgánico: estiércol o purín",
@@ -526,12 +544,19 @@ MODOS_APLICACION_ABONO = (
 #
 # Los tres nombres son los de la app oficial; el texto que se le enseña al agricultor es el de
 # `textos.INTERFAZ["titularidades_equipo"]`, en palabras que se entienden.
+#
+# **Y una cuarta respuesta: «no lo sé»** (A11 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Nacía
+# con tres y sin ella, y el campo se guardaba con `"propia"` por defecto: dar de alta el pulverizador
+# de la empresa de servicios sin tocar la casilla dejaba **la máquina de otro como tuya** y con su
+# ITEAF, en la lista equivocada del cuaderno. De quién es una máquina **no se deduce de ningún dato**
+# (`docs/T02`, tabla de evidencias), así que se pregunta y se puede contestar «no lo sé».
 # --------------------------------------------------------------------------
 
 TITULARIDADES_EQUIPO = (
     {"valor": "propia", "texto": "Es mía"},
     {"valor": "ajena", "texto": "Es de otro (me la deja o me la alquila)"},
     {"valor": "no_roma", "texto": "No va inscrita en el ROMA (mochila, apero…)"},
+    {"valor": "nulo", "texto": textos.ACCIONES["no_se"]},
 )
 
 

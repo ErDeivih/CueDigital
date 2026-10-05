@@ -110,7 +110,7 @@ def _alta_desde_recinto(
     alias: str | None,
     municipio: str | None,
     provincia: str | None,
-    sistema: str,
+    sistema: str | None,
     referencia_catastral: str | None = None,
 ) -> models.Parcela:
     """Da de alta la parcela con los datos que ha traído el SIGPAC.
@@ -214,7 +214,11 @@ def _alta_desde_recinto(
         superficie_sigpac_ha=recinto.superficie,
         uso_sigpac=recinto.uso_sigpac,
         pendiente_pct=recinto.pendiente_media,
-        sistema=sistema if sistema in catalogos.SISTEMAS_EXPLOTACION else "secano",
+        # El sistema de explotación lo dice el agricultor en el mapa, no el SIGPAC. **Y si no lo ha
+        # dicho, se queda en «no lo sé»** (A10 de `docs/T02_VALORES_POR_DEFECTO.md`): aquí ponía
+        # `else "secano"`, así que una tierra de regadío traída sin tocar el botón quedaba declarada de
+        # secano —y la casilla «Secano/Regadío» del cuaderno de la Junta se escribía con una «S»—.
+        sistema=sistema if sistema in catalogos.SISTEMAS_EXPLOTACION else None,
         geometria=recinto.wkt,
         zona_vulnerable_nitratos=en_zona,
     )
@@ -764,7 +768,12 @@ def _preparar_parcela_guardable(
     """
     # El sistema tiene que ser uno de los dos que distingue el cuaderno. Se rechaza con la lista
     # delante: guardarlo tal cual dejaría la tierra con un sistema que no existe.
-    if datos.sistema not in catalogos.SISTEMAS_EXPLOTACION:
+    #
+    # **Y «ninguno» es una respuesta válida** (A10 de `docs/T02_VALORES_POR_DEFECTO.md`): `None` es
+    # «no lo sé», que es distinto de un sistema inventado. Antes esta comprobación rechazaba el
+    # `None`, así que la única forma de guardar una tierra era declararla de secano o de regadío
+    # aunque nadie lo supiera; ahora se puede apuntar sin decirlo y el programa lo pregunta.
+    if datos.sistema is not None and datos.sistema not in catalogos.SISTEMAS_EXPLOTACION:
         raise HTTPException(
             status_code=422,
             detail=textos.mensaje("V23_sistema_desconocido"),
@@ -1170,10 +1179,8 @@ def los_cultivos_de_la_finca(
         "campana_anio": campana.anio if campana else None,
         "cuantos": len(finca),
         "faltan": len(faltan),
-        "sistemas": [
-            {"valor": valor, "texto": catalogos.ETIQUETA_SISTEMA[valor]}
-            for valor in catalogos.SISTEMAS_EXPLOTACION
-        ],
+        # Las tres respuestas, con «no lo sé» (A10): ver `catalogos.SISTEMAS_PARA_ELEGIR`.
+        "sistemas": catalogos.SISTEMAS_PARA_ELEGIR,
         "resumen": (
             textos.CULTIVOS["sin_parcelas"]
             if not finca

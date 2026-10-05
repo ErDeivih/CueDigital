@@ -273,6 +273,18 @@ COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS: tuple[tuple[str, str], ...] = (
     ("explotaciones", "produccion_ecologica"),
     ("parcelas", "masa_agua_cerca"),
     ("parcelas", "captacion_consumo_humano"),
+    # **A10 y A11 (05/10/2026): el sistema de una tierra y de quién es una máquina también pueden decir
+    # «no lo sé».** Los cuatro nacieron con un valor por defecto que **afirmaba algo que nadie había
+    # dicho**: `sistema = "secano"` declaraba de secano una tierra de regadío (y la exportación de la
+    # Junta escribía «S» en su casilla, además de comparar el abonado contra el límite que no es), y
+    # `titularidad = "propia"` ponía la máquina de la empresa de servicios en la lista de las propias, con
+    # su ITEAF como si fuera una obligación del agricultor. Sin esta reconstrucción, en una base ya creada
+    # las columnas seguirían siendo obligatorias y guardar un «no lo sé» fallaría. Las filas que ya existen
+    # **se copian tal cual**: lo que cambia es lo de adelante.
+    ("parcelas", "sistema"),
+    ("parcela_cultivos", "sistema"),
+    ("grupos_parcelas", "sistema"),
+    ("equipos_aplicacion", "titularidad"),
 )
 
 

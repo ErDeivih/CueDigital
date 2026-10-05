@@ -642,7 +642,19 @@ def _hoja_1_2_1_3_1_4(escritor: _Escritor, db, explotacion) -> None:
         # inspección: una mochila, una carretilla o un apero no se inscriben ni se inspeccionan, y
         # pedirlos sería pedir un dato que no existe. Es la diferencia entre las tres pestañas de la
         # app oficial (maquinaria propia, ajena y equipos NO ROMA).
-        if (equipo.titularidad or "propia") != "no_roma":
+        #
+        # **Y si no consta de quién es, se pregunta eso** (A11 de `docs/T02_VALORES_POR_DEFECTO.md`):
+        # esta hoja es la de los equipos **propios de la explotación**, y hasta el 05/10/2026 un
+        # `(equipo.titularidad or "propia")` metía aquí al pulverizador de la empresa de servicios
+        # —la máquina de otro, en la lista de las tuyas— y le pedía el ROMA y la ITEAF como si la
+        # obligación fuera del agricultor. No se puede deducir de ningún dato, así que se pregunta.
+        titularidad = equipo.titularidad
+        if titularidad is None:
+            falta_algo.append(
+                "si esa máquina es tuya, es de otro o no va inscrita en el ROMA (la hoja 1.3 es la "
+                "de los equipos propios)"
+            )
+        elif titularidad != "no_roma":
             if not equipo.numero_roma:
                 falta_algo.append("el nº de inscripción en el ROMA")
             if not equipo.fecha_iteaf:
@@ -684,6 +696,28 @@ def _hoja_1_2_1_3_1_4(escritor: _Escritor, db, explotacion) -> None:
         )
         escritor.anota(nombre)
         fila += 1
+
+
+def _la_casilla_del_sistema(sistema: str | None) -> str:
+    """La casilla «Secano/Regadío» (columna O de la hoja 2.1): «S», «R» o **en blanco**.
+
+    **En blanco cuando no se sabe, y esto es el arreglo de A10** (`docs/T02_VALORES_POR_DEFECTO.md`).
+    Hasta el 05/10/2026 esta casilla se escribía con un `"R" if … else "S"`: lo que no era regadío
+    salía «S», así que **una tierra cuyo sistema no había dicho nadie se declaraba de secano** en el
+    fichero que se sube a la Junta. Y no es una casilla decorativa: el sistema decide contra qué
+    columna del anexo III de la Orden MAV/398/2022 se compara el abonado, y el papel que se firma es
+    el que vale. Vacío es lo que el propio lector del cuaderno entiende por «no lo han declarado»
+    (`cuaderno_cyl._lee_sistema`: «En blanco se queda en blanco»), y quien revise el cuaderno verá
+    que falta un dato en vez de leer un dato falso.
+
+    El aviso de que falta se da aparte, en el informe de lo que falta de la hoja 2.1: aquí no se
+    escribe nada que nadie haya dicho.
+    """
+    if sistema == "secano":
+        return "S"
+    if sistema == "regadio":
+        return "R"
+    return ""
 
 
 def _hoja_2_1(escritor: _Escritor, db, explotacion, campana) -> None:
@@ -746,6 +780,10 @@ def _hoja_2_1(escritor: _Escritor, db, explotacion, campana) -> None:
         if cultivo is not None:
             especie = cultivo.especie or ""
             variedad = cultivo.variedad or ""
+        # El sistema: el del cultivo de la campaña manda, y si no lo dice se mira el de la tierra (es el
+        # mismo dato visto desde otro sitio). Lo que **no** se hace es suponerlo (A10): ver
+        # `_la_casilla_del_sistema`.
+        sistema = (cultivo.sistema if cultivo is not None else None) or parcela.sistema
         # El cuaderno escribe la especie y la variedad en una casilla, separadas por un punto: es lo
         # que lee el lector del cuaderno al revés (`cuaderno_cyl._lee_especie_y_variedad`).
         especie_y_variedad = f"{especie}.{variedad}" if variedad else especie
@@ -773,7 +811,7 @@ def _hoja_2_1(escritor: _Escritor, db, explotacion, campana) -> None:
                 "L": _numero(parcela.superficie_ha),
                 "M": especie_y_variedad,
                 "N": (cultivo.ecorregimen if cultivo else "") or "",
-                "O": "R" if (cultivo.sistema if cultivo else parcela.sistema) == "regadio" else "S",
+                "O": _la_casilla_del_sistema(sistema),
                 "P": "Principal",
                 "Q": cultivo.fecha_inicio if cultivo else None,
                 "R": cultivo.fecha_fin if cultivo else None,
@@ -791,6 +829,10 @@ def _hoja_2_1(escritor: _Escritor, db, explotacion, campana) -> None:
             falta_algo.append("el ecorregimen o la práctica (el «P3» del cuaderno)")
         if not parcela.municipio:
             falta_algo.append("el pueblo")
+        # **A10: si no se sabe el sistema, la casilla «Secano/Regadío» va en blanco y aquí se dice.**
+        # Sin este aviso, el agricultor mandaría un cuaderno con un hueco que él no ha visto.
+        if not _la_casilla_del_sistema(sistema):
+            falta_algo.append("si esa tierra es de secano o de regadío")
         if parcela.zona_vulnerable_nitratos is None:
             falta_algo.append("si está en zona de nitratos")
         if falta_algo:

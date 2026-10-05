@@ -32,6 +32,12 @@ venv/
 !data/municipios_cyl.csv
 !data/nitratos_cyl/*.pdf
 !data/fega/*.pdf
+# **Y los extractos de ejemplo de las pruebas** (T20, 05/10/2026): son ficheros **inventados** —no de
+# ningún agricultor— que las pruebas de `tests/test_extractos.py` leen para comprobar que se entiende
+# un extracto de verdad (separadores, codificaciones, fechas de doble lectura y filas raras). Sin esta
+# línea **no viajan con el código** y la suite falla en una copia recién hecha, que es justo lo que el
+# primer commit de este repositorio ya aprendió con `backend/tests/datos/`.
+!backend/tests/datos/**
 
 # **Restos de comprobaciones de rondas anteriores dentro del proyecto** (05/10/2026): son adjuntos que
 # dejó un guion de comprobación y no los usa ninguna prueba (buscado: cero referencias). Al repositorio

@@ -250,10 +250,8 @@ def interfaz() -> dict:
         # En qué se compra el producto: litros, kilos, mililitros… La dosis va por hectárea y la
         # compra va en un envase, así que son dos listas distintas y las dos hacen falta.
         "unidades_producto": list(catalogos.UNIDADES_PRODUCTO),
-        "sistemas": [
-            {"valor": valor, "texto": catalogos.ETIQUETA_SISTEMA[valor]}
-            for valor in catalogos.SISTEMAS_EXPLOTACION
-        ],
+        # Secano, regadío **o «no lo sé»**: ver `catalogos.SISTEMAS_PARA_ELEGIR` (A10).
+        "sistemas": catalogos.SISTEMAS_PARA_ELEGIR,
         # El asesor y el agua de riego. Las tres listas son NUESTRAS, no las oficiales: el
         # catálogo de la Junta para estos campos no está cargado (ver `catalogos.py`).
         "ambitos_asesor": [

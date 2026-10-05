@@ -220,8 +220,11 @@ class Parcela(Base):
     # esta es la oficial del recinto entero. Vacío quiere decir «no lo sé», nunca 0.
     superficie_sigpac_ha: Mapped[float | None] = mapped_column(Float)
     uso_sigpac: Mapped[str | None] = mapped_column(String(80))
-    # secano | regadio
-    sistema: Mapped[str] = mapped_column(String(20), default="secano")
+    # secano | regadio | **None = no lo sé** (A10 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Nacía
+    # en `"secano"`, así que **lo que no se sabía se declaraba de secano** y la exportación de la Junta
+    # acababa escribiendo «S» de una tierra que puede ser de regadío. El resumen del cuaderno ya cuenta las
+    # líneas sin sistema (`cuaderno_cyl._lee_sistema` se niega a ponerlo por defecto).
+    sistema: Mapped[str | None] = mapped_column(String(20))
     pendiente_pct: Mapped[float | None] = mapped_column(Float)
     # **Tres estados también aquí** (A12 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Nacían en
     # `False`, así que una tierra sin contestar se leía como «aquí no hay ni río ni toma de agua». De estos
@@ -286,7 +289,10 @@ class ParcelaCultivo(Base):
     campana_id: Mapped[int] = mapped_column(ForeignKey("campanas.id"), index=True)
     especie: Mapped[str] = mapped_column(String(120))
     variedad: Mapped[str | None] = mapped_column(String(120))
-    sistema: Mapped[str] = mapped_column(String(20), default="secano")
+    # secano | regadio | **None = no lo sé** (A10, ver la nota larga en `Parcela.sistema`). El cultivo de
+    # una campaña nace sin sistema declarado, no de secano: la exportación de la Junta lo escribía como
+    # «S» sin que nadie lo hubiera dicho.
+    sistema: Mapped[str | None] = mapped_column(String(20))
     fecha_inicio: Mapped[dt.date | None] = mapped_column(Date)
     fecha_fin: Mapped[dt.date | None] = mapped_column(Date)
 
@@ -328,7 +334,9 @@ class GrupoParcelas(Base):
     nombre: Mapped[str] = mapped_column(String(120))
     campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"))
     cultivo: Mapped[str | None] = mapped_column(String(120))
-    sistema: Mapped[str] = mapped_column(String(20), default="secano")
+    # secano | regadio | **None = no lo sé** (A10, ver la nota larga en `Parcela.sistema`): un grupo de
+    # tierras recién creado no es de secano, es un grupo del que todavía no se sabe el sistema.
+    sistema: Mapped[str | None] = mapped_column(String(20))
     creado_automaticamente: Mapped[bool] = mapped_column(Boolean, default=False)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
@@ -527,8 +535,10 @@ class EquipoAplicacion(Base):
     nombre: Mapped[str] = mapped_column(String(120))
     tipo: Mapped[str | None] = mapped_column(String(80))
     # De quién es la máquina y si va inscrita en el ROMA. Ver la nota de arriba: son las tres
-    # pestañas de la app oficial (propia, ajena y equipos sin ROMA).
-    titularidad: Mapped[str] = mapped_column(String(20), default="propia")
+    # pestañas de la app oficial (propia, ajena y equipos sin ROMA). **Y `None` es «no lo sé»** (A11,
+    # 05/10/2026): nacía en `"propia"`, así que **la máquina de otro quedaba como tuya** sin que nadie lo
+    # hubiera dicho, y en la hoja 1.3 una propia y una ajena no se apuntan igual.
+    titularidad: Mapped[str | None] = mapped_column(String(20))
     marca: Mapped[str | None] = mapped_column(String(80))
     modelo: Mapped[str | None] = mapped_column(String(80))
     numero_roma: Mapped[str | None] = mapped_column(String(60))

@@ -1448,6 +1448,9 @@ const RESPUESTAS = {
       { valor: "propia", texto: "Es mía" },
       { valor: "ajena", texto: "Es de otro (me la deja o me la alquila)" },
       { valor: "no_roma", texto: "No va inscrita en el ROMA (mochila, apero…)" },
+      // **La cuarta es nueva** (A11, 05/10/2026): de quién es una máquina no se deduce, así que se
+      // puede contestar «no lo sé» en vez de quedar como propia sin que nadie lo diga.
+      { valor: "nulo", texto: "No lo sé" },
     ],
     ambitos_asesor: [
       { valor: "gip", texto: "Plagas (gestión integrada)" },
@@ -1586,6 +1589,9 @@ const RESPUESTAS = {
     sistemas: [
       { valor: "secano", texto: "Secano" },
       { valor: "regadio", texto: "Regadío" },
+      // **El tercero es nuevo** (A10, 05/10/2026) y está aquí porque el servidor de verdad lo manda:
+      // `catalogos.SISTEMAS_PARA_ELEGIR`. Antes eran dos y el que no tocaba nada quedaba de secano.
+      { valor: "nulo", texto: "No lo sé" },
     ],
     tipos_instalacion: [
       { valor: "almacen", texto: "Almacén" },
@@ -1822,6 +1828,8 @@ const RESPUESTAS = {
     sistemas: [
       { valor: "secano", texto: "Secano" },
       { valor: "regadío", texto: "Regadío" },
+      // Como el de `/api/interfaz`: el de verdad trae tres (A10).
+      { valor: "nulo", texto: "No lo sé" },
     ],
     resumen: "A 1 parcelas les falta decir qué tienen este año.",
     parcelas: [
@@ -5429,13 +5437,24 @@ test("traer del SIGPAC no pide ocho datos: se busca la parcela y se marcan los t
   assert.ok(datos.provincias.length >= 1, "no le llegan las provincias");
   assert.equal(datos.provincias[0].etiqueta, "Salamanca", "la provincia no llega con su nombre");
   assert.ok(textos.municipios.cualquiera, "no le llega la opción de «cualquiera»");
-  // Y los dos sistemas, con el secano ya elegido (es lo normal en estas tierras).
+  // **Los tres sistemas, y ninguno dado por hecho** (A10, 05/10/2026). Esta prueba pedía antes dos
+  // —«secano» y «regadío»— con el secano ya elegido «porque es lo normal en estas tierras». Eso era el
+  // defecto: quien no tocaba el botón declaraba de secano una tierra de regadío, y el sistema decide
+  // **contra qué columna del anexo III de la Orden MAV/398/2022 se compara el abonado**. Ahora se
+  // ofrecen tres y sale marcado «no lo sé», que es lo que el agricultor puede afirmar sin saberlo.
   assert.deepEqual(
     datos.sistemas.map((sistema) => sistema.valor),
-    ["secano", "regadio"],
-    "no le llegan los dos sistemas",
+    ["secano", "regadio", "nulo"],
+    "no le llegan los tres sistemas",
   );
-  assert.ok(datos.sistemas[0].elegido, "el secano no sale elegido por defecto");
+  assert.ok(
+    datos.sistemas[2].elegido,
+    "no sale marcado «no lo sé»: parecería que el agricultor ya ha declarado el sistema",
+  );
+  assert.ok(
+    datos.sistemas.every((sistema) => !sistema.elegido || sistema.valor === "nulo"),
+    "viene un sistema dado por elegido sin que nadie lo haya dicho",
+  );
   // Los cuatro campos que sí se piden, con su `id` de siempre: es lo que lee `app.js`.
   assert.equal(datos.poligono, "", "el polígono no llega vacío");
   assert.equal(datos.parcela, "");
@@ -5829,9 +5848,17 @@ test("tocar el mapa pregunta por ese punto, no por otro", async () => {
   assert.ok(filas.includes("Calvarrasa de Arriba"), "no viene el pueblo");
   assert.ok(filas.includes("37070A503000510000AQ"), "no viene la referencia catastral");
   assert.ok(elemento.props.poligono.includes(","), "no viene el trozo para dibujarlo");
+  // **En el mapa sale marcado «no lo sé» y ningún sistema** (A10, 05/10/2026): esta prueba pedía antes
+  // el secano «por defecto». El mapa no puede declarar de secano una tierra que el agricultor no ha
+  // mirado: lo que sale marcado es «no lo sé», y sigue habiendo los tres botones para cambiarlo.
+  assert.equal(elegido.sistemas.length, 3, "el mapa no ofrece «no lo sé»");
   assert.ok(
-    elegido.sistemas.some((sistema) => sistema.elegido && sistema.valor === "secano"),
-    "no viene elegido el secano por defecto",
+    elegido.sistemas.some((sistema) => sistema.elegido && sistema.valor === "nulo"),
+    "no viene marcado «no lo sé» en el mapa: el sistema no se adivina",
+  );
+  assert.ok(
+    elegido.sistemas.every((sistema) => !sistema.elegido || sistema.valor === "nulo"),
+    "el mapa da por elegido un sistema que nadie ha dicho",
   );
 });
 

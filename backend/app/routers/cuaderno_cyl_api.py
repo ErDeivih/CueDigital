@@ -300,9 +300,13 @@ def _apuntar_la_linea(db, explotacion, campana, linea, parcela: models.Parcela |
             superficie_sigpac_ha=linea.superficie_sigpac_ha,
             uso_sigpac=linea.uso_sigpac or None,
             # El cuaderno de la Junta no dice si el agua de riego es de pozo, pero sí dice si la
-            # tierra es de secano o de regadío, así que de ahí sí se puede rellenar. Cuando el
-            # papel no lo dice, se queda en el valor por defecto del programa.
-            sistema=linea.sistema or "secano",
+            # tierra es de secano o de regadío («S» o «R» en su casilla), así que de ahí sí se
+            # rellena. **Y cuando el papel no lo dice, se queda en «no lo sé»** (A10 de
+            # `docs/T02_VALORES_POR_DEFECTO.md`): antes esta línea era `linea.sistema or "secano"`, y
+            # eso **declaraba de secano** una tierra de regadío cuyo renglón venía en blanco —el
+            # agricultor la veía de secano y el abonado se comparaba contra el límite que no es—.
+            # En blanco es «no lo sé», igual que la superficie de aquí arriba.
+            sistema=linea.sistema or None,
             # La casilla «parcela ubicada en zona nitratos» del cuaderno: puesta está en zona,
             # en blanco no se sabe (nunca «no está», que sería inventarse una comprobación).
             zona_vulnerable_nitratos=linea.zona_nitratos,
@@ -333,6 +337,9 @@ def _apuntar_la_linea(db, explotacion, campana, linea, parcela: models.Parcela |
             campana_id=campana.id,
             especie=linea.especie.strip(),
             variedad=linea.variedad or None,
+            # El sistema del renglón del papel manda; si el papel no lo dice, se copia el de la tierra
+            # cuando se conoce (es el mismo dato, mirado desde la tierra) y si tampoco se conoce se
+            # queda en «no lo sé». Las dos cosas pueden ser `None` desde A10.
             sistema=linea.sistema or parcela.sistema,
             fecha_inicio=linea.fecha_inicio,
             fecha_fin=linea.fecha_fin,
