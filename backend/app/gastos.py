@@ -119,6 +119,78 @@ def es_un_gasto_completo_del_cultivo(clase: str) -> bool:
 
 
 # --------------------------------------------------------------------------
+# 1-bis. Las categorías: **son nuestras, y se dice**
+# --------------------------------------------------------------------------
+#
+# No hay ningún catálogo oficial de categorías de gasto agrario cargado en el programa, así que esta
+# lista es la que usa un agricultor cuando separa sus papeles en montones. Se ofrece **para no
+# teclear y para poder agrupar**, no para obligar: lo que no encaje se apunta en «otro» y su concepto
+# dice lo que es. Y el día que haya un catálogo oficial (o el plan contable que use su asesor), se
+# cambia aquí y no en la pantalla.
+#
+# **Lo que no se hace con esta lista: deducir nada.** Que un gasto sea de «reparacion» no dice de qué
+# máquina es, ni a qué tierra va, ni si es una inversión. Eso se pregunta, uno por uno.
+CATEGORIAS_DE_GASTO: tuple[str, ...] = (
+    "abono",
+    "fitosanitario",
+    "semilla",
+    "gasoleo",
+    "reparacion",
+    "servicio",
+    "alquiler",
+    "seguro",
+    "impuesto",
+    "cuota",
+    "otro",
+)
+
+CATEGORIAS_DE_INVERSION: tuple[str, ...] = (
+    "maquinaria",
+    "apero",
+    "instalacion",
+    "vehiculo",
+    "terreno",
+    "otro",
+)
+
+
+# --------------------------------------------------------------------------
+# 1-ter. Lo que este módulo NO calcula, y de quién depende
+# --------------------------------------------------------------------------
+#
+# Es la receta de `AGENTS.md`: cuando algo no se puede hacer entero, se dice **qué es, para qué haría
+# falta y de quién depende**, y se dice en la pantalla y no solo en un comentario. Sin esto, el
+# agricultor cree que una cifra que no aparece es un fallo del programa.
+QUE_FALTA: tuple[dict[str, str], ...] = (
+    {
+        "que": "Los años de vida útil de un bien y su cuota de amortización.",
+        "para_que": "Poder llevar a cada campaña la parte del tractor que le toca sin preguntártelo.",
+        "de_quien_depende": (
+            "De que este programa tenga una tabla de amortización con su fuente. Hoy no la tiene, así "
+            "que **la parte que va a cada campaña la dices tú**, con un reparto, y lo que no digas se "
+            "queda sin asignar."
+        ),
+    },
+    {
+        "que": "El extracto del banco y la conciliación de un movimiento con un pago.",
+        "para_que": "Poder cuadrar lo que dice el banco con lo que tienes apuntado, y deshacerlo.",
+        "de_quien_depende": (
+            "Es el ticket siguiente (los extractos). Aquí el pago se apunta a mano, con su fecha y su "
+            "importe, y nunca se pide la contraseña de ningún banco."
+        ),
+    },
+    {
+        "que": "El IVA soportado y deducible, y el resumen trimestral.",
+        "para_que": "Poder presentar los impuestos desde aquí.",
+        "de_quien_depende": (
+            "De una especificación fiscal propia, igual que la factura emitida: este programa guarda "
+            "lo que dice el papel y no emite ningún documento con validez fiscal."
+        ),
+    },
+)
+
+
+# --------------------------------------------------------------------------
 # 2. Los estados de un gasto: seis, y cada uno dice qué hacer
 # --------------------------------------------------------------------------
 #

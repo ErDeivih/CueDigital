@@ -268,6 +268,8 @@ AVISO_FILAS_RECHAZADAS = "hay_filas_que_no_se_entienden"
 AVISO_SALDO_NO_CUADRA = "el_saldo_no_cuadra"
 AVISO_ORDEN_DUDOSO = "el_orden_de_las_filas_es_dudoso"
 AVISO_FORMATO_DE_FECHA_SIN_DECLARAR = "el_formato_de_la_fecha_no_esta_declarado"
+AVISO_FORMATO_DE_FECHA_DEDUCIDO = "el_formato_de_la_fecha_se_ha_deducido_del_fichero"
+AVISO_SIGNO_DEDUCIDO = "el_signo_de_los_importes_sin_signo_se_ha_deducido_del_saldo"
 AVISO_FILAS_SIN_SIGNO = "hay_filas_sin_decir_si_el_dinero_entra_o_sale"
 
 # --------------------------------------------------------------------------
@@ -560,7 +562,13 @@ class Aviso:
 
 @dataclass(frozen=True)
 class LecturaDelExtracto:
-    """Lo que ha salido de leer un fichero. **Todavía no se ha guardado nada.**"""
+    """Lo que ha salido de leer un fichero. **Todavía no se ha guardado nada.**
+
+    No lleva la huella del fichero, y es a propósito: esta función recibe **texto**, y la huella se
+    calcula sobre los bytes que ha subido el navegador (`huella_del_fichero`), que es lo que distingue
+    «el mismo fichero» de «el mismo texto escrito de otra manera». Un campo aquí que nadie rellenara
+    sería un dato que parece que está y no está.
+    """
 
     movimientos: tuple[FilaDeExtracto, ...]
     rechazadas: tuple[FilaRechazada, ...]
@@ -569,7 +577,6 @@ class LecturaDelExtracto:
     columnas: Mapping[str, str]
     perfil: PerfilDeFormato
     avisos: tuple[Aviso, ...] = ()
-    huella: str = ""
     lineas_leidas: int = 0
 
     @property
@@ -682,6 +689,94 @@ def _lee_un_numero(texto: str | None, *, decimal_declarado: str | None) -> tuple
     if valor is None:
         return (None, VACIO)
     return (valor, LEIDO)
+
+
+def _lleva_el_signo_escrito(texto: str | None) -> bool:
+    """Si el número trae el signo delante. Es lo que dice si hay algo que deducir.
+
+    «+1.205,40» y «-320,00» ya dicen por sí solos si el dinero entra o sale. El problema son los
+    `1.205,40` a secas: ahí el signo no está en el número, y hay que saber qué significa.
+    """
+    limpio = (texto or "").strip().replace("\u00a0", "").replace(" ", "")
+    limpio = limpio.removesuffix("€").strip()
+    return limpio.startswith(("+", "-")) or limpio.endswith("-")
+
+
+def deduce_el_signo_de_lo_que_no_lleva_signo(
+    filas: Sequence[tuple[int, Sequence[str]]],
+    indices: Mapping[str, int],
+    perfil: PerfilDeFormato,
+) -> tuple[str | None, tuple[int, ...]]:
+    """Qué quiere decir un importe **sin signo**, deducido del saldo que trae el propio fichero.
+
+    ## Por qué esto no es adivinar, y por qué hace falta
+
+    Hay extractos en los que la casilla del importe viene en positivo tanto si el dinero entra como
+    si sale («Importe: 1.205,40» para un cobro y «Importe: 320,00» para un recibo), y otros en los que
+    el recibo viene con su menos y el cobro sin nada. Sin saber cuál de las dos cosas es, un importe
+    sin signo puede significar dos contrarios, y elegir uno sería cambiarle el sentido al extracto
+    entero.
+
+    Pero **el fichero trae la prueba**: la columna del saldo. Si el saldo de antes más el importe da
+    el saldo de después, ese dinero **entró**; si da restando, **salió**. Es la misma aritmética que
+    comprueba cada línea (`_comprueba_los_saldos`), usada para lo que de verdad hace falta aquí, que
+    es saber qué significa un número sin signo. Y cuando el fichero no trae saldo, o el saldo viene
+    vacío, o las líneas se contradicen, esto devuelve `None`: entonces sí hay que preguntárselo al
+    agricultor, y las líneas sin signo se rechazan con su motivo.
+
+    **Se prueban los dos órdenes** (hay bancas que exportan de la más nueva a la más vieja), y se usa
+    el que traiga más pruebas.
+    """
+    if perfil.estilo_del_signo != SIGNO_EN_EL_IMPORTE or perfil.sin_signo_quiere_decir is not None:
+        return (None, ())
+
+    def celda(fila: Sequence[str], nombre: str) -> str:
+        posicion = indices.get(nombre)
+        if posicion is None or posicion >= len(fila):
+            return ""
+        return (fila[posicion] or "").strip()
+
+    def evidencia(
+        secuencia: Sequence[tuple[int, Sequence[str]]],
+    ) -> tuple[list[int], list[int]]:
+        entran: list[int] = []
+        salen: list[int] = []
+        anterior: Decimal | None = None
+        for numero, fila in secuencia:
+            texto_importe = celda(fila, "importe")
+            importe, _estado = _lee_un_numero(texto_importe, decimal_declarado=perfil.decimal)
+            saldo, _estado_del_saldo = _lee_un_numero(celda(fila, "saldo"), decimal_declarado=perfil.decimal)
+            if (
+                anterior is not None
+                and importe is not None
+                and importe != 0
+                and saldo is not None
+                and not _lleva_el_signo_escrito(texto_importe)
+            ):
+                if dinero.redondea(anterior + importe) == dinero.redondea(saldo):
+                    entran.append(numero)
+                elif dinero.redondea(anterior - importe) == dinero.redondea(saldo):
+                    salen.append(numero)
+            if saldo is not None:
+                anterior = saldo
+        return (entran, salen)
+
+    de_arriba_abajo = evidencia(filas)
+    de_abajo_arriba = evidencia(list(reversed(filas)))
+    if len(de_abajo_arriba[0]) + len(de_abajo_arriba[1]) > len(de_arriba_abajo[0]) + len(
+        de_arriba_abajo[1]
+    ):
+        de_arriba_abajo = de_abajo_arriba
+    entran, salen = de_arriba_abajo
+    if entran and salen:
+        # El fichero se contradice: hay líneas que demuestran que entra y líneas que demuestran que
+        # sale. No se elige ninguna de las dos.
+        return (None, ())
+    if entran:
+        return (ENTRA, tuple(entran))
+    if salen:
+        return (SALE, tuple(salen))
+    return (None, ())
 
 
 def _lee_una_fecha(
@@ -1075,7 +1170,6 @@ def lee_extracto(
             columnas={},
             perfil=perfil or PerfilDeFormato(delimitador=delimitador),
             avisos=(Aviso(AVISO_SIN_CABECERAS),),
-            huella="",
             lineas_leidas=len(filas_crudas),
         )
 
@@ -1086,6 +1180,10 @@ def lee_extracto(
     movimientos: list[FilaDeExtracto] = []
     rechazadas: list[FilaRechazada] = []
 
+    # Primero se apartan las líneas que de verdad son datos. Se hace en dos pasos y no en uno porque
+    # el formato de la fecha se deduce **del fichero entero** (ver `deduce_el_formato_de_la_fecha`):
+    # para eso hay que haber mirado antes todas las fechas.
+    filas_de_datos: list[tuple[int, list[str]]] = []
     for numero, fila in enumerate(filas_crudas[numero_de_cabecera + 1 :], start=numero_de_cabecera + 2):
         # Se quitan las casillas vacías del final: muchos extractos acaban la línea con «;;».
         while fila and not (fila[-1] or "").strip():
@@ -1104,12 +1202,44 @@ def lee_extracto(
                 )
             )
             continue
+        filas_de_datos.append((numero, list(fila)))
 
+    def _celda(fila: Sequence[str], nombre: str) -> str:
+        posicion = indices.get(nombre)
+        if posicion is None or posicion >= len(fila):
+            return ""
+        return (fila[posicion] or "").strip()
+
+    # El formato de la fecha: el que haya dicho el agricultor o, si no ha dicho ninguno, el que
+    # demuestre el propio fichero. Si no hay prueba de ninguno, se queda en «no lo sé» y las fechas
+    # que se puedan leer de dos maneras se rechazan.
+    formato_declarado = perfil.formato_de_fecha
+    lineas_que_lo_demuestran: tuple[int, ...] = ()
+    formato_deducido: str | None = None
+    if not formato_declarado:
+        formato_deducido, lineas_que_lo_demuestran = deduce_el_formato_de_la_fecha(
+            [
+                (numero, _celda(fila, "fecha") or _celda(fila, "fecha_valor"))
+                for numero, fila in filas_de_datos
+            ]
+        )
+    if formato_deducido:
+        perfil = replace(perfil, formato_de_fecha=formato_deducido)
+
+    # Y lo mismo con un importe sin signo: si el saldo del fichero demuestra si ese dinero entra o
+    # sale, se lee. Si no lo demuestra, se queda sin decidir y esas líneas se rechazan.
+    signo_deducido: str | None = None
+    lineas_del_signo: tuple[int, ...] = ()
+    if perfil.estilo_del_signo == SIGNO_EN_EL_IMPORTE and perfil.sin_signo_quiere_decir is None:
+        signo_deducido, lineas_del_signo = deduce_el_signo_de_lo_que_no_lleva_signo(
+            filas_de_datos, indices, perfil
+        )
+        if signo_deducido:
+            perfil = replace(perfil, sin_signo_quiere_decir=signo_deducido)
+
+    for numero, fila in filas_de_datos:
         def celda(nombre: str) -> str:
-            posicion = indices.get(nombre)
-            if posicion is None or posicion >= len(fila):
-                return ""
-            return (fila[posicion] or "").strip()
+            return _celda(fila, nombre)
 
         fecha, estado_de_la_fecha = _lee_una_fecha(
             celda("fecha") or celda("fecha_valor"), formato_declarado=perfil.formato_de_fecha
@@ -1212,7 +1342,17 @@ def lee_extracto(
     movimientos = movimientos_leidos
 
     saldo_final = next((f.saldo for f in reversed(movimientos) if f.saldo is not None), None)
-    avisos = _los_avisos_de_la_lectura(movimientos, rechazadas, perfil, cuenta_del_fichero)
+    avisos = _los_avisos_de_la_lectura(
+        movimientos,
+        rechazadas,
+        perfil,
+        cuenta_del_fichero,
+        formato_declarado=formato_declarado,
+        formato_deducido=formato_deducido,
+        lineas_que_lo_demuestran=lineas_que_lo_demuestran,
+        signo_deducido=signo_deducido,
+        lineas_del_signo=lineas_del_signo,
+    )
     return LecturaDelExtracto(
         movimientos=tuple(movimientos),
         rechazadas=tuple(rechazadas),
@@ -1221,7 +1361,6 @@ def lee_extracto(
         columnas=dict(columnas),
         perfil=perfil,
         avisos=avisos,
-        huella="",
         lineas_leidas=len(filas_crudas),
     )
 
@@ -1231,6 +1370,12 @@ def _los_avisos_de_la_lectura(
     rechazadas: Sequence[FilaRechazada],
     perfil: PerfilDeFormato,
     cuenta: CuentaDelFichero,
+    *,
+    formato_declarado: str | None = None,
+    formato_deducido: str | None = None,
+    lineas_que_lo_demuestran: tuple[int, ...] = (),
+    signo_deducido: str | None = None,
+    lineas_del_signo: tuple[int, ...] = (),
 ) -> tuple[Aviso, ...]:
     """Los avisos de una lectura: lo que el agricultor tiene que saber antes de importar."""
     avisos: list[Aviso] = []
@@ -1249,6 +1394,16 @@ def _los_avisos_de_la_lectura(
                 datos={"cuantas": len(rechazadas)},
             )
         )
+    if not formato_declarado and formato_deducido:
+        # Se dice **de dónde** sale el formato, porque es una lectura y no una decisión del
+        # agricultor: si el fichero venía mal, esto es lo primero que hay que revisar.
+        avisos.append(
+            Aviso(
+                AVISO_FORMATO_DE_FECHA_DEDUCIDO,
+                lineas=lineas_que_lo_demuestran,
+                datos={"formato": formato_deducido},
+            )
+        )
     if perfil.formato_de_fecha is None:
         dudosas = tuple(
             f.numero_de_linea
@@ -1257,6 +1412,14 @@ def _los_avisos_de_la_lectura(
         )
         if dudosas:
             avisos.append(Aviso(AVISO_FORMATO_DE_FECHA_SIN_DECLARAR, lineas=dudosas))
+    if signo_deducido:
+        avisos.append(
+            Aviso(
+                AVISO_SIGNO_DEDUCIDO,
+                lineas=lineas_del_signo,
+                datos={"signo": signo_deducido},
+            )
+        )
     if perfil.estilo_del_signo == SIGNO_EN_EL_IMPORTE and perfil.sin_signo_quiere_decir is None:
         sin_signo = [f for f in rechazadas if f.motivo == SIN_SIGNO]
         if len(sin_signo) >= 2:
@@ -1532,7 +1695,9 @@ class ResumenDeLoQueHaEntradoYSalido:
       · `entradas` y `salidas` **excluyen las dos patas de un traspaso propio**: mover dinero de una
         cuenta a otra no es ni un ingreso ni un gasto (A07).
       · `traspasos` e `importe_de_traspasos` dicen cuánto dinero se ha movido de sitio, y se enseña
-        aparte para que el agricultor vea que la cuenta cuadra.
+        aparte para que el agricultor vea que la cuenta cuadra. Se cuenta **una vez por traspaso** y
+        por el lado que salió: las dos patas son el mismo dinero, y sumarlas sería contar doble lo
+        que solo ha cambiado de cuenta.
       · `sin_importe` cuenta los movimientos cuyo importe **no consta**. No son cero y no se suman:
         se cuentan, que es la única forma de que un total no mienta. Un total que se calla que le
         faltan datos es un total que engaña.
@@ -1571,10 +1736,11 @@ def resumen_de_lo_que_ha_entrado_y_salido(
     for fila in movimientos:
         if fila.clave_de_duplicado in fuera:
             if fila.importe is not None:
-                importe_de_traspasos = dinero.suma(importe_de_traspasos, fila.importe)
-                # Se cuentan las patas de traspaso que entran (una por pareja), no las dos.
+                # Se cuenta **una vez por traspaso**, y se cuenta lo que salió de una cuenta (las dos
+                # patas son el mismo dinero): sumar las dos daría el doble de lo que se ha movido.
                 if fila.signo == SALE:
                     cuantos_traspasos += 1
+                    importe_de_traspasos = dinero.suma(importe_de_traspasos, fila.importe)
             continue
         if fila.importe is None:
             sin_importe += 1

@@ -173,6 +173,13 @@ CAMPOS_DE_UN_INSUMO = (
     "origen_id",
 )
 
+# **Lo que, si cambia, obliga a mover el almacén.** Es lo que de verdad salió del envase: el artículo,
+# el envase, la cantidad y en qué se mide. Se quedan fuera a propósito la dosis por hectárea (cambiar la
+# dosis no cambia lo que se gastó) y las notas: corregir eso **no** puede mover existencias. Y el día
+# del trabajo sí está, porque la salida lleva la fecha del trabajo y corregirla sin corregir el
+# movimiento dejaría el libro con la fecha vieja.
+CAMPOS_QUE_MUEVEN_EL_ALMACEN = ("articulo_id", "lote_id", "cantidad", "unidad")
+
 # De qué apunte del cuaderno sale una salida del almacén, y a qué tabla corresponde. Lo escribe el
 # programa, no una persona: se saca de aquí para que no haya dos formas de restar (ver `servicios.py`).
 DE_DONDE_SALE_UN_APUNTE = {"labor": "hecho", "trabajo_previsto": "previsto"}
@@ -1207,7 +1214,7 @@ def corregir(
         viejo = nuevo.get(campo)
         if viejo == valor:
             continue
-        antes_y_ahora[campo] = [_como_json(viejo), _como_json(valor)]
+        antes_y_ahora[campo] = [como_json(viejo), como_json(valor)]
         nuevo[campo] = valor
     if not antes_y_ahora:
         # Corregir sin cambiar nada no es un cambio: no se apunta en el rastro ni se toca el almacén.
@@ -1222,8 +1229,7 @@ def corregir(
 
     # ¿Hay que mover el almacén? Solo si lo que cambia es lo que salió: la cantidad, la unidad, el
     # envase, el artículo o el día. Un cambio de horas, de hectáreas o de observaciones no toca nada.
-    de_lo_que_sale = {"cantidad", "unidad", "lote_id", "articulo_id", "fecha"}
-    if de_lo_que_sale & set(antes_y_ahora):
+    if _cambio_lo_que_salio(original, nuevo, antes_y_ahora):
         devuelto["hay_que_tocar_el_almacen"] = True
         devuelto["consumos_que_hay_que_anular"] = [
             {**insumo, "motivo_codigo": "TJ4_lo_que_salio_cambio"}
@@ -1258,6 +1264,26 @@ def corregir(
 def origen_que_no_se_corrige(trabajo: Mapping[str, Any] | None) -> bool:
     """Si esto no es un hecho que se pueda corregir: un plan, o algo ya anulado."""
     return (trabajo or {}).get("de_donde") == "previsto" or esta_anulado(trabajo)
+
+
+def _cambio_lo_que_salio(
+    original: Mapping[str, Any], nuevo: Mapping[str, Any], campos_cambiados: Mapping[str, Any]
+) -> bool:
+    """Si lo que ha cambiado es **lo que salió del almacén**, y por tanto hay que mover el libro.
+
+    Se mira en dos sitios, y los dos hacen falta: los campos del propio trabajo (el día, que es la
+    fecha de la salida) y lo que se gastó (el artículo, el envase, la cantidad y la unidad). Lo que se
+    compara de los insumos son **esas cuatro cosas y nada más**: cambiar la dosis por hectárea, las
+    notas o el número de lote escrito a mano no cambia lo que salió del envase, y mover el almacén por
+    eso sería apuntar una salida nueva por un cambio que no gastó nada.
+    """
+    if set(campos_cambiados) & (set(CAMPOS_QUE_MUEVEN_EL_ALMACEN) | {"fecha"}):
+        return True
+    if "insumos" not in campos_cambiados:
+        return False
+    antes = [tuple(i.get(campo) for campo in CAMPOS_QUE_MUEVEN_EL_ALMACEN) for i in original["insumos"]]
+    ahora = [tuple(i.get(campo) for campo in CAMPOS_QUE_MUEVEN_EL_ALMACEN) for i in nuevo["insumos"]]
+    return antes != ahora
 
 
 def se_puede_borrar(trabajo: Mapping[str, Any] | None) -> tuple[bool, str]:
@@ -1472,10 +1498,19 @@ def _fecha_texto(valor: Any) -> str | None:
     return str(valor) if valor else None
 
 
-def _como_json(valor: Any) -> Any:
-    """Un valor en algo que se pueda escribir en el rastro (que es una columna JSON)."""
+def como_json(valor: Any) -> Any:
+    """Un valor en algo que se pueda escribir en el rastro (que es una columna JSON).
+
+    Lo usa el router para escribir en `auditoria` lo que decía antes y lo que dice ahora: una fecha no
+    se puede meter en un JSON tal cual, y reventaría al guardar el rastro —es decir, al corregir algo
+    que sí se puede corregir—.
+    """
     if isinstance(valor, (dt.date, dt.datetime)):
         return valor.isoformat()
     if isinstance(valor, (str, int, float, bool)) or valor is None:
         return valor
+    if isinstance(valor, (list, tuple)):
+        return [como_json(elemento) for elemento in valor]
+    if isinstance(valor, dict):
+        return {str(clave): como_json(dato) for clave, dato in valor.items()}
     return str(valor)

@@ -989,3 +989,425 @@ class TestLoQueEsteModuloNoHace:
             gastos.NO_SE_REPARTE_PORQUE_FALTA_UN_PESO,
         ):
             assert motivo.islower() and " " not in motivo
+
+
+# --------------------------------------------------------------------------
+# 12. El recorrido de punta a punta: lo que necesita el servidor
+# --------------------------------------------------------------------------
+#
+# Estas pruebas son **el recorrido** del ticket: apuntar un gasto → asignarlo a tierras, cultivos o
+# máquinas → consultar el importe conocido, los repartos y lo pendiente de pagar. Necesitan las tablas
+# (`models.py`) y los esquemas (`schemas.py`), que son ficheros compartidos y los integra el
+# coordinador. Mientras no estén, **se saltan diciendo exactamente qué falta**; el día que se integren
+# corren solas, sin tocar nada de este fichero.
+#
+# Y lo que comprueban no es «no revienta»: cada una es una de las siete reglas del encargo.
+
+
+def _lo_que_contesta(respuesta, *esperados):
+    """La respuesta, comprobando antes el código: un 500 con el cuerpo vacío no dice nada útil."""
+    assert respuesta.status_code in esperados or respuesta.status_code == 200, respuesta.text
+    return respuesta.json()
+
+
+@sin_servidor
+class TestElRecorridoDeUnGastoDePuntaAPunta:
+    """De apuntar el gasto a saber cuánto se debe: el camino entero, por la API."""
+
+    def _un_gasto(self, cliente, cuenta, **cambios):
+        datos = {
+            "fecha": "2026-03-04",
+            "concepto": "Abono 15-15-15",
+            "categoria": "abono",
+            "proveedor": "Cooperativa Agrícola de Peñaranda",
+            "base_imponible": "600.00",
+            "cuota_iva": "63.00",
+            "importe": "663.00",
+            "clave_de_reenvio": "movil-2026-03-04-1",
+        }
+        datos.update(cambios)
+        respuesta = cliente.post("/api/gastos", headers=cuenta["cabeceras"], json=datos)
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()
+
+    def test_se_apunta_se_reparte_y_se_consulta_lo_que_se_debe(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """El recorrido entero: **guardar → asignar a tierras → consultar importe, repartos y pendiente**."""
+        grande = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        pequena = crear_parcela(alias="La Vega", superficie_ha=2.0)
+        apuntado = self._un_gasto(cliente, cuenta, campana_id=campana["id"])
+        gasto = apuntado["gasto"]
+        assert gasto["importe"] == "663.00"
+        assert gasto["estado"] == gastos.SIN_PAGAR
+        assert gasto["pendiente"] == "663.00"
+        assert gasto["cuadre"]["cuadra"] is True
+        # Acaba de apuntarse: todavía no está en ninguna tierra, y se dice.
+        assert gasto["esta_sin_repartir"] is True
+
+        repartido = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={"metodo": "area", "destino_tipo": "tierra", "parcela_ids": [grande["id"], pequena["id"]]},
+        )
+        assert repartido.status_code == 200, repartido.text
+        suyo = repartido.json()["gasto"]
+        assert suyo["cuadre_del_reparto"]["repartido"] == "663.00"
+        assert suyo["cuadre_del_reparto"]["sin_asignar"] == "0.00"
+        assert suyo["cuadre_del_reparto"]["cuadra"] is True
+        # Y el reparto es proporcional a las hectáreas: 4 ha y 2 ha se llevan 442 y 221.
+        assert sorted(uno["importe"] for uno in suyo["repartos"]) == ["221.00", "442.00"]
+
+        ficha = cliente.get(f"/api/gastos/{gasto['id']}", headers=cuenta["cabeceras"])
+        assert ficha.status_code == 200
+        assert ficha.json()["cuadre_del_reparto"]["total_conocido"] == "663.00"
+
+    def test_un_pago_parcial_deja_el_pendiente_exacto_y_no_crea_otro_gasto(
+        self, cliente, cuenta, campana
+    ):
+        """A06 por el lado de las salidas: 663 € de gasto y 200 € pagados → faltan 463 €, y sigue
+        habiendo **un** gasto."""
+        gasto = self._un_gasto(cliente, cuenta, campana_id=campana["id"])["gasto"]
+        antes = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()["gastos"]
+        pago = cliente.post(
+            "/api/gastos/pagos",
+            headers=cuenta["cabeceras"],
+            json={
+                "fecha": "2026-03-20",
+                "importe": "200.00",
+                "proveedor": "Cooperativa Agrícola de Peñaranda",
+                "clave_de_reenvio": "movil-pago-1",
+                "aplicaciones": [{"gasto_id": gasto["id"]}],
+            },
+        )
+        assert pago.status_code == 201, pago.text
+        despues = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()["gastos"]
+        assert len(despues) == len(antes), "conciliar un pago ha creado un gasto"
+        suyo = [uno for uno in despues if uno["id"] == gasto["id"]][0]
+        assert suyo["pagado"] == "200.00"
+        assert suyo["pendiente"] == "463.00"
+        assert suyo["estado"] == gastos.PAGADO_EN_PARTE
+
+    def test_reenviar_el_mismo_gasto_no_lo_duplica(self, cliente, cuenta, campana):
+        primero = self._un_gasto(cliente, cuenta, campana_id=campana["id"])
+        segundo = self._un_gasto(cliente, cuenta, campana_id=campana["id"])
+        assert segundo["ya_estaba"] is True
+        assert segundo["gasto"]["id"] == primero["gasto"]["id"]
+        todos = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()["gastos"]
+        assert len(todos) == 1
+
+    def test_un_gasto_sin_importe_se_guarda_y_lo_dice_sin_convertirlo_en_cero(
+        self, cliente, cuenta, campana
+    ):
+        apuntado = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="Reparación del remolque",
+            base_imponible=None,
+            cuota_iva=None,
+            importe=None,
+            clave_de_reenvio="movil-2026-03-05-1",
+        )
+        gasto = apuntado["gasto"]
+        assert gasto["importe"] is None
+        assert gasto["texto_importe"] == ""
+        assert gasto["estado"] == gastos.SIN_IMPORTE
+        assert gasto["pendiente"] is None
+        assert apuntado["avisos"], "no se dice que se ha guardado sin importe"
+        # Y el pie de la cuenta lo dice, en vez de dar un total que parece completo.
+        cuentas = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()
+        assert cuentas["cuenta"]["gastos_sin_importe"] == 1
+        assert cuentas["cuenta"]["pendiente"] is None
+        assert cuentas["coste_por_clase"]["sin_importe"] == 1
+
+    def test_un_gasto_que_no_se_puede_repartir_se_queda_sin_asignar_y_se_dice(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """La trampa del ticket: falta la superficie de una tierra, así que **no se reparte a medias**."""
+        con_superficie = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        sin_superficie = crear_parcela(alias="La Vega", superficie_ha=None)
+        gasto = self._un_gasto(cliente, cuenta, campana_id=campana["id"])["gasto"]
+        respuesta = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={
+                "metodo": "area",
+                "destino_tipo": "tierra",
+                "parcela_ids": [con_superficie["id"], sin_superficie["id"]],
+            },
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        cuerpo = respuesta.json()
+        suyo = cuerpo["gasto"]
+        assert suyo["cuadre_del_reparto"]["repartido"] == "0.00"
+        assert suyo["cuadre_del_reparto"]["sin_asignar"] == "663.00"
+        assert suyo["cuadre_del_reparto"]["cuadra"] is True
+        assert suyo["cuadre_del_reparto"]["no_se_reparte"] == gastos.NO_SE_REPARTE_PORQUE_FALTA_UN_PESO
+        assert cuerpo["avisos"], "no se dice por qué no se ha podido repartir"
+
+    def test_el_reparto_dice_donde_esta_el_centimo_del_redondeo(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """100 € entre tres tierras iguales: la suma tiene que ser exacta y el céntimo, visible."""
+        tierras = [crear_parcela(alias=f"Tierra {indice}") for indice in range(3)]
+        gasto = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="Seguro de la finca",
+            importe="100.00",
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-seguro-1",
+        )["gasto"]
+        respuesta = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={"metodo": "area", "destino_tipo": "tierra", "parcela_ids": [t["id"] for t in tierras]},
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        cuerpo = respuesta.json()
+        assert cuerpo["texto_residual"] == "0,01 €"
+        assert cuerpo["residual_en"], "no se dice a qué trozo se le ha puesto el céntimo"
+        importes = sorted(uno["importe"] for uno in cuerpo["gasto"]["repartos"])
+        assert importes == ["33.33", "33.33", "33.34"]
+
+    def test_anular_un_gasto_revierte_sus_efectos_y_deja_el_rastro(
+        self, cliente, cuenta, campana, crear_parcela, db_sesion
+    ):
+        """Anular no borra: el gasto queda tachado con su motivo, sus repartos dejan de contar y el
+        dinero que lo saldaba vuelve a estar sin conciliar."""
+        parcela = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        gasto = self._un_gasto(cliente, cuenta, campana_id=campana["id"])["gasto"]
+        cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={"metodo": "area", "destino_tipo": "tierra", "parcela_ids": [parcela["id"]]},
+        )
+        cliente.post(
+            "/api/gastos/pagos",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-03-20", "importe": "200.00", "aplicaciones": [{"gasto_id": gasto["id"]}]},
+        )
+        anulado = cliente.post(
+            f"/api/gastos/{gasto['id']}/anular",
+            headers=cuenta["cabeceras"],
+            json={"motivo": "Me equivoqué: era de otra finca"},
+        )
+        assert anulado.status_code == 200, anulado.text
+        suyo = anulado.json()["gasto"]
+        assert suyo["anulado"] is True
+        assert suyo["motivo_anulacion"] == "Me equivoqué: era de otra finca"
+        assert suyo["repartos"] == [], "los repartos siguen vivos después de anular el gasto"
+        cuentas = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()
+        assert cuentas["cuenta"]["coste_conocido"] == "0.00"
+        assert cuentas["sin_conciliar"], "el dinero no ha vuelto a estar sin conciliar"
+        # Y el rastro: el motivo, la anulación y la vuelta del dinero.
+        from app import models
+
+        acciones = {
+            fila.accion
+            for fila in db_sesion.query(models.Auditoria)
+            .filter(models.Auditoria.entidad == "gasto")
+            .all()
+        }
+        assert "anular" in acciones
+
+    def test_deshacer_una_conciliacion_no_borra_el_pago(self, cliente, cuenta, campana):
+        gasto = self._un_gasto(cliente, cuenta, campana_id=campana["id"])["gasto"]
+        pago = cliente.post(
+            "/api/gastos/pagos",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-03-20", "importe": "200.00", "aplicaciones": [{"gasto_id": gasto["id"]}]},
+        ).json()["pago"]
+        aplicacion = pago["aplicaciones"][0]["id"]
+        deshecho = cliente.delete(
+            f"/api/gastos/pagos/{pago['id']}/aplicaciones/{aplicacion}",
+            headers=cuenta["cabeceras"],
+        )
+        assert deshecho.status_code == 200, deshecho.text
+        suyo = deshecho.json()["pago"]
+        # El pago sigue apuntado con su importe entero y vuelve a estar sin conciliar.
+        assert suyo["importe"] == "200.00"
+        assert suyo["sin_conciliar"] == "200.00"
+        assert suyo["aplicaciones"] == []
+        # Y el gasto vuelve a estar pendiente entero.
+        ficha = cliente.get(f"/api/gastos/{gasto['id']}", headers=cuenta["cabeceras"]).json()
+        assert ficha["pagado"] == "0.00"
+        assert ficha["pendiente"] == "663.00"
+
+    def test_el_margen_no_se_calcula_si_falta_un_importe(self, cliente, cuenta, campana):
+        """Regla del contrato: «no construir un margen con datos que faltan»."""
+        self._un_gasto(cliente, cuenta, campana_id=campana["id"], cultivo="Trigo")
+        self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="Reparación del remolque",
+            cultivo="Trigo",
+            importe=None,
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-2026-03-06-1",
+        )
+        cuentas = cliente.get(
+            f"/api/gastos?campana_id={campana['id']}", headers=cuenta["cabeceras"]
+        ).json()
+        trigo = cuentas["margenes"]["Trigo"]
+        assert trigo["completo"] is False
+        assert trigo["margen"] is None
+        assert trigo["costes_que_no_se"] == 1
+        assert trigo["coste_conocido"] == "663.00"
+
+    def test_las_ayudas_tienen_sus_tres_cifras_y_la_prevision_no_es_ingreso(self, cliente, cuenta, campana):
+        ayuda = cliente.post(
+            "/api/gastos/subvenciones",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "concepto": "Ayuda a la cosecha de cereal",
+                "organismo": "Junta de Castilla y León",
+                "importe_previsto": "3000.00",
+            },
+        )
+        assert ayuda.status_code == 201, ayuda.text
+        vista = ayuda.json()["subvencion"]
+        assert vista["estado"] == gastos.PREVISTA
+        assert vista["cuenta_como_ingreso"] is False
+        assert ayuda.json()["avisos"], "no se dice que una ayuda prevista no es un ingreso"
+        listado = cliente.get("/api/gastos/subvenciones", headers=cuenta["cabeceras"]).json()
+        assert listado["ingreso_cobrado"] == "0.00"
+        assert listado["importe_previsto"] == "3000.00"
+
+    def test_una_inversion_no_entra_en_el_coste_de_la_campana(self, cliente, cuenta, campana):
+        cliente.post(
+            "/api/gastos/inversiones",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "fecha": "2026-02-01",
+                "concepto": "Tractor usado",
+                "categoria": "maquinaria",
+                "importe": "24000.00",
+            },
+        )
+        cuentas = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json()
+        assert cuentas["cuenta"]["coste_conocido"] == "0.00"
+        assert len(cuentas["inversiones"]) == 1
+        assert cuentas["inversiones"][0]["texto_sin_asignar"] == "24.000,00 €"
+
+    def test_el_gasto_de_otra_finca_no_se_ve(self, cliente, cuenta, crear_cuenta):
+        from tests.conftest import DATOS_CUENTA
+
+        otro = crear_cuenta("otro@ejemplo.test", nombre="Otro", nif="12345678Z")
+        gasto = cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={"concepto": "Gasóleo", "importe": "100.00", "clave_de_reenvio": "aislamiento-1"},
+        ).json()["gasto"]
+        respuesta = cliente.get(f"/api/gastos/{gasto['id']}", headers=otro["cabeceras"])
+        # **404 y no 403**: así no se cuenta si el identificador existe en otra finca.
+        assert respuesta.status_code == 404, respuesta.text
+        del DATOS_CUENTA
+
+    def test_las_cinco_rutas_de_palabra_fija_llegan_a_su_funcion(self, cliente, cuenta):
+        """`/gastos/{id}` va la última a propósito: si fuera antes, «pagos» se leería como un id.
+
+        Sin esta prueba, un cambio de orden en el fichero haría que `/api/gastos/pagos` contestara
+        «revisa lo que has escrito» en vez de dar la lista, y nadie se enteraría hasta el día que
+        alguien abriera esa pantalla.
+        """
+        for ruta in (
+            "/api/gastos",
+            "/api/gastos/avisos",
+            "/api/gastos/inversiones",
+            "/api/gastos/pagos",
+            "/api/gastos/subvenciones",
+            "/api/gastos/cuadre",
+            "/api/gastos/que-falta",
+        ):
+            respuesta = cliente.get(ruta, headers=cuenta["cabeceras"])
+            assert respuesta.status_code == 200, f"{ruta} contesta {respuesta.status_code}"
+
+    def test_los_gastos_de_un_gasto_sin_importe_no_se_pueden_repartir(self, cliente, cuenta, campana, crear_parcela):
+        parcela = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        gasto = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            importe=None,
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-sin-importe-reparto",
+        )["gasto"]
+        respuesta = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={"metodo": "area", "destino_tipo": "tierra", "parcela_ids": [parcela["id"]]},
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        cuerpo = respuesta.json()
+        assert cuerpo["gasto"]["cuadre_del_reparto"]["no_se_reparte"] == (
+            gastos.NO_SE_REPARTE_PORQUE_NO_SE_EL_IMPORTE
+        )
+        assert cuerpo["avisos"], "no se dice que sin importe no se puede repartir"
+
+
+@sin_servidor
+class TestElCosteDeLasAveriasPorLaApi:
+    """El coste de las averías, que el T14 dejó declarado como de este ticket."""
+
+    def test_la_reparacion_es_un_gasto_que_dice_de_que_averia_sale(
+        self, cliente, cuenta, campana
+    ):
+        maquina = cliente.post(
+            "/api/maquinaria",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "El Landini", "clase": "tractor", "propiedad": "propia", "disponibilidad": "disponible"},
+        )
+        assert maquina.status_code == 201, maquina.text
+        averia = cliente.post(
+            f"/api/maquinaria/{maquina.json()['id']}/averias",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-04-01", "que_paso": "Se rompió el eje del ventilador", "resuelta": False},
+        )
+        assert averia.status_code == 201, averia.text
+        cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "concepto": "Reparación del eje del ventilador",
+                "categoria": "reparacion",
+                "averia_id": averia.json()["id"],
+                "maquina_id": maquina.json()["id"],
+                "importe": "900.00",
+                "clave_de_reenvio": "reparacion-1",
+            },
+        )
+        coste = cliente.get("/api/gastos/averias", headers=cuenta["cabeceras"]).json()
+        assert len(coste["averias"]) == 1
+        suya = coste["averias"][0]
+        assert suya["coste"] == "900.00"
+        assert suya["texto_coste"] == "900,00 €"
+        # **Y estar arreglada es otra cosa**: la avería sigue sin arreglar aunque la reparación esté
+        # apuntada y pagada. Son dos datos distintos y el programa no los mezcla.
+        assert suya["sigue_sin_arreglar"] is True
+
+    def test_una_averia_sin_ningun_gasto_no_cuesta_cero(self, cliente, cuenta):
+        maquina = cliente.post(
+            "/api/maquinaria",
+            headers=cuenta["cabeceras"],
+            json={"nombre": "El Landini", "clase": "tractor", "propiedad": "propia", "disponibilidad": "disponible"},
+        ).json()
+        averia = cliente.post(
+            f"/api/maquinaria/{maquina['id']}/averias",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-04-01", "que_paso": "Se rompió el eje", "resuelta": None},
+        ).json()
+        coste = cliente.get("/api/gastos/averias", headers=cuenta["cabeceras"]).json()
+        # No hay ninguna fila porque no hay ningún gasto apuntado: **no se inventa un cero**.
+        assert all(uno["averia_id"] != averia["id"] for uno in coste["averias"])
+        assert coste["reparaciones_sin_averia"]["cuantos"] == 0
+
