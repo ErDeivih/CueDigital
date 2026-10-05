@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Apuntado correctamente - CUE Digital</title>
+  <style>
+    /* Reset & Base System according to DESIGN.md */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #10190f;
+      font-size: 18px;
+      line-height: 1.45;
+      padding: 0;
+      margin: 0;
+    }
+    .app-container {
+      max-width: 44rem;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #ffffff;
+    }
+
+    /* Fixed Header */
+    header.top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      min-height: 64px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 4px solid #0d2b18;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .header-brand svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2.2;
+    }
+    .btn-header {
+      background-color: #3a6446;
+      color: #ffffff;
+      border: 2px solid #8fae97;
+      border-radius: 10px;
+      min-height: 48px;
+      padding: 6px 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-header:focus, .btn-header:active {
+      outline: 4px solid #ffd24a;
+    }
+
+    /* Content Area */
+    main {
+      flex: 1;
+      padding: 16px 14px 32px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Main Big Confirmation Box */
+    .confirm-box {
+      background-color: #f4f6f3;
+      border: 3px solid #1f4a2c;
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .confirm-icon-wrap {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      background-color: #1f4a2c;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .confirm-icon-wrap svg {
+      width: 32px;
+      height: 32px;
+      stroke: #ffffff;
+      stroke-width: 3;
+      fill: none;
+    }
+    .confirm-text h1 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #1f4a2c;
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+    .confirm-text p {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #10190f;
+    }
+
+    /* Offline status banner (explicitly highlighted as per prompt) */
+    .offline-banner {
+      background-color: #f4f6f3;
+      border: 3px solid #1f4a2c;
+      border-left: 8px solid #2f6b40;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .banner-icon {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      margin-top: 2px;
+    }
+    .offline-banner h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1f4a2c;
+      margin-bottom: 4px;
+    }
+    .offline-banner p {
+      font-size: 1.05rem;
+      color: #10190f;
+      line-height: 1.45;
+    }
+
+    /* Section Heading */
+    .section-label {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #43503f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      margin-bottom: -4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label svg {
+      width: 22px;
+      height: 22px;
+      stroke: #43503f;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* Summary Card (El apunte) */
+    .summary-card {
+      background-color: #ffffff;
+      border: 3px solid #1f4a2c;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .summary-header {
+      background-color: #1f4a2c;
+      color: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .summary-header-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-ok {
+      background-color: #ffffff;
+      color: #1f4a2c;
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 2px solid #0d2b18;
+      text-transform: uppercase;
+    }
+
+    .summary-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Row Item in Summary */
+    .data-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f4f6f3;
+    }
+    .data-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .data-label {
+      font-size: 1rem;
+      color: #43503f;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .data-label svg {
+      width: 18px;
+      height: 18px;
+      stroke: #43503f;
+      stroke-width: 2;
+      fill: none;
+    }
+    .data-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #10190f;
+    }
+    .data-sub {
+      font-size: 1.05rem;
+      color: #43503f;
+      font-weight: 400;
+    }
+
+    /* Security Harvest Period (Plazo de espera) Notice Box */
+    .harvest-alert {
+      background-color: #ffe9a8;
+      border: 3px solid #8a6a00;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .harvest-alert-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      margin-top: 2px;
+    }
+    .harvest-alert-icon svg {
+      width: 36px;
+      height: 36px;
+      stroke: #3d2f00;
+      stroke-width: 2.2;
+      fill: none;
+    }
+    .harvest-alert-content h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #3d2f00;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .harvest-alert-content p {
+      font-size: 1.15rem;
+      color: #3d2f00;
+      line-height: 1.45;
+      font-weight: 600;
+    }
+    .harvest-alert-content .highlight-date {
+      font-weight: 800;
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+    }
+
+    /* Actions Section - Strict: >=64px height, high contrast, no tabs */
+    .actions-group {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Primary Back Button */
+    .btn-volver {
+      background-color: #2f6b40;
+      color: #ffffff;
+      border: 3px solid #0d2b18;
+      border-radius: 14px;
+      min-height: 68px;
+      padding: 14px 18px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+    }
+    .btn-volver svg {
+      width: 28px;
+      height: 28px;
+      stroke: #ffffff;
+      stroke-width: 2.5;
+      fill: none;
+    }
+    .btn-volver:focus, .btn-volver:active {
+      outline: 4px solid #ffd24a;
+    }
+
+    /* Secondary Deshacer Button: visible, clear, safe, not intimidating */
+    .btn-deshacer {
+      background-color: #ffffff;
+      color: #8c1d18;
+      border: 3px solid #8c1d18;
+      border-radius: 14px;
+      min-height: 64px;
+      padding: 12px 18px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-deshacer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-deshacer-row svg {
+      width: 24px;
+      height: 24px;
+      stroke: #8c1d18;
+      stroke-width: 2.5;
+      fill: none;
+    }
+    .btn-deshacer-sub {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #43503f;
+    }
+    .btn-deshacer:focus, .btn-deshacer:active {
+      outline: 4px solid #ffd24a;
+    }
+
+    /* Bottom reassurance note */
+    .footer-clarification {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #43503f;
+      line-height: 1.4;
+      padding: 8px 12px;
+      border-top: 1px solid #a9b6a8;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="top-bar">
+      <div class="header-brand">
+        <!-- SVG Tractor / Agriculture Icon -->
+        <svg viewBox="0 0 24 24">
+          <circle cx="6" cy="17" r="3"></circle>
+          <circle cx="17" cy="15" r="5"></circle>
+          <path d="M9 17h3v-7l-4-3H4v6h2"></path>
+          <path d="M12 10h4l2 3"></path>
+        </svg>
+        <span>CUE Digital</span>
+      </div>
+      <button class="btn-header" type="button" aria-label="Agrandar letra">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M4 19L9.5 4h1L16 19"></path>
+          <path d="M6 14h8"></path>
+          <path d="M18 10v6"></path>
+          <path d="M15 13h6"></path>
+        </svg>
+        <span>A+ Letra</span>
+      </button>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Big Affirmation -->
+      <div class="confirm-box" role="status">
+        <div class="confirm-icon-wrap" aria-hidden="true">
+          <!-- Big Checkmark SVG -->
+          <svg viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="confirm-text">
+          <h1>Apuntado</h1>
+          <p>Si te has equivocado, pulsa DESHACER.</p>
+        </div>
+      </div>
+
+      <!-- Offline Coverage Status Alert -->
+      <div class="offline-banner">
+        <div class="banner-icon" aria-hidden="true">
+          <!-- Antena / Sin cobertura con guardado seguro SVG -->
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 1l22 22"></path>
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+            <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+            <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"></line>
+          </svg>
+        </div>
+        <div>
+          <h2>No hay cobertura</h2>
+          <p>No te preocupes: lo hemos guardado en el móvil y se manda solo cuando llegues a casa.</p>
+        </div>
+      </div>
+
+      <!-- Notice: Harvest security interval (Plazo de espera) -->
+      <div class="harvest-alert">
+        <div class="harvest-alert-icon" aria-hidden="true">
+          <!-- Calendar / Warning alert SVG -->
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <circle cx="12" cy="16" r="2" fill="#3d2f00"></circle>
+          </svg>
+        </div>
+        <div class="harvest-alert-content">
+          <h2>Plazo de espera obligatorio</h2>
+          <p>Fíjate: con lo que has echado hoy, en esta parcela no podrás coger la cosecha hasta el <span class="highlight-date">28 de mayo de 2026</span>.</p>
+        </div>
+      </div>
+
+      <!-- Summary of what was just recorded -->
+      <div class="section-label">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Lo que acabas de apuntar</span>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-header-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 2v20"></path>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            Tratamiento con producto
+          </span>
+          <span class="badge-ok">Guardado</span>
+        </div>
+
+        <div class="summary-body">
+          <!-- 1. Qué se ha echado -->
+          <div class="data-row">
+            <div class="data-label">
+              <svg viewBox="0 0 24 24"><path d="M10 2v7.31L4 18h16l-6-8.69V2z"></path></svg>
+              ¿Qué has echado?
+            </div>
+            <div class="data-value">Tebuconazol 25% WG</div>
+            <div class="data-sub">Fungicida para roya y oídio · Nº registro oficial 24.156</div>
+          </div>
+
+          <!-- 2. En qué tierra -->
+          <div class="data-row">
+            <div class="data-label">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              ¿En qué tierra?
+            </div>
+            <div class="data-value">El Prado (4,90 hectáreas)</div>
+            <div class="data-sub">Tierra de secano · Sembrado con Cebada cervecera</div>
+          </div>
+
+          <!-- 3. Cuánto -->
+          <div class="data-row">
+            <div class="data-label">
+              <svg viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"></path></svg>
+              ¿Cuánto has gastado?
+            </div>
+            <div class="data-value">2 kilos por hectárea</div>
+            <div class="data-sub">Gasto total: 9,8 kilos en toda la finca (Cuba llena: 600 litros de agua)</div>
+          </div>
+
+          <!-- 4. Qué día -->
+          <div class="data-row">
+            <div class="data-label">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              ¿Qué día se echó?
+            </div>
+            <div class="data-value">Hoy, 15 de abril de 2026</div>
+            <div class="data-sub">Tratamiento hecho por ti (con carné de aplicador en regla)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions: VOLVER and DESHACER (separated, >=64px, clear hierarchy) -->
+      <div class="actions-group">
+        <!-- Main button to return to home/menu -->
+        <button class="btn-volver" type="button" onclick="alert('Volviendo al inicio')">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>VOLVER AL INICIO</span>
+        </button>
+
+        <!-- Secondary Undo action: visible, clear, safe, non-threatening -->
+        <button class="btn-deshacer" type="button" onclick="alert('Se ha deshecho el apunte')">
+          <div class="btn-deshacer-row">
+            <svg viewBox="0 0 24 24">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            <span>DESHACER ESTE APUNTE</span>
+          </div>
+          <span class="btn-deshacer-sub">Por si te has confundido de tierra, producto o dosis</span>
+        </button>
+      </div>
+
+      <div class="footer-clarification">
+        <strong>CUE Digital · Junta de Castilla y León</strong><br>
+        Tus apuntes están seguros en el teléfono y protegidos para cualquier inspección.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

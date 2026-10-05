@@ -1,0 +1,18 @@
+CUADERNO DE CAMPO
+version: 1
+
+EXPLOTACION
+nombre: EXPLOTACION DE PRUEBA
+nif: 70922320A
+municipio: Villarino de los Aires
+provincia: Salamanca
+
+TRATAMIENTO
+fecha: 05/05/2026
+parcela: La Fuente
+cultivo: Cebada de dos carreras
+producto: Cipermetrina 10 %
+dosis: 0,25 l/ha
+superficie: 2,43 ha
+justificacion: Vi la plaga en el campo
+aplicador: David Perez

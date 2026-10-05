@@ -1,0 +1,129 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "dn_pk": 1353068077,
+    "provincia": 37,
+    "municipio": 70,
+    "agregado": 0,
+    "zona": 0,
+    "poligono": 503,
+    "parcela": 51,
+    "recinto": 1,
+    "pendiente_media": 1.0,
+    "altitud": 837
+   },
+   "id": 1353068077,
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -5.554602363328032,
+       40.90735266792641
+      ],
+      [
+       -5.554826829870154,
+       40.907387334641804
+      ],
+      [
+       -5.5548454360199235,
+       40.90739020795838
+      ],
+      [
+       -5.55486654668251,
+       40.90739346851891
+      ],
+      [
+       -5.559299730505033,
+       40.90829516102643
+      ],
+      [
+       -5.55929979336931,
+       40.908301672927394
+      ],
+      [
+       -5.559299809294928,
+       40.90830335601365
+      ],
+      [
+       -5.559306251626089,
+       40.90941802347336
+      ],
+      [
+       -5.558973858015916,
+       40.90935127669804
+      ],
+      [
+       -5.557940070059304,
+       40.909143735734
+      ],
+      [
+       -5.55694984201788,
+       40.90894494715378
+      ],
+      [
+       -5.556430511839271,
+       40.908837690638016
+      ],
+      [
+       -5.554660914277936,
+       40.90847221700682
+      ],
+      [
+       -5.554637625996776,
+       40.90846726162536
+      ],
+      [
+       -5.554630628783591,
+       40.90846577299927
+      ],
+      [
+       -5.554671643114635,
+       40.907863006836955
+      ],
+      [
+       -5.554603264382676,
+       40.9073760668487
+      ],
+      [
+       -5.554602363328032,
+       40.90735266792641
+      ]
+     ]
+    ]
+   }
+  }
+ ],
+ "numberMatched": 1,
+ "numberReturned": 1,
+ "links": [
+  {
+   "type": "application/geo+json",
+   "rel": "self",
+   "title": "This document as GeoJSON",
+   "href": "https://sigpac-hubcloud.es/ogcapi/collections/recintos/items?f=json&provincia=37&municipio=70&poligono=503&parcela=51&limit=50"
+  },
+  {
+   "rel": "alternate",
+   "type": "application/ld+json",
+   "title": "This document as RDF (JSON-LD)",
+   "href": "https://sigpac-hubcloud.es/ogcapi/collections/recintos/items?f=jsonld&provincia=37&municipio=70&poligono=503&parcela=51&limit=50"
+  },
+  {
+   "type": "text/html",
+   "rel": "alternate",
+   "title": "This document as HTML",
+   "href": "https://sigpac-hubcloud.es/ogcapi/collections/recintos/items?f=html&provincia=37&municipio=70&poligono=503&parcela=51&limit=50"
+  },
+  {
+   "type": "application/json",
+   "title": "Recintos SIGPAC",
+   "rel": "collection",
+   "href": "https://sigpac-hubcloud.es/ogcapi/collections/recintos"
+  }
+ ],
+ "timeStamp": "2026-09-24T12:45:32.553535Z"
+}

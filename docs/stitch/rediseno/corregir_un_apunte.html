@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lámina: Corregir un apunte guardado - CUE Digital</title>
+  <style>
+    /* Reset & Base Tokens from CUE Digital Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #1f4a2c;
+      --primary-container: #2f6b40;
+      --primary-dark: #0d2b18;
+      --primary-overlay: #3a6446;
+      --on-primary: #ffffff;
+      --tertiary: #8a6a00;
+      --secondary-container: #ffe9a8;
+      --on-secondary-container: #3d2f00;
+      --surface: #ffffff;
+      --surface-variant: #f4f6f3;
+      --on-surface: #10190f;
+      --on-surface-variant: #43503f;
+      --outline: #a9b6a8;
+      --error: #8c1d18;
+      --error-dark: #5c110d;
+      --error-container: #fbe3e1;
+      --on-error-container: #4a0f0b;
+      --focus: #ffd24a;
+      
+      --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #ebeee9;
+      color: var(--on-surface);
+      font-family: var(--font-stack);
+      font-size: 18px;
+      line-height: 1.45;
+      padding: 24px 16px 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container for the sheet / canvas showcase */
+    .sheet-wrapper {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    /* Sheet Header Banner */
+    .sheet-header {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+      border-radius: 14px;
+      padding: 20px 24px;
+    }
+
+    .sheet-header-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sheet-header-sub {
+      font-size: 18px;
+      color: #e2ede5;
+      margin-bottom: 12px;
+    }
+
+    .sheet-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sheet-badge {
+      background-color: var(--primary-overlay);
+      border: 2px solid #8fae97;
+      color: var(--on-primary);
+      font-size: 15px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 8px;
+    }
+
+    /* Device Showcase Frame (representing the mobile view in sunlight) */
+    .case-container {
+      background-color: var(--surface);
+      border: 4px solid var(--primary-dark);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .case-banner {
+      background-color: var(--primary-dark);
+      color: var(--on-primary);
+      padding: 14px 20px;
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .case-tag {
+      display: inline-block;
+      background-color: var(--focus);
+      color: var(--primary-dark);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    .case-title {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .case-desc {
+      font-size: 16px;
+      color: #cfdec5;
+      margin-top: 4px;
+    }
+
+    /* Inner Mobile Mockup Content */
+    .mobile-screen {
+      background-color: var(--surface);
+      padding: 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Mini App Header for Mockup */
+    .mock-topbar {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 60px;
+    }
+
+    .mock-brand {
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mock-badge-offline {
+      background-color: var(--primary-overlay);
+      border: 2px solid #8fae97;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Notice / Banner standard component */
+    .cue-notice {
+      background-color: var(--secondary-container);
+      color: var(--on-secondary-container);
+      border: 3px solid var(--tertiary);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .cue-notice-icon {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .cue-notice-text {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .cue-notice-sub {
+      font-size: 16px;
+      font-weight: 400;
+      margin-top: 4px;
+    }
+
+    /* --- MOMENTO 1: FICHA DEL APUNTE --- */
+    .card-ficha {
+      background-color: var(--surface);
+      border: 3px solid var(--outline);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ficha-meta-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--surface-variant);
+      padding-bottom: 10px;
+    }
+
+    .ficha-id {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background-color: var(--surface-variant);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .ficha-fecha-clase {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .ficha-producto-nombre {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--on-surface);
+      line-height: 1.25;
+    }
+
+    .ficha-datos-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: var(--surface-variant);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid #dbe2d9;
+    }
+
+    .ficha-renglon {
+      font-size: 18px;
+      line-height: 1.4;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ficha-label {
+      font-weight: 700;
+      color: var(--on-surface);
+    }
+
+    .ficha-valor {
+      font-weight: 500;
+      color: var(--on-surface);
+    }
+
+    .ficha-renglon-plazo {
+      background-color: var(--secondary-container);
+      color: var(--on-secondary-container);
+      border: 2px solid var(--tertiary);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 4px;
+    }
+
+    /* Acciones gemelas de la ficha (uno al lado del otro) */
+    .ficha-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .btn-cue {
+      min-height: 64px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-family: var(--font-stack);
+      font-size: 19px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      line-height: 1.2;
+      user-select: none;
+    }
+
+    /* Botón Acción Principal (Verde de CUE Digital) */
+    .btn-action-primary {
+      background-color: var(--primary-container);
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+    }
+
+    /* Botón Peligro (Rojo estricto del sistema) */
+    .btn-action-danger {
+      background-color: var(--error);
+      color: var(--on-primary);
+      border: 3px solid var(--error-dark);
+    }
+
+    .btn-action-secondary {
+      background-color: var(--surface-variant);
+      color: var(--primary);
+      border: 3px solid var(--outline);
+    }
+
+    /* Nota de claridad bajo los botones */
+    .micro-ayuda-pie {
+      font-size: 16px;
+      color: var(--on-surface-variant);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* --- MOMENTO 2: EL ASISTENTE EN MODO CORRECCIÓN --- */
+    .asistente-block {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Indicador de progreso de pasos */
+    .asistente-progreso-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .asistente-pasos-meta {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .barra-pasos {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .paso-seg {
+      height: 8px;
+      flex: 1;
+      border-radius: 4px;
+      background-color: var(--outline);
+    }
+
+    .paso-seg.activo {
+      background-color: var(--primary-container);
+    }
+
+    .asistente-pregunta {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--on-surface);
+      line-height: 1.25;
+    }
+
+    /* Bloque informativo de aviso de rectificación */
+    .aviso-modo-corregir {
+      background-color: var(--secondary-container);
+      color: var(--on-secondary-container);
+      border: 3px solid var(--tertiary);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      line-height: 1.45;
+      font-weight: 600;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    /* Campo de formulario con valor precargado */
+    .campo-seccion {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .campo-label {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--on-surface);
+    }
+
+    .campo-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .campo-input {
+      width: 100%;
+      min-height: 64px;
+      padding: 14px 70px 14px 16px;
+      font-family: var(--font-stack);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--on-surface);
+      background-color: var(--surface);
+      border: 3px solid var(--primary);
+      border-radius: 14px;
+      outline: 4px solid var(--focus);
+    }
+
+    .campo-unidad {
+      position: absolute;
+      right: 18px;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      pointer-events: none;
+    }
+
+    /* Caja de ayuda de campo estándar CUE Digital */
+    .ayuda-campo-box {
+      background-color: var(--surface-variant);
+      border-left: 6px solid var(--primary-container);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid #dbe2d9;
+      border-left: 6px solid var(--primary-container);
+    }
+
+    .ayuda-item {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--on-surface);
+    }
+
+    .ayuda-item strong {
+      color: var(--primary-dark);
+    }
+
+    /* Botones fijados abajo / pegados al borde del asistente */
+    .asistente-bottom-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 14px;
+      border-top: 2px solid var(--surface-variant);
+    }
+
+    /* --- MOMENTO 3: CONFIRMACIÓN FINAL --- */
+    .final-card {
+      background-color: #f1f8f3;
+      border: 4px solid var(--primary);
+      border-radius: 16px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+    }
+
+    .final-icon-wrapper {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+    }
+
+    .final-titulo {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      line-height: 1.15;
+    }
+
+    .final-desc {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--on-surface);
+      line-height: 1.45;
+      max-width: 480px;
+    }
+
+    .final-resumen-caja {
+      width: 100%;
+      background-color: var(--surface);
+      border: 3px solid var(--outline);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .resumen-fila {
+      display: flex;
+      justify-content: space-between;
+      font-size: 17px;
+      border-bottom: 1px solid var(--surface-variant);
+      padding-bottom: 6px;
+    }
+
+    .resumen-fila:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .resumen-k {
+      font-weight: 700;
+      color: var(--on-surface-variant);
+    }
+
+    .resumen-v {
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .resumen-v.tachado {
+      color: var(--error);
+      text-decoration: line-through;
+      margin-right: 6px;
+      font-weight: 600;
+    }
+
+    .final-actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* Footer de lámina */
+    .sheet-footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 15px;
+      color: var(--on-surface-variant);
+      font-weight: 600;
+      border-top: 2px solid #ccd5c9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sheet-wrapper">
+
+    <!-- CABECERA DE LA LÁMINA -->
+    <header class="sheet-header">
+      <div class="sheet-header-title">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        <span>CUE Digital · Muestrario de pantallas</span>
+      </div>
+      <p class="sheet-header-sub">
+        Lámina de diseño: Los tres momentos de corregir un apunte guardado en el cuaderno.
+      </p>
+      <div class="sheet-badges">
+        <span class="sheet-badge">Castilla y León</span>
+        <span class="sheet-badge">Al sol en la tierra</span>
+        <span class="sheet-badge">Letra ≥ 18 px</span>
+        <span class="sheet-badge">Botones ≥ 64 px</span>
+        <span class="sheet-badge">Sin sombras ni adornos</span>
+      </div>
+    </header>
+
+    <!-- ==========================================
+         MOMENTO 1: LA FICHA DENTRO DE LA LISTA
+         ========================================== -->
+    <section class="case-container">
+      <div class="case-banner">
+        <span class="case-tag">MOMENTO 1 DE 3</span>
+        <h2 class="case-title">1) La ficha del apunte dentro de la lista del cuaderno</h2>
+        <p class="case-desc">
+          Cómo se ve el trabajo guardado con sus dos acciones directas abajo («CORREGIR» y «BORRAR»), sin tocar la tarjeta.
+        </p>
+      </div>
+
+      <div class="mobile-screen">
+        <!-- Barra superior del móvil -->
+        <div class="mock-topbar">
+          <div class="mock-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>Mi Cuaderno 2026</span>
+          </div>
+          <div class="mock-badge-offline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Sin cobertura</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de la Ficha del Apunte -->
+        <div class="card-ficha">
+          <!-- Arriba a la izquierda y derecha -->
+          <div class="ficha-meta-top">
+            <span class="ficha-id">Apunte 1</span>
+            <span class="ficha-fecha-clase">12/05/2026 · Producto</span>
+          </div>
+
+          <!-- Nombre del producto en grande -->
+          <h3 class="ficha-producto-nombre">Glifosato 36 SL</h3>
+
+          <!-- Cada dato con su nombre delante, uno por renglón -->
+          <div class="ficha-datos-lista">
+            <div class="ficha-renglon">
+              <span class="ficha-label">Tierra y parcela:</span>
+              <span class="ficha-valor">El Prado</span>
+            </div>
+            <div class="ficha-renglon">
+              <span class="ficha-label">Hectáreas tratadas:</span>
+              <span class="ficha-valor">4,90 ha</span>
+            </div>
+            <div class="ficha-renglon">
+              <span class="ficha-label">Cuánto por hectárea:</span>
+              <span class="ficha-valor">2,00 L/ha</span>
+            </div>
+            <div class="ficha-renglon">
+              <span class="ficha-label">Cultivo:</span>
+              <span class="ficha-valor">Trigo blando</span>
+            </div>
+            <div class="ficha-renglon ficha-renglon-plazo">
+              <span class="ficha-label">Hasta aquí no puedes coger la cosecha:</span>
+              <span class="ficha-valor"><strong>26/05/2026</strong> (Plazo oficial de espera)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dos botones del mismo ancho, uno al lado del otro -->
+        <div class="ficha-actions-row">
+          <!-- CORREGIR: Acción principal del color de la app -->
+          <button type="button" class="btn-cue btn-action-primary">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            <span>CORREGIR</span>
+          </button>
+
+          <!-- BORRAR: Acción en color de peligro -->
+          <button type="button" class="btn-cue btn-action-danger">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            <span>BORRAR</span>
+          </button>
+        </div>
+
+        <p class="micro-ayuda-pie">
+          Toca «CORREGIR» para cambiar un número o nombre; toca «BORRAR» si te equivocaste de parcela o no echaste nada.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         MOMENTO 2: EL ASISTENTE EN MODO CORRECCIÓN
+         ========================================== -->
+    <section class="case-container">
+      <div class="case-banner">
+        <span class="case-tag">MOMENTO 2 DE 3</span>
+        <h2 class="case-title">2) El asistente abierto en modo corrección</h2>
+        <p class="case-desc">
+          Muestra los datos anteriores ya rellenos para no volver a escribir todo desde cero, con advertencia clara.
+        </p>
+      </div>
+
+      <div class="mobile-screen">
+        <!-- Indicador de barra de progreso -->
+        <div class="asistente-progreso-wrap">
+          <div class="asistente-pasos-meta">Paso 2 de 4 · Modificando apunte</div>
+          <div class="barra-pasos">
+            <div class="paso-seg activo"></div>
+            <div class="paso-seg activo"></div>
+            <div class="paso-seg"></div>
+            <div class="paso-seg"></div>
+          </div>
+        </div>
+
+        <!-- Título en grande -->
+        <h3 class="asistente-pregunta">Corregir lo que apuntaste</h3>
+
+        <!-- Explicación al agricultor -->
+        <div class="aviso-modo-corregir">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <strong>Está puesto lo que apuntaste.</strong> Cambia lo que esté mal y guárdalo: queda escrito que lo has cambiado.
+          </div>
+        </div>
+
+        <!-- Campo de ejemplo con lo que ya había puesto (4,90) -->
+        <div class="campo-seccion">
+          <label class="campo-label" for="hectareas-input">
+            ¿Cuántas hectáreas trataste en El Prado?
+          </label>
+          <div class="campo-input-container">
+            <input 
+              id="hectareas-input" 
+              class="campo-input" 
+              type="text" 
+              inputmode="decimal" 
+              value="4,90" 
+              aria-describedby="ayuda-hectareas"
+            />
+            <span class="campo-unidad">ha</span>
+          </div>
+
+          <!-- Caja de ayuda de 4 partes CUE Digital -->
+          <div class="ayuda-campo-box" id="ayuda-hectareas">
+            <div class="ayuda-item">
+              <strong>Qué es:</strong> El trozo de tierra donde echaste el producto, no la parcela entera si no la acabaste.
+            </div>
+            <div class="ayuda-item">
+              <strong>Por qué te lo piden:</strong> Para comprobar que no echaste más líquido por hectárea de lo que marca la ley.
+            </div>
+            <div class="ayuda-item">
+              <strong>Si no ha cambiado:</strong> Déjalo en 4,90 ha y pulsa directamente el botón de abajo.
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones pegados al borde del asistente: VOLVER y GUARDAR LOS CAMBIOS -->
+        <div class="asistente-bottom-bar">
+          <button type="button" class="btn-cue btn-action-primary" style="min-height: 72px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <span>GUARDAR LOS CAMBIOS</span>
+          </button>
+
+          <button type="button" class="btn-cue btn-action-secondary">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span>VOLVER (SIN GUARDAR)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         MOMENTO 3: EL FINAL (CONFIRMACIÓN)
+         ========================================== -->
+    <section class="case-container">
+      <div class="case-banner">
+        <span class="case-tag">MOMENTO 3 DE 3</span>
+        <h2 class="case-title">3) El final: pantalla de confirmación</h2>
+        <p class="case-desc">
+          Mensaje inequívoco y tranquilizador: el cambio es oficial y el apunte antiguo no se destruye en falso.
+        </p>
+      </div>
+
+      <div class="mobile-screen">
+        <div class="final-card">
+          <!-- Icono dibujado SVG de éxito -->
+          <div class="final-icon-wrapper">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+
+          <!-- Título en grande -->
+          <h3 class="final-titulo">Corregido</h3>
+
+          <!-- Frase tranquilizadora -->
+          <p class="final-desc">
+            Ya está cambiado. Lo que había antes queda guardado en el historial del cuaderno.
+          </p>
+
+          <!-- Resumen de lo modificado con claridad de inspección -->
+          <div class="final-resumen-caja">
+            <div class="resumen-fila">
+              <span class="resumen-k">Tierra:</span>
+              <span class="resumen-v">El Prado (4,90 ha)</span>
+            </div>
+            <div class="resumen-fila">
+              <span class="resumen-k">Producto:</span>
+              <span class="resumen-v">Glifosato 36 SL</span>
+            </div>
+            <div class="resumen-fila">
+              <span class="resumen-k">Superficie rectificada:</span>
+              <div>
+                <span class="resumen-v tachado">4,90 ha</span>
+                <span class="resumen-v">4,20 ha</span>
+              </div>
+            </div>
+            <div class="resumen-fila">
+              <span class="resumen-k">Motivo registrado:</span>
+              <span class="resumen-v">Corrección de hectáreas reales</span>
+            </div>
+          </div>
+
+          <!-- Aviso de seguridad para inspección -->
+          <div class="cue-notice" style="text-align: left; width: 100%;">
+            <svg class="cue-notice-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <div>
+              <div class="cue-notice-text">Tu firma sigue siendo válida ante la Junta</div>
+              <div class="cue-notice-sub">Si hay una inspección, el inspector ve el dato bueno y la fecha exacta en la que lo corregiste.</div>
+            </div>
+          </div>
+
+          <!-- Acciones de cierre -->
+          <div class="final-actions">
+            <button type="button" class="btn-cue btn-action-primary">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>VOLVER AL CUADERNO</span>
+            </button>
+            <button type="button" class="btn-cue btn-action-secondary">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 14 14"/>
+              </svg>
+              <span>VER EL HISTORIAL DE CAMBIOS</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pie institucional / diseño al sol -->
+    <footer class="sheet-footer">
+      <strong>CUE Digital · Junta de Castilla y León</strong><br>
+      Diseñado para trabajar al sol, con una mano, guantes de trabajo y sin cobertura móvil. Cumple con el Real Decreto de Cuaderno Digital de Explotación Agrícola.
+    </footer>
+
+  </div>
+
+</body>
+</html>

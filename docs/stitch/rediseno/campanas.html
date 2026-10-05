@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Los años de mi cuaderno - CUE Digital</title>
+  <style>
+    /* Reset & variables del Sistema CUE Digital */
+    :root {
+      --color-primary: #1f4a2c;
+      --color-primary-container: #2f6b40;
+      --color-primary-dark: #0d2b18;
+      --color-primary-overlay: #3a6446;
+      --color-primary-overlay-border: #8fae97;
+      --color-on-primary: #ffffff;
+      --color-tertiary: #8a6a00;
+      --color-secondary-container: #ffe9a8;
+      --color-on-secondary-container: #3d2f00;
+      --color-surface: #ffffff;
+      --color-surface-variant: #f4f6f3;
+      --color-on-surface: #10190f;
+      --color-on-surface-variant: #43503f;
+      --color-outline: #a9b6a8;
+      --color-error: #8c1d18;
+      --color-error-dark: #5c110d;
+      --color-error-container: #fbe3e1;
+      --color-on-error-container: #4a0f0b;
+      --color-focus: #ffd24a;
+      --font-base: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-base);
+      background-color: var(--color-surface);
+      color: var(--color-on-surface);
+      font-size: 18px;
+      line-height: 1.45;
+      padding-bottom: 40px;
+    }
+
+    /* Cabecera fija sin sombras */
+    .top-app-bar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 4px solid var(--color-primary-dark);
+      z-index: 100;
+    }
+
+    .btn-header {
+      background-color: var(--color-primary-overlay);
+      color: var(--color-on-primary);
+      border: 2px solid var(--color-primary-overlay-border);
+      border-radius: 10px;
+      height: 48px;
+      padding: 0 14px;
+      font-family: var(--font-base);
+      font-size: 18px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-header svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2.5;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-on-primary);
+      letter-spacing: -0.2px;
+    }
+
+    /* Contenedor central - Una columna, max 44rem */
+    .container {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Aviso de funcionamiento sin cobertura */
+    .offline-banner {
+      background-color: var(--color-surface-variant);
+      border: 3px solid var(--color-primary-container);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .offline-banner svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      color: var(--color-primary);
+      margin-top: 2px;
+    }
+
+    .offline-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-on-surface);
+      line-height: 1.35;
+    }
+
+    .offline-subtext {
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--color-on-surface-variant);
+      margin-top: 2px;
+    }
+
+    /* Bloque explicativo inicial */
+    .intro-block {
+      background-color: var(--color-surface);
+      border: 3px solid var(--color-outline);
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+
+    .intro-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .intro-header svg {
+      width: 32px;
+      height: 32px;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .intro-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--color-primary-dark);
+      line-height: 1.25;
+    }
+
+    .intro-desc {
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--color-on-surface);
+      line-height: 1.45;
+    }
+
+    /* Tarjetas de Años */
+    .year-card {
+      background-color: var(--color-surface);
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Tarjeta activa (campaña actual) */
+    .year-card.active {
+      border: 4px solid var(--color-primary);
+      outline: 4px solid var(--color-focus);
+      background-color: #fbfcfa;
+    }
+
+    /* Tarjeta normal o cerrada */
+    .year-card.closed {
+      border: 3px solid var(--color-outline);
+      background-color: var(--color-surface);
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .year-number {
+      font-size: 2.75rem; /* ~44px al sol */
+      font-weight: 900;
+      color: var(--color-on-surface);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    /* Badges de estado sin degradados */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+    }
+
+    .status-badge.current {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border: 2px solid var(--color-primary-dark);
+    }
+
+    .status-badge.closed {
+      background-color: var(--color-surface-variant);
+      color: var(--color-on-surface-variant);
+      border: 2px solid var(--color-outline);
+    }
+
+    .status-badge svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Fechas de la campaña */
+    .date-row {
+      background-color: var(--color-surface-variant);
+      border: 2px solid #d8ded6;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 18px;
+      color: var(--color-on-surface);
+      line-height: 1.4;
+    }
+
+    .date-row strong {
+      font-weight: 800;
+      color: var(--color-primary-dark);
+    }
+
+    /* Conteo de apuntes */
+    .content-count {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--color-on-surface);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .content-count svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    /* Aviso explicativo de por qué no se puede borrar */
+    .warning-box {
+      background-color: var(--color-secondary-container);
+      color: var(--color-on-secondary-container);
+      border: 2px solid var(--color-tertiary);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .warning-box svg {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      color: var(--color-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Fila de dos botones: CORREGIR y BORRAR */
+    .card-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    /* Estilos de botones estándar >=64px */
+    .btn {
+      min-height: 64px;
+      border-radius: 14px;
+      font-family: var(--font-base);
+      font-size: 19px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      padding: 12px 14px;
+      text-align: center;
+      transition: none;
+    }
+
+    .btn:active {
+      outline: 4px solid var(--color-focus);
+    }
+
+    /* Botón verde de acción */
+    .btn-action {
+      background-color: var(--color-primary-container);
+      color: var(--color-on-primary);
+      border: 3px solid var(--color-primary-dark);
+    }
+
+    /* Botón rojo de peligro */
+    .btn-danger {
+      background-color: var(--color-error);
+      color: var(--color-on-primary);
+      border: 3px solid var(--color-error-dark);
+    }
+
+    /* Botón deshabilitado con explicación */
+    .btn-danger-disabled {
+      background-color: #e5e5e5;
+      color: #636363;
+      border: 3px solid #b5b5b5;
+      cursor: not-allowed;
+    }
+
+    .btn svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2.5;
+      flex-shrink: 0;
+    }
+
+    /* Sección para Empezar un Año Nuevo */
+    .new-year-section {
+      margin-top: 12px;
+      background-color: var(--color-surface);
+      border: 3px dashed var(--color-outline);
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-new-year {
+      min-height: 68px;
+      background-color: var(--color-surface);
+      color: var(--color-primary);
+      border: 3px solid var(--color-primary);
+      border-radius: 14px;
+      font-family: var(--font-base);
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 12px;
+    }
+
+    .btn-new-year:active {
+      background-color: var(--color-surface-variant);
+      outline: 4px solid var(--color-focus);
+    }
+
+    .new-year-desc {
+      font-size: 18px;
+      color: var(--color-on-surface-variant);
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    /* Botón Volver al final */
+    .btn-back {
+      min-height: 64px;
+      background-color: var(--color-surface-variant);
+      color: var(--color-primary);
+      border: 3px solid var(--color-outline);
+      border-radius: 14px;
+      font-family: var(--font-base);
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 8px;
+    }
+
+    .btn-back:active {
+      outline: 4px solid var(--color-focus);
+    }
+
+    /* Pie de página oficial */
+    .footer-note {
+      text-align: center;
+      padding: 24px 12px 12px;
+      font-size: 16px;
+      color: var(--color-on-surface-variant);
+      border-top: 2px solid #e1e7df;
+      margin-top: 16px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera principal -->
+  <header class="top-app-bar" role="banner">
+    <a href="#" class="btn-header" aria-label="Volver al menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>VOLVER</span>
+    </a>
+    <span class="header-title">CUE Digital</span>
+    <button class="btn-header" aria-label="Aumentar tamaño de letra" onclick="document.body.style.fontSize = document.body.style.fontSize === '21px' ? '18px' : '21px'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M4 19h4M6 19v-9M13 19h6M16 19V5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>A+ Letra</span>
+    </button>
+  </header>
+
+  <main class="container" role="main">
+
+    <!-- Indicador de trabajo sin cobertura -->
+    <div class="offline-banner" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 4L12 14.01l-3-3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="offline-text">Funciona sin cobertura en el campo</div>
+        <div class="offline-subtext">Los años y sus fechas están guardados en este teléfono móvil.</div>
+      </div>
+    </div>
+
+    <!-- Título y explicación principal -->
+    <section class="intro-block" aria-labelledby="page-heading">
+      <div class="intro-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="16" y1="2" x2="16" y2="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="8" y1="2" x2="8" y2="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="3" y1="10" x2="21" y2="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1 id="page-heading" class="intro-title">Los años de mi cuaderno</h1>
+      </div>
+      <p class="intro-desc">Tu cuaderno se lleva por años: lo que apuntas va al año en el que estás.</p>
+    </section>
+
+    <!-- Lista de años: Del más nuevo al más viejo -->
+    
+    <!-- 1. AÑO ACTUAL: 2026 -->
+    <article class="year-card active" aria-label="Campaña del año 2026">
+      <div class="card-top-row">
+        <div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--color-primary); text-transform: uppercase;">Año del cuaderno</div>
+          <div class="year-number">2026</div>
+        </div>
+        <div class="status-badge current">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>ESTÁS APUNTANDO EN ESTE</span>
+        </div>
+      </div>
+
+      <div class="date-row">
+        <span>Empieza: <strong>01/09/2025</strong></span> &nbsp;•&nbsp; 
+        <span>Termina: <strong>31/08/2026</strong></span>
+      </div>
+
+      <div class="content-count">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="10 9 9 9 8 9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Tiene 42 apuntes dentro</span>
+      </div>
+
+      <!-- Explicación de por qué no se puede borrar -->
+      <div class="warning-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="9" x2="12" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <strong>Aquí dentro hay cosas apuntadas:</strong> primero quítalas y después podrás quitar el año.
+        </div>
+      </div>
+
+      <!-- Botones CORREGIR y BORRAR uno al lado del otro -->
+      <div class="card-actions-row">
+        <button type="button" class="btn btn-action" aria-label="Corregir datos del año 2026">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>CORREGIR</span>
+        </button>
+
+        <button type="button" class="btn btn-danger-disabled" aria-label="No se puede borrar el año 2026 porque tiene apuntes" title="No se puede borrar porque contiene 42 apuntes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="3 6 5 6 21 6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>BORRAR</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- 2. AÑO ANTERIOR CERRADO: 2025 -->
+    <article class="year-card closed" aria-label="Campaña del año 2025">
+      <div class="card-top-row">
+        <div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--color-on-surface-variant); text-transform: uppercase;">Año del cuaderno</div>
+          <div class="year-number" style="color: #334435;">2025</div>
+        </div>
+        <div class="status-badge closed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Año cerrado</span>
+        </div>
+      </div>
+
+      <div class="date-row">
+        <span>Empieza: <strong>01/09/2024</strong></span> &nbsp;•&nbsp; 
+        <span>Termina: <strong>31/08/2025</strong></span>
+      </div>
+
+      <div class="content-count">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Tiene 38 apuntes dentro</span>
+      </div>
+
+      <div class="warning-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="9" x2="12" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <strong>Aquí dentro hay cosas apuntadas:</strong> primero quítalas y después podrás quitar el año.
+        </div>
+      </div>
+
+      <div class="card-actions-row">
+        <button type="button" class="btn btn-action" aria-label="Corregir datos del año 2025">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>CORREGIR</span>
+        </button>
+
+        <button type="button" class="btn btn-danger-disabled" aria-label="No se puede borrar el año 2025 porque tiene apuntes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="3 6 5 6 21 6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>BORRAR</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- 3. AÑO VACÍO / BORRABLE: 2024 (Demostración de estado vacío) -->
+    <article class="year-card closed" aria-label="Campaña del año 2024">
+      <div class="card-top-row">
+        <div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--color-on-surface-variant); text-transform: uppercase;">Año del cuaderno</div>
+          <div class="year-number" style="color: #4f5f51;">2024</div>
+        </div>
+        <div class="status-badge closed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Año cerrado</span>
+        </div>
+      </div>
+
+      <div class="date-row">
+        <span>Empieza: <strong>01/09/2023</strong></span> &nbsp;•&nbsp; 
+        <span>Termina: <strong>31/08/2024</strong></span>
+      </div>
+
+      <!-- No tiene nada apuntado -->
+      <div class="content-count" style="color: var(--color-on-surface-variant);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>No tiene nada apuntado</span>
+      </div>
+
+      <div class="card-actions-row">
+        <button type="button" class="btn btn-action" aria-label="Corregir datos del año 2024">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>CORREGIR</span>
+        </button>
+
+        <!-- Aquí sí se puede borrar porque está vacío -->
+        <button type="button" class="btn btn-danger" aria-label="Borrar el año 2024 porque está vacío">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="3 6 5 6 21 6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>BORRAR</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- Sección final: Empezar un año nuevo (lo que menos se toca) -->
+    <section class="new-year-section" aria-labelledby="new-year-action">
+      <button type="button" id="new-year-action" class="btn-new-year">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="28" height="28" stroke-width="3">
+          <line x1="12" y1="5" x2="12" y2="19" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="5" y1="12" x2="19" y2="12" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>EMPEZAR UN AÑO NUEVO</span>
+      </button>
+      <p class="new-year-desc">
+        Cuando empiece el año que viene, hazlo aquí: lo que apuntes irá a ese año.
+      </p>
+    </section>
+
+    <!-- Botón Volver al final del todo -->
+    <a href="#" class="btn-back" aria-label="Volver a la pantalla principal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="26" height="26" stroke-width="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>VOLVER</span>
+    </a>
+
+    <!-- Pie de página -->
+    <footer class="footer-note">
+      <strong>CUE Digital • Junta de Castilla y León</strong><br>
+      Diseñado para trabajar al sol, con una mano y sin cobertura.
+    </footer>
+
+  </main>
+
+</body>
+</html>

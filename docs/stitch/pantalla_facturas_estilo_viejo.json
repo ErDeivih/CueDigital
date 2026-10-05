@@ -1,0 +1,362 @@
+{
+  "projectId": "16169899762021489082",
+  "sessionId": "9579261490489487120",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/16169899762021489082/files/f24add7d5bd64952a65a497001d2bd98",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1U8ZXR_oMKOCgyMVDYAwTtmXNu37pX49Jl2XTj55BJzT7VGwwxt-oYGDJwwrY7dnh4FxoVfZNPOaaY55V3RWbttPbHpxabCQ1U2sdzHLJLhyTJf0hsBAUBBrHLpig_0Ru98p1if0efopUBDYrqGP8CpCFHmG7Ur1UR-vCwXMlTqyaiDtAFvV1aE94A_AYXSPPL3JWkaRdKyHinyIPyYcEA76F81dHvqj1BXUFcx-UcpOjjQzsvX61qkKFv9"
+            },
+            "htmlCode": {
+              "name": "projects/16169899762021489082/files/17c7c00f838843b1b27880b15a6e5594",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2M0NmNmZTlmYmYzODQ3OWU5ZmQ0YzFlMmQ4MzAyNjFlEgsSBxDa8sKnzx0YAZIBJAoKcHJvamVjdF9pZBIWQhQxNjE2OTg5OTc2MjAyMTQ4OTA4Mg&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "ea365244bc7c4fbead23a560f7221237",
+            "generatedBy": "figaro_agent",
+            "width": "780",
+            "height": "5128",
+            "title": "Subir Factura - CUE Digital",
+            "prompt": "Diseña una pantalla móvil para CUE Digital (\"Subir factura de compra\").\nPúblico objetivo: Agricultor de 50 a 70 años, lectura fácil al sol con alto contraste, botones grandes mínimo 64px, sin sombras (solo bordes gruesos de 3px), una sola columna, tipografía grande (mínimo 18px).\n\nPaleta y tokens:\n- Verde oscuro cabecera y bordes: #1f4a2c\n- Botones verdes principales: fondo #2f6b40, texto blanco, borde #0d2b18 de 3px\n- Contenedores/fondos: blanco #ffffff, gris claro superficie #f4f6f3, bordes outline #a9b6a8 de 3px\n- Avisos: fondo amarillo suave #ffe9a8, borde #8a6a00 de 2px, texto marrón #3d2f00\n- Errores / descuadres: fondo #fbe3e1, borde #8c1d18 de 2px, texto #4a0f0b\n- Foco: #ffd24a\n\nEstructura de la pantalla:\n1. TopAppBar fijo arriba con icono tractor/agricultura, título \"CUE Digital\" y botón \"A+\" para letra grande.\n2. Título de la pantalla: Pregunta clara y directa: \"¿Tienes la factura a mano?\" o \"Subir factura de compra\", con explicación clara: \"Hazle una foto o súbela. El programa leerá los datos solo para que tú los revises y confirmes.\"\n3. Botón muy grande y destacado (altura ~100px): \"HACER FOTO O SUBIR FACTURA\" con icono de cámara/documento grande, indicando claramente la acción con una mano.\n4. Sección \"Datos que ha leído el programa (puedes tocarlos para corregir)\":\n   - Quién la manda / Proveedor (ej. \"Cooperativa Agrícola La Mancha\", campo editable de 64px alto con borde 3px).\n   - NIF / CIF (ej. \"B45123456\").\n   - Número de factura (ej. \"FAC-2025/084\").\n   - Fecha de la compra (ej. \"14 de abril de 2025\").\n5. Líneas de producto detectadas (cada producto en una tarjeta clara con borde grueso):\n   - Línea 1: \"Herbicida Glifosato 36% - 20 L\" | Cantidad: \"2 garrafas\" | Precio: \"180,00 €\"\n   - Línea 2: \"Abono NPK 15-15-15 - 50 kg\" | Cantidad: \"10 sacos\" | Precio: \"240,00 €\"\n   - Botón para \"Añadir otro producto si falta\"\n6. Resumen de totales:\n   - Base imponible: \"420,00 €\"\n   - IVA (21%): \"88,20 €\"\n   - Total factura: \"508,20 €\" (en tamaño de dato grande)\n7. Aviso informativo o de comprobación de cuentas:\n   - Tarjeta destacada con aviso claro: \"Comprobación de cuentas: La suma de los productos cuadra con el total de la factura (508,20 €).\" O simular cómo se muestra el aviso si hubiera descuadre (\"¡Ojo! La suma de productos da 420 € pero la base pone 430 €. Revisa los precios.\").\n8. Botones de acción al final:\n   - Botón principal de guardar (104px alto o 64px robusto, verde con flecha o icono de check): \"GUARDAR EN MI CUADERNO\".\n   - Botón claro/secundario de salida: \"DEJARLO Y VOLVER\".\n\nTodos los textos en lenguaje llano, directo, sin tecnicismos ni jerga jurídica/fiscal complicada. Mantiene coherencia absoluta con las pantallas existentes de CUE Digital.",
+            "name": "projects/16169899762021489082/screens/ea365244bc7c4fbead23a560f7221237",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "PUBLIC_SANS",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "PUBLIC_SANS",
+              "bodyFont": "PUBLIC_SANS",
+              "labelFont": "PUBLIC_SANS",
+              "namedColors": {
+                "on-secondary-container": "#3d2f00",
+                "on_background": "#151e14",
+                "secondary": "#6d5d2a",
+                "on_secondary": "#ffffff",
+                "surface_variant": "#dbe6d5",
+                "on-surface": "#10190f",
+                "surface_container_low": "#ecf7e6",
+                "outline": "#a9b6a8",
+                "on_primary": "#ffffff",
+                "surface": "#ffffff",
+                "on-error-container": "#4a0f0b",
+                "surface_container_highest": "#dbe6d5",
+                "error-container": "#fbe3e1",
+                "primary_fixed_dim": "#a2d2aa",
+                "inverse_surface": "#293328",
+                "surface_container_lowest": "#ffffff",
+                "on_secondary_fixed_variant": "#534614",
+                "surface_dim": "#d2ddcd",
+                "outline_variant": "#c1c9bf",
+                "secondary_fixed_dim": "#dac587",
+                "error-dark": "#5c110d",
+                "secondary_fixed": "#f7e1a1",
+                "tertiary": "#382a00",
+                "on_tertiary": "#ffffff",
+                "on_error": "#ffffff",
+                "primary_fixed": "#beeec5",
+                "primary-overlay": "#3a6446",
+                "tertiary_container": "#533f00",
+                "on_tertiary_fixed_variant": "#594400",
+                "secondary_container": "#f4de9e",
+                "on_secondary_fixed": "#231b00",
+                "primary_container": "#1f4a2c",
+                "on_primary_container": "#8bb992",
+                "on_surface_variant": "#414941",
+                "primary-overlay-border": "#8fae97",
+                "on-surface-variant": "#43503f",
+                "error_container": "#ffdad6",
+                "tertiary_fixed_dim": "#eac25a",
+                "tertiary_fixed": "#ffdf95",
+                "primary-container": "#2f6b40",
+                "surface_tint": "#3c6847",
+                "on-primary": "#ffffff",
+                "on_primary_fixed": "#00210c",
+                "on_secondary_container": "#71612e",
+                "on_surface": "#151e14",
+                "background": "#f2fdeb",
+                "surface-variant": "#f4f6f3",
+                "primary": "#043317",
+                "inverse_primary": "#a2d2aa",
+                "on_primary_fixed_variant": "#244f31",
+                "on_tertiary_fixed": "#251a00",
+                "error": "#8c1d18",
+                "focus": "#ffd24a",
+                "inverse_on_surface": "#e9f4e3",
+                "on_error_container": "#93000a",
+                "on_tertiary_container": "#d0a945",
+                "surface_container_high": "#e1ebda",
+                "surface_bright": "#f2fdeb",
+                "primary-dark": "#0d2b18",
+                "surface_container": "#e6f1e0"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#ffe9a8",
+              "overrideTertiaryColor": "#8a6a00",
+              "overrideNeutralColor": "#10190f",
+              "spacingScale": 2,
+              "typography": {
+                "headline-lg": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.3"
+                },
+                "body-sm": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.4"
+                },
+                "button-default": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.2"
+                },
+                "headline-question": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "body-lg": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "label-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.3"
+                },
+                "input-text": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.4"
+                },
+                "headline-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "body-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "button-hero": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.2"
+                }
+              },
+              "spacing": {
+                "space-xxl": "32px",
+                "space-md": "12px",
+                "margin": "1rem",
+                "gutter": "1rem",
+                "space-xs": "4px",
+                "space-sm": "8px",
+                "space-xl": "24px",
+                "space-lg": "16px"
+              },
+              "headlineFontFamily": "Public Sans",
+              "bodyFontFamily": "Public Sans",
+              "labelFontFamily": "Public Sans"
+            },
+            "deviceType": "MOBILE",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/4f0738a887a34573aaf0237886fdb14b",
+              "designSystem": {
+                "displayName": "Field Notebook High Contrast",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered for field agriculture under extreme conditions: direct sunlight, single-handed operation, variable lighting, and zero connectivity. Designed specifically for agricultural workers aged 50 to 70, the interface prioritizes immediate legibility, high motor-control tolerance, and low cognitive friction over decorative flourishes.\n\nThe aesthetic blends **High-Contrast Utilitarianism** with modern functional clarity. Key tenets include:\n- **Direct Sunlight Visibility:** Deep greens, warm ochre warning containers, solid high-contrast borders, and prominent surfaces ensure full legibility in glare conditions.\n- **One-Handed & Tactile Usability:** Exaggerated touch targets (minimum 64px, up to 104px for primary actions), prominent stroke borders (2px–6px), and high-visibility focus indicators (4px bright amber) prevent accidental input when wearing work gloves or using one hand.\n- **Calm, Sturdy Authority:** Agricultural hues root the system in earthy tones (forest green, warm wheat amber, and stark alert reds), providing an honest, dependable tool tailored for relentless field work.\n\n## Layout & Spacing\n\nThe layout is built on a single-column, thumb-driven vertical stack optimized for handheld mobile devices operated with a single hand:\n\n- **Touch Zones & Thumb Reach:** Primary interactive triggers, confirm actions, and critical inputs reside within the bottom two-thirds of the viewport.\n- **Rhythm & Padding:** Standard component interior padding is fixed at 16px (`space-lg`) or 12px (`space-md`), creating open tap targets and spacious gutters that eliminate mis-taps.\n- **Gutter & Screen Margins:** Mobile canvases maintain a 16px lateral safety margin (`margin`). Sections are separated by 24px (`space-xl`) or 32px (`space-xxl`) vertical gaps to clearly delineate separate tasks or questions.\n\n## Elevation & Depth\n\nTo maximize sunlight readability and prevent visual muddiness, this system **avoids soft ambient drop-shadows** entirely. Depth and visual hierarchy are instead communicated through **structural borders and high-contrast tonal layering**:\n\n- **Layer 0 (Base Canvas):** Pure white (`#ffffff`) or light earthen neutral (`#f4f6f3`).\n- **Layer 1 (Cards, Selectors, Inputs):** Crisp solid backgrounds framed by prominent 3px structural borders (`#a9b6a8` for neutral fields, `#0d2b18` for primary buttons).\n- **Layer 2 (Feedback & Alerts):** Tinted full-bleed or thick-bordered callouts using 2px outlines (`#8a6a00` for tertiary warnings, `#8c1d18` for errors) and high-visibility left accents (up to 6px solid border on help panels).\n- **Focus Rings:** Non-offset 4px solid borders in high-visibility bright yellow (`#ffd24a`) to provide unambiguous tactile feedback.\n\n## Components\n\n### Buttons\n- **Hero Button (`boton-principal`):** 104px height, full-width thumb trigger. Background `primary-container` (`#2f6b40`), text white (`#ffffff`), typography `button-hero`, border 3px solid `primary-dark` (`#0d2b18`), radius 14px. Used for main confirmation steps (e.g., \"GUARDAR TRABAJO\").\n- **Standard Button (`boton`):** 64px height, full width or flex item. Background `primary-container`, text white, typography `button-default`, border 3px solid `primary-dark`, radius 14px.\n- **Secondary Button (`boton-secundario`):** 64px height, background `surface` (`#ffffff`), text `primary` (`#1f4a2c`), border 3px solid `primary` (`#1f4a2c`), radius 14px.\n- **Selected State (`boton-elegido`):** 64px height, background `primary` (`#1f4a2c`), text white, radius 14px.\n- **Destructive Button (`boton-peligro`):** 64px height, background `error` (`#8c1d18`), text white, border 3px solid `error-dark` (`#5c110d`), radius 14px.\n- **Inline / Character Key (`boton-letra`):** 48px height, background `primary-overlay` (`#3a6446`), border 2px solid `primary-overlay-border` (`#8fae97`), radius 10px.\n\n### Inputs & Text Fields\n- **Field Container (`campo`):** Minimum height 64px with 12px internal padding. Background `surface`, text `on-surface` (`#10190f`), typography `input-text`. Border 3px solid `outline` (`#a9b6a8`), radius 14px.\n- **Focused State:** Border transitions to 4px solid `focus` (`#ffd24a`) with zero layout shift.\n- **Helper Note (`pista`):** Typography `label-md`, text color `on-surface-variant` (`#43503f`), spaced 8px below input target.\n\n### Information Callouts & Alerts\n- **Warning Notice (`aviso`):** Background `secondary-container` (`#ffe9a8`), text `on-secondary-container` (`#3d2f00`), typography `body-md`, radius 14px, 16px padding, border 2px solid `tertiary` (`#8a6a00`).\n- **Critical Alert (`aviso-error`):** Background `error-container` (`#fbe3e1`), text `on-error-container` (`#4a0f0b`), typography `body-md`, radius 14px, 16px padding, border 2px solid `error` (`#8c1d18`).\n- **Field Help Panel (`ayuda-campo`):** Background `surface-variant` (`#f4f6f3`), text `on-surface` (`#10190f`), typography `label-md`, radius 8px, 12px padding, with a 6px thick primary left border accent (`primary-container`).\n\n### Lists & Progress\n- **List Item (`lista-item`):** Minimum 64px height, padding 16px, background `surface`, border 3px solid `outline` (`#a9b6a8`), radius 14px. Text `body-md` in `on-surface`.\n- **Progress Track (`paso` / `paso-hecho`):** 8px height, radius 4px. Uncompleted steps use `outline` (`#a9b6a8`); completed steps fill with `primary-container` (`#2f6b40`).\n- **Header (`cabecera`):** 64px height, background `primary` (`#1f4a2c`), text white, typography `headline-md`, padding 12px 16px.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "PUBLIC_SANS",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "PUBLIC_SANS",
+                  "bodyFont": "PUBLIC_SANS",
+                  "labelFont": "PUBLIC_SANS",
+                  "namedColors": {
+                    "tertiary_container": "#533f00",
+                    "tertiary": "#382a00",
+                    "on_tertiary_fixed_variant": "#594400",
+                    "on_error": "#ffffff",
+                    "primary-overlay-border": "#8fae97",
+                    "on_primary": "#ffffff",
+                    "outline_variant": "#c1c9bf",
+                    "surface_container": "#e6f1e0",
+                    "on_tertiary_container": "#d0a945",
+                    "on_secondary_container": "#71612e",
+                    "secondary_fixed": "#f7e1a1",
+                    "on-surface": "#10190f",
+                    "on_tertiary_fixed": "#251a00",
+                    "primary-overlay": "#3a6446",
+                    "primary-dark": "#0d2b18",
+                    "on_primary_container": "#8bb992",
+                    "on_primary_fixed_variant": "#244f31",
+                    "primary-container": "#2f6b40",
+                    "surface": "#ffffff",
+                    "surface_variant": "#dbe6d5",
+                    "outline": "#a9b6a8",
+                    "on-error-container": "#4a0f0b",
+                    "surface_container_highest": "#dbe6d5",
+                    "primary_container": "#1f4a2c",
+                    "surface_container_high": "#e1ebda",
+                    "surface_tint": "#3c6847",
+                    "error-container": "#fbe3e1",
+                    "error-dark": "#5c110d",
+                    "inverse_surface": "#293328",
+                    "on_primary_fixed": "#00210c",
+                    "on_error_container": "#93000a",
+                    "inverse_on_surface": "#e9f4e3",
+                    "primary_fixed": "#beeec5",
+                    "background": "#f2fdeb",
+                    "on_surface": "#151e14",
+                    "surface_bright": "#f2fdeb",
+                    "surface-variant": "#f4f6f3",
+                    "on-secondary-container": "#3d2f00",
+                    "inverse_primary": "#a2d2aa",
+                    "on-primary": "#ffffff",
+                    "surface_container_lowest": "#ffffff",
+                    "primary": "#043317",
+                    "on_secondary_fixed_variant": "#534614",
+                    "focus": "#ffd24a",
+                    "secondary_container": "#f4de9e",
+                    "surface_container_low": "#ecf7e6",
+                    "error": "#8c1d18",
+                    "on_secondary": "#ffffff",
+                    "tertiary_fixed": "#ffdf95",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "on-surface-variant": "#43503f",
+                    "surface_dim": "#d2ddcd",
+                    "secondary": "#6d5d2a",
+                    "tertiary_fixed_dim": "#eac25a",
+                    "on_surface_variant": "#414941",
+                    "secondary_fixed_dim": "#dac587",
+                    "error_container": "#ffdad6",
+                    "on_tertiary": "#ffffff",
+                    "on_secondary_fixed": "#231b00",
+                    "on_background": "#151e14"
+                  },
+                  "designMd": "---\nname: Field Notebook High Contrast\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d2ddcd'\n  surface-bright: '#f2fdeb'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#ecf7e6'\n  surface-container: '#e6f1e0'\n  surface-container-high: '#e1ebda'\n  surface-container-highest: '#dbe6d5'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#293328'\n  inverse-on-surface: '#e9f4e3'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#6d5d2a'\n  on-secondary: '#ffffff'\n  secondary-container: '#f4de9e'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#382a00'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#533f00'\n  on-tertiary-container: '#d0a945'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#f7e1a1'\n  secondary-fixed-dim: '#dac587'\n  on-secondary-fixed: '#231b00'\n  on-secondary-fixed-variant: '#534614'\n  tertiary-fixed: '#ffdf95'\n  tertiary-fixed-dim: '#eac25a'\n  on-tertiary-fixed: '#251a00'\n  on-tertiary-fixed-variant: '#594400'\n  background: '#f2fdeb'\n  on-background: '#151e14'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  headline-lg:\n    fontFamily: Public Sans\n    fontSize: 1.6rem\n    fontWeight: '800'\n    lineHeight: '1.3'\n  headline-md:\n    fontFamily: Public Sans\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  headline-question:\n    fontFamily: Public Sans\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  body-lg:\n    fontFamily: Public Sans\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  body-md:\n    fontFamily: Public Sans\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  body-sm:\n    fontFamily: Public Sans\n    fontSize: 0.95rem\n    fontWeight: '400'\n    lineHeight: '1.4'\n  button-hero:\n    fontFamily: Public Sans\n    fontSize: 1.35rem\n    fontWeight: '700'\n    lineHeight: '1.2'\n  button-default:\n    fontFamily: Public Sans\n    fontSize: 1.1rem\n    fontWeight: '700'\n    lineHeight: '1.2'\n  input-text:\n    fontFamily: Public Sans\n    fontSize: 1.15rem\n    fontWeight: '400'\n    lineHeight: '1.4'\n  label-md:\n    fontFamily: Public Sans\n    fontSize: 0.95rem\n    fontWeight: '400'\n    lineHeight: '1.3'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 1rem\n  margin: 1rem\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\n---\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.45rem\n    fontWeight: 800\n    lineHeight: 1.45\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.5rem\n    fontWeight: 700\n    lineHeight: 1.45\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.1rem\n    fontWeight: 700\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.35rem\n    fontWeight: 700\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.15rem\n    fontWeight: 400\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 18px\n    fontWeight: 400\n    lineHeight: 1.45\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 21px\n    fontWeight: 400\n    lineHeight: 1.45\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 0.95rem\n    fontWeight: 400\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.6rem\n    fontWeight: 800\nrounded:\n  sm: 4px\n  md: 8px\n  lg: 10px\n  xl: 14px\nspacing:\n  xs: 4px\n  sm: 8px\n  md: 12px\n  lg: 16px\n  xl: 24px\n  xxl: 32px\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n    padding: 16px\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: 104px\n    padding: 16px\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: 48px\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: 64px\n    padding: 12px\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n    padding: 12px\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: 4px\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: 12px\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: 8px\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: 8px\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: 3px\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: 3px\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: 3px\n  borde-boton-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: 2px\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: 3px\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: 2px\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: 2px\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: 6px\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"\n",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#ffe9a8",
+                  "overrideTertiaryColor": "#8a6a00",
+                  "overrideNeutralColor": "#10190f",
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-sm": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.4"
+                    },
+                    "headline-question": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "button-default": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.2"
+                    },
+                    "headline-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "button-hero": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.2"
+                    },
+                    "body-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "label-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.3"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.3"
+                    },
+                    "input-text": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.4"
+                    },
+                    "body-lg": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    }
+                  },
+                  "spacing": {
+                    "gutter": "1rem",
+                    "space-lg": "16px",
+                    "space-xxl": "32px",
+                    "space-xl": "24px",
+                    "margin": "1rem",
+                    "space-sm": "8px",
+                    "space-xs": "4px",
+                    "space-md": "12px"
+                  },
+                  "headlineFontFamily": "Public Sans",
+                  "bodyFontFamily": "Public Sans",
+                  "labelFontFamily": "Public Sans"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He creado la pantalla de **Subida y lectura de facturas** para móvil (Subir Factura - CUE Digital), diseñada bajo el sistema y principios de accesibilidad de **CUE Digital**:\n\n### Decisiones de diseño y usabilidad:\n1. **Acción inicial prominente**: Botón de gran tamaño y altura táctil (`HACER FOTO O SUBIR FACTURA`) con icono de cámara para capturar la factura al instante en el campo o almacén, acompañado de un mensaje claro de que el programa lee los datos de forma automática.\n2. **Interpretación y edición directa**:\n   - Campos de proveedor, CIF/NIF, número de factura y fecha presentados en cajas táctiles de 64 px de altura, con borde contrastado (3 px) y texto en tamaño legible sin necesidad de ampliar.\n   - Todo es editable directamente con un toque de dedo.\n3. **Líneas de producto**:\n   - Tarjetas independientes para cada producto leído con su cantidad, importe y botón accesible para eliminar o corregir.\n   - Botón directo para añadir cualquier producto omitido.\n4. **Cuentas y comprobación matemática**:\n   - Desglose directo de base imponible, IVA y total destacado.\n   - Bloque de comprobación en fondo ámbar con borde de aviso (`#8a6a00`) que valida y confirma en lenguaje llano que los productos suman la base y cuadran exactamente con el total del papel.\n5. **Acciones finales seguras**:\n   - Botón verde principal de alta visibilidad: **GUARDAR EN MI CUADERNO**.\n   - Botón secundario claro: **DEJARLO Y VOLVER**."
+    },
+    {
+      "suggestion": "Mostrar el estado con alerta de descuadre en los totales"
+    },
+    {
+      "suggestion": "Ver la pantalla con letra grande activada (modo A+)"
+    },
+    {
+      "suggestion": "Añadir el desglose de lote o número de registro oficial por producto"
+    }
+  ]
+}

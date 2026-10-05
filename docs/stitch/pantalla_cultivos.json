@@ -1,0 +1,480 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "6764599691220454654",
+  "outputComponents": [
+    {
+      "designSystem": {
+        "name": "assets/13df8f4bcd2140169d504a9dc5783adf",
+        "designSystem": {
+          "displayName": "AgroField High-Contrast System",
+          "styleGuidelines": "## Brand & Style\nThis design system is purpose-built for extreme field conditions, direct sunlight, and industrial agricultural operations. Its personality is utilitarian, resilient, unflinching, and immediate. The primary target audience consists of agricultural engineers, field technicians, and farmers operating in tractors, greenhouses, or open terrain under glare, dust, and rain.\n\nThe aesthetic follows an uncompromising **High-Contrast Utilitarian / Neo-Brutalist Functionalism**:\n- Absolute zero-shadow, zero-blur, and zero-gradient policy to guarantee screen legibility under peak solar luminance.\n- Bold structural containment: high-weight borders (minimum 3px) delimit touch boundaries and data clusters.\n- Ultra-accessible tactile scale: all active controls target an ergonomic minimum hit box of 64px height to comfortably support gloved hands and rough field interaction.\n- Flat hierarchy: no hidden drawers, no nested menus, and no bottom tab overlays. All critical actions remain strictly on the immediate viewing plane.\n\n## Layout & Spacing\nThe layout model is a single-column, strictly vertical flow optimized for mobile devices operated with one hand:\n\n- **Vertical Stack**: Content moves top-to-bottom without side scrolls, collapsible drawers, or off-canvas trays. The entire current state of the notebook record is linearly visible.\n- **Touch Target Density**: Minimum vertical touch-target height for all clickable cards, inputs, and actions is fixed at `64px` (4rem).\n- **Margins & Gutters**: Outer canvas edge padding is fixed at `1rem` (16px) on mobile viewports to preserve maximum horizontal drawing area for large typography and thick borders.\n- **Rhythm**: Standard spacing between stacked modules is `1.5rem` (`space-lg`), providing unambiguous optical separation between discrete data groups without relying on soft shadows.\n\n## Elevation & Depth\nElevation through simulated depth (box-shadows, dropshadows, blurs, or skeuomorphic bevels) is entirely abolished. Visual hierarchy and elevation are communicated exclusively through:\n\n- **Bold Contours**: Structural `3px` solid stroke in `#0d2b18` encircling cards, sections, and controls.\n- **Tonal Inversion**: Primary interactive surfaces use full-bleed `#2f6b40` filled shapes with stark `#ffffff` text, creating distinct contrast against the `#ffffff` canvas base.\n- **Alert Inset Panels**: Urgent conditions use `#ffe9a8` solid fills bounded by `#8a6a00` 3px strokes.\n- **Linear Dividers**: When separation within a single card is required, use internal horizontal rules of `2px` solid `#0d2b18`.\n- **Zero Motion**: Transitions must snap instantaneously (`0ms` duration). No easing curves or animated fades that cause latency or motion blur in sunlight.\n\n## Components\n\n### Buttons & Action Bars\n- **Primary Button**: Background `#2f6b40`, text `#ffffff` (`label-lg`), border `3px solid #0d2b18`, height `64px` minimum. Full horizontal width across the content column.\n- **Secondary / Action Button**: Background `#ffffff`, text `#0d2b18` (`label-lg`), border `3px solid #0d2b18`, height `64px`.\n- **Destructive / Caution Button**: Background `#ffe9a8`, text `#3d2f00` (`label-lg`), border `3px solid #8a6a00`, height `64px`.\n- **State Changes**: Active/Pressed state switches directly to inverted colorway (e.g., `#0d2b18` background with `#ffffff` text) instantly with zero transition delay.\n\n### Inputs & Field Controls\n- **Text & Numeric Inputs**: Minimum height `64px`. Background `#ffffff`, text `#0d2b18` (`body-lg`), border `3px solid #0d2b18`. Inner padding `0.75rem 1rem`.\n- **Focus State**: Border width expands to `4px solid #0d2b18` with an explicit outline offset of `2px`.\n\n### Selection Controls (Checkboxes & Radios)\n- **Checkboxes**: Square box of `36px × 36px` with `3px solid #0d2b18` border and `#ffffff` background. Checked state fills box with `#1f4a2c` displaying an unmistakable solid white SVG checkmark (`4px` stroke).\n- **Radio Buttons**: `36px × 36px` circle with `3px solid #0d2b18`. Active state embeds an inner solid disk of `#1f4a2c` with a diameter of `20px`.\n- **Row Tappable Area**: Both controls are embedded inside full-width horizontal rows of `64px` height with clear label text (`body-lg`) to allow effortless tap recognition.\n\n### Chips & Filter Tags\n- Height: `48px`.\n- Inactive: Background `#ffffff`, border `3px solid #0d2b18`, text `#0d2b18` (`label-md`).\n- Active: Background `#1f4a2c`, border `3px solid #0d2b18`, text `#ffffff` (`label-md`).\n\n### Cards & Record Blocks\n- **Field Data Card**: Container background `#ffffff`, border `3px solid #0d2b18`, padding `1.25rem`.\n- **Card Header**: High-contrast block header in solid `#1f4a2c` with bold `#ffffff` typography spanning the full card width, cleanly demarcating parcel IDs, treatment logs, or crop cycles.\n\n### Alerts & Advisory Banners\n- Solid `#ffe9a8` fill, `3px solid #8a6a00` border, text `#3d2f00` (`body-md` / `label-lg`). Minimum height `64px`. Contains high-contrast SVG warning icon (`32px × 32px`) rendered in `#3d2f00`.\n\n### Navigation & Top Bar\n- Fixed top navigation bar rendered in solid `#1f4a2c`, height `72px`, containing direct text actions and title in `#ffffff`.\n- Strict exclusion of hamburger menus, collapsible side drawers, or bottom floating tab bars. Sub-views rely solely on a full-width \"VOLVER\" (Back) button positioned directly in the flow.",
+          "theme": {
+            "colorMode": "LIGHT",
+            "font": "SOURCE_SANS_3",
+            "roundness": "ROUND_FOUR",
+            "customColor": "#1f4a2c",
+            "headlineFont": "SOURCE_SANS_3",
+            "bodyFont": "SOURCE_SANS_3",
+            "labelFont": "SOURCE_SANS_3",
+            "namedColors": {
+              "secondary_fixed_dim": "#96d5a1",
+              "on_primary_fixed_variant": "#244f31",
+              "on_error_container": "#93000a",
+              "secondary_fixed": "#b1f2bb",
+              "border-dark": "#0d2b18",
+              "on_primary": "#ffffff",
+              "on_error": "#ffffff",
+              "inverse_on_surface": "#f0f1f1",
+              "outline": "#727971",
+              "outline_variant": "#c1c9bf",
+              "error": "#ba1a1a",
+              "on_background": "#1a1c1c",
+              "surface": "#f9f9f9",
+              "error_container": "#ffdad6",
+              "inverse_surface": "#2f3131",
+              "primary_fixed_dim": "#a2d2aa",
+              "alert-text": "#3d2f00",
+              "surface_container_lowest": "#ffffff",
+              "on_tertiary_container": "#e09ba8",
+              "text-dark": "#0d2b18",
+              "on_secondary_fixed_variant": "#125129",
+              "tertiary_fixed": "#ffd9de",
+              "inverse_primary": "#a2d2aa",
+              "surface_container_low": "#f3f3f4",
+              "canvas-base": "#ffffff",
+              "secondary": "#2e6a3f",
+              "background": "#f9f9f9",
+              "on_surface_variant": "#414941",
+              "surface_tint": "#3c6847",
+              "surface_variant": "#e2e2e2",
+              "on_tertiary_fixed_variant": "#6b3742",
+              "surface_bright": "#f9f9f9",
+              "tertiary_fixed_dim": "#fbb3c0",
+              "surface_container_high": "#e8e8e8",
+              "on_tertiary_fixed": "#360c18",
+              "primary_fixed": "#beeec5",
+              "on_secondary_fixed": "#00210b",
+              "on_tertiary": "#ffffff",
+              "alert-bg": "#ffe9a8",
+              "on_primary_fixed": "#00210c",
+              "secondary_container": "#b1f2bb",
+              "on_secondary": "#ffffff",
+              "primary_container": "#1f4a2c",
+              "tertiary_container": "#65323d",
+              "alert-border": "#8a6a00",
+              "on_surface": "#1a1c1c",
+              "primary": "#043317",
+              "surface_container": "#eeeeee",
+              "on_primary_container": "#8bb992",
+              "tertiary": "#4a1c27",
+              "surface_dim": "#dadada",
+              "surface_container_highest": "#e2e2e2",
+              "on_secondary_container": "#347045"
+            },
+            "designMd": "---\nname: AgroField High-Contrast System\ncolors:\n  surface: '#f9f9f9'\n  surface-dim: '#dadada'\n  surface-bright: '#f9f9f9'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f3f4'\n  surface-container: '#eeeeee'\n  surface-container-high: '#e8e8e8'\n  surface-container-highest: '#e2e2e2'\n  on-surface: '#1a1c1c'\n  on-surface-variant: '#414941'\n  inverse-surface: '#2f3131'\n  inverse-on-surface: '#f0f1f1'\n  outline: '#727971'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#1f4a2c'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#2e6a3f'\n  on-secondary: '#ffffff'\n  secondary-container: '#b1f2bb'\n  on-secondary-container: '#347045'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#b1f2bb'\n  secondary-fixed-dim: '#96d5a1'\n  on-secondary-fixed: '#00210b'\n  on-secondary-fixed-variant: '#125129'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9f9f9'\n  on-background: '#1a1c1c'\n  surface-variant: '#e2e2e2'\n  border-dark: '#0d2b18'\n  alert-bg: '#ffe9a8'\n  alert-border: '#8a6a00'\n  alert-text: '#3d2f00'\n  canvas-base: '#ffffff'\n  text-dark: '#0d2b18'\ntypography:\n  headline-xl:\n    fontFamily: Source Sans 3\n    fontSize: 32px\n    fontWeight: '800'\n    lineHeight: 40px\n  headline-lg:\n    fontFamily: Source Sans 3\n    fontSize: 26px\n    fontWeight: '700'\n    lineHeight: 34px\n  headline-md:\n    fontFamily: Source Sans 3\n    fontSize: 22px\n    fontWeight: '700'\n    lineHeight: 30px\n  body-xl:\n    fontFamily: Source Sans 3\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Source Sans 3\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Source Sans 3\n    fontSize: 18px\n    fontWeight: '500'\n    lineHeight: 26px\n  label-lg:\n    fontFamily: Source Sans 3\n    fontSize: 20px\n    fontWeight: '700'\n    lineHeight: 26px\n  label-md:\n    fontFamily: Source Sans 3\n    fontSize: 18px\n    fontWeight: '700'\n    lineHeight: 24px\nrounded:\n  sm: 0.125rem\n  DEFAULT: 0.25rem\n  md: 0.375rem\n  lg: 0.5rem\n  xl: 0.75rem\n  full: 9999px\nspacing:\n  gutter: 1rem\n  margin: 1rem\n  space-xs: 0.5rem\n  space-sm: 0.75rem\n  space-md: 1rem\n  space-lg: 1.5rem\n  space-xl: 2rem\n---\n\n## Brand & Style\nThis design system is purpose-built for extreme field conditions, direct sunlight, and industrial agricultural operations. Its personality is utilitarian, resilient, unflinching, and immediate. The primary target audience consists of agricultural engineers, field technicians, and farmers operating in tractors, greenhouses, or open terrain under glare, dust, and rain.\n\nThe aesthetic follows an uncompromising **High-Contrast Utilitarian / Neo-Brutalist Functionalism**:\n- Absolute zero-shadow, zero-blur, and zero-gradient policy to guarantee screen legibility under peak solar luminance.\n- Bold structural containment: high-weight borders (minimum 3px) delimit touch boundaries and data clusters.\n- Ultra-accessible tactile scale: all active controls target an ergonomic minimum hit box of 64px height to comfortably support gloved hands and rough field interaction.\n- Flat hierarchy: no hidden drawers, no nested menus, and no bottom tab overlays. All critical actions remain strictly on the immediate viewing plane.\n\n## Colors\nThe palette is calibrated strictly for daylight readability and solar glare compensation:\n\n- **Primary (`#1f4a2c`)**: Deep forest pine. Applied to solid top navigation headers, major titles, status summaries, and primary section anchoring.\n- **Secondary (`#2f6b40`)**: Vibrant field green. Used for tactile interactive elements, primary action cards, and prominent interactive surfaces.\n- **Border Dark (`#0d2b18`)**: Heavy anchoring green-black. Used for all structural 3px dividing lines, frame contours, active borders, and primary readable text.\n- **Neutral Canvas (`#ffffff`)**: Pure white base ground. Delivers maximum contrast ratio against deep green inks.\n- **Alert Grouping**:\n  - `alert-bg` (`#ffe9a8`): Opaque high-visibility safety amber surface.\n  - `alert-border` (`#8a6a00`): 3px solid edge framing warning nodes.\n  - `alert-text` (`#3d2f00`): High-legibility deep amber-brown typography.\n\nNo alpha-channel transparency, tinting layers, or subtle tonal gradients are permitted. Every surface must meet or exceed WCAG AAA requirements against its enclosing container.\n\n## Typography\nTypographic rules are anchored around **Source Sans 3**, selected for its optical clarity, broad character apertures, and heavy structural strokes that resist blinding solar flare.\n\n- **Scale Floor**: The absolute minimum font size anywhere across the application is `18px`. Sub-18px text is forbidden to guarantee readability at arm's length or in a vehicle cradle.\n- **Weight Calibration**: Default body text uses a minimum weight of `500` (Medium) or `600` (SemiBold). Hairline and light weights are prohibited.\n- **Direct Hierarchy**:\n  - `headline-xl` and `headline-lg`: Top bar screen descriptors and critical parcel/plot IDs.\n  - `body-xl` and `body-lg`: Primary data entry reads, numerical metric tallies, and input values.\n  - `body-md`: Descriptive helper context, field notes, and instructional prompts.\n  - `label-lg`: Button text, switch labels, and prominent key-value indicators.\n\n## Layout & Spacing\nThe layout model is a single-column, strictly vertical flow optimized for mobile devices operated with one hand:\n\n- **Vertical Stack**: Content moves top-to-bottom without side scrolls, collapsible drawers, or off-canvas trays. The entire current state of the notebook record is linearly visible.\n- **Touch Target Density**: Minimum vertical touch-target height for all clickable cards, inputs, and actions is fixed at `64px` (4rem).\n- **Margins & Gutters**: Outer canvas edge padding is fixed at `1rem` (16px) on mobile viewports to preserve maximum horizontal drawing area for large typography and thick borders.\n- **Rhythm**: Standard spacing between stacked modules is `1.5rem` (`space-lg`), providing unambiguous optical separation between discrete data groups without relying on soft shadows.\n\n## Elevation & Depth\nElevation through simulated depth (box-shadows, dropshadows, blurs, or skeuomorphic bevels) is entirely abolished. Visual hierarchy and elevation are communicated exclusively through:\n\n- **Bold Contours**: Structural `3px` solid stroke in `#0d2b18` encircling cards, sections, and controls.\n- **Tonal Inversion**: Primary interactive surfaces use full-bleed `#2f6b40` filled shapes with stark `#ffffff` text, creating distinct contrast against the `#ffffff` canvas base.\n- **Alert Inset Panels**: Urgent conditions use `#ffe9a8` solid fills bounded by `#8a6a00` 3px strokes.\n- **Linear Dividers**: When separation within a single card is required, use internal horizontal rules of `2px` solid `#0d2b18`.\n- **Zero Motion**: Transitions must snap instantaneously (`0ms` duration). No easing curves or animated fades that cause latency or motion blur in sunlight.\n\n## Shapes\nA constrained roundedness level of `1` (Soft, `4px` base border-radius) is used throughout the application. \n\n- Sharp, stable, industrial geometry provides definitive containment without losing screen real estate at button corners.\n- Buttons, inputs, and field-record cards maintain consistent `4px` corner radii.\n- Pill shapes (`9999px`) and circles are prohibited for core functional containers, ensuring high structural packing and strict edge alignment.\n\n## Components\n\n### Buttons & Action Bars\n- **Primary Button**: Background `#2f6b40`, text `#ffffff` (`label-lg`), border `3px solid #0d2b18`, height `64px` minimum. Full horizontal width across the content column.\n- **Secondary / Action Button**: Background `#ffffff`, text `#0d2b18` (`label-lg`), border `3px solid #0d2b18`, height `64px`.\n- **Destructive / Caution Button**: Background `#ffe9a8`, text `#3d2f00` (`label-lg`), border `3px solid #8a6a00`, height `64px`.\n- **State Changes**: Active/Pressed state switches directly to inverted colorway (e.g., `#0d2b18` background with `#ffffff` text) instantly with zero transition delay.\n\n### Inputs & Field Controls\n- **Text & Numeric Inputs**: Minimum height `64px`. Background `#ffffff`, text `#0d2b18` (`body-lg`), border `3px solid #0d2b18`. Inner padding `0.75rem 1rem`.\n- **Focus State**: Border width expands to `4px solid #0d2b18` with an explicit outline offset of `2px`.\n\n### Selection Controls (Checkboxes & Radios)\n- **Checkboxes**: Square box of `36px × 36px` with `3px solid #0d2b18` border and `#ffffff` background. Checked state fills box with `#1f4a2c` displaying an unmistakable solid white SVG checkmark (`4px` stroke).\n- **Radio Buttons**: `36px × 36px` circle with `3px solid #0d2b18`. Active state embeds an inner solid disk of `#1f4a2c` with a diameter of `20px`.\n- **Row Tappable Area**: Both controls are embedded inside full-width horizontal rows of `64px` height with clear label text (`body-lg`) to allow effortless tap recognition.\n\n### Chips & Filter Tags\n- Height: `48px`.\n- Inactive: Background `#ffffff`, border `3px solid #0d2b18`, text `#0d2b18` (`label-md`).\n- Active: Background `#1f4a2c`, border `3px solid #0d2b18`, text `#ffffff` (`label-md`).\n\n### Cards & Record Blocks\n- **Field Data Card**: Container background `#ffffff`, border `3px solid #0d2b18`, padding `1.25rem`.\n- **Card Header**: High-contrast block header in solid `#1f4a2c` with bold `#ffffff` typography spanning the full card width, cleanly demarcating parcel IDs, treatment logs, or crop cycles.\n\n### Alerts & Advisory Banners\n- Solid `#ffe9a8` fill, `3px solid #8a6a00` border, text `#3d2f00` (`body-md` / `label-lg`). Minimum height `64px`. Contains high-contrast SVG warning icon (`32px × 32px`) rendered in `#3d2f00`.\n\n### Navigation & Top Bar\n- Fixed top navigation bar rendered in solid `#1f4a2c`, height `72px`, containing direct text actions and title in `#ffffff`.\n- Strict exclusion of hamburger menus, collapsible side drawers, or bottom floating tab bars. Sub-views rely solely on a full-width \"VOLVER\" (Back) button positioned directly in the flow.",
+            "colorVariant": "FIDELITY",
+            "overridePrimaryColor": "#1f4a2c",
+            "overrideSecondaryColor": "#2f6b40",
+            "overrideNeutralColor": "#ffffff",
+            "spacingScale": 2,
+            "typography": {
+              "label-md": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "18px",
+                "fontWeight": "700",
+                "lineHeight": "24px"
+              },
+              "headline-md": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "22px",
+                "fontWeight": "700",
+                "lineHeight": "30px"
+              },
+              "body-md": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "18px",
+                "fontWeight": "500",
+                "lineHeight": "26px"
+              },
+              "label-lg": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "20px",
+                "fontWeight": "700",
+                "lineHeight": "26px"
+              },
+              "body-lg": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "20px",
+                "fontWeight": "600",
+                "lineHeight": "28px"
+              },
+              "body-xl": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "24px",
+                "fontWeight": "600",
+                "lineHeight": "32px"
+              },
+              "headline-lg": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "26px",
+                "fontWeight": "700",
+                "lineHeight": "34px"
+              },
+              "headline-xl": {
+                "fontFamily": "Source Sans 3",
+                "fontSize": "32px",
+                "fontWeight": "800",
+                "lineHeight": "40px"
+              }
+            },
+            "spacing": {
+              "space-xs": "0.5rem",
+              "space-lg": "1.5rem",
+              "margin": "1rem",
+              "space-md": "1rem",
+              "space-sm": "0.75rem",
+              "space-xl": "2rem",
+              "gutter": "1rem"
+            },
+            "headlineFontFamily": "Source Sans 3",
+            "bodyFontFamily": "Source Sans 3",
+            "labelFontFamily": "Source Sans 3"
+          }
+        },
+        "version": "1"
+      }
+    },
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/d6ad756796b640889e4005d82be1246f",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1XWsNnH9Psj3bZOxZtlryGPk97qq9hnskkgDdEqgPABtysHnHZPf-YX11TPw7LhIYgyWvx2RYHpUPDo_utuMQ_S1v_6bdpJ0rrsiVEVIpu9cx-RWKVZBantUjLAoZQ_eYdYNLFbJ7glKx3deXjEg_-Rpr_3mmEPVphe5TundjCum-KjxT4Jq769ShxvIVIXOUkA1rfj89AGf8F4fMbXhZU5ADbT2TiMYCWHMxMzKL_TaMLliU3dJFLuMZU"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/c14ed30604944ce2b4e9ff29b9d46c36",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzIwMTI5YWE2YjMwZDRjMDdhNTIyMjkxZTZhMWI1YWYzEgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "a87531e72155401abae4069e33dacfaa",
+            "generatedBy": "figaro_agent",
+            "width": "780",
+            "height": "5586",
+            "title": "Qué hay sembrado - CUE Digital Móvil",
+            "prompt": "Pantalla móvil para teléfono (device_type: mobile) para la aplicación CUE Digital en Castilla y León: 'Qué hay sembrado'.\nDiseñada específicamente para un agricultor de 50 a 70 años, de pie en mitad del campo con una mano, a pleno sol y sin cobertura.\nEstrictas restricciones que se deben cumplir escrupulosamente:\n1. NINGUNA barra de navegación inferior (NO bottom navbar), ni pestañas, ni menús hamburguesa u ocultos.\n2. Tipografía: tamaño de texto de cuerpo de 18px o más, títulos rotundos.\n3. Botones táctiles de 64px o más de alto, fáciles de pulsar incluso con guantes.\n4. Un solo color de acción: verde de campo (#1f4a2c y #2f6b40), con bordes sólidos de 3px. Cero sombras, cero degradados, cero animaciones (Flat UI con bordes de alto contraste).\n5. Iconos dibujados mediante SVG limpios (sin emojis en ningún sitio).\n6. Cada elemento o aviso va explicado con frases claras y directas en lenguaje de agricultor castellano (sin jerga técnica).\n\nEstructura de la pantalla móvil (una sola columna de ancho completo):\n- Cabecera fija superior verde oscuro (#1f4a2c) con botón a la izquierda de 48px 'VOLVER' con flecha SVG, título centrado 'Qué hay sembrado' y botón 'A+ Letra' a la derecha.\n- Tarjeta de aviso offline verde suave: 'Funciona sin cobertura. Los datos se guardan en el teléfono.' con icono de check SVG.\n- Cabecera y explicación de pantalla:\n  Título: 'Qué hay sembrado este año' (con icono SVG de reloj o calendario).\n  Explicación: 'Dinos qué hay este año en cada parcela. Con eso, cuando apuntes un tratamiento o una labor ya no tienes que escribir el cultivo: el programa ya lo sabe.'\n- Tarjeta de aviso de estado en ámbar/amarillo (#ffe9a8 con borde #8a6a00 y texto marrón oscuro #3d2f00):\n  Icono SVG de exclamación y texto: 'A 1 parcela le falta decir qué tiene este año.' con subtítulo explicativo 'La tienes destacada en amarillo abajo para completarla con un toque.'\n- Título de sección: 'Tus 3 parcelas de la campaña 2026:'\n- Tarjetas de parcelas:\n  1. Parcela pendiente (destacada para que se vea de un vistazo):\n     Nombre: 'Las Suertes de Arriba'\n     Detalle: '12,30 hectáreas • Sin riego (Secano)'\n     Etiqueta de estado en ámbar: 'FALTA RELLENAR'\n     Caja de advertencia interior en ámbar: 'Todavía no has dicho qué hay aquí este año. Si no lo pones, la Junta no puede validar los sulfatos ni las labores de esta parcela.'\n     Fila 'ESTE AÑO HAY': 'Sin cultivo asignado'\n     Fila 'Otros años': '2025: Girasol • 2024: Cebada cervecera'\n     Botón principal de acción verde (#2f6b40) de más de 64px de alto: icono SVG de suma (+) y texto 'DECIR QUÉ HAY SEMBRADO'.\n  2. Parcela con cultivo repetido (alerta de rotación de cultivos):\n     Nombre: 'El Prado'\n     Detalle: '4,90 hectáreas • Sin riego (Secano)'\n     Etiqueta de estado: 'AL DÍA'\n     Fila 'ESTE AÑO HAY': 'Cebada cervecera' (Variedad: Cerveza Planet)\n     Fila 'DESDE': '10/11/2025 (Siembra de otoño)' | 'HASTA': '30/06/2026 (Cosecha prevista)'\n     Caja de aviso informativo en ámbar: 'Aquí has puesto lo mismo que el año pasado. Si vas a repetir, apúntalo en las medidas preventivas: la rotación de cultivos es una de las que se piden.'\n     Fila 'Otros años': '2025: Cebada cervecera (Repite) • 2024: Trigo blando'\n     Botón secundario de 64px de alto con fondo blanco y borde verde: icono SVG de lápiz y texto 'CAMBIARLO'.\n  3. Parcela completada:\n     Nombre: 'La Vega del Río'\n     Detalle: '6,40 hectáreas • Con riego (Aspersión)'\n     Etiqueta de estado: 'AL DÍA'\n     Fila 'ESTE AÑO HAY': 'Maíz dulce de regadío' (Variedad: Syngenta Max)\n     Fila 'DESDE': '20/04/2026 (Siembra)' | 'HASTA': '15/10/2026 (Cosecha prevista)'\n     Fila 'Otros años': '2025: Alfalfa • 2024: Remolacha azucarera'\n     Botón secundario de 64px de alto con fondo blanco y borde verde: icono SVG de lápiz y texto 'CAMBIARLO'.\n- Botón final de navegación inferior: botón claro de 64px de alto con icono SVG de flecha y texto 'VOLVER AL INICIO'.\n- Pie de página discreto: 'CUE Digital • Junta de Castilla y León • Sin conexión requerida'.",
+            "name": "projects/4347842392867690825/screens/a87531e72155401abae4069e33dacfaa",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "INTER",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "INTER",
+              "bodyFont": "INTER",
+              "labelFont": "INTER",
+              "namedColors": {
+                "on_surface_variant": "#414941",
+                "background": "#f9faf5",
+                "on_tertiary_container": "#e09ba8",
+                "surface-variant": "#f4f6f3",
+                "primary-dark": "#0d2b18",
+                "secondary_container": "#ffd56c",
+                "primary-container": "#2f6b40",
+                "surface_container_high": "#e8e9e4",
+                "surface_tint": "#3c6847",
+                "surface_container_low": "#f3f4ef",
+                "secondary-container": "#ffe9a8",
+                "on-primary": "#ffffff",
+                "on-surface": "#10190f",
+                "tertiary_fixed_dim": "#fbb3c0",
+                "on_error": "#ffffff",
+                "surface_bright": "#f9faf5",
+                "on_secondary_fixed": "#251a00",
+                "on_primary_fixed_variant": "#244f31",
+                "surface_variant": "#e2e3de",
+                "primary-overlay-border": "#8fae97",
+                "on_secondary": "#ffffff",
+                "primary": "#043317",
+                "primary_fixed_dim": "#a2d2aa",
+                "on_surface": "#1a1c19",
+                "tertiary_container": "#65323d",
+                "on_secondary_container": "#775b00",
+                "on_background": "#1a1c19",
+                "error-dark": "#5c110d",
+                "error": "#8c1d18",
+                "on-surface-variant": "#43503f",
+                "on_primary_container": "#8bb992",
+                "surface_container_lowest": "#ffffff",
+                "inverse_primary": "#a2d2aa",
+                "outline": "#a9b6a8",
+                "primary-overlay": "#3a6446",
+                "on_error_container": "#93000a",
+                "on_secondary_fixed_variant": "#594400",
+                "on_primary": "#ffffff",
+                "inverse_on_surface": "#f0f1ec",
+                "on-secondary-container": "#3d2f00",
+                "on_tertiary_fixed": "#360c18",
+                "surface": "#ffffff",
+                "error-container": "#fbe3e1",
+                "surface_container_highest": "#e2e3de",
+                "primary_container": "#1f4a2c",
+                "secondary_fixed_dim": "#eac25a",
+                "secondary_fixed": "#ffdf95",
+                "surface_dim": "#d9dad6",
+                "on_primary_fixed": "#00210c",
+                "outline_variant": "#c1c9bf",
+                "tertiary": "#4a1c27",
+                "on_tertiary_fixed_variant": "#6b3742",
+                "error_container": "#ffdad6",
+                "focus": "#ffd24a",
+                "secondary": "#765a00",
+                "inverse_surface": "#2f312e",
+                "on-error-container": "#4a0f0b",
+                "surface_container": "#edeee9",
+                "primary_fixed": "#beeec5",
+                "on_tertiary": "#ffffff",
+                "tertiary_fixed": "#ffd9de"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#8a6a00",
+              "spacingScale": 2,
+              "typography": {
+                "titulo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "dato-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800"
+                },
+                "boton-principal": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700"
+                },
+                "boton": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700"
+                },
+                "cuerpo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "cuerpo-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "pista": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400"
+                },
+                "pregunta": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "campo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400"
+                }
+              },
+              "spacing": {
+                "space-xs": "4px",
+                "gutter": "16px",
+                "space-lg": "16px",
+                "space-xl": "24px",
+                "space-md": "12px",
+                "space-sm": "8px",
+                "space-xxl": "32px",
+                "margin": "16px"
+              },
+              "headlineFontFamily": "Inter",
+              "bodyFontFamily": "Inter",
+              "labelFontFamily": "Inter"
+            },
+            "deviceType": "MOBILE",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "focus": "#ffd24a",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "tertiary": "#4a1c27",
+                    "on_secondary": "#ffffff",
+                    "surface_variant": "#e2e3de",
+                    "error-dark": "#5c110d",
+                    "surface_container_lowest": "#ffffff",
+                    "on-secondary-container": "#3d2f00",
+                    "secondary_fixed_dim": "#eac25a",
+                    "on-error-container": "#4a0f0b",
+                    "on_background": "#1a1c19",
+                    "on_surface": "#1a1c19",
+                    "inverse_on_surface": "#f0f1ec",
+                    "on_error_container": "#93000a",
+                    "on-surface": "#10190f",
+                    "surface_tint": "#3c6847",
+                    "primary-container": "#2f6b40",
+                    "primary": "#043317",
+                    "on-primary": "#ffffff",
+                    "primary-dark": "#0d2b18",
+                    "on_primary_fixed_variant": "#244f31",
+                    "surface-variant": "#f4f6f3",
+                    "tertiary_fixed": "#ffd9de",
+                    "secondary": "#765a00",
+                    "background": "#f9faf5",
+                    "on_primary_fixed": "#00210c",
+                    "on_primary_container": "#8bb992",
+                    "tertiary_container": "#65323d",
+                    "outline": "#a9b6a8",
+                    "secondary_fixed": "#ffdf95",
+                    "error": "#8c1d18",
+                    "surface_dim": "#d9dad6",
+                    "outline_variant": "#c1c9bf",
+                    "primary_container": "#1f4a2c",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "surface_container_high": "#e8e9e4",
+                    "surface": "#ffffff",
+                    "primary_fixed": "#beeec5",
+                    "on_tertiary": "#ffffff",
+                    "on-surface-variant": "#43503f",
+                    "surface_bright": "#f9faf5",
+                    "surface_container": "#edeee9",
+                    "error_container": "#ffdad6",
+                    "inverse_surface": "#2f312e",
+                    "on_secondary_fixed_variant": "#594400",
+                    "primary-overlay-border": "#8fae97",
+                    "primary-overlay": "#3a6446",
+                    "on_secondary_container": "#775b00",
+                    "inverse_primary": "#a2d2aa",
+                    "on_surface_variant": "#414941",
+                    "surface_container_low": "#f3f4ef",
+                    "on_secondary_fixed": "#251a00",
+                    "on_error": "#ffffff",
+                    "on_primary": "#ffffff",
+                    "secondary-container": "#ffe9a8",
+                    "on_tertiary_container": "#e09ba8",
+                    "surface_container_highest": "#e2e3de",
+                    "on_tertiary_fixed": "#360c18",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "secondary_container": "#ffd56c",
+                    "error-container": "#fbe3e1"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    },
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    }
+                  },
+                  "spacing": {
+                    "space-xxl": "32px",
+                    "gutter": "16px",
+                    "space-xs": "4px",
+                    "space-lg": "16px",
+                    "space-md": "12px",
+                    "space-sm": "8px",
+                    "margin": "16px",
+                    "space-xl": "24px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la pantalla móvil **«Qué hay sembrado»** para CUE Digital adaptada rigurosamente a las condiciones de campo y a los requisitos de accesibilidad para un agricultor de Castilla y León:\n\n### Decisiones de diseño y adaptabilidad:\n1. **Legibilidad al sol y sin fatiga:**\n   - Tipografía base de **18 px o más** (con escala ampliable mediante el botón «A+ Letra» en cabecera).\n   - Fondos planos de alto contraste (blanco puro, verde oscuro `#1f4a2c` y ámbar informativo `#ffe9a8`), eliminando por completo sombras, degradados y animaciones para maximizar la visibilidad a plena luz solar.\n\n2. **Manejo táctil con una sola mano y guantes:**\n   - Botones con alturas de **64 px o más**, con separación adecuada para evitar pulsaciones erróneas.\n   - Sin barras de navegación inferior ni menús ocultos u hamburguesa que requieran destreza o desvíen la atención.\n\n3. **Claridad inmediata del estado de la explotación:**\n   - **Aviso superior destacado:** Informa al instante de cuántas parcelas faltan por completar («A 1 parcela le falta decir qué tiene este año»).\n   - **Diferenciación visual inmediata:** La parcela sin sembrado asignado («Las Suertes de Arriba») aparece destacada con borde ámbar y el botón principal verde oscuro **«DECIR QUÉ HAY SEMBRADO»**.\n   - **Alerta de rotación de cultivos:** En «El Prado» se muestra el aviso preventivo sobre repetir el mismo cultivo respecto al año anterior, con la recomendación para la inspección.\n   - **Estructura clara de datos:** Desglose fila a fila («Este año hay», «Desde», «Hasta», «Otros años») con lenguaje llano y sin jerga técnica.\n   - **Iconografía 100 % SVG vectorial:** Iconos nítidos y vectoriales (sin emojis)."
+    },
+    {
+      "suggestion": "Ver la pantalla siguiente al pulsar «DECIR QUÉ HAY SEMBRADO»"
+    },
+    {
+      "suggestion": "Diseñar la vista vacía (cuando no hay parcelas añadidas)"
+    },
+    {
+      "suggestion": "Simular la pantalla cuando todas las tierras están al día"
+    }
+  ]
+}

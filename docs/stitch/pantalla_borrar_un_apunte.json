@@ -1,0 +1,198 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "13888335512275810947",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/9e9c8e3503f84c0bba5ed1150f178162",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1VXSRV4vrgMP80lOHOEoGC09qpIyAN3l_4rB3lF-XK7yISQPN-KhpAbSX6G6cZtRjA4l5Wb6gEJTyzlpTNaxERBR8lteQnj5fWFkOtl_FI8-fiNnJz9IP-mWUgomSgKxm4PIGqVQut252dO2S_PCfbRCcQIhRWfUPZbEGhJKGmzFeygIcaCpKLtEYPIa4atrhiqevid0Bdu9-Fndw0Q3c2Bp7QJ51us6b2C60-1nTrz2DDleIoz056ecA"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/ae6b569046b646ca82909ac08f682794",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzcxZGJmNTFmZmFlZTQ2ZjE5OGQyNmZmZWVjMGE3MjI4EgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "98adb7e7e1174e7b8419e4b9fd8d32c9",
+            "generatedBy": "create_datastore_entry",
+            "width": "2560",
+            "height": "6124",
+            "title": "Lámina: Borrar y Anular un apunte - CUE Digital",
+            "name": "projects/4347842392867690825/screens/98adb7e7e1174e7b8419e4b9fd8d32c9",
+            "theme": {},
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "surface_container": "#edeee9",
+                    "surface-variant": "#f4f6f3",
+                    "surface_variant": "#e2e3de",
+                    "surface_container_lowest": "#ffffff",
+                    "primary_container": "#1f4a2c",
+                    "inverse_surface": "#2f312e",
+                    "on_secondary_fixed": "#251a00",
+                    "inverse_primary": "#a2d2aa",
+                    "error-dark": "#5c110d",
+                    "secondary_fixed_dim": "#eac25a",
+                    "tertiary": "#4a1c27",
+                    "on_error": "#ffffff",
+                    "tertiary_fixed": "#ffd9de",
+                    "on-surface-variant": "#43503f",
+                    "secondary_fixed": "#ffdf95",
+                    "on_secondary": "#ffffff",
+                    "on_primary_fixed": "#00210c",
+                    "surface_dim": "#d9dad6",
+                    "on-surface": "#10190f",
+                    "background": "#f9faf5",
+                    "on_tertiary": "#ffffff",
+                    "outline_variant": "#c1c9bf",
+                    "primary-overlay": "#3a6446",
+                    "secondary": "#765a00",
+                    "inverse_on_surface": "#f0f1ec",
+                    "on-primary": "#ffffff",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "on_primary_container": "#8bb992",
+                    "primary_fixed": "#beeec5",
+                    "on_primary": "#ffffff",
+                    "outline": "#a9b6a8",
+                    "on_tertiary_container": "#e09ba8",
+                    "on_secondary_fixed_variant": "#594400",
+                    "on_error_container": "#93000a",
+                    "surface_bright": "#f9faf5",
+                    "on_tertiary_fixed": "#360c18",
+                    "surface_container_high": "#e8e9e4",
+                    "tertiary_container": "#65323d",
+                    "surface_container_low": "#f3f4ef",
+                    "secondary-container": "#ffe9a8",
+                    "on-secondary-container": "#3d2f00",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "primary-overlay-border": "#8fae97",
+                    "on_surface": "#1a1c19",
+                    "primary": "#043317",
+                    "on-error-container": "#4a0f0b",
+                    "primary-dark": "#0d2b18",
+                    "surface": "#ffffff",
+                    "error-container": "#fbe3e1",
+                    "surface_tint": "#3c6847",
+                    "on_primary_fixed_variant": "#244f31",
+                    "error": "#8c1d18",
+                    "secondary_container": "#ffd56c",
+                    "on_background": "#1a1c19",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "on_secondary_container": "#775b00",
+                    "on_surface_variant": "#414941",
+                    "primary-container": "#2f6b40",
+                    "surface_container_highest": "#e2e3de",
+                    "error_container": "#ffdad6",
+                    "focus": "#ffd24a"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    }
+                  },
+                  "spacing": {
+                    "gutter": "16px",
+                    "space-xxl": "32px",
+                    "margin": "16px",
+                    "space-xs": "4px",
+                    "space-sm": "8px",
+                    "space-lg": "16px",
+                    "space-xl": "24px",
+                    "space-md": "12px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado y publicado en el lienzo la **lámina comparativa con los dos casos de borrar un apunte** para **CUE Digital**, adaptada al uso real por agricultores en el campo:\n\n---\n\n### Caso 1: Cuando el apunte se puede borrar (no firmado)\n1. **Pregunta directa y en grande:** `¿Seguro que quieres borrarlo?` con el subtítulo explicativo `De tu cuaderno desaparece del todo.`\n2. **Ficha de confirmación:** Muestra exactamente lo que se va a eliminar (*Producto: Glifosato 36 SL*, *Tierra y parcela: El Prado*, *Hectáreas tratadas: 4,90 ha*).\n3. **Los dos avisos preventivos:**\n   - *«Si solo te has equivocado al escribirlo, mejor CORREGIRLO: así el apunte queda bien en vez de desaparecer.»*\n   - *«El programa guarda por dentro qué había apuntado y qué día lo borraste, por si algún día hay que explicarlo.»*\n4. **Tres botones táctiles de 64 px con jerarquía intencionada:**\n   - **`SÍ, BORRARLO`**: En color de peligro (#8c1d18) con aclaración inferior, evitando que sea el botón más apetecible de tocar por error.\n   - **`MEJOR CORREGIRLO`**: Fondo blanco con borde verde reforzado, invitando a la corrección pacífica del dato.\n   - **`VOLVER`**: Fondo neutro de bajo impacto visual para cancelar la acción.\n\n---\n\n### Caso 2: El caso de un apunte firmado\n1. **Mensaje pedagógico en cabeza:** `Este apunte está firmado, así que no se puede borrar. Se puede ANULAR: queda tachado, con el motivo, y la firma sigue cuadrando ante la Junta.`\n2. **Explicación sin jerga informática ni legal:** Aclara que anular significa trazar una raya visible conservando la trazabilidad de la firma digital ante cualquier inspección.\n3. **Ficha del apunte a tachar** y selector de motivo (`Me equivoqué de parcela al apuntar`).\n4. **Ausencia total de botón de borrado:** Solo dispone de **`ANULARLO`** (en verde reglamentario con icono SVG de anulación) y **`VOLVER`**.\n\n---\n\n### Criterios de diseño aplicados:\n- **Letra &ge; 18 px** en todos los cuerpos de texto y 24–28 px en títulos.\n- **Botones con altura táctil mínima de 64 px** para pulsar con guantes o con una sola mano.\n- **Cero sombras, sin degradados ni animaciones:** Máximo contraste visible bajo luz solar directa.\n- **Iconografía puramente SVG** vectorial (sin emojis).\n- **Sin barra inferior de pestañas ni menús desplegables.**"
+    },
+    {
+      "suggestion": "¿Quieres añadir la pantalla de confirmación tras pulsar «ANULARLO»?"
+    },
+    {
+      "suggestion": "¿Deseas ajustar el texto de algún motivo de anulación?"
+    },
+    {
+      "suggestion": "¿Quieres ver la versión individual de cada pantalla para móvil de 390px?"
+    }
+  ]
+}

@@ -1,0 +1,388 @@
+municipio,provincia,codigo_ine,zona_vulnerable
+El Bohodón,Ávila,05036,Moraña
+Cabezas de Alambre,Ávila,05042,Moraña
+Cabezas del Villar,Ávila,05044,Alba-Peñaranda
+Cabizuela,Ávila,05045,Moraña
+Constanzana,Ávila,05064,Moraña
+Donjimeno,Ávila,05069,Moraña
+Donvidas,Ávila,05070,Arenales
+Espinosa de los Caballeros,Ávila,05072,Arenales
+Mancera de Arriba,Ávila,05118,Alba-Peñaranda
+Palacios de Goda,Ávila,05178,Arenales
+Papatrigo,Ávila,05179,Moraña
+Pedro-Rodríguez,Ávila,05183,Moraña
+San Miguel de Serrezuela,Ávila,05218,Alba-Peñaranda
+San Pascual,Ávila,05219,Moraña
+San Vicente de Arévalo,Ávila,05231,Moraña
+Aguilar de Bureba,Burgos,09007,Aluvial del OCA
+Aranda de Duero,Burgos,09018,Aranda de Duero
+Avellanosa de Muñó,Burgos,09032,Páramos-Esgueva
+Los Balbases,Burgos,09034,Castrojeriz - Villadiego
+Los Barrios de Bureba,Burgos,09043,Aluvial del OCA
+Berzosa de Bureba,Burgos,09052,Aluvial del OCA
+Bozoó,Burgos,09054,Aluvial de Miranda
+Briviesca,Burgos,09056,Aluvial del OCA
+Busto de Bureba,Burgos,09060,Aluvial del OCA
+Castellanos de Castro,Burgos,09079,Castrojeriz - Villadiego
+Castil de Peones,Burgos,09083,Aluvial del OCA
+Castrillo de la Vega,Burgos,09085,Aranda de Duero
+Castrojeriz,Burgos,09091,Castrojeriz - Villadiego
+Cerezo de Río Tirón,Burgos,09098,Aluvial del Tirón
+Cilleruelo de Abajo,Burgos,09103,Páramos-Esgueva
+Cubo de Bureba,Burgos,09115,Aluvial del OCA
+Fontioso,Burgos,09127,Páramos-Esgueva
+Fresno de Río Tirón,Burgos,09132,Aluvial del Tirón
+Fuentebureba,Burgos,09135,Aluvial del OCA
+Fuentecén,Burgos,09136,Aranda de Duero
+Fuentelisendo,Burgos,09138,Aranda de Duero
+Fuentemolinos,Burgos,09139,Aranda de Duero
+Fuentespina,Burgos,09141,Aranda de Duero
+Grijalba,Burgos,09148,Castrojeriz - Villadiego
+Grisaleña,Burgos,09149,Aluvial del OCA
+Haza,Burgos,09155,Aranda de Duero
+Hontanas,Burgos,09159,Castrojeriz - Villadiego
+Hornillos del Camino,Burgos,09167,Castrojeriz - Villadiego
+Hoyales de Roa,Burgos,09170,Aranda de Duero
+Ibeas de Juarros,Burgos,09177,Ibeas de Juarros
+Iglesiarrubia,Burgos,09179,Páramos-Esgueva
+Iglesias,Burgos,09180,Castrojeriz - Villadiego
+Miranda de Ebro,Burgos,09219,Aluvial de Miranda
+Nava de Roa,Burgos,09229,Aranda de Duero
+Padilla de Abajo,Burgos,09242,Castrojeriz - Villadiego
+Padilla de Arriba,Burgos,09243,Castrojeriz - Villadiego
+Pedrosa del Páramo,Burgos,09257,Castrojeriz - Villadiego
+Prádanos de Bureba,Burgos,09273,Aluvial del OCA
+Quintanaélez,Burgos,09283,Aluvial del OCA
+Reinoso,Burgos,09310,Aluvial del OCA
+Royuela de Río Franco,Burgos,09325,Páramos-Esgueva
+Santa Gadea del Cid,Burgos,09347,Aluvial de Miranda
+Sasamón,Burgos,09363,Castrojeriz - Villadiego
+La Sequera de Haza,Burgos,09365,Aranda de Duero
+Sordillos,Burgos,09368,Castrojeriz - Villadiego
+Tamarón,Burgos,09375,Castrojeriz - Villadiego
+Torresandino,Burgos,09390,Páramos-Esgueva
+Tórtoles de Esgueva,Burgos,09391,Páramos-Esgueva
+Vallejera,Burgos,09417,Castrojeriz - Villadiego
+La Vid de Bureba,Burgos,09422,Aluvial del OCA
+Vileña,Burgos,09423,Aluvial del OCA
+Villadiego,Burgos,09427,Castrojeriz - Villadiego
+Villaescusa de Roa,Burgos,09428,Páramos-Esgueva
+Villafruela,Burgos,09432,Páramos-Esgueva
+Villalba de Duero,Burgos,09438,Aranda de Duero
+Villaldemiro,Burgos,09441,Castrojeriz - Villadiego
+Villamayor de Treviño,Burgos,09444,Castrojeriz - Villadiego
+Villaquirán de la Puebla,Burgos,09455,Castrojeriz - Villadiego
+Villaquirán de los Infantes,Burgos,09456,Castrojeriz - Villadiego
+Villasandino,Burgos,09460,Castrojeriz - Villadiego
+Villegas,Burgos,09473,Castrojeriz - Villadiego
+Bercianos del Páramo,León,24017,Páramos de León
+Bustillo del Páramo,León,24026,Páramos de León
+Laguna Dalga,León,24087,Páramos de León
+Laguna de Negrillos,León,24088,Páramos de León
+Pobladura de Pelayo García,León,24113,Páramos de León
+Santa María del Páramo,León,24157,Páramos de León
+Urdiales del Páramo,León,24174,Páramos de León
+Zotes del Páramo,León,24230,Páramos de León
+Alba de Cerrato,Palencia,34006,Páramos-Esgueva
+Ampudia,Palencia,34010,Torozos
+Amusco,Palencia,34011,Campos Astudiillo
+Antigüedad,Palencia,34012,Páramos-Esgueva
+Astudillo,Palencia,34017,Campos Astudiillo
+Autilla del Pino,Palencia,34018,Torozos
+Baltanás,Palencia,34022,Páramos-Esgueva
+Venta de Baños,Palencia,34023,Páramos-Esgueva
+Belmonte de Campos,Palencia,34031,Torozos
+Boada de Campos,Palencia,34033,Torozos
+Capillas,Palencia,34045,Torozos
+Castil de Vela,Palencia,34048,Torozos
+Castrillo de Don Juan,Palencia,34050,Páramos-Esgueva
+Castrillo de Onielo,Palencia,34051,Páramos-Esgueva
+Cevico de la Torre,Palencia,34057,Páramos-Esgueva
+Cevico Navero,Palencia,34058,Páramos-Esgueva
+Cobos de Cerrato,Palencia,34060,Páramos-Esgueva
+Dueñas,Palencia,34069,Páramos-Esgueva
+Espinosa de Cerrato,Palencia,34070,Páramos-Esgueva
+Fuentes de Valdepero,Palencia,34077,Campos Astudiillo
+Hérmedes de Cerrato,Palencia,34082,Páramos-Esgueva
+Herrera de Valdecañas,Palencia,34084,Páramos-Esgueva
+Hontoria de Cerrato,Palencia,34086,Páramos-Esgueva
+Lomas,Palencia,34096,Campos Astudiillo
+Magaz de Pisuerga,Palencia,34098,Campos Astudiillo
+Manquillos,Palencia,34099,Campos Astudiillo
+Meneses de Campos,Palencia,34106,Torozos
+Monzón de Campos,Palencia,34108,Campos Astudiillo
+Palencia,Palencia,34120,Campos Astudiillo
+Palenzuela,Palencia,34121,Páramos-Esgueva
+Pedraza de Campos,Palencia,34125,Torozos
+Reinoso de Cerrato,Palencia,34146,Páramos-Esgueva
+Ribas de Campos,Palencia,34155,Campos Astudiillo
+San Cebrián de Campos,Palencia,34159,Campos Astudiillo
+Santa Cecilia del Alcor,Palencia,34167,Torozos
+Soto de Cerrato,Palencia,34177,Páramos-Esgueva
+Tabanera de Cerrato,Palencia,34178,Páramos-Esgueva
+Tariego de Cerrato,Palencia,34181,Páramos-Esgueva
+Valdeolmillos,Palencia,34189,Campos Astudiillo
+Valle de Cerrato,Palencia,34196,Páramos-Esgueva
+Vertavillo,Palencia,34201,Páramos-Esgueva
+Villaconancio,Palencia,34205,Páramos-Esgueva
+Villahán,Palencia,34210,Páramos-Esgueva
+Villalaco,Palencia,34213,Campos Astudiillo
+Villalobón,Palencia,34217,Campos Astudiillo
+Villamediana,Palencia,34221,Campos Astudiillo
+Villamuriel de Cerrato,Palencia,34225,Páramos-Esgueva
+Villaviudas,Palencia,34238,Páramos-Esgueva
+Villerías de Campos,Palencia,34240,Torozos
+Villoldo,Palencia,34243,Campos Astudiillo
+Alconada,Salamanca,37012,Alba-Peñaranda
+Aldeaseca de Alba,Salamanca,37021,Alba-Peñaranda
+Bóveda del Río Almar,Salamanca,37057,Alba-Peñaranda
+Cabrerizos,Salamanca,37067,Armuña-Salamanca
+Cabrillas,Salamanca,37068,Campo Charro
+Calzada de Valdunciel,Salamanca,37073,Armuña-Salamanca
+Cantaracillo,Salamanca,37083,Alba-Peñaranda
+Castellanos de Moriscos,Salamanca,37092,Armuña-Salamanca
+Coca de Alba,Salamanca,37108,Alba-Peñaranda
+Cordovilla,Salamanca,37110,Alba-Peñaranda
+La Fuente de San Esteban,Salamanca,37135,Campo Charro
+Garcihernández,Salamanca,37148,Alba-Peñaranda
+Gomecello,Salamanca,37152,Armuña-Salamanca
+Macotera,Salamanca,37174,Alba-Peñaranda
+Malpartida,Salamanca,37178,Alba-Peñaranda
+Mancera de Abajo,Salamanca,37179,Alba-Peñaranda
+Martín de Yeltes,Salamanca,37183,Campo Charro
+Castellanos de Villiquera,Salamanca,37185,Armuña-Salamanca
+Monterrubio de Armuña,Salamanca,37202,Armuña-Salamanca
+Moriscos,Salamanca,37207,Armuña-Salamanca
+Pedrosillo de Alba,Salamanca,37236,Alba-Peñaranda
+Pedrosillo el Ralo,Salamanca,37238,Armuña-Salamanca
+Pelabravo,Salamanca,37240,Armuña-Salamanca
+Peñaranda de Bracamonte,Salamanca,37246,Alba-Peñaranda
+Peñarandilla,Salamanca,37247,Alba-Peñaranda
+Salmoral,Salamanca,37276,Alba-Peñaranda
+San Cristóbal de la Cuesta,Salamanca,37278,Armuña-Salamanca
+Santa Marta de Tormes,Salamanca,37294,Armuña-Salamanca
+Tordillos,Salamanca,37324,Alba-Peñaranda
+Valdecarros,Salamanca,37330,Alba-Peñaranda
+Valdunciel,Salamanca,37338,Armuña-Salamanca
+Ventosa del Río Almar,Salamanca,37348,Alba-Peñaranda
+Villaverde de Guareña,Salamanca,37372,Armuña-Salamanca
+Adrada de Pirón,Segovia,40002,Cantimpalos - Segovia
+Adrados,Segovia,40003,Cantimpalos - Segovia
+Aguilafuente,Segovia,40004,Cantimpalos - Segovia
+Aldeanueva del Codonal,Segovia,40010,Arenales
+Aldeasoña,Segovia,40013,Churrería
+Aldehuela del Codonal,Segovia,40015,Arenales
+Añe,Segovia,40018,Arenales
+Brieva,Segovia,40033,Cantimpalos - Segovia
+Cabañas de Polendos,Segovia,40035,Cantimpalos - Segovia
+Cabezuela,Segovia,40036,Cantimpalos - Segovia
+Cantalejo,Segovia,40040,Cantimpalos - Segovia
+Cantimpalos,Segovia,40041,Cantimpalos - Segovia
+Carbonero el Mayor,Segovia,40043,Cantimpalos - Segovia
+Coca,Segovia,40057,Arenales
+Codorniz,Segovia,40058,Arenales
+Cuéllar,Segovia,40063,Cantimpalos - Segovia
+Donhierro,Segovia,40069,Arenales
+Encinillas,Segovia,40072,Cantimpalos - Segovia
+Escarabajosa de Cabezas,Segovia,40074,Cantimpalos - Segovia
+Frumales,Segovia,40081,Cantimpalos - Segovia
+Fuente de Santa Cruz,Segovia,40082,Arenales
+Fuente el Olmo de Íscar,Segovia,40084,Arenales
+Fuentepelayo,Segovia,40086,Cantimpalos - Segovia
+Fuentepiñel,Segovia,40087,Cantimpalos - Segovia
+Fuentesaúco de Fuentidueña,Segovia,40089,Churrería
+Gomezserracín,Segovia,40095,Cantimpalos - Segovia
+Hontalbilla,Segovia,40100,Cantimpalos - Segovia
+Juarros de Voltoya,Segovia,40106,Arenales
+Lastras de Cuéllar,Segovia,40110,Cantimpalos - Segovia
+Marazuela,Segovia,40118,Arenales
+Martín Muñoz de la Dehesa,Segovia,40120,Arenales
+Martín Muñoz de las Posadas,Segovia,40121,Arenales
+Mata de Cuéllar,Segovia,40124,Arenales
+Melque de Cercos,Segovia,40126,Arenales
+Membibre de la Hoz,Segovia,40127,Churrería
+Montejo de Arévalo,Segovia,40129,Arenales
+Mozoncillo,Segovia,40134,Cantimpalos - Segovia
+Muñopedro,Segovia,40135,Arenales
+Nava de la Asunción,Segovia,40138,Arenales
+Navalmanzano,Segovia,40141,Cantimpalos - Segovia
+Navas de Oro,Segovia,40145,Arenales
+Nieva,Segovia,40148,Arenales
+Olombrada,Segovia,40149,Churrería
+Ortigosa de Pestaño,Segovia,40151,Arenales
+Perosillo,Segovia,40158,Cantimpalos - Segovia
+Pinarejos,Segovia,40159,Cantimpalos - Segovia
+Pinarnegrillo,Segovia,40160,Cantimpalos - Segovia
+Rapariegos,Segovia,40164,Arenales
+Remondo,Segovia,40166,Arenales
+San Cristóbal de la Vega,Segovia,40178,Arenales
+Sanchonuño,Segovia,40179,Cantimpalos - Segovia
+Sangarcía,Segovia,40180,Arenales
+Santa María la Real de Nieva,Segovia,40185,Arenales
+Santiuste de San Juan Bautista,Segovia,40189,Arenales
+Sauquillo de Cabezas,Segovia,40192,Cantimpalos - Segovia
+Tabanera la Luenga,Segovia,40200,Cantimpalos - Segovia
+Tolocirio,Segovia,40201,Arenales
+Torrecilla del Pinar,Segovia,40204,Cantimpalos - Segovia
+Turégano,Segovia,40208,Cantimpalos - Segovia
+Veganzones,Segovia,40222,Cantimpalos - Segovia
+Villaverde de Íscar,Segovia,40228,Arenales
+Villeguillo,Segovia,40230,Arenales
+Zarzuela del Pinar,Segovia,40234,Cantimpalos - Segovia
+Cozuelos de Fuentidueña,Segovia,40902,Cantimpalos - Segovia
+Adradas,Soria,42003,Almazán
+Ágreda,Soria,42004,Agreda - Ólvega
+Alcubilla de las Peñas,Soria,42008,Almazán
+Alentisque,Soria,42015,Almazán
+Alpanseque,Soria,42023,Almazán
+Arenillas,Soria,42026,Almazán
+Baraona,Soria,42029,Almazán
+Barcones,Soria,42031,Almazán
+Castilruiz,Soria,42057,Agreda - Ólvega
+Coscurita,Soria,42068,Almazán
+Dévanos,Soria,42075,Agreda - Ólvega
+Escobosa de Almazán,Soria,42079,Almazán
+Frechilla de Almazán,Soria,42083,Almazán
+Fuentecantos,Soria,42087,Fuente Cantos
+Fuentestrún,Soria,42093,Agreda - Ólvega
+Matalebreras,Soria,42110,Agreda - Ólvega
+Momblona,Soria,42118,Almazán
+Morón de Almazán,Soria,42123,Almazán
+Nolay,Soria,42131,Almazán
+Ólvega,Soria,42134,Agreda - Ólvega
+Rello,Soria,42153,Almazán
+La Riba de Escalote,Soria,42157,Almazán
+Soliedra,Soria,42172,Almazán
+Taroda,Soria,42182,Almazán
+Villasayas,Soria,42212,Almazán
+Adalia,Valladolid,47001,Torozos
+Aguasal,Valladolid,47002,Arenales
+Alaejos,Valladolid,47004,Medina
+Alcazarén,Valladolid,47005,Arenales
+Aldea de San Miguel,Valladolid,47006,Arenales
+Aldeamayor de San Martín,Valladolid,47007,Arenales
+Almenara de Adaja,Valladolid,47008,Arenales
+Amusquillo,Valladolid,47009,Páramos-Esgueva
+Arroyo de la Encomienda,Valladolid,47010,Torozos
+Ataquines,Valladolid,47011,Arenales
+Bahabón,Valladolid,47012,Churrería
+Barruelo del Valle,Valladolid,47014,Torozos
+Bercero,Valladolid,47017,Torozos
+Berceruelo,Valladolid,47018,Torozos
+Bobadilla del Campo,Valladolid,47020,Medina
+Bocigas,Valladolid,47021,Arenales
+Boecillo,Valladolid,47023,Arenales
+Brahojos de Medina,Valladolid,47025,Medina
+Campaspero,Valladolid,47030,Churrería
+El Campillo,Valladolid,47031,Medina
+Canalejas de Peñafiel,Valladolid,47033,Churrería
+Canillas de Esgueva,Valladolid,47034,Páramos-Esgueva
+Carpio,Valladolid,47035,Medina
+Casasola de Arión,Valladolid,47036,Tordesillas
+Castrejón de Trabancos,Valladolid,47037,Medina
+Castrillo-Tejeriego,Valladolid,47039,Páramos-Esgueva
+Castrodeza,Valladolid,47041,Torozos
+Castromonte,Valladolid,47043,Torozos
+Castroverde de Cerrato,Valladolid,47047,Páramos-Esgueva
+Cigales,Valladolid,47050,Torozos
+Ciguñuela,Valladolid,47051,Torozos
+Cistérniga,Valladolid,47052,Torozos
+Cogeces de Íscar,Valladolid,47053,Arenales
+Cogeces del Monte,Valladolid,47054,Churrería
+Corcos,Valladolid,47055,Torozos
+Corrales de Duero,Valladolid,47056,Páramos-Esgueva
+Cubillas de Santa Marta,Valladolid,47057,Torozos
+Encinas de Esgueva,Valladolid,47060,Páramos-Esgueva
+Esguevillas de Esgueva,Valladolid,47061,Páramos-Esgueva
+Fombellida,Valladolid,47062,Páramos-Esgueva
+Fompedraza,Valladolid,47063,Churrería
+Fresno el Viejo,Valladolid,47065,Medina
+Fuensaldaña,Valladolid,47066,Torozos
+Fuente-Olmedo,Valladolid,47068,Arenales
+Gallegos de Hornija,Valladolid,47069,Tordesillas
+Geria,Valladolid,47071,Torozos
+Hornillos de Eresma,Valladolid,47074,Arenales
+Íscar,Valladolid,47075,Arenales
+Laguna de Duero,Valladolid,47076,Arenales
+Llano de Olmedo,Valladolid,47079,Arenales
+Marzales,Valladolid,47081,Tordesillas
+Matapozuelos,Valladolid,47082,Arenales
+Matilla de los Caños,Valladolid,47083,Torozos
+Medina de Rioseco,Valladolid,47086,Torozos
+Megeces,Valladolid,47087,Arenales
+Mojados,Valladolid,47090,Arenales
+Montealegre de Campos,Valladolid,47092,Torozos
+Montemayor de Pililla,Valladolid,47093,Churrería
+Mota del Marqués,Valladolid,47097,Torozos
+Mucientes,Valladolid,47098,Torozos
+La Mudarra,Valladolid,47099,Torozos
+Nueva Villa de las Torres,Valladolid,47102,Medina
+Olmedo,Valladolid,47104,Arenales
+La Pedraja de Portillo,Valladolid,47111,Arenales
+Pedrajas de San Esteban,Valladolid,47112,Arenales
+Pedrosa del Rey,Valladolid,47113,Tordesillas
+Peñaflor de Hornija,Valladolid,47115,Torozos
+Piñel de Abajo,Valladolid,47118,Páramos-Esgueva
+Piñel de Arriba,Valladolid,47119,Páramos-Esgueva
+Pozaldez,Valladolid,47124,Arenales
+Puras,Valladolid,47126,Arenales
+Quintanilla de Trigueros,Valladolid,47130,Torozos
+Robladillo,Valladolid,47135,Torozos
+San Cebrián de Mazote,Valladolid,47142,Torozos
+San Llorente,Valladolid,47143,Páramos-Esgueva
+San Pelayo,Valladolid,47149,Torozos
+San Salvador,Valladolid,47151,Torozos
+Santibáñez de Valcorba,Valladolid,47154,Churrería
+Sardón de Duero,Valladolid,47157,Churrería
+Simancas,Valladolid,47161,Torozos
+Tordehumos,Valladolid,47164,Torozos
+Tordesillas,Valladolid,47165,Tordesillas
+Torrecilla de la Torre,Valladolid,47168,Torozos
+Torre de Esgueva,Valladolid,47169,Páramos-Esgueva
+Torre de Peñafiel,Valladolid,47170,Churrería
+Torrelobatón,Valladolid,47171,Torozos
+Traspinedo,Valladolid,47173,Churrería
+Trigueros del Valle,Valladolid,47174,Torozos
+Valdenebro de los Valles,Valladolid,47181,Torozos
+Valdestillas,Valladolid,47182,Arenales
+Valoria la Buena,Valladolid,47184,Páramos-Esgueva
+Valverde de Campos,Valladolid,47185,Torozos
+Valladolid,Valladolid,47186,Torozos
+Vega de Valdetronco,Valladolid,47188,Tordesillas
+Velascálvaro,Valladolid,47189,Medina
+Velilla,Valladolid,47190,Torozos
+Velliza,Valladolid,47191,Torozos
+Villabrágima,Valladolid,47197,Torozos
+Villaco,Valladolid,47200,Páramos-Esgueva
+Villafuerte,Valladolid,47206,Páramos-Esgueva
+Villalar de los Comuneros,Valladolid,47210,Tordesillas
+Villalba de los Alcores,Valladolid,47212,Torozos
+Villalbarba,Valladolid,47213,Tordesillas
+Villán de Tordesillas,Valladolid,47216,Torozos
+Villanubla,Valladolid,47217,Torozos
+Villanueva de San Mancio,Valladolid,47222,Torozos
+Villasexmir,Valladolid,47225,Torozos
+Villaverde de Medina,Valladolid,47228,Medina
+Wamba,Valladolid,47230,Torozos
+Zaratán,Valladolid,47231,Torozos
+La Zarza,Valladolid,47232,Arenales
+Arquillinos,Zamora,49014,Villafáfila
+Barcial del Barco,Zamora,49019,Villafáfila
+Cañizo,Zamora,49035,Villafáfila
+Castronuevo,Zamora,49042,Villafáfila
+Cerecinos del Carrizal,Zamora,49047,Villafáfila
+Madridanos,Zamora,49103,Zamora
+Manganeses de la Lampreana,Zamora,49108,Villafáfila
+Montamarta,Zamora,49123,Villafáfila
+Pajares de la Lampreana,Zamora,49141,Villafáfila
+Piedrahita de Castro,Zamora,49155,Villafáfila
+Revellinos,Zamora,49175,Villafáfila
+San Agustín del Pozo,Zamora,49185,Villafáfila
+San Cebrián de Castro,Zamora,49186,Villafáfila
+San Martín de Valderaduey,Zamora,49190,Villafáfila
+Villafáfila,Zamora,49242,Villafáfila
+Villalazán,Zamora,49245,Zamora
+Villalba de la Lampreana,Zamora,49246,Villafáfila
+Villaralbo,Zamora,49261,Zamora
+Villárdiga,Zamora,49266,Villafáfila
+Villarrín de Campos,Zamora,49268,Villafáfila

@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background text-on-surface" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=1440, initial-scale=1.0" name="viewport"/>
+<title>CUE Digital CyL - Productos y Máquinas (Despacho Agrario)</title>
+<!-- Material Symbols Outlined Font -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed": "#360c18",
+            "background": "#f9faf5",
+            "on-surface-variant": "#43503f",
+            "surface-container-low": "#f3f4ef",
+            "surface-variant": "#e2e3de",
+            "error-container": "#fbe3e1",
+            "surface-container": "#edeee9",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#1a1c19",
+            "inverse-surface": "#2f312e",
+            "inverse-on-surface": "#f0f1ec",
+            "focus": "#ffd24a",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "on-primary-fixed-variant": "#244f31",
+            "primary-overlay": "#3a6446",
+            "on-secondary-container": "#3d2f00",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "tertiary-fixed": "#ffd9de",
+            "primary-fixed-dim": "#a2d2aa",
+            "error-dark": "#5c110d",
+            "surface-dim": "#d9dad6",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "primary-overlay-border": "#8fae97",
+            "secondary-container": "#ffe9a8",
+            "primary-container": "#2f6b40",
+            "secondary": "#765a00",
+            "surface-container-high": "#e8e9e4",
+            "on-secondary-fixed-variant": "#594400",
+            "on-tertiary-container": "#e09ba8",
+            "inverse-primary": "#a2d2aa",
+            "surface-container-highest": "#e2e3de",
+            "primary-fixed": "#beeec5",
+            "on-primary-container": "#8bb992",
+            "primary": "#043317",
+            "on-primary": "#ffffff",
+            "tertiary": "#4a1c27",
+            "secondary-fixed": "#ffdf95",
+            "surface-tint": "#3c6847",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#c1c9bf",
+            "surface": "#ffffff",
+            "on-primary-fixed": "#00210c",
+            "on-error": "#ffffff",
+            "on-secondary-fixed": "#251a00",
+            "primary-dark": "#0d2b18",
+            "tertiary-container": "#65323d",
+            "on-background": "#1a1c19",
+            "surface-bright": "#f9faf5",
+            "error": "#8c1d18",
+            "outline": "#a9b6a8",
+            "secondary-fixed-dim": "#eac25a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "space-lg": "16px",
+            "space-sm": "8px",
+            "margin": "16px",
+            "space-xl": "24px",
+            "space-xxl": "32px",
+            "space-md": "12px",
+            "gutter": "16px"
+          },
+          "fontFamily": {
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Estricto: Sin sombras, bordes sólidos de alta visibilidad para exterior */
+    * {
+      box-shadow: none !important;
+    }
+    /* Scrollbar sobrio para tablas densas */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #edeee9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-cuerpo text-cuerpo bg-background select-none overflow-hidden antialiased">
+<!-- ========================================================================= -->
+<!-- 1. TopNavBar (Web Header fijo con Selectores de Contexto Operativo)       -->
+<!-- ========================================================================= -->
+<header class="w-full h-16 px-gutter flex items-center justify-between z-40 bg-surface border-b-2 border-outline flex-shrink-0">
+<!-- Marca y contexto de despacho -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="font-titulo text-titulo text-primary font-bold tracking-tight">CUE Digital CyL</span>
+<span class="bg-primary text-on-primary text-xs font-boton px-2 py-0.5 rounded tracking-wide uppercase">DESPACHO</span>
+</div>
+<div class="h-6 w-[2px] bg-outline-variant mx-1"></div>
+<!-- Selectores de contexto operativo de explotación -->
+<div class="flex items-center gap-2 font-pista text-pista">
+<!-- Finca actual -->
+<div class="flex items-center gap-1 bg-surface-container-low px-2.5 py-1.5 rounded border border-outline text-on-surface font-medium">
+<span class="material-symbols-outlined text-primary text-[18px]">location_on</span>
+<span>Finca: <strong class="font-bold">Las Suertes y El Prado (187,42 ha)</strong></span>
+</div>
+<!-- Campaña -->
+<div class="flex items-center gap-1 bg-surface-container-low px-2.5 py-1.5 rounded border border-outline text-on-surface font-medium">
+<span class="material-symbols-outlined text-primary text-[18px]">calendar_today</span>
+<span>Campaña: <strong class="font-bold">2026 (01/09/2025 - 31/08/2026)</strong></span>
+</div>
+<!-- Estado SIEX / REGEPA -->
+<div class="flex items-center gap-1.5 bg-surface-container px-2.5 py-1.5 rounded border border-primary text-primary font-bold">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container inline-block"></span>
+<span>SIEX / REGEPA: AL DÍA</span>
+</div>
+<!-- Titular Cualificado -->
+<div class="hidden xl:flex items-center gap-1 bg-surface-container-low px-2 py-1.5 rounded border border-outline text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-[16px]">badge</span>
+<span>Manuel Ruiz Gómez (NIF: 12345678Z · Titular cualificado)</span>
+</div>
+</div>
+</div>
+<!-- Acciones Trailing y Usuario -->
+<div class="flex items-center gap-space-sm">
+<button class="bg-primary text-on-primary px-3.5 py-2 rounded-lg font-boton text-pista flex items-center gap-1.5 border-2 border-primary hover:bg-primary-dark transition-colors focus:ring-4 focus:ring-focus focus:outline-none">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>+ NUEVA FICHA</span>
+</button>
+<button class="bg-surface text-primary border-2 border-primary px-3 py-2 rounded-lg font-boton text-pista flex items-center gap-1.5 hover:bg-surface-container transition-colors focus:ring-4 focus:ring-focus focus:outline-none">
+<span class="material-symbols-outlined text-[19px]">sync</span>
+<span>Sincronizar SIEX</span>
+</button>
+<div class="h-6 w-[2px] bg-outline-variant mx-1"></div>
+<!-- Iconos funcionales -->
+<button class="w-9 h-9 flex items-center justify-center rounded border border-outline text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors focus:ring-2 focus:ring-focus focus:outline-none" title="Notificaciones">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded border border-outline text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors focus:ring-2 focus:ring-focus focus:outline-none" title="Ayuda técnica SIEX">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<!-- Perfil Técnico Asesor -->
+<div class="flex items-center gap-2 pl-2 border-l border-outline-variant">
+<div class="w-9 h-9 rounded bg-surface-container-high border-2 border-primary flex items-center justify-center font-bold text-primary text-sm">
+          MR
+        </div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 2. Shell Principal: SideNavBar lateral (izq) + Main Content (der)         -->
+<!-- ========================================================================= -->
+<div class="flex-1 flex overflow-hidden">
+<!-- SideNavBar (Ancho fijo de escritorio: 280px) -->
+<aside class="w-72 bg-surface-container-low border-r-2 border-outline flex flex-col justify-between flex-shrink-0 select-none">
+<!-- Cabecera de Explotación Activa -->
+<div>
+<div class="p-space-md border-b border-outline-variant bg-surface">
+<div class="text-xs uppercase tracking-wider font-bold text-on-surface-variant">Despacho Agrario CUE</div>
+<div class="font-titulo text-base font-bold text-primary mt-0.5 flex items-center justify-between">
+<span>Explotación Activa</span>
+<span class="bg-primary text-on-primary text-xs px-2 py-0.5 rounded font-mono font-bold">#49281</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-0.5">CyL · Valladolisis-Sur · Comarca Medina</p>
+</div>
+<!-- Lista de Módulos (Exactos según especificación con Productos y Máquinas ACTIVO) -->
+<nav class="p-space-sm space-y-1 overflow-y-auto max-h-[calc(100vh-250px)]">
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">dashboard</span>
+<span>Resumen General</span>
+</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">menu_book</span>
+<span>El Cuaderno</span>
+</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-xs font-bold text-on-surface-variant">24</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">map</span>
+<span>Tierras y Parcelas</span>
+</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-xs font-bold text-on-surface-variant">64</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">grass</span>
+<span>Qué hay sembrado</span>
+</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">warehouse</span>
+<span>El Almacén</span>
+</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">science</span>
+<span>Los Análisis</span>
+</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-xs font-bold text-on-surface-variant">5</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">water_drop</span>
+<span>Plan de Abono / Nitratos</span>
+</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">description</span>
+<span>Papeles y Documentos</span>
+</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-xs font-bold text-on-surface-variant">6</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">receipt_long</span>
+<span>Facturas y Albaranes</span>
+</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-xs font-bold text-on-surface-variant">12</span>
+</a>
+<!-- ESTADO ACTIVO: Productos y máquinas -->
+<a class="flex items-center justify-between bg-primary text-on-primary font-boton px-3 py-2.5 rounded-lg border-l-4 border-focus transition-colors shadow-none" href="#">
+<span class="flex items-center gap-2.5 font-bold">
+<span class="material-symbols-outlined text-[20px]">precision_manufacturing</span>
+<span>Productos y máquinas</span>
+</span>
+<span class="bg-primary-container text-white px-2 py-0.5 rounded text-xs font-mono font-bold">29</span>
+</a>
+<a class="flex items-center justify-between text-on-surface-variant hover:bg-surface-container-high px-3 py-2 rounded-lg font-cuerpo text-sm transition-colors" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[19px]">history</span>
+<span>Años del cuaderno</span>
+</span>
+</a>
+</nav>
+</div>
+<!-- Pie Lateral Informativo y Sesión -->
+<div class="p-space-md border-t-2 border-outline bg-surface space-y-2">
+<div class="flex items-center gap-2 text-xs font-bold text-primary bg-surface-container px-2.5 py-1.5 rounded border border-outline">
+<span class="material-symbols-outlined text-primary text-[18px]">wifi_off</span>
+<span>Modo local v4.2.8 (OFFLINE-OK)</span>
+</div>
+<button class="w-full flex items-center gap-2 text-on-surface-variant hover:text-error hover:bg-error-container px-2.5 py-1.5 rounded text-xs font-boton transition-colors">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span>Cerrar Sesión Despacho</span>
+</button>
+</div>
+</aside>
+<!-- ======================================================================= -->
+<!-- 3. Zona de Contenido Principal (Work Canvas para Ratón 1440px)          -->
+<!-- ======================================================================= -->
+<main class="flex-1 flex flex-col bg-background overflow-y-auto">
+<!-- Cabecera de Módulo y Métricas -->
+<section class="bg-surface px-6 py-4 border-b-2 border-outline flex-shrink-0">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-titulo text-titulo text-primary font-bold tracking-tight">Productos y máquinas</h1>
+<span class="bg-surface-container px-3 py-1 rounded border border-outline text-xs font-bold text-on-surface">
+                6 catálogos activos · 29 fichas en regla
+              </span>
+<span class="bg-surface-container-low px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant border border-outline-variant">
+                Reglamento SIEX (RD 1054/2022)
+              </span>
+</div>
+<p class="font-cuerpo text-sm text-on-surface-variant mt-1 max-w-4xl">
+              Catálogo oficial de elementos registrados para los tratamientos, planes de abonado, personal autorizado e instalaciones de la explotación según normativa SIEX/REGEPA.
+            </p>
+</div>
+<!-- Acciones de Exportación Rápidas -->
+<div class="flex items-center gap-2">
+<button class="bg-surface-container-low border-2 border-outline px-3 py-1.5 rounded text-xs font-boton text-on-surface flex items-center gap-1.5 hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+<span>Sacar listado oficial (PDF)</span>
+</button>
+<button class="bg-surface-container-low border-2 border-outline px-3 py-1.5 rounded text-xs font-boton text-on-surface flex items-center gap-1.5 hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[16px]">table_view</span>
+<span>Exportar Excel</span>
+</button>
+</div>
+</div>
+<!-- Navegación por pestañas de los 6 Catálogos Oficiales -->
+<div class="flex items-center gap-1 mt-4 border-b border-outline">
+<button class="tab-btn px-4 py-2 border-b-4 border-primary text-primary font-boton text-sm flex items-center gap-2 bg-surface-container-low rounded-t" id="btn-fitos" onclick="switchTab('tab-fitos')">
+<span class="material-symbols-outlined text-[18px]">science</span>
+<span>1. Productos fitosanitarios</span>
+<span class="bg-primary text-on-primary text-xs px-1.5 py-0.2 rounded font-bold">8</span>
+</button>
+<button class="tab-btn px-4 py-2 border-b-4 border-transparent text-on-surface-variant font-cuerpo hover:text-primary text-sm flex items-center gap-2 rounded-t transition-colors" id="btn-abonos" onclick="switchTab('tab-abonos')">
+<span class="material-symbols-outlined text-[18px]">eco</span>
+<span>2. Abonos y enmiendas</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs px-1.5 py-0.2 rounded font-bold">5</span>
+</button>
+<button class="tab-btn px-4 py-2 border-b-4 border-transparent text-on-surface-variant font-cuerpo hover:text-primary text-sm flex items-center gap-2 rounded-t transition-colors" id="btn-aplicadores" onclick="switchTab('tab-aplicadores')">
+<span class="material-symbols-outlined text-[18px]">person</span>
+<span>3. Quién aplica (Personal)</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs px-1.5 py-0.2 rounded font-bold">3</span>
+</button>
+<button class="tab-btn px-4 py-2 border-b-4 border-transparent text-on-surface-variant font-cuerpo hover:text-primary text-sm flex items-center gap-2 rounded-t transition-colors" id="btn-asesores" onclick="switchTab('tab-asesores')">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+<span>4. Quién asesora (Técnicos)</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs px-1.5 py-0.2 rounded font-bold">2</span>
+</button>
+<button class="tab-btn px-4 py-2 border-b-4 border-transparent text-on-surface-variant font-cuerpo hover:text-primary text-sm flex items-center gap-2 rounded-t transition-colors" id="btn-maquinas" onclick="switchTab('tab-maquinas')">
+<span class="material-symbols-outlined text-[18px]">agriculture</span>
+<span>5. Máquinas y equipos</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs px-1.5 py-0.2 rounded font-bold">6</span>
+</button>
+<button class="tab-btn px-4 py-2 border-b-4 border-transparent text-on-surface-variant font-cuerpo hover:text-primary text-sm flex items-center gap-2 rounded-t transition-colors" id="btn-naves" onclick="switchTab('tab-naves')">
+<span class="material-symbols-outlined text-[18px]">home_work</span>
+<span>6. Naves e instalaciones</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs px-1.5 py-0.2 rounded font-bold">4</span>
+</button>
+</div>
+</section>
+<!-- Barra de Filtros Compacta para Ratón (38px altura) -->
+<section class="px-6 py-2.5 bg-surface-container-low border-b border-outline flex items-center justify-between gap-4 flex-shrink-0">
+<div class="flex-1 flex items-center gap-3">
+<!-- Input de búsqueda con atajo Ctrl+F -->
+<div class="relative flex-1 max-w-xl">
+<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</span>
+<input class="w-full h-[36px] pl-9 pr-3 text-xs bg-surface border border-outline rounded text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-focus outline-none" id="masterSearch" placeholder="Buscar por nombre comercial, materia activa, nº de registro, carné o matrícula... [Ctrl+F]" type="text"/>
+</div>
+<!-- Filtro rápido de estado de registro -->
+<select class="h-[36px] text-xs bg-surface border border-outline rounded px-2.5 text-on-surface focus:border-primary focus:ring-2 focus:ring-focus">
+<option value="all">Estado: Todos los registros (29)</option>
+<option value="valid">Solo vigentes en ROPO / MAPA</option>
+<option value="pending">Pendientes de validar</option>
+</select>
+<!-- Filtro rápido de campaña activa -->
+<select class="h-[36px] text-xs bg-surface border border-outline rounded px-2.5 text-on-surface focus:border-primary focus:ring-2 focus:ring-focus">
+<option>Uso: Usados en Campaña 2026</option>
+<option>Uso: Todos los históricos</option>
+</select>
+</div>
+<div class="flex items-center gap-2 text-xs font-mono text-on-surface-variant">
+<span>Vista despacho compacta</span>
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+</div>
+</section>
+<!-- Contenedor Dinámico de Tablas Compactas con Sticky Thead -->
+<div class="flex-1 p-6 space-y-6">
+<!-- =================================================================== -->
+<!-- TABLA 1: PRODUCTOS FITOSANITARIOS                                  -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-fitos">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">science</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">1. Catálogo Oficial de Productos Fitosanitarios Registrados</h2>
+<span class="text-xs text-on-surface-variant">(Conforme a la base de datos oficial del MAPA)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR PRODUCTO</span>
+</button>
+</div>
+<div class="overflow-x-auto max-h-[500px]">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="sticky top-0 bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none z-10">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Producto (Nombre comercial)</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-44">Nº de registro MAPA</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Materia activa / Formulación</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-36">Dosis máxima</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-32">Días espera</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Fila 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Tebuconazol 25% WG</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">24.156</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Tebuconazol 25% (WG) · Fungicida</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">2,50 kg/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">35 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Glifosato 36% SL</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">18.940 / ES-00421</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Glifosato 36% (SL) · Herbicida sistémico</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">3,00 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">14 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Deltametrina 2,5%</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">23.412</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Deltametrina 2,5% (EC) · Insecticida piretroide</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">0,50 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">30 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 4 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Mojante no iónico</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">19.821</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Alcohol isotridecílico etoxilado · Coadyuvante</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">0,30 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 5 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Azoxistrobina 25% SC</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">22.891</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Azoxistrobina 250 g/L (SC) · Fungicida preventivo</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">1,00 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">21 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 6 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Clortoluron 50% SC</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">16.320</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Clortoluron 500 g/L · Herbicida cereal</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">2,00 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">60 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 7 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Fluroxipir 20% EC</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">25.019</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Fluroxipir (éster 1-metilheptil) · Herbicida post-emergencia</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">0,75 L/ha</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">45 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 8 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span>Aceite de Parafina 79%</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-semibold text-primary">12.443</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Aceite mineral parafínico · Insecticida/Acaricida</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">1,50 L/hl</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">20 días</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- TABLA 2: ABONOS Y ENMIENDAS                                        -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-abonos">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">eco</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">2. Abonos y Enmiendas del Plan de Fertilización</h2>
+<span class="text-xs text-on-surface-variant">(Normativa de Zonas Vulnerables a Nitratos CyL)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR ABONO</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Abono</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-32">Riqueza N</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-32">Riqueza P</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-32">Riqueza K</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Tipo y Destino agronómico</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Fila 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">NPK 8-15-15</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">8 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">15 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">15 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Abono complejo mineral de fondo</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">NAC 27</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">27 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Nitrato amónico cálcico (cobertera)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Estimulante Boro Soluble</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">3 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Foliar orgánico corrector de microelementos</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 4 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Urea 46%</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">46 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Abono nitrogenado simple perlado (cobertera temprana)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Fila 5 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Sulfato Amónico 21%</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-primary">21 %</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono text-on-surface-variant font-bold">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Cristalino con 24% de Azufre (SO3)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- TABLA 3: QUIÉN APLICA (Personal Aplicador Oficial)                  -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-aplicadores">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">person</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">3. Personal Aplicador Acreditado (ROPO)</h2>
+<span class="text-xs text-on-surface-variant">(Carnés de manipulador de productos fitosanitarios válidos)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR APLICADOR</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Nombre y Apellidos</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-36">NIF</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Carné Oficial / Nivel / Vigencia</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-44">Teléfono de contacto</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Aplicador 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Manuel Ruiz Gómez</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">12345678Z</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">
+<span class="bg-surface-container px-2 py-0.5 rounded font-mono font-bold text-primary mr-1">47-CAL-04892</span>
+<strong class="text-primary font-bold">Cualificado</strong> · Vigente hasta <span class="font-mono font-bold">2029</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface">620 91 82 73</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Aplicador 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Juan Antonio Delgado</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">09876543M</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">
+<span class="bg-surface-container px-2 py-0.5 rounded font-mono font-bold text-primary mr-1">47-BAS-01923</span>
+<strong class="text-on-surface font-bold">Básico</strong> · Vigente hasta <span class="font-mono font-bold">2027</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface">618 34 50 19</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Aplicador 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">David Pérez Velasco</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">71234567X</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">
+<span class="bg-surface-container px-2 py-0.5 rounded font-mono font-bold text-primary mr-1">47-CAL-08812</span>
+<strong class="text-primary font-bold">Cualificado</strong> · Vigente hasta <span class="font-mono font-bold">2030</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface">655 42 11 88</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- TABLA 4: QUIÉN ASESORA (Técnicos y Asesorías Acreditadas)           -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-asesores">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">support_agent</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">4. Asesoramiento Técnico Agronómico Obligatorio</h2>
+<span class="text-xs text-on-surface-variant">(Sección de Asesores GIP en ROPO)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR ASESOR</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Asesor / Entidad Acreditada</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-56">NIF / Inscripción ROPO</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Especialidad Reconocida</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-64">Contacto de Guardia</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Asesor 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Cooperativa Comarcal de Medina</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-primary font-bold">ROPO: AS-47-0012</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Asesoramiento GIP Integral (Cereales, Oleaginosas y Viñedo)</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">983 80 12 34 · tecnico@coopmedina.es</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Asesor 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Ing. Agrónomo Carlos M. Soria</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface">
+<span class="font-medium">11982341D</span> · <span class="font-bold text-primary">ROPO: AS-47-0341</span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Técnico Fitosanitario y Gestión de Residuos</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">639 12 00 45 · csoria.agricola@gmail.com</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- TABLA 5: MÁQUINAS Y EQUIPOS (ROMA / ITEAF)                         -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-maquinas">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">agriculture</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">5. Maquinaria y Equipos de Tratamiento / Abonado</h2>
+<span class="text-xs text-on-surface-variant">(Registro ROMA e Inspección ITEAF CyL)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR MÁQUINA</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Máquina o Equipo</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Tipo Técnico Homologado</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Nº de serie / ROMA / Matrícula</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-44">ITEAF en regla</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Máquina 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Cuba suspendida Aguirre 600L</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Equipo pulverización hidráulica de barras</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">ROMA: 47-0982 · Bastidor AG-9841</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="bg-surface-container text-primary font-bold px-2 py-0.5 rounded border border-primary">Favorable hasta 2027</span>
+</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Máquina 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Tractor John Deere 6155M</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Tractor agrícola doble tracción</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">Matrícula: E-4912-BDH · Bastidor 1L06155MC</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="bg-surface-container text-primary font-bold px-2 py-0.5 rounded border border-primary">Válido</span>
+</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Máquina 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Atomizador arrastrado 2000L</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Equipo de tratamiento frutal / leñosos</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">ROMA: 47-1104 · Serie AT-20-41</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="bg-surface-container text-primary font-bold px-2 py-0.5 rounded border border-primary">Favorable hasta 2028</span>
+</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Máquina 4 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Abonadora centrífuga doble disco</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Distribuidor centrífugo de fertilizante granular</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">Bastidor DC-4410</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-bold text-on-surface-variant">—</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Máquina 5 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Sembradora monograno neumática</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Sembradora de precisión con kit microgranulado</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">ROMA: 47-0611</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono font-bold text-on-surface-variant">—</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Máquina 6 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Tractor Case Puma 165</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Tractor agrícola con pala cargadora</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-on-surface font-medium">Matrícula: E-1804-BFK</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="bg-surface-container text-primary font-bold px-2 py-0.5 rounded border border-primary">Válido</span>
+</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- TABLA 6: NAVES E INSTALACIONES                                      -->
+<!-- =================================================================== -->
+<div class="tab-content bg-surface border-2 border-outline rounded-lg overflow-hidden" id="tab-naves">
+<div class="px-4 py-2.5 bg-surface-container flex items-center justify-between border-b-2 border-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">home_work</span>
+<h2 class="font-boton text-sm text-primary tracking-wide uppercase">6. Naves, Almacenes y Puntos de Carga Fija</h2>
+<span class="text-xs text-on-surface-variant">(Cumplimiento de almacenamiento seguro según Real Decreto 1311/2012)</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-xs flex items-center gap-1 hover:bg-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ AÑADIR NAVE</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead class="bg-surface-container-high border-b-2 border-outline text-on-surface font-bold select-none">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant">Nave / Instalación</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Tipo y Medidas de Seguridad</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-36">Superficie</th>
+<th class="py-2.5 px-3 border-r border-outline-variant">Ubicación / Referencia catastral o parcela</th>
+<th class="py-2.5 px-3 text-center w-36">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-cuerpo">
+<!-- Instalación 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Nave aperos y fitosanitarios</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Almacén principal ventilado con armario fitos bajo llave y cubeto retención</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">450 m²</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Parcela El Prado, Villalar (Polígono 3, Parcela 104)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Instalación 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Cobertizo maquinaria</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Almacén abierto maquinaria pesada, aperos y grano</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">800 m²</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Camino de Tordesillas km 3</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Instalación 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Depósito gasóleo y cubas</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Zona carga y lavado con solera hormigonada y fosa de recogida</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">120 m²</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Finca Las Suertes (Nave Central)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+<!-- Instalación 4 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-on-surface">Caseta de fertirrigación sector 2</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Cabezal de bombeo e inyección con doble válvula antirretorno</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-mono font-bold text-on-surface">35 m²</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface">Polígono 5, Parcela 88 (Valdestillas)</td>
+<td class="py-1 px-3 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="h-7 px-2.5 bg-surface-container border border-outline rounded text-xs font-boton hover:bg-surface-container-high text-on-surface">Editar</button>
+<button class="h-7 px-2.5 bg-surface border border-outline rounded text-xs font-boton hover:bg-error-container text-error">Borrar</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- ========================================================================= -->
+<!-- 4. Footer Fijo de Estado (Sin barra móvil - Formato Desktop Despacho)      -->
+<!-- ========================================================================= -->
+<footer class="w-full h-10 px-gutter flex items-center justify-between z-50 bg-primary-dark text-on-primary font-pista text-xs border-t-2 border-primary-container flex-shrink-0 select-none">
+<!-- Diagnóstico y Sincronización SIEX -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-focus animate-pulse inline-block"></span>
+<span class="text-white font-bold">SIEX: Sincronizado hace 4 min</span>
+</div>
+<span class="text-primary-fixed">|</span>
+<span>REGEPA: <strong class="text-focus">CYL-47-09821</strong> Actualizado</span>
+<span class="text-primary-fixed">|</span>
+<span>CUE Digital v4.2 Conectado</span>
+<span class="text-primary-fixed">|</span>
+<span class="bg-primary px-2 py-0.5 rounded text-white font-bold border border-primary-container">Modo local activo (sin cortes)</span>
+</div>
+<!-- Atajos de Ratón y Teclado para Despacho Agrario -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 font-mono text-[11px] text-primary-fixed">
+<span><kbd class="bg-primary border border-primary-container px-1.5 py-0.5 rounded text-focus">[Ctrl+F]</kbd> Buscar</span>
+<span><kbd class="bg-primary border border-primary-container px-1.5 py-0.5 rounded text-focus">[N]</kbd> Nueva Ficha</span>
+<span><kbd class="bg-primary border border-primary-container px-1.5 py-0.5 rounded text-focus">[F5]</kbd> Sincronizar SIEX</span>
+<span><kbd class="bg-primary border border-primary-container px-1.5 py-0.5 rounded text-focus">[Esc]</kbd> Deseleccionar</span>
+</div>
+<div class="h-4 w-[1px] bg-primary-container"></div>
+<!-- Servidores Junta CyL y Latencia -->
+<div class="flex items-center gap-2 text-primary-fixed">
+<span class="inline-block w-2 h-2 rounded-full bg-primary-fixed"></span>
+<span>Junta CyL (14ms)</span>
+</div>
+</div>
+</footer>
+<!-- Script interactivo mínimo para navegación rápida entre pestañas -->
+<script>
+    function switchTab(tabId) {
+      // Ocultar todas las secciones o destacarlas
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        if (content.id === tabId) {
+          content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          content.classList.add('border-primary');
+          content.classList.remove('border-outline');
+        } else {
+          content.classList.remove('border-primary');
+          content.classList.add('border-outline');
+        }
+      });
+
+      // Actualizar estilo visual del botón activo
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('border-primary', 'text-primary', 'bg-surface-container-low');
+        btn.classList.add('border-transparent', 'text-on-surface-variant');
+      });
+
+      const currentBtn = document.getElementById('btn-' + tabId.replace('tab-', ''));
+      if (currentBtn) {
+        currentBtn.classList.remove('border-transparent', 'text-on-surface-variant');
+        currentBtn.classList.add('border-primary', 'text-primary', 'bg-surface-container-low');
+      }
+    }
+
+    // Atajo de teclado nativo: [Ctrl+F] para enfocar buscador
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.getElementById('masterSearch');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+      }
+    });
+  </script>
+</body></html>

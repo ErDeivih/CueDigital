@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Añadir una factura - CUE Digital</title>
+  <style>
+    /* Estilos estrictos según CUE Digital DESIGN.md:
+       - No sombras, no degradados, no animaciones
+       - Fuente del sistema (system-ui)
+       - Letra base 18px o superior
+       - Elementos interactivos mínimo 64px de altura
+       - Bordes sólidos de 3px para contraste al sol directo
+       - Paleta: #1f4a2c (primary), #2f6b40 (container), #0d2b18 (dark border), #f4f6f3 (variant), etc.
+    */
+    :root {
+      --primary: #1f4a2c;
+      --primary-container: #2f6b40;
+      --primary-dark: #0d2b18;
+      --primary-overlay: #3a6446;
+      --primary-overlay-border: #8fae97;
+      --on-primary: #ffffff;
+      --tertiary: #8a6a00;
+      --secondary-container: #ffe9a8;
+      --on-secondary-container: #3d2f00;
+      --surface: #ffffff;
+      --surface-variant: #f4f6f3;
+      --on-surface: #10190f;
+      --on-surface-variant: #43503f;
+      --outline: #a9b6a8;
+      --error: #8c1d18;
+      --error-dark: #5c110d;
+      --error-container: #fbe3e1;
+      --on-error-container: #4a0f0b;
+      --focus: #ffd24a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.45;
+      color: var(--on-surface);
+      background-color: var(--surface-variant);
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Contenedor centralizado para móvil vertical de una mano */
+    .app-viewport {
+      width: 100%;
+      max-width: 44rem;
+      background-color: var(--surface);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--outline);
+      border-right: 1px solid var(--outline);
+    }
+
+    /* Cabecera fija superior */
+    header.top-app-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: var(--primary);
+      color: var(--on-primary);
+      height: 64px;
+      min-height: 64px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid var(--primary-dark);
+    }
+
+    .header-btn {
+      min-height: 48px;
+      height: 48px;
+      background-color: var(--primary-overlay);
+      color: var(--on-primary);
+      border: 2px solid var(--primary-overlay-border);
+      border-radius: 10px;
+      padding: 0 14px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--on-primary);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Contenido principal */
+    main.main-content {
+      padding: 16px 12px 32px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    /* Bloque informativo de encabezado */
+    .card-banner {
+      background-color: var(--surface);
+      border: 3px solid var(--primary);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .screen-heading {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.25;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .screen-subheading {
+      font-size: 18px;
+      color: var(--on-surface-variant);
+      margin: 0;
+    }
+
+    /* Zona de selección del papel */
+    .upload-section {
+      background-color: var(--surface);
+      border: 3px solid var(--primary);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-label {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      line-height: 1.35;
+    }
+
+    /* Botón / Hueco ancho táctil para seleccionar archivo */
+    .upload-dropzone {
+      position: relative;
+      background-color: var(--surface-variant);
+      border: 3px dashed var(--primary);
+      border-radius: 14px;
+      min-height: 130px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      outline: none;
+    }
+
+    .upload-dropzone:focus-visible,
+    .upload-dropzone.has-file {
+      border: 3px solid var(--primary);
+      background-color: #ebf3ec;
+      outline: 4px solid var(--focus);
+    }
+
+    .upload-dropzone input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dropzone-icon-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .dropzone-icon-box {
+      width: 48px;
+      height: 48px;
+      background-color: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+    }
+
+    .dropzone-main-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.3;
+    }
+
+    .dropzone-sub-text {
+      font-size: 17px;
+      color: var(--on-surface-variant);
+      margin-top: 4px;
+    }
+
+    /* Caja de fichero elegido */
+    .chosen-file-card {
+      display: none;
+      background-color: var(--surface);
+      border: 3px solid var(--primary);
+      border-radius: 10px;
+      padding: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .chosen-file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .chosen-file-name {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-cambiar {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 6px;
+    }
+
+    /* Pista de ayuda al lado */
+    .field-hint-box {
+      background-color: var(--surface-variant);
+      border-left: 6px solid var(--primary-container);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 17px;
+      color: var(--on-surface);
+      line-height: 1.45;
+    }
+
+    .field-hint-box strong {
+      color: var(--primary);
+    }
+
+    /* Avisos claros: sin cobertura y cuando no se lee */
+    .alert-box {
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .alert-warning {
+      background-color: var(--secondary-container);
+      border: 3px solid var(--tertiary);
+      color: var(--on-secondary-container);
+    }
+
+    .alert-error {
+      background-color: var(--error-container);
+      border: 3px solid var(--error);
+      color: var(--on-error-container);
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+    }
+
+    .alert-content h4 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .alert-content p {
+      font-size: 18px;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    /* Garantía: tranquilidad para el agricultor */
+    .tranquility-badge {
+      background-color: var(--surface-variant);
+      border: 2px solid var(--outline);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 17px;
+      color: var(--on-surface);
+    }
+
+    .tranquility-badge svg {
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+
+    /* Botones de acción vertical de una mano (mínimo 64px de alto) */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 64px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* Botón de acción principal: Verde oscuro contrastado */
+    .btn-action-primary {
+      background-color: var(--primary-container);
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+    }
+
+    .btn-action-primary:active {
+      background-color: var(--primary);
+      outline: 4px solid var(--focus);
+    }
+
+    .btn-action-primary[disabled] {
+      background-color: #557960;
+      border-color: #3f5947;
+      color: #e5ebe7;
+      cursor: not-allowed;
+    }
+
+    /* Botón secundario: Fondo blanco con borde y letra verde */
+    .btn-action-secondary {
+      background-color: var(--surface);
+      color: var(--primary);
+      border: 3px solid var(--primary);
+    }
+
+    .btn-action-secondary:active {
+      background-color: var(--surface-variant);
+      outline: 4px solid var(--focus);
+    }
+
+    /* Botón claro: Volver o salida */
+    .btn-action-neutral {
+      background-color: var(--surface-variant);
+      color: var(--primary);
+      border: 3px solid var(--outline);
+    }
+
+    .btn-action-neutral:active {
+      background-color: #e2e8df;
+      outline: 4px solid var(--focus);
+    }
+
+    /* Pie de página con recordatorio del sistema */
+    footer.app-footer {
+      margin-top: auto;
+      padding: 20px 16px;
+      text-align: center;
+      font-size: 16px;
+      color: var(--on-surface-variant);
+      border-top: 2px solid var(--outline);
+      background-color: var(--surface-variant);
+    }
+
+    /* Simulación de estados para revisión del agricultor/diseñador */
+    .simulation-controls {
+      margin-top: 16px;
+      padding: 12px;
+      border: 2px dashed var(--outline);
+      border-radius: 10px;
+      background-color: #fcfcfc;
+      font-size: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sim-btn {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--primary);
+      background-color: var(--surface);
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .sim-btn.active {
+      background-color: var(--primary);
+      color: var(--on-primary);
+    }
+
+    /* Modo A+ Letra grande accesible */
+    body.large-text {
+      font-size: 21px;
+    }
+    body.large-text .btn {
+      min-height: 72px;
+      font-size: 1.35rem;
+    }
+    body.large-text .screen-heading {
+      font-size: 1.75rem;
+    }
+    body.large-text .section-label {
+      font-size: 1.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-viewport">
+  <!-- Cabecera fija -->
+  <header class="top-app-bar">
+    <button class="header-btn" id="btn-back-header" onclick="history.back() || alert('Volviendo a la lista de papeles')">
+      <!-- Icono SVG flecha volver -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>VOLVER</span>
+    </button>
+
+    <div class="header-title">CUE Digital</div>
+
+    <button class="header-btn" id="btn-toggle-font" onclick="toggleFontSize()">
+      <!-- Icono SVG texto A+ -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 19L9.5 5L15 19"></path>
+        <path d="M6 14H13"></path>
+        <path d="M18 10V16"></path>
+        <path d="M15 13H21"></path>
+      </svg>
+      <span>A+ Letra</span>
+    </button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+
+    <!-- Tarjeta del Título: exactamente el botón con el que se llega y la frase de la lista -->
+    <div class="card-banner">
+      <h1 class="screen-heading">
+        <!-- Icono SVG de factura / documento -->
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        AÑADIR UNA FACTURA
+      </h1>
+      <p class="screen-subheading">Aquí guardas las facturas de lo que compras</p>
+    </div>
+
+    <!-- Rótulo principal y Hueco ancho para elegir la foto o el fichero -->
+    <div class="upload-section">
+      <label class="section-label" for="input-factura">
+        La factura: una foto o el fichero del proveedor
+      </label>
+
+      <!-- Hueco ancho táctil -->
+      <div class="upload-dropzone" id="dropzone" tabindex="0" onclick="triggerFileInput()">
+        <input type="file" id="input-factura" accept="image/*,.pdf" capture="environment" onchange="handleFileSelected(this)">
+        
+        <div class="dropzone-icon-row">
+          <!-- Icono SVG Cámara para foto con el móvil -->
+          <div class="dropzone-icon-box" title="Foto con el móvil">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </div>
+          <!-- Icono SVG Fichero / PDF -->
+          <div class="dropzone-icon-box" title="Fichero o PDF">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+        </div>
+
+        <div class="dropzone-main-text" id="dropzone-title">Toca aquí para elegir la foto o el fichero</div>
+        <div class="dropzone-sub-text" id="dropzone-desc">Se abre la cámara de tu móvil o la carpeta de descargas</div>
+      </div>
+
+      <!-- Tarjeta cuando ya se ha elegido un archivo -->
+      <div class="chosen-file-card" id="chosen-file-card">
+        <div class="chosen-file-info">
+          <!-- Icono comprobado -->
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <div style="font-size: 15px; color: var(--on-surface-variant);">Papel preparado:</div>
+            <div class="chosen-file-name" id="file-name-display">factura-abono-marzo-2026.pdf</div>
+          </div>
+        </div>
+        <button class="btn-cambiar" onclick="resetFile(event)">Cambiar</button>
+      </div>
+
+      <!-- Pista clara de cómo se hace -->
+      <div class="field-hint-box">
+        <strong>Cómo se hace:</strong> Hazle la foto al papel entero, con luz y sin torcerlo. Si tienes el fichero, súbelo: se lee mejor y no hay que adivinar nada.
+      </div>
+    </div>
+
+    <!-- Garantía de tranquilidad: el programa solo lo intenta y nada se guarda hasta que él lo mire -->
+    <div class="tranquility-badge">
+      <!-- Icono SVG escudo / tranquilidad -->
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <polyline points="9 12 11 14 15 10"></polyline>
+      </svg>
+      <div>
+        <strong>Trato claro:</strong> el programa solo intenta leer el papel. <strong>Nada se guarda en el cuaderno</strong> hasta que tú lo mires en pantalla y digas si está bien.
+      </div>
+    </div>
+
+    <!-- Mensaje de aviso: si no hay cobertura -->
+    <div class="alert-box alert-warning" id="alert-sin-cobertura">
+      <div class="alert-icon">
+        <!-- Icono SVG antena tachada / sin conexión -->
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+      <div class="alert-content">
+        <h4>Si estás en la tierra sin cobertura</h4>
+        <p>Para leer la factura hace falta conexión. El fichero lo tienes en tu móvil: prueba cuando tengas cobertura o escríbela a mano ahora.</p>
+      </div>
+    </div>
+
+    <!-- Mensaje de aviso: si no se ha podido leer la factura (oculto por defecto o visible al simular) -->
+    <div class="alert-box alert-error" id="alert-error-lectura" style="display: none;">
+      <div class="alert-icon">
+        <!-- Icono SVG exclamación alerta -->
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></polyline>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="alert-content">
+        <h4>No se ha podido leer la factura</h4>
+        <p>No se ha podido leer la factura. Prueba otra vez o escríbela a mano.</p>
+      </div>
+    </div>
+
+    <!-- Los tres caminos: ninguno esconde a los otros -->
+    <div class="action-group">
+      <!-- 1. Camino principal: LEER LA FACTURA (único color de acción) -->
+      <button class="btn btn-action-primary" id="btn-leer-factura" onclick="startReadingInvoice()">
+        <!-- Icono SVG escanear / leer papel -->
+        <svg id="icon-leer" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 12h20"></path>
+          <path d="M20 7V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"></path>
+          <path d="M4 17v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+        </svg>
+        <span id="label-leer">LEER LA FACTURA</span>
+      </button>
+
+      <!-- 2. Camino alternativo: ESCRIBIRLA A MANO -->
+      <button class="btn btn-action-secondary" id="btn-escribir-mano" onclick="alert('Abriendo formulario para escribir la factura a mano casilla a casilla')">
+        <!-- Icono SVG lápiz / mano -->
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+        <span>ESCRIBIRLA A MANO</span>
+      </button>
+
+      <!-- 3. Camino de salida: VOLVER -->
+      <button class="btn btn-action-neutral" id="btn-volver-abajo" onclick="history.back() || alert('Volviendo a la lista de papeles')">
+        <!-- Icono SVG volver atrás -->
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>VOLVER</span>
+      </button>
+    </div>
+
+    <!-- Barra de simulación interactiva para verificar los tres estados pedidos en la especificación -->
+    <div class="simulation-controls">
+      <strong>Probar estados de la pantalla:</strong>
+      <div class="sim-buttons">
+        <button class="sim-btn active" onclick="setSimState('normal')">1. Pantalla lista</button>
+        <button class="sim-btn" onclick="setSimState('leyendo')">2. Leyendo la factura…</button>
+        <button class="sim-btn" onclick="setSimState('error')">3. Aviso: No se pudo leer</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Pie institucional y de diseño de campo -->
+  <footer class="app-footer">
+    <div><strong>CUE Digital</strong> · Junta de Castilla y León</div>
+    <div style="margin-top: 4px;">Diseñado para trabajar al sol, con una mano y sin cobertura</div>
+  </footer>
+</div>
+
+<script>
+  let isReading = false;
+
+  function toggleFontSize() {
+    document.body.classList.toggle('large-text');
+  }
+
+  function triggerFileInput() {
+    if (isReading) return;
+    document.getElementById('input-factura').click();
+  }
+
+  function handleFileSelected(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      document.getElementById('dropzone').classList.add('has-file');
+      document.getElementById('chosen-file-card').style.display = 'flex';
+      document.getElementById('file-name-display').textContent = file.name;
+      document.getElementById('dropzone-title').textContent = 'Factura lista para leer';
+      document.getElementById('dropzone-desc').textContent = 'Toca aquí o en Cambiar si te has equivocado de foto';
+      document.getElementById('alert-error-lectura').style.display = 'none';
+    }
+  }
+
+  function resetFile(e) {
+    e.stopPropagation();
+    const input = document.getElementById('input-factura');
+    input.value = '';
+    document.getElementById('dropzone').classList.remove('has-file');
+    document.getElementById('chosen-file-card').style.display = 'none';
+    document.getElementById('dropzone-title').textContent = 'Toca aquí para elegir la foto o el fichero';
+    document.getElementById('dropzone-desc').textContent = 'Se abre la cámara de tu móvil o la carpeta de descargas';
+  }
+
+  function startReadingInvoice() {
+    if (isReading) return;
+    setSimState('leyendo');
+    
+    // Simula el proceso de lectura OCR y pasa a revisión tras 3 segundos
+    setTimeout(() => {
+      setSimState('normal');
+      alert('Factura leída con éxito. Pasando a la pantalla "Esto es lo que he leído" para que el agricultor revise antes de guardar.');
+    }, 3200);
+  }
+
+  function setSimState(state) {
+    const btnLeer = document.getElementById('btn-leer-factura');
+    const labelLeer = document.getElementById('label-leer');
+    const alertError = document.getElementById('alert-error-lectura');
+    const simBtns = document.querySelectorAll('.sim-btn');
+
+    simBtns.forEach(btn => btn.classList.remove('active'));
+
+    if (state === 'leyendo') {
+      isReading = true;
+      btnLeer.disabled = true;
+      labelLeer.textContent = 'Leyendo la factura…';
+      alertError.style.display = 'none';
+      if (simBtns[1]) simBtns[1].classList.add('active');
+    } else if (state === 'error') {
+      isReading = false;
+      btnLeer.disabled = false;
+      labelLeer.textContent = 'LEER LA FACTURA';
+      alertError.style.display = 'flex';
+      if (simBtns[2]) simBtns[2].classList.add('active');
+    } else {
+      isReading = false;
+      btnLeer.disabled = false;
+      labelLeer.textContent = 'LEER LA FACTURA';
+      alertError.style.display = 'none';
+      if (simBtns[0]) simBtns[0].classList.add('active');
+    }
+  }
+</script>
+
+</body>
+</html>

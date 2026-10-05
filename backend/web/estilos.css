@@ -1,0 +1,2060 @@
+/*
+ * estilos.css — Pensado para un móvil, al sol y con una mano.
+ *
+ * Las medidas no son capricho:
+ *   - 18 px de letra base: por debajo de eso, a partir de los 50 años no se lee.
+ *   - 64 px de alto mínimo en los botones: un dedo con guante acierta eso.
+ *   - Contraste alto sobre fondo claro: al sol, una pantalla oscura es un espejo.
+ *   - Nada de información que dependa SOLO del color: siempre hay texto o icono.
+ */
+
+:root {
+  /*
+   * Los colores viven AQUÍ y en ningún otro sitio de este fichero.
+   *
+   * Lo comprueba `tests/test_design_md.py`: cuenta los colores sueltos que quedan
+   * fuera de este bloque y contrasta cada uno con su token de `DESIGN.md`. Si alguien
+   * cambia un color en un lado y no en el otro, el test se pone rojo. Es la única
+   * forma de que el contrato de diseño no se quede en un documento decorativo.
+   */
+  --verde: #1f4a2c;
+  --verde-medio: #2f6b40;
+  --verde-oscuro: #0d2b18;
+  --sobre-verde: #ffffff;
+  /* Sólidos, no rgba: este diseño no usa transparencias. Sobre el verde oscuro de la
+     cabecera, un blanco al 18 % quedaba sucio al sol y no cumplía la propia regla. */
+  --sobre-verde-tenue: #3a6446;
+  --sobre-verde-borde: #8fae97;
+
+  --tinta: #10190f;
+  /* Un solo gris de texto secundario. Antes había tres casi iguales (#43503f,
+     #3c4739, #55604f) y eso es una inconsistencia esperando a que alguien la copie. */
+  --tinta-suave: #43503f;
+
+  --fondo: #ffffff;
+  --fondo-suave: #f4f6f3;
+  --borde: #a9b6a8;
+
+  --aviso-fondo: #ffe9a8;
+  --aviso-borde: #8a6a00;
+  --aviso-tinta: #3d2f00;
+
+  --error-fondo: #fbe3e1;
+  --error-borde: #8c1d18;
+  --error-oscuro: #5c110d;
+  --error-tinta: #4a0f0b;
+
+  /*
+   * El amarillo del foco. Es lo único que marca "estás aquí" sin depender del color,
+   * y tiene que seguir siendo el mismo en toda la aplicación (ver DESIGN.md).
+   */
+  --foco: #ffd24a;
+
+  --toque: 64px;
+  --radio: 14px;
+  --letra: 18px;
+
+  /*
+   * El armazón del ordenador (30/09/2026).
+   *
+   * Estas dos medidas solo se usan a partir de la pantalla ancha (`@media`, al final del fichero). En el
+   * móvil valen cero: ahí no hay menú lateral ni barra de arriba, y la aplicación se sigue viendo como
+   * siempre, que es lo que el agricultor ya tiene aprendido.
+   */
+  --ancho-menu: 17rem;
+  --alto-barra: 4.25rem;
+}
+
+/* Quien ve poco puede agrandar la letra desde la cabecera. */
+body.letra-grande {
+  --letra: 21px;
+  --toque: 72px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--letra);
+  line-height: 1.45;
+  color: var(--tinta);
+  background: var(--fondo);
+  /* Que el texto no se quede pequeño al girar el móvil. */
+  -webkit-text-size-adjust: 100%;
+  padding-bottom: 2rem;
+}
+
+/* ---------------------------------------------------------------- cabecera */
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--verde);
+  color: var(--sobre-verde);
+  padding: 0.6rem 0.8rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cabecera-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 0;
+  color: var(--sobre-verde);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  cursor: pointer;
+  min-height: var(--toque);
+}
+
+.cabecera-botones {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.boton-letra {
+  background: var(--sobre-verde-tenue);
+  border: 2px solid var(--sobre-verde-borde);
+  color: var(--sobre-verde);
+  border-radius: 10px;
+  min-height: 48px;
+  min-width: 56px;
+  padding: 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ aviso de red */
+
+.aviso {
+  margin: 0.6rem 0.8rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radio);
+  border: 2px solid var(--aviso-borde);
+  background: var(--aviso-fondo);
+  color: var(--aviso-tinta);
+  font-weight: 600;
+}
+
+.aviso-error {
+  border-color: var(--error-borde);
+  background: var(--error-fondo);
+  color: var(--error-tinta);
+}
+
+.oculto {
+  display: none !important;
+}
+
+/* -------------------------------------------------------------- pantallas */
+
+.pantalla {
+  padding: 0.8rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0.6rem 0 0.2rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 1rem 0 0.4rem;
+}
+
+.pregunta {
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin: 0.4rem 0 0.2rem;
+}
+
+.pista {
+  color: var(--tinta-suave);
+  margin: 0 0 1rem;
+}
+
+.pista-campo {
+  color: var(--tinta-suave);
+  font-size: 0.95rem;
+  margin: 0.2rem 0 0.6rem;
+}
+
+/*
+ * Cuántas cosas hay en una sección («Tienes 51 tierras apuntadas»).
+ *
+ * En «Mis parcelas, productos y máquinas» la lista de tierras es larga y se corta al final de la
+ * pantalla: sin decir cuántas hay, el agricultor no sabe si las está viendo todas o si el programa se ha
+ * dejado alguna por el camino.
+ */
+.cuantas {
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- botones */
+
+/*
+ * El botón de la aplicación, tal y como salió del rediseño con Stitch (ronda 76).
+ *
+ * **El cambio grande, y por qué:** antes TODOS los botones eran verdes y sólidos, así que el
+ * agricultor no distinguía la acción importante de las demás —«HE ECHADO PRODUCTO» se veía igual que
+ * «NO SÉ QUÉ PULSAR»—. Ahora el botón normal es una **tarjeta blanca con su borde grueso oscuro** (un
+ * dibujo que se toca), y el sólido verde se guarda para **la acción principal** (`.boton-principal`).
+ * Las señales no son solo el color: el borde grueso, el cuadro del icono y la flecha dicen lo mismo.
+ */
+.boton {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: var(--toque);
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 0.7rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--verde-oscuro);
+  background: var(--fondo);
+  border: 3px solid var(--verde-oscuro);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+.boton:active {
+  transform: translateY(1px);
+}
+
+/*
+ * El cuadro del icono.
+ *
+ * El dibujo va dentro de un cuadrado con su borde y su fondo claro: así el icono se lee como un icono
+ * (y no como un símbolo suelto delante del texto) y **todos los botones tienen el mismo hueco**, con
+ * emoji o con dibujo. El tamaño del dibujo lo manda el CSS, no el SVG: un solo sitio donde cambiarlo.
+ */
+.boton .icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo-suave);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.boton .icono .dibujo-icono {
+  width: 26px;
+  height: 26px;
+  color: var(--verde);
+}
+
+.boton .texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  /*
+   * **`min-width: 0`, por qué está aquí.** Los elementos de una fila flexible no se encogen por
+   * debajo del tamaño de su contenido si no se les dice (`min-width` vale `auto`). Al poner la flecha
+   * al final del botón (ronda 37), el rótulo y la flecha se reparten el ancho, y esta línea es lo que
+   * garantiza que **un rótulo largo se parta en dos líneas en vez de empujar la flecha fuera de la
+   * pantalla**.
+   *
+   * Hoy, con los rótulos que hay, no se ve ningún problema: se comprobó a 500 px de ancho en un
+   * navegador de verdad y los rótulos largos («MIS PARCELAS, PRODUCTOS Y MÁQUINAS») se parten bien y
+   * la flecha se queda dentro. Es una precaución para el día que una frase sea más larga, no el
+   * arreglo de un fallo que se haya visto.
+   */
+  min-width: 0;
+}
+
+.boton .pista-boton {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+/*
+ * La flecha del final del botón.
+ *
+ * Sale del diseño que generó Stitch para esta aplicación (las capturas están en `docs/stitch/`), y
+ * hace un trabajo concreto: **decir que ese botón lleva a algún sitio**. Sin ella, un botón y una
+ * casilla se parecen, y el agricultor que no sabe qué pulsar duda justo donde no debe.
+ *
+ * Tres decisiones, y las tres importan:
+ *
+ *  1. **Es una flecha, no un color.** El proyecto tiene la regla de no informar con el color en
+ *     solitario; aquí el color no informa nada: la señal es la flecha.
+ *  2. **`margin-left: auto`** la empuja al final de la línea, así que la flecha queda alineada en
+ *     todos los botones aunque el texto de cada uno ocupe distinto. No hace falta una tabla ni
+ *     anchos fijos.
+ *  3. **Va marcada con `aria-hidden`** en el HTML: quien use un lector de pantalla ya oye que es un
+ *     botón, y leerle «flecha» solo estorba.
+ */
+.boton .flecha {
+  margin-left: auto;
+  font-size: 1.3rem;
+  /* Ni se encoge ni se estira: la flecha queda igual con cualquier texto. */
+  flex: 0 0 auto;
+  /* Y no se parte en dos líneas por muy apretado que vaya el texto. */
+  white-space: nowrap;
+}
+
+/*
+ * La acción principal: la que más se usa en esa pantalla (en la de inicio, «HE ECHADO PRODUCTO»).
+ *
+ * Es la única sólida y la única más alta (104 px), y su icono va en un cuadro claro sobre el verde. Si
+ * se pinta otra cosa de verde sólido, esta deja de significar «esto es lo importante».
+ */
+.boton-principal {
+  min-height: 104px;
+  font-size: 1.35rem;
+  color: var(--sobre-verde);
+  background: var(--verde-medio);
+  border-color: var(--verde-oscuro);
+}
+
+.boton-principal .pista-boton {
+  color: var(--sobre-verde);
+}
+
+.boton-principal .icono {
+  border-color: var(--sobre-verde-borde);
+  background: var(--sobre-verde-tenue);
+}
+
+.boton-principal .icono .dibujo-icono {
+  color: var(--sobre-verde);
+}
+
+.boton-secundario {
+  color: var(--verde-oscuro);
+  background: var(--fondo);
+  border-color: var(--verde);
+}
+
+.boton-claro {
+  color: var(--verde-oscuro);
+  background: var(--fondo);
+  border-color: var(--borde);
+}
+
+.boton-claro .icono {
+  border-color: var(--borde);
+  background: var(--fondo);
+}
+
+/*
+ * La opción que ya está elegida.
+ *
+ * **El color del texto faltaba** (02/10/2026, al mirar en un navegador la respuesta «No lo sé»). `.boton`
+ * escribe el texto en verde oscuro (`--verde-oscuro`) porque su fondo es claro, pero esta regla le pone
+ * un fondo verde oscuro (`--verde`) y **no cambiaba el color de la letra**: la respuesta elegida salía
+ * verde oscuro sobre verde oscuro, con un contraste de 1,5 a 1, o sea ilegible. Se veía en todas las
+ * pantallas donde hay que elegir algo (el sistema de la tierra, la unidad de la dosis, un sí o un no…),
+ * y con la letra grande de «A+» todavía peor. Se arregla con la pareja de colores que el sistema de
+ * diseño ya tiene para esto —`--sobre-verde` sobre `--verde`, la misma del menú del ordenador—, así que
+ * no se inventa ningún color nuevo.
+ */
+.boton-elegido {
+  color: var(--sobre-verde);
+  background: var(--verde);
+  border-color: var(--verde-oscuro);
+  outline: 4px solid var(--foco);
+}
+
+.boton-peligro {
+  color: var(--sobre-verde);
+  background: var(--error-borde);
+  border-color: var(--error-oscuro);
+}
+
+/* La acción principal del asistente: apuntarlo. */
+.barra-acciones {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+  flex-wrap: wrap;
+}
+
+/*
+ * El bloque de la inspección: «Sacar mi cuaderno para la Junta» (rediseño de la ronda 80).
+ *
+ * **Por qué es el único bloque oscuro de la aplicación.** Es lo único de «mi cuaderno» que se hace con
+ * alguien delante —el inspector, en el campo, esperando—, así que hay que encontrarlo **sin leer nada**:
+ * en el diseño de Stitch (`docs/stitch/rediseno/mi_cuaderno.png`) es el único bloque con fondo oscuro y
+ * su botón como acción principal. Los botones de dentro van en blanco con el texto verde oscuro, que es
+ * la forma del botón de la casa llevada al revés: sobre verde oscuro, un botón verde no se vería, y el
+ * contraste es justo lo que hace que se vea al sol.
+ */
+.bloque-junta {
+  margin: 1rem 0;
+  padding: 1rem;
+  color: var(--sobre-verde);
+  background: var(--verde-oscuro);
+  border: 3px solid var(--verde-oscuro);
+  border-radius: var(--radio);
+}
+
+.bloque-junta h2 {
+  margin-top: 0;
+  color: var(--sobre-verde);
+}
+
+/* La explicación va en blanco (es lo que dice qué se saca y para qué); la línea de las hojas, en el
+   verde claro de la cabecera. El gris de texto sobre verde oscuro no se lee, y menos al sol. */
+.bloque-junta .pista {
+  color: var(--sobre-verde);
+}
+
+.bloque-junta .pista-campo {
+  color: var(--sobre-verde-borde);
+}
+
+.bloque-junta .boton {
+  color: var(--verde-oscuro);
+  background: var(--fondo);
+  border-color: var(--sobre-verde);
+}
+
+/* La acción principal —sacar el cuaderno— **a lo ancho**, y las otras dos debajo, de dos en dos: en el
+   diseño es el botón que se pulsa con el inspector delante, y a lo ancho no parte su texto en dos
+   líneas. Va por `:first-child` porque las acciones llegan en su orden desde `app.js` y la primera es
+   siempre la de sacar el cuaderno. */
+.bloque-junta .barra-acciones .boton:first-child {
+  flex: 1 1 100%;
+}
+
+.bloque-junta .boton:active {
+  background: var(--fondo-suave);
+}
+
+.barra-acciones .boton {
+  flex: 1 1 45%;
+  justify-content: center;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------- campos */
+
+.campo {
+  margin-bottom: 1.1rem;
+}
+
+/*
+ * Los campos de un formulario largo, numerados (ronda 90, del diseño de Stitch de «mis datos»).
+ *
+ * Es un formulario de once renglones: sin números no se sabe cuánto queda por rellenar. El número lo pone
+ * el CSS —no hay ningún número escrito en el componente—, así que el rótulo de cada campo sigue siendo el
+ * del servidor, palabra por palabra.
+ */
+.campos-numerados {
+  counter-reset: campo;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campos-numerados > li {
+  counter-increment: campo;
+}
+
+.campos-numerados > li label::before {
+  content: counter(campo) ". ";
+}
+
+/*
+ * Las diez medidas preventivas, numeradas (ronda 90, del diseño de Stitch de esa pantalla).
+ *
+ * El número va dentro de la pregunta, en el botón, y lo pone el CSS: la pregunta es un texto del servidor
+ * y no se toca. Sin números, con diez casillas no se sabe cuántas quedan por mirar.
+ */
+.medidas-numeradas {
+  counter-reset: medida;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medidas-numeradas > li {
+  counter-increment: medida;
+  margin-bottom: 0.8rem;
+}
+
+.medidas-numeradas > li .boton .texto > span:first-child::before {
+  content: counter(medida) ". ";
+}
+
+/*
+ * Las tierras de un grupo, una por línea con sus hectáreas (ronda 90, del diseño de esa pantalla).
+ *
+ * Van numeradas con un contador del CSS —como las medidas y los campos de «mis datos»—, así que el nombre
+ * de cada tierra y sus hectáreas siguen siendo los únicos datos, y el número no se escribe en ninguna parte.
+ */
+.tierras-del-grupo {
+  counter-reset: tierra;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tierras-del-grupo > li {
+  counter-increment: tierra;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tierras-del-grupo > li::before {
+  content: counter(tierra) ". ";
+  font-weight: 700;
+}
+
+/*
+ * La caja del fichero (ronda 90, del diseño de Stitch de «añadir una factura»).
+ *
+ * Lo que se viene a hacer en esa pantalla es darle el papel al programa, y un campo de fichero pelado no se
+ * ve como algo que se toca: la caja entera es la etiqueta del campo, así que tocarla abre la cámara o los
+ * ficheros del móvil, como tocar el campo. El campo sigue estando —oculto, con su `id`, que es como lo lee
+ * `app.js`— por el mismo camino de siempre.
+ */
+.caja-fichero {
+  display: block;
+  margin: 0.6rem 0;
+  padding: 1.2rem 1rem;
+  border: 2px dashed var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+  text-align: center;
+  cursor: pointer;
+}
+
+.caja-fichero-titulo {
+  display: block;
+  font-weight: 700;
+}
+
+.caja-fichero-pista {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  color: var(--tinta-suave);
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  width: 100%;
+  min-height: var(--toque);
+  padding: 0.6rem 0.8rem;
+  font-size: 1.15rem;
+  font-family: inherit;
+  color: var(--tinta);
+  background: var(--fondo);
+  border: 3px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 4px solid var(--foco);
+  border-color: var(--verde);
+}
+
+textarea {
+  min-height: 5rem;
+}
+
+/* ------------------------------------------------------------ ayuda "?" */
+
+.ayuda-campo {
+  margin: 0.4rem 0 0.8rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--fondo-suave);
+  border-left: 6px solid var(--verde-medio);
+  border-radius: 8px;
+}
+
+.ayuda-campo h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.ayuda-campo p {
+  margin: 0.2rem 0;
+  font-size: 0.98rem;
+}
+
+.ayuda-campo .etiqueta-dato {
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- listas */
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lista li {
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  margin-bottom: 0.6rem;
+  padding: 0.8rem;
+  background: var(--fondo);
+}
+
+.apunte-cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-weight: 700;
+}
+
+.apunte-detalle {
+  color: var(--tinta-suave);
+  font-size: 0.98rem;
+  /* El texto de un apunte puede traer sus propios saltos de línea —el porqué del cuaderno explica «sirve
+     para tres cosas» y las enumera—, y en HTML se pierden: los tres motivos salían seguidos, en un párrafo
+     corrido. `pre-line` los respeta y sigue juntando los espacios de más, que es lo que hace falta. */
+  white-space: pre-line;
+}
+
+/* El dibujo del trozo: la forma que trae el SIGPAC, para reconocer la parcela de un vistazo.
+   Fondo verde muy claro y contorno verde oscuro, sin relleno llamativo: es un reconocimiento,
+   no un mapa. Si la parcela no tiene forma, no se pinta nada (ver DESIGN.md). */
+.dibujo-parcela {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin-top: 0.5rem;
+  background: var(--fondo-suave);
+  border: 2px solid var(--verde-medio);
+  border-radius: var(--radio);
+}
+
+.dibujo-parcela path {
+  fill: var(--fondo-suave);
+  stroke: var(--verde-oscuro);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/*
+ * El mapa: la foto del campo con los linderos encima.
+ *
+ * La foto y los linderos son dos imágenes superpuestas en la misma caja, y encima va un SVG con
+ * la parcela elegida. Las tres cosas se colocan con la misma regla de tres sobre la caja de
+ * coordenadas, así que o se mueven juntas o no se mueve ninguna.
+ *
+ * La cruz del centro es lo que se pregunta al SIGPAC: lo que queda debajo de la cruz es la
+ * parcela que se propone. En un móvil, acertar con el dedo en un trozo pequeño es imposible;
+ * mover el mapa y pulsar un botón grande, no.
+ */
+.mapa-vista {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--verde-medio);
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+  aspect-ratio: 3 / 2;
+  margin-bottom: 0.8rem;
+}
+
+.mapa-foto,
+.mapa-linderos,
+.mapa-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mapa-linderos,
+.mapa-svg {
+  pointer-events: none;
+}
+
+.mapa-svg polygon {
+  fill: var(--verde-medio);
+  fill-opacity: 0.35;
+  stroke: var(--verde-oscuro);
+  stroke-width: 3;
+}
+
+/* La capa que recibe el toque: es un botón, para que también se pueda usar con el teclado. */
+.mapa-tocar {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+.mapa-cruz {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  pointer-events: none;
+  border: 3px solid var(--sobre-verde);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--verde-oscuro);
+}
+
+.mapa-cargando {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  background: var(--aviso-fondo);
+  color: var(--aviso-tinta);
+  font-weight: 700;
+}
+
+.mapa-elegido {
+  border: 2px solid var(--verde-medio);
+  border-radius: var(--radio);
+  padding: 0.8rem;
+  margin-top: 0.8rem;
+  background: var(--fondo);
+}
+
+.dato-grande {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.resumen-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.resumen-dato dt {
+  font-weight: 700;
+}
+
+.resumen-dato dd {
+  margin: 0;
+  text-align: right;
+}
+
+/*
+ * La fila de «Te queda» del almacén, destacada (ronda 90, del diseño de Stitch de esa pantalla).
+ *
+ * Es la pregunta con la que se entra en «lo que tengo en el almacén» —«¿me queda producto para tratar la
+ * parcela?»— y antes era una fila más, del mismo tamaño que «Compraste». Va en su recuadro, con el número
+ * grande, y cierra la tarjeta.
+ */
+.resumen-destacado {
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+}
+
+/* La etiqueta de estado de un producto: «Las cuentas cuadran», «Míralo»… */
+.etiqueta-estado {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid var(--borde);
+  border-radius: 8px;
+  background: var(--fondo-suave);
+  color: var(--tinta);
+}
+
+/* Las que dicen que hay algo que mirar van del color de los avisos, **y dicen qué pasa con palabras**:
+   el color solo no informa a quien no lo distingue. */
+.etiqueta-estado-falta,
+.etiqueta-estado-mirar {
+  color: var(--aviso-tinta);
+  background: var(--aviso-fondo);
+  border-color: var(--aviso-borde);
+}
+
+.etiqueta-estado-bien {
+  color: var(--sobre-verde);
+  background: var(--verde-medio);
+  border-color: var(--verde-medio);
+}
+
+/*
+ * Las dos etiquetas del bloque de la ley de la ayuda (ronda 90, del diseño de esa pantalla): «Sí es
+ * obligatorio» y «Es voluntario». La obligación va en oscuro —es lo que hay que cumplir— y lo voluntario
+ * en claro, que es como está el resto de la aplicación. **Las dos dicen qué son con palabras**: el color
+ * solo no informa a quien no lo distingue, y aquí lo que está en juego es una obligación legal.
+ */
+.etiqueta-estado-obligatorio {
+  color: var(--sobre-verde);
+  background: var(--verde-oscuro);
+  border-color: var(--verde-oscuro);
+}
+
+.etiqueta-estado-voluntario {
+  color: var(--tinta);
+  background: var(--fondo-suave);
+  border-color: var(--borde);
+}
+
+/*
+ * Los números de un boletín de análisis, en dos columnas (ronda 90, del diseño de esa pantalla).
+ *
+ * Son ocho o nueve números por boletín y venían en renglones con el rótulo a la izquierda: para
+ * comparar dos campañas había que leerlos uno a uno. En su caja y con el número grande se leen de un
+ * vistazo, que es lo que se hace con un boletín delante.
+ */
+.numeros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.4rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.numeros li {
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo-suave);
+}
+
+.numero-etiqueta {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--tinta-suave);
+}
+
+/* ------------------------------------------------------------------ pie */
+
+.pie {
+  max-width: 44rem;
+  margin: 1.5rem auto 3rem;
+  padding: 0 0.8rem;
+  color: var(--tinta-suave);
+  font-size: 0.95rem;
+}
+
+/* Los pasos del asistente, para saber por dónde vas. */
+.pasos {
+  display: flex;
+  gap: 0.3rem;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.paso {
+  height: 12px;
+  flex: 1;
+  border: 2px solid var(--borde);
+  border-radius: 6px;
+  background: var(--fondo-suave);
+}
+
+.paso-hecho {
+  background: var(--verde-medio);
+  border-color: var(--verde-oscuro);
+}
+
+/* «Paso 2 de 5», en palabras: la barra sola no dice cuántos quedan si no se cuentan los tramos. */
+.paso-cuantos {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tinta-suave);
+}
+
+/*
+ * La tarjeta, en las listas del asistente y en «mis cosas» (`react/piezas/tarjeta.js`).
+ *
+ * Es lo que resuelve el problema de verdad de esas listas: con 51 tierras, una fila de texto no se
+ * distingue de la de al lado. La tarjeta lleva el dibujo de la forma de la tierra, sus datos, sus avisos
+ * y el círculo que dice «esto se toca». La elegida lleva además la palabra «ELEGIDA», porque el color
+ * no informa solo (regla de la casa). **El mismo dibujo sirve para una tarjeta que se lee** (el apunte
+ * de un tratamiento en «mi cuaderno», que se pinta como un `div` y no como un botón).
+ */
+.tarjeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: var(--toque);
+  padding: 0.7rem 0.8rem;
+  margin: 0 0 0.7rem;
+  text-align: left;
+  color: var(--verde-oscuro);
+  background: var(--fondo);
+  border: 3px solid var(--verde-oscuro);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+/* Una tarjeta que solo se lee no es pulsable: el puntero y el hundimiento al tocar son del botón. */
+div.tarjeta {
+  cursor: auto;
+}
+
+.tarjeta:active {
+  transform: translateY(1px);
+}
+
+div.tarjeta:active {
+  transform: none;
+}
+
+/* El grupo de tarjetas: cada una trae ya su hueco de abajo, así que aquí solo se dice que no son una
+   lista con viñetas ni un renglón detrás de otro. */
+.tarjetas {
+  margin: 0 0 0.6rem;
+}
+
+.tarjeta-elegida {
+  border-color: var(--verde);
+  background: var(--fondo-suave);
+  outline: 4px solid var(--foco);
+}
+
+/*
+ * La tarjeta de un apunte con sus dos botones (ronda 91: CORREGIR y BORRAR).
+ *
+ * Va junto y no suelto porque **los botones son de esa tarjeta**: el agricultor mira el apunte, ve que
+ * la dosis está mal y corrige ese. La tarjeta ya trae su hueco de abajo (`.tarjeta` tiene
+ * `margin-bottom`), así que aquí solo se quita el aire de más entre la tarjeta y sus botones para que
+ * se lean como una cosa sola, y se deja el hueco grande **después** de los botones, que es lo que
+ * separa un apunte del siguiente.
+ */
+.tarjeta-con-acciones {
+  margin: 0 0 1rem;
+}
+
+.tarjeta-con-acciones .tarjeta {
+  margin-bottom: 0.5rem;
+}
+
+.tarjeta-con-acciones .barra-acciones {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.tarjeta-dibujo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 3px;
+  border: 2px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo-suave);
+}
+
+.tarjeta-dibujo .dibujo-parcela {
+  width: 100%;
+  height: 100%;
+}
+
+.tarjeta-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tarjeta-nombre {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.tarjeta-etiqueta {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--sobre-verde);
+  background: var(--verde-medio);
+  border-radius: 6px;
+}
+
+.tarjeta-linea {
+  font-weight: 700;
+}
+
+.tarjeta-linea-suave {
+  color: var(--tinta-suave);
+}
+
+.tarjeta-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.95rem;
+  color: var(--aviso-tinta);
+  background: var(--aviso-fondo);
+  border: 2px solid var(--aviso-borde);
+  border-radius: 8px;
+}
+
+.tarjeta-aviso-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  font-weight: 800;
+  color: var(--aviso-fondo);
+  background: var(--aviso-borde);
+  border-radius: 50%;
+}
+
+/* La franja de aviso de lo que más importa de esa pantalla: el plazo de espera del producto, que es lo
+   que decide cuándo se puede coger la cosecha (ronda 90). Va con la letra del cuerpo, no más pequeña. */
+.tarjeta-aviso-grande {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tarjeta-marca {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-top: 0.2rem;
+  font-weight: 800;
+  color: var(--sobre-verde);
+  border: 3px solid var(--borde);
+  border-radius: 50%;
+}
+
+.tarjeta-marca-si {
+  border-color: var(--verde);
+  background: var(--verde);
+}
+
+/*
+ * El rótulo de arriba y las filas con su nombre delante (ronda 78).
+ *
+ * El rótulo («Tierra n.º 12») existe para el muro de cincuenta y una tierras: es lo que permite saber
+ * por dónde vas y decir «mira la doce» por teléfono. Las filas con nombre son para los códigos: un
+ * «47-370-0-0-503-51-1» suelto no dice qué es; con «Referencia oficial SIGPAC» delante, sí.
+ */
+.tarjeta-rotulo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--tinta-suave);
+}
+
+/*
+ * El año del cuaderno, en grande y con su etiqueta al lado (diseño de Stitch de «los años de mi cuaderno»,
+ * ronda 93).
+ *
+ * El año es **lo que se viene a buscar** en esa pantalla, y en un renglón de texto normal no se distingue
+ * de sus fechas ni del año de la ficha de al lado. Se le da tamaño y se pone su etiqueta de estado a la
+ * derecha; cuando no cabe (un móvil estrecho con el año de cuatro cifras), la etiqueta baja sola.
+ */
+.campana-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+}
+
+.campana-anio {
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.tarjeta-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.tarjeta-fila-etiqueta {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  color: var(--tinta-suave);
+}
+
+.tarjeta-fila-valor {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+}
+
+/* El pie de la tarjeta: qué pasa si se toca. Con su flecha, como los demás botones de la aplicación. */
+.tarjeta-accion {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-weight: 700;
+}
+
+/*
+ * La barra de botones del asistente, pegada abajo.
+ *
+ * Con una mano y de pie en el campo, los botones de seguir tienen que estar **donde llega el pulgar**,
+ * no al final de una lista de cincuenta tierras. Con `sticky` la barra se queda abajo mientras se
+ * recorre la lista y vuelve a su sitio al terminar, así que no tapa nada.
+ */
+.asistente-acciones {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem 0 calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  background: var(--fondo);
+  border-top: 3px solid var(--fondo-suave);
+}
+
+.asistente-acciones .boton {
+  flex: 1 1 0;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * EL ORDENADOR: el armazón de una aplicación de gestión (30/09/2026)
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Hasta ahora todo lo de arriba valía igual en un móvil y en un ordenador, y por eso en un ordenador se
+ * veía **un móvil en medio de la pantalla**: una columna de 44 rem con botones de 64 px y sin ningún menú.
+ * David lo pidió así: *«debe ser responsive para usarse en pc y móvil, no solo móvil… no es una app usable
+ * de gestión»*.
+ *
+ * Lo que hay aquí es la parte de escritorio, y **todo va dentro de este `@media`**: en una pantalla
+ * estrecha no cambia nada y la aplicación se ve exactamente como antes. Esa es la regla: el móvil no se
+ * toca.
+ *
+ * Qué se gana a partir de 64 rem (≈1024 px, el ancho de un portátil pequeño):
+ *   1. **El menú lateral** (`#marco .menu`), con la finca arriba y todos los módulos.
+ *   2. **La barra de arriba** (`#marco .barra`), que dice siempre la finca, el año y la cuenta, y lleva el
+ *      botón de apuntar.
+ *   3. **La cabecera de siempre se esconde** (`header.cabecera`): en el ordenador su trabajo lo hace la
+ *      barra, y dos barras pegadas son una de más. La letra grande y el salir siguen estando, en la barra.
+ *   4. **La pantalla deja de ser una columna de móvil**: se queda con todo el ancho que sobra y con aire a
+ *      los lados. La letra sigue a 18 px y los botones de las acciones principales, a 64: el agricultor
+ *      sigue siendo el mismo, aquí solo cambia de ratón.
+ *   5. **Sin transparencias, sin sombras y sin animaciones**, como en el móvil: el diseño es el mismo, solo
+ *      que ancho.
+ */
+@media (min-width: 64rem) {
+  /* El armazón ocupa la izquierda y la barra cruza por arriba. Va fijo: el menú no se va con el scroll,
+     porque es lo que se usa para moverse. */
+  .marco .menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    width: var(--ancho-menu);
+    padding: 0.9rem 0.7rem 1rem;
+    overflow-y: auto;
+    color: var(--sobre-verde);
+    background: var(--verde-oscuro);
+  }
+
+  .marco .menu-marca {
+    margin: 0 0 0.2rem 0.7rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--sobre-verde-tenue);
+    text-transform: uppercase;
+  }
+
+  .marco .menu-finca {
+    margin: 0 0 0.9rem 0.7rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .marco .menu-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .marco .menu-enlace {
+    display: block;
+    width: 100%;
+    min-height: 2.9rem;
+    margin: 0 0 0.15rem;
+    padding: 0.55rem 0.7rem;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-align: left;
+    color: var(--sobre-verde);
+    background: transparent;
+    border: 0;
+    border-left: 5px solid transparent;
+    border-radius: 0 var(--radio) var(--radio) 0;
+    cursor: pointer;
+  }
+
+  .marco .menu-enlace:hover,
+  .marco .menu-enlace:focus-visible {
+    background: var(--sobre-verde-tenue);
+  }
+
+  /* El módulo en el que se está: fondo distinto **y** una barra a la izquierda (el color no informa solo),
+     y `aria-current="page"` en el botón, que ya lo pone el componente. */
+  .marco .menu-activo {
+    font-weight: 700;
+    background: var(--verde-medio);
+    border-left-color: var(--foco);
+  }
+
+  .marco .barra {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: var(--ancho-menu);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.2rem;
+    min-height: var(--alto-barra);
+    padding: 0.5rem 1.4rem;
+    background: var(--verde);
+    border-bottom: 3px solid var(--verde-oscuro);
+  }
+
+  .marco .barra-datos {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.6rem;
+    margin: 0;
+  }
+
+  .marco .barra-dato {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin: 0;
+    color: var(--sobre-verde);
+  }
+
+  .marco .barra-rotulo {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sobre-verde-tenue);
+  }
+
+  .marco .barra-valor {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .marco .barra-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  /* El botón de apuntar, en la barra: es la acción que más se usa y está siempre a la vista. */
+  .marco .barra-acciones .boton {
+    min-height: 2.9rem;
+    margin: 0;
+    padding: 0 1.1rem;
+    justify-content: center;
+  }
+
+  /* La letra grande y el salir: siguen ahí, más pequeños porque se pulsan con el ratón. */
+  .marco .barra-acciones .boton-letra {
+    min-height: 2.9rem;
+    margin: 0;
+  }
+
+  /* La cabecera de móvil, escondida: en el ordenador su trabajo lo hace la barra. */
+  header.cabecera {
+    display: none;
+  }
+
+  /* La pantalla, con todo el ancho que sobra y con aire a los lados. */
+  main.pantalla {
+    max-width: none;
+    margin: 0 0 0 var(--ancho-menu);
+    padding: calc(var(--alto-barra) + 1.2rem) 2rem 2rem;
+  }
+
+  .pie {
+    margin-left: var(--ancho-menu);
+    padding-left: 2rem;
+    text-align: left;
+  }
+
+  /* El aviso de lo que falta mandar cruza por encima de la barra, que es lo primero que hay que ver. */
+  #aviso-pendientes {
+    margin-left: var(--ancho-menu);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * LA TABLA DEL ORDENADOR (30/09/2026)
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Es la misma lista que en el móvil va en tarjetas, pero en una tabla: con 64 tierras, en una pantalla
+ * ancha lo que se quiere es verlas **de arriba abajo, comparar las hectáreas y ordenarlas**. Es la mitad
+ * de lo que David pidió con «una aplicación de gestión».
+ *
+ * Las dos formas van en el mismo HTML (`solo-escritorio` y `solo-movil`) y el CSS enseña la que toca. Así
+ * no hay dos aplicaciones que se puedan separar: los datos son los mismos y los botones de una fila son los
+ * mismos que los de su tarjeta, con el mismo manejador de clics.
+ *
+ * Los colores no se escriben aquí: se usan los del `:root`, como en todo el fichero.
+ */
+
+/* Por defecto (móvil): la tabla no se enseña y las tarjetas sí. */
+.solo-escritorio {
+  display: none;
+}
+
+.solo-movil {
+  display: block;
+}
+
+@media (min-width: 64rem) {
+  .solo-escritorio {
+    display: block;
+  }
+
+  .solo-movil {
+    display: none;
+  }
+
+  .tabla {
+    width: 100%;
+    margin: 0 0 1rem;
+    /* `separate` y no `collapse` para que las líneas no se coman el borde de la tabla. */
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--fondo);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+  }
+
+  .tabla th,
+  .tabla td {
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  /* La cabecera se queda fija al bajar: con 64 filas, sin esto se pierde de vista qué columna es cuál. */
+  .tabla thead th {
+    position: sticky;
+    top: var(--alto-barra);
+    z-index: 1;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--sobre-verde);
+    background: var(--verde);
+    border-bottom: 2px solid var(--verde-oscuro);
+  }
+
+  /* El último renglón (el total) no lleva línea: cierra la tabla. */
+  .tabla tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .tabla tbody tr:hover td {
+    background: var(--fondo-suave);
+  }
+
+  /* La cabecera que ordena es un botón: se ve que se puede pulsar y se pulsa con el ratón. */
+  .tabla-orden {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 2rem;
+    padding: 0.1rem 0.2rem;
+    font: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .tabla-orden:hover,
+  .tabla-orden:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* La flecha del orden **la pone el CSS**: no es una frase dentro del componente, y así el mismo
+     componente sirve para cualquier tabla. */
+  .tabla-ordenada .tabla-orden::after {
+    content: "▲";
+    font-size: 0.8rem;
+    color: var(--foco);
+  }
+
+  .tabla-ordenada-abajo .tabla-orden::after {
+    content: "▼";
+  }
+
+  /* Los números, a la derecha y con su unidad: es como se leen y como se comparan de un vistazo. */
+  .tabla-numero {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .tabla-dato {
+    display: block;
+  }
+
+  .tabla-pista {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--tinta-suave);
+  }
+
+  /* La columna de los botones: no se parte y no se lleva el ancho que necesitan los datos. */
+  .tabla-acciones {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  /* **Dentro de una tabla, la barra de botones no se parte** (30/09/2026). La barra de siempre lleva
+     `flex-wrap: wrap` para el móvil, y con la columna de las acciones estrecha (1 %) eso hacía que
+     CORREGIR y BORRAR se pusieran **uno debajo de otro**: cada fila ocupaba dos renglones y una tabla de
+     veinte productos se hacía el doble de larga. Se vio en la captura de la versión de ordenador. */
+  .tabla-acciones .barra-acciones {
+    margin: 0;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
+  .tabla-acciones .boton {
+    min-height: 2.2rem;
+    padding: 0 0.6rem;
+    font-size: 0.95rem;
+  }
+
+  .tabla tfoot td {
+    font-weight: 700;
+    color: var(--verde-oscuro);
+    background: var(--fondo-suave);
+    border-top: 2px solid var(--borde);
+  }
+
+  /* ══ El panel de mando: la portada del ordenador (fase 4, 30/09/2026) ══
+     Es lo primero que se ve al entrar desde un pc, y es la pantalla que pidió David («una aplicación de
+     gestión»): cuatro números del año, lo que falta por completar con su botón, los últimos apuntes y lo que
+     se saca del programa. **Solo existe en el ordenador**: en el móvil manda la pantalla de inicio de
+     siempre (`.solo-movil`), y por eso todo esto vive dentro del `@media`. */
+
+  /* Las cuatro tarjetas, en una fila. `auto-fit` y no cuatro columnas fijas: con una pantalla estrecha (pero
+     todavía de ordenador) bajan a dos y luego a una sola, en vez de apretarse. */
+  .mando-numeros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mando-numero {
+    padding: 0.7rem 0.9rem;
+    background: var(--fondo-suave);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+  }
+
+  .mando-numero-etiqueta {
+    margin: 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+  }
+
+  /* El número, en grande: es lo que se viene a ver de un vistazo desde la puerta del despacho. */
+  .mando-numero-valor {
+    margin: 0.1rem 0 0;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--verde-oscuro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mando-numero-detalle {
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
+    color: var(--tinta-suave);
+  }
+
+  /* Las dos columnas: lo que falta (a la izquierda y más ancha) y los últimos apuntes. */
+  .mando-columnas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .mando-bloque {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    background: var(--fondo);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+  }
+
+  .mando-bloque h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .mando-bloque-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Cada cosa que falta: su frase y **el botón que la arregla** a la derecha, en el mismo renglón. Es la
+     diferencia con el móvil, donde cada una ocupa su bloque entero: aquí se ven las diez de un vistazo. */
+  .mando-pendientes {
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mando-pendientes li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .mando-pendientes li:last-child {
+    border-bottom: 0;
+  }
+
+  .mando-pendiente-texto {
+    flex: 1 1 14rem;
+    margin: 0;
+  }
+
+  /* **El botón de cada pendiente va a su ancho, no a todo el ancho** (30/09/2026). En el móvil el botón
+     ocupa la línea entera porque se toca con el dedo y con guantes; aquí se pulsa con el ratón y va al lado
+     de su frase, que es lo que hace que se vean las diez cosas de un vistazo en vez de una pantalla por
+     cosa. Sin esta regla, el botón heredaba el `width: 100%` del móvil y cada pendiente ocupaba tres
+     renglones (se vio en la captura del panel con las 64 tierras de verdad). */
+  .mando-pendientes .boton {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 2.9rem;
+    padding: 0 0.9rem;
+  }
+
+  /* La tabla de los últimos apuntes: cinco filas para mirar, sin ordenar y sin elegir. */
+  .mando-ultimos {
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+  }
+
+  .mando-ultimos th,
+  .mando-ultimos td {
+    padding: 0.4rem 0.5rem;
+  }
+
+  /* La fila de «apuntar algo de hoy» y el cierre: los botones, en fila y sin flechas de más. */
+  .mando-apuntar .barra-acciones,
+  .mando-cierre .barra-acciones {
+    margin-top: 0.6rem;
+  }
+
+  .mando-apuntar .boton,
+  .mando-cierre .boton {
+    min-height: 2.9rem;
+  }
+
+  /* La franja de un aviso **con su botón** (30/09/2026): el aviso a la izquierda y el botón a la derecha, en
+     el mismo renglón. El botón va a su ancho, no a todo el ancho: en el móvil el botón ocupa la línea entera
+     porque se toca con el dedo, y aquí se pulsa con el ratón (sin esta regla, la franja de «qué hay sembrado»
+     ocupaba dos renglones y el botón parecía el protagonista de la pantalla). */
+  .aviso-con-boton {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .aviso-con-boton .boton {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 2.9rem;
+    padding: 0 1rem;
+  }
+
+  /* Y a partir de 72 rem (donde la tabla y su panel ya caben juntos), nada más que decir: las dos columnas
+     del panel de mando se quedan como están. */
+
+  /* ══ La tabla y su panel de detalle, al lado (fase 3, 30/09/2026) ══
+     Es la mitad de lo que hace que una tabla sirva: se mira la lista, se toca un nombre y se ve su ficha al
+     lado, sin cambiar de pantalla. La tabla se queda con el ancho que sobra y el panel con el suyo. */
+  .tabla-y-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  /* **Por debajo de 72 rem, el panel pasa a ir DEBAJO de la tabla** (30/09/2026, revisión de la interfaz).
+     Las cuentas, que están medidas y no inventadas: el menú se lleva 17 rem, los márgenes 2 rem a cada
+     lado, el panel 20 rem y su hueco 1 rem; y una tabla de cinco columnas necesita 30 rem para no apretarse
+     (su `min-width`). Total: 17 + 2 + 2 + 20 + 1 + 30 = **72 rem (1152 px)**. Por debajo de eso, con el panel
+     al lado, a la tabla le quedan 22 rem y **deja fuera la columna de Acciones**: en la captura de un
+     portátil de 1024 px se veían Nº, Nombre y Hectáreas y los botones de cada fila quedaban fuera, con la
+     tabla desplazándose en horizontal para llegar a ellos. Con el panel debajo, la tabla se ve entera. */
+  @media (max-width: 71.99rem) {
+    .tabla-y-panel {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Y pegajoso, no: aquí el panel ya no acompaña a la tabla, así que se queda quieto en su sitio. */
+    .panel-detalle {
+      position: static;
+    }
+  }
+
+  /* Al lado de la ficha, la tabla **no se aprieta**: conserva su ancho y, si no cabe, se desplaza en
+     horizontal. Sin esto, con ocho columnas los botones de la última se metían debajo del panel (se vio en
+     la captura de la versión de ordenador, que existe justo para esto). */
+  .tabla-scroll {
+    overflow-x: auto;
+  }
+
+  .tabla-scroll .tabla {
+    min-width: 30rem;
+  }
+
+  /* **Dentro del contenedor que se desplaza, el encabezado se pega a SU borde de arriba**, no al de la
+     ventana. Sin esto, el `top: var(--alto-barra)` de la cabecera —que es lo correcto cuando la tabla se
+     desplaza con la página— la bajaba 68 px dentro de su caja y **tapaba la primera fila**: se vio en la
+     captura de la versión de ordenador, que es justo para lo que está. */
+  .tabla-scroll .tabla thead th {
+    top: 0;
+  }
+
+  .tabla-y-panel .tabla {
+    margin-bottom: 0;
+  }
+
+  .panel-detalle {
+    position: sticky;
+    /* Se queda a la vista mientras se recorre una tabla larga: es lo que se mira mientras se compara. */
+    top: calc(var(--alto-barra) + 1rem);
+    padding: 0.9rem 1rem;
+    background: var(--fondo-suave);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+  }
+
+  .panel-detalle h2 {
+    margin-top: 0;
+    font-size: 1.15rem;
+  }
+
+  .panel-detalle .resumen-dato {
+    margin-bottom: 0.5rem;
+  }
+
+  /* La forma de la tierra, dibujada dentro del panel: es como el agricultor reconoce una tierra (la ve así
+     en el SIGPAC). Se centra y se le da un alto fijo para que todas las fichas midan lo mismo. */
+  .panel-dibujo {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 0.6rem;
+  }
+
+  .panel-dibujo svg {
+    width: 100%;
+    max-width: 12rem;
+    height: 6rem;
+  }
+
+  /* Y sus últimos apuntes, debajo de los datos: una lista corta, con la fecha delante. */
+  .panel-subtitulo {
+    margin: 0.9rem 0 0.3rem;
+    font-size: 0.95rem;
+  }
+
+  .panel-ultimos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9rem;
+    color: var(--tinta-suave);
+  }
+
+  .panel-ultimos li {
+    padding: 0.15rem 0;
+  }
+
+  .panel-detalle .boton {
+    width: 100%;
+    min-height: 2.4rem;
+    margin: 0.35rem 0 0;
+    justify-content: center;
+  }
+
+  /* El nombre de una fila, como un enlace: se toca para verla en el panel. */
+  .tabla-enlace {
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    color: var(--verde);
+    background: transparent;
+    border: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .tabla-enlace:focus-visible {
+    outline: 3px solid var(--foco);
+  }
+
+  /* La fila elegida se ve **y** se dice: el color solo no informa. */
+  .tabla-fila-elegida td {
+    background: var(--fondo-suave);
+    border-bottom-color: var(--verde);
+  }
+
+  .tabla-fila-elegida td:first-child {
+    border-left: 5px solid var(--foco);
+  }
+}
+
+/* En el móvil, la tabla ni se dibuja ni se anuncia: `display: none` la quita del árbol de accesibilidad. */
+@media (max-width: 63.99rem) {
+  .solo-escritorio {
+    display: none;
+  }
+}
+
+/* En una pantalla estrecha, el armazón no se enseña. Se dice aquí, y no solo por omisión, para que quede
+   escrito: en el móvil manda la pantalla de inicio, sin menús que aprender. */
+@media (max-width: 63.99rem) {
+  .marco {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra
+ *
+ * **Qué añade esto, y por qué hace falta.** Son dos pantallas nuevas: la tabla de las 64 tierras con
+ * sus filtros, su agrupación, su selección y el mapa de la finca enlazado; y la ficha de una tierra
+ * con sus versiones, la comparación de dos años y el ensayo de una importación.
+ *
+ * **Las tres reglas de la casa que se cumplen aquí, y se ven en cada línea:**
+ *
+ *  1. **El CSS decide el ancho.** La tabla del ordenador y la del móvil son la misma: la tabla se
+ *     desplaza en horizontal cuando no cabe (`.t06-tabla-scroll`) en vez de apretarse, y el ancho de
+ *     las casillas es fijo, no a ojo. Nada se elige con JavaScript.
+ *  2. **Los colores viven en el `:root`**, y aquí no hay ni uno suelto: todo sale de las variables (hay
+ *     una prueba que lo vigila, `tests/test_design_md.py`).
+ *  3. **Nada de sombras, degradados, transparencias ni animaciones**: al sol no se ven y en un móvil
+ *     barato cuestan (regla de `AGENTS.md` §5).
+ *
+ * Y una cosa que se dice porque sorprende: los trozos del mapa son `polygon` de un `svg` **dentro** de
+ * una caja con la imagen debajo. Es lo que hace que el dibujo y la foto se muevan juntos cuando se
+ * cambia la capa, sin recalcular nada en JavaScript.
+ * -------------------------------------------------------------------------- */
+
+/* Las filas de botones de elegir (los filtros, la agrupación y las capas): en un móvil son muchos
+   botones, así que se envuelven en varias líneas en vez de salirse de la pantalla. */
+.t06-opciones {
+  margin-bottom: 0.6rem;
+}
+
+.t06-opciones .barra-acciones {
+  flex-wrap: wrap;
+}
+
+.t06-rotulo,
+.t06-titulo-seccion,
+.t06-subtitulo {
+  display: block;
+  font-weight: bold;
+}
+
+.t06-titulo-seccion {
+  margin-top: 1.2rem;
+}
+
+.t06-subtitulo {
+  margin: 0.6rem 0 0.3rem;
+}
+
+.t06-buscar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.t06-buscar input {
+  flex: 1 1 14rem;
+  min-height: var(--toque);
+}
+
+.t06-filtros .campo {
+  margin-bottom: 0.4rem;
+}
+
+/* La tabla. **Se desplaza en horizontal, no se aprieta**: con diez columnas, apretarla deja las
+   cabeceras encima de los datos de al lado. */
+.t06-tabla-scroll {
+  overflow-x: auto;
+  margin-bottom: 0.8rem;
+}
+
+.t06-tabla {
+  min-width: 56rem;
+}
+
+/* **La columna del nombre es la que más texto lleva, y con los datos de verdad lleva de sobra**: los
+   nombres del agricultor son como «503/10059-1 BARBECHO TRADICIONAL (3.54 ha)», 42 caracteres con su
+   parentesis y sus hectareas dentro. Cuando esa columna se queda en cien pixeles, un nombre asi ocupa
+   cuatro renglones y la tabla de 64 tierras se hace interminable. Se le da un minimo para que quepa en
+   dos, y **el nombre nunca se recorta**: no hay `text-overflow` ni `overflow` en ninguna celda, asi
+   que el texto entero se ve siempre (medido a 390, 1024 y 1440 px con los datos reales). */
+.t06-tabla th:nth-child(3),
+.t06-tabla td:nth-child(3) {
+  min-width: 13rem;
+}
+
+.t06-casilla {
+  width: 3.4rem;
+  text-align: center;
+}
+
+/* **Las otras tierras que son el mismo trozo de tierra.** Con los datos de verdad, 65 tierras tienen
+   solo 52 referencias distintas: el cuaderno de la Junta parte un mismo recinto en varias líneas de
+   cultivo. Cuando se toca ese trozo, todas sus tierras se encienden a la vez —no se elige una fila al
+   azar— y esta raya dice que van juntas, con el mismo amarillo de la fila elegida. Se pone aquí, fuera
+   del `@media` del ordenador, para que también se vea en el móvil. */
+.t06-mismo-recinto td:first-child {
+  border-left: 5px solid var(--foco);
+}
+
+/* El aviso de que el nombre de una tierra está repetido: se dice con palabras («Hay 3 tierras con
+   este mismo nombre…»), y el color solo lo destaca. */
+.t06-nombre-repetido {
+  display: block;
+  color: var(--aviso-borde);
+}
+
+.t06-casilla input {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* El título de un grupo de filas («Sin forma», «Cebada», «Macotera»): es un renglón de la tabla, así
+   que quien usa un lector de pantalla lo oye como el nombre del grupo. */
+.t06-grupo th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  background: var(--fondo-suave);
+  border-bottom: 2px solid var(--borde);
+  color: var(--tinta);
+}
+
+/* El mapa: la imagen de la capa elegida con las rayas de las tierras encima. Las dos cosas ocupan el
+   mismo hueco, así que se mueven juntas cuando se cambia de capa. */
+.t06-imagen,
+.t06-mapa-vista {
+  display: block;
+  width: 100%;
+  border: 2px solid var(--verde-medio);
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+}
+
+.t06-mapa-vista {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  margin-top: -2px;
+}
+
+.t06-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.t06-tierra {
+  fill: var(--verde-medio);
+  fill-opacity: 0.25;
+  stroke: var(--verde-oscuro);
+  stroke-width: 3;
+  cursor: pointer;
+}
+
+/* **La tierra elegida se ve y se distingue de las marcadas**, y las dos cosas son distintas: elegir es
+   mirar un trozo, marcar es juntarlo con otros. El elegido lleva el amarillo de la casa (el mismo que
+   la fila elegida de una tabla) y las marcadas, una raya discontinua: la forma, no solo el color. */
+.t06-tierra-elegida {
+  fill-opacity: 0.5;
+  stroke: var(--foco);
+  stroke-width: 6;
+}
+
+.t06-tierra-marcada {
+  stroke-dasharray: 10 5;
+  stroke-width: 5;
+}
+
+.t06-leyenda ul {
+  margin: 0.3rem 0;
+  padding-left: 1.3rem;
+}
+
+/* La ficha de una tierra y sus versiones: cada versión es una tarjeta, porque se lee de una en una. */
+.t06-version {
+  margin-bottom: 0.8rem;
+}
+
+.t06-como-esta {
+  font-weight: bold;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.t06-cuenta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.3rem 1rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.t06-cambios {
+  list-style: none;
+  margin: 0.3rem 0;
+  padding: 0;
+}
+
+.t06-cambio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.t06-cambio-tierra {
+  font-weight: bold;
+}
+
+.t06-traer-opcion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.t06-ensayo-titulo {
+  font-weight: bold;
+  margin-top: 0.8rem;
+}
+
+.t06-aviso-de-ensayo ul {
+  margin: 0.2rem 0 0.6rem;
+  padding-left: 1.3rem;
+}

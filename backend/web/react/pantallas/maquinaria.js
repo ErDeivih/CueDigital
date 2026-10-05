@@ -1,0 +1,677 @@
+/*
+ * maquinaria.js — «Mi maquinaria»: la lista de máquinas y la ficha de una (S16, T14 / E8).
+ *
+ * POR QUÉ ESTA PANTALLA EXISTE, Y QUÉ ES LO QUE NO HACE
+ *
+ * El contrato la pide en su apartado 4 (`/maquinaria`, S16) con estas palabras: «Tabla: máquina, tipo,
+ * matrícula/serie, propiedad/alquiler, horas, próxima revisión, documentación y disponibilidad. Ficha
+ * separa ITV, ITEAF, mantenimiento, seguro y ROMA. Cada obligación tiene aplicabilidad, fuente, última
+ * inspección, resultado, próxima fecha y documento. **No calcular plazo solo por "tractor" o
+ * "sulfatadora"; pedir la clasificación técnica necesaria.** Avisos al planificar trabajo y registro de
+ * averías».
+ *
+ * Esa frase del medio es la que manda en todo el fichero, y se ve en tres sitios:
+ *
+ *  1. **La ficha pregunta, y cuando no sabe lo dice.** Cada obligación lleva sus tres respuestas («sí le
+ *     toca», «no le toca», «no lo sé») y, cuando falta la fecha de la próxima, escribe que **no se sabe
+ *     cuándo toca** en vez de enseñar una fecha. Si falta la **clasificación técnica** —que es lo que
+ *     dice de verdad a qué está obligada la máquina— la ficha lo dice con esas palabras y pide que se
+ *     mire en el papel.
+ *  2. **Ningún texto de aquí promete un cumplimiento.** La obligación que nadie ha declarado sale en
+ *     «no se sabe si le toca», que es distinto de «no le toca», y el color no informa solo: cada estado
+ *     va con su palabra.
+ *  3. **La lista dice cuántas cosas faltan por saber.** La columna de la próxima revisión puede estar
+ *     vacía: si además se callara cuántas obligaciones no tienen fecha, el agricultor creería que con la
+ *     fecha que ve está todo mirado.
+ *
+ * Y una cosa que el fichero **no** hace, a propósito: no reutiliza `EquipoAplicacion`. Los equipos con
+ * los que se echa producto viven en el cuaderno de la Junta (su hoja 1.3) y son **una parte** de la
+ * maquinaria, no toda. Los que ya estaban apuntados se enseñan en la lista aparte, diciendo qué son, con
+ * el botón para traerlos: así se completa lo que faltaba sin duplicar lo que ya había.
+ *
+ * CÓMO SE PASA LOS DATOS
+ *
+ * El componente es **puro**: no llama a `fetch`, no lee `localStorage` y no toca el DOM. Todo le llega
+ * por propiedades, **ya preparado por `app.js`**, que es quien tiene los datos y el vocabulario: los
+ * rótulos y las frases salen del servidor (`textos.py`, por `/api/interfaz`), y aquí no hay ni una frase
+ * escrita a mano. Los campos del formulario llevan su `id` (`maquina-nombre`…), que es lo único que
+ * `app.js` tiene para leer lo que el agricultor ha escrito; cambiarlos dejaría el formulario rellenándose
+ * y guardándose vacío sin decir nada.
+ */
+
+import { AvisoDeError, Boton, BotonSencillo, frase, html, OpcionesParaElegir } from "../componentes.js";
+import { Campo } from "../piezas/campo.js";
+import { Tabla } from "../piezas/tabla.js";
+
+/**
+ * Las opciones de una obligación, con la elegida marcada.
+ *
+ * `elegido` va también como `data-elegido` (lo pone `OpcionesParaElegir`): así el agricultor lo ve
+ * marcado **y** quien lea los datos sabe cuál está elegido sin mirar colores, que es la regla de la casa.
+ */
+function Opciones({ bloque, accion }) {
+  if (!bloque) return null;
+  return html`
+    <${OpcionesParaElegir}
+      rotulo=${bloque.etiqueta}
+      pista=${bloque.pista}
+      opciones=${bloque.opciones}
+      accion=${accion}
+      campo=${bloque.campo}
+      datos=${bloque.datos}
+      elegido=${bloque.elegido}
+    />
+    ${bloque.pista ? html`<p className="pista-campo">${frase(bloque.pista)}</p>` : null}
+  `;
+}
+
+/**
+ * Los campos de un formulario, tal y como los prepara `app.js`.
+ *
+ * Un bloque es de escribir (`{tipo, id, etiqueta, valor, pista}`) o de elegir
+ * (`{tipo: "opciones", campo, etiqueta, opciones, elegido}`), y los dos se pintan aquí. **Un bloque con
+ * un `tipo` que no se conoce se pinta como texto**: entre un campo de más y un campo que desaparece sin
+ * decir nada, el de más.
+ */
+function Formulario({ formulario, guardando }) {
+  if (!formulario) return null;
+  return html`
+    <h2>${frase(formulario.titulo)}</h2>
+    ${formulario.pista ? html`<p className="pista">${frase(formulario.pista)}</p>` : null}
+    ${(formulario.bloques || []).map((bloque, indice) =>
+      bloque.tipo === "opciones"
+        ? html`<${Opciones} key=${indice} bloque=${bloque} accion="maquina-elegir" />`
+        : html`
+            <${Campo}
+              key=${indice}
+              id=${bloque.id}
+              etiqueta=${bloque.etiqueta}
+              tipo=${bloque.tipo}
+              valor=${bloque.valor}
+              sufijo=${bloque.pista}
+              unidad=${bloque.unidad}
+              filas=${bloque.filas}
+            />
+          `,
+    )}
+    ${formulario.error ? html`<${AvisoDeError} texto=${formulario.error} />` : null}
+    <div className="barra-acciones">
+      <${Boton}
+        etiqueta=${formulario.guardar}
+        accion="maquina-guardar"
+        datos=${formulario.datos}
+        clase=""
+      />
+      <${BotonSencillo} etiqueta=${formulario.cancelar} accion="maquina-cancelar" />
+    </div>
+    ${guardando ? html`<p className="pista-campo">${frase(formulario.guardando)}</p>` : null}
+  `;
+}
+
+/**
+ * Los avisos de una máquina: lo que hay que mirar antes de contar con ella.
+ *
+ * Cada aviso lleva **su palabra de urgencia** además de su sitio y su color: «Míralo antes de usarla» o
+ * «Míralo cuando puedas». Un aviso que solo se distinguiera por el color no se ve al sol y no se oye en
+ * un lector de pantalla.
+ */
+function Avisos({ avisos = [], textos = {} }) {
+  if (!avisos.length) return html`<p className="pista-campo">${frase(textos.sin_avisos)}</p>`;
+  return html`
+    <ul className="lista">
+      ${avisos.map(
+        (aviso, indice) => html`
+          <li key=${indice} className=${aviso.urgente ? "aviso aviso-error" : "aviso"}>
+            <strong>${frase(aviso.urgente ? textos.urgente : textos.mirar_cuando_puedas)}</strong>
+            <div className="apunte-detalle">${frase(aviso.texto)}</div>
+          </li>
+        `,
+      )}
+    </ul>
+  `;
+}
+
+/**
+ * Lo que el programa **todavía no sabe calcular**, dicho con lo que es y de quién depende.
+ *
+ * Es la receta de `AGENTS.md` para todo lo que no se puede hacer entero, y aquí es el trabajo legal
+ * L07 (la clasificación técnica por máquina): mientras no esté transcrito, el programa no calcula plazos,
+ * y el agricultor tiene que poder leer por qué en vez de pensar que se ha olvidado de avisarle.
+ */
+function LoQueFalta({ queFalta = [], textos = {} }) {
+  if (!queFalta.length) return null;
+  return html`
+    <h2>${frase(textos.que_falta_titulo)}</h2>
+    <p className="pista-campo">${frase(textos.que_falta_explica)}</p>
+    <ul className="lista">
+      ${queFalta.map(
+        (lo, indice) => html`
+          <li key=${indice}>
+            <strong>${frase(lo.que)}</strong>
+            ${
+              // El rótulo y lo que dice van en **dos trozos separados** (su `strong` y su `span`) y no en
+              // una frase pegada: así se leen como dos cosas —el nombre del dato y el dato—, y así la
+              // prueba de «ni una frase escrita a mano» puede comprobar cada uno por su lado en vez de
+              // encontrarse una frase montada que no está en ninguna parte del servidor.
+              html`<div className="apunte-detalle">
+                <strong>${frase(textos.que_falta_para_que)}</strong>
+                <span> ${frase(lo.para_que)}</span>
+              </div>`
+            }
+            <div className="apunte-detalle">
+              <strong>${frase(textos.que_falta_depende)}</strong>
+              <span> ${frase(lo.de_quien_depende)}</span>
+            </div>
+          </li>
+        `,
+      )}
+    </ul>
+  `;
+}
+
+/**
+ * Un dato de la ficha: su rótulo y su valor. Un hueco se enseña **diciendo que está vacío**, nunca en
+ * blanco: un renglón sin nada al lado parece un fallo del programa.
+ */
+function Dato({ rotulo, valor, vacio }) {
+  if (!rotulo) return null;
+  return html`
+    <div className="apunte-detalle">
+      <strong>${frase(rotulo)}</strong>
+      ${valor ? ` ${frase(valor)}` : ` ${frase(vacio)}`}
+    </div>
+  `;
+}
+
+/** Una máquina de la lista, en el móvil: sus datos con el nombre delante y lo que hay que mirar. */
+function Maquina({ maquina, textos }) {
+  return html`
+    <li>
+      <strong>${frase(maquina.nombre)}</strong>
+      <div className="apunte-detalle">${frase(maquina.detalle)}</div>
+      ${maquina.proxima ? html`<div className="apunte-detalle">${frase(maquina.proxima)}</div>` : null}
+      ${maquina.papeles ? html`<div className="apunte-detalle">${frase(maquina.papeles)}</div>` : null}
+      ${maquina.disponibilidad ? html`<div className="apunte-detalle">${frase(maquina.disponibilidad)}</div>` : null}
+      ${
+        // Lo que hay que mirar de esta máquina, con sus palabras: es lo que hace que la lista sirva para
+        // algo más que para mirarla.
+        (maquina.avisos || []).map(
+          (aviso, indice) => html`
+            <div key=${indice} className=${aviso.urgente ? "aviso aviso-error" : "aviso"}>
+              ${frase(aviso.texto)}
+            </div>
+          `,
+        )
+      }
+      <div className="barra-acciones">
+        <${BotonSencillo}
+          etiqueta=${textos.abrir}
+          accion="maquina-ver"
+          datos=${{ id: maquina.id }}
+        />
+      </div>
+    </li>
+  `;
+}
+
+/**
+ * La pantalla de la lista.
+ *
+ * Propiedades: `textos` (el vocabulario de la maquinaria y el de los botones), `cuantas` (la frase que
+ * dice cuántas hay, ya en singular o plural), `filtro`, `tabla` (para el ordenador), `maquinas` (las
+ * tarjetas del móvil), `equipos` (los equipos del cuaderno que no están en la lista), `queFalta`,
+ * `formulario` y los dos avisos de la pantalla (`error` y `aviso`).
+ */
+export function PantallaDeLaMaquinaria({
+  textos = {},
+  cuantas = "",
+  filtro = "",
+  tabla = null,
+  maquinas = [],
+  equipos = [],
+  queFalta = [],
+  formulario = null,
+  guardando = false,
+  error = "",
+  aviso = "",
+}) {
+  const m = textos.maquinaria || {};
+  const acciones = textos.acciones || {};
+
+  return html`
+    <h1>${frase(m.titulo)}</h1>
+    <p className="pista">${frase(m.explica)}</p>
+    <${AvisoDeError} texto=${error} />
+    ${aviso ? html`<div className="aviso">${frase(aviso)}</div>` : null}
+    ${cuantas ? html`<p className="cuantas">${frase(cuantas)}</p>` : null}
+
+    ${
+      // El buscador, con su botón: la lista de maquinaria se lee de un tirón, pero con quince aperos el
+      // buscador es lo que evita recorrerla entera.
+      html`
+        <div className="campo">
+          <label htmlFor="maquinaria-buscar">${frase(m.buscar)}</label>
+          <input id="maquinaria-buscar" type="search" defaultValue=${filtro || ""} />
+          <p className="pista-campo">${frase(m.buscar_pista)}</p>
+        </div>
+        <div className="barra-acciones">
+          <${BotonSencillo} etiqueta=${m.buscar} accion="maquinaria-buscar" />
+          ${filtro ? html`<${BotonSencillo} etiqueta=${m.ver_todas} accion="maquinaria-ver-todas" />` : null}
+        </div>
+      `
+    }
+
+    ${
+      // **La tabla, en el ordenador**: las ocho columnas del contrato. Y si la lista está filtrada, el pie
+      // lo dice: un filtro sin decir qué está filtrando deja al agricultor creyendo que ha perdido máquinas.
+      //
+      // Va dentro de `.tabla-scroll` —como la tabla del dinero (T12)—: con nueve columnas, a 1024 px la
+      // tabla no cabe a lo ancho, y sin este contenedor **la página entera se sale** (medido: 1.621 px
+      // dentro de un hueco de 1.024) y el agricultor tiene que desplazar la pantalla entera para ver el
+      // último dato. Con él, se desplaza solo la tabla y la pantalla se queda quieta.
+      tabla && tabla.filas.length
+        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${tabla} /></div>`
+        : null
+    }
+
+    ${
+      maquinas.length
+        ? html`<ul className="lista solo-movil">
+            ${maquinas.map((maquina, indice) => html`<${Maquina} key=${indice} maquina=${maquina} textos=${{ ...m, abrir: m.abrir }} />`)}
+          </ul>`
+        : html`<p className="pista-campo">${frase(filtro ? m.sin_resultados : m.sin_maquinas)}</p>`
+    }
+
+    ${
+      // **Los equipos del cuaderno que todavía no están en esta lista.** Se enseñan con su explicación y
+      // con el botón de traerlos, porque lo que ya estaba apuntado no puede desaparecer de la vista (es
+      // media puerta de calidad de este ticket).
+      equipos.length
+        ? html`
+            <h2>${frase(m.equipos_sin_ficha)}</h2>
+            <p className="pista-campo">${frase(m.equipos_explica)}</p>
+            <ul className="lista">
+              ${equipos.map(
+                (equipo, indice) => html`
+                  <li key=${indice}>
+                    <strong>${frase(equipo.nombre)}</strong>
+                    ${equipo.detalle ? html`<div className="apunte-detalle">${frase(equipo.detalle)}</div>` : null}
+                    <div className="barra-acciones">
+                      <${BotonSencillo}
+                        etiqueta=${m.traer_equipo}
+                        accion="maquina-traer-equipo"
+                        datos=${{ id: equipo.id }}
+                      />
+                    </div>
+                  </li>
+                `,
+              )}
+            </ul>
+          `
+        : null
+    }
+
+    <${Formulario} formulario=${formulario} guardando=${guardando} />
+
+    ${
+      // El botón de apuntar una máquina: **abajo y siempre**, también cuando la lista está vacía. Decirle
+      // al agricultor que no tiene ninguna máquina y no darle dónde apuntarla es dejarlo sin salida, y eso
+      // ya estuvo mal una vez en este programa.
+      formulario
+        ? null
+        : html`<div className="barra-acciones">
+            <${Boton} etiqueta=${m.nueva} accion="maquina-nueva" clase="" />
+          </div>`
+    }
+
+    <${LoQueFalta} queFalta=${queFalta} textos=${m} />
+
+    <div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${acciones.volver} accion="ir-inicio" clase="" />
+    </div>
+  `;
+}
+
+/**
+ * Una obligación de la ficha: las cinco cosas que hay que separar.
+ *
+ * Lo que enseña, y por qué cada cosa está: la **aplicabilidad** con sus tres respuestas (y la pregunta de
+ * **de dónde sale**), la **última inspección** con su **resultado**, la **próxima fecha** tal y como venía
+ * del papel, el **papel** que la demuestra, la **fuente** de la obligación (la norma que tenemos, o lo que
+ * falta) y los botones para apuntar una inspección de esa obligación.
+ *
+ * Y cuando algo no se sabe, se dice con palabras: «No se sabe si le toca», «No hay ninguna apuntada», «No
+ * se sabe cuándo toca la próxima». Ninguna de esas frases se puede confundir con un «está bien».
+ */
+function Obligacion({ obligacion, textos }) {
+  const m = textos;
+  return html`
+    <li>
+      <h3>${frase(obligacion.nombre)}</h3>
+      <p className="pista-campo">${frase(obligacion.que_es)}</p>
+      <div className="apunte-detalle">
+        <strong>${frase(m.situacion)}</strong> ${frase(obligacion.situacion_texto)}
+      </div>
+      <${Opciones} bloque=${obligacion.opciones_aplicabilidad} accion="maquina-declarar" />
+      ${
+        // **Y de dónde sale lo que ha contestado.** «No le toca» sin decir quién lo dice no vale nada
+        // delante de una inspección, así que la pregunta va aquí, pegada a la respuesta.
+        obligacion.opciones_origen
+          ? html`<${Opciones} bloque=${obligacion.opciones_origen} accion="maquina-declarar" />`
+          : null
+      }
+      ${obligacion.ultima_texto ? html`<div className="apunte-detalle">${frase(obligacion.ultima_texto)}</div>` : null}
+      <${Dato} rotulo=${m.resultado} valor=${obligacion.resultado_texto} vacio=${m.resultado_no_consta} />
+      <${Dato} rotulo=${m.proxima_fecha} valor=${obligacion.proxima_texto} vacio=${m.sin_fecha_apuntada} />
+      <div className="apunte-detalle">
+        <strong>${frase(m.documento)}</strong>
+        ${obligacion.papel ? ` ${frase(obligacion.papel)}` : ` ${frase(m.sin_papel)}`}
+      </div>
+      ${
+        // **Y el papel se puede abrir**, que es lo que se hace con él: en una inspección lo que se enseña
+        // es el certificado. Antes la ficha decía «Con su papel» y no decía cuál ni dejaba verlo.
+        obligacion.papel_id
+          ? html`<div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${m.ver_papel}
+                accion="papel-ver"
+                datos=${{ id: obligacion.papel_id }}
+              />
+            </div>`
+          : null
+      }
+      ${
+        // **La fuente de la obligación**, con su norma si la tenemos y con lo que falta si no. Es lo que
+        // convierte «esto te toca» en algo que se puede comprobar, y lo que evita que un plazo inventado
+        // se confunda con uno que está en el BOE.
+        obligacion.fuente
+          ? html`<div className="apunte-detalle">
+              <strong>${frase(m.lo_que_dice_la_norma)}</strong>
+              ${obligacion.fuente.norma ? ` ${frase(obligacion.fuente.norma)}` : ` ${frase(obligacion.fuente.que_falta)}`}
+              ${
+                obligacion.fuente.url
+                  ? html` <a href=${obligacion.fuente.url} target="_blank" rel="noopener">${frase(obligacion.fuente.url)}</a>`
+                  : null
+              }
+            </div>`
+          : null
+      }
+      ${
+        // La clasificación técnica que falta: el programa **pide el dato** en vez de deducirlo, que es
+        // exactamente lo que el contrato manda.
+        obligacion.clasificacion_falta
+          ? html`<div className="aviso">${frase(m.clasificacion_falta)}</div>`
+          : null
+      }
+      <div className="barra-acciones">
+        <${BotonSencillo}
+          etiqueta=${m.apuntar_inspeccion}
+          accion="maquina-inspeccion-nueva"
+          datos=${{ tipo: obligacion.tipo }}
+        />
+      </div>
+    </li>
+  `;
+}
+
+/** Una inspección apuntada, con lo que traía el papel y sus dos salidas (corregir y borrar). */
+function Inspeccion({ inspeccion, textos }) {
+  const m = textos;
+  return html`
+    <li className=${inspeccion.anulado ? "anulado" : ""}>
+      <strong>${frase(inspeccion.titulo)}</strong>
+      <div className="apunte-detalle">${frase(inspeccion.fecha_texto)}</div>
+      <div className="apunte-detalle">${frase(inspeccion.resultado_texto)}</div>
+      <div className="apunte-detalle">${frase(inspeccion.proxima_texto)}</div>
+      <div className="apunte-detalle">${frase(inspeccion.papel_texto)}</div>
+      ${
+        inspeccion.papel_id
+          ? html`<div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${textos.ver_papel}
+                accion="papel-ver"
+                datos=${{ id: inspeccion.papel_id }}
+              />
+            </div>`
+          : null
+      }
+      ${inspeccion.motivo_anulacion ? html`<div className="apunte-detalle">${frase(inspeccion.motivo_anulacion)}</div>` : null}
+      ${
+        inspeccion.anulado
+          ? null
+          : html`<div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${textos.corregir}
+                accion="maquina-inspeccion-corregir"
+                datos=${{ id: inspeccion.id }}
+              />
+              <${BotonSencillo}
+                etiqueta=${textos.anular}
+                accion="maquina-anular"
+                datos=${{ que: "inspeccion", id: inspeccion.id }}
+              />
+              <${BotonSencillo}
+                etiqueta=${textos.borrar}
+                accion="maquina-inspeccion-borrar"
+                datos=${{ id: inspeccion.id }}
+              />
+            </div>`
+      }
+    </li>
+  `;
+}
+
+/** Una avería apuntada, con lo que pasó y si ya está arreglada. */
+function Averia({ averia, textos }) {
+  return html`
+    <li className=${averia.anulado ? "anulado" : ""}>
+      <strong>${frase(averia.titulo)}</strong>
+      <div className="apunte-detalle">${frase(averia.fecha_texto)}</div>
+      <div className="apunte-detalle">${frase(averia.resuelta_texto)}</div>
+      ${averia.notas ? html`<div className="apunte-detalle">${frase(averia.notas)}</div>` : null}
+      ${
+        averia.anulado
+          ? null
+          : html`<div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${textos.corregir}
+                accion="maquina-averia-corregir"
+                datos=${{ id: averia.id }}
+              />
+              <${BotonSencillo}
+                etiqueta=${textos.anular}
+                accion="maquina-anular"
+                datos=${{ que: "averia", id: averia.id }}
+              />
+              <${BotonSencillo}
+                etiqueta=${textos.borrar}
+                accion="maquina-averia-borrar"
+                datos=${{ id: averia.id }}
+              />
+            </div>`
+      }
+    </li>
+  `;
+}
+
+/**
+ * La ficha de una máquina: sus datos, sus cinco obligaciones, sus inspecciones, sus averías y sus avisos.
+ *
+ * Propiedades: `textos`, `maquina` (los datos ya con sus fechas en texto), `avisos`, `obligaciones` (las
+ * cinco, en el orden de la ficha), `inspecciones`, `averias`, `formulario`, `anulando` (la pregunta del
+ * motivo) y los dos avisos de la pantalla.
+ */
+export function PantallaDeUnaMaquina({
+  textos = {},
+  maquina = null,
+  avisos = [],
+  obligaciones = [],
+  inspecciones = [],
+  averias = [],
+  formulario = null,
+  anulando = null,
+  guardando = false,
+  error = "",
+  aviso = "",
+}) {
+  const m = textos.maquinaria || {};
+  const acciones = textos.acciones || {};
+  if (!maquina) return html`<${AvisoDeError} texto=${error} />`;
+
+  return html`
+    <h1>${frase(maquina.nombre)}</h1>
+    <${AvisoDeError} texto=${error} />
+    ${aviso ? html`<div className="aviso">${frase(aviso)}</div>` : null}
+
+    <h2>${frase(m.seccion_datos)}</h2>
+    <${Dato} rotulo=${m.clase} valor=${maquina.clase_texto} vacio=${m.sin_decir} />
+    ${
+      // **La clasificación técnica, con su aviso cuando falta.** Es el dato del que depende lo que le
+      // toca a la máquina, y el programa no lo deduce: lo pide.
+      html`<div className="apunte-detalle">
+        <strong>${frase(m.clasificacion)}</strong>
+        ${maquina.clasificacion ? ` ${frase(maquina.clasificacion)}` : ` ${frase(m.sin_clasificacion)}`}
+      </div>`
+    }
+    ${maquina.clasificacion_falta ? html`<div className="aviso">${frase(m.clasificacion_falta)}</div>` : null}
+    <${Dato} rotulo=${m.matricula} valor=${maquina.matricula} vacio=${m.sin_decir} />
+    <${Dato} rotulo=${m.numero_serie} valor=${maquina.numero_serie} vacio=${m.sin_decir} />
+    <${Dato} rotulo=${m.numero_roma} valor=${maquina.numero_roma} vacio=${m.sin_decir} />
+    <${Dato} rotulo=${m.marca} valor=${maquina.marca} vacio=${m.sin_decir} />
+    <${Dato} rotulo=${m.modelo} valor=${maquina.modelo} vacio=${m.sin_decir} />
+    ${maquina.anio_texto ? html`<${Dato} rotulo=${m.anio} valor=${maquina.anio_texto} />` : null}
+    <${Dato} rotulo=${m.propiedad} valor=${maquina.propiedad_texto} vacio=${m.propiedad_no_se} />
+    <${Dato} rotulo=${m.horas} valor=${maquina.horas_texto} vacio=${m.sin_decir} />
+    <${Dato} rotulo=${m.disponibilidad} valor=${maquina.disponibilidad_texto} vacio=${m.disponibilidad_no_se} />
+    ${
+      // Si esta máquina es uno de los equipos del cuaderno, se dice: es lo que evita que parezca que el
+      // pulverizador está apuntado dos veces.
+      maquina.es_el_equipo_del_cuaderno
+        ? html`<p className="pista-campo">${frase(m.es_el_equipo_del_cuaderno_pista)}</p>`
+        : null
+    }
+    <div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${textos.corregir} accion="maquina-corregir" />
+    </div>
+
+    <h2>${frase(m.avisos_titulo)}</h2>
+    <${Avisos} avisos=${avisos} textos=${m} />
+
+    <h2>${frase(m.seccion_obligaciones)}</h2>
+    <p className="pista-campo">${frase(m.seccion_obligaciones_explica)}</p>
+    ${
+      // **Cada obligación es un renglón de la lista, y no una «tarjeta».** Se probó con la clase de las
+      // tarjetas de las tierras y **la pantalla se salía de lo ancho** (medido: 1.287 px dentro de un hueco
+      // de 390): esa clase es una fila flexible que no parte, y aquí dentro van cinco renglones de datos y
+      // siete botones. El renglón de una lista sí los coloca uno debajo de otro y reparte los botones de dos
+      // en dos, que es lo que se ve bien en el móvil.
+      html`<ul className="lista">
+        ${obligaciones.map(
+          (obligacion, indice) => html`<${Obligacion} key=${indice} obligacion=${obligacion} textos=${m} />`,
+        )}
+      </ul>`
+    }
+
+    <h2>${frase(m.seccion_inspecciones)}</h2>
+    ${
+      // **Y el aviso de los papeles, que es una obligación de la ley**: «los registros y documentos se
+      // conservarán al menos durante los 3 años siguientes a su fecha de emisión» (artículo 16.3 del RD
+      // 1311/2012). Estaba escrito en `textos.py` y **no se leía en ninguna pantalla** (lo encontró la
+      // revisión del ticket), y este es su sitio: debajo de las inspecciones, que son los papeles de los
+      // que habla.
+      html`<p className="pista-campo"><strong>${frase(m.papeles_titulo)}</strong> ${frase(m.guarda_el_papel)}</p>`
+    }
+    ${
+      inspecciones.length
+        ? html`<ul className="lista">
+            ${inspecciones.map(
+              (inspeccion, indice) => html`<${Inspeccion} key=${indice} inspeccion=${inspeccion} textos=${{ ...m, corregir: textos.corregir, borrar: textos.borrar }} />`,
+            )}
+          </ul>`
+        : html`<p className="pista-campo">${frase(m.sin_inspecciones)}</p>`
+    }
+
+    <h2>${frase(m.seccion_averias)}</h2>
+    ${
+      averias.length
+        ? html`<ul className="lista">
+            ${averias.map(
+              (averia, indice) => html`<${Averia} key=${indice} averia=${averia} textos=${{ ...m, corregir: textos.corregir, borrar: textos.borrar }} />`,
+            )}
+          </ul>`
+        : html`<p className="pista-campo">${frase(m.sin_averias)}</p>`
+    }
+    <div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${m.apuntar_averia} accion="maquina-averia-nueva" />
+    </div>
+
+    <${Formulario} formulario=${formulario} guardando=${guardando} />
+
+    ${
+      // La pregunta del motivo, para anular. **Anular no es borrar** y la pantalla lo dice: lo anulado se
+      // queda en el cuaderno, tachado, y deja de contar para la última inspección.
+      anulando
+        ? html`
+            <h2>${frase(anulando.titulo)}</h2>
+            <p className="pista-campo">${frase(anulando.pista)}</p>
+            <div className="campo">
+              <label htmlFor="anular-motivo">${frase(m.motivo_anulacion)}</label>
+              <input id="anular-motivo" type="text" defaultValue="" />
+            </div>
+            <div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${m.anular_confirmar}
+                accion="maquina-anular-confirmar"
+                datos=${{ que: anulando.que, id: anulando.id }}
+              />
+              <${BotonSencillo} etiqueta=${acciones.volver} accion="maquina-anular-cancelar" />
+            </div>
+          `
+        : null
+    }
+
+    <${LoQueFalta} queFalta=${maquina.que_falta || []} textos=${m} />
+
+    <div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${acciones.volver} accion="maquinaria-ver" clase="" />
+    </div>
+  `;
+}
+
+/** El elemento de React de la lista, ya con sus propiedades puestas. */
+export function pantallaDeLaMaquinaria(propiedades) {
+  return html`
+    <${PantallaDeLaMaquinaria}
+      textos=${propiedades.textos}
+      cuantas=${propiedades.cuantas}
+      filtro=${propiedades.filtro}
+      tabla=${propiedades.tabla}
+      maquinas=${propiedades.maquinas}
+      equipos=${propiedades.equipos}
+      queFalta=${propiedades.queFalta}
+      formulario=${propiedades.formulario}
+      guardando=${propiedades.guardando}
+      error=${propiedades.error}
+      aviso=${propiedades.aviso}
+    />
+  `;
+}
+
+/** Y el de la ficha de una máquina. */
+export function pantallaDeUnaMaquina(propiedades) {
+  return html`
+    <${PantallaDeUnaMaquina}
+      textos=${propiedades.textos}
+      maquina=${propiedades.maquina}
+      avisos=${propiedades.avisos}
+      obligaciones=${propiedades.obligaciones}
+      inspecciones=${propiedades.inspecciones}
+      averias=${propiedades.averias}
+      formulario=${propiedades.formulario}
+      anulando=${propiedades.anulando}
+      guardando=${propiedades.guardando}
+      error=${propiedades.error}
+      aviso=${propiedades.aviso}
+    />
+  `;
+}

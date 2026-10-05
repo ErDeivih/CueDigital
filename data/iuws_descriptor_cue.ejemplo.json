@@ -1,0 +1,88 @@
+{
+  "_lee_esto_antes_de_rellenarlo": [
+    "Este fichero es la plantilla del mapeo del DESCRIPTOR DEL CUADERNO,",
+    "versión 3.11.4. El libro oficial y el esquema JSON están en data/iuws_fuentes/.",
+    "",
+    "Mientras este fichero se llame 'iuws_descriptor_cue.ejemplo.json' NO se carga y la",
+    "aplicación dirá que falta el descriptor, que es la verdad.",
+    "",
+    "Para activarlo:",
+    "  1. Lee el fichero BdcSix-DS-DisenoCUE_3.11.4.xlsx y su esquema JSON en data/iuws_fuentes/.",
+    "  2. Rellena 'bloques' copiando de ahí el nombre exacto de cada campo del JSON y, en",
+    "     'catalogos', el nombre del catálogo del que sale cada código.",
+    "  3. Guarda este fichero como 'data/iuws_descriptor_cue.json'.",
+    "",
+    "Esta plantilla no constituye todavía un mapeo completo. Los nombres y códigos pendientes",
+    "de cotejar con el esquema oficial quedan vacíos a propósito."
+  ],
+  "version": "3.11.4",
+  "fuente": "data/iuws_fuentes/BdcSix-DS-DisenoCUE_3.11.4.xlsx",
+  "documento": "Anexo VI. Interfaz Único Común v3.11.4",
+  "bloques": {
+    "DatosExplotacion": {
+      "MedidaPreventivaCultural": {
+        "campos": {
+          "IdMedidaPreventCultural": {
+            "de": "medida",
+            "tipo": "codigo_de_catalogo",
+            "catalogo": ""
+          }
+        }
+      }
+    },
+    "ActividadesExplotacion": {
+      "TratamientosFitosanitarios": {
+        "campos": {
+          "IdAjenaTratamientoFito": {
+            "de": "IdAjena",
+            "tipo": "texto",
+            "nota": "Lo genera esta herramienta. No puede cambiar nunca."
+          },
+          "Borrar": {
+            "de": "Borrar",
+            "tipo": "booleano"
+          }
+        }
+      },
+      "SiembraPlantacion": {
+        "campos": {
+          "IdAjenaSiembraPlant": {
+            "de": "IdAjena",
+            "tipo": "texto"
+          }
+        }
+      },
+      "TratamientosPostCosecha": {
+        "campos": {
+          "IdAjenaTratamPostco": {
+            "de": "IdAjena",
+            "tipo": "texto"
+          }
+        }
+      },
+      "Fertilizacion": {
+        "campos": {}
+      },
+      "CosechaComercializada": {
+        "campos": {}
+      },
+      "Analiticas": {
+        "campos": {}
+      },
+      "LaboresCulturales": {
+        "campos": {}
+      }
+    }
+  },
+  "catalogos": {
+    "_que_es": "De qué catálogo sale cada código. Los publica el servicio de catálogos de SIEX.",
+    "Producto": "",
+    "Unidad": "",
+    "Justificacion": "",
+    "MateriaActiva": "",
+    "MedidaPreventivaCultural": "",
+    "TipoMaquinariaUNE": "",
+    "EstadoFenologico": "",
+    "Eficacia": ""
+  }
+}

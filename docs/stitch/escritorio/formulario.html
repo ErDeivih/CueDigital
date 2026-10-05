@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CUE Digital CyL - Cuaderno de Explotación Agraria</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#d9dad6",
+            "inverse-primary": "#a2d2aa",
+            "secondary-container": "#ffd56c",
+            "outline-variant": "#c1c9bf",
+            "surface-variant": "#e2e3de",
+            "error": "#8c1d18",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#2f312e",
+            "tertiary": "#4a1c27",
+            "secondary-fixed": "#ffdf95",
+            "on-surface": "#1a1c19",
+            "tertiary-fixed": "#ffd9de",
+            "primary-overlay": "#3a6446",
+            "on-surface-variant": "#43503f",
+            "surface-container-low": "#f3f4ef",
+            "primary": "#043317",
+            "error-dark": "#5c110d",
+            "on-background": "#1a1c19",
+            "on-primary-fixed-variant": "#244f31",
+            "on-primary-container": "#8bb992",
+            "background": "#f9faf5",
+            "primary-fixed": "#beeec5",
+            "on-error-container": "#4a0f0b",
+            "surface-bright": "#f9faf5",
+            "primary-container": "#1f4a2c",
+            "on-tertiary-container": "#e09ba8",
+            "primary-dark": "#0d2b18",
+            "on-tertiary-fixed": "#360c18",
+            "error-container": "#fbe3e1",
+            "surface-container-high": "#e8e9e4",
+            "surface-container": "#edeee9",
+            "on-secondary-container": "#3d2f00",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "surface-container-highest": "#e2e3de",
+            "on-secondary-fixed": "#251a00",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed-dim": "#eac25a",
+            "on-error": "#ffffff",
+            "secondary": "#765a00",
+            "on-tertiary": "#ffffff",
+            "outline": "#a9b6a8",
+            "on-secondary-fixed-variant": "#594400",
+            "tertiary-container": "#65323d",
+            "surface": "#ffffff",
+            "primary-overlay-border": "#8fae97",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed": "#00210c",
+            "inverse-on-surface": "#f0f1ec",
+            "focus": "#ffd24a",
+            "surface-tint": "#3c6847",
+            "on-tertiary-fixed-variant": "#6b3742"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xxl": "32px",
+            "gutter": "16px",
+            "space-md": "12px",
+            "space-xs": "4px",
+            "space-xl": "24px",
+            "space-lg": "16px",
+            "margin": "16px",
+            "space-sm": "8px"
+          },
+          "fontFamily": {
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* High contrast focus ring for outdoor/despacho accessibility */
+    input:focus, select:focus, textarea:focus, button:focus {
+      outline: 3px solid #ffd24a !important;
+      outline-offset: 2px !important;
+    }
+    /* Clean custom scrollbar for desktop resolution */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #edeee9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #1f4a2c;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-cuerpo antialiased h-screen w-screen overflow-hidden flex flex-col select-none">
+<!-- ======================================================== -->
+<!-- 1. TOP APP BAR (Shared Component Exact Implementation) -->
+<!-- ======================================================== -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-gutter h-16 w-full bg-primary border-b-4 border-primary-container text-on-primary">
+<!-- Brand & Despacho Tag -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary-fixed text-3xl">agriculture</span>
+<span class="text-titulo font-titulo font-extrabold text-on-primary tracking-tight">CUE Digital CyL</span>
+</div>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border border-secondary">
+        DESPACHO
+      </span>
+<div class="h-6 w-px bg-primary-container"></div>
+<!-- Context Selectors from JSON / User spec -->
+<div class="flex items-center gap-space-md">
+<!-- Finca -->
+<div class="flex items-center gap-1.5 px-3 py-1 bg-primary-container rounded border border-primary-overlay text-on-primary cursor-pointer hover:bg-primary-overlay transition-colors">
+<span class="material-symbols-outlined text-secondary-fixed text-lg">home_work</span>
+<span class="text-pista font-pista font-bold">Finca Las Suertes y El Prado (42 ha)</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<!-- Campaña -->
+<div class="flex items-center gap-1.5 px-3 py-1 bg-primary-container rounded border border-primary-overlay text-on-primary cursor-pointer hover:bg-primary-overlay transition-colors">
+<span class="material-symbols-outlined text-secondary-fixed text-lg">calendar_today</span>
+<span class="text-pista font-pista font-bold">Campaña 2026 (01/09/2025 - 31/08/2026)</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<!-- Titular -->
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-primary-container">
+<span class="material-symbols-outlined text-lg">badge</span>
+<span class="text-pista font-pista">David Pérez Velasco · NIF: 12345678Z (Titular cualificado)</span>
+</div>
+</div>
+</div>
+<!-- Actions & Sync Status -->
+<div class="flex items-center gap-space-lg">
+<!-- Sync Status Pill -->
+<div class="flex items-center gap-2 bg-primary-dark px-3 py-1 rounded border border-primary-overlay text-xs font-bold text-inverse-primary">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+<span>SIEX y REGEPA al día</span>
+</div>
+<!-- Icon Actions -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-on-primary hover:bg-primary-container rounded transition-all active:translate-y-0.5" title="Sincronizar ahora">
+<span class="material-symbols-outlined text-xl">sync</span>
+</button>
+<button class="p-2 text-on-primary hover:bg-primary-container rounded transition-all active:translate-y-0.5" title="Ayuda técnica">
+<span class="material-symbols-outlined text-xl">help</span>
+</button>
+<button class="p-2 text-on-primary hover:bg-primary-container rounded relative transition-all active:translate-y-0.5" title="Notificaciones">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+</div>
+<!-- Trailing Primary Action -->
+<button class="bg-secondary-container text-on-secondary-container font-boton text-boton px-4 py-1.5 rounded border-2 border-secondary font-bold hover:bg-secondary-fixed transition-all active:translate-y-0.5 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>Nuevo Registro</span>
+</button>
+</div>
+</header>
+<!-- ======================================================== -->
+<!-- MAIN WORKSPACE CONTAINER (Below TopAppBar & Above Footer) -->
+<!-- ======================================================== -->
+<div class="flex flex-row h-[calc(100vh-6.5rem)] mt-16 overflow-hidden">
+<!-- ======================================================== -->
+<!-- 2. SIDE NAV BAR (Shared Component Exact Implementation)  -->
+<!-- ======================================================== -->
+<aside class="w-72 bg-surface-container-low flex flex-col justify-between border-r-4 border-outline z-30 shrink-0">
+<!-- Upper Section: Exploitation Info & Nav List -->
+<div class="flex flex-col overflow-y-auto">
+<!-- Sub-header card -->
+<div class="p-margin border-b-2 border-outline-variant bg-surface-container flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary text-secondary-fixed flex items-center justify-center font-bold text-lg border border-primary-container">
+<span class="material-symbols-outlined">shield</span>
+</div>
+<div>
+<div class="text-xs font-bold uppercase text-on-surface-variant">Explotación Principal</div>
+<div class="text-sm font-extrabold text-primary">REGEPA: CYL-47-09821</div>
+</div>
+</div>
+<!-- Navigation Tabs (With Exact Active State on 'El Cuaderno' / Cuaderno Activo) -->
+<nav class="py-2 flex flex-col gap-0.5">
+<!-- Tab 1: Resumen -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">dashboard</span>
+<span class="text-campo font-campo font-medium">Resumen</span>
+</div>
+</a>
+<!-- Tab 2: El Cuaderno (ACTIVO CON BADGE 24) -->
+<a class="flex items-center justify-between px-margin py-space-md bg-secondary-container text-on-secondary-container font-bold border-l-4 border-primary transition-transform duration-75" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-2xl text-primary">menu_book</span>
+<span class="text-campo font-campo font-bold">El Cuaderno</span>
+</div>
+<span class="bg-primary text-on-primary text-xs px-2 py-0.5 rounded-full font-bold">24</span>
+</a>
+<!-- Tab 3: Tierras y Parcelas -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">landscape</span>
+<span class="text-campo font-campo font-medium">Tierras y Parcelas</span>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant text-xs px-2 py-0.5 rounded font-bold border border-outline-variant">64</span>
+</a>
+<!-- Tab 4: Almacén y Stock -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">inventory_2</span>
+<span class="text-campo font-campo font-medium">El Almacén</span>
+</div>
+</a>
+<!-- Tab 5: Análisis Suelo/Agua -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">science</span>
+<span class="text-campo font-campo font-medium">Análisis Suelo y Agua</span>
+</div>
+</a>
+<!-- Tab 6: Ventas y Cosecha -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">point_of_sale</span>
+<span class="text-campo font-campo font-medium">Ventas y Cosecha</span>
+</div>
+</a>
+<!-- Tab 7: Plan de Abonado y Nitratos -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">eco</span>
+<span class="text-campo font-campo font-medium">Plan de Abono / Nitratos</span>
+</div>
+</a>
+<!-- Tab 8: Documentos y Trámites -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">folder_open</span>
+<span class="text-campo font-campo font-medium">Papeles y Documentos</span>
+</div>
+</a>
+<!-- Tab 9: Facturas y Albaranes -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">receipt_long</span>
+<span class="text-campo font-campo font-medium">Facturas y Albaranes</span>
+</div>
+</a>
+<!-- Tab 10: Maquinaria y Equipos -->
+<a class="flex items-center justify-between px-margin py-space-sm text-on-surface hover:bg-surface-variant font-medium transition-transform duration-75 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-xl text-on-surface-variant">agriculture</span>
+<span class="text-campo font-campo font-medium">Productos y Máquinas</span>
+</div>
+</a>
+</nav>
+</div>
+<!-- Lower Section: Offline Status / Sync and Config/Logout -->
+<div class="border-t-2 border-outline-variant bg-surface-container p-3 flex flex-col gap-2">
+<div class="bg-surface-container-highest p-2 rounded border border-outline flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base">cloud_sync</span>
+<span class="text-xs font-bold text-on-surface">Modo Local Activo</span>
+</div>
+<span class="text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">REGEPA OK</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<button class="flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-base">settings</span>
+<span>Configuración</span>
+</button>
+<button class="flex items-center gap-1 text-xs font-bold text-error hover:text-error-dark transition-colors">
+<span class="material-symbols-outlined text-base">logout</span>
+<span>Cerrar Sesión</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- ======================================================== -->
+<!-- 3. MAIN DESPATCH CONTENT CANVAS                          -->
+<!-- ======================================================== -->
+<main class="flex-1 flex flex-col overflow-hidden bg-background">
+<!-- Action Sub-header / Context Breadcrumbs -->
+<section class="h-20 shrink-0 border-b-2 border-outline-variant bg-surface px-6 flex items-center justify-between">
+<div>
+<!-- Breadcrumb -->
+<div class="flex items-center gap-1 text-xs font-bold text-on-surface-variant mb-1">
+<span>El Cuaderno</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span>Apuntes de campaña</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-extrabold">Nuevo tratamiento</span>
+</div>
+<!-- Title & Subtitle -->
+<div class="flex items-baseline gap-3">
+<h1 class="text-titulo font-titulo text-primary font-extrabold tracking-tight">
+              Apuntar lo que he echado
+            </h1>
+<p class="text-pista font-pista text-on-surface-variant font-medium">
+              Registro oficial de tratamiento fitosanitario con cuadratura automática de existencias y cálculo del plazo de espera.
+            </p>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 border-2 border-outline text-on-surface-variant hover:bg-surface-variant font-boton text-boton rounded font-bold transition-all active:translate-y-0.5 flex items-center gap-2">
+<span>CANCELAR</span>
+<kbd class="bg-surface-container px-1.5 py-0.5 text-xs rounded border border-outline-variant font-mono">Esc</kbd>
+</button>
+<button class="px-6 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-boton text-boton rounded border-2 border-primary-dark font-extrabold transition-all active:translate-y-0.5 flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">check_circle</span>
+<span>APUNTARLO AL CUADERNO</span>
+<kbd class="bg-primary-container text-on-primary px-1.5 py-0.5 text-xs rounded border border-primary-overlay font-mono">Ctrl+S</kbd>
+</button>
+</div>
+</section>
+<!-- Scrollable 2-Panel Content Area -->
+<div class="flex-1 flex overflow-hidden">
+<!-- ======================================================== -->
+<!-- FORM CONTAINER: Left + Center (2 columns of fields)      -->
+<!-- ======================================================== -->
+<div class="flex-1 overflow-y-auto p-6">
+<div class="bg-surface border-2 border-outline rounded-lg p-6 flex flex-col gap-6">
+<div class="grid grid-cols-2 gap-8">
+<!-- ---------------------------------------------------- -->
+<!-- COLUMNA 1: Datos de entrada directos                 -->
+<!-- ---------------------------------------------------- -->
+<div class="flex flex-col gap-5">
+<!-- 1. Dónde lo has echado -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center gap-1">
+<span>¿Dónde lo has echado?</span>
+<span class="text-error font-extrabold">*</span>
+</label>
+<span class="text-xs font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded border border-primary-overlay-border">1 seleccionada</span>
+</div>
+<!-- Quick search bar inside parcel selector -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 text-sm bg-surface-container-low border border-outline rounded text-on-surface font-medium focus:ring-0" placeholder="Buscar parcela o paraje..." type="text" value="El Prado"/>
+</div>
+<!-- Parcelas list (Compact selectable) -->
+<div class="flex flex-col gap-1.5 mt-1">
+<!-- Parcela 1: El Prado (SELECCIONADA) -->
+<div class="p-3 bg-primary-fixed/30 border-2 border-primary rounded flex items-center justify-between cursor-pointer">
+<div class="flex items-center gap-2.5">
+<div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-primary">El Prado (4,90 ha)</div>
+<div class="text-xs text-on-surface-variant font-medium">Cebada cervecera · Recinto 2, Polígono 14 · Secano</div>
+</div>
+</div>
+<span class="text-xs font-bold px-2 py-0.5 bg-primary text-on-primary rounded">Activa</span>
+</div>
+<!-- Parcela 2: Las Suertes de Arriba -->
+<div class="p-2.5 bg-surface-container-low border border-outline-variant hover:border-outline rounded flex items-center justify-between cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2.5">
+<div class="w-5 h-5 rounded-full border-2 border-outline flex items-center justify-center"></div>
+<div>
+<div class="text-sm font-bold text-on-surface">Las Suertes de Arriba (12,30 ha)</div>
+<div class="text-xs text-on-surface-variant">Trigo blando · Recinto 1, Polígono 12</div>
+</div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">Parcial</span>
+</div>
+<!-- Parcela 3: El Vallejo Llano -->
+<div class="p-2.5 bg-surface-container-low border border-outline-variant hover:border-outline rounded flex items-center justify-between cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2.5">
+<div class="w-5 h-5 rounded-full border-2 border-outline flex items-center justify-center"></div>
+<div>
+<div class="text-sm font-bold text-on-surface">El Vallejo Llano (8,15 ha)</div>
+<div class="text-xs text-on-surface-variant">Barbecho tradicional · Polígono 14</div>
+</div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">Sin labor</span>
+</div>
+<!-- Parcela 4: Majada Honda -->
+<div class="p-2.5 bg-surface-container-low border border-outline-variant hover:border-outline rounded flex items-center justify-between cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2.5">
+<div class="w-5 h-5 rounded-full border-2 border-outline flex items-center justify-center"></div>
+<div>
+<div class="text-sm font-bold text-on-surface">Majada Honda (3,25 ha)</div>
+<div class="text-xs text-on-surface-variant">Girasol · Polígono 15</div>
+</div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">Sin labor</span>
+</div>
+</div>
+</div>
+<!-- 2. Qué has echado -->
+<div class="flex flex-col gap-1.5 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center gap-1">
+<span>¿Qué has echado?</span>
+<span class="text-error font-extrabold">*</span>
+</label>
+<div class="relative">
+<select class="w-full h-12 px-3 bg-surface-container-low border-2 border-outline rounded text-sm font-bold text-on-surface pr-8 focus:border-primary">
+<option selected="">Glifosato 36 SL (Herbicida sistémico concentrado soluble)</option>
+<option>Clortoluron 500 SC (Herbicida selectivo)</option>
+<option>Tebuconazol 25 WP (Fungicida preventivo)</option>
+</select>
+</div>
+<!-- Official Registry Helper Box -->
+<div class="p-2.5 bg-surface-container rounded border border-outline text-xs text-on-surface-variant flex flex-col gap-1">
+<div class="flex items-center justify-between font-bold text-on-surface">
+<span>Nº Registro Oficial: 18.940 / ES-00421</span>
+<span class="text-primary font-extrabold bg-primary-fixed px-1.5 py-0.2 rounded">AUTORIZADO CyL</span>
+</div>
+<div>Materia activa: <span class="font-bold text-on-surface">Glifosato 360 g/L (sal isopropilamina)</span></div>
+<div class="font-extrabold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">inventory</span>
+<span>Stock disponible en la nave: 10,00 L</span>
+</div>
+</div>
+</div>
+<!-- 3. Cuánto por hectárea -->
+<div class="flex flex-col gap-1.5 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center justify-between">
+<span class="flex items-center gap-1">
+<span>¿Cuánto por hectárea?</span>
+<span class="text-error font-extrabold">*</span>
+</span>
+<span class="text-xs font-bold text-on-surface-variant">Dosis autorizada: máx. 3,00 L/ha</span>
+</label>
+<div class="flex items-center gap-3">
+<div class="relative flex-1">
+<input class="w-full h-12 px-4 bg-surface-container-low border-2 border-outline rounded text-lg font-bold text-on-surface" type="text" value="2,00"/>
+<span class="absolute right-3 top-3 text-sm font-extrabold text-on-surface-variant">L/ha</span>
+</div>
+<div class="flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-3 rounded">
+<span class="material-symbols-outlined text-base">verified</span>
+<span>Dentro de norma</span>
+</div>
+</div>
+</div>
+<!-- 4. Cuándo se echó -->
+<div class="flex flex-col gap-1.5 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center gap-1">
+<span>¿Cuándo se echó?</span>
+<span class="text-error font-extrabold">*</span>
+</label>
+<div class="flex items-center gap-2">
+<div class="relative flex-1">
+<input class="w-full h-12 px-4 bg-surface-container-low border-2 border-outline rounded text-base font-bold text-on-surface" type="text" value="12/05/2026"/>
+<span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant">calendar_month</span>
+</div>
+<button class="h-12 px-4 bg-primary text-on-primary font-bold rounded border-2 border-primary-dark hover:bg-primary-container transition-all">
+                      HOY
+                    </button>
+<button class="h-12 px-4 bg-surface-container-high text-on-surface font-bold rounded border-2 border-outline hover:bg-surface-variant transition-all">
+                      AYER (11/05)
+                    </button>
+</div>
+</div>
+</div>
+<!-- ---------------------------------------------------- -->
+<!-- COLUMNA 2: Datos derivados y trazabilidad oficial    -->
+<!-- ---------------------------------------------------- -->
+<div class="flex flex-col gap-5">
+<!-- 5. Cuántas hectáreas has tratado -->
+<div class="flex flex-col gap-1.5">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center justify-between">
+<span class="flex items-center gap-1">
+<span>¿Cuántas hectáreas has tratado?</span>
+<span class="text-error font-extrabold">*</span>
+</span>
+<span class="text-xs text-primary font-bold">Autocompletado con El Prado</span>
+</label>
+<div class="relative">
+<input class="w-full h-12 px-4 bg-surface-container-low border-2 border-outline rounded text-lg font-bold text-on-surface" type="text" value="4,90"/>
+<span class="absolute right-3 top-3 text-sm font-extrabold text-on-surface-variant">ha (total parcela)</span>
+</div>
+<span class="text-xs text-on-surface-variant">Si hiciste solo orillas o cabeceros, modifica la superficie tratada real.</span>
+</div>
+<!-- 6. Por qué lo has echado (Motivo o plaga) -->
+<div class="flex flex-col gap-1.5 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center gap-1">
+<span>¿Por qué lo has echado? (Motivo o plaga)</span>
+<span class="text-error font-extrabold">*</span>
+</label>
+<select class="w-full h-12 px-3 bg-surface-container-low border-2 border-outline rounded text-sm font-bold text-on-surface focus:border-primary">
+<option selected="">Control de malas hierbas en pre-siembra / rastrojo (Avena loca y bromo)</option>
+<option>Tratamiento post-emergencia contra hoja ancha</option>
+<option>Prevención fúngica en ahijado</option>
+<option>Limpieza perimetral obligatoria de linderos</option>
+</select>
+</div>
+<!-- 7. Quién lo aplica y Con qué máquina -->
+<div class="flex flex-col gap-2 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface">
+                    ¿Quién lo aplica? y ¿Con qué máquina?
+                  </label>
+<!-- Aplicador -->
+<div class="p-2.5 bg-surface-container rounded border border-outline flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">person</span>
+<div>
+<div class="text-xs font-bold uppercase text-on-surface-variant">Aplicador Homologado</div>
+<div class="text-sm font-extrabold text-on-surface">David Pérez Velasco</div>
+</div>
+</div>
+<span class="text-xs font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded">Carné: 47-CAL-04892 (Válido 2029)</span>
+</div>
+<!-- Maquinaria e ITEAF -->
+<div class="p-2.5 bg-surface-container rounded border border-outline flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">precision_manufacturing</span>
+<div>
+<div class="text-xs font-bold uppercase text-on-surface-variant">Equipo Tratamiento / ROMA</div>
+<div class="text-sm font-extrabold text-on-surface">Cuba suspendida Aguirre 600L</div>
+</div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">ROMA: 47-0982 · ITEAF Favorable 2024</span>
+</div>
+<!-- Volumen de caldo -->
+<div class="flex items-center justify-between gap-3 mt-1">
+<label class="text-xs font-bold text-on-surface-variant">Volumen de caldo de cuba:</label>
+<div class="flex items-center gap-2">
+<input class="w-20 h-9 px-2 text-right bg-surface-container-low border border-outline rounded text-sm font-bold" type="text" value="122"/>
+<span class="text-xs font-bold text-on-surface-variant">L/ha (Cuba a 600 L)</span>
+</div>
+</div>
+</div>
+<!-- 8. GIP: Gestión Integrada de Plagas -->
+<div class="flex flex-col gap-2 pt-2 border-t-2 border-outline-variant">
+<label class="text-campo font-campo font-bold text-on-surface flex items-center justify-between">
+<span>¿Qué hiciste antes? (GIP Obligatoria)</span>
+<span class="text-xs font-bold text-primary bg-primary-fixed px-1.5 py-0.5 rounded">SIEX Normativa</span>
+</label>
+<div class="space-y-2 bg-surface-container-low p-3 rounded border border-outline">
+<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-on-surface">
+<input checked="" class="w-4 h-4 text-primary rounded border-outline focus:ring-0" type="checkbox"/>
+<span>Rotación de cultivos previa (Leguminosa / Cereal)</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-on-surface">
+<input checked="" class="w-4 h-4 text-primary rounded border-outline focus:ring-0" type="checkbox"/>
+<span>Limpieza minuciosa de cosechadora y apero para evitar semillas</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-on-surface-variant">
+<input class="w-4 h-4 text-primary rounded border-outline focus:ring-0" type="checkbox"/>
+<span>Fomento y mantenimiento de fauna auxiliar en lindes</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ======================================================== -->
+<!-- PANEL DERECHO: Resumen en vivo de la labor y cálculo     -->
+<!-- ======================================================== -->
+<aside class="w-96 border-l-4 border-outline bg-surface-container-low p-6 flex flex-col justify-between overflow-y-auto shrink-0">
+<div class="flex flex-col gap-5">
+<!-- Header panel -->
+<div class="flex items-center justify-between border-b-2 border-outline-variant pb-3">
+<div>
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Comprobación Oficial</span>
+<h3 class="text-lg font-extrabold text-primary">RESUMEN EN VIVO</h3>
+</div>
+<span class="bg-emerald-600 text-on-primary text-xs px-2.5 py-1 rounded font-extrabold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">done_all</span>
+<span>Listo</span>
+</span>
+</div>
+<!-- Ficha Sintetizada -->
+<div class="bg-surface p-4 rounded border-2 border-outline flex flex-col gap-2.5">
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant font-bold">Parcela elegida:</span>
+<span class="font-extrabold text-on-surface">El Prado (4,90 ha)</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant font-bold">Producto aplicado:</span>
+<span class="font-extrabold text-primary">Glifosato 36 SL</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant font-bold">Superficie tratada:</span>
+<span class="font-extrabold text-on-surface">4,90 ha</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant font-bold">Dosis por hectárea:</span>
+<span class="font-extrabold text-on-surface">2,00 L/ha</span>
+</div>
+<div class="h-px bg-outline-variant my-1"></div>
+<div class="flex justify-between items-baseline">
+<span class="text-sm font-bold text-on-surface">Gasto de producto:</span>
+<span class="text-dato-grande font-dato-grande text-primary">9,80 L</span>
+</div>
+</div>
+<!-- Alerta ámbar de plazo de espera (Estricta normativa) -->
+<div class="bg-[#ffe9a8] border-2 border-[#8a6a00] p-4 rounded text-[#3d2f00] flex flex-col gap-2">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[#8a6a00] text-2xl shrink-0">timer</span>
+<div>
+<div class="text-xs font-extrabold uppercase tracking-wide text-[#594400]">Plazo de Seguridad Obligatorio</div>
+<div class="text-sm font-extrabold leading-tight mt-0.5">
+                    Hasta aquí no puedes cosechar: 26/05/2026
+                  </div>
+</div>
+</div>
+<p class="text-xs font-semibold leading-relaxed border-t border-[#8a6a00]/30 pt-2 text-[#4a3a05]">
+                14 días de espera reglamentarios en cebada cervecera y trigo antes de recolección para evitar residuos fitosanitarios.
+              </p>
+</div>
+<!-- Cuadratura de almacén en tiempo real -->
+<div class="bg-surface p-4 rounded border-2 border-outline flex flex-col gap-2">
+<div class="text-xs font-extrabold uppercase tracking-wider text-on-surface-variant flex items-center justify-between">
+<span>Cuadratura con nave</span>
+<span class="material-symbols-outlined text-sm">inventory_2</span>
+</div>
+<div class="space-y-1.5 text-xs">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Comprado según facturas:</span>
+<span class="font-bold text-on-surface">10,00 L</span>
+</div>
+<div class="flex justify-between text-error font-bold">
+<span>Este apunte gasta:</span>
+<span>- 9,80 L</span>
+</div>
+<div class="h-px bg-outline-variant"></div>
+<div class="flex justify-between font-extrabold text-sm pt-0.5">
+<span class="text-primary">Te quedará en almacén:</span>
+<span class="text-primary bg-primary-fixed px-2 py-0.5 rounded">0,20 L</span>
+</div>
+</div>
+<div class="mt-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+<span>Stock suficiente. Sin descuadre registral.</span>
+</div>
+</div>
+</div>
+<!-- Pie del panel derecho: Firma Digital -->
+<div class="mt-4 pt-3 border-t-2 border-outline-variant flex flex-col gap-2">
+<div class="flex items-center gap-2 text-xs font-bold text-on-surface-variant">
+<span class="material-symbols-outlined text-base text-primary">verified_user</span>
+<span>Firma electrónica diferida</span>
+</div>
+<p class="text-[11px] text-on-surface-variant leading-snug">
+              Este apunte se consolidará automáticamente y se firmará con certificado cualificado al cierre de campaña.
+            </p>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<!-- ======================================================== -->
+<!-- 4. FOOTER STATUS BAR (Shared Component Exact Specs)      -->
+<!-- ======================================================== -->
+<footer class="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-margin h-10 w-full bg-primary-dark border-t-2 border-primary-container text-on-primary text-pista font-pista">
+<!-- Status text exact to prompt -->
+<div class="flex items-center gap-3">
+<span class="font-bold text-secondary-fixed">CUE Despacho v2.4 Activo</span>
+<span class="text-outline-variant">|</span>
+<span>Resolución: 1440x900</span>
+<span class="text-outline-variant">|</span>
+<span>Cumple Real Decreto 1054/2022 (SIEX) y normativa Junta de Castilla y León</span>
+</div>
+<!-- Right Keyboard Short-cuts & Status -->
+<div class="flex items-center gap-4 text-xs font-semibold">
+<div class="flex items-center gap-1.5 text-secondary-fixed">
+<kbd class="bg-primary px-1.5 py-0.5 rounded border border-primary-overlay font-mono">Ctrl+S</kbd>
+<span>Guardar</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline-variant">
+<kbd class="bg-primary px-1.5 py-0.5 rounded border border-primary-overlay font-mono">Esc</kbd>
+<span>Cancelar</span>
+</div>
+<span class="text-outline-variant">|</span>
+<a class="text-outline-variant hover:text-surface-bright transition-colors" href="#">Estado Servidores CyL</a>
+<a class="text-outline-variant hover:text-surface-bright transition-colors" href="#">Firma Digital Activa</a>
+</div>
+</footer>
+<!-- Inline shortcut script for desktop realism -->
+<script>
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        alert('Apunte fitosanitario guardado correctamente en el Cuaderno Digital y validado para SIEX.');
+      }
+      if (e.key === 'Escape') {
+        if (confirm('¿Desea descartar los cambios del apunte actual?')) {
+          console.log('Edición cancelada');
+        }
+      }
+    });
+  </script>
+</body></html>

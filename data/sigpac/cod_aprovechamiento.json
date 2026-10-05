@@ -1,0 +1,34 @@
+{
+ "nombre": "cod_aprovechamiento",
+ "descripcion": "Lista de códigos de tipo de aprovechamiento.",
+ "codigos": [
+  {
+   "codigo": 1,
+   "descripcion": "Subproductos Pastables"
+  },
+  {
+   "codigo": 2,
+   "descripcion": "Forestal de la dehesa (vuelo)"
+  },
+  {
+   "codigo": 3,
+   "descripcion": "Corredores"
+  },
+  {
+   "codigo": 4,
+   "descripcion": "Cinegético"
+  },
+  {
+   "codigo": 5,
+   "descripcion": "Ni agrario ni forestal"
+  },
+  {
+   "codigo": 6,
+   "descripcion": "Frutales en prados de siega"
+  },
+  {
+   "codigo": 7,
+   "descripcion": "Actividad agraria realizada por un tercero"
+  }
+ ]
+}

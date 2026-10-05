@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <!-- Sin `user-scalable=no` a propósito: quien ve poco tiene que poder ampliar. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f4a2c">
+  <meta name="description" content="El cuaderno de campo, en el móvil y en castellano.">
+  <title>Mi cuaderno</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/estilos.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+</head>
+<body>
+  <!-- Lo que queda pendiente de mandar. Va arriba y se ve siempre, porque el
+       agricultor tiene que saber que lo que apuntó sin cobertura NO se ha perdido. -->
+  <div id="aviso-pendientes" class="aviso oculto" role="status" aria-live="polite"></div>
+
+  <!-- El armazón de la aplicación en el ordenador: el menú de la izquierda y la barra de arriba
+       (la finca, el año, la cuenta y el botón de apuntar). Lo pinta React (`react/piezas/marco.js`) y
+       **en el móvil no se ve**: en una pantalla estrecha manda el CSS y ahí se sigue entrando por la
+       pantalla de inicio, que es lo que el agricultor ya conoce. -->
+  <div id="marco" class="marco"></div>
+
+  <header class="cabecera">
+    <button type="button" class="cabecera-titulo" data-accion="ir-inicio">
+      <span aria-hidden="true">🌾</span>
+      <span id="cabecera-texto">Mi cuaderno</span>
+    </button>
+    <div class="cabecera-botones">
+      <button type="button" class="boton-letra" data-accion="cambiar-letra"
+              aria-label="Poner la letra más grande">A+</button>
+      <button type="button" class="boton-letra" data-accion="salir"
+              aria-label="Salir de la cuenta">Salir</button>
+    </div>
+  </header>
+
+  <main id="pantalla" class="pantalla" aria-live="polite"></main>
+
+  <p id="pie" class="pie"></p>
+
+  <!-- React, sin compilar. Son ficheros oficiales descargados a `web/vendor/` (con su
+       licencia y su LEEME): no hay npm ni paso de compilación, porque donde corre esto no
+       hay Node y la aplicación tiene que abrirse en el campo sin cobertura. `htm` es lo
+       que deja escribir las plantillas sin JSX. Van ANTES de `app.js`: si no, el módulo no
+       encuentra `React` y `htm` cuando se cargue. -->
+  <script src="/vendor/react.production.min.js"></script>
+  <script src="/vendor/react-dom.production.min.js"></script>
+  <script src="/vendor/htm.umd.js"></script>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

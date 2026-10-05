@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>CUE Digital - Cuaderno de Campo</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#043317",
+            "tertiary-fixed": "#ffd9de",
+            "surface-tint": "#3c6847",
+            "on-primary-fixed": "#00210c",
+            "surface-dim": "#d9dad6",
+            "tertiary-container": "#65323d",
+            "surface-container-low": "#f3f4ef",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#594400",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed": "#360c18",
+            "focus": "#ffd24a",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed": "#251a00",
+            "on-secondary-container": "#775b00",
+            "surface-container-high": "#e8e9e4",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "surface-variant": "#e2e3de",
+            "on-background": "#1a1c19",
+            "error-container": "#ffdad6",
+            "outline-variant": "#c1c9bf",
+            "on-secondary": "#ffffff",
+            "on-error-container": "#4a0f0b",
+            "on-surface-variant": "#414941",
+            "outline": "#a9b6a8",
+            "error": "#8c1d18",
+            "secondary-container": "#ffe9a8",
+            "on-tertiary-container": "#e09ba8",
+            "surface-container": "#edeee9",
+            "surface-container-highest": "#e2e3de",
+            "primary-overlay": "#3a6446",
+            "surface": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#244f31",
+            "on-primary-container": "#8bb992",
+            "inverse-on-surface": "#f0f1ec",
+            "error-dark": "#5c110d",
+            "inverse-primary": "#a2d2aa",
+            "on-surface": "#10190f",
+            "primary-fixed-dim": "#a2d2aa",
+            "background": "#f9faf5",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "secondary-fixed-dim": "#eac25a",
+            "surface-bright": "#f9faf5",
+            "primary-overlay-border": "#8fae97",
+            "secondary": "#765a00",
+            "primary-fixed": "#beeec5",
+            "secondary-fixed": "#ffdf95",
+            "primary-container": "#2f6b40",
+            "primary-dark": "#0d2b18",
+            "inverse-surface": "#2f312e",
+            "tertiary": "#4a1c27"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "space-xxl": "32px",
+            "margin": "16px",
+            "space-sm": "8px",
+            "space-md": "12px",
+            "space-xl": "24px",
+            "space-lg": "16px",
+            "gutter": "16px"
+          },
+          "fontFamily": {
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 48;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-full bg-background text-on-surface flex flex-col font-cuerpo text-cuerpo antialiased selection:bg-focus selection:text-on-surface">
+<!-- TOP APP BAR (from Shared Components JSON with exact styling & hierarchy) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-3 min-h-[64px] bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary border-b-4 border-outline dark:border-outline-variant select-none">
+<button aria-label="Volver atrás" class="flex items-center gap-1.5 min-h-[48px] px-3 py-1 rounded-lg bg-primary-overlay border-2 border-primary-overlay-border active:scale-95 transition-transform duration-150 text-on-primary font-boton text-boton" type="button">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+<span class="tracking-wide">Atrás</span>
+</button>
+<h1 class="font-titulo text-titulo text-on-primary dark:text-on-primary font-bold text-center tracking-tight truncate px-2">
+      Paso 1 de 5: Parcela
+    </h1>
+<button aria-label="Agrandar tamaño de letra" class="flex items-center justify-center min-h-[48px] px-3 py-1.5 rounded-lg bg-primary-overlay border-2 border-primary-overlay-border font-boton text-boton text-on-primary active:scale-95 transition-transform duration-150" onclick="toggleFontSize()" type="button">
+      A+ Letra
+    </button>
+</header>
+<!-- MAIN SCROLLABLE CONTENT -->
+<main class="flex-1 w-full max-w-xl mx-auto pt-[84px] pb-[120px] px-margin flex flex-col gap-space-lg" id="content-container">
+<!-- STEP PROGRESS INDICATOR -->
+<section aria-label="Progreso del asistente" class="bg-surface border-2 border-outline rounded-lg p-space-md flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-boton text-boton text-primary tracking-wider uppercase">PASO 1 DE 5</span>
+<span class="font-cuerpo text-on-surface-variant font-bold">1 de 5 tareas</span>
+</div>
+<!-- 5 Large segments: First active green, rest solid grey outline -->
+<div class="grid grid-cols-5 gap-2 w-full h-3">
+<div class="h-3 rounded-full bg-primary-container border border-primary-dark" title="Paso 1: Parcela"></div>
+<div class="h-3 rounded-full bg-outline" title="Paso 2"></div>
+<div class="h-3 rounded-full bg-outline" title="Paso 3"></div>
+<div class="h-3 rounded-full bg-outline" title="Paso 4"></div>
+<div class="h-3 rounded-full bg-outline" title="Paso 5"></div>
+</div>
+</section>
+<!-- HEADING & PLAIN SPANISH INSTRUCTION -->
+<section class="flex flex-col gap-1.5 pt-1">
+<h2 class="font-pregunta text-pregunta text-on-surface font-extrabold tracking-tight leading-tight">
+        ¿Dónde lo has echado?
+      </h2>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-surface-variant leading-relaxed">
+        Casi siempre es en una parcela. Elige lo que corresponda tocando con el dedo.
+      </p>
+</section>
+<!-- FIELD PARCEL SELECTION LIST (BENTO TACTILE STACK) -->
+<fieldset class="flex flex-col gap-space-md border-0 p-0 m-0">
+<legend class="sr-only">Selecciona la parcela correspondiente</legend>
+<!-- OPCIÓN 1: ACTIVA / SELECCIONADA ("El Prado") -->
+<label class="relative flex items-center justify-between p-4 min-h-[96px] rounded-xl bg-surface border-[4px] border-primary ring-4 ring-focus cursor-pointer active:scale-[0.99] transition-transform">
+<input checked="" class="sr-only peer" name="parcela" type="radio" value="el-prado"/>
+<div class="flex items-center gap-4 flex-1">
+<!-- Dibujo SVG esquemático de la parcela con trazo contundente -->
+<div aria-hidden="true" class="w-16 h-16 rounded-lg bg-primary-fixed border-2 border-primary flex items-center justify-center flex-shrink-0">
+<svg class="w-12 h-12" fill="none" viewbox="0 0 48 48">
+<polygon fill="#beeec5" points="6,12 34,6 42,28 32,42 10,38" stroke="#043317" stroke-linejoin="round" stroke-width="3.5"></polygon>
+<line stroke="#043317" stroke-linecap="round" stroke-width="2.5" x1="16" x2="30" y1="20" y2="28"></line>
+<circle cx="24" cy="24" fill="#043317" r="3"></circle>
+</svg>
+</div>
+<!-- Datos de la parcela -->
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-dato-grande text-dato-grande text-on-surface leading-snug">El Prado</span>
+<span class="bg-primary-container text-on-primary text-xs font-bold px-2 py-0.5 rounded">ELEGIDA</span>
+</div>
+<span class="font-cuerpo-grande text-cuerpo-grande text-primary font-extrabold">4,90 hectáreas</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">Medina del Campo</span>
+</div>
+</div>
+<!-- Selector tactile visual: Marcado -->
+<div aria-hidden="true" class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 border-2 border-primary-dark ml-2">
+<svg class="w-6 h-6 text-on-primary" fill="none" stroke="currentColor" stroke-width="4" viewbox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+</label>
+<!-- OPCIÓN 2: "Los Almendros" (Con aviso de barbecho) -->
+<label class="relative flex flex-col p-4 min-h-[96px] rounded-xl bg-surface border-[3px] border-outline cursor-pointer active:scale-[0.99] transition-transform">
+<input class="sr-only peer" name="parcela" type="radio" value="los-almendros"/>
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-4 flex-1">
+<div aria-hidden="true" class="w-16 h-16 rounded-lg bg-surface-container-low border-2 border-outline flex items-center justify-center flex-shrink-0">
+<svg class="w-12 h-12" fill="none" viewbox="0 0 48 48">
+<polygon fill="#edeee9" points="8,8 38,10 40,36 12,40" stroke="#414941" stroke-linejoin="round" stroke-width="3"></polygon>
+<line stroke="#414941" stroke-dasharray="2 3" stroke-width="2" x1="20" x2="20" y1="14" y2="34"></line>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-dato-grande text-dato-grande text-on-surface leading-snug">Los Almendros</span>
+<span class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-extrabold">8,20 hectáreas</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">Medina del Campo</span>
+</div>
+</div>
+<!-- Selector táctil vacío -->
+<div aria-hidden="true" class="w-10 h-10 rounded-full border-[3px] border-outline bg-surface-container-lowest flex items-center justify-center flex-shrink-0 ml-2">
+<span class="w-4 h-4 rounded-full bg-transparent"></span>
+</div>
+</div>
+<!-- Caja de aviso ambar de alto contraste -->
+<div class="mt-3 bg-secondary-container border-2 border-secondary text-on-secondary-container px-3 py-2 rounded-lg flex items-center gap-2">
+<svg class="w-6 h-6 flex-shrink-0 text-on-secondary-container" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-cuerpo text-cuerpo font-bold">Aviso: tiene barbecho declarado</span>
+</div>
+</label>
+<!-- OPCIÓN 3: "La Dehesa Vieja" (Con aviso de ganado ovino) -->
+<label class="relative flex flex-col p-4 min-h-[96px] rounded-xl bg-surface border-[3px] border-outline cursor-pointer active:scale-[0.99] transition-transform">
+<input class="sr-only peer" name="parcela" type="radio" value="la-dehesa-vieja"/>
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-4 flex-1">
+<div aria-hidden="true" class="w-16 h-16 rounded-lg bg-surface-container-low border-2 border-outline flex items-center justify-center flex-shrink-0">
+<svg class="w-12 h-12" fill="none" viewbox="0 0 48 48">
+<polygon fill="#edeee9" points="6,16 26,6 42,14 36,40 10,34" stroke="#414941" stroke-linejoin="round" stroke-width="3"></polygon>
+<circle cx="24" cy="24" r="5" stroke="#414941" stroke-width="2"></circle>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-dato-grande text-dato-grande text-on-surface leading-snug">La Dehesa Vieja</span>
+<span class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-extrabold">12,40 hectáreas</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">Pozaldez</span>
+</div>
+</div>
+<div aria-hidden="true" class="w-10 h-10 rounded-full border-[3px] border-outline bg-surface-container-lowest flex items-center justify-center flex-shrink-0 ml-2">
+<span class="w-4 h-4 rounded-full bg-transparent"></span>
+</div>
+</div>
+<div class="mt-3 bg-secondary-container border-2 border-secondary text-on-secondary-container px-3 py-2 rounded-lg flex items-center gap-2">
+<svg class="w-6 h-6 flex-shrink-0 text-on-secondary-container" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-cuerpo text-cuerpo font-bold">Aviso: parcela con ganado ovino</span>
+</div>
+</label>
+<!-- OPCIÓN 4: "Tierra Grande" -->
+<label class="relative flex items-center justify-between p-4 min-h-[96px] rounded-xl bg-surface border-[3px] border-outline cursor-pointer active:scale-[0.99] transition-transform">
+<input class="sr-only peer" name="parcela" type="radio" value="tierra-grande"/>
+<div class="flex items-center gap-4 flex-1">
+<div aria-hidden="true" class="w-16 h-16 rounded-lg bg-surface-container-low border-2 border-outline flex items-center justify-center flex-shrink-0">
+<svg class="w-12 h-12" fill="none" viewbox="0 0 48 48">
+<polygon fill="#edeee9" points="10,8 38,8 38,40 10,40" stroke="#414941" stroke-linejoin="round" stroke-width="3"></polygon>
+<line stroke="#414941" stroke-width="2.5" x1="10" x2="38" y1="24" y2="24"></line>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-dato-grande text-dato-grande text-on-surface leading-snug">Tierra Grande</span>
+<span class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-extrabold">3,15 hectáreas</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">Medina del Campo</span>
+</div>
+</div>
+<div aria-hidden="true" class="w-10 h-10 rounded-full border-[3px] border-outline bg-surface-container-lowest flex items-center justify-center flex-shrink-0 ml-2">
+<span class="w-4 h-4 rounded-full bg-transparent"></span>
+</div>
+</label>
+</fieldset>
+<!-- TARJETA ESPECIAL SEPARADA (ALMACÉN / NAVE AGRÍCOLA) -->
+<a class="flex items-center justify-between p-4 min-h-[80px] rounded-xl bg-surface-container border-[3px] border-dashed border-outline text-on-surface active:bg-surface-variant active:scale-[0.99] transition-all" href="#almacen" role="button">
+<div class="flex items-center gap-4 flex-1">
+<!-- Icono Nave / Silo agrícola geométrico -->
+<div aria-hidden="true" class="w-14 h-14 rounded-lg bg-surface border-2 border-outline flex items-center justify-center flex-shrink-0">
+<svg class="w-9 h-9 text-on-surface" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M3 21h18"></path>
+<path d="M4 21V9l8-5 8 5v12"></path>
+<path d="M9 21v-7h6v7"></path>
+<line x1="9" x2="9" y1="9" y2="9.01"></line>
+<line x1="15" x2="15" y1="9" y2="9.01"></line>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-titulo text-titulo text-on-surface font-extrabold leading-tight">¿No es en una parcela?</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant leading-snug mt-0.5">
+            Para naves, almacenes, grano guardado o producto ya recogido.
+          </span>
+</div>
+</div>
+<!-- Flecha gruesa derecha -->
+<div aria-hidden="true" class="w-10 h-10 flex items-center justify-center text-on-surface flex-shrink-0 ml-2">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3.5" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</a>
+<!-- AVISO DE MODO SIN COBERTURA (DIRECTO, SIN TÉCNICISMOS) -->
+<div class="bg-surface-container-high border-2 border-outline rounded-lg p-3 flex items-center gap-3">
+<svg class="w-7 h-7 text-primary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold">
+        Guardado en este teléfono. Puedes trabajar tranquilo sin cobertura en el campo.
+      </span>
+</div>
+</main>
+<!-- BARRA DE ACCIÓN INFERIOR FIJA (STICKY BOTTOM, SIN SOMBRAS, 64px TALL BUTTONS) -->
+<footer class="fixed bottom-0 left-0 w-full z-40 bg-surface border-t-[3px] border-outline py-3 px-4 select-none">
+<div class="max-w-xl mx-auto grid grid-cols-2 gap-3 items-center">
+<!-- BOTÓN SECUNDARIO: DEJARLO -->
+<button class="h-16 w-full rounded-xl bg-surface border-[3px] border-primary text-primary font-boton text-boton tracking-wide active:scale-95 transition-transform flex items-center justify-center" type="button">
+        DEJARLO
+      </button>
+<!-- BOTÓN PRINCIPAL DE ACCIÓN: SEGUIR -->
+<button class="h-16 w-full rounded-xl bg-primary-container border-b-[4px] border-primary-dark text-on-primary font-boton-principal text-boton-principal tracking-wide active:scale-95 transition-transform flex items-center justify-center gap-2" type="button">
+<span>SEGUIR</span>
+<svg class="w-7 h-7 text-on-primary" fill="none" stroke="currentColor" stroke-width="3.5" viewbox="0 0 24 24">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</footer>
+<!-- SCRIPT ACCESIBILIDAD LETRA GRANDE -->
+<script>
+    let isEnlarged = false;
+    function toggleFontSize() {
+      const container = document.getElementById('content-container');
+      isEnlarged = !isEnlarged;
+      if (isEnlarged) {
+        document.documentElement.style.fontSize = '120%';
+      } else {
+        document.documentElement.style.fontSize = '100%';
+      }
+    }
+  </script>
+</body></html>

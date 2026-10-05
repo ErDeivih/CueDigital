@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lámina: Borrar y Anular un apunte - CUE Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Reglas esenciales del sistema CUE Digital:
+       - Fuente system-ui legible
+       - Sin sombras, sin degradados, sin animaciones
+       - Contrastes altos para exterior con luz solar directa
+       - Alturas táctiles de mínimo 64px
+       - Separación por bordes sólidos
+    */
+    :root {
+      --color-primary: #1f4a2c;
+      --color-primary-container: #2f6b40;
+      --color-primary-dark: #0d2b18;
+      --color-surface: #ffffff;
+      --color-surface-variant: #f4f6f3;
+      --color-on-surface: #10190f;
+      --color-on-surface-variant: #43503f;
+      --color-outline: #a9b6a8;
+      --color-error: #8c1d18;
+      --color-error-dark: #5c110d;
+      --color-error-container: #fbe3e1;
+      --color-on-error-container: #4a0f0b;
+      --color-tertiary: #8a6a00;
+      --color-secondary-container: #ffe9a8;
+      --color-on-secondary-container: #3d2f00;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.45;
+      color: #10190f;
+      background-color: #f4f6f3;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 sm:p-6 pb-20">
+
+  <div class="max-w-[44rem] mx-auto space-y-10">
+
+    <!-- CABECERA GENERAL DE LA LÁMINA -->
+    <header class="bg-[#1f4a2c] text-white p-5 rounded-[14px] border-4 border-[#0d2b18]">
+      <div class="flex items-center gap-3 mb-2">
+        <svg class="w-8 h-8 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h1 class="text-2xl font-bold leading-tight">CUE Digital · Muestrario de pantallas</h1>
+      </div>
+      <p class="text-lg text-white font-medium">Lámina de diseño: Los dos casos de quitar o cambiar un apunte del cuaderno</p>
+      <div class="mt-3 inline-block bg-[#2f6b40] text-white text-base px-3 py-1.5 rounded-[8px] border-2 border-white/40">
+        Diseñado para trabajar al sol · Letra grande (+18px) · Botones de 64px o más · Sin adornos
+      </div>
+    </header>
+
+
+    <!-- ========================================== -->
+    <!-- CASO 1: CUANDO EL APUNTE SE PUEDE BORRAR -->
+    <!-- ========================================== -->
+    <section class="border-4 border-[#1f4a2c] rounded-[18px] bg-white overflow-hidden shadow-none">
+      
+      <!-- Título de la lámina -->
+      <div class="bg-[#1f4a2c] text-white px-5 py-4 border-b-4 border-[#0d2b18]">
+        <span class="text-xs uppercase tracking-wider font-bold bg-[#ffd24a] text-[#10190f] px-2.5 py-1 rounded-[4px] inline-block mb-1">
+          Caso 1 de 2
+        </span>
+        <h2 class="text-2xl font-black">Cuando el apunte aún se puede borrar</h2>
+        <p class="text-base text-gray-200 mt-0.5">El apunte todavía no está firmado con certificado oficial.</p>
+      </div>
+
+      <!-- Pantalla del móvil simulada en el caso 1 -->
+      <div class="p-4 sm:p-6 space-y-6">
+
+        <!-- Barra superior simplificada de la pantalla -->
+        <div class="bg-[#1f4a2c] text-white p-3 rounded-[10px] flex items-center justify-between border-2 border-[#0d2b18]">
+          <span class="font-bold text-lg">CUE Digital</span>
+          <span class="text-sm bg-[#3a6446] border border-[#8fae97] px-2.5 py-1 rounded-[6px] font-bold">Sin cobertura</span>
+        </div>
+
+        <!-- 1) PREGUNTA EN GRANDE (como pregunta, no como aviso) -->
+        <div class="bg-white border-3 border-[#a9b6a8] p-5 rounded-[14px]">
+          <div class="flex items-start gap-3">
+            <svg class="w-8 h-8 text-[#8c1d18] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <div>
+              <h3 class="text-[1.55rem] font-extrabold text-[#10190f] leading-snug">
+                ¿Seguro que quieres borrarlo?
+              </h3>
+              <p class="text-base text-[#43503f] mt-1 font-medium">
+                De tu cuaderno desaparece del todo.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- LO QUE VA A DESAPARECER -->
+        <div class="border-3 border-[#a9b6a8] rounded-[14px] bg-[#f4f6f3] p-5">
+          <p class="text-sm font-bold uppercase tracking-wider text-[#43503f] mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Lo que va a desaparecer de tu cuaderno:
+          </p>
+
+          <div class="space-y-3 bg-white p-4 rounded-[10px] border-2 border-[#a9b6a8]">
+            <div class="border-b-2 border-gray-100 pb-2">
+              <span class="text-sm text-[#43503f] block font-semibold">Producto echado:</span>
+              <strong class="text-xl text-[#10190f] font-bold">Glifosato 36 SL</strong>
+            </div>
+            <div class="border-b-2 border-gray-100 pb-2">
+              <span class="text-sm text-[#43503f] block font-semibold">Tierra y parcela:</span>
+              <strong class="text-xl text-[#10190f] font-bold">El Prado</strong>
+            </div>
+            <div>
+              <span class="text-sm text-[#43503f] block font-semibold">Hectáreas tratadas:</span>
+              <strong class="text-xl text-[#10190f] font-bold">4,90 ha</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- DOS AVISOS EXPLICATIVOS -->
+        <div class="space-y-3">
+          <!-- Aviso 1: Mejor corregirlo -->
+          <div class="bg-[#ffe9a8] border-2 border-[#8a6a00] p-4 rounded-[14px] text-[#3d2f00] flex items-start gap-3">
+            <svg class="w-7 h-7 text-[#8a6a00] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div class="text-[17px] leading-snug">
+              <strong>Si solo te has equivocado al escribirlo, mejor CORREGIRLO:</strong> así el apunte queda bien en vez de desaparecer.
+            </div>
+          </div>
+
+          <!-- Aviso 2: Registro de auditoría / trazabilidad interna -->
+          <div class="bg-[#f4f6f3] border-2 border-[#a9b6a8] p-4 rounded-[14px] text-[#43503f] flex items-start gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="text-[17px] leading-snug text-[#10190f]">
+              El programa guarda por dentro qué había apuntado y qué día lo borraste, por si algún día hay que explicarlo.
+            </div>
+          </div>
+        </div>
+
+        <!-- TRES BOTONES DE ACCIÓN (Mínimo 64px de alto) -->
+        <!-- Jerarquía deliberada: El botón de borrar en rojo de peligro pero menos apetecible; corregir y volver claros y tranquilos -->
+        <div class="space-y-3 pt-2">
+          
+          <!-- Botón 1: Peligro de borrado definitivo -->
+          <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-[#8c1d18] text-white font-bold text-lg rounded-[14px] border-b-4 border-[#5c110d] active:border-b-0 active:translate-y-1 flex items-center justify-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>SÍ, BORRARLO</span>
+          </button>
+          <p class="text-sm text-[#43503f] text-center -mt-1 mb-2">Este botón quita el apunte de la lista del año.</p>
+
+          <!-- Botón 2: Mejor corregirlo (Acción recomendada, tono tranquilo) -->
+          <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-white text-[#1f4a2c] font-bold text-lg rounded-[14px] border-3 border-[#1f4a2c] active:bg-[#f4f6f3] flex items-center justify-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            <span>MEJOR CORREGIRLO</span>
+          </button>
+
+          <!-- Botón 3: Volver sin tocar nada -->
+          <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-[#f4f6f3] text-[#10190f] font-bold text-lg rounded-[14px] border-2 border-[#a9b6a8] active:bg-gray-200 flex items-center justify-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>VOLVER</span>
+          </button>
+
+        </div>
+
+      </div>
+    </section>
+
+
+
+    <!-- ========================================== -->
+    <!-- CASO 2: CUANDO EL APUNTE YA ESTÁ FIRMADO -->
+    <!-- ========================================== -->
+    <section class="border-4 border-[#1f4a2c] rounded-[18px] bg-white overflow-hidden shadow-none">
+      
+      <!-- Título de la lámina -->
+      <div class="bg-[#1f4a2c] text-white px-5 py-4 border-b-4 border-[#0d2b18]">
+        <span class="text-xs uppercase tracking-wider font-bold bg-[#ffd24a] text-[#10190f] px-2.5 py-1 rounded-[4px] inline-block mb-1">
+          Caso 2 de 2
+        </span>
+        <h2 class="text-2xl font-black">El caso de un apunte firmado</h2>
+        <p class="text-base text-gray-200 mt-0.5">Ya tiene firma digital oficial. La ley no permite borrar, solo tachar y justificar.</p>
+      </div>
+
+      <!-- Pantalla del móvil simulada en el caso 2 -->
+      <div class="p-4 sm:p-6 space-y-6">
+
+        <!-- Barra superior simplificada de la pantalla -->
+        <div class="bg-[#1f4a2c] text-white p-3 rounded-[10px] flex items-center justify-between border-2 border-[#0d2b18]">
+          <span class="font-bold text-lg">CUE Digital</span>
+          <span class="text-sm bg-[#3a6446] border border-[#8fae97] px-2.5 py-1 rounded-[6px] font-bold">Sin cobertura</span>
+        </div>
+
+        <!-- ESTADO DE LA FIRMA -->
+        <div class="bg-[#f4f6f3] border-2 border-[#a9b6a8] p-3 rounded-[10px] flex items-center gap-3">
+          <svg class="w-6 h-6 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="text-base font-semibold text-[#10190f]">
+            Apunte firmado electrónicamente (Campaña oficial 2026)
+          </span>
+        </div>
+
+        <!-- 2) MENSAJE CLARO EN CABEZA DE PANTALLA: NO SE PUEDE BORRAR, SE ANULA -->
+        <div class="bg-[#ffe9a8] border-3 border-[#8a6a00] p-5 rounded-[14px]">
+          <div class="flex items-start gap-3">
+            <svg class="w-8 h-8 text-[#8a6a00] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+              <h3 class="text-[1.35rem] font-bold text-[#3d2f00] leading-snug">
+                Este apunte está firmado, así que no se puede borrar.
+              </h3>
+              <p class="text-[1.1rem] text-[#3d2f00] mt-2 font-normal leading-relaxed">
+                Se puede <strong>ANULAR</strong>: queda tachado, con el motivo, y la firma sigue cuadrando ante la Junta.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN SENCILLA SIN PALABRAS RARAS -->
+        <div class="bg-white border-2 border-[#a9b6a8] p-4 rounded-[12px] space-y-2">
+          <p class="text-[18px] text-[#10190f]">
+            <strong>¿Qué significa anular?</strong>
+          </p>
+          <p class="text-[17px] text-[#43503f]">
+            El apunte no desaparece del papel ni del ordenador: aparece tachado con una raya y con la fecha en que lo anulaste. Así, si viene una inspección, ve que no escondes nada y que tu firma sigue siendo válida.
+          </p>
+        </div>
+
+        <!-- FICHA DEL APUNTE QUE SE VA A TACHAR -->
+        <div class="border-3 border-[#a9b6a8] rounded-[14px] bg-[#f4f6f3] p-5">
+          <p class="text-sm font-bold uppercase tracking-wider text-[#43503f] mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Apunte que va a quedar anulado (tachado):
+          </p>
+
+          <div class="space-y-3 bg-white p-4 rounded-[10px] border-2 border-[#a9b6a8]">
+            <div class="border-b-2 border-gray-100 pb-2">
+              <span class="text-sm text-[#43503f] block font-semibold">Producto echado:</span>
+              <strong class="text-xl text-[#10190f] font-bold">Glifosato 36 SL</strong>
+            </div>
+            <div class="border-b-2 border-gray-100 pb-2">
+              <span class="text-sm text-[#43503f] block font-semibold">Tierra y parcela:</span>
+              <strong class="text-xl text-[#10190f] font-bold">El Prado</strong>
+            </div>
+            <div>
+              <span class="text-sm text-[#43503f] block font-semibold">Hectáreas tratadas:</span>
+              <strong class="text-xl text-[#10190f] font-bold">4,90 ha</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAMPO EXPLICATIVO: MOTIVO DE ANULARLO -->
+        <div class="space-y-2">
+          <label for="motivo-anulacion" class="block font-bold text-lg text-[#10190f]">
+            ¿Por qué lo anulas? (Elige o escribe una frase corta):
+          </label>
+          <div class="space-y-2 mb-2">
+            <div class="p-3 bg-[#f4f6f3] border-2 border-[#1f4a2c] rounded-[10px] font-medium text-[#1f4a2c] flex items-center gap-3">
+              <span class="w-5 h-5 rounded-full border-2 border-[#1f4a2c] bg-[#1f4a2c] flex items-center justify-center text-white text-xs">✓</span>
+              <span>Me equivoqué de parcela al apuntar</span>
+            </div>
+          </div>
+          <p class="text-sm text-[#43503f]">Quedará escrito en el cuaderno oficial al lado de la raya tachada.</p>
+        </div>
+
+        <!-- NINGÚN BOTÓN DE BORRAR: SOLO ANULARLO Y VOLVER -->
+        <div class="space-y-3 pt-2">
+
+          <!-- Botón 1: ANULARLO (Verde de acción regulada, no rojo destructivo) -->
+          <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-[#2f6b40] text-white font-bold text-lg rounded-[14px] border-b-4 border-[#0d2b18] active:border-b-0 active:translate-y-1 flex items-center justify-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+            <span>ANULARLO</span>
+          </button>
+          <p class="text-sm text-[#43503f] text-center -mt-1 mb-2">Queda tachado en el cuaderno. No borra el archivo firmado.</p>
+
+          <!-- Botón 2: VOLVER -->
+          <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-[#f4f6f3] text-[#10190f] font-bold text-lg rounded-[14px] border-2 border-[#a9b6a8] active:bg-gray-200 flex items-center justify-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>VOLVER</span>
+          </button>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PIE EXPLICATIVO DE LA LÁMINA -->
+    <footer class="bg-white p-5 rounded-[14px] border-2 border-[#a9b6a8] text-[#43503f] text-base space-y-2">
+      <div class="font-bold text-[#10190f] flex items-center gap-2">
+        <svg class="w-5 h-5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Resumen de criterios aplicados para CUE Digital:</span>
+      </div>
+      <ul class="list-disc pl-5 space-y-1 text-sm">
+        <li><strong>Sin confusiones:</strong> En el caso no firmado se ofrece «MEJOR CORREGIRLO» antes de destruir datos.</li>
+        <li><strong>Fidelidad a la norma:</strong> En el caso firmado no existe botón de borrar, impidiendo infracciones en inspección.</li>
+        <li><strong>Accesibilidad rústica:</strong> Tipografía &ge; 18px, botones &ge; 64px, alto contraste, sin sombras ni pestañas inferiores.</li>
+      </ul>
+      <p class="text-xs text-[#a9b6a8] pt-2 border-t border-gray-200">
+        CUE Digital · Junta de Castilla y León · Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>

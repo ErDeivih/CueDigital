@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=2.0" name="viewport"/>
+<title>Qué hay sembrado - CUE Digital Castilla y León</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#d9dad6",
+            "surface-container-highest": "#e2e3de",
+            "primary-overlay-border": "#8fae97",
+            "primary": "#043317",
+            "on-secondary-fixed": "#251a00",
+            "focus": "#ffd24a",
+            "error-container": "#fbe3e1",
+            "inverse-on-surface": "#f0f1ec",
+            "on-error-container": "#4a0f0b",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#1a1c19",
+            "primary-overlay": "#3a6446",
+            "surface-bright": "#f9faf5",
+            "on-primary": "#ffffff",
+            "background": "#f9faf5",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#3c6847",
+            "surface-container-low": "#f3f4ef",
+            "secondary-container": "#ffe9a8",
+            "on-tertiary-container": "#e09ba8",
+            "on-secondary-container": "#3d2f00",
+            "on-primary-fixed": "#00210c",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "primary-fixed": "#beeec5",
+            "outline-variant": "#c1c9bf",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-background": "#1a1c19",
+            "tertiary": "#4a1c27",
+            "secondary": "#765a00",
+            "on-surface-variant": "#414941",
+            "primary-dark": "#0d2b18",
+            "on-secondary-fixed-variant": "#594400",
+            "surface-container-high": "#e8e9e4",
+            "surface": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "inverse-surface": "#2f312e",
+            "primary-container": "#1f4a2c",
+            "error": "#8c1d18",
+            "on-primary-container": "#8bb992",
+            "on-error": "#ffffff",
+            "tertiary-fixed": "#ffd9de",
+            "surface-container": "#edeee9",
+            "secondary-fixed": "#ffdf95",
+            "inverse-primary": "#a2d2aa",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "outline": "#a9b6a8",
+            "tertiary-container": "#65323d",
+            "secondary-fixed-dim": "#eac25a",
+            "on-primary-fixed-variant": "#244f31",
+            "on-tertiary-fixed": "#360c18",
+            "surface-variant": "#e2e3de",
+            "error-dark": "#5c110d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "16px",
+            "space-md": "12px",
+            "space-xl": "24px",
+            "space-sm": "8px",
+            "space-xxl": "32px",
+            "space-xs": "4px",
+            "margin": "16px",
+            "space-lg": "16px"
+          },
+          "fontFamily": {
+            "campo": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "boton-principal": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "titulo": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "pista": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "cuerpo-grande": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "boton": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "dato-grande": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "cuerpo": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ],
+            "pregunta": [
+              "\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""
+            ]
+          },
+          "fontSize": {
+            "campo": [
+              "1.15rem",
+              {
+                "fontWeight": "400"
+              }
+            ],
+            "boton-principal": [
+              "1.35rem",
+              {
+                "fontWeight": "700"
+              }
+            ],
+            "titulo": [
+              "1.5rem",
+              {
+                "lineHeight": "1.45",
+                "fontWeight": "700"
+              }
+            ],
+            "pista": [
+              "0.95rem",
+              {
+                "fontWeight": "400"
+              }
+            ],
+            "cuerpo-grande": [
+              "21px",
+              {
+                "lineHeight": "1.45",
+                "fontWeight": "400"
+              }
+            ],
+            "boton": [
+              "1.1rem",
+              {
+                "fontWeight": "700"
+              }
+            ],
+            "dato-grande": [
+              "1.6rem",
+              {
+                "fontWeight": "800"
+              }
+            ],
+            "cuerpo": [
+              "18px",
+              {
+                "lineHeight": "1.45",
+                "fontWeight": "400"
+              }
+            ],
+            "pregunta": [
+              "1.45rem",
+              {
+                "lineHeight": "1.45",
+                "fontWeight": "800"
+              }
+            ]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-cuerpo text-cuerpo antialiased selection:bg-focus selection:text-on-surface min-h-screen flex flex-col">
+<!-- Shared TopAppBar Component -->
+<header class="docked full-width top-0 sticky z-50 min-h-[64px] bg-primary-container text-on-primary border-b-4 border-primary-dark select-none">
+<div class="flex justify-between items-center w-full px-gutter min-h-[64px] bg-primary-container text-on-primary">
+<!-- Botón Izquierdo: Volver -->
+<a aria-label="Volver a la pantalla anterior" class="min-h-[48px] px-3 py-2 bg-primary border-2 border-primary-overlay-border flex items-center justify-center gap-2 text-on-primary active:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-focus text-boton font-boton" href="#">
+<span aria-hidden="true" class="material-symbols-outlined text-[28px] font-bold">arrow_back</span>
+<span class="font-bold tracking-wide">VOLVER</span>
+</a>
+<!-- Título de cabecera -->
+<h1 class="text-titulo font-titulo text-on-primary text-center tracking-normal px-2 truncate">
+        Qué hay sembrado
+      </h1>
+<!-- Botón Derecho: Agrandar letra -->
+<button aria-label="Aumentar tamaño de letra" class="min-h-[48px] min-w-[48px] px-3 py-2 bg-primary border-2 border-primary-overlay-border flex items-center justify-center text-on-primary active:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-focus text-boton font-boton font-bold" type="button">
+        A+
+      </button>
+</div>
+</header>
+<!-- Contenedor Principal (Mobile 1 columna sin barra inferior ni menús ocultos) -->
+<main class="w-full max-w-xl mx-auto px-gutter py-space-md flex-1 flex flex-col gap-space-lg">
+<!-- Tarjeta de aviso offline: Sin cobertura -->
+<div class="bg-surface-container-low border-2 border-primary-container p-space-md flex items-center gap-space-md" role="status">
+<div aria-hidden="true" class="w-12 h-12 bg-primary-container text-on-primary flex items-center justify-center flex-shrink-0">
+<svg class="w-7 h-7 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface font-semibold m-0 leading-tight">
+        Funciona sin cobertura. Los datos se guardan en el teléfono.
+      </p>
+</div>
+<!-- Cabecera de contexto y explicación de pantalla -->
+<section class="bg-surface border-2 border-surface-container-highest p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center gap-2">
+<span aria-hidden="true" class="text-primary-container flex-shrink-0">
+<svg class="w-7 h-7 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</span>
+<h2 class="text-titulo font-titulo text-primary font-bold">
+          Qué hay sembrado este año
+        </h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-normal">
+        Dinos qué hay este año en cada parcela. Con eso, cuando apuntes un tratamiento o una labor ya no tienes que escribir el cultivo: el programa ya lo sabe.
+      </p>
+</section>
+<!-- Tarjeta de aviso de estado en ámbar/amarillo -->
+<div class="bg-secondary-container border-4 border-secondary p-space-md flex flex-col gap-space-xs" role="alert">
+<div class="flex items-start gap-space-md">
+<span aria-hidden="true" class="text-on-secondary-container flex-shrink-0 mt-1">
+<svg class="w-8 h-8 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+<line x1="12" x2="12" y1="9" y2="13"></line>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+</span>
+<div>
+<h3 class="font-cuerpo-grande text-cuerpo-grande text-on-secondary-container font-extrabold leading-snug">
+            A 1 parcela le falta decir qué tiene este año.
+          </h3>
+<p class="font-cuerpo text-cuerpo text-on-secondary-container font-medium mt-1">
+            La tienes destacada en amarillo abajo para completarla con un toque.
+          </p>
+</div>
+</div>
+</div>
+<!-- Título de sección de parcelas -->
+<div class="mt-2">
+<h3 class="text-titulo font-titulo text-primary font-bold">
+        Tus 3 parcelas de la campaña 2026:
+      </h3>
+</div>
+<!-- LISTADO DE PARCELAS -->
+<div class="flex flex-col gap-space-xl">
+<!-- 1. PARCELA PENDIENTE (Destacada en amarillo/ámbar de advertencia) -->
+<article class="bg-surface border-4 border-secondary p-space-md flex flex-col gap-space-md">
+<!-- Cabecera de la parcela -->
+<div class="flex justify-between items-start gap-2 border-b-2 border-secondary-container pb-2">
+<div>
+<h4 class="text-dato-grande font-dato-grande text-primary leading-tight font-bold">
+              Las Suertes de Arriba
+            </h4>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-semibold mt-0.5">
+              12,30 hectáreas • Sin riego (Secano)
+            </p>
+</div>
+<span class="bg-secondary-container text-on-secondary-container border-2 border-secondary font-boton text-boton px-3 py-1 font-bold whitespace-nowrap">
+            FALTA RELLENAR
+          </span>
+</div>
+<!-- Caja de advertencia interior -->
+<div class="bg-secondary-container border-2 border-secondary p-3 flex gap-2 items-start">
+<svg class="w-6 h-6 stroke-on-secondary-container flex-shrink-0 mt-0.5" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="8" y2="12"></line>
+<line x1="12" x2="12.01" y1="16" y2="16"></line>
+</svg>
+<p class="font-cuerpo text-cuerpo text-on-secondary-container font-semibold leading-normal">
+            Todavía no has dicho qué hay aquí este año. Si no lo pones, la Junta no puede validar los sulfatos ni las labores de esta parcela.
+          </p>
+</div>
+<!-- Fila de cultivo actual -->
+<div class="bg-surface-container-low border-2 border-outline-variant p-3 flex flex-col">
+<span class="font-boton text-boton text-on-surface-variant uppercase font-bold tracking-wide">ESTE AÑO HAY:</span>
+<span class="font-cuerpo-grande text-cuerpo-grande text-error font-bold mt-1">Sin cultivo asignado</span>
+</div>
+<!-- Historial otros años -->
+<div class="border-t border-outline-variant pt-2 flex flex-col">
+<span class="font-pista text-pista text-on-surface-variant font-bold">Otros años:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-medium">2025: Girasol • 2024: Cebada cervecera</span>
+</div>
+<!-- Botón de acción principal verde alto (+64px) para fácil toque con guantes -->
+<button class="w-full min-h-[64px] py-3 px-4 bg-primary-container text-on-primary border-4 border-primary-dark flex items-center justify-center gap-3 active:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-focus cursor-pointer text-boton-principal font-boton-principal" type="button">
+<svg class="w-8 h-8 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+<span class="tracking-wide">DECIR QUÉ HAY SEMBRADO</span>
+</button>
+</article>
+<!-- 2. PARCELA CON CULTIVO REPETIDO (Alerta rotación de cultivos) -->
+<article class="bg-surface border-4 border-outline p-space-md flex flex-col gap-space-md">
+<!-- Cabecera de la parcela -->
+<div class="flex justify-between items-start gap-2 border-b-2 border-surface-container pb-2">
+<div>
+<h4 class="text-dato-grande font-dato-grande text-primary leading-tight font-bold">
+              El Prado
+            </h4>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-semibold mt-0.5">
+              4,90 hectáreas • Sin riego (Secano)
+            </p>
+</div>
+<span class="bg-primary-container text-on-primary border-2 border-primary-dark font-boton text-boton px-3 py-1 font-bold whitespace-nowrap">
+            AL DÍA
+          </span>
+</div>
+<!-- Fila de cultivo actual -->
+<div class="bg-surface-container-low border-2 border-primary-container p-3 flex flex-col">
+<span class="font-boton text-boton text-primary font-bold uppercase tracking-wide">ESTE AÑO HAY:</span>
+<span class="font-dato-grande text-dato-grande text-on-surface font-extrabold mt-0.5">Cebada cervecera</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-semibold">Variedad: Cerveza Planet</span>
+</div>
+<!-- Fechas Siembra / Cosecha -->
+<div class="grid grid-cols-1 gap-2 bg-surface-container-lowest border-2 border-outline-variant p-2">
+<div class="flex flex-col">
+<span class="font-pista text-pista text-on-surface-variant font-bold uppercase">DESDE:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold">10/11/2025 (Siembra de otoño)</span>
+</div>
+<div class="flex flex-col border-t border-outline-variant pt-1">
+<span class="font-pista text-pista text-on-surface-variant font-bold uppercase">HASTA:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold">30/06/2026 (Cosecha prevista)</span>
+</div>
+</div>
+<!-- Caja de advertencia de rotación -->
+<div class="bg-secondary-container border-2 border-secondary p-3 flex gap-2 items-start">
+<svg class="w-6 h-6 stroke-on-secondary-container flex-shrink-0 mt-0.5" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+<line x1="12" x2="12" y1="9" y2="13"></line>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+<p class="font-cuerpo text-cuerpo text-on-secondary-container font-semibold leading-normal">
+            Aquí has puesto lo mismo que el año pasado. Si vas a repetir, apúntalo en las medidas preventivas: la rotación de cultivos es una de las que se piden.
+          </p>
+</div>
+<!-- Historial otros años -->
+<div class="border-t border-outline-variant pt-2 flex flex-col">
+<span class="font-pista text-pista text-on-surface-variant font-bold">Otros años:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-medium">2025: Cebada cervecera (Repite) • 2024: Trigo blando</span>
+</div>
+<!-- Botón secundario de 64px alto con borde verde y fondo blanco -->
+<button class="w-full min-h-[64px] py-3 px-4 bg-surface text-primary border-4 border-primary-container flex items-center justify-center gap-3 active:bg-surface-container focus:outline-none focus:ring-4 focus:ring-focus cursor-pointer text-boton font-boton" type="button">
+<svg class="w-7 h-7 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+<span class="tracking-wide">CAMBIARLO</span>
+</button>
+</article>
+<!-- 3. PARCELA COMPLETADA -->
+<article class="bg-surface border-4 border-outline p-space-md flex flex-col gap-space-md">
+<!-- Cabecera de la parcela -->
+<div class="flex justify-between items-start gap-2 border-b-2 border-surface-container pb-2">
+<div>
+<h4 class="text-dato-grande font-dato-grande text-primary leading-tight font-bold">
+              La Vega del Río
+            </h4>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-semibold mt-0.5">
+              6,40 hectáreas • Con riego (Aspersión)
+            </p>
+</div>
+<span class="bg-primary-container text-on-primary border-2 border-primary-dark font-boton text-boton px-3 py-1 font-bold whitespace-nowrap">
+            AL DÍA
+          </span>
+</div>
+<!-- Fila de cultivo actual -->
+<div class="bg-surface-container-low border-2 border-primary-container p-3 flex flex-col">
+<span class="font-boton text-boton text-primary font-bold uppercase tracking-wide">ESTE AÑO HAY:</span>
+<span class="font-dato-grande text-dato-grande text-on-surface font-extrabold mt-0.5">Maíz dulce de regadío</span>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-semibold">Variedad: Syngenta Max</span>
+</div>
+<!-- Fechas Siembra / Cosecha -->
+<div class="grid grid-cols-1 gap-2 bg-surface-container-lowest border-2 border-outline-variant p-2">
+<div class="flex flex-col">
+<span class="font-pista text-pista text-on-surface-variant font-bold uppercase">DESDE:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold">20/04/2026 (Siembra)</span>
+</div>
+<div class="flex flex-col border-t border-outline-variant pt-1">
+<span class="font-pista text-pista text-on-surface-variant font-bold uppercase">HASTA:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold">15/10/2026 (Cosecha prevista)</span>
+</div>
+</div>
+<!-- Historial otros años -->
+<div class="border-t border-outline-variant pt-2 flex flex-col">
+<span class="font-pista text-pista text-on-surface-variant font-bold">Otros años:</span>
+<span class="font-cuerpo text-cuerpo text-on-surface font-medium">2025: Alfalfa • 2024: Remolacha azucarera</span>
+</div>
+<!-- Botón secundario de 64px alto -->
+<button class="w-full min-h-[64px] py-3 px-4 bg-surface text-primary border-4 border-primary-container flex items-center justify-center gap-3 active:bg-surface-container focus:outline-none focus:ring-4 focus:ring-focus cursor-pointer text-boton font-boton" type="button">
+<svg class="w-7 h-7 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+<span class="tracking-wide">CAMBIARLO</span>
+</button>
+</article>
+</div>
+<!-- Botón final de navegación inferior hacia el inicio -->
+<div class="mt-4 pt-4 border-t-4 border-outline-variant flex flex-col gap-space-sm">
+<a class="w-full min-h-[64px] py-4 px-4 bg-surface-container-high text-primary border-4 border-primary flex items-center justify-center gap-3 active:bg-surface-dim focus:outline-none focus:ring-4 focus:ring-focus text-boton-principal font-boton-principal text-center" href="#">
+<svg class="w-7 h-7 stroke-current flex-shrink-0" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<line x1="19" x2="5" y1="12" y2="12"></line>
+<polyline points="12 19 5 12 12 5"></polyline>
+</svg>
+<span>VOLVER AL INICIO</span>
+</a>
+<!-- Pie de página informativo -->
+<footer class="text-center py-4">
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-bold leading-normal">
+          CUE Digital • Junta de Castilla y León
+        </p>
+<p class="font-pista text-pista text-on-surface-variant font-medium">
+          Sin conexión requerida
+        </p>
+</footer>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Guardar un papel - CUE Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #1f4a2c;
+      --color-primary-container: #2f6b40;
+      --color-primary-dark: #0d2b18;
+      --color-primary-overlay: #3a6446;
+      --color-primary-border: #8fae97;
+      --color-surface: #ffffff;
+      --color-surface-variant: #f4f6f3;
+      --color-on-surface: #10190f;
+      --color-on-surface-variant: #43503f;
+      --color-outline: #a9b6a8;
+      --color-tertiary: #8a6a00;
+      --color-amber-bg: #ffe9a8;
+      --color-amber-text: #3d2f00;
+      --color-focus: #ffd24a;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f6f3;
+      color: #10190f;
+      font-size: 18px;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Regla sagrada: cero sombras, cero animaciones, bordes contundentes para el sol */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .border-campo {
+      border: 3px solid #a9b6a8;
+    }
+
+    .border-boton {
+      border: 3px solid #0d2b18;
+    }
+
+    .border-aviso {
+      border: 2px solid #8a6a00;
+    }
+
+    .border-ayuda {
+      border-left: 6px solid #2f6b40;
+    }
+
+    .ring-foco:focus-within, .ring-foco:focus {
+      outline: 4px solid #ffd24a !important;
+      border-color: #1f4a2c !important;
+    }
+
+    /* Estado seleccionado claro */
+    .carpeta-elegida {
+      background-color: #1f4a2c !important;
+      color: #ffffff !important;
+      border-color: #ffd24a !important;
+      outline: 4px solid #ffd24a;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f4f6f3] text-[#10190f] pb-16">
+
+  <!-- CABECERA FIJA Y ROBUSTA -->
+  <header class="sticky top-0 z-50 bg-[#1f4a2c] text-white border-b-4 border-[#0d2b18] px-3 py-2 flex items-center justify-between min-h-[64px]">
+    <div class="flex items-center gap-2">
+      <svg class="w-8 h-8 text-white flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6"></path>
+      </svg>
+      <div>
+        <div class="text-[14px] uppercase tracking-wider text-[#8fae97] font-bold leading-tight">Castilla y León</div>
+        <span class="text-[20px] font-bold tracking-tight text-white leading-tight">CUE Digital</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="button" class="min-h-[48px] px-3 bg-[#3a6446] text-white font-bold rounded-[10px] border-2 border-[#8fae97] text-[16px] flex items-center justify-center">
+        A+ Letra
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL: 1 SOLA COLUMNA, ANCHO DE LECTURA ÓPTIMO -->
+  <main class="max-w-[44rem] mx-auto px-3 pt-3 pb-8 flex flex-col gap-4">
+
+    <!-- AVISO DE FUNCIONAMIENTO SIN COBERTURA -->
+    <section class="bg-white border-campo rounded-[14px] p-3 flex items-start gap-3">
+      <div class="bg-[#2f6b40] text-white p-2 rounded-[8px] flex-shrink-0 mt-0.5">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-[18px] font-bold text-[#1f4a2c] leading-snug">Funciona sin cobertura en el campo</h2>
+        <p class="text-[17px] text-[#43503f] leading-snug mt-0.5">Los datos y fotos se quedan guardados en este teléfono móvil.</p>
+      </div>
+    </section>
+
+    <!-- TÍTULO DE PANTALLA Y PARA QUÉ SIRVE -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-2">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-[8px] bg-[#1f4a2c] text-white flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <h1 class="text-[24px] font-extrabold text-[#1f4a2c] tracking-tight uppercase">Guardar un papel</h1>
+      </div>
+      <p class="text-[18px] text-[#10190f] font-medium leading-snug pt-1 border-t-2 border-[#f4f6f3]">
+        Si un día viene una inspección, esto es lo que te van a pedir junto con el cuaderno. Y si se te pierde el papel de verdad, aquí queda al menos apuntado.
+      </p>
+    </section>
+
+    <!-- VISOR DEL LOMO DEL ARCHIVADOR: SIEMPRE A LA VISTA QUÉ SE ESTÁ GUARDANDO -->
+    <section class="bg-[#1f4a2c] text-white rounded-[14px] p-4 border-boton">
+      <div class="flex items-center justify-between pb-2 border-b border-[#3a6446]">
+        <span class="text-[14px] font-bold tracking-wider text-[#8fae97] uppercase flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#ffd24a]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5z"></path>
+          </svg>
+          Lomo de tu archivador
+        </span>
+        <span class="bg-[#3a6446] text-[#ffd24a] text-[14px] font-bold px-2 py-0.5 rounded-[4px] border border-[#8fae97]">
+          Queda visible
+        </span>
+      </div>
+
+      <div class="mt-2.5">
+        <div class="text-[15px] text-[#8fae97] font-semibold">Papel que estás guardando:</div>
+        <div class="text-[22px] font-extrabold text-[#ffffff] leading-tight mt-0.5">
+          Factura del abono de mayo
+        </div>
+      </div>
+
+      <div class="mt-2.5 pt-2 border-t border-[#3a6446] flex flex-wrap items-center justify-between gap-2 text-[16px]">
+        <div>
+          <span class="text-[#8fae97]">Carpeta:</span>
+          <span class="font-bold text-[#ffd24a] ml-1">Facturas (Abonos, sulfatos, gasóleo)</span>
+        </div>
+        <div class="text-[15px] bg-[#0d2b18] px-2 py-1 rounded-[6px] text-white border border-[#3a6446]">
+          Pendiente de foto o PDF
+        </div>
+      </div>
+    </section>
+
+    <!-- FORMULARIO SECUENCIAL: PREGUNTA POR PREGUNTA, CERO JERGA -->
+
+    <!-- PREGUNTA 1: ¿QUÉ ES? (EL NOMBRE MANDA) -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-2 ring-foco">
+      <div class="flex items-center justify-between">
+        <label for="nombre-papel" class="text-[22px] font-extrabold text-[#10190f]">
+          1. ¿Qué es?
+        </label>
+        <span class="bg-[#1f4a2c] text-white text-[13px] font-bold px-2 py-1 rounded-[6px] uppercase tracking-wide">
+          Obligatorio
+        </span>
+      </div>
+
+      <p class="text-[17px] text-[#43503f] leading-snug">
+        Por ejemplo: «Contrato de la finca del río» o «Factura del abono de mayo».
+      </p>
+
+      <input
+        type="text"
+        id="nombre-papel"
+        value="Factura del abono de mayo"
+        class="w-full min-h-[64px] px-3 text-[20px] font-bold text-[#10190f] bg-white border-campo rounded-[14px] ring-foco mt-1"
+        placeholder="Escribe aquí el nombre del papel"
+      >
+
+      <!-- EXPLICACIÓN CLAVE DE QUE EL NOMBRE MANDA -->
+      <div class="bg-[#f4f6f3] border-ayuda p-3 rounded-[8px] mt-1 text-[17px] text-[#10190f]">
+        <strong class="text-[#1f4a2c] font-bold">Ese nombre manda:</strong> sin título no se guarda nada. Ponle un nombre al papel, para poder encontrarlo luego.
+      </div>
+    </section>
+
+    <!-- PREGUNTA 2: ¿EN QUÉ CARPETA LO GUARDAS? -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-3">
+      <div>
+        <h2 class="text-[22px] font-extrabold text-[#10190f]">
+          2. ¿En qué carpeta lo guardas?
+        </h2>
+        <p class="text-[17px] text-[#43503f] leading-snug mt-1">
+          Como las tienes tú en casa. Si escribes una nueva, se crea.
+        </p>
+      </div>
+
+      <div class="text-[16px] font-bold text-[#1f4a2c] uppercase tracking-wide mt-1">
+        Las que suele haber (toca una):
+      </div>
+
+      <!-- LISTA DE BOTONES DE CARPETAS (MÍNIMO 64PX DE ALTO) -->
+      <div class="flex flex-col gap-2.5">
+
+        <!-- CARPETA 1 (ELEGIDA) -->
+        <button type="button" class="carpeta-elegida w-full min-h-[64px] px-3.5 py-2.5 rounded-[14px] flex items-center justify-between text-left border-3">
+          <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#ffd24a] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+            </svg>
+            <div>
+              <div class="text-[19px] font-bold leading-tight">Facturas</div>
+              <div class="text-[15px] opacity-90 leading-tight">Abonos, sulfatos, gasóleo, semilla</div>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-[#ffd24a] text-[#10190f] flex items-center justify-center font-extrabold text-[18px] flex-shrink-0 ml-2">
+            ✓
+          </div>
+        </button>
+
+        <!-- CARPETA 2 -->
+        <button type="button" class="bg-[#f4f6f3] text-[#10190f] border-campo w-full min-h-[64px] px-3.5 py-2.5 rounded-[14px] flex items-center justify-between text-left">
+          <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <div>
+              <div class="text-[19px] font-bold leading-tight">Contratos de la tierra</div>
+              <div class="text-[15px] text-[#43503f] leading-tight">Arrendamientos, cesiones y acuerdos</div>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-full border-2 border-[#a9b6a8] flex-shrink-0 ml-2"></div>
+        </button>
+
+        <!-- CARPETA 3 -->
+        <button type="button" class="bg-[#f4f6f3] text-[#10190f] border-campo w-full min-h-[64px] px-3.5 py-2.5 rounded-[14px] flex items-center justify-between text-left">
+          <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <div>
+              <div class="text-[19px] font-bold leading-tight">Envases y resguardos</div>
+              <div class="text-[15px] text-[#43503f] leading-tight">Albarán de entrega SIGFITO de garrafas</div>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-full border-2 border-[#a9b6a8] flex-shrink-0 ml-2"></div>
+        </button>
+
+        <!-- CARPETA 4 -->
+        <button type="button" class="bg-[#f4f6f3] text-[#10190f] border-campo w-full min-h-[64px] px-3.5 py-2.5 rounded-[14px] flex items-center justify-between text-left">
+          <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+            </svg>
+            <div>
+              <div class="text-[19px] font-bold leading-tight">Licencias y permisos</div>
+              <div class="text-[15px] text-[#43503f] leading-tight">Carné de aplicador, ITEAF de la cuba</div>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-full border-2 border-[#a9b6a8] flex-shrink-0 ml-2"></div>
+        </button>
+
+        <!-- CARPETA 5 -->
+        <button type="button" class="bg-[#f4f6f3] text-[#10190f] border-campo w-full min-h-[64px] px-3.5 py-2.5 rounded-[14px] flex items-center justify-between text-left">
+          <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <div class="text-[19px] font-bold leading-tight">Ayudas PAC y resoluciones</div>
+              <div class="text-[15px] text-[#43503f] leading-tight">Solicitud única y cartas de la Junta</div>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-full border-2 border-[#a9b6a8] flex-shrink-0 ml-2"></div>
+        </button>
+      </div>
+
+      <!-- CREAR OTRA CARPETA DISTINTA -->
+      <div class="mt-2 pt-3 border-t-2 border-[#f4f6f3]">
+        <label for="nueva-carpeta" class="text-[17px] font-bold text-[#10190f] block mb-1">
+          O escribe aquí el nombre para crear una carpeta nueva:
+        </label>
+        <div class="flex items-center gap-2">
+          <input
+            type="text"
+            id="nueva-carpeta"
+            placeholder="Ejemplo: Análisis de tierra o Riegos"
+            class="w-full min-h-[64px] px-3 text-[18px] text-[#10190f] bg-white border-campo rounded-[14px] ring-foco"
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- PREGUNTA 3: ¿DE QUÉ FECHA ES? -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-2">
+      <label for="fecha-papel" class="text-[22px] font-extrabold text-[#10190f]">
+        3. ¿De qué fecha es?
+      </label>
+      <p class="text-[17px] text-[#43503f] leading-snug">
+        La del papel, no la de hoy. Si no lo sabes, déjalo en blanco.
+      </p>
+
+      <div class="relative mt-1">
+        <input
+          type="date"
+          id="fecha-papel"
+          value="2026-05-22"
+          class="w-full min-h-[64px] px-3 text-[20px] font-bold text-[#10190f] bg-white border-campo rounded-[14px] ring-foco"
+        >
+      </div>
+      <div class="text-[15px] text-[#43503f]">
+        Has puesto: <strong>22 de mayo de 2026</strong>
+      </div>
+    </section>
+
+    <!-- PREGUNTA 4: ¿DE QUIÉN ES O QUIÉN TE LO DIO? -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-2">
+      <label for="emisor-papel" class="text-[22px] font-extrabold text-[#10190f]">
+        4. ¿De quién es o quién te lo dio?
+      </label>
+      <p class="text-[17px] text-[#43503f] leading-snug">
+        El proveedor, el dueño de la tierra, la cooperativa.
+      </p>
+
+      <input
+        type="text"
+        id="emisor-papel"
+        value="Cooperativa Comarcal de Medina"
+        class="w-full min-h-[64px] px-3 text-[19px] font-bold text-[#10190f] bg-white border-campo rounded-[14px] ring-foco mt-1"
+        placeholder="Escribe el nombre del almacén, persona o entidad"
+      >
+    </section>
+
+    <!-- PREGUNTA 5: ¿QUIERES APUNTAR ALGO MÁS? -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-2">
+      <label for="notas-papel" class="text-[22px] font-extrabold text-[#10190f]">
+        5. ¿Quieres apuntar algo más?
+      </label>
+      <p class="text-[17px] text-[#43503f] leading-snug">
+        Por si tiene alguna nota, número de factura o kilo anotado.
+      </p>
+
+      <textarea
+        id="notas-papel"
+        rows="3"
+        class="w-full p-3 text-[18px] text-[#10190f] bg-white border-campo rounded-[14px] ring-foco mt-1"
+        placeholder="Por ejemplo: Son 4 sacos de 500 kg de abono complejo para El Prado."
+      >Son 4 sacos de 500 kg de abono complejo para El Prado.</textarea>
+    </section>
+
+    <!-- EL PAPEL EN SÍ (FOTO O PDF) -->
+    <section class="bg-white border-campo rounded-[14px] p-4 flex flex-col gap-3">
+      <div>
+        <h2 class="text-[22px] font-extrabold text-[#10190f]">
+          El papel en sí (una foto o el PDF)
+        </h2>
+        <p class="text-[17px] text-[#43503f] leading-snug mt-1">
+          Una foto hecha con la cámara del móvil vale exactamente igual que el papel de verdad delante del inspector.
+        </p>
+      </div>
+
+      <!-- BOTÓN PRINCIPAL DE SUBIR: 104PX DE ALTO, FÁCIL DE TOCAR CON GUANTE O AL SOL -->
+      <button
+        type="button"
+        class="w-full min-h-[104px] p-4 bg-[#2f6b40] text-white rounded-[14px] border-boton flex items-center justify-center gap-4 text-left active:bg-[#1f4a2c] ring-foco"
+      >
+        <div class="w-14 h-14 rounded-full bg-[#1f4a2c] flex items-center justify-center flex-shrink-0 border-2 border-white">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-[22px] font-extrabold leading-tight tracking-tight uppercase">
+            Subir el papel
+          </div>
+          <div class="text-[16px] text-[#ffffff] font-medium leading-snug mt-0.5 opacity-95">
+            Toca aquí para hacer una foto o elegir un PDF de tu móvil
+          </div>
+        </div>
+      </button>
+
+      <!-- AVISO TRANQUILIZADOR: SE PUEDE GUARDAR AUNQUE NO HAYA FOTO -->
+      <div class="bg-[#ffe9a8] border-aviso text-[#3d2f00] p-3.5 rounded-[14px] flex items-start gap-3 mt-1">
+        <svg class="w-7 h-7 text-[#8a6a00] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <div class="text-[17px] leading-snug font-medium">
+          <strong>Este papel está apuntado pero no has subido el fichero.</strong> Apúntalo igual: así no se te olvida que existe y siempre puedes añadir la foto más tarde cuando llegues a casa.
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTONES DE ACCIÓN INFERIORES: GUARDAR (64PX) Y VOLVER (64PX) -->
+    <div class="flex flex-col gap-3 pt-2">
+      <!-- BOTÓN DE GUARDAR -->
+      <button
+        type="button"
+        class="w-full min-h-[64px] px-4 bg-[#1f4a2c] text-white rounded-[14px] border-boton font-extrabold text-[22px] uppercase tracking-wide flex items-center justify-center gap-3 active:bg-[#0d2b18] ring-foco"
+      >
+        <svg class="w-7 h-7 text-[#ffd24a]" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Guardar este papel
+      </button>
+
+      <!-- BOTÓN DE VOLVER (SALIDA TRANQUILA) -->
+      <button
+        type="button"
+        class="w-full min-h-[64px] px-4 bg-[#f4f6f3] text-[#1f4a2c] rounded-[14px] border-campo font-bold text-[19px] flex items-center justify-center gap-2 active:bg-[#e2e7e0]"
+      >
+        <svg class="w-6 h-6 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Volver sin guardar
+      </button>
+    </div>
+
+    <!-- PIE INSTITUCIONAL DISCRETO -->
+    <footer class="text-center text-[15px] text-[#43503f] pt-4 pb-2 border-t border-[#a9b6a8]">
+      <p class="font-bold">CUE Digital · Junta de Castilla y León</p>
+      <p class="mt-0.5">Diseñado para trabajar al sol, con una mano y sin cobertura.</p>
+    </footer>
+
+  </main>
+
+</body>
+</html>

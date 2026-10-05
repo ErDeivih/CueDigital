@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0" name="viewport"/>
+<title>Qué hay sembrado - CUE Digital</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#d9dad6",
+            "surface-variant": "#e2e3de",
+            "on-tertiary-fixed": "#360c18",
+            "on-primary-fixed-variant": "#244f31",
+            "on-surface": "#1a1c19",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed": "#00210c",
+            "primary": "#043317",
+            "on-secondary-fixed": "#251a00",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#e2e3de",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "primary-container": "#1f4a2c",
+            "on-primary-container": "#8bb992",
+            "secondary-container": "#ffd56c",
+            "surface-container-low": "#f3f4ef",
+            "surface-bright": "#f9faf5",
+            "inverse-surface": "#2f312e",
+            "tertiary-fixed": "#ffd9de",
+            "secondary-fixed-dim": "#eac25a",
+            "on-secondary-container": "#775b00",
+            "error-dark": "#5c110d",
+            "on-error-container": "#4a0f0b",
+            "on-surface-variant": "#43503f",
+            "primary-fixed-dim": "#a2d2aa",
+            "primary-fixed": "#beeec5",
+            "error": "#8c1d18",
+            "primary-dark": "#0d2b18",
+            "tertiary-container": "#65323d",
+            "tertiary": "#4a1c27",
+            "error-container": "#ffdad6",
+            "on-background": "#1a1c19",
+            "background": "#f9faf5",
+            "surface-tint": "#3c6847",
+            "primary-overlay-border": "#8fae97",
+            "outline": "#a9b6a8",
+            "surface-container-lowest": "#ffffff",
+            "surface": "#ffffff",
+            "outline-variant": "#c1c9bf",
+            "focus": "#ffd24a",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "on-secondary-fixed-variant": "#594400",
+            "inverse-on-surface": "#f0f1ec",
+            "surface-container-high": "#e8e9e4",
+            "secondary-fixed": "#ffdf95",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "secondary": "#765a00",
+            "inverse-primary": "#a2d2aa",
+            "primary-overlay": "#3a6446",
+            "surface-container": "#edeee9",
+            "on-tertiary-container": "#e09ba8"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xxl": "32px",
+            "gutter": "16px",
+            "space-xs": "4px",
+            "space-md": "12px",
+            "margin": "16px",
+            "space-sm": "8px",
+            "space-xl": "24px",
+            "space-lg": "16px"
+          },
+          "fontFamily": {
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* High contrast, zero ambiguity, anti-glare mobile outdoor field style */
+    * {
+      -webkit-tap-highlight-color: rgba(255, 210, 74, 0.4);
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased font-cuerpo min-h-screen pb-12 selection:bg-focus selection:text-primary-dark">
+<!-- TOP APP BAR (Shared Component Source of Truth) -->
+<header class="docked full-width top-0 sticky z-50 min-h-[64px] border-b-4 border-primary-dark bg-primary-container text-on-primary">
+<div class="flex justify-between items-center w-full px-gutter min-h-[64px] max-w-[44rem] mx-auto">
+<!-- Back Navigation Button -->
+<a aria-label="Volver a la lista de tierras" class="flex items-center gap-2 min-h-[64px] min-w-[64px] px-3 bg-primary border-2 border-primary-dark active:border-focus active:bg-primary-dark text-on-primary font-boton text-boton focus:outline-none focus:border-focus" href="#" role="button">
+<span aria-hidden="true" class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+<span class="font-bold">Volver</span>
+</a>
+<!-- Headline / Brand Anchor -->
+<div class="text-center px-2">
+<span class="block text-titulo font-titulo tracking-tight text-on-primary">CUE Digital</span>
+<span class="block text-[13px] font-bold text-on-primary-container tracking-wider uppercase">Junta de CyL</span>
+</div>
+<!-- Action Button (Font Resizer indicator) -->
+<button aria-label="Aumentar tamaño de letra para lectura al sol" class="min-h-[64px] min-w-[64px] flex items-center justify-center bg-primary border-2 border-primary-dark active:border-focus active:bg-primary-dark text-on-primary font-boton text-boton px-2 focus:outline-none focus:border-focus" type="button">
+<span class="font-extrabold text-[22px] tracking-tight">A+</span>
+</button>
+</div>
+</header>
+<!-- MAIN CANVAS: Single vertical column for one-handed operation -->
+<main class="max-w-[44rem] mx-auto px-gutter pt-space-md space-y-space-lg">
+<!-- AVISO 1: Conectividad y guardado offline -->
+<section aria-label="Estado de conexión" class="bg-surface border-4 border-primary-container p-space-md">
+<div class="flex items-start gap-space-md">
+<div class="bg-primary-container text-on-primary p-2 flex items-center justify-center shrink-0">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+</div>
+<div>
+<p class="font-boton text-boton text-primary-dark leading-tight">
+            Funciona sin cobertura de móvil
+          </p>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1 leading-snug">
+            Todos los datos se guardan en este teléfono de forma segura aunque no haya red en el campo.
+          </p>
+</div>
+</div>
+</section>
+<!-- AVISO 2: Aviso Ámbar destacado de regularización de campaña -->
+<section aria-label="Aviso de cultivo pendiente" class="bg-[#ffe9a8] border-4 border-[#8a6a00] p-space-md text-[#3d2f00]">
+<div class="flex items-start gap-space-md">
+<div class="bg-[#8a6a00] text-white p-2 shrink-0 flex items-center justify-center">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+</div>
+<div>
+<h2 class="font-pregunta text-pregunta text-[#3d2f00] leading-tight">
+            A esta tierra le falta decir qué tiene este año
+          </h2>
+<p class="font-cuerpo text-cuerpo mt-space-xs leading-normal">
+            Rellena los datos y pulsa <strong>GUARDAR</strong> para dejarla al día. Si no estás seguro de algo, déjalo en blanco.
+          </p>
+</div>
+</div>
+</section>
+<!-- IDENTIFICACIÓN INEQUÍVOCA DE LA TIERRA -->
+<section aria-labelledby="tierra-titulo" class="bg-surface border-4 border-primary-container p-space-md">
+<div class="inline-block bg-primary-container text-on-primary px-3 py-1 font-bold text-pista tracking-wider mb-2">
+        TIERRA SELECCIONADA
+      </div>
+<h1 class="font-dato-grande text-dato-grande text-primary-dark" id="tierra-titulo">
+        El Prado · 4,90 ha (49.000 m²)
+      </h1>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-cuerpo text-cuerpo">
+<svg aria-hidden="true" class="w-6 h-6 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="square"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="square"></path>
+</svg>
+<span class="font-semibold text-on-surface">Municipio: Villalar de los Comuneros (Valladolid)</span>
+</div>
+<div class="mt-space-md pt-space-md border-t-2 border-surface-variant">
+<h2 class="font-pregunta text-pregunta text-primary-dark">
+          ¿Qué hay sembrado?
+        </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1">
+          Rellena solo lo que sepas. El único dato imprescindible es el nombre del cultivo.
+        </p>
+</div>
+</section>
+<!-- FORMULARIO VERTICAL DE ALTO CONTRASTE -->
+<form action="#" class="space-y-space-xl" method="POST" onsubmit="event.preventDefault();">
+<!-- CAMPO 1: CULTIVO (IMPRESCINDIBLE) -->
+<fieldset class="bg-surface border-4 border-primary-dark p-space-md space-y-space-sm">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="cultivo-nombre">
+            1. ¿Qué hay sembrado?
+          </label>
+<span class="bg-primary text-on-primary px-3 py-1 font-boton text-[16px] tracking-wide border-2 border-primary-dark">
+            IMPRESCINDIBLE
+          </span>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+          Por ejemplo: trigo blando, cebada, girasol, alfalfa, viña o colza.
+        </p>
+<div class="relative">
+<input aria-required="true" class="w-full min-h-[64px] px-4 font-campo text-campo text-on-surface font-bold bg-white border-4 border-outline focus:border-focus focus:ring-4 focus:ring-focus outline-none" id="cultivo-nombre" name="cultivo_nombre" required="" type="text" value="Cebada cervecera"/>
+</div>
+<div class="bg-surface-container-low border-2 border-outline-variant p-space-sm flex items-start gap-2">
+<svg aria-hidden="true" class="w-6 h-6 text-primary-container shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="square"></path>
+</svg>
+<p class="font-pista text-pista text-on-surface">
+            Ya hemos puesto lo que declaraste anteriormente para que no tengas que escribirlo de nuevo si repites.
+          </p>
+</div>
+</fieldset>
+<!-- CAMPO 2: VARIEDAD -->
+<fieldset class="bg-surface border-4 border-outline p-space-md space-y-space-sm">
+<label class="block font-pregunta text-pregunta text-on-surface" for="variedad-nombre">
+          2. ¿De qué variedad?
+        </label>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+          Si lo sabes. Por ejemplo: Craklin, Planet, Arthur o RGT Planet. Si no te acuerdas, no pasa nada, déjalo en blanco.
+        </p>
+<input class="w-full min-h-[64px] px-4 font-campo text-campo text-on-surface bg-white border-4 border-outline focus:border-focus focus:ring-4 focus:ring-focus outline-none" id="variedad-nombre" name="variedad_nombre" placeholder="Escribe la variedad si la sabes" type="text" value="Cerveza Planet"/>
+</fieldset>
+<!-- CAMPO 3: TIPO DE CULTIVO (SECANO O REGADÍO) -->
+<fieldset class="bg-surface border-4 border-outline p-space-md space-y-space-sm">
+<legend class="font-pregunta text-pregunta text-on-surface block w-full mb-1">
+          3. ¿Es de secano o de regadío?
+        </legend>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+          Viene ya elegido según el SIGPAC de tu tierra. Toca el otro solo si ha cambiado.
+        </p>
+<div aria-label="Régimen hídrico" class="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-2" role="radiogroup">
+<!-- Botón SECANO (Elegido activamente) -->
+<button aria-checked="true" class="min-h-[72px] p-3 flex items-center justify-between bg-primary-container text-on-primary border-4 border-focus ring-2 ring-focus text-left cursor-pointer" id="opcion-secano" role="radio" type="button">
+<div class="flex items-center gap-3">
+<!-- Icono Sol SVG nítido -->
+<svg aria-hidden="true" class="w-10 h-10 shrink-0 text-secondary-container" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke-width="2.5"></circle>
+<path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke-linecap="square"></path>
+</svg>
+<div>
+<span class="block font-boton text-boton text-on-primary tracking-wide">SECANO</span>
+<span class="block text-[14px] text-on-primary-container font-semibold">Elegido actualmente</span>
+</div>
+</div>
+<!-- Checkmark SVG grande -->
+<div class="bg-focus text-primary-dark p-1">
+<svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="4" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+</div>
+</button>
+<!-- Botón REGADÍO (No elegido) -->
+<button aria-checked="false" class="min-h-[72px] p-3 flex items-center justify-between bg-surface text-primary border-4 border-outline hover:border-primary active:bg-surface-variant text-left cursor-pointer" id="opcion-regadio" role="radio" type="button">
+<div class="flex items-center gap-3">
+<!-- Icono Gota de Agua SVG nítido -->
+<svg aria-hidden="true" class="w-10 h-10 shrink-0 text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" stroke-linecap="square"></path>
+</svg>
+<div>
+<span class="block font-boton text-boton text-on-surface tracking-wide">REGADÍO</span>
+<span class="block text-[14px] text-on-surface-variant">Toca para cambiar</span>
+</div>
+</div>
+<!-- Círculo vacío selector -->
+<div class="w-7 h-7 border-4 border-outline rounded-full"></div>
+</button>
+</div>
+</fieldset>
+<!-- CAMPO 4: FECHA INICIO -->
+<fieldset class="bg-surface border-4 border-outline p-space-md space-y-space-sm">
+<label class="block font-pregunta text-pregunta text-on-surface" for="fecha-siembra">
+          4. ¿Desde cuándo está sembrado?
+        </label>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+          Toca para abrir el calendario. Si no sabes el día exacto de la siembra, déjalo en blanco o pon el primer día del mes.
+        </p>
+<div class="relative flex items-center">
+<input class="w-full min-h-[64px] pl-4 pr-16 font-campo text-campo text-on-surface font-bold bg-white border-4 border-outline focus:border-focus focus:ring-4 focus:ring-focus outline-none" id="fecha-siembra" name="fecha_siembra" type="text" value="11/10/2025"/>
+<div class="absolute right-0 top-0 h-full w-16 bg-surface-container-high border-l-4 border-outline flex items-center justify-center pointer-events-none text-primary-dark">
+<!-- Icono Calendario SVG -->
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<rect height="18" rx="0" stroke-width="2.5" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+</div>
+</fieldset>
+<!-- CAMPO 5: FECHA FIN / COSECHA PREVISTA -->
+<fieldset class="bg-surface border-4 border-outline p-space-md space-y-space-sm">
+<label class="block font-pregunta text-pregunta text-on-surface" for="fecha-cosecha">
+          5. ¿Hasta cuándo durará este cultivo?
+        </label>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+          Cosecha prevista. No hace falta que sea el día exacto: sirve para saber cuándo la tierra vuelve a quedar libre.
+        </p>
+<div class="relative flex items-center">
+<input class="w-full min-h-[64px] pl-4 pr-16 font-campo text-campo text-on-surface font-bold bg-white border-4 border-outline focus:border-focus focus:ring-4 focus:ring-focus outline-none" id="fecha-cosecha" name="fecha_cosecha" type="text" value="30/06/2026"/>
+<div class="absolute right-0 top-0 h-full w-16 bg-surface-container-high border-l-4 border-outline flex items-center justify-center pointer-events-none text-primary-dark">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<rect height="18" rx="0" stroke-width="2.5" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+</div>
+</fieldset>
+<!-- BOTONES DE ACCIÓN DE PIE DE PÁGINA (ACCESIBLES CON EL PULGAR) -->
+<div class="pt-space-md space-y-space-md">
+<!-- Botón Primario Gigante (104px touch target) -->
+<button class="w-full min-h-[104px] p-4 bg-primary text-on-primary border-4 border-primary-dark active:border-focus active:bg-primary-dark flex flex-col items-center justify-center text-center cursor-pointer shadow-none" type="submit">
+<div class="flex items-center justify-center gap-3">
+<svg aria-hidden="true" class="w-9 h-9 text-focus shrink-0" fill="none" stroke="currentColor" stroke-width="4" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+<span class="font-boton-principal text-boton-principal uppercase tracking-wider">
+              GUARDAR ESTE CULTIVO
+            </span>
+</div>
+<span class="font-cuerpo text-[17px] text-primary-fixed font-semibold mt-1">
+            Dejar esta tierra al día y terminar
+          </span>
+</button>
+<!-- Botón Secundario de Volver -->
+<a class="w-full min-h-[64px] px-4 py-3 bg-surface-container-low text-on-surface border-4 border-outline hover:border-primary-dark active:bg-surface-variant flex items-center justify-center gap-2 font-boton text-boton text-center cursor-pointer" href="#" role="button">
+<svg aria-hidden="true" class="w-6 h-6 text-on-surface shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+<span>VOLVER SIN GUARDAR</span>
+</a>
+</div>
+</form>
+<!-- PIE INSTITUCIONAL DE MÁXIMA CONFIANZA -->
+<footer class="mt-space-xxl pt-space-lg pb-space-lg border-t-4 border-outline-variant text-center space-y-2">
+<div class="inline-flex items-center gap-2 text-primary font-bold text-cuerpo">
+<svg aria-hidden="true" class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>
+</svg>
+<span>Registro de Explotaciones Agrarias Oficial</span>
+</div>
+<p class="font-cuerpo text-[16px] text-on-surface-variant leading-relaxed">
+        CUE Digital · Junta de Castilla y León · Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+</footer>
+</main>
+<!-- MICRO-INTERACCIONES NATIVAS DE SELECTOR TÁCTIL (SIN LIBRERÍAS EXTERNAS) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const secanoBtn = document.getElementById('opcion-secano');
+      const regadioBtn = document.getElementById('opcion-regadio');
+
+      if (secanoBtn && regadioBtn) {
+        secanoBtn.addEventListener('click', function() {
+          // Activar Secano
+          secanoBtn.setAttribute('aria-checked', 'true');
+          secanoBtn.className = 'min-h-[72px] p-3 flex items-center justify-between bg-primary-container text-on-primary border-4 border-focus ring-2 ring-focus text-left cursor-pointer';
+          secanoBtn.querySelector('div:last-child').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" d="M5 13l4 4L19 7" /></svg>';
+          secanoBtn.querySelector('div:last-child').className = 'bg-focus text-primary-dark p-1';
+
+          // Desactivar Regadío
+          regadioBtn.setAttribute('aria-checked', 'false');
+          regadioBtn.className = 'min-h-[72px] p-3 flex items-center justify-between bg-surface text-primary border-4 border-outline hover:border-primary active:bg-surface-variant text-left cursor-pointer';
+          regadioBtn.querySelector('div:last-child').innerHTML = '';
+          regadioBtn.querySelector('div:last-child').className = 'w-7 h-7 border-4 border-outline rounded-full';
+        });
+
+        regadioBtn.addEventListener('click', function() {
+          // Activar Regadío
+          regadioBtn.setAttribute('aria-checked', 'true');
+          regadioBtn.className = 'min-h-[72px] p-3 flex items-center justify-between bg-primary-container text-on-primary border-4 border-focus ring-2 ring-focus text-left cursor-pointer';
+          regadioBtn.querySelector('div:last-child').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" d="M5 13l4 4L19 7" /></svg>';
+          regadioBtn.querySelector('div:last-child').className = 'bg-focus text-primary-dark p-1';
+
+          // Desactivar Secano
+          secanoBtn.setAttribute('aria-checked', 'false');
+          secanoBtn.className = 'min-h-[72px] p-3 flex items-center justify-between bg-surface text-primary border-4 border-outline hover:border-primary active:bg-surface-variant text-left cursor-pointer';
+          secanoBtn.querySelector('div:last-child').innerHTML = '';
+          secanoBtn.querySelector('div:last-child').className = 'w-7 h-7 border-4 border-outline rounded-full';
+        });
+      }
+    });
+  </script>
+</body></html>

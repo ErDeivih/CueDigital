@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Los análisis de tierra y agua - CUE Digital</title>
+  <style>
+    /* Reset & variables del sistema CUE Digital */
+    :root {
+      --primary: #1f4a2c;
+      --primary-container: #2f6b40;
+      --primary-dark: #0d2b18;
+      --primary-overlay: #3a6446;
+      --primary-overlay-border: #8fae97;
+      --on-primary: #ffffff;
+      --tertiary: #8a6a00;
+      --secondary-container: #ffe9a8;
+      --on-secondary-container: #3d2f00;
+      --surface: #ffffff;
+      --surface-variant: #f4f6f3;
+      --on-surface: #10190f;
+      --on-surface-variant: #43503f;
+      --outline: #a9b6a8;
+      --error: #8c1d18;
+      --error-dark: #5c110d;
+      --error-container: #fbe3e1;
+      --on-error-container: #4a0f0b;
+      --focus: #ffd24a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--surface-variant);
+      color: var(--on-surface);
+      font-size: 18px;
+      line-height: 1.45;
+      padding-bottom: 32px;
+    }
+
+    /* Cabecera fija obligatoria de 64px sin sombras */
+    header.cue-header {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background-color: var(--primary);
+      color: var(--on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 4px solid var(--primary-dark);
+      z-index: 100;
+    }
+
+    .cue-header .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--on-primary);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .cue-header .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-header {
+      background-color: var(--primary-overlay);
+      color: var(--on-primary);
+      border: 2px solid var(--primary-overlay-border);
+      border-radius: 10px;
+      height: 48px;
+      padding: 0 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-header:focus, .btn-header:active {
+      outline: 4px solid var(--focus);
+    }
+
+    /* Contenedor de una sola columna, máx 44rem */
+    main.container {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Avisos y cuadros informativos planos con bordes */
+    .offline-badge {
+      background-color: #eaf1eb;
+      border: 2px solid var(--outline);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 1rem;
+      color: var(--on-surface);
+      font-weight: 500;
+    }
+
+    .screen-intro-card {
+      background-color: var(--surface);
+      border: 3px solid var(--primary);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .screen-intro-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.3;
+    }
+
+    .screen-intro-desc {
+      font-size: 18px;
+      color: var(--on-surface);
+      line-height: 1.45;
+    }
+
+    /* Contador principal de análisis */
+    .count-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 4px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .count-indicator-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background-color: var(--primary-container);
+    }
+
+    /* Tarjetas de Boletín de Análisis */
+    .analisis-card {
+      background-color: var(--surface);
+      border: 3px solid var(--outline);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .analisis-card.este-ano {
+      border: 3px solid var(--primary);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-type-tag {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--on-surface-variant);
+    }
+
+    .card-main-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--on-surface);
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+
+    .badge-vigencia {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .badge-vigencia.vigente {
+      background-color: #eaf5ec;
+      border: 2px solid var(--primary-container);
+      color: var(--primary-dark);
+    }
+
+    .badge-vigencia.antiguo {
+      background-color: var(--secondary-container);
+      border: 2px solid var(--tertiary);
+      color: var(--on-secondary-container);
+    }
+
+    /* Ficha de datos */
+    .ficha-grid {
+      background-color: var(--surface-variant);
+      border: 2px solid var(--outline);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ficha-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #d8dfd6;
+      font-size: 1.05rem;
+      gap: 12px;
+    }
+
+    .ficha-fila:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .ficha-etiqueta {
+      color: var(--on-surface-variant);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .ficha-valor {
+      color: var(--on-surface);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Sección de Números del Boletín */
+    .numeros-section {
+      background-color: var(--surface);
+      border: 2px solid #ccd6cb;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .numeros-titulo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .numeros-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .numero-item {
+      background-color: var(--surface-variant);
+      border: 2px solid var(--outline);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .numero-nombre {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--on-surface-variant);
+    }
+
+    .numero-cifra {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.2;
+    }
+
+    .numero-unidad {
+      font-size: 0.95rem;
+      color: var(--on-surface);
+      font-weight: 500;
+    }
+
+    .aviso-sin-numeros {
+      background-color: var(--secondary-container);
+      border: 2px solid var(--tertiary);
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--on-secondary-container);
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Papel del laboratorio */
+    .papel-box {
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .papel-box.con-papel {
+      background-color: #f1f7f2;
+      border: 2px solid var(--primary-container);
+    }
+
+    .papel-box.sin-papel {
+      background-color: var(--secondary-container);
+      border: 2px solid var(--tertiary);
+      color: var(--on-secondary-container);
+    }
+
+    .papel-texto {
+      font-size: 1.05rem;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .fichero-nombre {
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-all;
+    }
+
+    /* Botones de acción accesibles de 64px o más */
+    .btn-accion-verde {
+      min-height: 64px;
+      background-color: var(--primary-container);
+      color: var(--on-primary);
+      border: 3px solid var(--primary-dark);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-accion-verde:focus, .btn-accion-verde:active {
+      outline: 4px solid var(--focus);
+    }
+
+    .btn-accion-secundario {
+      min-height: 64px;
+      background-color: var(--surface);
+      color: var(--primary);
+      border: 3px solid var(--primary);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-accion-secundario:focus, .btn-accion-secundario:active {
+      outline: 4px solid var(--focus);
+    }
+
+    .btn-principal-pantalla {
+      min-height: 96px;
+      background-color: var(--primary-container);
+      color: var(--on-primary);
+      border: 4px solid var(--primary-dark);
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-principal-pantalla:focus, .btn-principal-pantalla:active {
+      outline: 4px solid var(--focus);
+    }
+
+    .btn-volver-pantalla {
+      min-height: 64px;
+      background-color: var(--surface-variant);
+      color: var(--primary);
+      border: 3px solid var(--outline);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-volver-pantalla:focus, .btn-volver-pantalla:active {
+      outline: 4px solid var(--focus);
+    }
+
+    /* Nota informativa al pie */
+    .nota-normativa {
+      background-color: var(--surface);
+      border: 2px solid var(--outline);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      color: var(--on-surface-variant);
+      line-height: 1.45;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .nota-normativa svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .footer-firm {
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--on-surface-variant);
+      padding: 12px 0 20px;
+    }
+
+    /* Iconos SVG planos */
+    .svg-icon {
+      width: 28px;
+      height: 28px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .svg-icon-sm {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .svg-icon-lg {
+      width: 34px;
+      height: 34px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera fija para el campo -->
+  <header class="cue-header">
+    <a href="#" class="brand" aria-label="Volver a Inicio">
+      <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+      </svg>
+      <span>CUE Digital</span>
+    </a>
+    <div class="header-actions">
+      <button class="btn-header" type="button" aria-label="Agrandar letra">
+        <svg class="svg-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/>
+        </svg>
+        <span>A+ Letra</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Sin cobertura / Guardado en el móvil -->
+    <div class="offline-badge" role="status">
+      <svg class="svg-icon-sm" style="color: var(--primary);" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+      <div>
+        <strong>Datos guardados en este móvil.</strong> Puedes consultar y subir análisis aunque estés en la parcela sin cobertura.
+      </div>
+    </div>
+
+    <!-- Título y explicación para qué se guardan -->
+    <div class="screen-intro-card">
+      <div class="screen-intro-title">
+        <svg class="svg-icon-lg" style="color: var(--primary);" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        <h1>Los análisis</h1>
+      </div>
+      <p class="screen-intro-desc">
+        Aquí se guardan los análisis que has mandado hacer: de la tierra, del agua, de la planta o de la cosecha. Con los números de la tierra se abona mejor, y el papel del laboratorio no se pierde.
+      </p>
+    </div>
+
+    <!-- Conteo de análisis guardados -->
+    <div class="count-bar" aria-label="Cantidad de análisis">
+      <span class="count-indicator-dot"></span>
+      <span>2 análisis guardados</span>
+    </div>
+
+    <!-- BOLETÍN 1: Análisis reciente de este año con números y papel -->
+    <article class="analisis-card este-ano">
+      <div class="card-top">
+        <div>
+          <span class="card-type-tag">Análisis de tierra</span>
+          <h2 class="card-main-title">Análisis de La tierra de El Prado</h2>
+        </div>
+        <span class="badge-vigencia vigente">
+          <svg class="svg-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+          De este año (2026)
+        </span>
+      </div>
+
+      <!-- Ficha de detalles -->
+      <div class="ficha-grid">
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">De dónde salió:</span>
+          <span class="ficha-valor">Parcela El Prado (Villalar)</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Muestra cogida el:</span>
+          <span class="ficha-valor">14 de febrero de 2026</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Resultado el:</span>
+          <span class="ficha-valor">28 de febrero de 2026</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Laboratorio:</span>
+          <span class="ficha-valor">Agrolab Duero (Tordesillas)</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Nº de boletín:</span>
+          <span class="ficha-valor">BOL-2026-0842</span>
+        </div>
+      </div>
+
+      <!-- Números del boletín -->
+      <div class="numeros-section">
+        <div class="numeros-titulo">
+          <svg class="svg-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-4H8v-2h2V9h2v2h2v2h-2v4z"/>
+          </svg>
+          <span>Números apuntados del boletín:</span>
+        </div>
+        <div class="numeros-grid">
+          <div class="numero-item">
+            <span class="numero-nombre">Materia orgánica</span>
+            <span class="numero-cifra">1,85 %</span>
+            <span class="numero-unidad">Nivel medio</span>
+          </div>
+          <div class="numero-item">
+            <span class="numero-nombre">pH del suelo</span>
+            <span class="numero-cifra">7,8</span>
+            <span class="numero-unidad">Suelo calizo</span>
+          </div>
+          <div class="numero-item">
+            <span class="numero-nombre">Fósforo (P)</span>
+            <span class="numero-cifra">24</span>
+            <span class="numero-unidad">mg/kg (Olsen)</span>
+          </div>
+          <div class="numero-item">
+            <span class="numero-nombre">Potasio (K)</span>
+            <span class="numero-cifra">210</span>
+            <span class="numero-unidad">mg/kg</span>
+          </div>
+          <div class="numero-item">
+            <span class="numero-nombre">Nitrógeno nítrico</span>
+            <span class="numero-cifra">18</span>
+            <span class="numero-unidad">mg/kg</span>
+          </div>
+          <div class="numero-item">
+            <span class="numero-nombre">Caliza activa</span>
+            <span class="numero-cifra">6,4 %</span>
+            <span class="numero-unidad">Adecuado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Papel guardado -->
+      <div class="papel-box con-papel">
+        <div class="papel-texto">
+          <strong>Ya tienes el boletín guardado.</strong>
+          <div class="fichero-nombre" style="margin-top: 4px; color: var(--primary-dark);">
+            <svg class="svg-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            <span>Boletin_ElPrado_Feb2026.pdf</span>
+          </div>
+        </div>
+        <button class="btn-accion-secundario" type="button">
+          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+          </svg>
+          <span>DESCARGAR EL BOLETÍN</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- BOLETÍN 2: Hace 2 años, sin números y sin papel guardado -->
+    <article class="analisis-card">
+      <div class="card-top">
+        <div>
+          <span class="card-type-tag">Análisis del agua del pozo</span>
+          <h2 class="card-main-title">Análisis de Agua del Pozo Las Viñas</h2>
+        </div>
+        <span class="badge-vigencia antiguo">
+          <svg class="svg-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+          </svg>
+          Hace 2 años (2024)
+        </span>
+      </div>
+
+      <!-- Ficha de detalles -->
+      <div class="ficha-grid">
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">De dónde salió:</span>
+          <span class="ficha-valor">Pozo de riego (Tordesillas)</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Muestra cogida el:</span>
+          <span class="ficha-valor">10 de junio de 2024</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Resultado el:</span>
+          <span class="ficha-valor">25 de junio de 2024</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Laboratorio:</span>
+          <span class="ficha-valor">Laboratorio Agrario Regional</span>
+        </div>
+        <div class="ficha-fila">
+          <span class="ficha-etiqueta">Nº de boletín:</span>
+          <span class="ficha-valor">AGUA-24-1190</span>
+        </div>
+      </div>
+
+      <!-- Caso: Sin números apuntados -->
+      <div class="aviso-sin-numeros">
+        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>Sin números apuntados: solo está guardado el boletín.</span>
+      </div>
+
+      <!-- Caso: Sin papel guardado -->
+      <div class="papel-box sin-papel">
+        <div class="papel-texto">
+          <strong>De este análisis no tienes el papel guardado.</strong> Si lo tienes en el móvil o en papel, hazle una foto y súbela.
+        </div>
+        <button class="btn-accion-verde" type="button" style="background-color: var(--primary);">
+          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          </svg>
+          <span>SUBIR EL PAPEL DEL LABORATORIO</span>
+        </button>
+      </div>
+    </article>
+
+    <!-- Línea explicativa oficial obligatoria -->
+    <div class="nota-normativa">
+      <svg class="svg-icon-sm" style="color: var(--primary);" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+      </svg>
+      <div>
+        Los números que se guardan de cada clase de análisis son los que trae el boletín. De la tierra son los nueve que pide la administración; de lo demás, todavía no hay listado oficial.
+      </div>
+    </div>
+
+    <!-- Botón de acción principal (mínimo 96-104px para no fallar con guantes) -->
+    <button class="btn-principal-pantalla" type="button">
+      <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+      <span>APUNTAR UN ANÁLISIS</span>
+    </button>
+
+    <!-- Botón Volver -->
+    <a href="#" class="btn-volver-pantalla">
+      <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+      </svg>
+      <span>VOLVER</span>
+    </a>
+
+    <div class="footer-firm">
+      CUE Digital · Castilla y León · Diseñado para trabajar sin cobertura
+    </div>
+
+  </main>
+
+</body>
+</html>

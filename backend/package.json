@@ -1,0 +1,9 @@
+{
+  "name": "cuedigital-backend",
+  "private": true,
+  "type": "module",
+  "descripcion": "Este fichero NO es un proyecto de npm: no hay dependencias ni compilacion. Existe solo para decirle a Node que los .js de esta carpeta son modulos (import/export), que es lo que necesita `node --test` para poder probar web/nucleo.js. Sin el, Node los trataria como CommonJS y los tests no arrancarian.",
+  "scripts": {
+    "test": "node --test \"tests_js/*.test.js\""
+  }
+}

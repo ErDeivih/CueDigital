@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lo que he entendido - CUE Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Reset & high-contrast base for direct sunlight viewing */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #10190f;
+      margin: 0;
+      padding: 0;
+      line-height: 1.45;
+      font-size: 18px;
+    }
+    /* Enforce no box shadows, gradients, or transition blurs */
+    button, input, select, textarea, div {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    /* Accessibility button text scaling */
+    .large-text body, .large-text p, .large-text span, .large-text div {
+      font-size: 115% !important;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen text-[#10190f] pb-10">
+
+  <!-- Top App Bar (Cabecera fija, verde oscuro #1f4a2c, alto 64px) -->
+  <header class="sticky top-0 z-50 bg-[#1f4a2c] text-white h-16 px-3 flex items-center justify-between border-b-4 border-[#0d2b18]">
+    <div class="flex items-center gap-2">
+      <!-- Icono volver atrás -->
+      <button type="button" aria-label="Volver" class="w-12 h-12 flex items-center justify-center rounded-[10px] bg-[#3a6446] border-2 border-[#8fae97] text-white active:bg-[#0d2b18]">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </button>
+      <span class="font-bold text-[20px] tracking-tight">CUE Digital</span>
+    </div>
+
+    <!-- Botón A+ Letra -->
+    <button type="button" onclick="document.documentElement.classList.toggle('large-text')" class="h-12 px-3 flex items-center justify-center gap-1 rounded-[10px] bg-[#3a6446] border-2 border-[#8fae97] text-white font-bold text-[17px] active:bg-[#0d2b18]">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+      </svg>
+      <span>A+ Letra</span>
+    </button>
+  </header>
+
+  <!-- Contenedor central a una sola columna (máximo 44rem) -->
+  <main class="max-w-[44rem] mx-auto px-3 pt-4 flex flex-col gap-5">
+
+    <!-- Indicador de trabajo sin cobertura / voz procesada -->
+    <div class="bg-[#f4f6f3] border-2 border-[#a9b6a8] rounded-[14px] p-3 flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-[#1f4a2c] text-white flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      </div>
+      <p class="text-[17px] font-medium text-[#10190f] m-0">
+        <strong>Voz procesada en tu teléfono.</strong> No hace falta cobertura para apuntarlo.
+      </p>
+    </div>
+
+    <!-- Título e Introducción -->
+    <section class="flex flex-col gap-1">
+      <h1 class="text-[26px] font-extrabold text-[#10190f] leading-tight m-0">
+        Lo que he entendido
+      </h1>
+      <p class="text-[19px] font-normal text-[#43503f] m-0">
+        Mira si está bien. Completa lo que falte y apúntalo.
+      </p>
+    </section>
+
+    <!-- Audio original dictado (con botón para escucharlo de nuevo) -->
+    <div class="bg-[#f4f6f3] border-2 border-[#a9b6a8] rounded-[14px] p-3.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-[#2f6b40] text-white flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+          </svg>
+        </div>
+        <div>
+          <span class="text-[15px] font-bold text-[#43503f] uppercase tracking-wide block">Has dicho:</span>
+          <p class="text-[17px] text-[#10190f] italic m-0">
+            «Ayer por la tarde eché el tebuconazol en El Prado, a dos litros por hectárea con el tractor nuevo»
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: FICHAS DE LO ENTENDIDO (¿Qué has hecho? ¿Dónde? ¿Cuándo?...) -->
+    <section class="flex flex-col gap-3.5">
+      <div class="flex items-center justify-between pb-1 border-b-2 border-[#1f4a2c]">
+        <h2 class="text-[20px] font-bold text-[#1f4a2c] m-0">
+          Datos de la labor
+        </h2>
+        <span class="text-[15px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2.5 py-1 rounded-md border border-[#2f6b40]">
+          5 datos claros
+        </span>
+      </div>
+
+      <!-- Ficha 1: ¿Qué has hecho? -->
+      <article class="bg-white border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[16px] font-bold text-[#43503f] uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-5 h-5 text-[#2f6b40]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+            ¿Qué has hecho?
+          </span>
+          <span class="text-[14px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2 py-0.5 rounded border border-[#2f6b40]">Entendido</span>
+        </div>
+        <div class="text-[22px] font-extrabold text-[#10190f]">
+          Echar producto fitosanitario (tratar)
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0 border-t border-[#e2e8e0] pt-1.5">
+          Tratamiento con fungicida contra hongos en el cultivo.
+        </p>
+      </article>
+
+      <!-- Ficha 2: ¿Dónde? -->
+      <article class="bg-white border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[16px] font-bold text-[#43503f] uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-5 h-5 text-[#2f6b40]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            ¿Dónde?
+          </span>
+          <span class="text-[14px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2 py-0.5 rounded border border-[#2f6b40]">Entendido</span>
+        </div>
+        <div class="flex items-baseline justify-between gap-2">
+          <div class="text-[22px] font-extrabold text-[#10190f]">
+            El Prado (Villalar)
+          </div>
+          <span class="text-[18px] font-bold text-[#2f6b40] shrink-0">4,90 hectáreas</span>
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0 border-t border-[#e2e8e0] pt-1.5">
+          Tierra con cebada cervecera declarada en tu PAC.
+        </p>
+      </article>
+
+      <!-- Ficha 3: ¿Cuándo? -->
+      <article class="bg-white border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[16px] font-bold text-[#43503f] uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-5 h-5 text-[#2f6b40]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+            </svg>
+            ¿Cuándo?
+          </span>
+          <span class="text-[14px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2 py-0.5 rounded border border-[#2f6b40]">Entendido</span>
+        </div>
+        <div class="text-[22px] font-extrabold text-[#10190f]">
+          Ayer por la tarde (14 de abril de 2026)
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0 border-t border-[#e2e8e0] pt-1.5">
+          Se guarda con la fecha de ayer para cumplir el plazo de 1 mes de la ley.
+        </p>
+      </article>
+
+      <!-- Ficha 4: ¿Qué producto has echado? -->
+      <article class="bg-white border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[16px] font-bold text-[#43503f] uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-5 h-5 text-[#2f6b40]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+            </svg>
+            ¿Qué producto has echado?
+          </span>
+          <span class="text-[14px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2 py-0.5 rounded border border-[#2f6b40]">Entendido</span>
+        </div>
+        <div class="text-[22px] font-extrabold text-[#10190f]">
+          Tebuconazol 25% WG
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0 border-t border-[#e2e8e0] pt-1.5">
+          Fungicida de hoja. Tienes 32 kilos guardados en el almacén.
+        </p>
+      </article>
+
+      <!-- Ficha 5: ¿Cuánto por hectárea? -->
+      <article class="bg-white border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[16px] font-bold text-[#43503f] uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-5 h-5 text-[#2f6b40]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0l-3-3m3 3l3-3M6.75 19.5h10.5" />
+            </svg>
+            ¿Cuánto por hectárea?
+          </span>
+          <span class="text-[14px] font-bold text-[#2f6b40] bg-[#eef5f0] px-2 py-0.5 rounded border border-[#2f6b40]">Entendido</span>
+        </div>
+        <div class="flex items-baseline justify-between gap-2">
+          <div class="text-[24px] font-extrabold text-[#10190f]">
+            2 kilos por hectárea
+          </div>
+          <span class="text-[17px] font-bold text-[#43503f] shrink-0">Total: 9,8 kilos gastados</span>
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0 border-t border-[#e2e8e0] pt-1.5">
+          Está dentro de la dosis legal autorizada por el Ministerio (máx. 2,5 kg/ha).
+        </p>
+      </article>
+    </section>
+
+    <!-- SECCIÓN: ESTO LO HE OÍDO PERO NO SÉ DÓNDE PONERLO -->
+    <section class="bg-[#f4f6f3] border-[3px] border-[#a9b6a8] rounded-[14px] p-4 flex flex-col gap-2">
+      <div class="flex items-center gap-2">
+        <svg class="w-6 h-6 text-[#8a6a00]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <h3 class="text-[18px] font-bold text-[#10190f] m-0">
+          Esto lo he oído pero no sé dónde ponerlo:
+        </h3>
+      </div>
+      <div class="bg-white border-2 border-[#a9b6a8] rounded-[10px] p-3 text-[18px] text-[#10190f]">
+        «...con el tractor nuevo»
+      </div>
+      <p class="text-[15px] text-[#43503f] m-0">
+        No se tira: si quieres lo guardamos como nota de la máquina o lo dejamos aparte.
+      </p>
+    </section>
+
+    <!-- SECCIÓN: PARA PODER APUNTARLO ME FALTA ESTO -->
+    <section class="bg-[#ffe9a8] border-[3px] border-[#8a6a00] rounded-[14px] p-4 flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-[#8a6a00] text-white flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h3 class="text-[19px] font-extrabold text-[#3d2f00] m-0">
+          Para poder apuntarlo me falta esto:
+        </h3>
+      </div>
+
+      <p class="text-[17px] text-[#3d2f00] m-0">
+        Son 2 preguntas rápidas que la Junta de Castilla y León exige en el papel:
+      </p>
+
+      <!-- Pregunta pendiente 1: Litros de agua -->
+      <div class="bg-white border-2 border-[#8a6a00] rounded-[10px] p-3.5 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <label for="caldo-input" class="text-[18px] font-bold text-[#10190f]">
+            1. ¿Cuántos litros de agua llevaba la cuba?
+          </label>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="caldo-input" type="number" inputmode="decimal" placeholder="Ejemplo: 600" value="600" class="w-full h-14 px-3 text-[20px] font-bold bg-[#f4f6f3] border-2 border-[#1f4a2c] rounded-[10px] text-[#10190f] focus:outline-none focus:ring-4 focus:ring-[#ffd24a]">
+          <span class="text-[18px] font-bold text-[#43503f] shrink-0">litros</span>
+        </div>
+        <p class="text-[15px] text-[#43503f] m-0">
+          Si llenaste la cuba entera de 600 litros, déjalo como está.
+        </p>
+      </div>
+
+      <!-- Pregunta pendiente 2: Quién lo echó -->
+      <div class="bg-white border-2 border-[#8a6a00] rounded-[10px] p-3.5 flex flex-col gap-2">
+        <label for="aplicador-select" class="text-[18px] font-bold text-[#10190f]">
+          2. ¿Quién se montó en el tractor a sulfatar?
+        </label>
+        <select id="aplicador-select" class="w-full h-14 px-3 text-[19px] font-bold bg-[#f4f6f3] border-2 border-[#1f4a2c] rounded-[10px] text-[#10190f] focus:outline-none focus:ring-4 focus:ring-[#ffd24a]">
+          <option selected>Tú mismo (Carné cualificado en regla)</option>
+          <option>Juan (Hijo / Empleado)</option>
+          <option>Empresa de servicios / Cooperativa</option>
+        </select>
+        <p class="text-[15px] text-[#43503f] m-0">
+          La ley pide asociar el número de carné del aplicador.
+        </p>
+      </div>
+    </section>
+
+    <!-- BANNER INFORMATIVO: QUÉ PASA SI NO SE ENTIENDE NADA (EXPLICACIÓN VISUAL) -->
+    <details class="bg-[#f4f6f3] border-2 border-[#a9b6a8] rounded-[14px] p-3.5 group">
+      <summary class="font-bold text-[17px] text-[#1f4a2c] cursor-pointer flex items-center justify-between list-none">
+        <span class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#43503f]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+          </svg>
+          ¿Qué pasa si la máquina no entiende nada de lo que digo?
+        </span>
+        <svg class="w-5 h-5 text-[#1f4a2c] group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </summary>
+      <div class="mt-3 pt-3 border-t border-[#a9b6a8] text-[17px] text-[#10190f]">
+        <p class="m-0 mb-2">
+          Si hay mucho viento o el tractor hace ruido y la máquina no se entera de nada, nunca verás una pantalla vacía ni signos extraños. Te saldrá este aviso claro:
+        </p>
+        <div class="bg-[#fbe3e1] border-2 border-[#8c1d18] rounded-[10px] p-3 text-[17px] text-[#4a0f0b] font-medium">
+          «No he entendido nada de lo que has dicho. Prueba a decírmelo de otra forma, o rellénalo a mano: se tarda un minuto.»
+        </div>
+      </div>
+    </details>
+
+    <!-- ESPACIO DE SEPARACIÓN ANTES DE BOTONES -->
+    <div class="h-2"></div>
+
+    <!-- BOTONES DE ACCIÓN PRINCIPALES (Mínimo 64px de alto, sin menús ni pestañas) -->
+    <div class="flex flex-col gap-3">
+      <!-- Botón de acción principal: ESTÁ BIEN, APUNTARLO (Verde #2f6b40, texto blanco, 68px de alto) -->
+      <button type="button" class="w-full min-h-[68px] py-3 px-4 bg-[#2f6b40] text-white rounded-[14px] border-b-4 border-[#0d2b18] active:translate-y-1 active:border-b-0 flex items-center justify-center gap-3">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+        <span class="text-[21px] font-extrabold tracking-wide uppercase">
+          Está bien, apuntarlo
+        </span>
+      </button>
+
+      <!-- Botón secundario: CORREGIRLO A MANO (Fondo claro, texto y borde verdes, 64px de alto) -->
+      <button type="button" class="w-full min-h-[64px] py-3 px-4 bg-white text-[#1f4a2c] rounded-[14px] border-[3px] border-[#1f4a2c] active:bg-[#f4f6f3] flex items-center justify-center gap-3">
+        <svg class="w-6 h-6 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+        </svg>
+        <span class="text-[20px] font-bold tracking-wide">
+          Corregirlo a mano
+        </span>
+      </button>
+    </div>
+
+    <!-- Pie de tranquilidad al agricultor -->
+    <footer class="mt-4 pt-4 border-t-2 border-[#e2e8e0] text-center text-[#43503f] text-[15px] flex flex-col gap-1">
+      <p class="m-0 font-medium">CUE Digital · Castilla y León</p>
+      <p class="m-0 text-[14px]">Diseñado para trabajar al sol, con una mano y sin cobertura.</p>
+    </footer>
+
+  </main>
+
+</body>
+</html>

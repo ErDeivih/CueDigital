@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0" name="viewport"/>
+<title>CUE Digital - Mis facturas</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-container": "#ffe9a8",
+            "on-primary-fixed-variant": "#244f31",
+            "inverse-surface": "#2f312e",
+            "surface-container-highest": "#e2e3de",
+            "inverse-on-surface": "#f0f1ec",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3c6847",
+            "error-container": "#fbe3e1",
+            "primary-overlay": "#3a6446",
+            "on-error-container": "#93000a",
+            "on-surface": "#1a1c19",
+            "on-surface-variant": "#43503f",
+            "on-primary-container": "#8bb992",
+            "primary-container": "#1f4a2c",
+            "on-primary": "#ffffff",
+            "tertiary-container": "#65323d",
+            "surface-container": "#edeee9",
+            "tertiary": "#4a1c27",
+            "background": "#f9faf5",
+            "surface-variant": "#f4f6f3",
+            "on-primary-fixed": "#00210c",
+            "primary-fixed": "#beeec5",
+            "on-secondary-fixed": "#251a00",
+            "secondary": "#765a00",
+            "on-secondary-container": "#3d2f00",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "surface-dim": "#d9dad6",
+            "on-tertiary-container": "#e09ba8",
+            "error-dark": "#5c110d",
+            "secondary-fixed-dim": "#eac25a",
+            "primary-overlay-border": "#8fae97",
+            "surface": "#ffffff",
+            "secondary-fixed": "#ffdf95",
+            "tertiary-fixed": "#ffd9de",
+            "primary-dark": "#0d2b18",
+            "outline": "#a9b6a8",
+            "focus": "#ffd24a",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "on-background": "#1a1c19",
+            "inverse-primary": "#a2d2aa",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed-variant": "#594400",
+            "primary": "#043317",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f3f4ef",
+            "surface-container-high": "#e8e9e4",
+            "surface-bright": "#f9faf5",
+            "error": "#8c1d18",
+            "on-tertiary-fixed": "#360c18",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#a2d2aa",
+            "outline-variant": "#c1c9bf"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "24px",
+            "margin": "16px",
+            "space-lg": "16px",
+            "space-xxl": "32px",
+            "space-xs": "4px",
+            "gutter": "16px",
+            "space-sm": "8px",
+            "space-md": "12px"
+          },
+          "fontFamily": {
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* High tactile outdoor view: remove glossy tap highlights and enforce solid borders */
+    * {
+      -webkit-tap-highlight-color: rgba(255, 210, 74, 0.4);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 48;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-full font-cuerpo text-cuerpo antialiased pb-space-xxl">
+<!-- Shared Component: TopAppBar -->
+<!-- Fully mapped to JSON tokens & Style Hierarchy -->
+<header class="fixed top-0 left-0 right-0 w-full z-50 flex items-center justify-between px-space-md py-space-sm h-16 min-h-[64px] bg-surface dark:bg-background border-b-4 border-primary dark:border-primary-overlay-border">
+<button aria-label="Volver atrás" class="flex items-center gap-space-xs px-space-sm py-2 bg-surface text-primary border-2 border-primary font-boton text-boton hover:bg-surface-container active:bg-focus active:text-on-surface transition-none focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+<span class="tracking-wide">VOLVER</span>
+</button>
+<h1 class="font-titulo text-titulo text-on-surface dark:text-inverse-on-surface font-bold text-center tracking-tight truncate px-2">
+      Mis facturas
+    </h1>
+<button aria-label="Aumentar tamaño de letra" class="flex items-center px-space-sm py-2 bg-surface text-primary border-2 border-primary font-boton text-boton hover:bg-surface-container active:bg-focus active:text-on-surface transition-none focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+      A+ Letra
+    </button>
+</header>
+<!-- Main Canvas (padding-top 80px to safely clear the fixed 64px header + 4px border) -->
+<main class="w-full max-w-xl mx-auto px-margin pt-[80px] flex flex-col gap-space-lg">
+<!-- AVISO DE COBERTURA: Tarjeta blanca con borde verde y checkmark -->
+<section class="bg-surface border-4 border-primary p-space-md flex items-start gap-space-md">
+<div class="flex-shrink-0 bg-primary-fixed text-primary p-2 border-2 border-primary">
+<span class="material-symbols-outlined text-[32px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1">
+<p class="font-boton text-boton text-primary font-bold leading-tight mb-1">
+          Funciona sin cobertura en el campo
+        </p>
+<p class="font-cuerpo text-cuerpo text-on-surface leading-snug">
+          Las facturas y fotos se quedan guardadas en tu teléfono móvil.
+        </p>
+</div>
+</section>
+<!-- BANNER DE CONFIRMACIÓN RECIENTE (Estado factura guardada) -->
+<section class="bg-surface-variant border-4 border-primary p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="task_alt" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+<h2 class="font-pregunta text-pregunta text-primary">
+          Factura guardada correctamente.
+        </h2>
+</div>
+<a class="w-full min-h-[56px] py-space-sm px-space-md bg-surface text-primary border-4 border-primary font-boton text-boton text-center flex items-center justify-center hover:bg-surface-container active:bg-focus active:text-on-surface focus:outline-none focus:ring-4 focus:ring-focus" href="#almacen">
+        VER LO QUE TENGO EN EL ALMACÉN
+      </a>
+</section>
+<!-- BLOQUE EXPLICATIVO PRINCIPAL -->
+<article class="bg-surface border-4 border-primary p-space-lg">
+<div class="flex items-center gap-space-sm border-b-2 border-outline-variant pb-space-sm mb-space-md">
+<span class="material-symbols-outlined text-primary text-[32px]" data-icon="receipt_long">receipt_long</span>
+<h2 class="font-titulo text-titulo text-primary font-extrabold tracking-wide">
+          MIS FACTURAS
+        </h2>
+</div>
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface mb-space-md">
+        Aquí guardas las facturas de lo que compras.
+      </p>
+<div class="p-space-md bg-surface-container-low border-2 border-outline">
+<p class="font-cuerpo text-cuerpo text-on-surface leading-relaxed">
+          Sirven para tres cosas: <span class="font-bold">saber cuánto producto tienes comprado</span>, rellenar el cuaderno cuando te pida la empresa que te lo vendió y el número de factura, y <span class="font-bold">tener el papel a mano</span> si te lo piden.
+        </p>
+</div>
+</article>
+<!-- AVISO ÁMBAR «Mira esto antes de guardar» -->
+<aside class="bg-secondary-container border-4 border-[#8a6a00] p-space-lg text-on-secondary-container">
+<div class="flex items-center gap-space-sm mb-space-sm">
+<span class="material-symbols-outlined text-secondary text-[34px]" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h3 class="font-titulo text-titulo font-extrabold tracking-tight">
+          Mira esto antes de guardar
+        </h3>
+</div>
+<p class="font-cuerpo text-cuerpo font-medium leading-relaxed">
+        Si el teléfono no puede leer la foto o el papel está arrugado, la factura se guarda igual. Lo que no se lea lo puedes dejar en blanco o apuntarlo a mano con calma cuando llegues a casa.
+      </p>
+</aside>
+<!-- LISTADO DE FACTURAS -->
+<section aria-labelledby="facturas-count" class="flex flex-col gap-space-md">
+<div class="flex justify-between items-end px-1 pt-space-xs">
+<h2 class="font-pregunta text-pregunta text-primary font-extrabold" id="facturas-count">
+          3 facturas guardadas
+        </h2>
+<span class="font-boton text-boton text-on-surface-variant">Total: 3</span>
+</div>
+<!-- Factura 1 -->
+<article class="bg-surface border-4 border-outline p-space-lg flex flex-col gap-space-sm">
+<div class="border-b-2 border-outline pb-space-sm">
+<p class="font-pista text-pista text-on-surface-variant font-bold">PROVEEDOR</p>
+<h3 class="font-titulo text-titulo text-on-surface font-extrabold">
+            Agrícola del Duero S.L.
+          </h3>
+</div>
+<div class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Fecha:</span> 12 de marzo de 2026 · <span class="font-bold">Nº de factura:</span> F-2026/0418
+        </div>
+<div class="p-space-sm bg-surface-variant border-2 border-outline-variant">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Lo que has comprado:</span> 2 cosas (40 kg Tebuconazol 25% y 10 L Mojante)
+          </p>
+</div>
+<div class="my-space-xs p-space-sm bg-surface-container-high border-2 border-primary">
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold block">Total de la factura:</span>
+<span class="font-dato-grande text-dato-grande text-primary font-extrabold">924,00 €</span>
+</div>
+<!-- Estado papel -->
+<div class="inline-flex items-center gap-2 px-3 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-primary font-boton text-boton">
+<span class="material-symbols-outlined text-[24px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Foto del papel guardada</span>
+</div>
+<button class="w-full min-h-[56px] mt-space-xs py-space-sm px-space-md bg-surface text-primary border-4 border-primary font-boton-principal text-boton-principal text-center hover:bg-surface-container active:bg-focus active:text-on-surface focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+          VER ESTA FACTURA
+        </button>
+</article>
+<!-- Factura 2 -->
+<article class="bg-surface border-4 border-outline p-space-lg flex flex-col gap-space-sm">
+<div class="border-b-2 border-outline pb-space-sm">
+<p class="font-pista text-pista text-on-surface-variant font-bold">PROVEEDOR</p>
+<h3 class="font-titulo text-titulo text-on-surface font-extrabold">
+            Cooperativa Comarcal de Medina
+          </h3>
+</div>
+<div class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Fecha:</span> 22 de febrero de 2026 · <span class="font-bold">Nº de factura:</span> 2026-B-891
+        </div>
+<div class="p-space-sm bg-surface-variant border-2 border-outline-variant">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Lo que has comprado:</span> 1 cosa (50 sacos de abono complejo NPK)
+          </p>
+</div>
+<div class="my-space-xs p-space-sm bg-surface-container-high border-2 border-primary">
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold block">Total de la factura:</span>
+<span class="font-dato-grande text-dato-grande text-primary font-extrabold">1.450,00 €</span>
+</div>
+<!-- Estado papel: falta foto -->
+<div class="inline-flex items-center gap-2 px-3 py-2 bg-secondary-container text-on-secondary-container border-2 border-[#8a6a00] font-boton text-boton">
+<span class="material-symbols-outlined text-[24px]" data-icon="add_a_photo">add_a_photo</span>
+<span>Falta la foto: puedes añadirla luego</span>
+</div>
+<button class="w-full min-h-[56px] mt-space-xs py-space-sm px-space-md bg-surface text-primary border-4 border-primary font-boton-principal text-boton-principal text-center hover:bg-surface-container active:bg-focus active:text-on-surface focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+          VER ESTA FACTURA
+        </button>
+</article>
+<!-- Factura 3 (Con faltantes ilustrados sin romper legibilidad) -->
+<article class="bg-surface border-4 border-outline p-space-lg flex flex-col gap-space-sm">
+<div class="border-b-2 border-outline pb-space-sm">
+<p class="font-pista text-pista text-on-surface-variant font-bold">PROVEEDOR</p>
+<h3 class="font-titulo text-titulo text-on-surface-variant font-extrabold italic">
+            Sin decir quién
+          </h3>
+</div>
+<div class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Fecha:</span> 15 de enero de 2026 · <span class="font-bold">Nº de factura:</span> 45/A
+        </div>
+<div class="p-space-sm bg-surface-variant border-2 border-outline-variant">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Lo que has comprado:</span> 1 cosa (Semilla certificada de cebada Planet)
+          </p>
+</div>
+<div class="my-space-xs p-space-sm bg-surface-container-high border-2 border-outline">
+<span class="font-cuerpo text-cuerpo text-on-surface font-bold block">Total de la factura:</span>
+<span class="font-dato-grande text-dato-grande text-on-surface font-extrabold">—</span>
+<p class="font-pista text-pista text-on-surface-variant mt-1">No se apuntó el precio total en el papel</p>
+</div>
+<button class="w-full min-h-[56px] mt-space-xs py-space-sm px-space-md bg-surface text-primary border-4 border-primary font-boton-principal text-boton-principal text-center hover:bg-surface-container active:bg-focus active:text-on-surface focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+          VER ESTA FACTURA
+        </button>
+</article>
+</section>
+<!-- BLOQUE INFORMATIVO SI NO HUBIERA FACTURAS (Guía del estado vacío) -->
+<section class="border-4 border-dashed border-outline p-space-lg bg-surface-variant text-on-surface">
+<div class="flex items-center gap-space-sm mb-space-xs">
+<span class="material-symbols-outlined text-[28px] text-on-surface-variant" data-icon="info">info</span>
+<h4 class="font-boton text-boton text-on-surface">Si todavía no has subido ninguna:</h4>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant">
+        Todavía no has subido ninguna factura. Cuando subas la primera, aquí verás lo que has comprado y de quién.
+      </p>
+</section>
+<!-- BOTONES DE ACCIÓN INFERIORES -->
+<section aria-label="Acciones de la pantalla" class="flex flex-col gap-space-lg pt-space-md">
+<!-- Botón Principal: mínimo 64px de alto, borde grueso, alto contraste táctil -->
+<button class="w-full min-h-[68px] px-space-lg py-space-md bg-primary-container text-on-primary border-4 border-primary-dark font-boton-principal text-boton-principal text-center flex items-center justify-center gap-space-md shadow-none hover:bg-primary active:bg-focus active:text-on-surface active:border-on-surface focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<span class="material-symbols-outlined text-[34px]" data-icon="photo_camera">photo_camera</span>
+<span class="tracking-wide text-white">+ AÑADIR UNA FACTURA</span>
+</button>
+<!-- Botón Secundario: mínimo 64px, fondo surface-variant, borde outline -->
+<button class="w-full min-h-[64px] px-space-lg py-space-md bg-surface-variant text-primary border-4 border-outline font-boton text-boton text-center flex items-center justify-center gap-space-sm hover:bg-surface-container active:bg-focus active:text-on-surface focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+<span class="tracking-wide">VOLVER AL INICIO</span>
+</button>
+</section>
+<!-- PIE DE PÁGINA INSTITUCIONAL DE CONFIANZA -->
+<footer class="mt-space-lg border-t-4 border-primary pt-space-lg pb-space-xl text-center">
+<div class="inline-block p-2 bg-surface border-2 border-outline-variant mb-space-sm">
+<span class="font-bold text-primary font-titulo text-titulo">Junta de Castilla y León</span>
+</div>
+<p class="font-pista text-pista text-on-surface font-semibold max-w-sm mx-auto leading-normal">
+        CUE Digital · Junta de Castilla y León · Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+</footer>
+</main>
+<script>
+    // Accesibilidad táctil de campo: permitir alternar tamaño ampliado
+    const btnLetra = document.querySelector('button[aria-label="Aumentar tamaño de letra"]');
+    if (btnLetra) {
+      let enlarged = false;
+      btnLetra.addEventListener('click', () => {
+        enlarged = !enlarged;
+        document.documentElement.style.fontSize = enlarged ? '120%' : '100%';
+        btnLetra.classList.toggle('bg-focus', enlarged);
+        btnLetra.classList.toggle('text-on-surface', enlarged);
+      });
+    }
+  </script>
+</body></html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CUE Digital CyL - Los años de mi cuaderno</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "on-surface-variant": "#43503f",
+            "on-secondary-fixed": "#251a00",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "on-primary-fixed": "#00210c",
+            "surface-dim": "#d9dad6",
+            "surface-tint": "#3c6847",
+            "secondary": "#765a00",
+            "on-surface": "#10190f",
+            "error-container": "#ffdad6",
+            "inverse-on-surface": "#f0f1ec",
+            "surface-bright": "#f9faf5",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "on-secondary-container": "#775b00",
+            "surface-container-high": "#e8e9e4",
+            "secondary-container": "#ffd56c",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-primary": "#ffffff",
+            "outline": "#a9b6a8",
+            "inverse-primary": "#a2d2aa",
+            "surface-container": "#edeee9",
+            "on-tertiary-container": "#e09ba8",
+            "on-tertiary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "primary": "#043317",
+            "primary-container": "#2f6b40",
+            "error": "#8c1d18",
+            "surface-variant": "#f4f6f3",
+            "inverse-surface": "#2f312e",
+            "focus": "#ffd24a",
+            "tertiary": "#4a1c27",
+            "surface": "#ffffff",
+            "outline-variant": "#c1c9bf",
+            "primary-dark": "#0d2b18",
+            "background": "#f9faf5",
+            "on-tertiary-fixed": "#360c18",
+            "surface-container-highest": "#e2e3de",
+            "secondary-fixed": "#ffdf95",
+            "on-background": "#1a1c19",
+            "error-dark": "#5c110d",
+            "on-primary-fixed-variant": "#244f31",
+            "primary-fixed": "#beeec5",
+            "tertiary-container": "#65323d",
+            "primary-overlay-border": "#8fae97",
+            "on-error": "#ffffff",
+            "secondary-fixed-dim": "#eac25a",
+            "on-secondary-fixed-variant": "#594400",
+            "primary-overlay": "#3a6446",
+            "on-primary-container": "#8bb992",
+            "tertiary-fixed": "#ffd9de",
+            "surface-container-low": "#f3f4ef"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "gutter": "16px",
+            "space-lg": "16px",
+            "space-xxl": "32px",
+            "space-md": "12px",
+            "space-xl": "24px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .material-symbols-outlined.fill-active {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="h-full font-cuerpo text-cuerpo text-on-surface bg-background antialiased flex flex-col selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- 1. TopNavBar Institucional CUE Digital CyL (Docked top, 1440px compatible) -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-gutter h-16 w-full bg-primary border-b-4 border-primary-container text-on-primary select-none">
+<!-- Izquierda: Marca y Contexto Agrario -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-sm pr-space-md border-r-2 border-primary-container">
+<span class="material-symbols-outlined text-secondary-fixed text-[28px]" data-icon="agriculture" data-weight="fill">agriculture</span>
+<span class="text-titulo font-titulo font-extrabold text-on-primary tracking-tight">CUE Digital CyL</span>
+<span class="text-pista font-pista bg-primary-container text-on-primary-fixed px-space-xs py-0.5 rounded border border-primary-overlay-border font-bold">DESPACHO</span>
+</div>
+<!-- Selectores de contexto rápido -->
+<div class="flex items-center gap-space-md">
+<!-- Finca Activa -->
+<div class="flex items-center gap-space-xs bg-primary-dark px-space-md py-1.5 rounded border border-primary-container text-left cursor-pointer hover:border-focus transition-colors">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="landscape">landscape</span>
+<div class="flex flex-col leading-tight">
+<span class="text-pista font-pista text-on-primary-container">Finca activa:</span>
+<span class="text-campo font-campo font-bold text-on-primary">Finca Las Suertes y El Prado (187,42 ha)</span>
+</div>
+<span class="material-symbols-outlined text-on-primary-container text-sm ml-1" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Campaña Activa Selector -->
+<div class="flex items-center gap-space-xs bg-primary-dark px-space-md py-1.5 rounded border-2 border-secondary-fixed text-left cursor-pointer">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="calendar_today">calendar_today</span>
+<div class="flex flex-col leading-tight">
+<span class="text-pista font-pista text-secondary-fixed font-bold">Campaña activa:</span>
+<span class="text-campo font-campo font-bold text-on-primary">2026 (01/09/2025 - 31/08/2026)</span>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed text-sm ml-1" data-icon="unfold_more">unfold_more</span>
+</div>
+</div>
+</div>
+<!-- Centro-Derecha: Conectividad y Titular -->
+<div class="flex items-center gap-space-lg">
+<!-- Indicador Estado de Conexión -->
+<div class="flex items-center gap-space-sm bg-primary-container px-space-md py-1 rounded border border-primary-overlay-border">
+<span class="h-3 w-3 rounded-full bg-secondary-fixed animate-pulse"></span>
+<span class="text-pista font-pista font-bold text-on-primary tracking-wide">SIEX / REGEPA: AL DÍA</span>
+</div>
+<!-- Titular Info -->
+<div class="flex items-center gap-space-sm pl-space-sm border-l-2 border-primary-container text-right">
+<div class="flex flex-col leading-tight">
+<span class="text-campo font-campo font-bold text-on-primary">David Pérez Velasco</span>
+<span class="text-pista font-pista text-on-primary-container">ES12345678Z · Titular cualificado</span>
+</div>
+<div class="h-9 w-9 rounded bg-primary-container flex items-center justify-center border border-primary-overlay-border">
+<span class="material-symbols-outlined text-on-primary" data-icon="person">person</span>
+</div>
+</div>
+<!-- Acción Rápida Primaria -->
+<button class="h-10 px-space-lg bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed font-boton text-boton rounded flex items-center gap-space-xs border-2 border-secondary active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-on-secondary-fixed" data-icon="add_circle">add_circle</span>
+<span>+ NUEVA CAMPAÑA</span>
+</button>
+<!-- Iconos utilitarios -->
+<div class="flex items-center gap-space-xs text-on-primary-container border-l-2 border-primary-container pl-space-md">
+<button class="p-2 hover:bg-primary-container hover:text-on-primary rounded border border-transparent hover:border-primary-overlay-border" title="Sincronizar ahora">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+<button class="p-2 hover:bg-primary-container hover:text-on-primary rounded border border-transparent hover:border-primary-overlay-border" title="Ayuda técnica">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 hover:bg-primary-container hover:text-on-primary rounded border border-transparent hover:border-primary-overlay-border relative" title="Avisos">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary-fixed rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<!-- Layout Contenedor: SideNav (260px) + Main Workspace (1180px) -->
+<div class="pt-16 pb-10 flex h-screen overflow-hidden">
+<!-- 2. SideNavBar (Menú lateral de módulos, 260px) -->
+<aside class="w-64 flex-shrink-0 bg-surface-container-low border-r-4 border-outline flex flex-col justify-between select-none overflow-y-auto">
+<div class="p-space-sm space-y-1">
+<!-- Tarjeta de Explotación Principal en Menú -->
+<div class="p-space-md bg-surface-container border-2 border-outline rounded mb-space-md">
+<div class="flex items-center gap-space-xs text-primary font-bold">
+<span class="material-symbols-outlined" data-icon="apartment">apartment</span>
+<span class="text-campo font-campo font-bold">Explotación Principal</span>
+</div>
+<p class="text-pista font-pista text-on-surface-variant mt-0.5">REGEPA: CYL-47-09821</p>
+<div class="mt-space-sm flex items-center justify-between text-pista font-pista bg-surface px-2 py-1 border border-outline rounded">
+<span class="text-on-surface-variant font-medium">Sincronización SIEX:</span>
+<span class="text-primary font-bold">4 min</span>
+</div>
+</div>
+<!-- Módulos de Navegación -->
+<nav aria-label="Menú principal" class="space-y-0.5">
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="dashboard">dashboard</span>
+<span class="text-campo font-campo">Resumen General</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="menu_book">menu_book</span>
+<span class="text-campo font-campo">El Cuaderno</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-bold bg-surface-container-high text-on-surface rounded border border-outline">42</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="landscape">landscape</span>
+<span class="text-campo font-campo">Tierras y Parcelas</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-bold bg-surface-container-high text-on-surface rounded border border-outline">64</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="inventory_2">inventory_2</span>
+<span class="text-campo font-campo">El Almacén</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="science">science</span>
+<span class="text-campo font-campo">Los Análisis</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-bold bg-surface-container-high text-on-surface rounded border border-outline">5</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="eco">eco</span>
+<span class="text-campo font-campo">Plan de Abono / Nitratos</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="folder_open">folder_open</span>
+<span class="text-campo font-campo">Papeles y Documentos</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-bold bg-surface-container-high text-on-surface rounded border border-outline">6</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="receipt_long">receipt_long</span>
+<span class="text-campo font-campo">Facturas y Albaranes</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-bold bg-surface-container-high text-on-surface rounded border border-outline">12</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="agriculture">agriculture</span>
+<span class="text-campo font-campo">Maquinaria y Equipos</span>
+</div>
+</a>
+<!-- PESTAÑA ACTIVA SEGÚN REQUERIMIENTO -->
+<a class="flex items-center justify-between px-space-md py-2.5 rounded bg-primary text-on-primary font-bold border-l-4 border-secondary-fixed shadow-none" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary-fixed fill-active" data-icon="event_note" data-weight="fill">event_note</span>
+<span class="text-campo font-campo font-bold">Los años del cuaderno</span>
+</div>
+<span class="px-2 py-0.5 text-pista font-pista font-extrabold bg-secondary-container text-on-secondary-fixed rounded border border-secondary">3</span>
+</a>
+<a class="flex items-center justify-between px-space-md py-2 rounded text-on-surface hover:bg-surface-variant border-2 border-transparent font-medium" href="#">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="contact_page">contact_page</span>
+<span class="text-campo font-campo">Mis datos</span>
+</div>
+</a>
+</nav>
+</div>
+<!-- Pie Lateral Informativo y Sesión -->
+<div class="p-space-sm border-t-2 border-outline bg-surface-container">
+<div class="flex items-center justify-between text-pista font-pista mb-2 px-1">
+<span class="flex items-center gap-1 font-bold text-primary">
+<span class="inline-block w-2.5 h-2.5 bg-primary-container rounded-full"></span>
+            Modo Local: ACTIVO
+          </span>
+<span class="text-on-surface-variant font-mono">v4.2.0</span>
+</div>
+<div class="flex items-center justify-between gap-space-xs">
+<button class="w-full h-9 px-space-sm bg-surface hover:bg-surface-variant text-on-surface text-pista font-pista font-bold rounded border border-outline flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="settings">settings</span>
+<span>Ajustes</span>
+</button>
+<button class="w-full h-9 px-space-sm bg-surface hover:bg-error-container text-error text-pista font-pista font-bold rounded border border-outline flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="logout">logout</span>
+<span>Cerrar</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- 3. Área Principal de Contenido (1180px útil) -->
+<main class="flex-1 overflow-y-auto bg-background p-space-xl" style="max-width: calc(1440px - 260px);">
+<div class="max-w-[1180px] mx-auto space-y-space-lg">
+<!-- Encabezado de Sección Principal -->
+<div class="bg-surface p-space-lg border-2 border-outline rounded flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="space-y-1">
+<div class="flex items-center gap-space-sm">
+<h1 class="text-titulo font-titulo text-on-surface tracking-tight">Los años de mi cuaderno</h1>
+<span class="px-space-sm py-1 bg-surface-container text-on-surface text-pista font-pista font-bold rounded border border-outline">
+                3 campañas registradas
+              </span>
+</div>
+<p class="text-cuerpo font-cuerpo text-on-surface-variant max-w-3xl">
+              Tu cuaderno se lleva por años: lo que apuntas va al año en el que estás. Aquí ves los años que tienes y puedes arreglar o quitar el que esté mal.
+            </p>
+</div>
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<button class="h-9 px-space-md bg-surface hover:bg-surface-variant text-primary border-2 border-primary font-boton text-pista rounded flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="print">print</span>
+<span>Imprimir relación</span>
+</button>
+<button class="h-9 px-space-md bg-primary hover:bg-primary-container text-on-primary font-boton text-pista rounded flex items-center gap-1.5 border-2 border-primary-dark transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span>+ EMPEZAR UN AÑO NUEVO</span>
+</button>
+</div>
+</div>
+<!-- Barra de Aviso / Contexto Operativo de Campaña Activa -->
+<div class="bg-surface-container-low border-l-6 border-2 border-l-primary border-outline p-space-md rounded flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="info" data-weight="fill">info</span>
+<div>
+<p class="text-campo font-campo font-bold text-primary">Campaña 2026 activa para registro diario</p>
+<p class="text-pista font-pista text-on-surface-variant">Para consultar o certificar campañas cerradas (2025 y 2024), puedes abrir su historial o emitir su libro oficial.</p>
+</div>
+</div>
+<span class="text-pista font-pista font-bold bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded border border-primary-overlay-border">
+            Cuaderno en regla SIEX
+          </span>
+</div>
+<!-- Tabla de Campañas Agrícolas de Alta Densidad y Estructura Sólida -->
+<div class="bg-surface border-2 border-outline rounded overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b-2 border-outline text-on-surface">
+<th class="py-space-md px-space-lg text-campo font-campo font-bold border-r border-outline-variant w-52" scope="col">
+                  Año / Campaña
+                </th>
+<th class="py-space-md px-space-md text-campo font-campo font-bold border-r border-outline-variant w-32" scope="col">
+                  Empieza
+                </th>
+<th class="py-space-md px-space-md text-campo font-campo font-bold border-r border-outline-variant w-36" scope="col">
+                  Termina
+                </th>
+<th class="py-space-md px-space-lg text-campo font-campo font-bold border-r border-outline-variant" scope="col">
+                  Qué tiene dentro
+                </th>
+<th class="py-space-md px-space-md text-campo font-campo font-bold border-r border-outline-variant w-48" scope="col">
+                  Estado
+                </th>
+<th class="py-space-md px-space-md text-campo font-campo font-bold text-center w-56" scope="col">
+                  Acciones
+                </th>
+</tr>
+</thead>
+<tbody class="divide-y-2 divide-outline-variant">
+<!-- FILA 1: Campaña 2026 (Activa) -->
+<tr class="bg-surface-bright hover:bg-surface-container-low transition-colors">
+<!-- Columna Año -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top">
+<div class="flex items-center gap-space-sm">
+<span class="text-dato-grande font-dato-grande text-primary leading-none">2026</span>
+<span class="material-symbols-outlined text-secondary font-bold" data-icon="edit_note">edit_note</span>
+</div>
+<div class="mt-2">
+<span class="inline-block bg-secondary-container text-on-secondary-container text-pista font-pista font-bold px-2 py-0.5 rounded border border-secondary">
+                      Estás apuntando en este
+                    </span>
+</div>
+</td>
+<!-- Columna Empieza -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono font-bold text-on-surface">01/09/2025</span>
+</td>
+<!-- Columna Termina -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono font-bold text-on-surface">31/08/2026</span>
+<span class="block text-pista font-pista font-bold text-primary mt-0.5">(En curso)</span>
+</td>
+<!-- Columna Qué tiene dentro -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top space-y-1">
+<div class="flex items-center gap-space-sm">
+<span class="text-campo font-campo font-bold text-on-surface">42 apuntes registrados</span>
+<span class="inline-flex items-center gap-1 text-pista font-pista bg-surface-container text-secondary font-bold px-2 py-0.5 rounded border border-outline">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+                      Hay cosas dentro (no se puede borrar)
+                    </span>
+</div>
+<p class="text-pista font-pista text-on-surface-variant">
+                    64 tierras con cultivo declarado · 4 análisis asociados · Plan de abonado activo
+                  </p>
+</td>
+<!-- Columna Estado -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="inline-flex items-center gap-1 bg-primary-fixed text-on-primary-fixed text-pista font-pista font-bold px-2.5 py-1 rounded border border-primary-overlay-border">
+<span class="material-symbols-outlined text-sm" data-icon="radio_button_checked">radio_button_checked</span>
+                    Año abierto (En curso)
+                  </span>
+</td>
+<!-- Columna Acciones -->
+<td class="py-space-lg px-space-md align-top">
+<div class="flex flex-col gap-1.5 items-center">
+<button class="w-full h-8 px-space-sm bg-surface hover:bg-surface-variant text-primary border-2 border-primary rounded font-boton text-pista font-bold flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit_calendar">edit_calendar</span>
+<span>CORREGIR FECHAS</span>
+</button>
+<div class="w-full" title="No se puede borrar: tiene 42 apuntes y 64 tierras dentro">
+<button class="w-full h-8 px-space-sm bg-surface-container-high text-outline font-boton text-pista font-bold rounded border border-outline-variant cursor-not-allowed flex items-center justify-center gap-1" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="delete_forever">delete_forever</span>
+<span>BORRAR</span>
+</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- FILA 2: Campaña 2025 (Cerrada con datos) -->
+<tr class="bg-surface hover:bg-surface-container-low transition-colors">
+<!-- Columna Año -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top">
+<span class="text-titulo font-titulo font-bold text-on-surface">2025</span>
+</td>
+<!-- Columna Empieza -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono text-on-surface">01/09/2024</span>
+</td>
+<!-- Columna Termina -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono text-on-surface">31/08/2025</span>
+</td>
+<!-- Columna Qué tiene dentro -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top space-y-1">
+<div class="flex items-center gap-space-sm">
+<span class="text-campo font-campo font-bold text-on-surface">38 apuntes registrados</span>
+<span class="inline-flex items-center gap-1 text-pista font-pista bg-surface-container text-secondary font-bold px-2 py-0.5 rounded border border-outline">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+                      Hay cosas dentro (no se puede borrar)
+                    </span>
+</div>
+<p class="text-pista font-pista text-on-surface-variant">
+                    64 tierras cerradas · Firma digital Junta CyL completada
+                  </p>
+</td>
+<!-- Columna Estado -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="inline-flex items-center gap-1 bg-surface-container-highest text-on-surface text-pista font-pista font-bold px-2.5 py-1 rounded border border-outline">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+                    Año cerrado (Inspección OK)
+                  </span>
+</td>
+<!-- Columna Acciones -->
+<td class="py-space-lg px-space-md align-top">
+<div class="flex flex-col gap-1.5 items-center">
+<button class="w-full h-8 px-space-sm bg-surface hover:bg-surface-variant text-on-surface border border-outline rounded font-boton text-pista font-bold flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="visibility">visibility</span>
+<span>VER DATOS</span>
+</button>
+<div class="w-full" title="No se puede borrar: año cerrado con datos">
+<button class="w-full h-8 px-space-sm bg-surface-container-high text-outline font-boton text-pista font-bold rounded border border-outline-variant cursor-not-allowed flex items-center justify-center gap-1" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+<span>BORRAR</span>
+</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- FILA 3: Campaña 2024 (Vacía / Borrable) -->
+<tr class="bg-surface hover:bg-surface-container-low transition-colors">
+<!-- Columna Año -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top">
+<span class="text-titulo font-titulo font-bold text-on-surface">2024</span>
+</td>
+<!-- Columna Empieza -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono text-on-surface">01/09/2023</span>
+</td>
+<!-- Columna Termina -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="text-campo font-campo font-mono text-on-surface">31/08/2024</span>
+</td>
+<!-- Columna Qué tiene dentro -->
+<td class="py-space-lg px-space-lg border-r border-outline-variant align-top space-y-1">
+<div class="flex items-center gap-space-sm">
+<span class="text-campo font-campo font-bold text-on-surface">0 apuntes registrados</span>
+<span class="inline-flex items-center gap-1 text-pista font-pista bg-primary-fixed text-on-primary-fixed font-bold px-2 py-0.5 rounded border border-primary-overlay-border">
+                      Campaña vacía
+                    </span>
+</div>
+<p class="text-pista font-pista text-on-surface-variant">
+                    Sin tierras ni tratamientos en esta campaña histórica
+                  </p>
+</td>
+<!-- Columna Estado -->
+<td class="py-space-lg px-space-md border-r border-outline-variant align-top">
+<span class="inline-flex items-center gap-1 bg-surface-container-highest text-on-surface text-pista font-pista font-bold px-2.5 py-1 rounded border border-outline">
+<span class="material-symbols-outlined text-sm" data-icon="lock_open">lock_open</span>
+                    Año cerrado (Sin actividad)
+                  </span>
+</td>
+<!-- Columna Acciones -->
+<td class="py-space-lg px-space-md align-top">
+<div class="flex flex-col gap-1.5 items-center">
+<button class="w-full h-8 px-space-sm bg-surface hover:bg-surface-variant text-on-surface border border-outline rounded font-boton text-pista font-bold flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+<span>CORREGIR</span>
+</button>
+<!-- Borrar ACTIVO porque no tiene apuntes -->
+<button class="w-full h-8 px-space-sm bg-error-container hover:bg-error hover:text-on-error text-error font-boton text-pista font-bold rounded border-2 border-error flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="delete_forever">delete_forever</span>
+<span>BORRAR CAMPAÑA</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pie de Tabla Resumen -->
+<div class="p-space-md bg-surface-container-high border-t-2 border-outline flex flex-col sm:flex-row items-center justify-between text-pista font-pista text-on-surface-variant gap-2">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="verified">verified</span>
+<span class="font-bold text-on-surface">3 años en tu cuaderno</span>
+<span>|</span>
+<span>80 apuntes totales archivados</span>
+</div>
+<div class="font-mono text-on-surface">
+              Conforme a normativa SIEX y Real Decreto 1054/2022
+            </div>
+</div>
+</div>
+<!-- Bloque Destacado: EMPEZAR UN AÑO NUEVO (CAMPAÑA 2027) -->
+<div class="bg-surface p-space-lg border-2 border-outline rounded flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg">
+<div class="space-y-1 max-w-2xl">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="calendar_add_on">calendar_add_on</span>
+<h2 class="text-titulo font-titulo text-on-surface font-bold">¿Vas a comenzar la campaña siguiente?</h2>
+</div>
+<p class="text-cuerpo font-cuerpo text-on-surface-variant">
+              Cuando empiece el año que viene, hazlo aquí: se creará la campaña 2027 trayendo automáticamente tus tierras y datos del titular para que no tengas que escribir nada desde cero.
+            </p>
+</div>
+<button class="h-11 px-space-xl bg-primary hover:bg-primary-container text-on-primary font-boton text-boton rounded border-2 border-primary-dark flex items-center gap-space-sm shadow-none whitespace-nowrap active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="add_circle">add_circle</span>
+<span>+ EMPEZAR UN AÑO NUEVO (CAMPAÑA 2027)</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+<!-- 4. Footer Barra de Estado Docked (40px) -->
+<footer class="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-margin h-10 w-full bg-primary-dark border-t-2 border-primary-container text-on-primary select-none">
+<div class="flex items-center gap-space-md text-pista font-pista">
+<span class="flex items-center gap-1 font-bold">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span>
+        SIEX: Sincronizado hace 4 min
+      </span>
+<span class="text-outline-variant">|</span>
+<span>REGEPA: CYL-47-09821 Actualizado</span>
+<span class="text-outline-variant">|</span>
+<span class="hidden md:inline text-on-primary-container">Resolución: 1440x900</span>
+<span class="text-outline-variant">|</span>
+<span class="text-secondary-fixed font-bold">Modo Despacho v2.4 Activo</span>
+</div>
+<div class="flex items-center gap-space-lg text-pista font-pista">
+<a class="hover:text-secondary-fixed flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="dns">dns</span>
+<span>Estado de Servidores Junta CyL</span>
+</a>
+<a class="hover:text-secondary-fixed flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="support_agent">support_agent</span>
+<span>Soporte Técnico</span>
+</a>
+<a class="text-secondary-fixed font-bold flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span>Firma Digital Activa</span>
+</a>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,338 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "18338296389123816266",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/561749646bec4e249f5c07aeb5d13c1c",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1Xhe7IC_42VpQvXJovimWXOiifxlJgehLKPbs8xZKdFyvPDXpcJv0UXt2n90A8Skb6bSSATKP62OdZ_eLINvZZ1uh0MCYAYZYJfmecRqbLQNEJkAWRdswwdRKppFKlXjuPFyshcSxarijXxb3ZwAOzgKi0woG5a3AzLfEF_vQvmdtfMRFKotQNbvH79gHKpY7klEh3QB_BOXw5Yw7qRJzREiGBwYycFadpqKIADX3cTAL02pG8U3vN0Pw"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/fbbfb2c6be5d4b01a49919c5d12c56e5",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzVhYjc3NGEwMmNkNTQyMDI4MDY0M2U0N2MzY2E0OWNkEgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "32d7abb81ae948d199da14455ba0b38c",
+            "generatedBy": "figaro_agent",
+            "width": "2560",
+            "height": "2048",
+            "title": "Qué hay sembrado - CUE Gestión Despacho (1440x900)",
+            "prompt": "Diseñar pantalla completa de escritorio para ordenador (1440x900) de la aplicación CUE Digital Despacho (Castilla y León). Módulo: «Qué hay sembrado».\n\nEstructura y diseño general (idéntico al marco de escritorio de las pantallas SCREEN_4, SCREEN_6, SCREEN_9 y SCREEN_10 de CUE Gestión Despacho):\n- Sin sombras, sin degradados, bordes nítidos sólidos, estética ERP profesional sobria de alto contraste (verde oscuro #1f4a2c, fondo claro #f9faf5 / blanco, tinta oscura #10190f).\n- Barra superior de navegación de escritorio (TopNavBar): Logotipo CUE Digital CyL DESPACHO, selector de finca «Finca Las Suertes y El Prado (187,42 ha)», selector de campaña activa «Campaña 2026 (01/09/2025 - 31/08/2026)», indicador verde de sincronización «SIEX / REGEPA: AL DÍA», titular David Pérez Velasco (NIF 12345678Z) y botón de acción destacada «+ NUEVO APUNTE / CAMBIAR CULTIVOS».\n- Barra lateral de módulos (SideNavBar, ancho ~260-280px): Resumen General, El Cuaderno (24), Tierras y Parcelas (64), Qué hay sembrado (ACTIVO y destacado con fondo o barra verde oscuro), El Almacén, Los Análisis (5), Plan de Abono / Nitratos, Papeles y Documentos (6), Facturas y Albaranes (12), Maquinaria y Equipos, Años del cuaderno. Pie de barra con estado «Modo Local Activo» y cierre de sesión.\n- Barra inferior de estado (Footer de despacho): SIEX sincronizado, REGEPA CYL-47-09821, atajos de teclado [Ctrl+F], [N], estado servidores Junta CyL y soporte técnico. ¡NO poner barra de pestañas móvil abajo!\n\nContenido central principal del módulo «Qué hay sembrado»:\n1. Encabezado de página:\n   - Título: «Qué hay sembrado» con badge o contador «64 parcelas en campaña 2026».\n   - Subtítulo descriptivo: «Dinos qué hay este año en cada parcela. Con eso, cuando apuntes un tratamiento o una labor ya no tienes que escribir el cultivo: el programa ya lo sabe.»\n   - Botones superiores de herramientas compactos (32-38px): «Sacar listado oficial (PDF)», «Exportar Excel», «+ Asignación rápida masiva».\n\n2. Banner de aviso en ámbar/amarillo destacado:\n   - Icono SVG de aviso/alerta.\n   - Texto principal en negrita: «A 10 parcelas les falta decir qué tienen este año».\n   - Explicación: «Sin cultivo declarado, la Junta no puede validar los sulfatos ni las labores de estas tierras para las ayudas PAC. Pulsa en DECIRLO o filtra por las pendientes para completarlas en bloque.»\n   - Botón de acción rápido dentro del aviso: «Ver solo las 10 que faltan».\n\n3. Barra de filtros y herramientas de tabla (compacta):\n   - Buscador de texto: «Buscar por nombre de tierra, referencia o cultivo...»\n   - Filtros desplegables: «Todos los estados (54 al día, 10 faltan)», «Todos los cultivos», «Secano / Regadío», «Término municipal (Villalar, Tordesillas, Castronuño...)».\n   - Casilla de verificación rápida: «[ ] Ver sólo las que repiten cultivo del año pasado».\n\n4. Tabla de datos principal (densa, optimizada para ratón, cabecera fija sticky, bordes limpios, sin sombras):\n   - Columnas con indicadores de ordenación (flechas):\n     1. Tierra / Parcela (con nombre popular, pueblo y badge pequeño de tipo p. ej. «Secano» o «Regadío»)\n     2. Ref. SIGPAC (código canónico ej. 37-70-0-0-503-51-1)\n     3. Hectáreas (alineado a la derecha con dos decimales y sufijo «ha», ej. 12,30 ha)\n     4. Este año hay (Campaña 2026): cultivo en negrita clara y variedad (ej. «Cebada cervecera · Cerveza Planet», «Trigo blando · Camargo», «Maíz dulce · Syngenta Max»). Si falta, texto en rojo/ámbar «Sin cultivo asignado».\n     5. Alerta de rotación: En las filas donde repite el mismo cultivo que 2025, etiqueta visible clara de advertencia en ámbar: «⚠️ Repite lo del año pasado (consume suelo)».\n     6. Otros años (rotación histórica): los 2 o 3 últimos años en tipografía compacta limpia con su año delante (ej. «2025: Girasol (8,20 ha) · 2024: Cebada cervecera» o «2025: Cebada (Repite) · 2024: Trigo blando»). Si no hay datos, «—».\n     7. Estado: Badge nítido «Al día» (verde suave con texto verde oscuro y punto verde) en las que ya tienen cultivo, o «Falta rellenar» (ámbar con borde) en las 10 pendientes.\n     8. Acciones (a la derecha): Botones compactos (32px de alto): botón «CAMBIARLO» (verde contorno/neutro) para las que están al día, o botón resaltado «DECIRLO» (verde sólido o ámbar directo) para las que faltan.\n\n   - Fila de datos reales y coherentes de la explotación:\n     * Fila 1: Las Suertes de Arriba | 47-186-0-0-102-14-1 | 12,30 ha | «Sin cultivo asignado» | — | 2025: Girasol · 2024: Cebada cervecera | [Falta rellenar] | Botón [DECIRLO]\n     * Fila 2: El Prado | 37-70-0-0-503-51-1 | 4,90 ha | Cebada cervecera (Cerveza Planet) | ⚠️ Repite lo del año pasado | 2025: Cebada cervecera · 2024: Trigo blando | [Al día] | Botón [CAMBIARLO]\n     * Fila 3: El Vallejo Llano | 47-212-0-0-205-8-1 | 8,15 ha | Trigo blando (Camargo) | — | 2025: Barbecho tradicional · 2024: Girasol | [Al día] | Botón [CAMBIARLO]\n     * Fila 4: La Vega del Río | 47-045-0-0-12-30-2 | 6,40 ha (Regadío) | Maíz dulce (Syngenta Max) | — | 2025: Alfalfa · 2024: Remolacha azucarera | [Al día] | Botón [CAMBIARLO]\n     * Fila 5: Majada Honda | 37-70-0-0-502-18-1 | 3,25 ha | Girasol alto oleico | — | 2025: Cebada cervecera · 2024: Trigo | [Al día] | Botón [CAMBIARLO]\n     * Fila 6: El Sotillo Húmedo | 47-045-0-0-12-31-1 | 6,40 ha | «Sin cultivo asignado» | — | 2025: Barbecho · 2024: Trigo | [Falta rellenar] | Botón [DECIRLO]\n     * Fila 7: Los Almendros | 47-186-0-0-104-9-1 | 8,20 ha | Barbecho tradicional | — | 2025: Cebada · 2024: Girasol | [Al día] | Botón [CAMBIARLO]\n     * Fila 8: La Dehesa Vieja | 47-186-0-0-108-3-2 | 12,40 ha | Girasol alto oleico | — | 2025: Trigo blando · 2024: Barbecho | [Al día] | Botón [CAMBIARLO]\n     * Fila 9: Tierra Grande | 37-70-0-0-501-4-1 | 3,15 ha | Alfalfa (secano) | ⚠️ Repite lo del año pasado | 2025: Alfalfa · 2024: Alfalfa (año 1) | [Al día] | Botón [CAMBIARLO]\n     * Fila 10: El Carrizal de Abajo | 47-045-0-0-15-2-1 | 5,10 ha | Remolacha azucarera | — | 2025: Maíz dulce · 2024: Trigo blando | [Al día] | Botón [CAMBIARLO]\n\n5. Pie de la tabla y paginación:\n   - Resumen en negrita: «64 tierras · 54 con su cultivo dicho (10 pendientes)». Superficie total: 187,42 ha.\n   - Paginador compacto: «Mostrando 1 - 10 de 64 tierras», [«] [1] [2] [3] [4] [5] [6] [7] [»].\n\n6. Bloque pedagógico de explicación al pie (conforme a las instrucciones del usuario):\n   - Tarjeta clara de fondo suave con borde nítido e icono SVG:\n   - «Sirve para tres cosas:\n      1. El cuaderno de cada año dice qué había en la tierra, para que no tengas que escribirlo en cada sulfatada.\n      2. Puedes ver qué sembraste los años anteriores —que es lo que ayuda a decidir la rotación y evitar desgastar el terreno o sanciones de ecorregímenes PAC.\n      3. El aviso de «en esa fecha no había cultivo» funciona automáticamente si intentas apuntar una labor fuera de campaña.»\n\nCumplir a rajatabla: 1440x900 desktop, sin scroll horizontal innecesario, sin barra de pestañas móvil, sin emojis (usar SVG), bordes sólidos de 1px a 3px, botones compactos para ratón.",
+            "name": "projects/4347842392867690825/screens/32d7abb81ae948d199da14455ba0b38c",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "INTER",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "INTER",
+              "bodyFont": "INTER",
+              "labelFont": "INTER",
+              "namedColors": {
+                "error-container": "#fbe3e1",
+                "on_secondary_container": "#775b00",
+                "surface_container_low": "#f3f4ef",
+                "primary-dark": "#0d2b18",
+                "on_primary_fixed_variant": "#244f31",
+                "error": "#8c1d18",
+                "tertiary_fixed": "#ffd9de",
+                "surface_container": "#edeee9",
+                "on_tertiary_fixed": "#360c18",
+                "inverse_primary": "#a2d2aa",
+                "on_tertiary_container": "#e09ba8",
+                "inverse_on_surface": "#f0f1ec",
+                "surface_dim": "#d9dad6",
+                "secondary_container": "#ffd56c",
+                "primary": "#043317",
+                "on-surface-variant": "#43503f",
+                "inverse_surface": "#2f312e",
+                "outline_variant": "#c1c9bf",
+                "on_tertiary_fixed_variant": "#6b3742",
+                "focus": "#ffd24a",
+                "tertiary_fixed_dim": "#fbb3c0",
+                "primary_fixed": "#beeec5",
+                "on_surface": "#1a1c19",
+                "error-dark": "#5c110d",
+                "surface_bright": "#f9faf5",
+                "background": "#f9faf5",
+                "surface_container_lowest": "#ffffff",
+                "tertiary": "#4a1c27",
+                "error_container": "#ffdad6",
+                "surface": "#ffffff",
+                "on_primary": "#ffffff",
+                "on_primary_fixed": "#00210c",
+                "primary_fixed_dim": "#a2d2aa",
+                "on-secondary-container": "#3d2f00",
+                "on_secondary": "#ffffff",
+                "surface-variant": "#f4f6f3",
+                "primary-container": "#2f6b40",
+                "surface_variant": "#e2e3de",
+                "on_surface_variant": "#414941",
+                "on_error_container": "#93000a",
+                "outline": "#a9b6a8",
+                "on-primary": "#ffffff",
+                "secondary_fixed_dim": "#eac25a",
+                "primary_container": "#1f4a2c",
+                "on-surface": "#10190f",
+                "on-error-container": "#4a0f0b",
+                "on_primary_container": "#8bb992",
+                "surface_container_highest": "#e2e3de",
+                "secondary_fixed": "#ffdf95",
+                "on_tertiary": "#ffffff",
+                "primary-overlay": "#3a6446",
+                "on_background": "#1a1c19",
+                "on_secondary_fixed": "#251a00",
+                "surface_container_high": "#e8e9e4",
+                "surface_tint": "#3c6847",
+                "primary-overlay-border": "#8fae97",
+                "secondary": "#765a00",
+                "on_error": "#ffffff",
+                "tertiary_container": "#65323d",
+                "on_secondary_fixed_variant": "#594400",
+                "secondary-container": "#ffe9a8"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#8a6a00",
+              "spacingScale": 2,
+              "typography": {
+                "pregunta": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "dato-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800"
+                },
+                "boton": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700"
+                },
+                "titulo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "cuerpo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "boton-principal": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700"
+                },
+                "cuerpo-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "campo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400"
+                },
+                "pista": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400"
+                }
+              },
+              "spacing": {
+                "space-xl": "24px",
+                "space-lg": "16px",
+                "space-xxl": "32px",
+                "space-xs": "4px",
+                "margin": "16px",
+                "space-sm": "8px",
+                "space-md": "12px",
+                "gutter": "16px"
+              },
+              "headlineFontFamily": "Inter",
+              "bodyFontFamily": "Inter",
+              "labelFontFamily": "Inter"
+            },
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "error-container": "#fbe3e1",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "on_surface_variant": "#414941",
+                    "on_error_container": "#93000a",
+                    "on_secondary": "#ffffff",
+                    "secondary_container": "#ffd56c",
+                    "primary_fixed": "#beeec5",
+                    "on-secondary-container": "#3d2f00",
+                    "inverse_primary": "#a2d2aa",
+                    "surface": "#ffffff",
+                    "on_tertiary": "#ffffff",
+                    "tertiary_fixed": "#ffd9de",
+                    "on_error": "#ffffff",
+                    "inverse_surface": "#2f312e",
+                    "outline_variant": "#c1c9bf",
+                    "surface_container_highest": "#e2e3de",
+                    "on-error-container": "#4a0f0b",
+                    "on_primary_container": "#8bb992",
+                    "error-dark": "#5c110d",
+                    "on_surface": "#1a1c19",
+                    "on_secondary_fixed": "#251a00",
+                    "background": "#f9faf5",
+                    "surface_tint": "#3c6847",
+                    "error_container": "#ffdad6",
+                    "on_tertiary_fixed": "#360c18",
+                    "surface_container": "#edeee9",
+                    "primary": "#043317",
+                    "surface_bright": "#f9faf5",
+                    "on_primary": "#ffffff",
+                    "on_secondary_container": "#775b00",
+                    "tertiary_container": "#65323d",
+                    "surface-variant": "#f4f6f3",
+                    "primary-dark": "#0d2b18",
+                    "on_primary_fixed": "#00210c",
+                    "surface_variant": "#e2e3de",
+                    "on-primary": "#ffffff",
+                    "on_background": "#1a1c19",
+                    "tertiary": "#4a1c27",
+                    "surface_container_lowest": "#ffffff",
+                    "on-surface-variant": "#43503f",
+                    "on_secondary_fixed_variant": "#594400",
+                    "inverse_on_surface": "#f0f1ec",
+                    "secondary_fixed_dim": "#eac25a",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "primary-overlay-border": "#8fae97",
+                    "on-surface": "#10190f",
+                    "surface_container_high": "#e8e9e4",
+                    "error": "#8c1d18",
+                    "outline": "#a9b6a8",
+                    "secondary_fixed": "#ffdf95",
+                    "surface_container_low": "#f3f4ef",
+                    "on_primary_fixed_variant": "#244f31",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "surface_dim": "#d9dad6",
+                    "secondary-container": "#ffe9a8",
+                    "primary-overlay": "#3a6446",
+                    "primary_container": "#1f4a2c",
+                    "on_tertiary_container": "#e09ba8",
+                    "focus": "#ffd24a",
+                    "secondary": "#765a00",
+                    "primary-container": "#2f6b40"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    },
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    }
+                  },
+                  "spacing": {
+                    "margin": "16px",
+                    "space-xxl": "32px",
+                    "space-md": "12px",
+                    "gutter": "16px",
+                    "space-xl": "24px",
+                    "space-lg": "16px",
+                    "space-xs": "4px",
+                    "space-sm": "8px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la pantalla de escritorio para despacho (1440x900) del módulo **«Qué hay sembrado: cultivos de campaña por parcela»** (Qué hay sembrado - CUE Gestión Despacho (1440x900)), siguiendo fielmente las especificaciones de ergonomía para ratón y teclado, sin sombras ni degradados, con iconos vectoriales SVG y alineada con el contrato visual y las pantallas de gestión ya existentes:\n\n### Decisiones de diseño implementadas:\n1. **Armazón de Despacho (1440x900)**:\n   - **Barra superior**: Identificador de *CUE Digital CyL Despacho*, selectores de finca activa (*Finca Las Suertes y El Prado, 187,42 ha*), campaña 2026, estado de sincronización oficial *SIEX / REGEPA al día* y acceso a nuevo apunte o asignación.\n   - **Menú lateral de módulos**: Módulo **«Qué hay sembrado»** destacado en estado activo con fondo verde oscuro de contraste, junto al resto de módulos (Cuaderno, Tierras, Almacén, Análisis, Plan de abono, etc.).\n   - **Barra de estado inferior**: Datos de conexión local/nube, normativa RD 1054/2022 y atajos de teclado para agilizar la jornada de oficina.\n\n2. **Aviso superior de pendientes**:\n   - Bloque en tono ámbar de alta visibilidad: *«A 10 parcelas les falta decir qué tienen este año»*, explicando la repercusión directa en las inspecciones y validaciones PAC, junto con el botón de filtrado rápido *«Ver solo las 10 que faltan»*.\n\n3. **Tabla densa de 64 tierras (optimizada para ratón)**:\n   - **Cabecera fija (sticky)** con ordenación por columnas.\n   - **Columnas**:\n     - *Tierra / Parcela*: Nombre tradicional, término municipal y régimen (Secano/Regadío).\n     - *Ref. SIGPAC*: Código catastral canónico.\n     - *Hectáreas*: Alineadas a la derecha con dos decimales y unidad `ha` (ej. `12,30 ha`).\n     - *Este año hay (2026)*: Cultivo y variedad declarada en negrita nítida; o aviso en rojo/ámbar *«Sin cultivo asignado»* para las pendientes.\n     - *Alerta de rotación*: Indicador visible *«Repite lo del año pasado (consume suelo)»* cuando coincide con el cultivo anterior, para prevenir problemas agronómicos o de condicionalidad reforzada.\n     - *Otros años (histórico)*: Detalle de las dos últimas campañas en tipografía compacta (ej. `2025: Girasol · 2024: Cebada cervecera`).\n     - *Estado*: Etiquetas nítidas *«Al día»* (verde) o *«Falta rellenar»* (ámbar).\n     - *Acciones*: Botones compactos (32–36 px) dedicados: **«DECIRLO»** destacado en las pendientes y **«CAMBIARLO»** en las ya cumplimentadas.\n\n4. **Pie de tabla y pedagogía para el agricultor**:\n   - Contador de balance: *«64 parcelas en campaña 2026 (54 al día, 10 faltan)»*.\n   - Bloque explicativo inferior con los 3 motivos prácticos de cumplimentar el cultivo (ahorro al apuntar tratamientos, control de rotaciones/ecorregímenes y validación automática de fechas).\n   - Ausencia total de barras móviles inferiores o elementos táctiles sobredimensionados innecesarios."
+    },
+    {
+      "suggestion": "Abrir el diálogo o modal de «DECIRLO / Asignación de cultivo» para una parcela pendiente"
+    },
+    {
+      "suggestion": "Simular la vista filtrada de «Solo las 10 parcelas que faltan» con asignación masiva en bloque"
+    },
+    {
+      "suggestion": "Ver la vista de impresión o exportación del listado oficial de siembras para la Junta"
+    }
+  ]
+}

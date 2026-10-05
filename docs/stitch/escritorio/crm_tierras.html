@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tierras y mapa - CUE Gestión Despacho (1440x900)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1f4a2c',
+            'primary-container': '#2f6b40',
+            'primary-dark': '#0d2b18',
+            'on-primary': '#ffffff',
+            surface: '#ffffff',
+            'surface-variant': '#f4f6f3',
+            'surface-dim': '#e8ece6',
+            'on-surface': '#10190f',
+            'on-surface-variant': '#43503f',
+            outline: '#a9b6a8',
+            'outline-light': '#d7ded5',
+            focus: '#ffd24a',
+            warning: '#8a6a00',
+            'warning-bg': '#ffe9a8',
+            'warning-text': '#3d2f00',
+            error: '#8c1d18',
+            'error-bg': '#fbe3e1',
+            'error-text': '#4a0f0b',
+            info: '#174873',
+            'info-bg': '#e1effa',
+            'info-text': '#0b2e4d',
+          },
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Reglas estrictas: nada de sombras, degradados ni animaciones */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+    input[type="checkbox"] {
+      accent-color: #1f4a2c;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f4f6f3;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+    }
+    /* Vista responsive para pantallas < 1200px */
+    @media (max-width: 1180px) {
+      #split-container {
+        flex-direction: column !important;
+      }
+      #map-panel {
+        width: 100% !important;
+        height: 520px !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#f0f3ef] text-on-surface font-sans antialiased text-[14px] leading-snug">
+
+  <!-- ==================== TOP NAVIGATION BAR ==================== -->
+  <header class="bg-primary text-on-primary border-b-[3px] border-primary-dark sticky top-0 z-50">
+    <div class="max-w-[1440px] mx-auto px-4 h-14 flex items-center justify-between">
+      
+      <!-- Brand & Section -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <!-- Logo SVG -->
+          <svg class="w-6 h-6 text-focus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="font-bold text-base tracking-tight text-white">CUE Digital CyL</span>
+          <span class="bg-[#2f6b40] text-focus text-[11px] font-bold px-1.5 py-0.5 rounded border border-[#8fae97] uppercase tracking-wider">Despacho</span>
+        </div>
+
+        <div class="h-6 w-[1px] bg-[#3a6446]"></div>
+
+        <!-- Finca activa selector -->
+        <div class="flex items-center gap-2 bg-[#275935] px-2.5 py-1 rounded border border-[#3a6446]">
+          <span class="text-[#c1d9c7] text-[12px]">Finca:</span>
+          <span class="font-semibold text-white text-[13px]">Las Suertes y El Prado (187,42 ha)</span>
+          <svg class="w-4 h-4 text-[#c1d9c7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+
+        <!-- Campaña selector -->
+        <div class="flex items-center gap-2 bg-[#275935] px-2.5 py-1 rounded border border-[#3a6446]">
+          <span class="text-[#c1d9c7] text-[12px]">Campaña:</span>
+          <span class="font-bold text-focus text-[13px]">2026</span>
+          <svg class="w-4 h-4 text-[#c1d9c7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Center Status Badges -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#163821] border border-[#2e5d3a] text-[12px]">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="text-white">SIEX / REGEPA:</span>
+          <span class="font-bold text-emerald-300">Al día (Sinc. 10:14)</span>
+        </div>
+        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#163821] border border-[#2e5d3a] text-[12px]">
+          <svg class="w-3.5 h-3.5 text-[#c1d9c7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-[#d0e2d5]">Modo local activo</span>
+        </div>
+      </div>
+
+      <!-- User & Quick actions -->
+      <div class="flex items-center gap-2">
+        <div class="text-right leading-none mr-2">
+          <div class="text-white text-[12px] font-semibold">David Pérez Velasco</div>
+          <div class="text-[#a6c7ae] text-[11px]">NIF: 12345678Z · Asesor</div>
+        </div>
+        <button class="bg-[#275935] hover:bg-[#326d43] border border-[#3a6446] text-white p-1.5 rounded" title="Ayuda F1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+        <button class="bg-[#275935] hover:bg-[#326d43] border border-[#3a6446] text-white p-1.5 rounded relative" title="Avisos">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="absolute -top-1 -right-1 bg-error text-white font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center border border-white">2</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Secondary Tab Bar (Desktop ERP Modules) -->
+    <div class="bg-[#173b22] border-t border-[#2d5c37] px-4">
+      <div class="max-w-[1440px] mx-auto flex items-center gap-1 overflow-x-auto text-[13px]">
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Inicio / Resumen
+        </a>
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          El Cuaderno (apuntes)
+        </a>
+        <a href="#" class="px-3 py-2 bg-surface text-primary font-bold flex items-center gap-1.5 border-b-2 border-focus rounded-t-sm">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          Tierras y mapa
+          <span class="bg-primary text-white text-[11px] px-1.5 py-0.2 rounded-full font-bold ml-1">64</span>
+        </a>
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          El Almacén
+        </a>
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          Los Análisis
+        </a>
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Facturas y Albaranes
+        </a>
+        <a href="#" class="px-3 py-2 text-[#bed3c4] hover:text-white hover:bg-[#1f4a2c] flex items-center gap-1.5 border-b-2 border-transparent">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          Maquinaria y Equipos
+          <span class="bg-error text-white text-[10px] font-bold px-1.5 rounded-full ml-1" title="1 ITEAF Vencida">1</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="max-w-[1440px] mx-auto px-4 py-3 flex flex-col gap-3">
+
+    <!-- Title and High Level Summary -->
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-outline pb-2">
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-on-surface">Tierras y mapa de la explotación</h1>
+          <span class="bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded">64 tierras registradas</span>
+          <span class="bg-surface border border-outline text-on-surface-variant text-xs font-semibold px-2 py-0.5 rounded">187,42 ha gestionadas</span>
+        </div>
+        <p class="text-on-surface-variant text-xs mt-0.5">
+          Catálogo parcelario sincronizado con SIGPAC 2026. Selección activa sincronizada entre el listado y el visor cartográfico.
+        </p>
+      </div>
+
+      <!-- Quick summary flags -->
+      <div class="flex items-center gap-2 text-xs">
+        <div class="flex items-center gap-1.5 bg-warning-bg border border-warning text-warning-text px-2.5 py-1 rounded font-semibold">
+          <svg class="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          10 tierras sin cultivo declarado
+        </div>
+        <div class="flex items-center gap-1.5 bg-[#f5e9df] border border-[#a15324] text-[#6b3110] px-2.5 py-1 rounded font-semibold">
+          <svg class="w-4 h-4 text-[#a15324]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          3 tierras sin geometría oficial
+        </div>
+        <div class="flex items-center gap-1.5 bg-error-bg border border-error text-error-text px-2.5 py-1 rounded font-semibold">
+          <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          1 ITEAF vencida en cuba 600L
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VISIBLE FILTER BAR ==================== -->
+    <section class="bg-surface border-2 border-outline rounded p-3 flex flex-col gap-2.5">
+      <!-- Upper filter controls -->
+      <div class="grid grid-cols-12 gap-2 items-center">
+        
+        <!-- Search Input -->
+        <div class="col-span-4 relative">
+          <label for="filtro-buscar" class="sr-only">Buscar por nombre, referencia SIGPAC o municipio</label>
+          <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </div>
+          <input id="filtro-buscar" type="text" value="Villalar" placeholder="Buscar por nombre, referencia SIGPAC o municipio..." class="w-full pl-8 pr-3 py-1.5 bg-white border-2 border-outline rounded text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus h-9">
+        </div>
+
+        <!-- Dropdowns (Compact 32-40px desktop size) -->
+        <div class="col-span-2">
+          <select class="w-full bg-white border-2 border-outline rounded text-xs px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus h-9">
+            <option value="">Cultivo: Todos</option>
+            <option value="cebada" selected>Cultivo: Cebada cervecera (24)</option>
+            <option value="trigo">Cultivo: Trigo blando (18)</option>
+            <option value="girasol">Cultivo: Girasol (8)</option>
+            <option value="maiz">Cultivo: Maíz dulce (4)</option>
+            <option value="sin_cultivo">Sin cultivo declarado (10)</option>
+          </select>
+        </div>
+
+        <div class="col-span-2">
+          <select class="w-full bg-white border-2 border-outline rounded text-xs px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus h-9">
+            <option value="">Municipio: Todos</option>
+            <option value="villalar" selected>Villalar de los Comuneros (38)</option>
+            <option value="tordesillas">Tordesillas (16)</option>
+            <option value="castronuno">Castronuño (10)</option>
+          </select>
+        </div>
+
+        <div class="col-span-2">
+          <select class="w-full bg-white border-2 border-outline rounded text-xs px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus h-9">
+            <option value="">Régimen: Todos</option>
+            <option value="secano">Secano (52)</option>
+            <option value="regadio">Regadío (12)</option>
+          </select>
+        </div>
+
+        <div class="col-span-2">
+          <select class="w-full bg-white border-2 border-outline rounded text-xs px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus h-9">
+            <option value="">Titularidad: Todas</option>
+            <option value="propiedad">En propiedad (44)</option>
+            <option value="arrendamiento">Arrendamiento rústico (20)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Lower filter row: Checkboxes + Action Tags + Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-outline-light">
+        
+        <!-- Quick Highlight Checkboxes -->
+        <div class="flex items-center gap-4 text-xs">
+          <label class="flex items-center gap-1.5 cursor-pointer font-medium text-warning-text bg-warning-bg/60 px-2 py-1 rounded border border-warning">
+            <input type="checkbox" class="w-4 h-4 rounded border-2 border-warning">
+            <span>Solo las que no tienen cultivo declarado (10)</span>
+          </label>
+
+          <label class="flex items-center gap-1.5 cursor-pointer font-medium text-[#6b3110] bg-[#f5e9df] px-2 py-1 rounded border border-[#a15324]">
+            <input type="checkbox" class="w-4 h-4 rounded border-2 border-[#a15324]">
+            <span>Solo las que no tienen forma (3)</span>
+          </label>
+
+          <span class="text-outline text-sm">|</span>
+
+          <!-- Active Filter Pills (Clickable 'x' to remove) -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Filtros puestos:</span>
+            
+            <span class="inline-flex items-center gap-1 bg-surface-variant border-2 border-outline px-2 py-0.5 rounded text-xs text-on-surface">
+              <span>Texto: «Villalar»</span>
+              <button class="hover:text-error font-bold ml-0.5" title="Quitar filtro">×</button>
+            </span>
+
+            <span class="inline-flex items-center gap-1 bg-surface-variant border-2 border-outline px-2 py-0.5 rounded text-xs text-on-surface">
+              <span>Cultivo: Cebada cervecera</span>
+              <button class="hover:text-error font-bold ml-0.5" title="Quitar filtro">×</button>
+            </span>
+
+            <span class="inline-flex items-center gap-1 bg-surface-variant border-2 border-outline px-2 py-0.5 rounded text-xs text-on-surface">
+              <span>Municipio: Villalar</span>
+              <button class="hover:text-error font-bold ml-0.5" title="Quitar filtro">×</button>
+            </span>
+
+            <button class="text-xs font-bold text-error hover:underline px-1 py-0.5 uppercase tracking-wider">
+              QUITAR TODOS LOS FILTROS
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Buttons (Right side) -->
+        <div class="flex items-center gap-2">
+          <!-- Export Split Button -->
+          <div class="inline-flex rounded border-2 border-primary bg-white h-9">
+            <button class="px-3 py-1 text-xs font-bold text-primary hover:bg-surface-variant flex items-center gap-1.5 border-r border-primary">
+              <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              EXPORTAR (14 filtradas)
+            </button>
+            <button class="px-2 text-primary hover:bg-surface-variant" title="Opciones de exportación">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+          </div>
+
+          <!-- Add Land Button (Primary action - comfortable 38px) -->
+          <button class="bg-primary hover:bg-primary-container border-2 border-primary-dark text-on-primary text-xs font-bold px-3.5 py-1.5 rounded flex items-center gap-1.5 h-9">
+            <svg class="w-4 h-4 text-focus" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            AÑADIR UNA TIERRA
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SPLIT: TABLE & MAP SYNCHRONIZED ==================== -->
+    <div id="split-container" class="flex gap-3 items-start w-full">
+      
+      <!-- LEFT: TABLE PANEL (W-7/12 ~ 58%) -->
+      <section class="w-full lg:w-7/12 bg-surface border-2 border-outline rounded flex flex-col">
+        
+        <!-- Table Header Bar -->
+        <div class="px-3 py-2 bg-surface-variant border-b-2 border-outline flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs text-on-surface uppercase tracking-wider">Catálogo de tierras</span>
+            <span class="text-xs text-on-surface-variant font-medium">(Mostrando 10 de 14 que coinciden con el filtro · Total 64)</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-on-surface-variant">Seleccionadas: <strong class="text-primary font-bold">1 tierra</strong></span>
+            <button class="text-primary hover:underline font-semibold text-[11px]">Marcar todas las 14</button>
+          </div>
+        </div>
+
+        <!-- Data Table (Explicit headers with sort indicators, row actions at right) -->
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-[#e9eee7] text-on-surface border-b-2 border-outline text-[11px] font-bold uppercase tracking-wider">
+                <th class="py-2 px-2 text-center w-8">
+                  <input type="checkbox" title="Seleccionar todas" class="w-3.5 h-3.5">
+                </th>
+                <th class="py-2 px-2.5 cursor-pointer hover:bg-[#d8e0d6]">
+                  <div class="flex items-center gap-1">
+                    <span>Nombre / Parcela</span>
+                    <svg class="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-4 4h8l-4-4zm0 16l4-4H8l4 4z"/></svg>
+                  </div>
+                </th>
+                <th class="py-2 px-2 cursor-pointer hover:bg-[#d8e0d6]">
+                  <div class="flex items-center gap-1">
+                    <span>Municipio</span>
+                    <svg class="w-3 h-3 text-on-surface-variant" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-4 4h8l-4-4zm0 16l4-4H8l4 4z"/></svg>
+                  </div>
+                </th>
+                <th class="py-2 px-2 text-right cursor-pointer hover:bg-[#d8e0d6]">
+                  <div class="flex items-center justify-end gap-1">
+                    <span>Área gest.</span>
+                    <svg class="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20l4-4H8l4 4z"/></svg>
+                  </div>
+                </th>
+                <th class="py-2 px-2.5">Cultivo actual</th>
+                <th class="py-2 px-2">Último trabajo</th>
+                <th class="py-2 px-2">Pendientes</th>
+                <th class="py-2 px-2 text-center">Forma</th>
+                <th class="py-2 px-2 text-right pr-3 font-bold text-primary">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-light text-[12px]">
+
+              <!-- ROW 1: SELECTED ROW (El Prado) - Synced with highlighted polygon on map -->
+              <tr class="bg-[#e7f0e8] border-l-4 border-l-primary font-medium hover:bg-[#deebdf]">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" checked class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-primary flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                    El Prado (recinto 1)
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">37-70-0-0-503-51-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">4,90 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-primary px-1.5 py-0.5 rounded text-[11px] font-semibold text-primary">
+                    Cebada cervecera (RGT Planet)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>12/05/26</div>
+                  <div class="text-[10px] text-on-surface">Glifosato 36 SL</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                    Al día
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-0.5">
+                    <svg class="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    Con forma
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-primary text-white hover:bg-primary-dark px-2 py-1 rounded text-[11px] font-bold" title="Abrir ficha completa">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant text-on-surface px-1.5 py-1 rounded text-[11px]" title="Planificar">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant text-primary px-1.5 py-1 rounded text-[11px] font-semibold" title="Registrar labor">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 2: Las Suertes de Arriba (parcela 12) - LONG NAME EXAMPLE -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">Las Suertes de Arriba (parcela 12)</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-186-0-0-102-14-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">12,30 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-warning-bg border border-warning px-1.5 py-0.5 rounded text-[11px] font-bold text-warning-text">
+                    Sin cultivo declarado
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>03/05/26</div>
+                  <div class="text-[10px] text-on-surface">Cultivador y rulo</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="bg-warning-bg text-warning-text border border-warning px-1.5 py-0.5 rounded text-[10px] font-bold block text-center">
+                    Falta cultivo
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 3: 501/10015-1 VEZA VELLOSA - LONG NAME FICTITIOUS -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">501/10015-1 VEZA VELLOSA</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-212-0-0-205-8-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">8,15 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Cebada cervecera (Camargo)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>18/11/25</div>
+                  <div class="text-[10px] text-on-surface">Pase cultivador</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="text-on-surface-variant bg-surface-variant border border-outline px-1.5 py-0.5 rounded text-[10px]">
+                    —
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 4: Majada Honda (Parcela con pago parcial) -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">Majada Honda - Pozo nuevo</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">37-70-0-0-502-18-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">3,25 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Cebada cervecera (RGT Planet)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>10/04/26</div>
+                  <div class="text-[10px] text-on-surface">Abonado fondo NPK</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="bg-[#fef3c7] text-[#92400e] border border-[#f59e0b] px-1.5 py-0.5 rounded text-[10px] font-bold block text-center" title="Factura abono con 380,50 € pendientes">
+                    Pago parcial fac.
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 5: El Sotillo Húmedo (SIN FORMA / SIN GEOMETRÍA) -->
+              <tr class="bg-[#fff9f5] border-l-2 border-l-[#a15324] hover:bg-[#fceded]">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-[#6b3110] flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-[#a15324]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    El Sotillo Húmedo (trozo rústico)
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-045-0-0-12-31-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">6,40 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-warning-bg border border-warning px-1.5 py-0.5 rounded text-[11px] font-bold text-warning-text">
+                    Sin cultivo declarado
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>—</div>
+                  <div class="text-[10px] text-on-surface-variant">Sin labores 2026</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="bg-[#fbe3e1] text-error font-bold border border-error px-1.5 py-0.5 rounded text-[10px] block text-center">
+                    Sin geometría
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#fceded] text-[#8c1d18] border border-[#d97768] px-1 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-0.5">
+                    Sin forma
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-[#8a4216] text-white hover:bg-[#6b3110] px-2 py-1 rounded text-[11px] font-bold" title="Definir trozo en visor">Dibujar</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Abrir</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 6: Tierras Los Almendros -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">Los Almendros - Polígono 9</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-186-0-0-104-9-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">8,20 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Barbecho tradicional
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>14/03/26</div>
+                  <div class="text-[10px] text-on-surface">Pase de grada</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="text-on-surface-variant bg-surface-variant border border-outline px-1.5 py-0.5 rounded text-[10px]">
+                    —
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 7: La Dehesa Vieja (Alerta ITEAF maquinaria vencida) -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">La Dehesa Vieja (Término norte)</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-186-0-0-108-3-2</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">12,40 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Cebada cervecera (RGT Planet)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>15/04/26</div>
+                  <div class="text-[10px] text-error font-medium">Tebuconazol (Cuba ITEAF)</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="bg-error-bg text-error-text border border-error px-1.5 py-0.5 rounded text-[10px] font-bold block text-center" title="Tratamiento con Cuba Aguirre 600L con ITEAF vencida el 14/03/2026">
+                    ITEAF vencida
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 8: Tierra Grande - Camino Real -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">Tierra Grande - Camino Real</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">37-70-0-0-501-4-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">3,15 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Alfalfa (Campaña 2º año)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>20/04/26</div>
+                  <div class="text-[10px] text-on-surface">Primer corte heno</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="text-on-surface-variant bg-surface-variant border border-outline px-1.5 py-0.5 rounded text-[10px]">
+                    —
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 9: El Carrizal de Abajo (Importe desconocido de laboreo) -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">El Carrizal de Abajo</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">47-045-0-0-15-2-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">5,10 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-white border border-outline px-1.5 py-0.5 rounded text-[11px] text-on-surface">
+                    Cebada cervecera (RGT Planet)
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>11/11/25</div>
+                  <div class="text-[10px] text-on-surface">Siembra certificada</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="text-on-surface-variant bg-surface-variant border border-outline px-1.5 py-0.5 rounded text-[10px]" title="Albarán de semilla sin precio fijado por cooperativa">
+                    Coste pendiente
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 10: Rincón de Don Pedro -->
+              <tr class="hover:bg-surface-variant">
+                <td class="py-2 px-2 text-center">
+                  <input type="checkbox" class="w-3.5 h-3.5">
+                </td>
+                <td class="py-2 px-2.5">
+                  <div class="font-bold text-on-surface">Rincón de Don Pedro</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">37-70-0-0-503-62-1</div>
+                </td>
+                <td class="py-2 px-2">Villalar</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-on-surface">2,85 ha</td>
+                <td class="py-2 px-2.5">
+                  <span class="inline-block bg-warning-bg border border-warning px-1.5 py-0.5 rounded text-[11px] font-bold text-warning-text">
+                    Sin cultivo declarado
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-[11px] text-on-surface-variant">
+                  <div>—</div>
+                  <div class="text-[10px] text-on-surface-variant">Pendiente asignar</div>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="bg-warning-bg text-warning-text border border-warning px-1.5 py-0.5 rounded text-[10px] font-bold block text-center">
+                    Falta cultivo
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <span class="bg-[#d7ecd9] text-emerald-800 border border-emerald-400 px-1 py-0.5 rounded text-[10px] font-bold">Con forma</span>
+                </td>
+                <td class="py-2 px-2 text-right pr-3 whitespace-nowrap">
+                  <div class="inline-flex gap-1">
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-2 py-1 rounded text-[11px] font-bold text-primary">Abrir</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px]">Planif.</button>
+                    <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-1 rounded text-[11px] text-primary">Labor</button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer: Totals and Pagination -->
+        <div class="px-3 py-2 bg-surface-variant border-t-2 border-outline flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="text-on-surface-variant">
+            <strong>64 tierras</strong> · <span class="font-mono font-bold text-on-surface">187,42 ha</span> gestionadas · 
+            <span class="text-on-surface">Mostrando 1 a 10 de 14 resultados filtrados</span>
+          </div>
+
+          <!-- Pagination buttons (Compact) -->
+          <div class="flex items-center gap-1">
+            <button class="px-2 py-1 bg-white border border-outline rounded text-on-surface-variant disabled:opacity-50" disabled>« Primero</button>
+            <button class="px-2 py-1 bg-white border border-outline rounded text-on-surface-variant disabled:opacity-50" disabled>‹ Anterior</button>
+            <span class="px-2.5 py-1 bg-primary text-white font-bold rounded">1</span>
+            <button class="px-2.5 py-1 bg-white border border-outline rounded hover:bg-surface-variant">2</button>
+            <button class="px-2 py-1 bg-white border border-outline rounded hover:bg-surface-variant text-on-surface">Siguiente ›</button>
+            <button class="px-2 py-1 bg-white border border-outline rounded hover:bg-surface-variant text-on-surface">Último »</button>
+          </div>
+        </div>
+
+        <!-- Tierras sin Geometría Section (No desaparecen, listado claro con aviso) -->
+        <div class="m-3 p-2.5 bg-[#fcf8f5] border-2 border-[#d97768] rounded">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span class="font-bold text-xs text-error">Tierras sin dibujo geométrico en el mapa (3 registradas)</span>
+            </div>
+            <span class="text-[11px] text-on-surface-variant">Estas parcelas constan en REGEPA pero falta delimitar el polígono exacto en el visor.</span>
+          </div>
+
+          <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
+            <div class="bg-white border border-[#d97768] p-2 rounded flex justify-between items-center">
+              <div>
+                <div class="font-bold text-on-surface">El Sotillo Húmedo</div>
+                <div class="text-[11px] text-on-surface-variant font-mono">6,40 ha · Villalar</div>
+              </div>
+              <button class="bg-[#8a4216] hover:bg-[#6b3110] text-white px-2 py-1 rounded text-[11px] font-bold">Dibujar</button>
+            </div>
+
+            <div class="bg-white border border-[#d97768] p-2 rounded flex justify-between items-center">
+              <div>
+                <div class="font-bold text-on-surface">Finca El Cascajal</div>
+                <div class="text-[11px] text-on-surface-variant font-mono">1,80 ha · Tordesillas</div>
+              </div>
+              <button class="bg-[#8a4216] hover:bg-[#6b3110] text-white px-2 py-1 rounded text-[11px] font-bold">Dibujar</button>
+            </div>
+
+            <div class="bg-white border border-[#d97768] p-2 rounded flex justify-between items-center">
+              <div>
+                <div class="font-bold text-on-surface">Majada del Valle</div>
+                <div class="text-[11px] text-on-surface-variant font-mono">4,10 ha · Castronuño</div>
+              </div>
+              <button class="bg-[#8a4216] hover:bg-[#6b3110] text-white px-2 py-1 rounded text-[11px] font-bold">Dibujar</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT: SYNCHRONIZED MAP PANEL (W-5/12 ~ 42%) -->
+      <section id="map-panel" class="w-full lg:w-5/12 bg-surface border-2 border-outline rounded flex flex-col">
+        
+        <!-- Map View Toggle & Layer Controls -->
+        <div class="p-2.5 bg-surface-variant border-b-2 border-outline flex flex-col gap-2">
+          
+          <div class="flex items-center justify-between">
+            <!-- View Mode Switcher -->
+            <div class="inline-flex rounded border-2 border-outline bg-white p-0.5">
+              <button class="px-2.5 py-1 text-xs text-on-surface-variant hover:text-on-surface">Tabla</button>
+              <button class="px-2.5 py-1 text-xs bg-primary text-white font-bold rounded">Los dos</button>
+              <button class="px-2.5 py-1 text-xs text-on-surface-variant hover:text-on-surface">Mapa solo</button>
+            </div>
+
+            <!-- Map Zoom & Center Tools -->
+            <div class="flex items-center gap-1">
+              <button class="bg-white border border-outline hover:bg-surface p-1 rounded text-on-surface" title="Acercar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              </button>
+              <button class="bg-white border border-outline hover:bg-surface p-1 rounded text-on-surface" title="Alejar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6"/></svg>
+              </button>
+              <button class="bg-white border border-outline hover:bg-surface px-2 py-1 rounded text-xs font-semibold text-primary flex items-center gap-1" title="Centrar en selección">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+                Centrar El Prado
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Map Layers (Checkboxes with color dots, date and official source) -->
+          <div class="flex items-center gap-3 text-[11px] flex-wrap pt-1 border-t border-outline-light">
+            <span class="font-bold text-on-surface-variant uppercase tracking-wider">Capas:</span>
+            
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" checked class="w-3.5 h-3.5">
+              <span class="w-2.5 h-2.5 bg-emerald-600 rounded-sm inline-block"></span>
+              <span>Tierras gestión</span>
+            </label>
+
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" checked class="w-3.5 h-3.5">
+              <span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm inline-block"></span>
+              <span>Cultivos</span>
+            </label>
+
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" checked class="w-3.5 h-3.5">
+              <span class="w-2.5 h-2.5 border border-red-500 bg-red-100 rounded-sm inline-block"></span>
+              <span>Avisos / ITEAF</span>
+            </label>
+
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" class="w-3.5 h-3.5">
+              <span class="w-2.5 h-2.5 bg-blue-400 rounded-sm inline-block"></span>
+              <span>Nitratos / Agua</span>
+            </label>
+
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" checked class="w-3.5 h-3.5">
+              <span>Ortofoto PNOA</span>
+            </label>
+          </div>
+
+        </div>
+
+        <!-- VISOR CARTOGRÁFICO ESQUEMÁTICO REALISTA (SVG Vectorial con ortofoto estilizada de campo) -->
+        <div class="relative bg-[#c8d4c0] h-[480px] overflow-hidden border-b-2 border-outline select-none">
+          
+          <!-- Ortofoto de Fondo Estilizada (Simulación gráfica de parcelario agrícola castellano sin datos falsos de salud) -->
+          <svg class="w-full h-full" viewBox="0 0 600 480" preserveAspectRatio="none">
+            <defs>
+              <!-- Textura de fondo ortofoto agrícola castellana (tonos tierra y rastrojo) -->
+              <pattern id="rastrojo" width="40" height="40" patternUnits="userSpaceOnUse">
+                <rect width="40" height="40" fill="#d2d9c7"/>
+                <path d="M0 10 L40 10 M0 20 L40 20 M0 30 L40 30" stroke="#c0c9b4" stroke-width="1"/>
+              </pattern>
+              <pattern id="barbecho" width="30" height="30" patternUnits="userSpaceOnUse">
+                <rect width="30" height="30" fill="#ddcca8"/>
+                <circle cx="15" cy="15" r="1" fill="#c4b28c"/>
+              </pattern>
+            </defs>
+
+            <!-- Fondo general -->
+            <rect width="600" height="480" fill="url(#rastrojo)" />
+
+            <!-- Caminos rurales y lindes principales -->
+            <path d="M 0,160 Q 250,150 600,180" stroke="#fdfbf7" stroke-width="6" fill="none"/>
+            <path d="M 280,0 L 290,480" stroke="#fdfbf7" stroke-width="5" fill="none"/>
+            <path d="M 0,340 L 600,320" stroke="#fdfbf7" stroke-width="4" fill="none"/>
+
+            <!-- Parcela Colindante Norte (Sin gestión) -->
+            <polygon points="40,20 270,18 260,150 30,150" fill="#cfd6c0" stroke="#8c997e" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="110" y="85" font-size="11" fill="#69755b" font-weight="bold">Colindante (No gestionada)</text>
+
+            <!-- Parcela Colindante Este -->
+            <polygon points="300,20 570,30 560,160 295,155" fill="url(#barbecho)" stroke="#8c997e" stroke-width="1.5"/>
+            <text x="370" y="90" font-size="11" fill="#7d6a45">Polígono 501 / Parcela 14</text>
+
+            <!-- PARCELA GESTIONADA: Las Suertes de Arriba (parcela 12) - 12,30 ha -->
+            <polygon points="30,170 270,165 260,330 20,335" fill="#e8d89e" stroke="#1f4a2c" stroke-width="2"/>
+            <text x="50" y="240" font-size="12" fill="#1f4a2c" font-weight="bold">Las Suertes de Arriba</text>
+            <text x="50" y="258" font-size="11" fill="#8a6a00" font-weight="bold">12,30 ha · Sin cultivo declarado</text>
+
+            <!-- PARCELA GESTIONADA SELECCIONADA: El Prado (recinto 1) - 4,90 ha (RESALTADA) -->
+            <g id="selected-parcel-polygon">
+              <!-- Borde de selección grueso de alto contraste foco amarillo -->
+              <polygon points="305,175 570,190 545,310 295,315" fill="#b9ddbe" stroke="#ffd24a" stroke-width="7"/>
+              <polygon points="305,175 570,190 545,310 295,315" fill="#a4d1a9" stroke="#1f4a2c" stroke-width="3"/>
+              
+              <!-- Marcador de centroide con chincheta oficial -->
+              <circle cx="410" cy="245" r="16" fill="#1f4a2c" stroke="#ffd24a" stroke-width="3"/>
+              <text x="410" y="249" font-size="10" fill="#ffffff" font-weight="bold" text-anchor="middle">✓</text>
+
+              <!-- Rótulo de la parcela seleccionada -->
+              <rect x="340" y="200" width="145" height="34" fill="#ffffff" stroke="#1f4a2c" stroke-width="2" rx="4"/>
+              <text x="348" y="215" font-size="11" fill="#1f4a2c" font-weight="bold">El Prado (Elegida)</text>
+              <text x="348" y="228" font-size="10" fill="#43503f">4,90 ha · Cebada cervecera</text>
+            </g>
+
+            <!-- PARCELA GESTIONADA: Majada Honda - 3,25 ha -->
+            <polygon points="25,350 250,345 240,460 20,465" fill="#cde2c6" stroke="#1f4a2c" stroke-width="2"/>
+            <text x="45" y="405" font-size="11" fill="#1f4a2c" font-weight="bold">Majada Honda (3,25 ha)</text>
+            <text x="45" y="420" font-size="10" fill="#a15324">Pago parcial en factura</text>
+
+            <!-- PARCELA GESTIONADA: La Dehesa Vieja - Con aviso ITEAF -->
+            <polygon points="280,335 560,330 550,465 275,470" fill="#fbe3e1" stroke="#8c1d18" stroke-width="2.5"/>
+            <text x="300" y="395" font-size="11" fill="#8c1d18" font-weight="bold">La Dehesa Vieja (12,40 ha)</text>
+            <text x="300" y="410" font-size="10" fill="#8c1d18" font-weight="bold">Aviso: Tratamiento con ITEAF vencida</text>
+
+            <!-- Rosa de los vientos / Norte -->
+            <g transform="translate(550, 40)">
+              <circle cx="0" cy="0" r="16" fill="#ffffff" stroke="#1f4a2c" stroke-width="2"/>
+              <polygon points="0,-12 4,-2 0,0 -4,-2" fill="#8c1d18"/>
+              <polygon points="0,12 4,2 0,0 -4,2" fill="#1f4a2c"/>
+              <text x="0" y="-14" font-size="9" font-weight="bold" fill="#1f4a2c" text-anchor="middle">N</text>
+            </g>
+
+            <!-- Escala gráfica gráfica -->
+            <g transform="translate(20, 450)">
+              <rect x="0" y="0" width="100" height="4" fill="#10190f"/>
+              <rect x="0" y="0" width="50" height="4" fill="#ffffff"/>
+              <text x="0" y="-4" font-size="9" font-mono font-bold fill="#10190f">0</text>
+              <text x="45" y="-4" font-size="9" font-mono font-bold fill="#10190f">100 m</text>
+              <text x="90" y="-4" font-size="9" font-mono font-bold fill="#10190f">200 m</text>
+            </g>
+          </svg>
+
+          <!-- Floating Info Card on Map for Selected Parcel -->
+          <div class="absolute bottom-2 right-2 bg-white/95 border-2 border-primary rounded p-2.5 text-xs max-w-[260px]">
+            <div class="flex items-center justify-between border-b border-outline-light pb-1">
+              <span class="font-bold text-primary flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-primary"></span>
+                El Prado (Tierra activa)
+              </span>
+              <span class="bg-[#d7ecd9] text-emerald-800 text-[10px] font-bold px-1 rounded">SIGPAC OK</span>
+            </div>
+            <div class="mt-1.5 space-y-0.5 text-[11px]">
+              <div><strong>Referencia:</strong> <span class="font-mono">37-70-0-0-503-51-1</span></div>
+              <div><strong>Superficie declarada:</strong> <span class="font-mono font-bold">4,90 ha</span></div>
+              <div><strong>Municipio:</strong> Villalar de los Comuneros</div>
+              <div><strong>Cultivo 2026:</strong> Cebada cervecera (RGT Planet)</div>
+              <div><strong>Zona nitratos:</strong> Sí (Vulnerable Valle Duero)</div>
+            </div>
+            <div class="mt-2 pt-1.5 border-t border-outline-light flex gap-1 justify-end">
+              <button class="bg-primary text-white hover:bg-primary-dark px-2 py-0.5 rounded text-[11px] font-bold">Ficha de tierra</button>
+              <button class="bg-white border border-outline hover:bg-surface-variant px-1.5 py-0.5 rounded text-[11px]">Nueva labor</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Map Footer: Metadata & Source Info -->
+        <div class="p-2 bg-surface-variant flex items-center justify-between text-[11px] text-on-surface-variant">
+          <div>
+            <strong>Fuente oficial:</strong> Visor SIGPAC 2026 · Junta de Castilla y León · Ortofoto PNOA 2025
+          </div>
+          <div>
+            Coordenadas: 41°32'44.2"N 5°08'19.1"W · ETRS89 Huso 30
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- ==================== SYSTEM STATES DIAGNOSTIC STRIP ==================== -->
+    <!-- Requisito estricto: Dibujar estado cargado + vacío, sin resultados, cargando, error y conflicto -->
+    <section class="border-2 border-outline rounded bg-surface p-3 mt-1">
+      <div class="flex items-center justify-between border-b-2 border-outline-light pb-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span class="font-bold text-xs uppercase tracking-wider text-on-surface">Muestrario de estados del catálogo de tierras (Garantía de funcionamiento en despacho y campo)</span>
+        </div>
+        <span class="text-[11px] text-on-surface-variant">Comprobaciones de interfaz según normativa CUE CyL</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-2.5">
+        
+        <!-- ESTADO 1: VACÍO (Recién empezado) -->
+        <div class="bg-surface-variant border-2 border-outline rounded p-2.5 flex flex-col justify-between h-44 text-xs">
+          <div>
+            <div class="flex items-center gap-1.5 text-on-surface font-bold text-[12px] mb-1">
+              <span class="w-2 h-2 rounded-full bg-outline"></span>
+              1. Estado Vacío
+            </div>
+            <p class="text-[11px] text-on-surface-variant">
+              Cuando el agricultor entra por primera vez y todavía no ha cargado ninguna parcela.
+            </p>
+            <div class="bg-white border border-outline rounded p-2 text-center mt-2">
+              <div class="text-[11px] font-semibold text-on-surface">Sin tierras en la campaña</div>
+              <div class="text-[10px] text-on-surface-variant">Trae tus parcelas de la PAC o SIGPAC</div>
+            </div>
+          </div>
+          <button class="w-full bg-primary hover:bg-primary-container text-white py-1 rounded text-[11px] font-bold">
+            Traer tierras de la Junta
+          </button>
+        </div>
+
+        <!-- ESTADO 2: SIN RESULTADOS POR FILTRO -->
+        <div class="bg-surface-variant border-2 border-outline rounded p-2.5 flex flex-col justify-between h-44 text-xs">
+          <div>
+            <div class="flex items-center gap-1.5 text-on-surface font-bold text-[12px] mb-1">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              2. Sin resultados
+            </div>
+            <p class="text-[11px] text-on-surface-variant">
+              Ninguna de las 64 parcelas cumple los criterios actuales del buscador o filtros.
+            </p>
+            <div class="bg-white border border-outline rounded p-2 text-center mt-2">
+              <div class="text-[11px] font-semibold text-on-surface">«Cebolla en Castronuño»</div>
+              <div class="text-[10px] text-on-surface-variant">0 tierras encontradas</div>
+            </div>
+          </div>
+          <button class="w-full bg-white border border-primary text-primary hover:bg-surface-variant py-1 rounded text-[11px] font-bold">
+            Limpiar filtros de búsqueda
+          </button>
+        </div>
+
+        <!-- ESTADO 3: CARGANDO (Sincronización SIGPAC) -->
+        <div class="bg-surface-variant border-2 border-outline rounded p-2.5 flex flex-col justify-between h-44 text-xs">
+          <div>
+            <div class="flex items-center gap-1.5 text-on-surface font-bold text-[12px] mb-1">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              3. Cargando datos
+            </div>
+            <p class="text-[11px] text-on-surface-variant">
+              Consultando la sede electrónica y descargando geometrías vectoriales del servidor.
+            </p>
+            <div class="bg-white border border-outline rounded p-2 text-center mt-2 flex flex-col items-center justify-center">
+              <!-- Indicador de carga sin animación: barra estática por pasos -->
+              <div class="w-full bg-outline-light h-2 rounded overflow-hidden">
+                <div class="bg-primary h-full w-2/3"></div>
+              </div>
+              <span class="text-[10px] text-on-surface-variant mt-1">Descargando capa SIGPAC (67%)</span>
+            </div>
+          </div>
+          <span class="text-center text-[10px] text-on-surface-variant py-1">Espera unos segundos...</span>
+        </div>
+
+        <!-- ESTADO 4: ERROR DE SERVICIO -->
+        <div class="bg-[#fbe3e1] border-2 border-error rounded p-2.5 flex flex-col justify-between h-44 text-xs">
+          <div>
+            <div class="flex items-center gap-1.5 text-error font-bold text-[12px] mb-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              4. Error de servicio
+            </div>
+            <p class="text-[11px] text-error-text">
+              Servidor SIEX ocupado o sin respuesta de la sede de la Junta de CyL.
+            </p>
+            <div class="bg-white border border-error rounded p-1.5 text-center mt-1.5">
+              <div class="text-[10px] text-error font-semibold">Tus 64 tierras guardadas en local</div>
+            </div>
+          </div>
+          <button class="w-full bg-error hover:bg-red-800 text-white py-1 rounded text-[11px] font-bold">
+            Reintentar conexión
+          </button>
+        </div>
+
+        <!-- ESTADO 5: CONFLICTO (Solape de superficie) -->
+        <div class="bg-warning-bg border-2 border-warning rounded p-2.5 flex flex-col justify-between h-44 text-xs">
+          <div>
+            <div class="flex items-center gap-1.5 text-warning-text font-bold text-[12px] mb-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              5. Conflicto / Solape
+            </div>
+            <p class="text-[11px] text-warning-text">
+              Superficie solapada con otro declarante en REGEPA (0,40 ha en Villalar).
+            </p>
+            <div class="bg-white border border-warning rounded p-1.5 text-center mt-1.5">
+              <div class="text-[10px] text-warning-text font-bold">Alegación requerida antes de fin de mes</div>
+            </div>
+          </div>
+          <button class="w-full bg-[#8a6a00] hover:bg-[#6e5400] text-white py-1 rounded text-[11px] font-bold">
+            Revisar alegación
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== DESKTOP STATUS BAR / ATTACHED FOOTER ==================== -->
+  <footer class="bg-primary-dark text-on-primary border-t-2 border-primary-dark mt-4 py-2 px-4 text-xs select-none">
+    <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- System Identifiers -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span>SIEX: <strong>CYL-47-09821</strong> (Conectado hace 4 min)</span>
+        </div>
+        <span class="text-[#3a6446]">|</span>
+        <div>
+          Base Local SQLite: <strong>Modo Despacho Activo</strong> (Sin cortes de red)
+        </div>
+        <span class="text-[#3a6446]">|</span>
+        <div>
+          CUE Digital v4.2 CyL
+        </div>
+      </div>
+
+      <!-- Keyboard Shortcuts for Quick Desk Work (Atajos de teclado habituales) -->
+      <div class="flex items-center gap-3 text-[11px] text-[#c1d9c7]">
+        <span><kbd class="bg-[#1f4a2c] text-white px-1.5 py-0.5 rounded border border-[#3a6446] font-mono">[Ctrl+F]</kbd> Buscar</span>
+        <span><kbd class="bg-[#1f4a2c] text-white px-1.5 py-0.5 rounded border border-[#3a6446] font-mono">[N]</kbd> Nueva Tierra</span>
+        <span><kbd class="bg-[#1f4a2c] text-white px-1.5 py-0.5 rounded border border-[#3a6446] font-mono">[Espacio]</kbd> Centrar mapa</span>
+        <span><kbd class="bg-[#1f4a2c] text-white px-1.5 py-0.5 rounded border border-[#3a6446] font-mono">[Esc]</kbd> Deseleccionar</span>
+      </div>
+
+      <!-- Compliance & Certificate Status -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1 text-emerald-300">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>Firma Digital FNMT Activa</span>
+        </div>
+        <span class="text-[#3a6446]">|</span>
+        <span class="font-mono text-[11px] text-[#a6c7ae]">Resolución: 1440 × 900</span>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+</html>

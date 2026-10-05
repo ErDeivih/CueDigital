@@ -1,0 +1,362 @@
+{
+  "projectId": "16169899762021489082",
+  "sessionId": "1651359973322951372",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/16169899762021489082/files/648787627770452db0cb3bfa58edb7a2",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1VePAwn0CmeeoQMcDPmq6fXQAgAvxwdiihkoBiydIQG5i-1_WFGX_LkUoTvVecwiNd2jnAyaKOdf2gxelo5uCPzf0kqfeb342rbOg1AYePoLTZHtwJmzbX0pdX5ptO5fx0oj_76l9b4iaK4V2ZtH3Y5psG83IHqsQ37sxOzsubpT78flV0iLAgdJppYdalzSzscf_frxqUBloSwM9UKCZUrDDi1Ep-FPomW8KQxreT9UiKNE_5aKilEouZP"
+            },
+            "htmlCode": {
+              "name": "projects/16169899762021489082/files/6f181c7efa8e46b6b904973ef441f4e9",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzBmYTM3ODQ1MzQzZjQzYzI4ZDMxOTZlNTIwNjhlZGRhEgsSBxDa8sKnzx0YAZIBJAoKcHJvamVjdF9pZBIWQhQxNjE2OTg5OTc2MjAyMTQ4OTA4Mg&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "16e2620f813e4b97898e894bcf7c0c81",
+            "generatedBy": "figaro_agent",
+            "width": "780",
+            "height": "1800",
+            "title": "Asistente - Dónde lo has echado",
+            "prompt": "Pantalla del asistente paso 1 en CUE Digital: registrar aplicación de producto («Echar producto»).\nDispositivo: Móvil (390px ancho).\nEstilo: Sistema CUE Digital estricto (DESIGN.md {{DATA:DOCUMENT:DOCUMENT_4}}). Alto contraste, apto para sol, bordes de 3px, sin sombras ni transparencias.\n\n1. Cabecera fija (TopAppBar):\n- Verde oscuro (#1f4a2c), texto blanco. Icono tractor a la izquierda con \"CUE Digital\", y botón \"A+\" (#3a6446 con borde #8fae97, 48px) a la derecha.\n\n2. Indicador de progreso del asistente:\n- Pasos de 8px de alto con rounded 4px. Barra de progreso con 4 pasos: el primer paso activo/hecho (verde #2f6b40), los siguientes 3 pendientes (gris outline #a9b6a8). Opcional texto discreto de paso: \"Paso 1 de 4\".\n\n3. Pregunta única en grande:\n- Tipo pregunta-pantalla: «¿Dónde lo has echado?» (negrita 800, tamaño 1.45rem, color #10190f).\n\n4. Selector o agrupador:\n- Pestaña u opción clara visible: «Elegir por grupo de parcelas» (botón secundario de fondo blanco, borde verde #1f4a2c de 3px, con icono de carpetas o grupos para fincas agrupadas).\n\n5. Lista de parcelas como botones grandes seleccionables (mínimo 64px-80px de alto, esquinas 14px):\n- Cada parcela muestra claramente:\n  - Nombre de la parcela en negrita («Los Olivos - Parcela 14», «La Vega - Parcela 3», «El Rincón - Parcela 8»)\n  - Hectáreas en formato claro y legible («4,20 hectáreas», «1,85 hectáreas», «6,50 hectáreas»)\n  - Municipio / Pueblo («Madridejos», «Consuegra», «Camuñas»)\n  - La primera parcela aparece seleccionada (estado \"boton-elegido\": fondo #1f4a2c, texto blanco, contorno amarillo de foco de 4px #ffd24a y checkmark). Las demás en fondo blanco con borde de 3px (#a9b6a8 o #1f4a2c).\n\n6. Pista o ayuda breve debajo si procede:\n- Estilo ayuda-campo o aviso sutil recordatorio (\"Si echaste en varias parcelas a la vez, pulsa en Elegir por grupo\").\n\n7. Acciones fijas o claras abajo (apto para una mano, pulgar):\n- Botón principal de 104px (o 64px según flujo) verde (#2f6b40) con borde (#0d2b18) de 3px, texto blanco en negrita 700: «SIGUIENTE PASO →»\n- Botón claro para cancelar («DEJARLO Y VOLVER», fondo #f4f6f3, texto #1f4a2c, borde #a9b6a8, 64px de alto).\n\nCero jerga técnica, textos naturales en castellano, alto contraste, sin sombras ni degradados.",
+            "name": "projects/16169899762021489082/screens/16e2620f813e4b97898e894bcf7c0c81",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "PUBLIC_SANS",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "PUBLIC_SANS",
+              "bodyFont": "PUBLIC_SANS",
+              "labelFont": "PUBLIC_SANS",
+              "namedColors": {
+                "on_tertiary_container": "#d0a945",
+                "surface_variant": "#dbe6d5",
+                "primary-overlay-border": "#8fae97",
+                "primary-dark": "#0d2b18",
+                "tertiary_fixed": "#ffdf95",
+                "on-primary": "#ffffff",
+                "on-surface-variant": "#43503f",
+                "error-dark": "#5c110d",
+                "on_secondary_fixed": "#231b00",
+                "on_surface": "#151e14",
+                "on_primary_container": "#8bb992",
+                "on_secondary": "#ffffff",
+                "surface_container_high": "#e1ebda",
+                "on-error-container": "#4a0f0b",
+                "error": "#8c1d18",
+                "primary": "#043317",
+                "error-container": "#fbe3e1",
+                "error_container": "#ffdad6",
+                "focus": "#ffd24a",
+                "on_tertiary_fixed_variant": "#594400",
+                "secondary_fixed": "#f7e1a1",
+                "surface_container_low": "#ecf7e6",
+                "outline": "#a9b6a8",
+                "secondary_container": "#f4de9e",
+                "tertiary": "#382a00",
+                "primary_container": "#1f4a2c",
+                "inverse_surface": "#293328",
+                "on_primary_fixed_variant": "#244f31",
+                "outline_variant": "#c1c9bf",
+                "on_background": "#151e14",
+                "on_error": "#ffffff",
+                "on_secondary_container": "#71612e",
+                "on_primary": "#ffffff",
+                "on_surface_variant": "#414941",
+                "on_error_container": "#93000a",
+                "secondary_fixed_dim": "#dac587",
+                "on_tertiary": "#ffffff",
+                "surface_tint": "#3c6847",
+                "secondary": "#6d5d2a",
+                "primary-container": "#2f6b40",
+                "primary-overlay": "#3a6446",
+                "surface_container": "#e6f1e0",
+                "surface_dim": "#d2ddcd",
+                "primary_fixed": "#beeec5",
+                "on-secondary-container": "#3d2f00",
+                "tertiary_container": "#533f00",
+                "surface-variant": "#f4f6f3",
+                "surface": "#ffffff",
+                "on_tertiary_fixed": "#251a00",
+                "tertiary_fixed_dim": "#eac25a",
+                "surface_bright": "#f2fdeb",
+                "primary_fixed_dim": "#a2d2aa",
+                "surface_container_highest": "#dbe6d5",
+                "inverse_on_surface": "#e9f4e3",
+                "background": "#f2fdeb",
+                "on_primary_fixed": "#00210c",
+                "on_secondary_fixed_variant": "#534614",
+                "surface_container_lowest": "#ffffff",
+                "inverse_primary": "#a2d2aa",
+                "on-surface": "#10190f"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#ffe9a8",
+              "overrideTertiaryColor": "#8a6a00",
+              "overrideNeutralColor": "#10190f",
+              "spacingScale": 2,
+              "typography": {
+                "headline-question": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "input-text": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.4"
+                },
+                "label-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.3"
+                },
+                "body-sm": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400",
+                  "lineHeight": "1.4"
+                },
+                "headline-lg": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.3"
+                },
+                "body-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "button-default": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.2"
+                },
+                "headline-md": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "body-lg": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "button-hero": {
+                  "fontFamily": "Public Sans",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.2"
+                }
+              },
+              "spacing": {
+                "space-xl": "24px",
+                "space-xxl": "32px",
+                "space-xs": "4px",
+                "gutter": "1rem",
+                "margin": "1rem",
+                "space-sm": "8px",
+                "space-lg": "16px",
+                "space-md": "12px"
+              },
+              "headlineFontFamily": "Public Sans",
+              "bodyFontFamily": "Public Sans",
+              "labelFontFamily": "Public Sans"
+            },
+            "deviceType": "MOBILE",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/4f0738a887a34573aaf0237886fdb14b",
+              "designSystem": {
+                "displayName": "Field Notebook High Contrast",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered for field agriculture under extreme conditions: direct sunlight, single-handed operation, variable lighting, and zero connectivity. Designed specifically for agricultural workers aged 50 to 70, the interface prioritizes immediate legibility, high motor-control tolerance, and low cognitive friction over decorative flourishes.\n\nThe aesthetic blends **High-Contrast Utilitarianism** with modern functional clarity. Key tenets include:\n- **Direct Sunlight Visibility:** Deep greens, warm ochre warning containers, solid high-contrast borders, and prominent surfaces ensure full legibility in glare conditions.\n- **One-Handed & Tactile Usability:** Exaggerated touch targets (minimum 64px, up to 104px for primary actions), prominent stroke borders (2px–6px), and high-visibility focus indicators (4px bright amber) prevent accidental input when wearing work gloves or using one hand.\n- **Calm, Sturdy Authority:** Agricultural hues root the system in earthy tones (forest green, warm wheat amber, and stark alert reds), providing an honest, dependable tool tailored for relentless field work.\n\n## Layout & Spacing\n\nThe layout is built on a single-column, thumb-driven vertical stack optimized for handheld mobile devices operated with a single hand:\n\n- **Touch Zones & Thumb Reach:** Primary interactive triggers, confirm actions, and critical inputs reside within the bottom two-thirds of the viewport.\n- **Rhythm & Padding:** Standard component interior padding is fixed at 16px (`space-lg`) or 12px (`space-md`), creating open tap targets and spacious gutters that eliminate mis-taps.\n- **Gutter & Screen Margins:** Mobile canvases maintain a 16px lateral safety margin (`margin`). Sections are separated by 24px (`space-xl`) or 32px (`space-xxl`) vertical gaps to clearly delineate separate tasks or questions.\n\n## Elevation & Depth\n\nTo maximize sunlight readability and prevent visual muddiness, this system **avoids soft ambient drop-shadows** entirely. Depth and visual hierarchy are instead communicated through **structural borders and high-contrast tonal layering**:\n\n- **Layer 0 (Base Canvas):** Pure white (`#ffffff`) or light earthen neutral (`#f4f6f3`).\n- **Layer 1 (Cards, Selectors, Inputs):** Crisp solid backgrounds framed by prominent 3px structural borders (`#a9b6a8` for neutral fields, `#0d2b18` for primary buttons).\n- **Layer 2 (Feedback & Alerts):** Tinted full-bleed or thick-bordered callouts using 2px outlines (`#8a6a00` for tertiary warnings, `#8c1d18` for errors) and high-visibility left accents (up to 6px solid border on help panels).\n- **Focus Rings:** Non-offset 4px solid borders in high-visibility bright yellow (`#ffd24a`) to provide unambiguous tactile feedback.\n\n## Components\n\n### Buttons\n- **Hero Button (`boton-principal`):** 104px height, full-width thumb trigger. Background `primary-container` (`#2f6b40`), text white (`#ffffff`), typography `button-hero`, border 3px solid `primary-dark` (`#0d2b18`), radius 14px. Used for main confirmation steps (e.g., \"GUARDAR TRABAJO\").\n- **Standard Button (`boton`):** 64px height, full width or flex item. Background `primary-container`, text white, typography `button-default`, border 3px solid `primary-dark`, radius 14px.\n- **Secondary Button (`boton-secundario`):** 64px height, background `surface` (`#ffffff`), text `primary` (`#1f4a2c`), border 3px solid `primary` (`#1f4a2c`), radius 14px.\n- **Selected State (`boton-elegido`):** 64px height, background `primary` (`#1f4a2c`), text white, radius 14px.\n- **Destructive Button (`boton-peligro`):** 64px height, background `error` (`#8c1d18`), text white, border 3px solid `error-dark` (`#5c110d`), radius 14px.\n- **Inline / Character Key (`boton-letra`):** 48px height, background `primary-overlay` (`#3a6446`), border 2px solid `primary-overlay-border` (`#8fae97`), radius 10px.\n\n### Inputs & Text Fields\n- **Field Container (`campo`):** Minimum height 64px with 12px internal padding. Background `surface`, text `on-surface` (`#10190f`), typography `input-text`. Border 3px solid `outline` (`#a9b6a8`), radius 14px.\n- **Focused State:** Border transitions to 4px solid `focus` (`#ffd24a`) with zero layout shift.\n- **Helper Note (`pista`):** Typography `label-md`, text color `on-surface-variant` (`#43503f`), spaced 8px below input target.\n\n### Information Callouts & Alerts\n- **Warning Notice (`aviso`):** Background `secondary-container` (`#ffe9a8`), text `on-secondary-container` (`#3d2f00`), typography `body-md`, radius 14px, 16px padding, border 2px solid `tertiary` (`#8a6a00`).\n- **Critical Alert (`aviso-error`):** Background `error-container` (`#fbe3e1`), text `on-error-container` (`#4a0f0b`), typography `body-md`, radius 14px, 16px padding, border 2px solid `error` (`#8c1d18`).\n- **Field Help Panel (`ayuda-campo`):** Background `surface-variant` (`#f4f6f3`), text `on-surface` (`#10190f`), typography `label-md`, radius 8px, 12px padding, with a 6px thick primary left border accent (`primary-container`).\n\n### Lists & Progress\n- **List Item (`lista-item`):** Minimum 64px height, padding 16px, background `surface`, border 3px solid `outline` (`#a9b6a8`), radius 14px. Text `body-md` in `on-surface`.\n- **Progress Track (`paso` / `paso-hecho`):** 8px height, radius 4px. Uncompleted steps use `outline` (`#a9b6a8`); completed steps fill with `primary-container` (`#2f6b40`).\n- **Header (`cabecera`):** 64px height, background `primary` (`#1f4a2c`), text white, typography `headline-md`, padding 12px 16px.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "PUBLIC_SANS",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "PUBLIC_SANS",
+                  "bodyFont": "PUBLIC_SANS",
+                  "labelFont": "PUBLIC_SANS",
+                  "namedColors": {
+                    "secondary_fixed_dim": "#dac587",
+                    "on_primary_fixed_variant": "#244f31",
+                    "background": "#f2fdeb",
+                    "inverse_surface": "#293328",
+                    "surface_dim": "#d2ddcd",
+                    "outline_variant": "#c1c9bf",
+                    "surface_container_low": "#ecf7e6",
+                    "on_primary_container": "#8bb992",
+                    "primary_fixed": "#beeec5",
+                    "on-surface": "#10190f",
+                    "on_tertiary": "#ffffff",
+                    "tertiary_fixed_dim": "#eac25a",
+                    "error-container": "#fbe3e1",
+                    "inverse_on_surface": "#e9f4e3",
+                    "error_container": "#ffdad6",
+                    "secondary_fixed": "#f7e1a1",
+                    "on_tertiary_fixed_variant": "#594400",
+                    "tertiary_fixed": "#ffdf95",
+                    "on_tertiary_container": "#d0a945",
+                    "tertiary_container": "#533f00",
+                    "primary-dark": "#0d2b18",
+                    "primary_container": "#1f4a2c",
+                    "outline": "#a9b6a8",
+                    "surface_variant": "#dbe6d5",
+                    "primary": "#043317",
+                    "secondary": "#6d5d2a",
+                    "on_secondary": "#ffffff",
+                    "on-secondary-container": "#3d2f00",
+                    "on_secondary_fixed_variant": "#534614",
+                    "surface_container_lowest": "#ffffff",
+                    "inverse_primary": "#a2d2aa",
+                    "focus": "#ffd24a",
+                    "surface_container": "#e6f1e0",
+                    "on_primary_fixed": "#00210c",
+                    "on_surface_variant": "#414941",
+                    "on_error_container": "#93000a",
+                    "on_error": "#ffffff",
+                    "surface_bright": "#f2fdeb",
+                    "primary-container": "#2f6b40",
+                    "surface_container_highest": "#dbe6d5",
+                    "on_primary": "#ffffff",
+                    "tertiary": "#382a00",
+                    "surface-variant": "#f4f6f3",
+                    "on_secondary_container": "#71612e",
+                    "on_background": "#151e14",
+                    "surface_tint": "#3c6847",
+                    "primary-overlay-border": "#8fae97",
+                    "on-primary": "#ffffff",
+                    "on_secondary_fixed": "#231b00",
+                    "primary-overlay": "#3a6446",
+                    "secondary_container": "#f4de9e",
+                    "on-error-container": "#4a0f0b",
+                    "on_tertiary_fixed": "#251a00",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "error-dark": "#5c110d",
+                    "on_surface": "#151e14",
+                    "surface_container_high": "#e1ebda",
+                    "on-surface-variant": "#43503f",
+                    "error": "#8c1d18",
+                    "surface": "#ffffff"
+                  },
+                  "designMd": "---\nname: Field Notebook High Contrast\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d2ddcd'\n  surface-bright: '#f2fdeb'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#ecf7e6'\n  surface-container: '#e6f1e0'\n  surface-container-high: '#e1ebda'\n  surface-container-highest: '#dbe6d5'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#293328'\n  inverse-on-surface: '#e9f4e3'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#6d5d2a'\n  on-secondary: '#ffffff'\n  secondary-container: '#f4de9e'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#382a00'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#533f00'\n  on-tertiary-container: '#d0a945'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#f7e1a1'\n  secondary-fixed-dim: '#dac587'\n  on-secondary-fixed: '#231b00'\n  on-secondary-fixed-variant: '#534614'\n  tertiary-fixed: '#ffdf95'\n  tertiary-fixed-dim: '#eac25a'\n  on-tertiary-fixed: '#251a00'\n  on-tertiary-fixed-variant: '#594400'\n  background: '#f2fdeb'\n  on-background: '#151e14'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  headline-lg:\n    fontFamily: Public Sans\n    fontSize: 1.6rem\n    fontWeight: '800'\n    lineHeight: '1.3'\n  headline-md:\n    fontFamily: Public Sans\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  headline-question:\n    fontFamily: Public Sans\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  body-lg:\n    fontFamily: Public Sans\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  body-md:\n    fontFamily: Public Sans\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  body-sm:\n    fontFamily: Public Sans\n    fontSize: 0.95rem\n    fontWeight: '400'\n    lineHeight: '1.4'\n  button-hero:\n    fontFamily: Public Sans\n    fontSize: 1.35rem\n    fontWeight: '700'\n    lineHeight: '1.2'\n  button-default:\n    fontFamily: Public Sans\n    fontSize: 1.1rem\n    fontWeight: '700'\n    lineHeight: '1.2'\n  input-text:\n    fontFamily: Public Sans\n    fontSize: 1.15rem\n    fontWeight: '400'\n    lineHeight: '1.4'\n  label-md:\n    fontFamily: Public Sans\n    fontSize: 0.95rem\n    fontWeight: '400'\n    lineHeight: '1.3'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 1rem\n  margin: 1rem\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\n---\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.45rem\n    fontWeight: 800\n    lineHeight: 1.45\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.5rem\n    fontWeight: 700\n    lineHeight: 1.45\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.1rem\n    fontWeight: 700\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.35rem\n    fontWeight: 700\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.15rem\n    fontWeight: 400\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 18px\n    fontWeight: 400\n    lineHeight: 1.45\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 21px\n    fontWeight: 400\n    lineHeight: 1.45\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 0.95rem\n    fontWeight: 400\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: 1.6rem\n    fontWeight: 800\nrounded:\n  sm: 4px\n  md: 8px\n  lg: 10px\n  xl: 14px\nspacing:\n  xs: 4px\n  sm: 8px\n  md: 12px\n  lg: 16px\n  xl: 24px\n  xxl: 32px\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n    padding: 16px\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: 104px\n    padding: 16px\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: 48px\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: 64px\n    padding: 12px\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: 64px\n    padding: 12px\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: 4px\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: 12px\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: 16px\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: 8px\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: 8px\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: 3px\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: 3px\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: 3px\n  borde-boton-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: 2px\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: 3px\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: 2px\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: 2px\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: 6px\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"\n",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#ffe9a8",
+                  "overrideTertiaryColor": "#8a6a00",
+                  "overrideNeutralColor": "#10190f",
+                  "spacingScale": 2,
+                  "typography": {
+                    "button-default": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.2"
+                    },
+                    "button-hero": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.2"
+                    },
+                    "headline-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "headline-question": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "body-lg": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "label-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.3"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.4"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.3"
+                    },
+                    "body-md": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "input-text": {
+                      "fontFamily": "Public Sans",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400",
+                      "lineHeight": "1.4"
+                    }
+                  },
+                  "spacing": {
+                    "gutter": "1rem",
+                    "space-sm": "8px",
+                    "space-lg": "16px",
+                    "space-md": "12px",
+                    "space-xxl": "32px",
+                    "space-xl": "24px",
+                    "space-xs": "4px",
+                    "margin": "1rem"
+                  },
+                  "headlineFontFamily": "Public Sans",
+                  "bodyFontFamily": "Public Sans",
+                  "labelFontFamily": "Public Sans"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la pantalla del primer paso del asistente para registrar la aplicación de un producto («¿Dónde lo has echado?»), siguiendo al pie de la letra las directrices del sistema **CUE Digital**:\n\n### Decisiones de diseño aplicadas:\n1. **Progreso y pregunta única**:\n   - Barra de pasos superior dividida en 4 segmentos (Paso 1 resaltado en verde de 8 px, sm 4 px).\n   - Título directo en tipografía `pregunta` (1.45 rem, negrita 800): **«¿Dónde lo has echado?»** con explicación clara y sin tecnicismos («Toca la parcela donde has aplicado el tratamiento hoy»).\n2. **Listado de parcelas para usar al sol y con una mano**:\n   - Tarjetas/botones grandes de más de 70 px de altura táctil con esquinas de 14 px.\n   - Jerarquía clara: nombre del paraje/parcela en negrita, dato de superficie destacado en una píldora legible («4,20 hectáreas») y el municipio correspondiente.\n   - Estado elegido con verde oscuro (`#1f4a2c`), texto blanco y el contorno de foco amarillo (`#ffd24a`) de 4 px para máxima visibilidad.\n3. **Acceso a grupos de parcelas**:\n   - Botón directo arriba para «Elegir por grupo de parcelas», pensado para cuando se trata una tanda entera de una sola vez.\n4. **Acciones inferiores**:\n   - Botón principal de avance («SIGUIENTE PASO →») en verde container con borde de 3 px de alto contraste.\n   - Botón claro inferior («DEJARLO Y VOLVER») con fondo suave para salir con tranquilidad sin miedo a perderse.\n   - Total ausencia de sombras, degradados o transparencias, asegurando nitidez bajo la luz directa del sol."
+    },
+    {
+      "suggestion": "Diseñar el paso 2: «¿Qué producto has echado?» con buscador y favoritos"
+    },
+    {
+      "suggestion": "Diseñar la pantalla de «Elegir por grupo de parcelas»"
+    },
+    {
+      "suggestion": "Diseñar el paso de confirmación y resumen final antes de guardar"
+    }
+  ]
+}

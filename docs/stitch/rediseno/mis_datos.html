@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" name="viewport"/>
+<title>Mis datos - CUE Digital Castilla y León</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#fbb3c0",
+            "tertiary-container": "#65323d",
+            "surface-container-lowest": "#ffffff",
+            "outline-variant": "#c1c9bf",
+            "surface": "#ffffff",
+            "secondary-fixed-dim": "#eac25a",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "inverse-surface": "#2f312e",
+            "on-secondary-container": "#3d2f00",
+            "primary-fixed": "#beeec5",
+            "on-error-container": "#93000a",
+            "tertiary": "#4a1c27",
+            "on-surface-variant": "#43503f",
+            "primary-dark": "#0d2b18",
+            "primary-overlay-border": "#8fae97",
+            "on-primary-container": "#8bb992",
+            "error-dark": "#5c110d",
+            "inverse-primary": "#a2d2aa",
+            "secondary-fixed": "#ffdf95",
+            "surface-dim": "#d9dad6",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "outline": "#a9b6a8",
+            "surface-container-highest": "#e2e3de",
+            "surface-bright": "#f9faf5",
+            "surface-variant": "#f4f6f3",
+            "error": "#8c1d18",
+            "surface-container": "#edeee9",
+            "on-surface": "#1a1c19",
+            "secondary-container": "#ffd56c",
+            "on-primary-fixed": "#00210c",
+            "on-secondary-fixed-variant": "#594400",
+            "error-container": "#fbe3e1",
+            "primary-container": "#2f6b40",
+            "on-tertiary-fixed": "#360c18",
+            "primary": "#043317",
+            "secondary": "#765a00",
+            "on-secondary-fixed": "#251a00",
+            "on-tertiary": "#ffffff",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-primary-fixed-variant": "#244f31",
+            "primary-overlay": "#3a6446",
+            "on-tertiary-container": "#e09ba8",
+            "focus": "#ffd24a",
+            "on-background": "#1a1c19",
+            "tertiary-fixed": "#ffd9de",
+            "surface-container-low": "#f3f4ef",
+            "background": "#f9faf5",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#3c6847",
+            "surface-container-high": "#e8e9e4",
+            "inverse-on-surface": "#f0f1ec"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "16px",
+            "space-xxl": "32px",
+            "space-md": "12px",
+            "space-xl": "24px",
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "margin": "16px",
+            "space-lg": "16px"
+          },
+          "fontFamily": {
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 28px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+    }
+    input:focus {
+      outline: 4px solid #ffd24a !important;
+      border-color: #043317 !important;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-cuerpo antialiased selection:bg-secondary-container selection:text-on-secondary-container min-h-screen flex flex-col pb-16">
+<!-- TOP APP BAR FIJA (SHARED COMPONENT JSON RIGID SPEC) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center h-16 px-gutter bg-primary dark:bg-primary-dark border-b-4 border-primary-container dark:border-primary-overlay-border">
+<button aria-label="Volver a la pantalla anterior" class="min-h-[48px] px-3 py-2 flex items-center gap-2 bg-primary-dark border-2 border-outline-variant text-on-primary rounded-lg text-boton font-boton active:scale-95 transition-transform" onclick="history.back()" type="button">
+<span class="material-symbols-outlined text-on-primary" data-icon="arrow_back">arrow_back</span>
+<span class="font-bold text-[18px]">VOLVER</span>
+</button>
+<h1 class="text-titulo font-titulo text-on-primary dark:text-on-primary tracking-wide text-center">
+      Mis datos
+    </h1>
+<button aria-label="Aumentar tamaño de letra para lectura al sol" class="min-h-[48px] px-3 py-2 flex items-center gap-1.5 bg-primary-dark border-2 border-outline-variant text-on-primary rounded-lg text-boton font-boton active:scale-95 transition-transform" id="font-toggle-btn" type="button">
+<span class="material-symbols-outlined text-on-primary" data-icon="text_increase">text_increase</span>
+<span class="font-bold text-[17px]">A+ Letra</span>
+</button>
+</header>
+<!-- CONTENIDO PRINCIPAL (OPTIMIZADO PARA SOL Y UNA MANO) -->
+<main class="w-full max-w-xl mx-auto px-gutter pt-20 flex-1 flex flex-col space-y-space-xl" id="main-content">
+<!-- AVISO DE COBERTURA / MODO OFFLINE SEGURO -->
+<div class="bg-surface-variant border-4 border-primary-container rounded-xl p-4 flex items-start gap-3" role="status">
+<div class="mt-0.5 shrink-0 bg-primary-container text-on-primary rounded-full p-1.5 flex items-center justify-center">
+<svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+<div>
+<p class="font-boton text-[19px] text-primary-dark leading-tight">
+          Funciona sin cobertura.
+        </p>
+<p class="text-[17px] text-on-surface-variant font-medium mt-1 leading-snug">
+          Tus datos se guardan en este teléfono de forma segura.
+        </p>
+</div>
+</div>
+<!-- TARJETA EXPLICATIVA PRINCIPAL -->
+<section class="bg-surface border-4 border-[#1f4a2c] rounded-xl p-space-lg">
+<div class="flex items-center gap-3 mb-2">
+<div class="bg-primary-container text-on-primary p-2 rounded-lg shrink-0">
+<svg aria-hidden="true" class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M4 4h16v16H4z"></path>
+<path d="M4 9h16"></path>
+<path d="M9 4v5"></path>
+</svg>
+</div>
+<h2 class="text-titulo font-titulo text-[#10190f]">
+          La primera hoja de tu cuaderno
+        </h2>
+</div>
+<p class="text-cuerpo text-on-surface-variant font-medium leading-relaxed mt-2">
+        Quién eres y cómo se llama tu explotación. Se rellena una sola vez y vale para toda la campaña: <strong>no hace falta mandarlo cada día</strong>.
+      </p>
+</section>
+<!-- ESTADO DE GUARDADO -->
+<div class="bg-surface-container-low border-3 border-primary-container rounded-xl p-4 flex items-center gap-3">
+<div class="shrink-0 text-primary-container">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+<polyline points="22 4 12 14.01 9 11.01"></polyline>
+</svg>
+</div>
+<p class="text-[18px] font-bold text-primary-dark">
+        Tus datos están guardados. La portada del cuaderno ya los lleva.
+      </p>
+</div>
+<!-- FORMULARIO: LOS ONCE RENGLONES OFICIALES -->
+<form class="space-y-space-xl" id="mis-datos-form" onsubmit="event.preventDefault(); alert('Tus datos han quedado guardados en este dispositivo.');">
+<!-- RENGLÓN 1 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-nombre">
+          1. ¿Cómo te llamas?
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Como viene en el cuaderno de la Junta o en la PAC.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-nombre" name="nombre_completo" required="" type="text" value="Manuel Ruiz Gómez"/>
+</div>
+<!-- RENGLÓN 2 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-nif">
+          2. Tu NIF
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Con la letra. Es lo que se compara con tu certificado al entrar.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none uppercase" id="campo-nif" name="nif" required="" type="text" value="12345678Z"/>
+</div>
+<!-- RENGLÓN 3 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-telefono">
+          3. Un teléfono
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Por si hay que avisarte de algo urgente del cuaderno o de una inspección.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-telefono" inputmode="tel" name="telefono" required="" type="tel" value="612 34 56 78"/>
+</div>
+<!-- RENGLÓN 4 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-email">
+          4. Tu correo electrónico
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Donde mandarte una copia del cuaderno si lo pides.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-email" inputmode="email" name="email" required="" type="email" value="manuel.ruiz.agricola@gmail.com"/>
+</div>
+<!-- RENGLÓN 5 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-direccion">
+          5. Dirección o pueblo donde vives
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          El domicilio que tienes puesto en los papeles del banco y la Junta.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-direccion" name="direccion" required="" type="text" value="Calle Mayor 14, 47100 Tordesillas (Valladolid)"/>
+</div>
+<!-- RENGLÓN 6 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-finca">
+          6. Nombre de tu explotación o finca
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Cómo llamas tú a tus tierras en conjunto.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-finca" name="nombre_explotacion" required="" type="text" value="Finca Las Suertes y El Prado"/>
+</div>
+<!-- RENGLÓN 7 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-pueblo">
+          7. Pueblo principal donde tienes las tierras
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          El término municipal donde están la mayoría de tus parcelas.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-pueblo" name="termino_municipal" required="" type="text" value="Tordesillas / Villalar de los Comuneros"/>
+</div>
+<!-- RENGLÓN 8 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-regepa">
+          8. Nº de registro de explotación (REGEPA)
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          El número de tu explotación agraria que viene en tu solicitud de la PAC.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none uppercase" id="campo-regepa" name="regepa" required="" type="text" value="ES471860004521"/>
+</div>
+<!-- RENGLÓN 9 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-nacional">
+          9. Nº de registro nacional (si lo tienes)
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Si no lo sabes o no te lo han dado, déjalo en blanco.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface placeholder:text-[#6b7280] placeholder:font-normal focus:ring-0 focus:outline-none" id="campo-nacional" name="registro_nacional" placeholder="Opcional: déjalo vacío si no lo sabes" type="text" value=""/>
+</div>
+<!-- RENGLÓN 10 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-carne">
+          10. Tu número de carné de aplicador
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          El que te dieron en el curso de fitosanitarios para poder sulfatar.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none uppercase" id="campo-carne" name="numero_carne" required="" type="text" value="47-CAL-04892"/>
+</div>
+<!-- RENGLÓN 11 -->
+<div class="space-y-2">
+<label class="block font-pregunta text-pregunta text-[#10190f]" for="campo-validez">
+          11. Fecha de validez del carné
+        </label>
+<p class="text-pista text-on-surface-variant text-[16px] leading-snug">
+          Hasta qué día puedes echar producto sin tener que renovar el carné.
+        </p>
+<input class="w-full min-h-[64px] border-2 border-outline rounded-xl px-4 text-[19px] font-bold bg-surface text-on-surface focus:ring-0 focus:outline-none" id="campo-validez" name="validez_carne" required="" type="text" value="18/06/2029"/>
+<!-- Indicador amigable en regla -->
+<div class="inline-flex items-center gap-2 bg-surface-container border-2 border-[#1f4a2c] px-3 py-2 rounded-lg">
+<svg aria-hidden="true" class="w-5 h-5 text-primary-dark" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+<span class="text-[17px] font-bold text-primary-dark">En regla hasta 2029</span>
+</div>
+</div>
+<!-- BOTÓN DE ACCIÓN ÚNICO PRINCIPAL -->
+<div class="pt-4">
+<button class="w-full min-h-[72px] bg-[#1f4a2c] border-4 border-[#0d2b18] text-white rounded-xl px-6 py-4 flex items-center justify-center gap-3 text-boton-principal font-boton-principal text-[20px] active:scale-95 transition-transform" type="submit">
+<svg aria-hidden="true" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+<polyline points="17 21 17 13 7 13 7 21"></polyline>
+<polyline points="7 3 7 8 15 8"></polyline>
+</svg>
+<span>GUARDAR MIS DATOS</span>
+</button>
+</div>
+</form>
+<!-- SEPARADOR ESTRUCTURAL DE ALTO CONTRASTE -->
+<hr class="border-t-4 border-outline my-8"/>
+<!-- SECCIÓN DE NAVEGACIÓN SECUNDARIA -->
+<section aria-label="Otras gestiones de la explotación" class="space-y-4">
+<!-- BOTÓN: QUIÉN ENTRA EN MI FINCA -->
+<a class="w-full min-h-[64px] bg-white border-4 border-[#1f4a2c] text-[#10190f] rounded-xl p-4 flex items-start gap-4 active:scale-95 transition-transform block" href="#">
+<div class="shrink-0 text-[#1f4a2c] mt-0.5">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+<circle cx="9" cy="7" r="4"></circle>
+<path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[19px] text-primary-dark">QUIÉN ENTRA EN MI FINCA</span>
+<svg aria-hidden="true" class="w-6 h-6 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</div>
+<p class="text-[16px] text-on-surface-variant font-medium mt-1 leading-snug">
+            Apuntar asesor, aplicador o tratante que te ayuda en las tierras.
+          </p>
+</div>
+</a>
+<!-- BOTÓN: VOLVER AL INICIO -->
+<button class="w-full min-h-[64px] bg-[#f4f6f3] border-4 border-[#a9b6a8] text-[#1f4a2c] rounded-xl px-4 py-3 flex items-center justify-center gap-3 font-boton text-[19px] active:scale-95 transition-transform" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" type="button">
+<svg aria-hidden="true" class="w-6 h-6 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+<span class="font-bold">VOLVER AL INICIO</span>
+</button>
+</section>
+<!-- PIE DE PÁGINA INSTITUCIONAL DE CAMPO -->
+<footer class="pt-6 pb-4 text-center">
+<div class="border-2 border-outline-variant bg-surface-container-low rounded-lg p-3">
+<p class="text-[15px] font-bold text-primary-dark leading-snug">
+          CUE Digital · Junta de Castilla y León
+        </p>
+<p class="text-[14px] text-on-surface-variant mt-0.5">
+          Diseñado para trabajar al sol, con una mano y sin cobertura.
+        </p>
+</div>
+</footer>
+</main>
+<script>
+    // Micro-interacción: Botón A+ para agricultores que necesiten agrandar tipografía al sol
+    const fontToggleBtn = document.getElementById('font-toggle-btn');
+    const mainContent = document.getElementById('main-content');
+    let isEnlarged = false;
+
+    if (fontToggleBtn && mainContent) {
+      fontToggleBtn.addEventListener('click', () => {
+        isEnlarged = !isEnlarged;
+        if (isEnlarged) {
+          mainContent.style.fontSize = '120%';
+          fontToggleBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+        } else {
+          mainContent.style.fontSize = '';
+          fontToggleBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+        }
+      });
+    }
+  </script>
+</body></html>

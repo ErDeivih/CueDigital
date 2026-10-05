@@ -1,0 +1,142 @@
+{
+ "nombre": "cod_uso_sigpac",
+ "descripcion": "Lista de códigos de Uso de Recintos SIGPAC.",
+ "codigos": [
+  {
+   "codigo": "AG",
+   "descripcion": "CORRIENTES Y SUPERFICIES DE AGUA"
+  },
+  {
+   "codigo": "CA",
+   "descripcion": "VIALES"
+  },
+  {
+   "codigo": "CF",
+   "descripcion": "Asociación Cítricos-Frutales"
+  },
+  {
+   "codigo": "CI",
+   "descripcion": "CITRICOS"
+  },
+  {
+   "codigo": "CO",
+   "descripcion": "CONTORNO OLIVAR"
+  },
+  {
+   "codigo": "CS",
+   "descripcion": "Asociación Cítricos-Frutales de cáscara"
+  },
+  {
+   "codigo": "CV",
+   "descripcion": "Asociación Cítricos-Viñedo"
+  },
+  {
+   "codigo": "ED",
+   "descripcion": "EDIFICACIONES"
+  },
+  {
+   "codigo": "EP",
+   "descripcion": "ELEMENTO DEL PAISAJE"
+  },
+  {
+   "codigo": "FF",
+   "descripcion": "Asociación Frutales-Frutales de cáscara"
+  },
+  {
+   "codigo": "FL",
+   "descripcion": "FRUTOS SECOS Y OLIVAR"
+  },
+  {
+   "codigo": "FO",
+   "descripcion": "FORESTAL"
+  },
+  {
+   "codigo": "FS",
+   "descripcion": "FRUTOS SECOS"
+  },
+  {
+   "codigo": "FV",
+   "descripcion": "FRUTOS SECOS Y VIÑEDO"
+  },
+  {
+   "codigo": "FY",
+   "descripcion": "FRUTALES"
+  },
+  {
+   "codigo": "IM",
+   "descripcion": "IMPRODUCTIVOS"
+  },
+  {
+   "codigo": "IS",
+   "descripcion": "ISLAS"
+  },
+  {
+   "codigo": "IV",
+   "descripcion": "INVERNADEROS Y CULTIVOS BAJO PLASTICO"
+  },
+  {
+   "codigo": "MT",
+   "descripcion": "MATORRAL"
+  },
+  {
+   "codigo": "OC",
+   "descripcion": "Asociación Olivar-Cítricos"
+  },
+  {
+   "codigo": "OF",
+   "descripcion": "OLIVAR -  FRUTAL"
+  },
+  {
+   "codigo": "OP",
+   "descripcion": "Otros cultivos Permanentes"
+  },
+  {
+   "codigo": "OV",
+   "descripcion": "OLIVAR"
+  },
+  {
+   "codigo": "PA",
+   "descripcion": "PASTO CON ARBOLADO"
+  },
+  {
+   "codigo": "PR",
+   "descripcion": "PASTO ARBUSTIVO"
+  },
+  {
+   "codigo": "PS",
+   "descripcion": "PASTIZAL"
+  },
+  {
+   "codigo": "TA",
+   "descripcion": "TIERRAS ARABLES"
+  },
+  {
+   "codigo": "TH",
+   "descripcion": "HUERTA"
+  },
+  {
+   "codigo": "VF",
+   "descripcion": "VIÑEDO - FRUTAL"
+  },
+  {
+   "codigo": "VI",
+   "descripcion": "VIÑEDO"
+  },
+  {
+   "codigo": "VO",
+   "descripcion": "VIÑEDO - OLIVAR"
+  },
+  {
+   "codigo": "ZC",
+   "descripcion": "ZONA CONCENTRADA NO INCLUIDA EN LA ORTOF"
+  },
+  {
+   "codigo": "ZU",
+   "descripcion": "ZONA URBANA"
+  },
+  {
+   "codigo": "ZV",
+   "descripcion": "ZONA CENSURADA"
+  }
+ ]
+}

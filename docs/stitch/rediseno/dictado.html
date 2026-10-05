@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dímelo con la voz - CUE Digital</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #ffffff;
+      color: #10190f;
+      line-height: 1.45;
+      font-size: 18px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Contenedor centralizado para móvil */
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #d9dad6;
+      border-right: 1px solid #d9dad6;
+      position: relative;
+    }
+
+    /* Cabecera verde fija */
+    header.top-bar {
+      background-color: #1f4a2c;
+      color: #ffffff;
+      height: 64px;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 3px solid #0d2b18;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .btn-header-back {
+      background-color: #3a6446;
+      border: 2px solid #8fae97;
+      color: #ffffff;
+      height: 48px;
+      padding: 0 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-header-textsize {
+      background-color: #3a6446;
+      border: 2px solid #8fae97;
+      color: #ffffff;
+      height: 48px;
+      padding: 0 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    /* Contenido principal */
+    main.content {
+      padding: 16px 12px 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Aviso de funcionamiento sin cobertura */
+    .offline-notice {
+      background-color: #f4f6f3;
+      border: 2px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      color: #10190f;
+    }
+    .offline-notice svg {
+      flex-shrink: 0;
+      color: #1f4a2c;
+    }
+
+    /* Caja de introducción clara */
+    .intro-card {
+      background-color: #ffffff;
+      border: 3px solid #1f4a2c;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .intro-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #10190f;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .intro-desc {
+      font-size: 18px;
+      color: #10190f;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    .intro-guarantee {
+      background-color: #ffe9a8;
+      border: 2px solid #8a6a00;
+      color: #3d2f00;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .intro-guarantee svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* EL BOTÓN GRANDE DE HABLAR */
+    .voice-action-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-voice-master {
+      width: 100%;
+      min-height: 104px;
+      background-color: #2f6b40;
+      border: 3px solid #0d2b18;
+      border-radius: 14px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.1s;
+    }
+
+    .btn-voice-master:focus {
+      outline: 4px solid #ffd24a;
+      outline-offset: 2px;
+    }
+
+    .btn-voice-master.listening {
+      background-color: #8c1d18;
+      border-color: #5c110d;
+    }
+
+    .btn-voice-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-voice-icon svg {
+      width: 44px;
+      height: 44px;
+      display: block;
+    }
+
+    .btn-voice-text-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+
+    .btn-voice-subhint {
+      font-size: 16px;
+      font-weight: 400;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+
+    /* Estados informativos de voz (cuando escucha o no hay voz) */
+    .voice-feedback-banner {
+      display: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 18px;
+      line-height: 1.4;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .voice-feedback-banner.listening-banner {
+      background-color: #ffe9a8;
+      border: 2px solid #8a6a00;
+      color: #3d2f00;
+      font-weight: 600;
+    }
+
+    .voice-feedback-banner.error-banner {
+      background-color: #fbe3e1;
+      border: 2px solid #8c1d18;
+      color: #4a0f0b;
+    }
+
+    .voice-feedback-banner.fallback-banner {
+      background-color: #f4f6f3;
+      border: 2px solid #a9b6a8;
+      color: #10190f;
+    }
+
+    /* Caja de texto para lo escuchado y arreglarlo a mano */
+    .dictation-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dictation-label-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dictation-label {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #10190f;
+    }
+
+    .dictation-instruction {
+      font-size: 16px;
+      color: #43503f;
+    }
+
+    .dictation-textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 1.15rem;
+      color: #10190f;
+      background-color: #ffffff;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      line-height: 1.45;
+      resize: vertical;
+      display: block;
+    }
+
+    .dictation-textarea:focus {
+      outline: 4px solid #ffd24a;
+      border-color: #1f4a2c;
+    }
+
+    /* Frase de ejemplo */
+    .example-box {
+      background-color: #f4f6f3;
+      border-left: 6px solid #2f6b40;
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .example-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1f4a2c;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .example-quote {
+      font-size: 18px;
+      color: #10190f;
+      font-style: italic;
+    }
+
+    .example-apply-btn {
+      align-self: flex-start;
+      margin-top: 6px;
+      background-color: #ffffff;
+      border: 2px solid #2f6b40;
+      color: #1f4a2c;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Acciones finales al pie */
+    .bottom-actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 2px solid #f4f6f3;
+    }
+
+    .btn-action-primary {
+      width: 100%;
+      min-height: 68px;
+      background-color: #2f6b40;
+      border: 3px solid #0d2b18;
+      border-radius: 14px;
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .btn-action-primary:focus {
+      outline: 4px solid #ffd24a;
+    }
+
+    .btn-action-secondary {
+      width: 100%;
+      min-height: 64px;
+      background-color: #f4f6f3;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      color: #1f4a2c;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-action-secondary:focus {
+      outline: 4px solid #ffd24a;
+    }
+
+    /* Pie discreto */
+    footer.app-footer {
+      padding: 16px 12px 24px 12px;
+      text-align: center;
+      font-size: 15px;
+      color: #43503f;
+      border-top: 1px solid #d9dad6;
+      background-color: #f4f6f3;
+    }
+
+    /* Modal / Simulador de estado para pruebas fáciles */
+    .status-toggle-bar {
+      background-color: #e6eae4;
+      border: 1px dashed #8fae97;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #43503f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .status-toggle-bar span {
+      font-weight: 600;
+    }
+    .toggle-chip {
+      background: #ffffff;
+      border: 1px solid #a9b6a8;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f4a2c;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Cabecera fija sin menús ni pestañas -->
+    <header class="top-bar">
+      <button class="btn-header-back" onclick="window.history.back()" aria-label="Volver a la pantalla anterior">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <span>VOLVER</span>
+      </button>
+
+      <span class="header-title">CUE Digital</span>
+
+      <button class="btn-header-textsize" id="btnToggleLetra" onclick="toggleTextSize()" aria-label="Agrandar o reducir letra">
+        <span style="font-size: 18px; font-weight: 800;">A+</span>
+        <span style="font-size: 13px;">Letra</span>
+      </button>
+    </header>
+
+    <main class="content">
+
+      <!-- Aviso al agricultor de que funciona sin cobertura -->
+      <div class="offline-notice">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <div>
+          <strong>Funciona sin cobertura.</strong> No necesitas internet en la parcela para hablar ni para apuntar.
+        </div>
+      </div>
+
+      <!-- Explicación franca del trato -->
+      <div class="intro-card">
+        <h1 class="intro-title">Dímelo con la voz</h1>
+        <p class="intro-desc">
+          Cuéntame lo que has hecho con tus palabras normales.
+        </p>
+        <div class="intro-guarantee">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong>Trato claro:</strong> Lo que la máquina no entienda se queda en blanco. Nada se apunta en tu cuaderno sin que tú lo veas primero en pantalla.
+          </div>
+        </div>
+      </div>
+
+      <!-- EL BOTÓN GRANDE DE HABLAR / PARAR -->
+      <div class="voice-action-area">
+        <button id="btnVoiceMaster" class="btn-voice-master" onclick="toggleListening()">
+          <div class="btn-voice-content">
+            <div class="btn-voice-icon" id="micIconBox">
+              <!-- Micrófono dibujado SVG nítido -->
+              <svg id="svgMic" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <!-- Cuadrado de PARAR SVG cuando está escuchando -->
+              <svg id="svgStop" style="display:none;" width="44" height="44" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+              </svg>
+            </div>
+            <div style="text-align: left;">
+              <div class="btn-voice-text-title" id="voiceBtnTitle">HABLAR</div>
+              <div class="btn-voice-subhint" id="voiceBtnSubtitle">Toca aquí y cuéntamelo con tus palabras</div>
+            </div>
+          </div>
+        </button>
+
+        <!-- Banner reactivo: Te escucho -->
+        <div id="listeningBanner" class="voice-feedback-banner listening-banner">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <div>
+            <strong>Te escucho…</strong> Di qué has echado, en qué tierra y cuándo, y pulsa <strong>PARAR</strong> al terminar.
+          </div>
+        </div>
+
+        <!-- Banner reactivo: No he oído nada -->
+        <div id="noAudioBanner" class="voice-feedback-banner error-banner">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong>No he oído nada.</strong> Prueba otra vez pulsando el botón verde, o escríbelo en el recuadro de abajo.
+          </div>
+        </div>
+
+        <!-- Banner reactivo: El navegador no sabe escuchar -->
+        <div id="notSupportedBanner" class="voice-feedback-banner fallback-banner">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div>
+            <strong>Este navegador no sabe escuchar.</strong> Escribe lo que has hecho en el recuadro y lo entiendo exactamente igual.
+          </div>
+        </div>
+      </div>
+
+      <!-- Hueco de texto visible para leer, arreglar o escribir directamente -->
+      <div class="dictation-container">
+        <div class="dictation-label-row">
+          <label for="campoTexto" class="dictation-label">Escribe lo que has hecho</label>
+          <span class="dictation-instruction">Aquí queda escrito lo que hables. Puedes cambiar o añadir letras con el dedo.</span>
+        </div>
+
+        <textarea 
+          id="campoTexto" 
+          class="dictation-textarea" 
+          placeholder="Toca el botón HABLAR arriba o escribe aquí directamente..."
+          rows="4"
+        >Ayer por la tarde eché el tebuconazol en El Prado, a dos litros por hectárea con el tractor nuevo</textarea>
+      </div>
+
+      <!-- Ejemplo real de campo castellano -->
+      <div class="example-box">
+        <div class="example-header">Por ejemplo:</div>
+        <div class="example-quote">«Hoy he echado dos litros en el prado, había pulgón»</div>
+        <button type="button" class="example-apply-btn" onclick="useExampleText()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>Poner este ejemplo en el recuadro</span>
+        </button>
+      </div>
+
+      <!-- Pequeños botones para comprobar los 3 estados requeridos por el usuario -->
+      <div class="status-toggle-bar">
+        <span>Simular para ver:</span>
+        <button class="toggle-chip" onclick="simularEstado('escuchando')">Escuchando</button>
+        <button class="toggle-chip" onclick="simularEstado('no_oido')">No ha oído</button>
+        <button class="toggle-chip" onclick="simularEstado('sin_soporte')">Sin soporte</button>
+        <button class="toggle-chip" onclick="simularEstado('normal')">Normal</button>
+      </div>
+
+      <!-- Botones de Acción al pie: ENTENDERLO y VOLVER -->
+      <div class="bottom-actions">
+        <button class="btn-action-primary" onclick="procesarEntendimiento()">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>ENTENDERLO</span>
+        </button>
+
+        <button class="btn-action-secondary" onclick="window.history.back()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>VOLVER</span>
+        </button>
+      </div>
+
+    </main>
+
+    <footer class="app-footer">
+      <strong>CUE Digital</strong> · Junta de Castilla y León<br>
+      Diseñado para trabajar al sol, con una mano y sin cobertura
+    </footer>
+
+  </div>
+
+  <script>
+    var isListening = false;
+    var recognition = null;
+    var hasRecognitionSupport = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+
+    // Preparar reconocimiento de voz nativo si está disponible
+    if (hasRecognitionSupport) {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onresult = function(event) {
+        var transcript = '';
+        for (var i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim() !== '') {
+          document.getElementById('campoTexto').value = transcript;
+          hideAllBanners();
+        }
+      };
+
+      recognition.onerror = function(event) {
+        setListeningState(false);
+        if (event.error === 'no-speech') {
+          showBanner('noAudioBanner');
+        }
+      };
+
+      recognition.onend = function() {
+        if (isListening) {
+          setListeningState(false);
+        }
+      };
+    }
+
+    function toggleListening() {
+      if (!hasRecognitionSupport) {
+        showBanner('notSupportedBanner');
+        return;
+      }
+
+      if (isListening) {
+        // Detener escucha
+        setListeningState(false);
+        if (recognition) recognition.stop();
+      } else {
+        // Comenzar a escuchar
+        hideAllBanners();
+        setListeningState(true);
+        try {
+          if (recognition) recognition.start();
+        } catch(e) {
+          // Ya activo
+        }
+      }
+    }
+
+    function setListeningState(listening) {
+      isListening = listening;
+      var btn = document.getElementById('btnVoiceMaster');
+      var title = document.getElementById('voiceBtnTitle');
+      var subtitle = document.getElementById('voiceBtnSubtitle');
+      var svgMic = document.getElementById('svgMic');
+      var svgStop = document.getElementById('svgStop');
+      var listeningBanner = document.getElementById('listeningBanner');
+
+      if (listening) {
+        btn.classList.add('listening');
+        title.innerText = 'PARAR';
+        subtitle.innerText = 'Pulsa para dejar de escuchar';
+        svgMic.style.display = 'none';
+        svgStop.style.display = 'block';
+        listeningBanner.style.display = 'flex';
+      } else {
+        btn.classList.remove('listening');
+        title.innerText = 'HABLAR';
+        subtitle.innerText = 'Toca aquí y cuéntamelo con tus palabras';
+        svgMic.style.display = 'block';
+        svgStop.style.display = 'none';
+        listeningBanner.style.display = 'none';
+      }
+    }
+
+    function hideAllBanners() {
+      document.getElementById('listeningBanner').style.display = 'none';
+      document.getElementById('noAudioBanner').style.display = 'none';
+      document.getElementById('notSupportedBanner').style.display = 'none';
+    }
+
+    function showBanner(id) {
+      hideAllBanners();
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function useExampleText() {
+      document.getElementById('campoTexto').value = 'Hoy he echado dos litros en el prado, había pulgón';
+      hideAllBanners();
+      document.getElementById('campoTexto').focus();
+    }
+
+    function procesarEntendimiento() {
+      var texto = document.getElementById('campoTexto').value.trim();
+      if (!texto) {
+        showBanner('noAudioBanner');
+        return;
+      }
+      // Simula el paso a la pantalla de "Lo que he entendido" (SCREEN_8 en el sistema)
+      alert("Procesando lo que has dicho para mostrarte qué datos se rellenan antes de guardar en tu cuaderno.");
+    }
+
+    function toggleTextSize() {
+      var currentSize = parseFloat(window.getComputedStyle(document.body).fontSize);
+      if (currentSize <= 19) {
+        document.body.style.fontSize = '22px';
+        document.getElementById('btnToggleLetra').style.backgroundColor = '#ffd24a';
+        document.getElementById('btnToggleLetra').style.color = '#10190f';
+        document.getElementById('btnToggleLetra').style.borderColor = '#8a6a00';
+      } else {
+        document.body.style.fontSize = '18px';
+        document.getElementById('btnToggleLetra').style.backgroundColor = '#3a6446';
+        document.getElementById('btnToggleLetra').style.color = '#ffffff';
+        document.getElementById('btnToggleLetra').style.borderColor = '#8fae97';
+      }
+    }
+
+    // Función didáctica para que el evaluador pueda ver los estados requeridos en la misma pantalla
+    function simularEstado(estado) {
+      if (estado === 'escuchando') {
+        setListeningState(true);
+      } else if (estado === 'no_oido') {
+        setListeningState(false);
+        showBanner('noAudioBanner');
+      } else if (estado === 'sin_soporte') {
+        setListeningState(false);
+        showBanner('notSupportedBanner');
+      } else {
+        setListeningState(false);
+        hideAllBanners();
+      }
+    }
+  </script>
+</body>
+</html>

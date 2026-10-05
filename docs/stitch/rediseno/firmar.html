@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Firmar Cuaderno - CUE Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#10190f",
+            "primary-overlay-border": "#8fae97",
+            "surface-container-high": "#e8e9e4",
+            "primary-overlay": "#3a6446",
+            "on-tertiary-fixed": "#360c18",
+            "surface-tint": "#3c6847",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "focus": "#ffd24a",
+            "outline-variant": "#c1c9bf",
+            "error-container": "#fbe3e1",
+            "secondary-fixed": "#ffdf95",
+            "surface-bright": "#f9faf5",
+            "on-background": "#1a1c19",
+            "primary": "#043317",
+            "inverse-primary": "#a2d2aa",
+            "surface-container-low": "#f3f4ef",
+            "primary-fixed": "#beeec5",
+            "on-surface-variant": "#414941",
+            "background": "#f9faf5",
+            "secondary": "#765a00",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "inverse-surface": "#2f312e",
+            "on-primary-fixed-variant": "#244f31",
+            "tertiary-fixed": "#ffd9de",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "error-dark": "#5c110d",
+            "secondary-container": "#ffd56c",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e2e3de",
+            "on-secondary-fixed-variant": "#594400",
+            "surface-container": "#edeee9",
+            "secondary-fixed-dim": "#eac25a",
+            "on-primary-fixed": "#00210c",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#775b00",
+            "primary-container": "#1f4a2c",
+            "on-secondary-fixed": "#251a00",
+            "error": "#8c1d18",
+            "inverse-on-surface": "#f0f1ec",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "on-primary-container": "#8bb992",
+            "tertiary-container": "#65323d",
+            "tertiary": "#4a1c27",
+            "primary-dark": "#0d2b18",
+            "outline": "#a9b6a8",
+            "on-tertiary-container": "#e09ba8",
+            "surface-dim": "#d9dad6",
+            "surface": "#ffffff",
+            "surface-container-highest": "#e2e3de"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "24px",
+            "space-sm": "8px",
+            "gutter": "16px",
+            "space-xs": "4px",
+            "space-md": "12px",
+            "space-lg": "16px",
+            "space-xxl": "32px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "pista": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "dato-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton-principal": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "campo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "pregunta": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "titulo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"]
+          },
+          "fontSize": {
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-cuerpo text-cuerpo select-none">
+<!-- CABECERA SUPERIOR FIJA (SHARED COMPONENT: TopAppBar) -->
+<header class="sticky top-0 z-50 bg-primary-container text-on-primary flex justify-between items-center w-full px-space-lg h-20 min-h-[64px] border-b-4 border-on-surface">
+<!-- Botón Volver Izquierda -->
+<button aria-label="Volver a la pantalla anterior" class="h-12 px-3 flex items-center gap-2 bg-primary-dark text-on-primary font-boton text-boton rounded border-2 border-primary-overlay-border active:bg-primary focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<svg aria-hidden="true" class="w-6 h-6 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<line x1="19" x2="5" y1="12" y2="12"></line>
+<polyline points="12 19 5 12 12 5"></polyline>
+</svg>
+<span>VOLVER</span>
+</button>
+<!-- Título Central -->
+<h1 class="text-titulo font-titulo text-on-primary text-center px-2 truncate">
+      Firmar Cuaderno
+    </h1>
+<!-- Botón Accesibilidad Derecha -->
+<button aria-label="Aumentar tamaño de letra" class="h-12 px-3 flex items-center justify-center bg-primary-dark text-on-primary font-boton text-boton rounded border-2 border-primary-overlay-border active:bg-primary focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<span class="tracking-tight text-boton-principal font-bold">A+ Letra</span>
+</button>
+</header>
+<!-- CONTENIDO PRINCIPAL SCROLLABLE (PENSADO PARA EL CAMPO Y LUZ DIRECTA) -->
+<main class="flex-1 w-full max-w-xl mx-auto px-space-lg py-space-xl flex flex-col gap-space-xl">
+<!-- INDICADOR SUPERIOR DE TRABAJO SIN COBERTURA -->
+<section class="bg-surface border-4 border-primary p-space-lg rounded flex items-start gap-space-md" role="status">
+<div class="flex-shrink-0 mt-0.5">
+<svg aria-hidden="true" class="w-8 h-8 text-primary stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<polyline points="9 12 11 14 15 10"></polyline>
+</svg>
+</div>
+<div>
+<p class="font-boton text-boton text-primary leading-tight">
+          Funciona sin cobertura
+        </p>
+<p class="text-cuerpo font-cuerpo text-on-surface mt-1">
+          Los datos y las firmas se guardan en el teléfono.
+        </p>
+</div>
+</section>
+<!-- BLOQUE 1: ¿QUÉ ES FIRMAR Y PARA QUÉ SIRVE? -->
+<section class="bg-surface-container-lowest border-4 border-outline p-space-lg rounded flex flex-col gap-space-md">
+<div class="flex items-center gap-space-md border-b-2 border-outline-variant pb-space-sm">
+<svg aria-hidden="true" class="w-7 h-7 text-primary flex-shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+<polyline points="14 2 14 8 20 8"></polyline>
+<line x1="16" x2="8" y1="13" y2="13"></line>
+<line x1="16" x2="8" y1="17" y2="17"></line>
+<polyline points="10 9 9 9 8 9"></polyline>
+</svg>
+<h2 class="text-pregunta font-pregunta text-on-surface leading-tight">
+          ¿Qué es firmar y para qué sirve?
+        </h2>
+</div>
+<div class="flex flex-col gap-space-md pt-space-xs">
+<div class="bg-surface-container-low p-space-md border-l-4 border-primary">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<strong class="font-boton text-on-surface">Firmar</strong> es lo que hace que el cuaderno valga delante de la administración: queda claro quién lo ha hecho y que nadie lo ha cambiado después.
+          </p>
+</div>
+<div class="bg-surface-container-low p-space-md border-l-4 border-primary-container">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<strong class="font-boton text-on-surface">¿Para qué te sirve?</strong> Para poder enseñarlo delante de quien te lo pida en cualquier inspección o trámite oficial.
+          </p>
+</div>
+</div>
+</section>
+<!-- BLOQUE 2: ESTADO ACTUAL DEL CUADERNO -->
+<section class="bg-surface border-4 border-primary-dark p-space-lg rounded flex flex-col gap-space-lg">
+<div>
+<span class="inline-block bg-primary-fixed text-on-primary-fixed font-boton text-pista px-space-md py-1 rounded mb-space-sm uppercase">
+          Estado actual
+        </span>
+<p class="text-dato-grande font-dato-grande text-on-surface leading-snug">
+          Todavía no has firmado el cuaderno de este año.
+        </p>
+<p class="text-cuerpo-grande font-cuerpo-grande text-on-surface-variant font-bold mt-1">
+          Puedes firmarlo ahora.
+        </p>
+</div>
+<!-- BOTÓN PRINCIPAL GIGANTE (104px alto, fondo #2f6b40 / primary-overlay, borde 3px #0d2b18) -->
+<button class="w-full min-h-[104px] bg-[#2f6b40] text-on-primary border-[3px] border-primary-dark rounded-lg p-space-md flex items-center justify-start gap-space-lg text-left active:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<div class="flex-shrink-0 bg-primary-dark text-on-primary p-3 rounded-full flex items-center justify-center">
+<svg aria-hidden="true" class="w-10 h-10 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+<path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+<path d="M2 2l7.586 7.586"></path>
+<circle cx="11" cy="11" r="2"></circle>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="text-boton-principal font-boton-principal uppercase tracking-wide leading-none mb-1">
+            FIRMAR EL CUADERNO
+          </span>
+<span class="text-cuerpo font-cuerpo text-primary-fixed opacity-95">
+            Deja tu firma oficial para la campaña 2026
+          </span>
+</div>
+</button>
+</section>
+<!-- BLOQUE 3: LOS TRES PASOS -->
+<section class="flex flex-col gap-space-lg">
+<h2 class="text-pregunta font-pregunta text-on-surface px-1">
+        Pasos para firmar
+      </h2>
+<!-- PASO 1 -->
+<div class="bg-surface border-4 border-on-surface p-space-lg rounded flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="w-10 h-10 rounded-full bg-primary text-on-primary font-dato-grande flex items-center justify-center text-center">1</span>
+<h3 class="text-titulo font-titulo text-on-surface">Descarga este fichero</h3>
+</div>
+<p class="text-cuerpo font-cuerpo text-on-surface">
+          Baja el archivo oficial del cuaderno preparado para firmar.
+        </p>
+<!-- Botón Táctil Descargar (>64px, fondo blanco, borde 3px verde oscuro) -->
+<button class="w-full min-h-[64px] bg-surface text-primary border-[3px] border-primary-dark rounded font-boton text-boton flex items-center justify-center gap-space-md px-space-lg py-3 active:bg-surface-container-high focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+<polyline points="7 10 12 15 17 10"></polyline>
+<line x1="12" x2="12" y1="15" y2="3"></line>
+</svg>
+<span class="uppercase">DESCARGAR EL FICHERO</span>
+</button>
+<!-- Nota de estado actual visible -->
+<div class="bg-primary-fixed border-2 border-primary p-space-md rounded flex items-center gap-space-md mt-1">
+<svg aria-hidden="true" class="w-6 h-6 text-primary flex-shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+<p class="text-cuerpo font-cuerpo text-on-primary-fixed font-bold">
+            Ya tienes el fichero. Ábrelo con AutoFirma y firma.
+          </p>
+</div>
+</div>
+<!-- PASO 2 -->
+<div class="bg-surface border-4 border-on-surface p-space-lg rounded flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="w-10 h-10 rounded-full bg-primary text-on-primary font-dato-grande flex items-center justify-center text-center">2</span>
+<h3 class="text-titulo font-titulo text-on-surface">Fírmalo con AutoFirma</h3>
+</div>
+<p class="text-cuerpo font-cuerpo text-on-surface">
+          AutoFirma es el programa que usa la administración para firmar. Si no lo tienes, se descarga gratis de la web del Gobierno.
+        </p>
+<!-- Recuadro informativo claro -->
+<div class="bg-surface-container-low border-2 border-outline p-space-md rounded flex items-start gap-space-md">
+<svg aria-hidden="true" class="w-7 h-7 text-secondary flex-shrink-0 stroke-[2.5] mt-0.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+<div class="text-cuerpo font-cuerpo text-on-surface">
+            Recuerda que AutoFirma se ejecuta en una aplicación aparte. Solo tienes que seleccionar el fichero descargado y aceptar.
+          </div>
+</div>
+</div>
+<!-- PASO 3 -->
+<div class="bg-surface border-4 border-on-surface p-space-lg rounded flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="w-10 h-10 rounded-full bg-primary text-on-primary font-dato-grande flex items-center justify-center text-center">3</span>
+<h3 class="text-titulo font-titulo text-on-surface">Sube aquí la firma</h3>
+</div>
+<p class="text-cuerpo font-cuerpo text-on-surface">
+          Cuando hayas firmado el archivo, súbelo aquí para que quede guardado en tu móvil.
+        </p>
+<!-- Botón Táctil Subir (>64px, fondo verde #2f6b40, texto blanco) -->
+<button class="w-full min-h-[64px] bg-[#2f6b40] text-on-primary border-[3px] border-primary-dark rounded font-boton text-boton flex items-center justify-center gap-space-md px-space-lg py-3 active:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+<polyline points="17 8 12 3 7 8"></polyline>
+<line x1="12" x2="12" y1="3" y2="15"></line>
+</svg>
+<span class="uppercase">SUBIR LA FIRMA</span>
+</button>
+</div>
+</section>
+<!-- BLOQUE 4: CASOS ESPECIALES Y AVISOS CLAVE -->
+<section class="flex flex-col gap-space-md">
+<h2 class="text-pregunta font-pregunta text-on-surface px-1">
+        Avisos importantes
+      </h2>
+<!-- CASO 1: Si no tienes certificado digital -->
+<div class="bg-surface border-4 border-tertiary p-space-lg rounded flex items-start gap-space-md">
+<div class="flex-shrink-0 mt-1">
+<svg aria-hidden="true" class="w-8 h-8 text-tertiary stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-boton text-boton text-tertiary">
+            Si no tienes certificado digital
+          </h3>
+<p class="text-cuerpo font-cuerpo text-on-surface mt-1">
+            Para firmar hace falta que entres con tu certificado. Es lo que dice quién firma: sin él no se puede saber. Por eso no se muestra la opción directa de firma en el dispositivo si no está instalado.
+          </p>
+</div>
+</div>
+<!-- CASO 2: Si se cambia algo después de firmar (Ámbar #8a6a00 y amarillo claro #ffe9a8) -->
+<div class="bg-[#ffe9a8] border-4 border-[#8a6a00] p-space-lg rounded flex items-start gap-space-md">
+<div class="flex-shrink-0 mt-1">
+<svg aria-hidden="true" class="w-8 h-8 text-[#8a6a00] stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+<line x1="12" x2="12" y1="9" y2="13"></line>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+</div>
+<div>
+<h3 class="font-boton text-boton text-[#4f3800] uppercase">
+            Aviso de modificación
+          </h3>
+<p class="text-cuerpo font-cuerpo text-[#251a00] font-medium mt-1">
+            Ojo: este cuaderno se firmó el 15 de marzo de 2026 por Manuel Ruiz Gómez, pero después se ha cambiado algo. La firma ya no vale para lo que hay ahora. Vuelve a firmarlo.
+          </p>
+</div>
+</div>
+<!-- CASO 3: Nota cuando no hay apuntes -->
+<div class="bg-surface-container-high border-2 border-outline-variant p-space-md rounded flex items-center gap-space-md">
+<svg aria-hidden="true" class="w-7 h-7 text-on-surface-variant flex-shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="8" y2="12"></line>
+<line x1="12" x2="12.01" y1="16" y2="16"></line>
+</svg>
+<p class="text-cuerpo font-cuerpo text-on-surface italic">
+          Todavía no hay nada apuntado este año, así que no hay nada que firmar.
+        </p>
+</div>
+</section>
+<!-- PARTE INFERIOR: BOTÓN VOLVER Y PIE -->
+<div class="mt-space-lg flex flex-col gap-space-xl">
+<!-- Botón secundario/claro ancho (>64px) -->
+<button class="w-full min-h-[64px] bg-surface text-on-surface border-[3px] border-on-surface rounded font-boton text-boton flex items-center justify-center gap-space-md px-space-lg active:bg-surface-variant focus:outline-none focus:ring-4 focus:ring-focus" type="button">
+<svg aria-hidden="true" class="w-6 h-6 stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<line x1="19" x2="5" y1="12" y2="12"></line>
+<polyline points="12 19 5 12 12 5"></polyline>
+</svg>
+<span class="uppercase">VOLVER</span>
+</button>
+<!-- Pie de página institucional de campo -->
+<footer class="text-center border-t-2 border-outline-variant pt-space-lg pb-space-xxl">
+<p class="font-boton text-pista text-on-surface-variant font-bold leading-normal">
+          CUE Digital · Junta de Castilla y León
+        </p>
+<p class="text-pista font-pista text-on-surface-variant mt-1">
+          Diseñado para trabajar al sol, con una mano y sin cobertura
+        </p>
+</footer>
+</div>
+</main>
+<script>
+    // Accesibilidad táctil: Aumentar tamaño de letra en campo
+    const accessibilityBtn = document.querySelector('button[aria-label="Aumentar tamaño de letra"]');
+    let isEnlarged = false;
+    
+    if (accessibilityBtn) {
+      accessibilityBtn.addEventListener('click', () => {
+        isEnlarged = !isEnlarged;
+        document.documentElement.style.fontSize = isEnlarged ? '120%' : '100%';
+        accessibilityBtn.setAttribute('aria-pressed', isEnlarged);
+      });
+    }
+  </script>
+</body></html>

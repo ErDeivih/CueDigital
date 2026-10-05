@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lámina de Componentes - CUE Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Estilos base alineados con DESIGN.md de CUE Digital */
+    :root {
+      --color-primary: #1f4a2c;
+      --color-primary-container: #2f6b40;
+      --color-primary-dark: #0d2b18;
+      --color-on-primary: #ffffff;
+      --color-surface: #ffffff;
+      --color-surface-variant: #f4f6f3;
+      --color-on-surface: #10190f;
+      --color-on-surface-variant: #43503f;
+      --color-outline: #a9b6a8;
+      --color-tertiary: #8a6a00;
+      --color-secondary-container: #ffe9a8;
+      --color-on-secondary-container: #3d2f00;
+      --color-error: #8c1d18;
+      --color-error-dark: #5c110d;
+      --color-error-container: #fbe3e1;
+      --color-on-error-container: #4a0f0b;
+      --color-focus: #ffd24a;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.45;
+      color: #10190f;
+      background-color: #f4f6f3;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Regla sagrada: sin sombras, sin degradados, separación con bordes gruesos */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    .borde-estricto {
+      border: 3px solid #1f4a2c;
+    }
+    .borde-campo {
+      border: 3px solid #a9b6a8;
+    }
+    .borde-aviso {
+      border: 3px solid #8a6a00;
+    }
+    .borde-error {
+      border: 3px solid #8c1d18;
+    }
+    .borde-focus {
+      outline: 4px solid #ffd24a;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex justify-center selection:bg-amber-200">
+
+  <!-- Contenedor centralizado para revisión en lámina (máx 44rem como marca DESIGN.md) -->
+  <main class="w-full max-w-[44rem] flex flex-col gap-10 pb-20">
+
+    <!-- CABECERA DE LA LÁMINA -->
+    <header class="bg-[#1f4a2c] text-white p-6 rounded-2xl border-4 border-[#0d2b18]">
+      <div class="inline-block bg-[#2f6b40] text-white font-bold text-sm px-3 py-1 rounded-md mb-2 border border-[#8fae97]">
+        SISTEMA DE DISEÑO RURAL • CAMPO Y SOL
+      </div>
+      <h1 class="text-3xl font-extrabold leading-tight tracking-tight">
+        Lámina de Componentes Esenciales
+      </h1>
+      <p class="text-lg text-green-100 mt-2">
+        Muestrario de piezas comunes de CUE Digital. Para usar al sol, de pie en la tierra, con letra de 18 px o más, botones de 64 px y alto contraste sin sombras.
+      </p>
+    </header>
+
+    <!-- SECCIÓN 1: TARJETAS DE TIERRA (NORMAL Y ELEGIDA) -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 1 y 2</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Tarjeta de una tierra (Normal y Elegida)</h2>
+      </div>
+
+      <!-- Tarjeta 1: Normal -->
+      <article class="bg-white rounded-2xl border-[3px] border-[#a9b6a8] p-5 flex flex-col gap-4">
+        <div class="flex items-start gap-4">
+          <!-- Dibujo SVG de la forma de la parcela -->
+          <div class="w-24 h-24 flex-shrink-0 bg-[#eef3ed] rounded-xl border-2 border-[#1f4a2c] p-2 flex flex-col items-center justify-center">
+            <svg class="w-full h-full text-[#1f4a2c]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+              <polygon points="15,25 78,18 90,75 35,88 12,50" fill="#dce8dc" />
+            </svg>
+            <span class="text-[12px] font-bold text-[#1f4a2c] mt-0.5">FORMA</span>
+          </div>
+
+          <!-- Datos de la tierra -->
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-baseline justify-between gap-2 flex-wrap">
+              <h3 class="text-2xl font-black text-[#10190f]">El Prado</h3>
+              <span class="text-xl font-extrabold text-[#1f4a2c] bg-[#eef3ed] px-2.5 py-1 rounded-lg border border-[#a9b6a8]">
+                4,90 ha
+              </span>
+            </div>
+            <p class="text-[#43503f] font-semibold text-lg mt-1 flex items-center gap-1.5">
+              <svg class="w-5 h-5 flex-shrink-0 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c4.97-4.97 8-9.03 8-13A8 8 0 104 8c0 3.97 3.03 8.03 8 13z"/>
+                <circle cx="12" cy="8" r="3" />
+              </svg>
+              Villalar de los Comuneros
+            </p>
+          </div>
+        </div>
+
+        <!-- Franja de avisos de la parcela -->
+        <div class="bg-[#ffe9a8] border-2 border-[#8a6a00] rounded-xl p-3 flex flex-col gap-2">
+          <div class="flex items-center gap-2.5 text-[#3d2f00] font-bold text-base">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#8a6a00]" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/>
+            </svg>
+            <span>Está en zona de nitratos</span>
+          </div>
+          <div class="flex items-center gap-2.5 text-[#3d2f00] font-bold text-base">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#8a6a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z"/>
+            </svg>
+            <span>Tiene una masa de agua cerca</span>
+          </div>
+        </div>
+      </article>
+      <p class="text-sm font-bold text-[#43503f] px-2">Tarjeta de tierra normal (sin marcar)</p>
+
+      <!-- Tarjeta 2: Elegida -->
+      <article class="bg-white rounded-2xl border-[4px] border-[#1f4a2c] outline outline-4 outline-[#ffd24a] p-5 flex flex-col gap-4 mt-2">
+        <div class="flex items-start gap-4">
+          <!-- Dibujo SVG con indicador -->
+          <div class="w-24 h-24 flex-shrink-0 bg-[#dce8dc] rounded-xl border-[3px] border-[#1f4a2c] p-2 flex flex-col items-center justify-center">
+            <svg class="w-full h-full text-[#1f4a2c]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+              <polygon points="15,25 78,18 90,75 35,88 12,50" fill="#bad4bc" />
+            </svg>
+            <span class="text-[12px] font-black text-[#1f4a2c] mt-0.5">PARCELA</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h3 class="text-2xl font-black text-[#10190f]">El Prado</h3>
+              <div class="flex items-center gap-2 bg-[#1f4a2c] text-white px-3 py-1.5 rounded-xl border-2 border-[#0d2b18]">
+                <svg class="w-6 h-6 text-[#ffd24a]" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.74-5.25z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-base font-black tracking-wide">ELEGIDA</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+              <span class="text-xl font-extrabold text-[#1f4a2c] bg-[#eef3ed] px-2.5 py-0.5 rounded-lg border border-[#a9b6a8]">
+                4,90 ha
+              </span>
+              <span class="text-[#43503f] font-semibold text-lg flex items-center gap-1">
+                Villalar de los Comuneros
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Avisos dentro de la tarjeta elegida -->
+        <div class="bg-[#ffe9a8] border-2 border-[#8a6a00] rounded-xl p-3 flex flex-col gap-2">
+          <div class="flex items-center gap-2.5 text-[#3d2f00] font-bold text-base">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#8a6a00]" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/>
+            </svg>
+            <span>Está en zona de nitratos</span>
+          </div>
+          <div class="flex items-center gap-2.5 text-[#3d2f00] font-bold text-base">
+            <svg class="w-6 h-6 flex-shrink-0 text-[#8a6a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z"/>
+            </svg>
+            <span>Tiene una masa de agua cerca</span>
+          </div>
+        </div>
+      </article>
+      <p class="text-sm font-bold text-[#43503f] px-2">Tarjeta de tierra elegida (con texto «ELEGIDA», círculo relleno y contorno amarillo visible al sol)</p>
+    </section>
+
+    <!-- SECCIÓN 2: LISTA DE BOTONES PARA ELEGIR («¿CUÁL?») -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 3</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Lista de botones para elegir («¿Cuál?»)</h2>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <!-- Botón 1 -->
+        <button type="button" class="w-full min-h-[72px] bg-white border-[3px] border-[#1f4a2c] active:bg-[#eef3ed] rounded-2xl p-4 flex items-center justify-between text-left gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-[#eef3ed] border-2 border-[#1f4a2c] flex items-center justify-center flex-shrink-0">
+              <svg class="w-8 h-8 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xl font-black text-[#10190f]">Abonado y fertilizantes</div>
+              <div class="text-base text-[#43503f] font-normal">Complejos de fondo, cobertera, purines o estiércol</div>
+            </div>
+          </div>
+          <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+          </svg>
+        </button>
+
+        <!-- Botón 2 -->
+        <button type="button" class="w-full min-h-[72px] bg-white border-[3px] border-[#1f4a2c] active:bg-[#eef3ed] rounded-2xl p-4 flex items-center justify-between text-left gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-[#eef3ed] border-2 border-[#1f4a2c] flex items-center justify-center flex-shrink-0">
+              <svg class="w-8 h-8 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xl font-black text-[#10190f]">Tratamiento con producto</div>
+              <div class="text-base text-[#43503f] font-normal">Sulfatos contra hierba, bichos u hongos en la hoja</div>
+            </div>
+          </div>
+          <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+          </svg>
+        </button>
+
+        <!-- Botón 3 -->
+        <button type="button" class="w-full min-h-[72px] bg-white border-[3px] border-[#1f4a2c] active:bg-[#eef3ed] rounded-2xl p-4 flex items-center justify-between text-left gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-[#eef3ed] border-2 border-[#1f4a2c] flex items-center justify-center flex-shrink-0">
+              <svg class="w-8 h-8 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xl font-black text-[#10190f]">Labores mecánicas</div>
+              <div class="text-base text-[#43503f] font-normal">Arar, cultivar, sembrar, desbrozar o cosechar</div>
+            </div>
+          </div>
+          <svg class="w-7 h-7 text-[#1f4a2c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+          </svg>
+        </button>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Lista de botones para elegir: altura &gt;64px, icono SVG a la izquierda, título y explicación de una frase al lado</p>
+    </section>
+
+    <!-- SECCIÓN 3: UN CAMPO CON SU PREGUNTA Y SU AYUDA DE CUATRO RÓTULOS -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 4</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Campo de formulario con su pregunta y ayuda de 4 rótulos</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl border-[3px] border-[#a9b6a8] p-5 flex flex-col gap-4">
+        <!-- Rótulo / Pregunta grande -->
+        <div>
+          <label for="campo-ejemplo" class="block text-2xl font-black text-[#10190f] leading-tight">
+            ¿Cuántos kilos o litros has echado en total?
+          </label>
+          <span class="inline-block text-base font-bold text-[#43503f] mt-1">
+            Cuenta toda la tierra tratada hoy, no por hectárea.
+          </span>
+        </div>
+
+        <!-- Hueco para escribir con teclado numérico -->
+        <div class="relative">
+          <input
+            id="campo-ejemplo"
+            type="text"
+            inputmode="decimal"
+            value="450"
+            class="w-full h-16 px-4 text-2xl font-extrabold text-[#10190f] bg-white rounded-xl border-[3px] border-[#1f4a2c] focus:outline-none focus:ring-4 focus:ring-[#ffd24a]"
+            placeholder="0"
+          >
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xl font-black text-[#43503f]">
+            kilos
+          </span>
+        </div>
+
+        <!-- Bloque de ayuda oficial estructurado con sus 4 rótulos obligatorios -->
+        <div class="bg-[#f4f6f3] border-l-[6px] border-[#2f6b40] rounded-r-xl p-4 flex flex-col gap-3">
+          <!-- 1. Qué es -->
+          <div class="text-base text-[#10190f]">
+            <span class="font-extrabold text-[#1f4a2c] block">Qué es:</span>
+            El peso total de abono o producto que sacaste del almacén y metiste en la máquina.
+          </div>
+
+          <!-- 2. Por qué te lo piden -->
+          <div class="text-base text-[#10190f]">
+            <span class="font-extrabold text-[#1f4a2c] block">Por qué te lo piden:</span>
+            Para que la Junta y el inspector comprueben que no echas más de lo que autoriza la ley.
+          </div>
+
+          <!-- 3. Ejemplo -->
+          <div class="text-base text-[#10190f]">
+            <span class="font-extrabold text-[#1f4a2c] block">Ejemplo:</span>
+            «450 kilos» si echaste 9 sacos de 50 kg de abono de fondo.
+          </div>
+
+          <!-- 4. Si te falta -->
+          <div class="text-base text-[#10190f]">
+            <span class="font-extrabold text-[#8c1d18] block">Si te falta:</span>
+            Pon una cifra aproximada según los sacos que gastaste; no lo dejes a cero.
+          </div>
+        </div>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Campo de texto accesible con ayuda explicativa: Qué es, Por qué te lo piden, Ejemplo y Si te falta</p>
+    </section>
+
+    <!-- SECCIÓN 4: LOS TRES AVISOS JUNTOS -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 5</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Los tres avisos del sistema (Informativo, Error y Pendiente)</h2>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <!-- 1. Aviso normal (una cosa que hay que saber) -->
+        <div class="bg-[#ffe9a8] border-[3px] border-[#8a6a00] rounded-2xl p-5 flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-white/70 border-2 border-[#8a6a00] flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8 text-[#8a6a00]" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="text-xl font-black text-[#3d2f00]">Aviso importante sobre el plazo</div>
+            <p class="text-lg text-[#3d2f00] font-medium mt-1">
+              Fíjate: con el producto echado hoy en esta parcela, no podrás segar ni meter cosechadora hasta el 28 de mayo.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. Aviso de error / algo que no se ha podido hacer con botón VOLVER -->
+        <div class="bg-[#fbe3e1] border-[3px] border-[#8c1d18] rounded-2xl p-5 flex flex-col gap-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-white border-2 border-[#8c1d18] flex items-center justify-center flex-shrink-0">
+              <svg class="w-8 h-8 text-[#8c1d18]" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-xl font-black text-[#4a0f0b]">No se ha podido mandar</div>
+              <p class="text-lg text-[#4a0f0b] font-medium mt-1">
+                No te preocupes: sigue guardado en el móvil. Cuando vuelva a haber cobertura o wifi lo vuelve a intentar solo.
+              </p>
+            </div>
+          </div>
+          <!-- Botón VOLVER dentro del aviso de error -->
+          <button type="button" class="w-full h-16 min-h-[64px] bg-white border-[3px] border-[#8c1d18] active:bg-[#fbe3e1] rounded-xl text-[#8c1d18] font-black text-xl flex items-center justify-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+            </svg>
+            VOLVER
+          </button>
+        </div>
+
+        <!-- 3. Aviso de lo que está esperando a mandarse sin cobertura -->
+        <div class="bg-white border-[3px] border-[#1f4a2c] rounded-2xl p-5 flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-[#eef3ed] border-2 border-[#1f4a2c] flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="text-xl font-black text-[#10190f]">Guardado sin internet</div>
+            <p class="text-lg text-[#43503f] font-semibold mt-1">
+              1 apunte esperando a que haya cobertura. Se manda solo.
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Los tres tipos de avisos del sistema con alto contraste y claridad absoluta</p>
+    </section>
+
+    <!-- SECCIÓN 5: BLOQUE DE APUNTADO / CONFIRMACIÓN CON DESHACER Y VOLVER -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 6</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Bloque de apuntado (Confirmación y acciones)</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl border-[3px] border-[#1f4a2c] p-6 flex flex-col gap-5">
+        <!-- Encabezado de confirmación -->
+        <div class="flex items-start gap-4 bg-[#eef3ed] border-2 border-[#1f4a2c] p-4 rounded-xl">
+          <div class="w-12 h-12 rounded-full bg-[#1f4a2c] text-white flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-[#1f4a2c]">Apuntado correctamente</h3>
+            <p class="text-lg text-[#10190f] font-medium mt-0.5">
+              Si te has equivocado, pulsa <strong class="font-black text-[#8c1d18]">DESHACER</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Resumen conciso de lo apuntado -->
+        <div class="border-t-2 border-b-2 border-[#a9b6a8] py-3 flex flex-col gap-1.5 text-lg">
+          <div class="flex justify-between">
+            <span class="text-[#43503f] font-bold">Tierra:</span>
+            <span class="font-extrabold text-[#10190f]">El Prado (4,90 ha)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#43503f] font-bold">Labor:</span>
+            <span class="font-extrabold text-[#10190f]">Abonado con NPK</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#43503f] font-bold">Fecha:</span>
+            <span class="font-extrabold text-[#10190f]">Hoy</span>
+          </div>
+        </div>
+
+        <!-- Dos botones de 64px o más -->
+        <div class="flex flex-col gap-3">
+          <!-- Botón DESHACER (Peligro pero visible) -->
+          <button type="button" class="w-full h-16 min-h-[64px] bg-white border-[3px] border-[#8c1d18] active:bg-[#fbe3e1] rounded-xl text-[#8c1d18] font-black text-xl flex items-center justify-center gap-3">
+            <svg class="w-7 h-7 text-[#8c1d18]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>
+            </svg>
+            DESHACER ESTE APUNTE
+          </button>
+
+          <!-- Botón VOLVER (Neutro) -->
+          <button type="button" class="w-full h-16 min-h-[64px] bg-[#f4f6f3] border-[3px] border-[#1f4a2c] active:bg-[#eef3ed] rounded-xl text-[#1f4a2c] font-black text-xl flex items-center justify-center gap-3">
+            <svg class="w-7 h-7 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+            </svg>
+            VOLVER AL INICIO
+          </button>
+        </div>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Bloque de apuntado con opción clara de revertir y volver sin perder datos</p>
+    </section>
+
+    <!-- SECCIÓN 6: BARRA DE BOTONES DE ABAJO DEL ASISTENTE (3 BOTONES EN FILA) -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 7</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Barra de navegación inferior del asistente (3 botones en fila)</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl border-[3px] border-[#a9b6a8] p-5 flex flex-col gap-3">
+        <p class="text-base text-[#43503f] font-semibold">
+          Diseñada para el borde inferior de la pantalla con margen para el pulgar de una sola mano:
+        </p>
+
+        <!-- Barra de navegación con 3 botones en fila -->
+        <div class="w-full bg-[#f4f6f3] border-[3px] border-[#1f4a2c] rounded-2xl p-3 flex items-center justify-between gap-2.5">
+          <!-- Botón 1: VOLVER -->
+          <button type="button" class="flex-1 h-16 min-h-[64px] bg-white border-2 border-[#a9b6a8] active:bg-[#eef3ed] rounded-xl text-[#10190f] font-black text-lg flex items-center justify-center gap-1.5 px-2">
+            <svg class="w-6 h-6 text-[#10190f] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+            </svg>
+            VOLVER
+          </button>
+
+          <!-- Botón 2: DEJARLO -->
+          <button type="button" class="flex-1 h-16 min-h-[64px] bg-white border-2 border-[#a9b6a8] active:bg-[#eef3ed] rounded-xl text-[#8c1d18] font-black text-lg flex items-center justify-center gap-1.5 px-2">
+            <svg class="w-6 h-6 text-[#8c1d18] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            DEJARLO
+          </button>
+
+          <!-- Botón 3: SEGUIR (Acción principal) -->
+          <button type="button" class="flex-[1.4] h-16 min-h-[64px] bg-[#2f6b40] border-[3px] border-[#0d2b18] active:bg-[#1f4a2c] rounded-xl text-white font-black text-xl flex items-center justify-center gap-2 px-3">
+            SEGUIR
+            <svg class="w-6 h-6 text-[#ffd24a] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Barra con tres botones táctiles (≥64px) accesibles con un solo pulgar</p>
+    </section>
+
+    <!-- SECCIÓN 7: ESTADO VACÍO (CON FRASE Y BOTÓN DE ACCIÓN, NUNCA HUECO BLANCO) -->
+    <section class="flex flex-col gap-4">
+      <div class="border-b-2 border-[#a9b6a8] pb-1">
+        <span class="text-xs uppercase tracking-wider font-black text-[#43503f]">Componente 8</span>
+        <h2 class="text-2xl font-bold text-[#1f4a2c]">Estado vacío (con frase explicativa y botón directo)</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl border-[3px] border-dashed border-[#a9b6a8] p-6 flex flex-col items-center text-center gap-4">
+        <!-- Icono ilustrativo en SVG -->
+        <div class="w-20 h-20 rounded-full bg-[#f4f6f3] border-2 border-[#a9b6a8] flex items-center justify-center">
+          <svg class="w-10 h-10 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+        </div>
+
+        <div>
+          <h3 class="text-2xl font-black text-[#10190f]">Todavía no has apuntado nada este año</h3>
+          <p class="text-lg text-[#43503f] font-semibold mt-1 max-w-md">
+            El cuaderno de la campaña 2026 está vacío. En cuanto apuntes el primer trabajo o abono saldrá aquí la lista completa.
+          </p>
+        </div>
+
+        <!-- Botón que arregla el estado vacío (≥64px de alto) -->
+        <button type="button" class="w-full max-w-sm h-16 min-h-[64px] bg-[#2f6b40] border-[3px] border-[#0d2b18] active:bg-[#1f4a2c] rounded-2xl text-white font-black text-xl flex items-center justify-center gap-3 px-6 mt-1">
+          <svg class="w-7 h-7 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          HACER EL PLAN DE ABONO
+        </button>
+      </div>
+      <p class="text-sm font-bold text-[#43503f] px-2">Estado vacío: explica exactamente la situación y da la solución inmediata sin dejar pantallas en blanco</p>
+    </section>
+
+    <!-- PIE DE PÁGINA INFORMATIVO DE LA LÁMINA -->
+    <footer class="mt-6 p-4 text-center border-t-2 border-[#a9b6a8] text-[#43503f] text-base font-bold">
+      CUE Digital • Junta de Castilla y León • Lámina de diseño para validación de componentes
+    </footer>
+
+  </main>
+
+</body>
+</html>

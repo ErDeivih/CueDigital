@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, initial-scale=1.0">
+  <title>Lo que he vendido - CUE Gestión Despacho (1440x900)</title>
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1f4a2c',
+            'primary-container': '#2f6b40',
+            'primary-dark': '#0d2b18',
+            'primary-overlay': '#3a6446',
+            'primary-overlay-border': '#8fae97',
+            'on-primary': '#ffffff',
+            tertiary: '#8a6a00',
+            'secondary-container': '#ffe9a8',
+            'on-secondary-container': '#3d2f00',
+            surface: '#ffffff',
+            'surface-variant': '#f4f6f3',
+            'surface-container-low': '#f8faf7',
+            'surface-container-high': '#eef2ec',
+            'on-surface': '#10190f',
+            'on-surface-variant': '#43503f',
+            outline: '#a9b6a8',
+            'outline-variant': '#cfd8cd',
+            error: '#8c1d18',
+            'error-dark': '#5c110d',
+            'error-container': '#fbe3e1',
+            'on-error-container': '#4a0f0b',
+            focus: '#ffd24a',
+            'success-bg': '#e7f3ea',
+            'success-text': '#144d27'
+          },
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Reglas estrictas CUE Digital / Despacho */
+    * {
+      box-sizing: border-box;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background-color: #f4f6f3;
+      color: #10190f;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    /* Scrollbars sobrias estilo escritorio ERP */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #eef2ec;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #43503f;
+    }
+  </style>
+</head>
+<body class="w-[1440px] min-h-[900px] flex flex-col bg-[#f4f6f3]">
+
+  <!-- 1. BARRA SUPERIOR FIJA DE GESTIÓN (ERP DESPACHO) -->
+  <header class="w-full h-16 bg-primary border-b-4 border-primary-dark text-on-primary flex items-center justify-between px-6 z-40 sticky top-0">
+    <div class="flex items-center gap-6">
+      <!-- Marca y Módulo -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-on-primary text-primary font-black rounded-lg flex items-center justify-center text-lg tracking-tighter">
+          CUE
+        </div>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-lg tracking-tight leading-tight">CUE Digital</span>
+            <span class="bg-[#2f6b40] text-xs font-semibold px-2 py-0.5 rounded border border-[#8fae97] text-white uppercase tracking-wider">Despacho</span>
+          </div>
+          <span class="text-[11px] text-[#cfd8cd] leading-none">Castilla y León · Gestión Agraria</span>
+        </div>
+      </div>
+
+      <div class="h-8 w-[1px] bg-primary-overlay-border opacity-40"></div>
+
+      <!-- Selector Finca -->
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-primary-overlay rounded-lg border border-primary-overlay-border text-sm">
+        <span class="material-symbols-outlined text-base text-focus">location_on</span>
+        <span class="font-medium text-xs text-[#cfd8cd]">Finca activa:</span>
+        <span class="font-bold text-sm">Las Suertes y El Prado (187,42 ha)</span>
+        <span class="material-symbols-outlined text-sm ml-1 text-[#cfd8cd]">expand_more</span>
+      </div>
+
+      <!-- Campaña -->
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-primary-overlay rounded-lg border border-primary-overlay-border text-sm">
+        <span class="material-symbols-outlined text-base text-focus">calendar_month</span>
+        <span class="font-medium text-xs text-[#cfd8cd]">Campaña:</span>
+        <span class="font-bold text-sm">2026 (01/09/25 - 31/08/26)</span>
+      </div>
+    </div>
+
+    <!-- Acciones de cabecera y Usuario -->
+    <div class="flex items-center gap-4">
+      <!-- Estado Conexión SIEX -->
+      <div class="flex items-center gap-2 px-3 py-1 bg-primary-dark rounded border border-primary-overlay-border text-xs text-white">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#52c41a]"></span>
+        <span>SIEX / REGEPA: <strong>Al día</strong></span>
+      </div>
+
+      <div class="h-7 w-[1px] bg-primary-overlay-border opacity-40"></div>
+
+      <!-- Titular -->
+      <div class="text-right leading-tight">
+        <div class="text-xs font-bold text-white">Manuel Ruiz Gómez</div>
+        <div class="text-[11px] text-[#cfd8cd]">NIF 12345678Z · Titular</div>
+      </div>
+
+      <!-- Botón Principal "APUNTAR UNA VENTA" -->
+      <button class="flex items-center gap-2 h-10 px-4 bg-focus hover:bg-[#f5c738] active:bg-[#e6b82e] text-[#10190f] font-bold text-sm rounded-lg border-2 border-[#8a6a00] transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-lg font-bold">add</span>
+        <span>APUNTAR UNA VENTA</span>
+      </button>
+
+      <!-- Botón Letra Accesible -->
+      <button class="h-9 px-2.5 bg-primary-overlay hover:bg-[#437552] border border-primary-overlay-border text-xs font-bold rounded-lg flex items-center gap-1 text-white" title="Tamaño de letra">
+        <span class="material-symbols-outlined text-base">format_size</span>
+        <span>A+</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. CUERPO PRINCIPAL (SIDEBAR + CONTENIDO CENTRAL) -->
+  <div class="flex flex-1 w-full min-h-[calc(900px-64px-36px)]">
+
+    <!-- MENÚ LATERAL ERP DE ESCRITORIO -->
+    <aside class="w-72 bg-surface-container-low border-r-4 border-outline flex flex-col justify-between shrink-0">
+      <div class="py-4">
+        <!-- Tarjeta Rápida Explotación -->
+        <div class="mx-4 mb-4 p-3 bg-surface rounded-lg border-2 border-outline-variant">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Explotación Agraria</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 bg-surface-container-high rounded border border-outline text-primary">#49281</span>
+          </div>
+          <div class="text-sm font-bold text-on-surface mt-1">Manuel Ruiz e Hijos</div>
+          <div class="text-xs text-on-surface-variant">CyL · Valladolid · Medina / Villalar</div>
+        </div>
+
+        <!-- Módulos de Navegación -->
+        <nav class="space-y-1 px-2">
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">dashboard</span>
+              <span>Resumen General</span>
+            </div>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">menu_book</span>
+              <span>El Cuaderno</span>
+            </div>
+            <span class="text-xs bg-surface-container-high text-on-surface font-bold px-2 py-0.5 rounded-full border border-outline">42</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">landscape</span>
+              <span>Tierras y Parcelas</span>
+            </div>
+            <span class="text-xs bg-surface-container-high text-on-surface font-bold px-2 py-0.5 rounded-full border border-outline">64</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">agriculture</span>
+              <span>Qué hay sembrado</span>
+            </div>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">warehouse</span>
+              <span>El Almacén</span>
+            </div>
+          </a>
+
+          <!-- MÓDULO ACTIVO: LO QUE HE VENDIDO -->
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-bold rounded-lg bg-primary text-on-primary border-l-4 border-focus">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-focus text-xl">shopping_cart</span>
+              <span>Lo que he vendido</span>
+            </div>
+            <span class="text-xs bg-primary-container text-white px-2 py-0.5 rounded-full border border-primary-overlay-border">2</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">science</span>
+              <span>Los Análisis</span>
+            </div>
+            <span class="text-xs bg-surface-container-high text-on-surface font-bold px-2 py-0.5 rounded-full border border-outline">5</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">eco</span>
+              <span>Plan de Abono / Nitratos</span>
+            </div>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">folder_open</span>
+              <span>Papeles y Documentos</span>
+            </div>
+            <span class="text-xs bg-surface-container-high text-on-surface font-bold px-2 py-0.5 rounded-full border border-outline">6</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">receipt_long</span>
+              <span>Facturas y Albaranes</span>
+            </div>
+            <span class="text-xs bg-surface-container-high text-on-surface font-bold px-2 py-0.5 rounded-full border border-outline">12</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">precision_manufacturing</span>
+              <span>Productos y Máquinas</span>
+            </div>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg text-on-surface hover:bg-surface-container-high transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-xl">history</span>
+              <span>Años del cuaderno</span>
+            </div>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Pie del Menú Lateral -->
+      <div class="p-3 border-t-2 border-outline-variant bg-surface-container-high space-y-2">
+        <div class="flex items-center justify-between text-xs text-on-surface-variant">
+          <span class="flex items-center gap-1.5 font-medium">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            Modo Local Activo v4.2
+          </span>
+          <span class="font-bold">Offline-OK</span>
+        </div>
+        <button class="w-full h-8 text-xs font-bold text-on-surface-variant hover:text-primary bg-surface hover:bg-surface-variant border border-outline rounded flex items-center justify-center gap-1.5 transition-colors">
+          <span class="material-symbols-outlined text-sm">support_agent</span>
+          <span>Soporte Técnico CyL</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO DE DESPACHO -->
+    <main class="flex-1 p-6 flex flex-col gap-5 overflow-y-auto">
+
+      <!-- ENCABEZADO DE MÓDULO CON RESUMEN Y ACCIONES SECUNDARIAS -->
+      <div class="bg-surface rounded-xl border-2 border-outline p-5 flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-black text-on-surface tracking-tight">Lo que he vendido</h1>
+            <span class="px-3 py-1 bg-surface-container-high text-primary font-bold text-xs rounded-full border border-outline">
+              2 ventas apuntadas · 44.000 kg
+            </span>
+            <span class="text-xs font-medium text-on-surface-variant">
+              (Campaña activa 2026)
+            </span>
+          </div>
+          <p class="text-sm text-on-surface-variant mt-1.5 max-w-3xl leading-relaxed">
+            Aquí se registran las salidas y ventas de cosecha de la explotación: a quién se entrega, cuántos kilos o toneladas, de qué parcelas procede y el albarán justificativo. Es el documento que cierra la trazabilidad de la finca y que revisan en las inspecciones agrarias de la Junta de Castilla y León.
+          </p>
+        </div>
+
+        <!-- Botones de Acción Documental (Estilo despacho compacto 36px) -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button class="h-9 px-3.5 bg-surface hover:bg-surface-variant text-primary font-bold text-xs rounded-lg border-2 border-primary flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">picture_as_pdf</span>
+            <span>Sacar listado oficial (PDF)</span>
+          </button>
+          <button class="h-9 px-3.5 bg-surface hover:bg-surface-variant text-on-surface font-bold text-xs rounded-lg border border-outline flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">table_view</span>
+            <span>Exportar Excel</span>
+          </button>
+          <button class="h-9 px-4 bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs rounded-lg border-2 border-primary-dark flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-base font-bold">add</span>
+            <span>APUNTAR VENTA</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AVISO CRÍTICO DE DESCUADRE CON LA COSECHA (MANDATORIO PARA INSPECCIÓN) -->
+      <div class="bg-[#fbe3e1] rounded-xl border-3 border-error p-4 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-lg bg-error text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+          <span class="material-symbols-outlined text-2xl font-bold">warning</span>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-error-dark flex items-center gap-2">
+              <span>Descuadre de cosecha detectado en la inspección automática</span>
+              <span class="text-xs bg-error text-white font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">Aviso de Inspección SIEX</span>
+            </h2>
+            <button class="text-xs font-bold text-error hover:underline flex items-center gap-1">
+              <span>Ver labores de cosecha apuntadas</span>
+              <span class="material-symbols-outlined text-xs">arrow_forward</span>
+            </button>
+          </div>
+          <p class="text-sm font-semibold text-on-error-container mt-1">
+            Has vendido más de lo que has apuntado cosechado: lo normal es que se te haya olvidado apuntar la cosecha.
+          </p>
+          <div class="mt-2.5 pt-2.5 border-t border-[#f1b8b4] grid grid-cols-3 gap-4 text-xs">
+            <div class="bg-white/80 p-2 rounded border border-[#e5a09c]">
+              <span class="text-on-surface-variant block">Total vendido en albaranes:</span>
+              <span class="font-extrabold text-sm text-on-surface">44.000 kg (44,00 t)</span>
+            </div>
+            <div class="bg-white/80 p-2 rounded border border-[#e5a09c]">
+              <span class="text-on-surface-variant block">Cosecha registrada en labores:</span>
+              <span class="font-extrabold text-sm text-error">32.400 kg (32,40 t)</span>
+            </div>
+            <div class="bg-white/80 p-2 rounded border border-[#e5a09c] flex items-center justify-between">
+              <div>
+                <span class="text-on-surface-variant block">Diferencia sin justificar:</span>
+                <span class="font-extrabold text-sm text-error">+11.600 kg sin labor previa</span>
+              </div>
+              <button class="px-2.5 py-1 bg-error hover:bg-error-dark text-white font-bold text-xs rounded border border-error-dark">
+                + Apuntar Cosecha
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETAS DE TOTALES Y BALANCES DEL AÑO (4 PANELES COMPACTOS) -->
+      <div class="grid grid-cols-4 gap-4">
+        <!-- Panel 1: Total Kilos -->
+        <div class="bg-surface rounded-xl border-2 border-outline p-4">
+          <div class="flex items-center justify-between text-xs text-on-surface-variant font-bold uppercase tracking-wide">
+            <span>Total Vendido (Año)</span>
+            <span class="material-symbols-outlined text-primary text-lg">scale</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span class="text-3xl font-extrabold text-on-surface">44.000</span>
+            <span class="text-base font-bold text-on-surface-variant">kg</span>
+          </div>
+          <div class="text-xs text-on-surface-variant mt-1 font-medium">
+            Equivale a <strong>44,00 toneladas</strong> netas
+          </div>
+        </div>
+
+        <!-- Panel 2: Ventas y Entregas -->
+        <div class="bg-surface rounded-xl border-2 border-outline p-4">
+          <div class="flex items-center justify-between text-xs text-on-surface-variant font-bold uppercase tracking-wide">
+            <span>Albaranes / Entregas</span>
+            <span class="material-symbols-outlined text-primary text-lg">receipt_long</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span class="text-3xl font-extrabold text-on-surface">2</span>
+            <span class="text-base font-bold text-on-surface-variant">ventas</span>
+          </div>
+          <div class="text-xs text-on-surface-variant mt-1 font-medium">
+            1 con albarán digital · 1 pendiente de papel
+          </div>
+        </div>
+
+        <!-- Panel 3: Cultivos vendidos -->
+        <div class="bg-surface rounded-xl border-2 border-outline p-4">
+          <div class="flex items-center justify-between text-xs text-on-surface-variant font-bold uppercase tracking-wide">
+            <span>Cultivos comercializados</span>
+            <span class="material-symbols-outlined text-primary text-lg">grain</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-xl font-extrabold text-on-surface">Cebada y Trigo</span>
+          </div>
+          <div class="text-xs text-on-surface-variant mt-1 font-medium">
+            32.400 kg cebada · 11.600 kg trigo blando
+          </div>
+        </div>
+
+        <!-- Panel 4: Destinatarios principales -->
+        <div class="bg-surface rounded-xl border-2 border-outline p-4">
+          <div class="flex items-center justify-between text-xs text-on-surface-variant font-bold uppercase tracking-wide">
+            <span>Destino y Compradores</span>
+            <span class="material-symbols-outlined text-primary text-lg">storefront</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span class="text-xl font-extrabold text-on-surface">2 empresas</span>
+          </div>
+          <div class="text-xs text-on-surface-variant mt-1 font-medium">
+            Coop. Medina y Harinas del Pisuerga
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN TABLA: BARRA DE FILTROS Y HERRAMIENTAS DE DESPACHO -->
+      <div class="bg-surface rounded-xl border-2 border-outline flex flex-col overflow-hidden">
+        
+        <!-- Barra de herramientas superior de la tabla -->
+        <div class="p-3 bg-surface-container-low border-b-2 border-outline flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 flex-1">
+            <!-- Buscador en tiempo real -->
+            <div class="relative w-80">
+              <span class="material-symbols-outlined absolute left-2.5 top-2 text-on-surface-variant text-lg">search</span>
+              <input type="text" placeholder="Buscar por cultivo, comprador, albarán o finca..." 
+                     class="w-full h-8 pl-8 pr-3 text-xs bg-surface border-2 border-outline rounded-lg text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-focus font-medium" />
+            </div>
+
+            <!-- Filtro de Cultivo -->
+            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+              <span class="font-bold">Cultivo:</span>
+              <select class="h-8 px-2.5 bg-surface border-2 border-outline rounded-lg text-xs font-semibold text-on-surface focus:outline-none focus:border-primary">
+                <option value="todos">Todos los cultivos (2)</option>
+                <option value="cebada">Cebada cervecera</option>
+                <option value="trigo">Trigo blando</option>
+                <option value="girasol">Girasol</option>
+              </select>
+            </div>
+
+            <!-- Filtro de Comprador -->
+            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+              <span class="font-bold">A quién:</span>
+              <select class="h-8 px-2.5 bg-surface border-2 border-outline rounded-lg text-xs font-semibold text-on-surface focus:outline-none focus:border-primary">
+                <option value="todos">Todos los compradores</option>
+                <option value="medina">Cooperativa Comarcal de Medina</option>
+                <option value="pisuerga">Harinas del Pisuerga S.A.</option>
+              </select>
+            </div>
+
+            <!-- Filtro Estado Albarán -->
+            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+              <span class="font-bold">Albarán:</span>
+              <select class="h-8 px-2.5 bg-surface border-2 border-outline rounded-lg text-xs font-semibold text-on-surface focus:outline-none focus:border-primary">
+                <option value="todos">Todos los estados</option>
+                <option value="con_foto">Con papel/PDF subido</option>
+                <option value="pendiente">Pendiente de papel</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button class="h-8 px-2.5 bg-surface hover:bg-surface-variant border border-outline rounded text-xs font-bold text-on-surface-variant flex items-center gap-1" title="Limpiar filtros">
+              <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+              <span>Limpiar</span>
+            </button>
+            <div class="h-5 w-[1px] bg-outline"></div>
+            <span class="text-xs text-on-surface-variant font-medium">Mostrando <strong>2 de 2</strong> registros</span>
+          </div>
+        </div>
+
+        <!-- TABLA COMPLETA DE COSECHA VENDIDA (CABECERA FIJA Y ORDENABLE) -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <!-- CABECERA FIJA CON COLUMNAS ORDENABLES -->
+            <thead class="bg-surface-container-high border-b-2 border-outline text-xs font-bold text-on-surface sticky top-0 z-10">
+              <tr>
+                <!-- Fecha -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-32">
+                  <div class="flex items-center justify-between">
+                    <span>Fecha</span>
+                    <span class="material-symbols-outlined text-sm text-primary font-bold">arrow_downward</span>
+                  </div>
+                </th>
+
+                <!-- Qué (Cultivo y Variedad) -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-64">
+                  <div class="flex items-center justify-between">
+                    <span>Qué (Cultivo y variedad)</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                  </div>
+                </th>
+
+                <!-- Cuánto (Alineado a la derecha) -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-44 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                    <span>Cuánto</span>
+                  </div>
+                </th>
+
+                <!-- A quién (Comprador o Cooperativa) -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant">
+                  <div class="flex items-center justify-between">
+                    <span>A quién</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                  </div>
+                </th>
+
+                <!-- Partida / Lote -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-36">
+                  <div class="flex items-center justify-between">
+                    <span>Partida</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                  </div>
+                </th>
+
+                <!-- Albarán -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-44">
+                  <div class="flex items-center justify-between">
+                    <span>Albarán</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                  </div>
+                </th>
+
+                <!-- De dónde (Tierra / Parcela de procedencia) -->
+                <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-[#e4eae1] transition-colors border-r border-outline-variant w-52">
+                  <div class="flex items-center justify-between">
+                    <span>De dónde</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">unfold_more</span>
+                  </div>
+                </th>
+
+                <!-- Acciones -->
+                <th scope="col" class="py-3 px-4 text-center w-36">
+                  <span>Acciones</span>
+                </th>
+              </tr>
+            </thead>
+
+            <!-- CUERPO DE LA TABLA: DATOS REALES SIN INVENTAR -->
+            <tbody class="divide-y divide-outline-variant text-xs">
+              
+              <!-- FILA 1: Cebada cervecera -->
+              <tr class="hover:bg-surface-variant transition-colors group">
+                <!-- Fecha -->
+                <td class="py-3.5 px-4 font-bold text-on-surface border-r border-outline-variant align-top">
+                  <div class="text-sm">14/10/2026</div>
+                  <div class="text-[11px] font-normal text-on-surface-variant">Otoño 2026</div>
+                </td>
+
+                <!-- Qué -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface flex items-center gap-1.5">
+                    <span>Cebada cervecera</span>
+                    <span class="w-2 h-2 rounded-full bg-primary" title="Secano"></span>
+                  </div>
+                  <div class="text-xs text-on-surface-variant font-medium mt-0.5">
+                    Variedad: <strong>Cerveza Planet</strong>
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant">
+                    Forma de entrega: A granel (remolque 2 ejes)
+                  </div>
+                </td>
+
+                <!-- Cuánto (Alineado a la derecha con unidad estricta) -->
+                <td class="py-3.5 px-4 text-right border-r border-outline-variant align-top bg-surface-container-low/40">
+                  <div class="text-base font-black text-on-surface font-mono">
+                    32.400 <span class="text-xs font-bold text-on-surface-variant">kg</span>
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant font-semibold mt-0.5">
+                    32,40 toneladas
+                  </div>
+                </td>
+
+                <!-- A quién -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface">Cooperativa Comarcal de Medina</div>
+                  <div class="text-xs text-on-surface-variant">CIF: F-47109283 · Socio nº 412</div>
+                  <div class="text-[11px] text-on-surface-variant">Destino: Silo Medina del Campo</div>
+                </td>
+
+                <!-- Partida -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top font-mono">
+                  <span class="inline-block px-2 py-0.5 bg-surface border border-outline rounded text-xs font-bold text-on-surface">
+                    Lote CC-2026-04
+                  </span>
+                </td>
+
+                <!-- Albarán -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface font-mono">ALB-78214</div>
+                  <div class="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-success-text bg-success-bg px-2 py-0.5 rounded border border-[#a3d9b1]">
+                    <span class="material-symbols-outlined text-xs">check_circle</span>
+                    <span>Foto guardada</span>
+                  </div>
+                </td>
+
+                <!-- De dónde -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface">El Prado</div>
+                  <div class="text-xs text-on-surface-variant">4,90 ha · Secano</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">SIGPAC: 37-70-0-0-503-51-1</div>
+                </td>
+
+                <!-- Acciones (Compactas 32-36px con ratón) -->
+                <td class="py-3.5 px-4 text-center align-top">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button class="h-8 px-2.5 bg-surface hover:bg-surface-variant text-primary font-bold text-xs rounded border border-outline flex items-center gap-1 transition-colors" title="Modificar datos de esta venta">
+                      <span class="material-symbols-outlined text-sm">edit</span>
+                      <span>Editar</span>
+                    </button>
+                    <button class="h-8 px-2 bg-surface hover:bg-error-container text-error font-bold text-xs rounded border border-outline hover:border-error flex items-center transition-colors" title="Borrar venta del registro">
+                      <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- FILA 2: Trigo blando -->
+              <tr class="hover:bg-surface-variant transition-colors group">
+                <!-- Fecha -->
+                <td class="py-3.5 px-4 font-bold text-on-surface border-r border-outline-variant align-top">
+                  <div class="text-sm">28/09/2026</div>
+                  <div class="text-[11px] font-normal text-on-surface-variant">Final verano 2026</div>
+                </td>
+
+                <!-- Qué -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface flex items-center gap-1.5">
+                    <span>Trigo blando</span>
+                    <span class="w-2 h-2 rounded-full bg-primary" title="Secano"></span>
+                  </div>
+                  <div class="text-xs text-on-surface-variant font-medium mt-0.5">
+                    Variedad: <strong>Camargo</strong>
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant">
+                    Forma de entrega: A granel
+                  </div>
+                </td>
+
+                <!-- Cuánto (Alineado a la derecha con unidad estricta) -->
+                <td class="py-3.5 px-4 text-right border-r border-outline-variant align-top bg-surface-container-low/40">
+                  <div class="text-base font-black text-on-surface font-mono">
+                    11.600 <span class="text-xs font-bold text-on-surface-variant">kg</span>
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant font-semibold mt-0.5">
+                    11,60 toneladas
+                  </div>
+                </td>
+
+                <!-- A quién -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface">Harinas del Pisuerga S.A.</div>
+                  <div class="text-xs text-on-surface-variant">CIF: A-47019284 · Venta directa</div>
+                  <div class="text-[11px] text-on-surface-variant">Fábrica de harinas Cabezón</div>
+                </td>
+
+                <!-- Partida -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top font-mono">
+                  <span class="inline-block px-2 py-0.5 bg-surface border border-outline rounded text-xs font-bold text-on-surface">
+                    Lote HP-09
+                  </span>
+                </td>
+
+                <!-- Albarán -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface font-mono">Nº 10.452</div>
+                  <div class="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-tertiary bg-secondary-container px-2 py-0.5 rounded border border-[#d6a500]">
+                    <span class="material-symbols-outlined text-xs">pending_actions</span>
+                    <span>Falta foto/papel</span>
+                  </div>
+                </td>
+
+                <!-- De dónde -->
+                <td class="py-3.5 px-4 border-r border-outline-variant align-top">
+                  <div class="font-bold text-sm text-on-surface">El Vallejo Llano</div>
+                  <div class="text-xs text-on-surface-variant">8,15 ha · Secano</div>
+                  <div class="text-[11px] text-on-surface-variant font-mono">SIGPAC: 47-212-0-0-205-8-1</div>
+                </td>
+
+                <!-- Acciones (Compactas 32-36px con ratón) -->
+                <td class="py-3.5 px-4 text-center align-top">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button class="h-8 px-2.5 bg-surface hover:bg-surface-variant text-primary font-bold text-xs rounded border border-outline flex items-center gap-1 transition-colors" title="Modificar datos de esta venta">
+                      <span class="material-symbols-outlined text-sm">edit</span>
+                      <span>Editar</span>
+                    </button>
+                    <button class="h-8 px-2 bg-surface hover:bg-error-container text-error font-bold text-xs rounded border border-outline hover:border-error flex items-center transition-colors" title="Borrar venta del registro">
+                      <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+
+            <!-- PIE DE TABLA: TOTAL VENDIDO DEL AÑO Y RESUMEN GENERAL -->
+            <tfoot class="bg-surface-container-high border-t-3 border-outline text-xs font-bold text-on-surface">
+              <tr>
+                <td colspan="2" class="py-3 px-4 border-r border-outline-variant">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-extrabold uppercase tracking-wide text-primary">TOTAL VENDIDO DEL AÑO (Campaña 2026):</span>
+                    <span class="text-xs font-semibold text-on-surface-variant">2 albaranes asentados</span>
+                  </div>
+                </td>
+                <!-- Total Kilos Alineado a la derecha -->
+                <td class="py-3 px-4 text-right border-r border-outline-variant bg-surface">
+                  <div class="text-lg font-black text-primary font-mono leading-none">
+                    44.000 <span class="text-xs font-bold">kg</span>
+                  </div>
+                  <div class="text-[11px] text-on-surface-variant font-bold mt-0.5">
+                    (44,00 toneladas)
+                  </div>
+                </td>
+                <td colspan="4" class="py-3 px-4 border-r border-outline-variant text-on-surface-variant">
+                  <span>Desglose: 32.400 kg Cebada Planet (73,6%) + 11.600 kg Trigo blando Camargo (26,4%)</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <span class="text-xs text-primary font-bold">Registro al día</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Barra inferior de paginación y atajos de teclado -->
+        <div class="p-3 bg-surface-container-low border-t border-outline flex items-center justify-between text-xs text-on-surface-variant">
+          <div class="flex items-center gap-3">
+            <span>Página <strong>1 de 1</strong></span>
+            <span>·</span>
+            <span>Mostrando filas 1 a 2</span>
+            <span>·</span>
+            <span class="text-primary font-medium">Cumple con la trazabilidad reglamentaria del Real Decreto 1054/2022 (SIEX)</span>
+          </div>
+
+          <div class="flex items-center gap-4 text-xs font-mono">
+            <span><strong class="text-on-surface">[Alt + N]</strong> Nueva venta</span>
+            <span><strong class="text-on-surface">[F2]</strong> Buscar</span>
+            <span><strong class="text-on-surface">[P]</strong> Imprimir oficial</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETA EXPLICATIVA DE NORMATIVA AGRARIA (DESPACHO) -->
+      <div class="bg-surface rounded-xl border-2 border-outline p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary text-2xl">info</span>
+          <div class="text-xs text-on-surface leading-relaxed">
+            <strong>¿Para qué pide la ley apuntar lo vendido en el cuaderno digital?</strong> La normativa exige justificar la salida de producto recolectado para cuadrar la superficie declarada con el rendimiento medio de la comarca, asegurando que no se comercializa cosecha de recintos no autorizados o sin declarar.
+          </div>
+        </div>
+        <button class="h-8 px-3 bg-surface hover:bg-surface-variant text-primary font-bold text-xs rounded border border-outline shrink-0 ml-4">
+          Consultar Guía de la Junta
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- 3. BARRA DE ESTADO INFERIOR (STATUS BAR DESKTOP ERP) -->
+  <footer class="w-full h-9 bg-primary-dark border-t-2 border-primary-container text-on-primary flex items-center justify-between px-6 text-xs z-50">
+    <div class="flex items-center gap-6">
+      <span class="flex items-center gap-1.5 font-bold text-[#8fae97]">
+        <span class="w-2 h-2 rounded-full bg-[#52c41a]"></span>
+        SIEX: Conectado y Sincronizado hace 3 min
+      </span>
+      <span class="text-[#cfd8cd]">|</span>
+      <span class="text-[#cfd8cd]">REGEPA: <strong>CYL-47-09821</strong> Actualizado</span>
+      <span class="text-[#cfd8cd]">|</span>
+      <span class="text-[#cfd8cd]">Base Local SQLite: <strong>Modo Despacho Activo</strong> (Sin cortes de red)</span>
+    </div>
+
+    <div class="flex items-center gap-4 text-[11px] text-[#cfd8cd]">
+      <span class="hover:text-white cursor-pointer transition-colors">Firma Digital Activa (FNMT)</span>
+      <span>·</span>
+      <span class="hover:text-white cursor-pointer transition-colors">Servidores Junta CyL: Operativos</span>
+      <span>·</span>
+      <span>CUE Digital v4.2.0</span>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Cuaderno de Campo - CUE Gestión Despacho (1440x900)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #f4f6f3;
+      color: #10190f;
+    }
+    /* Estricto: sin sombras, sin degradados, bordes nítidos de alto contraste */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f3f0;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #c2cec1;
+      border-radius: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #8fae97;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden text-[13px] bg-[#f4f6f3]">
+
+  <!-- 1. BARRA SUPERIOR INSTITUCIONAL Y DE CONTEXTO DE EXPLOTACIÓN (DESKTOP ERP) -->
+  <header class="h-14 bg-[#0d2b18] text-white flex items-center justify-between px-5 border-b-2 border-[#1f4a2c] flex-shrink-0 z-30">
+    <div class="flex items-center space-x-6">
+      <!-- Marca / Logo CUE Despacho -->
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded bg-[#1f4a2c] border border-[#3a6446] flex items-center justify-center text-white">
+          <svg class="w-5 h-5 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="font-bold text-base tracking-tight text-white">CUE Digital</span>
+          <span class="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-[#1f4a2c] text-[#ffd24a] border border-[#3a6446]">Despacho</span>
+        </div>
+      </div>
+
+      <!-- Divisor -->
+      <div class="h-6 w-px bg-[#1f4a2c]"></div>
+
+      <!-- Finca Activa -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-[#a9b6a8] uppercase font-bold tracking-wider">Finca:</span>
+        <button class="flex items-center space-x-1.5 bg-[#1f4a2c] hover:bg-[#2f6b40] text-white px-2.5 py-1 rounded text-xs font-semibold border border-[#3a6446]">
+          <span>Finca Las Suertes y El Prado</span>
+          <span class="bg-[#2f6b40] text-[#ffd24a] text-[10px] font-bold px-1.5 py-0.2 rounded border border-[#3a6446]">42 ha</span>
+          <svg class="w-3.5 h-3.5 ml-0.5 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Campaña -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-[#a9b6a8] uppercase font-bold tracking-wider">Campaña:</span>
+        <div class="flex items-center bg-[#1f4a2c] px-2.5 py-1 rounded border border-[#3a6446] text-xs">
+          <span class="font-bold text-white mr-1.5">2026</span>
+          <span class="text-[11px] text-[#a9b6a8] font-normal">(01/09/2025 al 31/08/2026)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Titular y Acciones Rápidas -->
+    <div class="flex items-center space-x-4">
+      <div class="text-right">
+        <div class="text-xs font-bold text-white leading-tight">Manuel Ruiz Gómez</div>
+        <div class="text-[11px] text-[#a9b6a8]">NIF: 12345678Z · Titular cualificado</div>
+      </div>
+
+      <div class="h-6 w-px bg-[#1f4a2c]"></div>
+
+      <button class="h-8 px-3 rounded bg-[#1f4a2c] hover:bg-[#2f6b40] text-white border border-[#3a6446] font-semibold text-xs flex items-center space-x-1.5">
+        <svg class="w-4 h-4 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+        </svg>
+        <span>Imprimir Informe Oficial</span>
+      </button>
+
+      <button class="h-8 px-3 rounded bg-[#ffd24a] hover:bg-[#ffc820] text-[#0d2b18] font-bold text-xs flex items-center space-x-1.5 border border-[#8a6a00]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>+ Nuevo Apunte</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. CONTENEDOR PRINCIPAL: MENÚ LATERAL + ÁREA DE TRABAJO -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- MENÚ LATERAL DE MÓDULOS ERP -->
+    <aside class="w-56 bg-white border-r-2 border-[#d9dad6] flex flex-col justify-between flex-shrink-0 z-20">
+      <div class="py-3">
+        <div class="px-4 pb-2 text-[10px] font-bold tracking-wider text-[#43503f] uppercase">
+          Módulos de Explotación
+        </div>
+        <nav class="space-y-0.5 px-2">
+          <!-- Resumen General -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span>Resumen General</span>
+          </a>
+
+          <!-- EL CUADERNO (ACTIVO) -->
+          <a href="#" class="flex items-center justify-between px-3 py-2 rounded bg-[#1f4a2c] text-white font-bold text-xs border border-[#0d2b18]">
+            <div class="flex items-center space-x-2.5">
+              <svg class="w-4 h-4 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              <span>El Cuaderno</span>
+            </div>
+            <span class="bg-[#ffd24a] text-[#0d2b18] text-[10px] font-extrabold px-1.5 py-0.5 rounded leading-none">24</span>
+          </a>
+
+          <!-- Tratamientos y Labores -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+            </svg>
+            <span>Tratamientos</span>
+          </a>
+
+          <!-- Tierras y Cultivos -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+            </svg>
+            <span>Tierras y Cultivos</span>
+          </a>
+
+          <!-- El Almacén -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <span>El Almacén</span>
+          </a>
+
+          <!-- Facturas y Albaranes -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Facturas y Albaranes</span>
+          </a>
+
+          <!-- Ventas y Entregas -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span>Ventas y Cosecha</span>
+          </a>
+
+          <!-- Plan de Abono y Nitratos -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+            <span>Plan de Abono</span>
+          </a>
+
+          <!-- Papeles y Documentos -->
+          <a href="#" class="flex items-center space-x-2.5 px-3 py-2 rounded text-[#43503f] hover:bg-[#f4f6f3] font-medium text-xs">
+            <svg class="w-4 h-4 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Papeles y Archivo</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Estado Sincronización y Validación Junta -->
+      <div class="p-3 border-t-2 border-[#d9dad6] bg-[#f4f6f3]">
+        <div class="flex items-start space-x-2 text-[11px] leading-tight text-[#43503f]">
+          <div class="w-2 h-2 rounded-full bg-[#1f4a2c] mt-1 flex-shrink-0"></div>
+          <div>
+            <div class="font-bold text-[#10190f]">CUE Conectado</div>
+            <div>Validado con SIEX y Junta CyL</div>
+          </div>
+        </div>
+        <div class="mt-2 text-[10px] text-[#43503f] bg-white p-1.5 rounded border border-[#d9dad6]">
+          Real Decreto 1054/2022<br><span class="font-semibold text-[#1f4a2c]">Campaña oficial 2026</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO CENTRAL (TABLA DE APUNTES) -->
+    <main class="flex-1 flex flex-col min-w-0 bg-white border-r-2 border-[#d9dad6] overflow-hidden">
+
+      <!-- FRANJA SUPERIOR: TÍTULO Y HERRAMIENTAS DE FILTRADO (36-40px de alto, ratón) -->
+      <div class="p-4 border-b-2 border-[#d9dad6] bg-white flex-shrink-0 space-y-3">
+        <!-- Encabezado de sección -->
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-xl font-bold text-[#10190f] tracking-tight">El cuaderno: apuntes de campaña</h1>
+              <span class="bg-[#f4f6f3] text-[#1f4a2c] font-bold text-xs px-2 py-0.5 rounded border border-[#a9b6a8]">Campaña 2026</span>
+            </div>
+            <p class="text-xs text-[#43503f] mt-0.5">Control de todos los tratamientos fitosanitarios, abonados, labores y cosechas de la explotación.</p>
+          </div>
+
+          <!-- Botones de Acción Principales -->
+          <div class="flex items-center space-x-2.5">
+            <button class="h-9 px-3.5 rounded bg-[#f4f6f3] hover:bg-[#e2e7e0] text-[#1f4a2c] border-2 border-[#a9b6a8] font-bold text-xs flex items-center space-x-2">
+              <svg class="w-4 h-4 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+              </svg>
+              <span>SACAR EN PAPEL</span>
+            </button>
+            <button class="h-9 px-4 rounded bg-[#1f4a2c] hover:bg-[#2f6b40] text-white border-2 border-[#0d2b18] font-bold text-xs flex items-center space-x-2">
+              <svg class="w-4 h-4 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>+ APUNTAR</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FRANJA DE HERRAMIENTAS Y FILTROS COMPACTOS (34-38px) -->
+        <div class="bg-[#f4f6f3] p-2.5 rounded-lg border-2 border-[#d9dad6] flex flex-wrap items-center gap-2.5">
+          <!-- Búsqueda -->
+          <div class="relative flex-1 min-w-[200px]">
+            <input type="text" placeholder="Buscar en el cuaderno (producto, tierra, registro)..." value="" class="w-full h-8 pl-8 pr-3 text-xs bg-white border border-[#a9b6a8] rounded focus:outline-none focus:border-[#1f4a2c] text-[#10190f]">
+            <svg class="w-4 h-4 text-[#43503f] absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+
+          <!-- Filtro: De qué clase -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-[11px] font-bold text-[#43503f] uppercase">Clase:</span>
+            <select class="h-8 px-2 text-xs bg-white border border-[#a9b6a8] rounded font-medium text-[#10190f] focus:outline-none focus:border-[#1f4a2c]">
+              <option value="todos">Todas las clases</option>
+              <option value="producto">Producto (Tratamiento)</option>
+              <option value="abono">Abono y fertilizante</option>
+              <option value="trabajo">Trabajo mecánico</option>
+              <option value="cosecha">Cosecha y venta</option>
+            </select>
+          </div>
+
+          <!-- Filtro Fechas: Desde y Hasta -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-[11px] font-bold text-[#43503f] uppercase">Desde:</span>
+            <input type="date" value="2026-03-01" class="h-8 px-2 text-xs bg-white border border-[#a9b6a8] rounded font-medium text-[#10190f] focus:outline-none focus:border-[#1f4a2c]">
+            <span class="text-[11px] font-bold text-[#43503f] uppercase ml-1">Hasta:</span>
+            <input type="date" value="2026-05-31" class="h-8 px-2 text-xs bg-white border border-[#a9b6a8] rounded font-medium text-[#10190f] focus:outline-none focus:border-[#1f4a2c]">
+          </div>
+
+          <!-- Filtro Tierras -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-[11px] font-bold text-[#43503f] uppercase">Tierra:</span>
+            <select class="h-8 px-2 text-xs bg-white border border-[#a9b6a8] rounded font-medium text-[#10190f] focus:outline-none focus:border-[#1f4a2c]">
+              <option value="todas">Todas las tierras</option>
+              <option value="prado" selected>El Prado (4,90 ha)</option>
+              <option value="suertes">Las Suertes de Arriba (12,30 ha)</option>
+              <option value="vallejo">El Vallejo Llano (8,15 ha)</option>
+              <option value="vega">La Vega del Río (6,40 ha)</option>
+            </select>
+          </div>
+
+          <!-- Casilla: Sólo los firmados -->
+          <label class="flex items-center space-x-1.5 bg-white px-2.5 h-8 rounded border border-[#a9b6a8] cursor-pointer hover:bg-[#e2e7e0]">
+            <input type="checkbox" class="w-3.5 h-3.5 text-[#1f4a2c] rounded border-[#a9b6a8] focus:ring-0">
+            <span class="text-xs font-semibold text-[#10190f]">Sólo firmados</span>
+          </label>
+
+          <!-- Botón Limpiar filtros -->
+          <button class="h-8 px-2.5 text-xs text-[#43503f] hover:text-[#10190f] hover:underline font-medium">
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLA DE APUNTES CON SCROLL VERTICAL -->
+      <div class="flex-1 overflow-y-auto custom-scroll">
+        <table class="w-full border-collapse text-left">
+          <!-- CABECERA DE TABLA CON ORDENACIÓN -->
+          <thead class="bg-[#f4f6f3] sticky top-0 z-10 border-b-2 border-[#d9dad6] text-[11px] font-bold text-[#43503f] uppercase tracking-wider">
+            <tr>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-28 cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-between">
+                  <span>Fecha</span>
+                  <svg class="w-3 h-3 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-24 cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-between">
+                  <span>Clase</span>
+                  <svg class="w-3 h-3 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-between">
+                  <span>Qué (Producto o Trabajo)</span>
+                  <svg class="w-3 h-3 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-40 cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-between">
+                  <span>Tierra</span>
+                  <svg class="w-3 h-3 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-24 text-right cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-end space-x-1">
+                  <span>Hectáreas</span>
+                  <svg class="w-3 h-3 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-36 cursor-pointer hover:bg-[#e2e7e0]">
+                <div class="flex items-center justify-between">
+                  <span>Cultivo</span>
+                  <svg class="w-3 h-3 text-[#a9b6a8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                </div>
+              </th>
+              <th scope="col" class="py-2.5 px-3 border-r border-[#d9dad6] w-24 text-center">
+                <span>Firmado</span>
+              </th>
+              <th scope="col" class="py-2.5 px-3 text-center w-36">
+                <span>Acciones</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#d9dad6] text-xs">
+
+            <!-- AGRUPACIÓN 1: MAYO DE 2026 -->
+            <tr class="bg-[#eef2ec] border-t-2 border-b border-[#a9b6a8]">
+              <td colspan="8" class="py-1.5 px-3 font-bold text-[#1f4a2c] text-xs tracking-wide">
+                <div class="flex items-center space-x-2">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  <span>Mayo de 2026 · 4 apuntes registrados</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 1 (SELECCIONADA / ACTIVA) -->
+            <tr class="bg-[#f0f7f2] border-l-4 border-l-[#1f4a2c] hover:bg-[#e5f0e8] cursor-pointer transition-colors">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">12/05/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#1f4a2c] text-white border border-[#0d2b18]">Producto</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f] text-sm">Glifosato 36 SL</div>
+                <div class="text-[11px] text-[#43503f]">Herbicida no selectivo · 2,00 L/ha · Lote: GLI-26-08</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">El Prado (Villalar)</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">4,90 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Trigo blando</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#8a6a00] bg-[#ffe9a8] px-1.5 py-0.5 rounded border border-[#8a6a00]">
+                  Pendiente
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#1f4a2c] text-white font-bold text-[11px] hover:bg-[#2f6b40]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#8c1d18] text-[#8c1d18] font-bold text-[11px] hover:bg-[#fbe3e1]">Borrar</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 2: Abono -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">08/05/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#8a6a00] text-white border border-[#3d2f00]">Abono</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Abono foliar estimulante Boro</div>
+                <div class="text-[11px] text-[#43503f]">Nitrógeno orgánico + Boro soluble · 1,50 L/ha</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">El Prado (Villalar)</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">4,90 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Cebada cervecera</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <!-- Botón anular porque está firmado (borrar deshabilitado) -->
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]" title="Apunte firmado: solo permite anular formalmente">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 3: Labor Mecánica -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">03/05/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#43503f] text-white border border-[#10190f]">Trabajo</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Pase de cultivador y rulo</div>
+                <div class="text-[11px] text-[#43503f]">Tractor John Deere 6155M · Apero cultivador 4m</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">Las Suertes de Arriba</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">12,30 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Girasol alto oleico</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#8a6a00] bg-[#ffe9a8] px-1.5 py-0.5 rounded border border-[#8a6a00]">
+                  Pendiente
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#8c1d18] text-[#8c1d18] font-bold text-[11px] hover:bg-[#fbe3e1]">Borrar</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 4: Producto Fitosanitario Firmado -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">01/05/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#1f4a2c] text-white border border-[#0d2b18]">Producto</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Deltametrina 2,5%</div>
+                <div class="text-[11px] text-[#43503f]">Insecticida piretroide · 0,50 L/ha · Plazo: 30 días</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">El Vallejo Llano</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">8,15 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Cebada Planet</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]" title="Apunte firmado: solo permite anular">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- AGRUPACIÓN 2: ABRIL DE 2026 -->
+            <tr class="bg-[#eef2ec] border-t-2 border-b border-[#a9b6a8]">
+              <td colspan="8" class="py-1.5 px-3 font-bold text-[#1f4a2c] text-xs tracking-wide">
+                <div class="flex items-center space-x-2">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  <span>Abril de 2026 · 8 apuntes registrados</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 5: Tratamiento Tebuconazol (FIRMADO) -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">22/04/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#1f4a2c] text-white border border-[#0d2b18]">Producto</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Tebuconazol 25% WG</div>
+                <div class="text-[11px] text-[#43503f]">Fungicida sistémico · 2,00 kg/ha · Reg. 24.156</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">Las Suertes de Arriba</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">4,10 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Trigo blando</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]" title="Apunte firmado: solo permite anular">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 6: Tratamiento Tebuconazol El Prado (FIRMADO) -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">15/04/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#1f4a2c] text-white border border-[#0d2b18]">Producto</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Tebuconazol 25% WG</div>
+                <div class="text-[11px] text-[#43503f]">Fungicida sistémico · 2,00 kg/ha · Reg. 24.156</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">El Prado (Villalar)</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">4,90 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Cebada cervecera</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 7: Siembra Maíz -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">20/04/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#43503f] text-white border border-[#10190f]">Trabajo</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Siembra de precisión</div>
+                <div class="text-[11px] text-[#43503f]">Sembradora neumática 6 líneas · Dosis: 85.000 semillas/ha</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">La Vega del Río</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">6,40 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Maíz dulce (Regadío)</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 8: Abono complejo NPK -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">12/04/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#8a6a00] text-white border border-[#3d2f00]">Abono</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Abono complejo NPK 8-15-15</div>
+                <div class="text-[11px] text-[#43503f]">Abonado de cobertera · 350 kg/ha · Nitrógeno: 28 kg N/ha</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">El Prado (Villalar)</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">4,90 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Cebada cervecera</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- AGRUPACIÓN 3: MARZO DE 2026 -->
+            <tr class="bg-[#eef2ec] border-t-2 border-b border-[#a9b6a8]">
+              <td colspan="8" class="py-1.5 px-3 font-bold text-[#1f4a2c] text-xs tracking-wide">
+                <div class="flex items-center space-x-2">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  <span>Marzo de 2026 · 12 apuntes registrados</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 9: Herbicida avena loca -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">28/03/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#1f4a2c] text-white border border-[#0d2b18]">Producto</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Herbicida selectivo cereal</div>
+                <div class="text-[11px] text-[#43503f]">Tratamiento contra avena loca y vallico · 0,80 L/ha</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">Las Suertes de Arriba</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">12,30 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Trigo blando</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fila 10: Riego por aspersión -->
+            <tr class="hover:bg-[#f9faf7] cursor-pointer">
+              <td class="py-2.5 px-3 font-semibold text-[#10190f] border-r border-[#d9dad6]">15/03/2026</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-[#43503f] text-white border border-[#10190f]">Trabajo</span>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6]">
+                <div class="font-bold text-[#10190f]">Riego de nascencia</div>
+                <div class="text-[11px] text-[#43503f]">Cobertura total por aspersión · 320 m³/ha · Pozo Las Viñas</div>
+              </td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] font-medium text-[#10190f]">La Vega del Río</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-right font-bold text-[#10190f]">6,40 ha</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-[#43503f]">Maíz dulce</td>
+              <td class="py-2.5 px-3 border-r border-[#d9dad6] text-center">
+                <span class="inline-flex items-center text-[11px] font-bold text-[#1f4a2c] bg-[#eef2ec] px-1.5 py-0.5 rounded border border-[#1f4a2c]">
+                  <svg class="w-3 h-3 mr-0.5 text-[#1f4a2c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Firmado
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#10190f] font-bold text-[11px] hover:bg-[#e2e7e0]">VER</button>
+                  <button class="px-2 py-1 rounded bg-white border border-[#a9b6a8] text-[#1f4a2c] font-bold text-[11px] hover:bg-[#f4f6f3]">Editar</button>
+                  <button class="px-2 py-1 rounded bg-[#f4f6f3] border border-[#a9b6a8] text-[#43503f] font-bold text-[11px] hover:bg-[#e2e7e0]">Anular</button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PIE DE TABLA: RESUMEN Y PAGINACIÓN COMPACTA -->
+      <div class="h-11 px-4 bg-[#f4f6f3] border-t-2 border-[#d9dad6] flex items-center justify-between flex-shrink-0 text-xs text-[#43503f]">
+        <div class="flex items-center space-x-4">
+          <span class="font-bold text-[#10190f]">24 apuntes registrados en campaña</span>
+          <span class="text-[#a9b6a8]">|</span>
+          <span>Superficie total acumulada: <strong class="text-[#10190f]">62,40 ha tratadas</strong></span>
+          <span class="text-[#a9b6a8]">|</span>
+          <span class="flex items-center text-[11px]">
+            <span class="w-2 h-2 rounded-full bg-[#1f4a2c] mr-1.5"></span>
+            22 firmados
+            <span class="w-2 h-2 rounded-full bg-[#8a6a00] ml-3 mr-1.5"></span>
+            2 pendientes
+          </span>
+        </div>
+
+        <!-- Paginación estilo aplicación de gestión -->
+        <div class="flex items-center space-x-2">
+          <span class="text-[11px]">Mostrando 1-10 de 24</span>
+          <div class="flex items-center space-x-1">
+            <button class="px-2 py-1 rounded border border-[#a9b6a8] bg-white text-[#43503f] disabled:opacity-40" disabled>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <button class="px-2 py-1 rounded bg-[#1f4a2c] text-white font-bold text-xs border border-[#0d2b18]">1</button>
+            <button class="px-2 py-1 rounded border border-[#a9b6a8] bg-white text-[#10190f] hover:bg-[#e2e7e0]">2</button>
+            <button class="px-2 py-1 rounded border border-[#a9b6a8] bg-white text-[#10190f] hover:bg-[#e2e7e0]">3</button>
+            <button class="px-2 py-1 rounded border border-[#a9b6a8] bg-white text-[#10190f] hover:bg-[#e2e7e0]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- PANEL LATERAL DERECHO: DETALLE DEL APUNTE ELEGIDO (340px) -->
+    <aside class="w-[360px] bg-[#fdfdfc] flex flex-col justify-between flex-shrink-0 overflow-y-auto custom-scroll z-10 border-l border-[#d9dad6]">
+
+      <!-- CABECERA DEL PANEL DE DETALLE -->
+      <div>
+        <div class="p-3.5 border-b-2 border-[#d9dad6] bg-[#f4f6f3] flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-[#43503f]">Ficha del apunte seleccionado</span>
+            <span class="bg-[#ffe9a8] text-[#3d2f00] text-[10px] font-bold px-1.5 py-0.2 rounded border border-[#8a6a00]">Pendiente de firma</span>
+          </div>
+          <button class="text-[#43503f] hover:text-[#10190f] p-1 rounded hover:bg-[#e2e7e0]" title="Cerrar panel">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- CUERPO PRINCIPAL DEL DETALLE -->
+        <div class="p-4 space-y-4">
+
+          <!-- Producto y Fecha en Grande -->
+          <div>
+            <div class="flex items-center justify-between text-xs text-[#43503f] mb-1">
+              <span class="font-semibold">Fecha: 12 de mayo de 2026</span>
+              <span class="bg-[#1f4a2c] text-white text-[10px] font-bold px-2 py-0.5 rounded">Producto Fitosanitario</span>
+            </div>
+            <h2 class="text-xl font-extrabold text-[#10190f] leading-snug tracking-tight">Glifosato 36 SL</h2>
+            <p class="text-xs text-[#43503f] mt-0.5">Herbicida sistémico concentrado soluble</p>
+          </div>
+
+          <!-- AVISO OBLIGATORIO DE PLAZO DE SEGURIDAD / COSECHA -->
+          <div class="p-3 bg-[#ffe9a8] rounded border-2 border-[#8a6a00] text-xs">
+            <div class="flex items-start space-x-2">
+              <svg class="w-4 h-4 text-[#8a6a00] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+              <div>
+                <div class="font-bold text-[#3d2f00] text-xs">Hasta aquí no puedes coger la cosecha:</div>
+                <div class="font-extrabold text-sm text-[#3d2f00] mt-0.5">26/05/2026 (14 días de espera)</div>
+                <div class="text-[11px] text-[#3d2f00] mt-1 leading-tight">En trigo blando y cebada: no entrar con cosechadora antes de cumplirse el plazo oficial.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLA DE PARÁMETROS REGISTRADOS -->
+          <div class="border-2 border-[#d9dad6] rounded overflow-hidden bg-white">
+            <div class="p-2.5 bg-[#f4f6f3] border-b border-[#d9dad6] font-bold text-xs text-[#10190f]">
+              Datos Oficiales para la Inspección
+            </div>
+            <div class="divide-y divide-[#d9dad6] text-xs">
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Tierra y parcela:</span>
+                <span class="font-bold text-[#10190f] text-right">El Prado (Villalar)</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Referencia SIGPAC:</span>
+                <span class="font-mono text-[11px] text-[#10190f]">37-70-0-0-503-51-1</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Hectáreas tratadas:</span>
+                <span class="font-bold text-sm text-[#10190f]">4,90 ha</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Cuánto por hectárea:</span>
+                <span class="font-bold text-[#10190f]">2,00 L/ha</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Producto total gastado:</span>
+                <span class="font-bold text-[#1f4a2c]">9,80 L en la cuba</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Cultivo declarado:</span>
+                <span class="font-medium text-[#10190f]">Trigo blando (Secano)</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Nº Registro oficial:</span>
+                <span class="font-mono text-[#10190f]">18.940 / ES-00421</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Materia activa:</span>
+                <span class="text-[#10190f] text-right">Glifosato 360 g/L</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Aplicador:</span>
+                <span class="text-[#10190f] text-right font-medium">Manuel Ruiz (Carné: 47-CAL-04892)</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Máquina de sulfatar:</span>
+                <span class="text-[#10190f] text-right">Cuba Aguirre 600L (ITEAF 2024)</span>
+              </div>
+              <div class="p-2.5 flex justify-between items-center">
+                <span class="text-[#43503f]">Caldo de agua:</span>
+                <span class="font-medium text-[#10190f]">122 L/ha (Cuba llena a 600L)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CUADRATURA CON EL ALMACÉN -->
+          <div class="p-3 bg-[#f4f6f3] rounded border border-[#a9b6a8] text-xs">
+            <div class="font-bold text-[#10190f] mb-1.5 flex items-center justify-between">
+              <span>Cuadratura con el almacén:</span>
+              <span class="text-[10px] text-[#1f4a2c] font-semibold underline cursor-pointer">Ver producto</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-white p-1.5 rounded border border-[#d9dad6]">
+                <div class="text-[10px] text-[#43503f]">Comprado</div>
+                <div class="font-bold text-[#10190f]">10,00 L</div>
+              </div>
+              <div class="bg-white p-1.5 rounded border border-[#d9dad6]">
+                <div class="text-[10px] text-[#43503f]">Gastado</div>
+                <div class="font-bold text-[#8c1d18]">14,70 L</div>
+              </div>
+              <div class="bg-[#fbe3e1] p-1.5 rounded border border-[#8c1d18]">
+                <div class="text-[10px] text-[#8c1d18] font-bold">Desfase</div>
+                <div class="font-extrabold text-[#8c1d18]">-4,70 L</div>
+              </div>
+            </div>
+            <div class="mt-2 text-[11px] text-[#8c1d18] leading-tight font-medium">
+              Aviso: Has echado más litros de los que constan en facturas guardadas. Registra la factura que falta para cuadrar la inspección.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTONES DE ACCIÓN DEL DETALLE (CORREGIR Y VOLVER) -->
+      <div class="p-3.5 border-t-2 border-[#d9dad6] bg-[#f4f6f3] space-y-2 flex-shrink-0">
+        <button class="w-full h-10 rounded bg-[#1f4a2c] hover:bg-[#2f6b40] text-white font-bold text-xs border-2 border-[#0d2b18] flex items-center justify-center space-x-1.5">
+          <svg class="w-4 h-4 text-[#ffd24a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          <span>CORREGIR ESTE APUNTE</span>
+        </button>
+
+        <div class="flex items-center space-x-2">
+          <button class="flex-1 h-8 rounded bg-white hover:bg-[#e2e7e0] text-[#10190f] font-semibold text-xs border border-[#a9b6a8] flex items-center justify-center space-x-1">
+            <svg class="w-3.5 h-3.5 text-[#43503f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Volver a su sitio</span>
+          </button>
+          <button class="h-8 px-3 rounded bg-white hover:bg-[#fbe3e1] text-[#8c1d18] font-bold text-xs border border-[#8c1d18]" title="Borrar apunte todavía no firmado">
+            Borrar
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- 3. BARRA INFERIOR DE ESTADO / FOOTER DESKTOP ERP -->
+  <footer class="h-7 bg-[#0d2b18] text-[#a9b6a8] text-[11px] px-5 flex items-center justify-between border-t border-[#1f4a2c] flex-shrink-0 z-30">
+    <div class="flex items-center space-x-5">
+      <span class="text-white font-medium">CUE Digital · Módulo ERP Despacho</span>
+      <span>Base de datos sincronizada localmente (Modo sin cobertura / Escritorio)</span>
+      <span class="flex items-center text-white">
+        <span class="w-2 h-2 rounded-full bg-[#ffd24a] mr-1.5"></span>
+        Conectado con el Registro Oficial de Explotaciones de Castilla y León
+      </span>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span>Resolución de pantalla: 1440 × 900 píxeles</span>
+      <span>Cumple Real Decreto 1054/2022</span>
+    </div>
+  </footer>
+
+</body>
+</html>

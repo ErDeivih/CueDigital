@@ -1,0 +1,358 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "11908919196502304368",
+  "outputComponents": [
+    {
+      "designSystem": {
+        "name": "assets/687baf53d17740bea1d965d5c69701f0",
+        "designSystem": {
+          "displayName": "AgroCastilla CUE ERP",
+          "styleGuidelines": "## Brand & Style\nThis design system powers a mission-critical Cuaderno de Explotación Digital (CUE) and dispatch management platform for agricultural cooperatives, agrarian technical offices, and farm operators across Castilla y León. \n\nThe aesthetic is functional, agrarian-institutional, and deliberately austere. It rejects decorative trends, transparency, gradients, and soft elevations in favor of strict structural clarity, absolute tabular order, and high-contrast ergonomics. The user profile centers on agrarian professionals, dispatch managers, and farmers aged 50–70 working on standard desktop displays (1440×900) under variable office and warehouse lighting conditions.\n\nThe design movement is **Structured High-Contrast / Functional Brutalist Utilitarian**:\n- Visual hierarchy is articulated through sharp 1px structural dividing lines rather than elevation or ambient blur.\n- Data density is high and compact, prioritizing horizontal eye-flow, vertical column alignment, and immediate field validation.\n- The interface delivers uncompromising institutional authority, reliability, and regulatory compliance.\n\n## Layout & Spacing\nThe layout strategy uses a continuous, fixed-docked enterprise shell tailored for wide data tables and multi-pane parcel inspection.\n\n- **Desktop Foundation (1440×900 Target)**:\n  - Top Application Bar: Fixed `48px` height (`#1f4a2c` background).\n  - Left Primary Navigation: Fixed `220px` width; collapsable to `56px` icon-only rail for data-heavy workflows.\n  - Main Operational Stage: Fluid viewport consumption with a minimum workspace threshold of `1180px`.\n- **Vertical Grid Rhythm**:\n  - Compact table rows strictly adhere to a `32px` minimum and `40px` maximum row envelope.\n  - Form panels and filter ribbons use a compact vertical gap of `space-sm` (8px) to `space-md` (12px), keeping primary action buttons and data tables above the screen fold on 900px displays.\n\n## Elevation & Depth\nThis system explicitly eliminates box shadows, elevation blurs, depth drops, and translucent glassmorphism.\n\nVisual separation relies exclusively on:\n1. **1px Sharp Perimeter Borders**: Hard, high-contrast borders using `#cfd4da` for interior structures and `#4a5568` for container bounds.\n2. **Surface Contrasts**: Clean shifts between `#f8f9fa` (canvas backdrop), `#ffffff` (interactive cards and data grids), and `#e8f0eb` (selected states).\n3. **Z-Index Layering**: Modals and dropdown flyouts rest on solid `#ffffff` with a hard `2px solid #1f4a2c` perimeter, accompanied by a flat `rgba(0, 0, 0, 0.4)` non-blurred overlay mask.\n\n## Components\n\n### Data Tables (CUE Core Grid)\n- **Geometry**: Row height exactly `36px` default, togglable between `32px` (compact) and `40px` (comfortable).\n- **Borders**: Continuous horizontal and vertical cell borders (`1px solid #dcdfe3`).\n- **Header**: `#f1f3f5` background, uppercase `11px` bold text (`#1f4a2c`), bottom border `2px solid #1f4a2c`.\n- **Text Alignment**: Left-align string data (Parcela, Variedad, Titular); right-align all numeric quantities (Superficie ha, Dosis kg/ha, Rendimiento); center operational status chips and action buttons.\n- **States**: Hover row changes to `#f4f6f5`; selected row highlights with `#e8f0eb` and a `3px solid #1f4a2c` left-edge indicator.\n\n### Input Fields & Select Controls\n- **Height**: Standardized at `34px`.\n- **Visuals**: Background `#ffffff`, border `1px solid #718096`, text `14px` (`#1a202c`).\n- **Focus**: Hard outline of `2px solid #1f4a2c` with zero offset. No soft glows or blue halo effects.\n- **Invalid**: `2px solid #a61b1b` border with bottom-aligned microcopy in `12px` bold red.\n\n### Buttons\n- **Primary CTA**: `#1f4a2c` solid fill, `#ffffff` bold text, zero border-radius, `34px` height, `12px 16px` padding. Active state deepens to `#14331e`.\n- **Secondary**: `#ffffff` background, `1px solid #1f4a2c` border, `#1f4a2c` text.\n- **Destructive**: `#a61b1b` solid fill, white text, zero border-radius.\n- **Icon Buttons**: Flat 32×32px squares, border `1px solid #cfd4da`, containing crisp 16px single-color SVG icons.\n\n### Status Chips & Badges\n- **Structure**: Rectangular tags, zero radius, `20px` height, `6px` horizontal padding.\n- **Styles**:\n  - *Vigente / Validado (CUE)*: Border `1px solid #1f4a2c`, background `#edf4ef`, text `#1f4a2c`.\n  - *Pendiente Firma*: Border `1px solid #92400e`, background `#fef3c7`, text `#92400e`.\n  - *Incidencia SIGPAC*: Border `1px solid #a61b1b`, background `#fee2e2`, text `#a61b1b`.\n\n### Checkboxes & Radios\n- **Checkboxes**: 18×18px squares with `2px solid #4a5568` border. When checked, fill with `#1f4a2c` and an interior white checkmark.\n- **Radios**: 18×18px circles with high-contrast inner dot indicator.\n\n### Iconography\n- Strictly monoline SVG icons with `1.75px` stroke width, optimized on a 16×16 or 20×20 pixel grid to prevent blurry subpixel rendering on standard-DPI screens.",
+          "theme": {
+            "colorMode": "LIGHT",
+            "font": "INTER",
+            "customColor": "#1f4a2c",
+            "headlineFont": "INTER",
+            "bodyFont": "INTER",
+            "labelFont": "INTER",
+            "namedColors": {
+              "on_secondary_fixed_variant": "#5d4210",
+              "error_container": "#ffdad6",
+              "outline_variant": "#c1c9bf",
+              "surface_dim": "#cfdaf1",
+              "tertiary_fixed": "#dce1ff",
+              "surface_variant": "#d8e3fa",
+              "surface_container_highest": "#d8e3fa",
+              "primary": "#043317",
+              "tertiary": "#002473",
+              "on_surface": "#111c2c",
+              "on_secondary_fixed": "#281900",
+              "tertiary_container": "#203c8c",
+              "outline": "#727971",
+              "surface": "#f9f9ff",
+              "inverse_primary": "#a2d2aa",
+              "secondary": "#775926",
+              "on_tertiary": "#ffffff",
+              "on_error": "#ffffff",
+              "secondary_fixed": "#ffdeac",
+              "surface_container_low": "#f0f3ff",
+              "on_secondary_container": "#785a26",
+              "on_tertiary_container": "#94abff",
+              "surface_container_high": "#dee8ff",
+              "surface_container_lowest": "#ffffff",
+              "on_primary_container": "#8bb992",
+              "surface_tint": "#3c6847",
+              "primary_fixed_dim": "#a2d2aa",
+              "on_primary": "#ffffff",
+              "primary_fixed": "#beeec5",
+              "inverse_on_surface": "#ebf1ff",
+              "on_secondary": "#ffffff",
+              "on_error_container": "#93000a",
+              "secondary_container": "#fdd494",
+              "secondary_fixed_dim": "#e8c083",
+              "on_tertiary_fixed": "#00164e",
+              "surface_bright": "#f9f9ff",
+              "inverse_surface": "#263142",
+              "error": "#ba1a1a",
+              "on_primary_fixed": "#00210c",
+              "tertiary_fixed_dim": "#b6c4ff",
+              "background": "#f9f9ff",
+              "on_background": "#111c2c",
+              "surface_container": "#e7eeff",
+              "primary_container": "#1f4a2c",
+              "on_primary_fixed_variant": "#244f31",
+              "on_tertiary_fixed_variant": "#264191",
+              "on_surface_variant": "#414941"
+            },
+            "designMd": "---\nname: AgroCastilla CUE ERP\ncolors:\n  surface: '#f9f9ff'\n  surface-dim: '#cfdaf1'\n  surface-bright: '#f9f9ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f0f3ff'\n  surface-container: '#e7eeff'\n  surface-container-high: '#dee8ff'\n  surface-container-highest: '#d8e3fa'\n  on-surface: '#111c2c'\n  on-surface-variant: '#414941'\n  inverse-surface: '#263142'\n  inverse-on-surface: '#ebf1ff'\n  outline: '#727971'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#1f4a2c'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#775926'\n  on-secondary: '#ffffff'\n  secondary-container: '#fdd494'\n  on-secondary-container: '#785a26'\n  tertiary: '#002473'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#203c8c'\n  on-tertiary-container: '#94abff'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdeac'\n  secondary-fixed-dim: '#e8c083'\n  on-secondary-fixed: '#281900'\n  on-secondary-fixed-variant: '#5d4210'\n  tertiary-fixed: '#dce1ff'\n  tertiary-fixed-dim: '#b6c4ff'\n  on-tertiary-fixed: '#00164e'\n  on-tertiary-fixed-variant: '#264191'\n  background: '#f9f9ff'\n  on-background: '#111c2c'\n  surface-variant: '#d8e3fa'\ntypography:\n  headline-xl:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.015em\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '700'\n    lineHeight: 28px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '600'\n    lineHeight: 24px\n    letterSpacing: 0em\n  body-lg:\n    fontFamily: Inter\n    fontSize: 15px\n    fontWeight: '500'\n    lineHeight: 22px\n    letterSpacing: 0em\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n    letterSpacing: 0em\n  body-sm:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 18px\n    letterSpacing: 0em\n  label-lg:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 20px\n    letterSpacing: 0.01em\n  label-md:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 11px\n    fontWeight: '700'\n    lineHeight: 14px\n    letterSpacing: 0.04em\n  tabular-data:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '500'\n    lineHeight: 18px\n    letterSpacing: 0em\nspacing:\n  gutter: 1rem\n  gutter-compact: 0.5rem\n  margin: 1.25rem\n  margin-panel: 0.75rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 0.75rem\n  space-lg: 1rem\n  space-xl: 1.5rem\n---\n\n## Brand & Style\nThis design system powers a mission-critical Cuaderno de Explotación Digital (CUE) and dispatch management platform for agricultural cooperatives, agrarian technical offices, and farm operators across Castilla y León. \n\nThe aesthetic is functional, agrarian-institutional, and deliberately austere. It rejects decorative trends, transparency, gradients, and soft elevations in favor of strict structural clarity, absolute tabular order, and high-contrast ergonomics. The user profile centers on agrarian professionals, dispatch managers, and farmers aged 50–70 working on standard desktop displays (1440×900) under variable office and warehouse lighting conditions.\n\nThe design movement is **Structured High-Contrast / Functional Brutalist Utilitarian**:\n- Visual hierarchy is articulated through sharp 1px structural dividing lines rather than elevation or ambient blur.\n- Data density is high and compact, prioritizing horizontal eye-flow, vertical column alignment, and immediate field validation.\n- The interface delivers uncompromising institutional authority, reliability, and regulatory compliance.\n\n## Colors\nThe palette is calibrated for long operational sessions on matte desktop monitors, maintaining WCAG AAA contrast ratios (minimum 7:1 for standard text) against bright environmental daylight.\n\n- **Primary (`#1f4a2c` - Encinar Pine)**: Used strictly for global application headers, top-tier navigation anchors, primary confirmation CTAs, and certified status badges.\n- **Secondary (`#7a5c28` - Castilla Ochre / Harvest)**: Used for agricultural lifecycle markers, SIGPAC parcel verifications, and secondary operational workflows.\n- **Tertiary (`#1e3a8a` - Cadastral Blue)**: Dedicated to external registry lookups, official Junta de Castilla y León exports, and legal/cadastral parcel linkages.\n- **Neutral (`#4a5568` - Slate Neutral)**: Delivers distinct mid-tone structural outlines, column borders, and non-distracting inactive state indicators.\n- **Surfaces**:\n  - Global Canvas: `#f8f9fa` (Warm Neutral Ground).\n  - Data Grid & Form Workspace: `#ffffff` (True White for maximum contrast).\n  - Table Alternating Rows (Zebra): `#f1f3f5`.\n  - Focused/Active Row Highlight: `#e8f0eb`.\n- **System Feedback**:\n  - Error: `#a61b1b` (High-contrast crimson, accompanied by text and icon).\n  - Warning/Pending CUE: `#92400e` (Deep amber).\n  - Success/Validated: `#1b5e20` (Forest green).\n\n## Typography\nTypographic decisions address sight fatigue and readability challenges for older operational personnel using 1440×900 screens at standard desk viewing distances (~60–75cm).\n\n- **Typeface Engine**: `Inter`, with direct fallback to standard OS system sans-serifs (`-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif`).\n- **Tabular Figures**: Every numeric display, plot code, cadastral reference, dosage metric, and date field must employ OpenType tabular figures (`font-variant-numeric: tabular-nums; font-feature-settings: \"tnum\" 1`).\n- **Hierarchy Rules**: \n  - Standard body copy never falls below `13px`.\n  - Labels and table headers rely on medium-to-bold weights (`600` or `700`) to remain legible against structural borders without requiring excessive physical height.\n  - Headings avoid exaggerated scale jumps to maintain high vertical information density on sub-1080p desktop monitors.\n\n## Layout & Spacing\nThe layout strategy uses a continuous, fixed-docked enterprise shell tailored for wide data tables and multi-pane parcel inspection.\n\n- **Desktop Foundation (1440×900 Target)**:\n  - Top Application Bar: Fixed `48px` height (`#1f4a2c` background).\n  - Left Primary Navigation: Fixed `220px` width; collapsable to `56px` icon-only rail for data-heavy workflows.\n  - Main Operational Stage: Fluid viewport consumption with a minimum workspace threshold of `1180px`.\n- **Vertical Grid Rhythm**:\n  - Compact table rows strictly adhere to a `32px` minimum and `40px` maximum row envelope.\n  - Form panels and filter ribbons use a compact vertical gap of `space-sm` (8px) to `space-md` (12px), keeping primary action buttons and data tables above the screen fold on 900px displays.\n\n## Elevation & Depth\nThis system explicitly eliminates box shadows, elevation blurs, depth drops, and translucent glassmorphism.\n\nVisual separation relies exclusively on:\n1. **1px Sharp Perimeter Borders**: Hard, high-contrast borders using `#cfd4da` for interior structures and `#4a5568` for container bounds.\n2. **Surface Contrasts**: Clean shifts between `#f8f9fa` (canvas backdrop), `#ffffff` (interactive cards and data grids), and `#e8f0eb` (selected states).\n3. **Z-Index Layering**: Modals and dropdown flyouts rest on solid `#ffffff` with a hard `2px solid #1f4a2c` perimeter, accompanied by a flat `rgba(0, 0, 0, 0.4)` non-blurred overlay mask.\n\n## Shapes\nAll UI geometries are strictly **Sharp (0px radius)**.\n\n- Table boundaries, cell divisions, form inputs, buttons, status indicators, and modal frames use zero rounded corners (`border-radius: 0px`).\n- This angularity enforces a clean, spreadsheet-like administrative tool feel, eliminates wasted screen margins, and ensures horizontal and vertical gridlines align without optical distortion.\n\n## Components\n\n### Data Tables (CUE Core Grid)\n- **Geometry**: Row height exactly `36px` default, togglable between `32px` (compact) and `40px` (comfortable).\n- **Borders**: Continuous horizontal and vertical cell borders (`1px solid #dcdfe3`).\n- **Header**: `#f1f3f5` background, uppercase `11px` bold text (`#1f4a2c`), bottom border `2px solid #1f4a2c`.\n- **Text Alignment**: Left-align string data (Parcela, Variedad, Titular); right-align all numeric quantities (Superficie ha, Dosis kg/ha, Rendimiento); center operational status chips and action buttons.\n- **States**: Hover row changes to `#f4f6f5`; selected row highlights with `#e8f0eb` and a `3px solid #1f4a2c` left-edge indicator.\n\n### Input Fields & Select Controls\n- **Height**: Standardized at `34px`.\n- **Visuals**: Background `#ffffff`, border `1px solid #718096`, text `14px` (`#1a202c`).\n- **Focus**: Hard outline of `2px solid #1f4a2c` with zero offset. No soft glows or blue halo effects.\n- **Invalid**: `2px solid #a61b1b` border with bottom-aligned microcopy in `12px` bold red.\n\n### Buttons\n- **Primary CTA**: `#1f4a2c` solid fill, `#ffffff` bold text, zero border-radius, `34px` height, `12px 16px` padding. Active state deepens to `#14331e`.\n- **Secondary**: `#ffffff` background, `1px solid #1f4a2c` border, `#1f4a2c` text.\n- **Destructive**: `#a61b1b` solid fill, white text, zero border-radius.\n- **Icon Buttons**: Flat 32×32px squares, border `1px solid #cfd4da`, containing crisp 16px single-color SVG icons.\n\n### Status Chips & Badges\n- **Structure**: Rectangular tags, zero radius, `20px` height, `6px` horizontal padding.\n- **Styles**:\n  - *Vigente / Validado (CUE)*: Border `1px solid #1f4a2c`, background `#edf4ef`, text `#1f4a2c`.\n  - *Pendiente Firma*: Border `1px solid #92400e`, background `#fef3c7`, text `#92400e`.\n  - *Incidencia SIGPAC*: Border `1px solid #a61b1b`, background `#fee2e2`, text `#a61b1b`.\n\n### Checkboxes & Radios\n- **Checkboxes**: 18×18px squares with `2px solid #4a5568` border. When checked, fill with `#1f4a2c` and an interior white checkmark.\n- **Radios**: 18×18px circles with high-contrast inner dot indicator.\n\n### Iconography\n- Strictly monoline SVG icons with `1.75px` stroke width, optimized on a 16×16 or 20×20 pixel grid to prevent blurry subpixel rendering on standard-DPI screens.",
+            "colorVariant": "FIDELITY",
+            "overridePrimaryColor": "#1f4a2c",
+            "overrideSecondaryColor": "#7a5c28",
+            "overrideTertiaryColor": "#1e3a8a",
+            "overrideNeutralColor": "#4a5568",
+            "spacingScale": 2,
+            "typography": {
+              "label-lg": {
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "fontWeight": "600",
+                "lineHeight": "20px",
+                "letterSpacing": "0.01em"
+              },
+              "label-sm": {
+                "fontFamily": "Inter",
+                "fontSize": "11px",
+                "fontWeight": "700",
+                "lineHeight": "14px",
+                "letterSpacing": "0.04em"
+              },
+              "tabular-data": {
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "fontWeight": "500",
+                "lineHeight": "18px",
+                "letterSpacing": "0em"
+              },
+              "headline-lg": {
+                "fontFamily": "Inter",
+                "fontSize": "20px",
+                "fontWeight": "700",
+                "lineHeight": "28px",
+                "letterSpacing": "-0.01em"
+              },
+              "label-md": {
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "fontWeight": "600",
+                "lineHeight": "16px",
+                "letterSpacing": "0.02em"
+              },
+              "body-md": {
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "fontWeight": "400",
+                "lineHeight": "20px",
+                "letterSpacing": "0em"
+              },
+              "body-sm": {
+                "fontFamily": "Inter",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "lineHeight": "18px",
+                "letterSpacing": "0em"
+              },
+              "headline-xl": {
+                "fontFamily": "Inter",
+                "fontSize": "24px",
+                "fontWeight": "700",
+                "lineHeight": "32px",
+                "letterSpacing": "-0.015em"
+              },
+              "body-lg": {
+                "fontFamily": "Inter",
+                "fontSize": "15px",
+                "fontWeight": "500",
+                "lineHeight": "22px",
+                "letterSpacing": "0em"
+              },
+              "headline-md": {
+                "fontFamily": "Inter",
+                "fontSize": "16px",
+                "fontWeight": "600",
+                "lineHeight": "24px",
+                "letterSpacing": "0em"
+              }
+            },
+            "spacing": {
+              "margin": "1.25rem",
+              "space-lg": "1rem",
+              "gutter-compact": "0.5rem",
+              "space-xl": "1.5rem",
+              "margin-panel": "0.75rem",
+              "space-xs": "0.25rem",
+              "space-md": "0.75rem",
+              "gutter": "1rem",
+              "space-sm": "0.5rem"
+            },
+            "headlineFontFamily": "Inter",
+            "bodyFontFamily": "Inter",
+            "labelFontFamily": "Inter"
+          }
+        },
+        "version": "1"
+      }
+    },
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/b5d267e33a8743f99b3c52a61d7f5920",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1Wk-YzIjVk1pq66Qs5PGDoItzcNCVSgcknphh8NSWWGn0QqcmgzHnUs3E0rYJxjLk3BcZM2HWkYiIpkjsJ-w07L95Sl8K5kpLD47kHw0XhbuCQb82P7KD7n387AYGQn-eeEJUkLHnCYuKefDLzMTnldvPUr9xickPentZFyHyS4vvzcfZXSokXS8C7by-cYHgPxkhQQ6cLyCT_at4VCu_BxBsVw5VzIe02kzxR6PydCZse2NwlblbdVUjc"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/f6e829716ce84afc8070dc6f1aaa67f6",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2NlNWQwMDEzMGNmNDRjZTVhMDgyMTBkNjViMmJiYjMwEgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "0b6d9d4a8f094f7fbf36ef193a9d2db3",
+            "generatedBy": "create_datastore_entry",
+            "width": "2560",
+            "height": "2048",
+            "title": "El almacén - CUE Gestión Despacho (1440x900)",
+            "name": "projects/4347842392867690825/screens/0b6d9d4a8f094f7fbf36ef193a9d2db3",
+            "theme": {},
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "primary_fixed_dim": "#a2d2aa",
+                    "on_error_container": "#93000a",
+                    "on-secondary-container": "#3d2f00",
+                    "surface_container_high": "#e8e9e4",
+                    "inverse_surface": "#2f312e",
+                    "inverse_on_surface": "#f0f1ec",
+                    "surface_dim": "#d9dad6",
+                    "on_tertiary_fixed": "#360c18",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "on_surface": "#1a1c19",
+                    "on_secondary_fixed_variant": "#594400",
+                    "secondary": "#765a00",
+                    "primary-container": "#2f6b40",
+                    "surface_container": "#edeee9",
+                    "primary_container": "#1f4a2c",
+                    "surface_container_highest": "#e2e3de",
+                    "primary-overlay": "#3a6446",
+                    "primary": "#043317",
+                    "background": "#f9faf5",
+                    "secondary_container": "#ffd56c",
+                    "on_secondary_fixed": "#251a00",
+                    "inverse_primary": "#a2d2aa",
+                    "surface-variant": "#f4f6f3",
+                    "on-primary": "#ffffff",
+                    "on_background": "#1a1c19",
+                    "error-container": "#fbe3e1",
+                    "outline_variant": "#c1c9bf",
+                    "on-surface": "#10190f",
+                    "surface": "#ffffff",
+                    "on-error-container": "#4a0f0b",
+                    "error": "#8c1d18",
+                    "on_tertiary": "#ffffff",
+                    "on_error": "#ffffff",
+                    "on_primary_fixed": "#00210c",
+                    "on_secondary_container": "#775b00",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "on_surface_variant": "#414941",
+                    "primary-dark": "#0d2b18",
+                    "primary-overlay-border": "#8fae97",
+                    "on_primary_fixed_variant": "#244f31",
+                    "secondary-container": "#ffe9a8",
+                    "on-surface-variant": "#43503f",
+                    "tertiary": "#4a1c27",
+                    "surface_bright": "#f9faf5",
+                    "on_secondary": "#ffffff",
+                    "outline": "#a9b6a8",
+                    "focus": "#ffd24a",
+                    "secondary_fixed_dim": "#eac25a",
+                    "tertiary_container": "#65323d",
+                    "surface_tint": "#3c6847",
+                    "secondary_fixed": "#ffdf95",
+                    "on_tertiary_container": "#e09ba8",
+                    "tertiary_fixed": "#ffd9de",
+                    "primary_fixed": "#beeec5",
+                    "surface_container_low": "#f3f4ef",
+                    "error-dark": "#5c110d",
+                    "error_container": "#ffdad6",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_variant": "#e2e3de",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#8bb992"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    }
+                  },
+                  "spacing": {
+                    "space-xs": "4px",
+                    "space-lg": "16px",
+                    "space-md": "12px",
+                    "margin": "16px",
+                    "space-xl": "24px",
+                    "gutter": "16px",
+                    "space-xxl": "32px",
+                    "space-sm": "8px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la aplicación web de gestión para escritorio en resolución 1440×900: **«El almacén - CUE Gestión Despacho»** (El almacén - CUE Gestión Despacho (1440x900)), adaptada específicamente para el trabajo de despacho del agricultor con teclado y ratón.\n\n### Decisiones de diseño y cumplimiento de requisitos:\n1. **Armazón ERP de despacho**:\n   - Barra superior fija en verde oscuro oficial (`#1f4a2c`) con identificador de la explotación («Finca Las Suertes y El Prado · 42 ha»), selector de campaña activa («2026») y acciones rápidas («Imprimir Informe Oficial» y «+ Nueva Factura o Albarán»).\n   - Menú lateral izquierdo con todos los módulos de la explotación, destacando **«El Almacén»** como módulo activo con insignia en amarillo señalizador.\n   - Sin barra de pestañas inferior (prohibida expresamente para escritorio).\n\n2. **Tarjetas de números clave**:\n   - **Producto comprado**: `1.240,00 L/kg` (en 4 facturas).\n   - **Producto echado**: `860,50 L/kg` (en 6 tratamientos en campo).\n   - **Te queda en la nave**: `379,50 L/kg` (con estado de stock activo suficiente).\n   - **Gasto del año**: `2.410,80 €` (IVA desglosado).\n\n3. **Tabla de Existencias y Cuadraturas**:\n   - Columnas ordenables: *Producto*, *Nº de registro*, *Comprado*, *Echado*, *Te queda*, *Gasto*, *Estado* y *Acciones*.\n   - Botonería compacta de 28-32 px de alto para uso ágil de ratón.\n   - Alineación numérica estricta a la derecha con fuentes monoespaciadas y unidades exactas.\n   - **Tratamiento de descuadres reales**: En *Glifosato 36% SL*, el stock negativo (`-4,70 L`) se muestra en fondo rojo claro con el aviso textual obligatorio: *«Has echado más de lo que has comprado»*. En *Aminoácidos con Boro*, al diferir las unidades entre compra (litros) y aplicación (kilos), se indica de forma explícita *«No se puede comparar»* evitando ceros ficticios.\n\n4. **Panel lateral derecho del producto seleccionado**:\n   - Muestra la ficha técnica de *Tebuconazol 25% WG*, su número de registro oficial (24.156), lote de etiqueta, dosis legal máxima y el **plazo de seguridad obligatorio** (35 días para cosecha).\n   - Registro cronológico detallado de entradas y salidas renglón por renglón con fecha, procedencia de factura o parcela tratada, y cantidad.\n\n5. **Tabla de facturas vinculadas del año**:\n   - Desglose con fecha, proveedor, número de factura, base imponible, cuota de IVA, total y estado del papel digitalizado (PDF o foto pendiente). Para facturas con datos incompletos se representan con guion («—») sin inventar cifras."
+    },
+    {
+      "suggestion": "Abrir el modal de añadir nueva factura de insumos en escritorio"
+    },
+    {
+      "suggestion": "Diseñar la vista detallada de una inspección oficial con el informe de trazabilidad descargable"
+    },
+    {
+      "suggestion": "Ver el módulo de tratamientos con el calendario de parcelas de la campaña"
+    }
+  ]
+}

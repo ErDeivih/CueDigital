@@ -1,0 +1,23 @@
+{
+  "_leeme": "Derivado reproducible; no editar la lista de municipios a mano.",
+  "fuente": "INE, «Relación de municipios y sus códigos», https://www.ine.es/daco/daco42/codmun/diccionario2025.xlsx",
+  "url": "https://www.ine.es/daco/daco42/codmun/diccionario2025.xlsx",
+  "anio_del_diccionario": 2025,
+  "descargado_el": "2026-09-24",
+  "sha256": "5cf83d5b9c68b4c39650b2f38cd60d817a2c9f90acc618b603e8c17ebd12ad07",
+  "municipios": 2248,
+  "municipios_por_provincia": {
+    "05": 248,
+    "09": 371,
+    "24": 211,
+    "34": 191,
+    "37": 362,
+    "40": 209,
+    "42": 183,
+    "47": 225,
+    "49": 248
+  },
+  "cotejados_con_el_listado_de_zonas_vulnerables": 387,
+  "comose_usa": "codigo_ine (5 cifras) = codigo_provincia (2) + codigo_municipio (3). El codigo_municipio es el mismo que sale en el visor del SIGPAC y el que va en la referencia del recinto; el codigo_ine es con el que se comprueba la zona vulnerable a nitratos.",
+  "licencia": "Datos del INE. La relación de municipios y sus códigos es información pública; se guarda aquí para poder elegir el municipio sin teclear códigos."
+}

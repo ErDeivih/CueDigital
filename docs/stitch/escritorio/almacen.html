@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-100">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El almacén - CUE Gestión Despacho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #10190f;
+      background-color: #f3f4f1;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Estricto: sin sombras, sin degradados */
+    *, *::before, *::after {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    /* Scrollbar sobrio */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e5e7eb;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #9ca3af;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6b7280;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden text-sm">
+
+  <!-- BARRA SUPERIOR FIJA DE CONTROL DE DESPACHO -->
+  <header class="h-14 bg-[#1f4a2c] text-white flex items-center justify-between px-5 border-b-2 border-[#0d2b18] select-none flex-shrink-0 z-30">
+    <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-3">
+        <!-- Icono tractor SVG -->
+        <svg class="w-6 h-6 text-[#ffd24a]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h2l2 3h9a3 3 0 106 0v-4l-3-4H9L7 13H3v4h2"></path>
+          <circle cx="7" cy="18" r="2.5"></circle>
+          <circle cx="18" cy="18" r="2.5"></circle>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 6V3H9v5"></path>
+        </svg>
+        <span class="text-lg font-bold tracking-tight">CUE Digital <span class="text-xs font-normal bg-[#2f6b40] px-2 py-0.5 rounded border border-[#8fae97] ml-1.5 uppercase">Despacho</span></span>
+      </div>
+
+      <div class="h-5 w-px bg-[#3a6446]"></div>
+
+      <!-- Selector de Explotación y Campaña -->
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 bg-[#0d2b18] px-3 py-1.5 rounded border border-[#3a6446]">
+          <span class="text-xs text-[#a9b6a8] uppercase font-semibold">Finca:</span>
+          <span class="font-bold text-white text-sm">Finca Las Suertes y El Prado</span>
+          <span class="text-xs text-[#ffd24a] bg-[#2f6b40] px-1.5 py-0.2 rounded font-mono">42 ha</span>
+        </div>
+
+        <div class="flex items-center space-x-2 bg-[#0d2b18] px-3 py-1.5 rounded border border-[#3a6446]">
+          <span class="text-xs text-[#a9b6a8] uppercase font-semibold">Año:</span>
+          <span class="font-bold text-[#ffd24a] text-sm">Campaña 2026</span>
+          <span class="text-[11px] text-[#a9b6a8]">(01/09/2025 al 31/08/2026)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones globales derecha -->
+    <div class="flex items-center space-x-4">
+      <div class="text-xs text-right pr-2">
+        <div class="font-medium text-white">Manuel Ruiz Gómez</div>
+        <div class="text-[#a9b6a8] text-[11px]">NIF: 12345678Z · Titular</div>
+      </div>
+
+      <button class="h-9 px-3 bg-[#2f6b40] hover:bg-[#3a6446] border border-[#8fae97] text-white rounded font-medium flex items-center space-x-2 text-xs">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+        </svg>
+        <span>Imprimir Informe Oficial</span>
+      </button>
+
+      <button class="h-9 px-3 bg-white text-[#1f4a2c] hover:bg-slate-100 border border-slate-300 rounded font-bold text-xs flex items-center space-x-1.5">
+        <svg class="w-4 h-4 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>+ Nueva Factura o Albarán</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL: MENÚ LATERAL + ÁREA DE TRABAJO -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- MENÚ LATERAL COMPACTO DE GESTIÓN (MÓDULOS) -->
+    <aside class="w-64 bg-white border-r-2 border-slate-300 flex flex-col justify-between flex-shrink-0">
+      <div class="py-3">
+        <div class="px-4 pb-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+          Módulos de Explotación
+        </div>
+        <nav class="space-y-1 px-2">
+          <!-- Inicio / Resumen -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span>Resumen General</span>
+          </a>
+
+          <!-- Mi Cuaderno (Apuntes) -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span>Tratamientos y Labores</span>
+          </a>
+
+          <!-- Parcelas y SIGPAC -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+            </svg>
+            <span>Tierras y Cultivos</span>
+          </a>
+
+          <!-- EL ALMACÉN (ACTIVO) -->
+          <a href="#" class="flex items-center justify-between px-3 py-2 bg-[#2f6b40] text-white rounded font-bold text-xs border border-[#1f4a2c]">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 mr-3 text-[#ffd24a]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              <span>El Almacén</span>
+            </div>
+            <span class="bg-[#ffd24a] text-[#3d2f00] text-[10px] px-1.5 py-0.5 rounded font-black">ACTIVO</span>
+          </a>
+
+          <!-- Facturas y Compras -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path>
+            </svg>
+            <span>Facturas y Albaranes</span>
+          </a>
+
+          <!-- Ventas y Cosecha -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span>Ventas y Entregas</span>
+          </a>
+
+          <!-- Plan de Abono -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+            <span>Plan de Abono y Nitratos</span>
+          </a>
+
+          <!-- Archivo de Papeles -->
+          <a href="#" class="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-100 rounded font-medium text-xs">
+            <svg class="w-4 h-4 mr-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Papeles y Documentos</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Ayuda oficial inferior -->
+      <div class="p-3 border-t-2 border-slate-300 bg-[#f4f6f3]">
+        <div class="flex items-start space-x-2 text-[11px] text-[#43503f]">
+          <svg class="w-4 h-4 text-[#1f4a2c] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <span class="font-bold text-[#10190f]">Libro de entradas y salidas:</span>
+            cuadra con las inspecciones del Real Decreto 1054/2022.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO CENTRAL (TABLAS Y PANELES) -->
+    <main class="flex-1 flex overflow-hidden">
+
+      <!-- COLUMNA PRINCIPAL DE TRABAJO (TABLAS Y MÉTRICAS) -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+
+        <!-- TÍTULO DE LA SECCIÓN Y BOTONERA DE HERRAMIENTAS -->
+        <div class="flex items-center justify-between bg-white p-4 rounded border-2 border-slate-300">
+          <div>
+            <div class="flex items-center space-x-3">
+              <h1 class="text-xl font-black text-[#10190f] tracking-tight">El almacén: entradas, salidas y existencias</h1>
+              <span class="bg-[#f4f6f3] text-[#43503f] border border-slate-300 px-2 py-0.5 rounded text-xs font-semibold">Campaña 2026</span>
+            </div>
+            <p class="text-xs text-[#43503f] mt-0.5">Control directo de existencias reales para cuadrar el libro de tratamientos fitosanitarios y abonos.</p>
+          </div>
+
+          <!-- Filtros y acciones de tabla -->
+          <div class="flex items-center space-x-2">
+            <div class="relative">
+              <input type="text" placeholder="Buscar producto o registro..." class="h-9 pl-8 pr-3 text-xs bg-white border-2 border-slate-300 rounded focus:border-[#1f4a2c] focus:outline-none w-56">
+              <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+
+            <select class="h-9 px-3 text-xs bg-white border-2 border-slate-300 rounded focus:border-[#1f4a2c] focus:outline-none font-medium">
+              <option>Todos los tipos (Fungicidas, Herbicidas, Abonos)</option>
+              <option>Solo fitosanitarios</option>
+              <option>Solo fertilizantes</option>
+              <option>Solo con descuadre / aviso</option>
+            </select>
+
+            <button class="h-9 px-3 bg-[#1f4a2c] hover:bg-[#2f6b40] text-white rounded font-bold text-xs flex items-center space-x-1.5 border border-[#0d2b18]">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>+ Entrada de almacén</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 TARJETAS DE NÚMEROS CLAVE (MÉTRICAS DEL AÑO) -->
+        <div class="grid grid-cols-4 gap-4">
+          <!-- Tarjeta 1: Producto comprado -->
+          <div class="bg-white p-4 rounded border-2 border-slate-300">
+            <div class="flex items-center justify-between text-xs text-[#43503f] font-semibold">
+              <span>Producto comprado</span>
+              <svg class="w-4 h-4 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+            </div>
+            <div class="mt-2 text-2xl font-black text-[#10190f] font-mono-num tracking-tight">1.240,00 <span class="text-sm font-semibold text-slate-500">L/kg</span></div>
+            <div class="mt-1 text-[11px] text-slate-500 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-[#1f4a2c] mr-1.5"></span>
+              En 4 facturas registradas
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Producto echado -->
+          <div class="bg-white p-4 rounded border-2 border-slate-300">
+            <div class="flex items-center justify-between text-xs text-[#43503f] font-semibold">
+              <span>Producto echado</span>
+              <svg class="w-4 h-4 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+            </div>
+            <div class="mt-2 text-2xl font-black text-[#10190f] font-mono-num tracking-tight">860,50 <span class="text-sm font-semibold text-slate-500">L/kg</span></div>
+            <div class="mt-1 text-[11px] text-slate-500 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-[#2f6b40] mr-1.5"></span>
+              En 6 tratamientos en campo
+            </div>
+          </div>
+
+          <!-- Tarjeta 3: Te queda -->
+          <div class="bg-white p-4 rounded border-2 border-[#1f4a2c]">
+            <div class="flex items-center justify-between text-xs text-[#1f4a2c] font-bold">
+              <span>Te queda en la nave</span>
+              <span class="text-[10px] bg-[#f4f6f3] px-1.5 py-0.5 rounded border border-slate-300 font-semibold text-slate-700">Stock activo</span>
+            </div>
+            <div class="mt-2 text-2xl font-black text-[#1f4a2c] font-mono-num tracking-tight">379,50 <span class="text-sm font-semibold text-slate-600">L/kg</span></div>
+            <div class="mt-1 text-[11px] text-[#43503f] flex items-center">
+              <svg class="w-3.5 h-3.5 text-emerald-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Suficiente para próximas aplicaciones
+            </div>
+          </div>
+
+          <!-- Tarjeta 4: Gasto del año -->
+          <div class="bg-white p-4 rounded border-2 border-slate-300">
+            <div class="flex items-center justify-between text-xs text-[#43503f] font-semibold">
+              <span>Gasto del año (Insumos)</span>
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div class="mt-2 text-2xl font-black text-[#10190f] font-mono-num tracking-tight">2.410,80 <span class="text-sm font-semibold text-slate-500">€</span></div>
+            <div class="mt-1 text-[11px] text-slate-500">
+              IVA incluido desglosado abajo
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA 1: PRODUCTOS EN EL ALMACÉN (CUADRATURA) -->
+        <div class="bg-white rounded border-2 border-slate-300 overflow-hidden">
+          <div class="px-4 py-3 bg-[#f4f6f3] border-b-2 border-slate-300 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <h2 class="font-bold text-slate-900 text-sm">Existencias por Producto (Fitosanitarios y Fertilizantes)</h2>
+              <span class="text-xs bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-600 font-medium">4 referencias registradas</span>
+            </div>
+            <span class="text-[11px] text-slate-500">Haz clic en una fila para ver el desglose en el panel derecho</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b-2 border-slate-300 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th class="py-2.5 px-3 cursor-pointer hover:bg-slate-100 border-r border-slate-200">
+                    <div class="flex items-center space-x-1">
+                      <span>Producto</span>
+                      <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3 border-r border-slate-200">Nº de registro</th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200 cursor-pointer hover:bg-slate-100">
+                    <div class="flex items-center justify-end space-x-1">
+                      <span>Comprado</span>
+                      <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200 cursor-pointer hover:bg-slate-100">
+                    <div class="flex items-center justify-end space-x-1">
+                      <span>Echado</span>
+                      <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200 cursor-pointer hover:bg-slate-100">
+                    <div class="flex items-center justify-end space-x-1">
+                      <span>Te queda</span>
+                      <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200">Gasto</th>
+                  <th class="py-2.5 px-3 border-r border-slate-200 text-center">Estado</th>
+                  <th class="py-2.5 px-3 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+
+                <!-- FILA 1: PRODUCTO SELECCIONADO (TEBUCONAZOL) -->
+                <tr class="bg-emerald-50/70 border-l-4 border-l-[#1f4a2c] hover:bg-emerald-50">
+                  <td class="py-3 px-3 border-r border-slate-200">
+                    <div class="font-bold text-[#10190f] text-sm">Tebuconazol 25% WG</div>
+                    <div class="text-[11px] text-slate-500">Fungicida granulado · Materia: Tebuconazol 250 g/kg</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono-num text-slate-700 border-r border-slate-200">
+                    24.156 / ES-00124
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    50,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">
+                    18,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-bold text-emerald-800 border-r border-slate-200 bg-emerald-100/50">
+                    32,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    640,00 €
+                  </td>
+                  <td class="py-3 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
+                      <svg class="w-3 h-3 mr-1 text-emerald-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                      Las cuentas cuadran
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1.5">
+                      <button class="h-7 px-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-[#1f4a2c] font-semibold rounded text-xs">Ver sus apuntes</button>
+                      <button class="h-7 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-xs font-medium">Editar</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 2: CASO NEGATIVO / AVISO ROJO (GLIFOSATO - SE ECHÓ MÁS DE LO COMPRADO) -->
+                <tr class="hover:bg-amber-50/50 bg-red-50/30">
+                  <td class="py-3 px-3 border-r border-slate-200">
+                    <div class="font-bold text-[#10190f] text-sm">Glifosato 36% SL</div>
+                    <div class="text-[11px] text-slate-500">Herbicida concentrado soluble · Sistémico total</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono-num text-slate-700 border-r border-slate-200">
+                    18.940 / ES-00421
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    10,00 L
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">
+                    14,70 L
+                  </td>
+                  <!-- Aviso en rojo con explicación obligatoria -->
+                  <td class="py-3 px-3 text-right border-r border-slate-200 bg-red-100/70">
+                    <div class="font-mono-num font-bold text-red-800 text-sm">-4,70 L</div>
+                    <div class="text-[10px] text-red-900 font-semibold leading-tight mt-0.5">Has echado más de lo que has comprado</div>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    120,80 €
+                  </td>
+                  <td class="py-3 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#ffe9a8] text-[#3d2f00] border-2 border-[#8a6a00]">
+                      <svg class="w-3 h-3 mr-1 text-[#8a6a00]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                      Míralo
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1.5">
+                      <button class="h-7 px-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-[#1f4a2c] font-semibold rounded text-xs">Ver sus apuntes</button>
+                      <button class="h-7 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-xs font-medium">Editar</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 3: CASO NO SE PUEDE COMPARAR (UNIDADES DISTINTAS) -->
+                <tr class="hover:bg-slate-50">
+                  <td class="py-3 px-3 border-r border-slate-200">
+                    <div class="font-bold text-[#10190f] text-sm">Aminoácidos con Boro</div>
+                    <div class="text-[11px] text-slate-500">Abono foliar estimulante · Nitrógeno orgánico</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono-num text-slate-500 border-r border-slate-200">
+                    Abono CE (Sin reg. fitos)
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    20,00 L
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">
+                    5,00 kg
+                  </td>
+                  <!-- No se puede comparar en vez de cero inventado -->
+                  <td class="py-3 px-3 text-right border-r border-slate-200 bg-amber-50">
+                    <span class="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold text-[#3d2f00] bg-[#ffe9a8] border border-[#8a6a00]">
+                      No se puede comparar
+                    </span>
+                    <div class="text-[10px] text-slate-500 mt-0.5">Comprado en L, echado en kg</div>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    180,00 €
+                  </td>
+                  <td class="py-3 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#ffe9a8] text-[#3d2f00] border-2 border-[#8a6a00]">
+                      Míralo
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1.5">
+                      <button class="h-7 px-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-[#1f4a2c] font-semibold rounded text-xs">Ver sus apuntes</button>
+                      <button class="h-7 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-xs font-medium">Editar</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 4: FERTILIZANTE DE FONDO NPK (CUADRA) -->
+                <tr class="hover:bg-slate-50">
+                  <td class="py-3 px-3 border-r border-slate-200">
+                    <div class="font-bold text-[#10190f] text-sm">Abono complejo NPK 8-15-15</div>
+                    <div class="text-[11px] text-slate-500">Abono mineral de fondo · Granel y sacas</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono-num text-slate-500 border-r border-slate-200">
+                    F0002148/2026
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    2.500,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">
+                    2.200,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-bold text-emerald-800 border-r border-slate-200 bg-emerald-50">
+                    300,00 kg
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono-num font-semibold text-slate-900 border-r border-slate-200">
+                    1.470,00 €
+                  </td>
+                  <td class="py-3 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
+                      <svg class="w-3 h-3 mr-1 text-emerald-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                      Las cuentas cuadran
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1.5">
+                      <button class="h-7 px-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-[#1f4a2c] font-semibold rounded text-xs">Ver sus apuntes</button>
+                      <button class="h-7 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-xs font-medium">Editar</button>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABLA 2: FACTURAS Y ALBARANES DEL AÑO -->
+        <div class="bg-white rounded border-2 border-slate-300 overflow-hidden">
+          <div class="px-4 py-3 bg-[#f4f6f3] border-b-2 border-slate-300 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <h2 class="font-bold text-slate-900 text-sm">Facturas de Compra del Año (Insumos y Abonos)</h2>
+              <span class="text-xs bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-600 font-medium">3 facturas registradas</span>
+            </div>
+            <button class="h-8 px-3 bg-white hover:bg-slate-100 text-[#1f4a2c] border border-slate-300 rounded font-semibold text-xs flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 text-[#1f4a2c]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <span>Exportar listado a Excel / CSV</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b-2 border-slate-300 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th class="py-2.5 px-3 border-r border-slate-200">Fecha</th>
+                  <th class="py-2.5 px-3 border-r border-slate-200">Proveedor</th>
+                  <th class="py-2.5 px-3 border-r border-slate-200">Nº Factura</th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200">Base Imponible</th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200">IVA</th>
+                  <th class="py-2.5 px-3 text-right border-r border-slate-200">Total</th>
+                  <th class="py-2.5 px-3 text-center border-r border-slate-200">Papel guardado</th>
+                  <th class="py-2.5 px-3 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+
+                <!-- FACTURA 1 -->
+                <tr class="hover:bg-slate-50">
+                  <td class="py-2.5 px-3 font-mono-num text-slate-800 border-r border-slate-200">12/03/2026</td>
+                  <td class="py-2.5 px-3 font-semibold text-slate-900 border-r border-slate-200">Agrícola del Duero S.L.</td>
+                  <td class="py-2.5 px-3 font-mono-num text-slate-700 border-r border-slate-200">F-2026/0418</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">840,00 €</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">84,00 € (10%)</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num font-bold text-slate-900 border-r border-slate-200">924,00 €</td>
+                  <td class="py-2.5 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
+                      <svg class="w-3 h-3 mr-1 text-emerald-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                      Sí (PDF)
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1">
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Ver</button>
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Editar</button>
+                      <button class="h-6 px-1.5 bg-white hover:bg-red-50 border border-slate-300 text-red-700 rounded text-[11px] font-medium" title="Borrar">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FACTURA 2 -->
+                <tr class="hover:bg-slate-50">
+                  <td class="py-2.5 px-3 font-mono-num text-slate-800 border-r border-slate-200">22/02/2026</td>
+                  <td class="py-2.5 px-3 font-semibold text-slate-900 border-r border-slate-200">Cooperativa Comarcal de Medina</td>
+                  <td class="py-2.5 px-3 font-mono-num text-slate-700 border-r border-slate-200">2026-B-891</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">1.318,18 €</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-700 border-r border-slate-200">131,82 € (10%)</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num font-bold text-slate-900 border-r border-slate-200">1.450,00 €</td>
+                  <td class="py-2.5 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#ffe9a8] text-[#3d2f00] border border-[#8a6a00]">
+                      No (Foto pendiente)
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1">
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Ver</button>
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Editar</button>
+                      <button class="h-6 px-1.5 bg-white hover:bg-red-50 border border-slate-300 text-red-700 rounded text-[11px] font-medium" title="Borrar">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FACTURA 3 (DATO DESCONOCIDO EXPRESADO CON GUION) -->
+                <tr class="hover:bg-slate-50">
+                  <td class="py-2.5 px-3 font-mono-num text-slate-800 border-r border-slate-200">15/01/2026</td>
+                  <td class="py-2.5 px-3 text-slate-500 italic border-r border-slate-200">Sin proveedor indicado</td>
+                  <td class="py-2.5 px-3 font-mono-num text-slate-700 border-r border-slate-200">45/A</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-500 border-r border-slate-200">—</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-500 border-r border-slate-200">—</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num text-slate-500 border-r border-slate-200">—</td>
+                  <td class="py-2.5 px-3 text-center border-r border-slate-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
+                      No
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="inline-flex items-center space-x-1">
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Ver</button>
+                      <button class="h-6 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded text-[11px] font-medium">Editar</button>
+                      <button class="h-6 px-1.5 bg-white hover:bg-red-50 border border-slate-300 text-red-700 rounded text-[11px] font-medium" title="Borrar">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PANEL LATERAL DERECHO: DETALLE DEL PRODUCTO ELEGIDO -->
+      <aside class="w-96 bg-white border-l-2 border-slate-300 overflow-y-auto p-5 flex flex-col justify-between flex-shrink-0">
+        <div class="space-y-4">
+
+          <!-- Encabezado del panel -->
+          <div class="border-b-2 border-slate-200 pb-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ficha del Producto Seleccionado</span>
+              <span class="bg-emerald-100 text-emerald-900 border border-emerald-400 text-[10px] font-black px-1.5 py-0.5 rounded">AL DÍA</span>
+            </div>
+            <h3 class="text-base font-black text-[#10190f] mt-1 leading-snug">Tebuconazol 25% WG</h3>
+            <p class="text-xs text-slate-600">Fungicida sistémico en microgránulos dispersables</p>
+          </div>
+
+          <!-- Datos técnicos obligatorios para la inspección -->
+          <div class="bg-[#f4f6f3] p-3 rounded border border-slate-300 space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-600">Nº de registro oficial:</span>
+              <span class="font-mono-num font-bold text-slate-900">24.156</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Lote en etiqueta:</span>
+              <span class="font-mono-num font-semibold text-slate-800">L-2025/TEB-094</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Materia activa:</span>
+              <span class="font-semibold text-slate-900">Tebuconazol 250 g/kg</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Dosis legal máxima:</span>
+              <span class="font-mono-num font-bold text-slate-900">2,50 kg/ha</span>
+            </div>
+          </div>
+
+          <!-- Plazo de seguridad destacado -->
+          <div class="p-3 bg-[#ffe9a8] border-2 border-[#8a6a00] rounded text-xs text-[#3d2f00]">
+            <div class="flex items-center space-x-1.5 font-bold mb-1">
+              <svg class="w-4 h-4 text-[#8a6a00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Plazo de seguridad obligatorio:</span>
+            </div>
+            <div class="text-sm font-black font-mono-num">35 días para cosecha</div>
+            <div class="text-[11px] text-[#43503f] mt-0.5">En trigo y cebada: no segar antes de cumplirse el plazo.</div>
+          </div>
+
+          <!-- Resumen de existencias -->
+          <div class="border-t border-slate-200 pt-3">
+            <div class="text-xs font-bold text-slate-800 mb-2">Cuadratura actual en nave:</div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="p-2 bg-slate-50 border border-slate-200 rounded">
+                <div class="text-[10px] text-slate-500 uppercase font-semibold">Comprado</div>
+                <div class="font-mono-num font-bold text-slate-900 text-xs mt-0.5">50,00 kg</div>
+              </div>
+              <div class="p-2 bg-slate-50 border border-slate-200 rounded">
+                <div class="text-[10px] text-slate-500 uppercase font-semibold">Echado</div>
+                <div class="font-mono-num font-bold text-slate-900 text-xs mt-0.5">18,00 kg</div>
+              </div>
+              <div class="p-2 bg-emerald-50 border border-emerald-300 rounded">
+                <div class="text-[10px] text-emerald-800 uppercase font-bold">Te queda</div>
+                <div class="font-mono-num font-black text-emerald-900 text-xs mt-0.5">32,00 kg</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Movimientos del producto: renglón por renglón con fecha y cantidad -->
+          <div class="border-t border-slate-200 pt-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-800">Últimos movimientos del año:</span>
+              <span class="text-[11px] text-slate-500">3 apuntes</span>
+            </div>
+
+            <div class="space-y-2">
+              <!-- Movimiento 1: Compra -->
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-emerald-800 flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                    Compra (Entrada)
+                  </span>
+                  <span class="font-mono-num font-bold text-slate-900">+50,00 kg</span>
+                </div>
+                <div class="text-[11px] text-slate-600 mt-1 flex justify-between">
+                  <span>Factura F-2026/0418 · Agrícola del Duero</span>
+                  <span class="font-mono-num text-slate-500">12/03/2026</span>
+                </div>
+              </div>
+
+              <!-- Movimiento 2: Tratamiento en campo -->
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-[#8c1d18] flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path></svg>
+                    Tratamiento (Salida)
+                  </span>
+                  <span class="font-mono-num font-bold text-slate-900">-9,80 kg</span>
+                </div>
+                <div class="text-[11px] text-slate-600 mt-1 flex justify-between">
+                  <span>Parcela El Prado (4,90 ha a 2,0 kg/ha)</span>
+                  <span class="font-mono-num text-slate-500">15/04/2026</span>
+                </div>
+              </div>
+
+              <!-- Movimiento 3: Tratamiento en campo -->
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-[#8c1d18] flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path></svg>
+                    Tratamiento (Salida)
+                  </span>
+                  <span class="font-mono-num font-bold text-slate-900">-8,20 kg</span>
+                </div>
+                <div class="text-[11px] text-slate-600 mt-1 flex justify-between">
+                  <span>Parcela Las Suertes (4,10 ha a 2,0 kg/ha)</span>
+                  <span class="font-mono-num text-slate-500">22/04/2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Acciones inferiores del panel -->
+        <div class="pt-4 border-t border-slate-200 space-y-2">
+          <button class="w-full h-9 bg-[#1f4a2c] hover:bg-[#2f6b40] text-white rounded font-bold text-xs flex items-center justify-center space-x-1.5 border border-[#0d2b18]">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Sacar ficha de movimientos en PDF</span>
+          </button>
+          <button class="w-full h-8 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded font-semibold text-xs">
+            Editar datos de registro
+          </button>
+        </div>
+      </aside>
+
+    </main>
+  </div>
+
+  <!-- PIE DE PÁGINA INFORMATIVO DE DESPACHO -->
+  <footer class="h-8 bg-white border-t border-slate-300 px-5 flex items-center justify-between text-[11px] text-slate-500 flex-shrink-0 select-none">
+    <div class="flex items-center space-x-4">
+      <span><strong>CUE Digital</strong> · Módulo ERP Despacho</span>
+      <span class="text-slate-300">|</span>
+      <span>Base de datos sincronizada localmente</span>
+      <span class="text-slate-300">|</span>
+      <span class="text-emerald-700 font-semibold flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 mr-1.5"></span>
+        Conectado con el Registro Oficial de Explotaciones de Castilla y León
+      </span>
+    </div>
+    <div class="text-slate-400">
+      Resolución de pantalla: 1440 × 900 píxeles
+    </div>
+  </footer>
+
+</body>
+</html>

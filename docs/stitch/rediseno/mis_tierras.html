@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=2.0" name="viewport"/>
+<title>Mis tierras y parcelas - CUE Digital</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#8c1d18",
+            "surface-container-high": "#e8e9e4",
+            "surface-dim": "#d9dad6",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#251a00",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "on-primary-fixed": "#00210c",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#360c18",
+            "primary-container": "#2f6b40",
+            "primary-dark": "#0d2b18",
+            "on-primary-fixed-variant": "#244f31",
+            "surface-container-lowest": "#ffffff",
+            "primary-overlay-border": "#8fae97",
+            "outline-variant": "#c1c9bf",
+            "tertiary-fixed": "#ffd9de",
+            "on-surface": "#1a1c19",
+            "on-tertiary": "#ffffff",
+            "surface-container": "#edeee9",
+            "primary": "#043317",
+            "tertiary": "#4a1c27",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-primary-container": "#8bb992",
+            "secondary-container": "#ffd56c",
+            "on-secondary-container": "#3d2f00",
+            "surface-container-highest": "#e2e3de",
+            "inverse-on-surface": "#f0f1ec",
+            "surface-variant": "#f4f6f3",
+            "background": "#ffffff",
+            "secondary": "#765a00",
+            "surface-bright": "#f9faf5",
+            "on-tertiary-container": "#e09ba8",
+            "on-surface-variant": "#43503f",
+            "surface-tint": "#3c6847",
+            "on-error-container": "#4a0f0b",
+            "surface": "#ffffff",
+            "tertiary-container": "#65323d",
+            "primary-fixed": "#beeec5",
+            "on-background": "#1a1c19",
+            "outline": "#a9b6a8",
+            "inverse-surface": "#2f312e",
+            "inverse-primary": "#a2d2aa",
+            "on-secondary-fixed-variant": "#594400",
+            "on-error": "#ffffff",
+            "secondary-fixed-dim": "#eac25a",
+            "surface-container-low": "#f3f4ef",
+            "primary-overlay": "#3a6446",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "focus": "#ffd24a",
+            "secondary-fixed": "#ffdf95",
+            "error-dark": "#5c110d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "16px",
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "space-xl": "24px",
+            "space-md": "12px",
+            "space-xxl": "32px",
+            "space-lg": "16px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Estrictamente Flat sin box-shadows conforme a reglas de diseño para sol directo */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      -webkit-tap-highlight-color: rgba(255, 210, 74, 0.4);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 48;
+      vertical-align: middle;
+      font-size: 28px;
+    }
+    .border-3 {
+      border-width: 3px;
+    }
+    .border-4 {
+      border-width: 4px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-cuerpo text-cuerpo min-h-screen flex flex-col antialiased selection:bg-focus selection:text-primary-dark">
+<!-- CABECERA FIJA SUPERIOR (Alto contraste para trabajo bajo el sol) -->
+<header class="sticky top-0 z-50 bg-[#1f4a2c] text-on-primary border-b-4 border-primary-dark px-gutter py-space-sm flex flex-col justify-between" role="banner">
+<!-- Fila de Navegación y Utilidad -->
+<div class="flex items-center justify-between gap-space-sm min-h-[56px]">
+<!-- Botón Volver / Inicio Táctil Extragrande -->
+<a aria-label="Volver al menú de inicio principal" class="flex items-center gap-space-xs bg-[#0d2b18] text-on-primary border-2 border-primary-overlay-border px-space-md py-space-xs rounded-lg active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus min-h-[48px]" href="#inicio">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current flex-shrink-0" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-boton text-boton tracking-wide uppercase">INICIO</span>
+</a>
+<!-- Logotipo e Identificador del Cuaderno -->
+<div class="flex items-center gap-space-xs">
+<svg aria-hidden="true" class="w-8 h-8 text-secondary-fixed flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 3v18m-7-9l7-7 7 7M5 12h14" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-titulo text-titulo text-white font-extrabold tracking-tight">CUE Digital</span>
+</div>
+<!-- Botón Agrandar Letra Táctil -->
+<button aria-label="Agrandar o reducir tamaño del texto para leer mejor con el sol" class="flex items-center justify-center bg-[#0d2b18] text-white border-2 border-primary-overlay-border px-space-sm py-space-xs rounded-lg active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus min-h-[48px] min-w-[56px]" id="btn-zoom-text" type="button">
+<span class="font-boton text-boton font-bold">A+ Letra</span>
+</button>
+</div>
+<!-- Título de la Pantalla -->
+<div class="pt-space-xs pb-space-xs flex items-center justify-between border-t-2 border-[#2f6b40]/60 mt-1">
+<h1 class="font-titulo text-titulo text-white font-bold leading-tight flex items-center gap-space-xs">
+<svg aria-hidden="true" class="w-7 h-7 text-secondary-fixed flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2" stroke-linecap="round" stroke-linejoin="round"></polygon>
+<line stroke-linecap="round" x1="8" x2="8" y1="2" y2="18"></line>
+<line stroke-linecap="round" x1="16" x2="16" y1="6" y2="22"></line>
+</svg>
+        Mis parcelas y tierras
+      </h1>
+<span class="bg-[#beeec5] text-primary-dark font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border border-primary-dark">
+        OFFLINE
+      </span>
+</div>
+</header>
+<!-- CONTENIDO PRINCIPAL SCROLLABLE (Pensado para una sola mano, sin barra inferior) -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-gutter py-space-lg flex flex-col gap-space-xl pb-28" role="main">
+<!-- RESUMEN CLARO Y CONTADOR DE PARCELAS -->
+<section aria-labelledby="seccion-resumen" class="bg-surface-variant border-3 border-primary-dark rounded-xl p-space-lg">
+<div class="flex items-center justify-between flex-wrap gap-space-sm">
+<div>
+<span class="font-pista text-pista uppercase tracking-wider text-on-surface-variant font-bold block">Situación de tu explotación</span>
+<p class="font-dato-grande text-dato-grande text-primary-dark font-extrabold leading-none mt-1" id="seccion-resumen">
+            Tienes 52 tierras apuntadas
+          </p>
+</div>
+<div class="flex items-center gap-1.5 bg-surface border-2 border-primary-dark px-space-md py-space-xs rounded-lg">
+<span class="w-4 h-4 rounded-full bg-primary-container inline-block"></span>
+<span class="font-boton text-boton text-primary-dark font-bold">Campaña 2024 / 2025</span>
+</div>
+</div>
+</section>
+<!-- ACCIÓN PRINCIPAL: BOTÓN GIGANTE PARA AÑADIR TIERRA (Touch target > 64px) -->
+<section>
+<a aria-label="Añadir una tierra nueva al cuaderno" class="w-full min-h-[72px] bg-primary-container text-on-primary border-4 border-primary-dark rounded-xl px-space-lg py-space-md flex items-center justify-between gap-space-md active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus group text-left" href="#nueva-tierra" role="button">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 bg-primary-dark text-white rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-white">
+<svg aria-hidden="true" class="w-8 h-8 stroke-current" fill="none" stroke-width="3" viewbox="0 0 24 24">
+<path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<span class="block font-boton-principal text-boton-principal uppercase tracking-tight text-white group-active:text-primary-dark">
+              ＋ AÑADIR OTRA TIERRA
+            </span>
+<span class="block font-cuerpo text-pista text-surface-container-high group-active:text-primary-dark font-medium leading-tight">
+              Apuntar una tierra nueva con el SIGPAC o a mano
+            </span>
+</div>
+</div>
+<svg aria-hidden="true" class="w-8 h-8 text-secondary-container flex-shrink-0 group-active:text-primary-dark" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M8.25 4.5l7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+</section>
+<!-- BUSCADOR RÁPIDO CON ALTURA 64PX -->
+<section aria-labelledby="label-buscador">
+<label class="block font-pregunta text-boton font-bold text-on-surface mb-2" for="campo-busqueda" id="label-buscador">
+        Buscar entre tus fincas:
+      </label>
+<div class="relative flex items-center">
+<div class="absolute left-4 pointer-events-none text-primary-dark">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<input class="w-full h-16 pl-14 pr-4 bg-surface text-on-surface font-campo text-campo font-bold border-3 border-primary-dark rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-focus placeholder:text-on-surface-variant/80 placeholder:font-normal" id="campo-busqueda" placeholder="Buscar por nombre o pueblo (ej. El Prado, Villalar...)" type="search"/>
+</div>
+</section>
+<!-- LISTA VERTICAL DE PARCELAS -->
+<section aria-label="Listado de fincas y parcelas registradas" class="flex flex-col gap-space-xl">
+<!-- ================= TARJETA 1 (COMPLETA EN REGLA) ================= -->
+<article aria-labelledby="parcela-1-titulo" class="bg-surface border-3 border-primary-dark rounded-xl p-space-lg flex flex-col gap-space-md">
+<!-- Fila Superior: Nombre Propio + Silueta Geográfica SIGPAC -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b-2 border-outline-variant">
+<div class="flex-1">
+<span class="inline-block bg-primary-fixed text-primary-dark font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border border-primary-dark mb-1">
+              TIERRA Nº 1
+            </span>
+<h2 class="font-pregunta text-dato-grande text-primary-dark font-extrabold leading-tight" id="parcela-1-titulo">
+              El Prado
+            </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium flex items-center gap-1 mt-0.5">
+<svg aria-hidden="true" class="w-5 h-5 text-secondary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+              Villalar de los Comuneros (Valladolid)
+            </p>
+</div>
+<!-- Silueta SVG de Forma de Parcela (Reconocimiento visual inmediato) -->
+<div aria-label="Forma esquemática de la parcela" class="flex flex-col items-center justify-center bg-surface-container border-2 border-primary-dark p-2 rounded-lg min-w-[80px]">
+<svg class="w-16 h-16 stroke-primary-dark" fill="#2f6b40" stroke-width="3" viewbox="0 0 100 100">
+<polygon points="12,18 78,10 92,75 58,92 10,65"></polygon>
+</svg>
+<span class="font-pista text-[12px] font-bold text-primary-dark mt-1">Forma SIGPAC</span>
+</div>
+</div>
+<!-- Datos Técnicos: SIGPAC y Superficie -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm bg-surface-container-low p-space-md rounded-lg border-2 border-outline-variant">
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Referencia oficial SIGPAC:</span>
+<span class="block font-cuerpo-grande text-campo font-bold text-on-surface tracking-wide">
+              37-70-0-0-503-51-1
+            </span>
+</div>
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Superficie declarada:</span>
+<span class="block font-dato-grande text-campo font-extrabold text-primary-dark">
+              4,90 ha <span class="font-cuerpo text-pista text-on-surface font-normal">(49.000 m²)</span>
+</span>
+</div>
+</div>
+<!-- Cultivo sembrado actual (Verificado en verde suave) -->
+<div class="bg-[#beeec5]/50 border-2 border-primary-container rounded-lg p-space-md flex items-center gap-space-md">
+<div class="w-10 h-10 bg-primary-container text-white rounded-lg flex items-center justify-center flex-shrink-0 border border-primary-dark">
+<svg aria-hidden="true" class="w-6 h-6 stroke-current" fill="none" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M12 2v20M7 8l5-5 5 5M7 14l5-5 5 5M7 20l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<span class="block font-pista text-pista text-primary-dark font-extrabold uppercase">Cultivo en regla:</span>
+<span class="block font-cuerpo-grande text-cuerpo font-extrabold text-primary-dark">
+              Sembrado este año: Cebada cervecera (Cerveza Planet)
+            </span>
+</div>
+</div>
+<!-- Botón de Acción Directa Altura 64px -->
+<a class="w-full min-h-[64px] bg-[#2f6b40] text-white border-3 border-[#0d2b18] rounded-xl font-boton-principal text-boton-principal flex items-center justify-center gap-space-sm active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus tracking-wide" href="#parcela-el-prado" role="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          VER Y APUNTAR TRABAJO
+        </a>
+</article>
+<!-- ================= TARJETA 2 (CON AVISO URGENTE: FALTA CULTIVO) ================= -->
+<article aria-labelledby="parcela-2-titulo" class="bg-surface border-4 border-[#8a6a00] rounded-xl p-space-lg flex flex-col gap-space-md">
+<!-- Fila Superior: Nombre Propio + Silueta Geográfica SIGPAC -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b-2 border-outline-variant">
+<div class="flex-1">
+<span class="inline-block bg-[#ffdf95] text-[#3d2f00] font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border-2 border-[#8a6a00] mb-1">
+              TIERRA Nº 2 · REVISIÓN NECESARIA
+            </span>
+<h2 class="font-pregunta text-dato-grande text-primary-dark font-extrabold leading-tight" id="parcela-2-titulo">
+              Las Suertes de Arriba
+            </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium flex items-center gap-1 mt-0.5">
+<svg aria-hidden="true" class="w-5 h-5 text-secondary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+              Tordesillas (Valladolid)
+            </p>
+</div>
+<!-- Silueta SVG de Forma de Parcela Diferente -->
+<div aria-label="Forma esquemática de la parcela Las Suertes de Arriba" class="flex flex-col items-center justify-center bg-surface-container border-2 border-[#8a6a00] p-2 rounded-lg min-w-[80px]">
+<svg class="w-16 h-16 stroke-[#8a6a00]" fill="#ffd56c" stroke-width="3" viewbox="0 0 100 100">
+<polygon points="20,15 90,25 75,85 15,90 35,50"></polygon>
+</svg>
+<span class="font-pista text-[12px] font-bold text-primary-dark mt-1">Forma SIGPAC</span>
+</div>
+</div>
+<!-- Datos Técnicos: SIGPAC y Superficie -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm bg-surface-container-low p-space-md rounded-lg border-2 border-outline-variant">
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Referencia oficial SIGPAC:</span>
+<span class="block font-cuerpo-grande text-campo font-bold text-on-surface tracking-wide">
+              47-186-0-0-102-14-1
+            </span>
+</div>
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Superficie declarada:</span>
+<span class="block font-dato-grande text-campo font-extrabold text-primary-dark">
+              12,30 ha <span class="font-cuerpo text-pista text-on-surface font-normal">(123.000 m²)</span>
+</span>
+</div>
+</div>
+<!-- BLOQUE DE AVISO DESTACADO (Ámbar intenso para el sol directo) -->
+<div class="bg-[#ffe9a8] border-3 border-[#8a6a00] rounded-xl p-space-lg flex flex-col gap-space-sm" role="alert">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 bg-[#8a6a00] text-white rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-[#3d2f00]">
+<svg aria-hidden="true" class="w-8 h-8 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<p class="font-pregunta text-campo text-[#3d2f00] font-extrabold leading-tight">
+                LE FALTA DECIR QUÉ TIENE SEMBRADO ESTE AÑO
+              </p>
+<p class="font-cuerpo text-cuerpo text-[#3d2f00] font-medium mt-1 leading-snug">
+                Antes de 2027 o de pedir la ayuda PAC tienes que decir qué hay aquí puesto.
+              </p>
+</div>
+</div>
+<!-- Botón de Acción Urgente 64px de alto -->
+<a class="w-full min-h-[64px] bg-[#8a6a00] text-white border-3 border-[#3d2f00] rounded-xl font-boton-principal text-boton-principal flex items-center justify-center gap-space-sm active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus tracking-wide mt-1 text-center" href="#declarar-siembra" role="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+            DECIR QUÉ HAY SEMBRADO
+          </a>
+</div>
+</article>
+<!-- ================= TARJETA 3 (COMPLETA EN REGLA) ================= -->
+<article aria-labelledby="parcela-3-titulo" class="bg-surface border-3 border-primary-dark rounded-xl p-space-lg flex flex-col gap-space-md">
+<!-- Fila Superior: Nombre Propio + Silueta Geográfica SIGPAC -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b-2 border-outline-variant">
+<div class="flex-1">
+<span class="inline-block bg-primary-fixed text-primary-dark font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border border-primary-dark mb-1">
+              TIERRA Nº 3
+            </span>
+<h2 class="font-pregunta text-dato-grande text-primary-dark font-extrabold leading-tight" id="parcela-3-titulo">
+              El Vallejo Llano
+            </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium flex items-center gap-1 mt-0.5">
+<svg aria-hidden="true" class="w-5 h-5 text-secondary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+              Villalar de los Comuneros (Valladolid)
+            </p>
+</div>
+<!-- Silueta SVG de Forma de Parcela Rectangular Alargada -->
+<div aria-label="Forma esquemática de la parcela El Vallejo Llano" class="flex flex-col items-center justify-center bg-surface-container border-2 border-primary-dark p-2 rounded-lg min-w-[80px]">
+<svg class="w-16 h-16 stroke-primary-dark" fill="#2f6b40" stroke-width="3" viewbox="0 0 100 100">
+<polygon points="25,10 88,18 72,90 12,82"></polygon>
+</svg>
+<span class="font-pista text-[12px] font-bold text-primary-dark mt-1">Forma SIGPAC</span>
+</div>
+</div>
+<!-- Datos Técnicos: SIGPAC y Superficie -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm bg-surface-container-low p-space-md rounded-lg border-2 border-outline-variant">
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Referencia oficial SIGPAC:</span>
+<span class="block font-cuerpo-grande text-campo font-bold text-on-surface tracking-wide">
+              47-212-0-0-205-8-1
+            </span>
+</div>
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Superficie declarada:</span>
+<span class="block font-dato-grande text-campo font-extrabold text-primary-dark">
+              8,15 ha <span class="font-cuerpo text-pista text-on-surface font-normal">(81.500 m²)</span>
+</span>
+</div>
+</div>
+<!-- Cultivo sembrado actual (Verificado en verde suave) -->
+<div class="bg-[#beeec5]/50 border-2 border-primary-container rounded-lg p-space-md flex items-center gap-space-md">
+<div class="w-10 h-10 bg-primary-container text-white rounded-lg flex items-center justify-center flex-shrink-0 border border-primary-dark">
+<svg aria-hidden="true" class="w-6 h-6 stroke-current" fill="none" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M12 2v20M7 8l5-5 5 5M7 14l5-5 5 5M7 20l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<span class="block font-pista text-pista text-primary-dark font-extrabold uppercase">Cultivo en regla:</span>
+<span class="block font-cuerpo-grande text-cuerpo font-extrabold text-primary-dark">
+              Sembrado este año: Trigo blando (Camargo)
+            </span>
+</div>
+</div>
+<!-- Botón de Acción Directa Altura 64px -->
+<a class="w-full min-h-[64px] bg-[#2f6b40] text-white border-3 border-[#0d2b18] rounded-xl font-boton-principal text-boton-principal flex items-center justify-center gap-space-sm active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus tracking-wide" href="#parcela-el-vallejo" role="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          VER Y APUNTAR TRABAJO
+        </a>
+</article>
+<!-- ================= TARJETA 4 (COMPLETA DE REGADÍO) ================= -->
+<article aria-labelledby="parcela-4-titulo" class="bg-surface border-3 border-primary-dark rounded-xl p-space-lg flex flex-col gap-space-md">
+<!-- Fila Superior: Nombre Propio + Silueta Geográfica SIGPAC -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b-2 border-outline-variant">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1 flex-wrap">
+<span class="inline-block bg-primary-fixed text-primary-dark font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border border-primary-dark">
+                TIERRA Nº 4
+              </span>
+<span class="inline-block bg-[#beeec5] text-[#00210c] font-boton text-pista px-space-sm py-0.5 rounded font-extrabold border border-primary-dark">
+                REGADÍO
+              </span>
+</div>
+<h2 class="font-pregunta text-dato-grande text-primary-dark font-extrabold leading-tight" id="parcela-4-titulo">
+              La Vega del Río
+            </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium flex items-center gap-1 mt-0.5">
+<svg aria-hidden="true" class="w-5 h-5 text-secondary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+              Castronuño (Valladolid)
+            </p>
+</div>
+<!-- Silueta SVG de Parcela Triangular cerca del Río -->
+<div aria-label="Forma esquemática de la parcela La Vega del Río" class="flex flex-col items-center justify-center bg-surface-container border-2 border-primary-dark p-2 rounded-lg min-w-[80px]">
+<svg class="w-16 h-16 stroke-primary-dark" fill="#2f6b40" stroke-width="3" viewbox="0 0 100 100">
+<polygon points="15,20 85,15 95,60 50,88 10,70"></polygon>
+</svg>
+<span class="font-pista text-[12px] font-bold text-primary-dark mt-1">Forma SIGPAC</span>
+</div>
+</div>
+<!-- Datos Técnicos: SIGPAC y Superficie -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm bg-surface-container-low p-space-md rounded-lg border-2 border-outline-variant">
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Referencia oficial SIGPAC:</span>
+<span class="block font-cuerpo-grande text-campo font-bold text-on-surface tracking-wide">
+              47-045-0-0-12-30-2
+            </span>
+</div>
+<div>
+<span class="block font-pista text-pista text-on-surface-variant font-bold">Superficie declarada:</span>
+<span class="block font-dato-grande text-campo font-extrabold text-primary-dark">
+              6,40 ha <span class="font-cuerpo text-pista text-on-surface font-normal">(64.000 m²)</span>
+</span>
+</div>
+</div>
+<!-- Cultivo sembrado actual (Verificado en verde con detalle de riego) -->
+<div class="bg-[#beeec5]/50 border-2 border-primary-container rounded-lg p-space-md flex items-center gap-space-md">
+<div class="w-10 h-10 bg-primary-container text-white rounded-lg flex items-center justify-center flex-shrink-0 border border-primary-dark">
+<svg aria-hidden="true" class="w-6 h-6 stroke-current" fill="none" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M12 3v18m0-18c-3 4-6 7.5-6 11a6 6 0 0012 0c0-3.5-3-7-6-11z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<span class="block font-pista text-pista text-primary-dark font-extrabold uppercase">Cultivo en regla:</span>
+<span class="block font-cuerpo-grande text-cuerpo font-extrabold text-primary-dark">
+              Sembrado este año: Maíz dulce (Riego por aspersión)
+            </span>
+</div>
+</div>
+<!-- Botón de Acción Directa Altura 64px -->
+<a class="w-full min-h-[64px] bg-[#2f6b40] text-white border-3 border-[#0d2b18] rounded-xl font-boton-principal text-boton-principal flex items-center justify-center gap-space-sm active:bg-focus active:text-primary-dark focus:outline-none focus:ring-4 focus:ring-focus tracking-wide" href="#parcela-la-vega" role="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          VER Y APUNTAR TRABAJO
+        </a>
+</article>
+</section>
+<!-- PIE DE PÁGINA INFORMATIVO Y SOPORTE DIRECTO (Sin barra de pestañas, en flujo vertical) -->
+<footer class="mt-space-lg bg-surface-container border-3 border-primary-dark rounded-xl p-space-lg flex flex-col gap-space-md" role="contentinfo">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 bg-primary-dark text-white rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+<svg aria-hidden="true" class="w-6 h-6 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface font-semibold leading-relaxed">
+          ¿No encuentras una tierra o el SIGPAC está mal? Llama al técnico de tu cooperativa o pulsa para ayuda.
+        </p>
+</div>
+<!-- Botón de Soporte y Ayuda Altura 64px -->
+<a class="w-full min-h-[64px] bg-surface text-primary-dark border-3 border-primary-dark rounded-xl font-boton-principal text-boton-principal flex items-center justify-center gap-space-sm active:bg-focus focus:outline-none focus:ring-4 focus:ring-focus tracking-wide" href="#ayuda-tierras" role="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-current" fill="none" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+        AYUDA: CÓMO REVISAR TUS TIERRAS
+      </a>
+<div class="text-center pt-2">
+<p class="font-pista text-pista text-on-surface-variant font-bold">
+          CUE Digital · Junta de Castilla y León · Sin conexión a internet
+        </p>
+</div>
+</footer>
+</main>
+<!-- Script interactivo accesible para el botón A+ Letra bajo el sol -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const zoomBtn = document.getElementById('btn-zoom-text');
+      let isLarge = false;
+
+      zoomBtn.addEventListener('click', () => {
+        isLarge = !isLarge;
+        if (isLarge) {
+          document.documentElement.style.fontSize = '120%';
+          zoomBtn.classList.add('bg-focus', 'text-primary-dark');
+          zoomBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          document.documentElement.style.fontSize = '100%';
+          zoomBtn.classList.remove('bg-focus', 'text-primary-dark');
+          zoomBtn.setAttribute('aria-pressed', 'false');
+        }
+      });
+    });
+  </script>
+</body></html>

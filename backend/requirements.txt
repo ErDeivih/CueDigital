@@ -1,0 +1,23 @@
+# Dependencias del backend del cuaderno de campo.
+#
+# Decisión: se instala con `requirements.txt` y no con poetry ni uv, porque el que
+# mantiene esto tiene que poder entenderlo dentro de dos años sin aprender una
+# herramienta nueva. La lista sigue siendo corta y se lee.
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+SQLAlchemy==2.0.54
+pydantic==2.13.5
+pydantic-settings==2.15.0
+python-multipart==0.0.22
+reportlab==5.0.1
+jsonschema==4.25.1
+
+# Solo para desarrollo y tests
+pytest==9.1.1
+httpx==0.28.1
+# Para que los tests puedan leer el frontmatter de DESIGN.md. La aplicación no lo usa.
+pyyaml==6.0.3
+# Solo para rehacer y cotejar las tablas de la Orden MAV/398/2022 desde el PDF oficial.
+pdfplumber==0.11.9
+# Para rehacer el listado municipal oficial de IDECyL y cotejar sus códigos con el INE.
+openpyxl==3.1.5

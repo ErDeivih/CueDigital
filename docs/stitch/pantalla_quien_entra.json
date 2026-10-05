@@ -1,0 +1,338 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "784563585753549453",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/b2dbe928db994f979b6b70d7ea981976",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1UADB_vsZaOj3Fvx0PNTZNLJoHtfTyY-KvnTkRtdcHau4o4sj38NaW-5YivnC1SZpbs3GwrgLZVSjGLuMI8L7sPfnXkKFZsH2eRL4_L--Wg8Ytsc7dbPGnRcTdkIwlq__5sSTekCyBWFTYXenEscNgV6V4vY7c0JFmChaAdgPfdBS0o98zhQvr9kquU1viYWHWDW73l2m2P0NumARMFf7isoIZmUNIktazJU2ZYX4IcyUUE0zNutrExifM"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/587b3027271f46c2ba850d84f72220a4",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzZmZjdjNTY4YzY1NzRiNDU4NjM4MDk3ZjkwYjMyMzVhEgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "44237a34a8de40c4abd64e69fc29e724",
+            "generatedBy": "figaro_agent",
+            "width": "780",
+            "height": "5492",
+            "title": "Quién entra en mi finca - CUE Digital",
+            "prompt": "Pantalla móvil de la aplicación CUE Digital: «Quién entra en mi finca».\nDiseñada específicamente para un agricultor de 50 a 70 años de Castilla y León, leída a pleno sol y manejada con una sola mano, sin cobertura requerida.\n\nREGLAS ESTRICTAS DE DISEÑO CUE DIGITAL:\n- Tipografía mínima de 18px en cuerpo, negritas robustas, contraste ultra-alto (#1f4a2c verde primario, blanco puro #ffffff, fondo claro #f9faf5, acento ámbar #ffe9a8 / #8a6a00 para avisos, rojo #8c1d18 para peligro/quitar).\n- CERO sombras, CERO degradados, CERO animaciones, CERO transparencias. Separaciones mediante bordes sólidos de 3px o 4px.\n- Todos los botones interactivos miden como mínimo 64px de altura con padding generoso para pulgares grandes con guantes.\n- Iconos estrictamente SVG inline vectoriales limpios (NUNCA emojis).\n- NO PONER barra de pestañas inferior ni menús desplegables/hamburguesa ocultos. Diseño en una sola columna limpia (max-w-md centrado).\n- Cada casilla o acción va acompañada de una frase explicativa clara, lenguaje directo de campo sin jerga informática.\n\nESTRUCTURA DE CONTENIDOS EXACTA:\n1. Cabecera superior fija CUE Digital:\n   - Botón volver a la izquierda («← VOLVER», min 48px alto).\n   - Título central «Quién entra en mi finca».\n   - Botón a la derecha «A+ Letra».\n\n2. Tarjeta de estado de conectividad:\n   - «Funciona sin cobertura en el campo. Los permisos se guardan en el teléfono.» con icono SVG de check verde.\n\n3. Bloque de ubicación actual:\n   - «Estás en: Finca Las Suertes y El Prado» en tipografía destacada.\n   - Mensaje de autoridad del titular: «Eres el titular de esta finca: puedes añadir y quitar cuentas.» (con borde distintivo).\n\n4. Notificación o aviso de confirmación reciente:\n   - Banner de estado claro y tranquilizador: «✓ Ya puede entrar en tu finca.» o «Ya no entra en tu finca.».\n\n5. Lista de personas que entran en la finca:\n   - Encabezado: «Cuentas que apuntan en este cuaderno (2 personas)»\n   - Persona 1 (El usuario):\n     * Nombre en grande (21px bold): «Manuel Ruiz Gómez»\n     * Correo debajo: «manuel.ruiz.agricola@gmail.com»\n     * Etiqueta de papel destacada y visible de un vistazo: «Tú (titular)» con fondo verde oscuro #1f4a2c y texto blanco «MANDAS TÚ».\n     * Explicación: «Esta es tu cuenta principal. Como titular, eres el responsable legal ante la Junta.»\n   - Persona 2 (Colaborador / Aplicador):\n     * Nombre en grande (21px bold): «Juan Antonio Delgado»\n     * Correo debajo: «j.delgado.tractor@gmail.com»\n     * Etiqueta de papel: «Ayuda en la finca» con borde y fondo claro de alto contraste.\n     * Explicación: «Puede apuntar tratamientos, labores y riegos con su propio móvil. No puede cambiar tus parcelas ni firmar por ti.»\n     * Acción secundaria de quitar: Botón discreto pero accesible (64px, fondo claro con borde fino o botón secundario peligro sobrio) con icono SVG de papelera o candado: «QUITARLE EL ACCESO A ESTA FINCA». Diseñado como lo que menos se toca de la pantalla.\n\n6. Bloque para añadir a alguien nuevo:\n   - Recuadro con borde de 3px y título «Añadir una cuenta nueva».\n   - Etiqueta clara: «¿Con qué correo entra?»\n   - Campo de texto (64px alto, texto claro 18px): «ejemplo: hijo@gmail.com»\n   - Ayuda debajo del campo: «El correo con el que se dio de alta esa persona.»\n   - Aviso aclaratorio obligatorio: «La otra persona tiene que tener ya su cuenta hecha con ese correo: tú no puedes ponerle la clave.»\n   - Botón principal de acción verde (alto 64px o 72px): «+ AÑADIR UNA CUENTA».\n\n7. Bloque «En qué finca estás trabajando»:\n   - Introducción: «Solo sale porque entras en más de una finca. Toca para cambiar la finca donde estás apuntando ahora mismo:»\n   - Opción Finca A (Actual):\n     * «Finca Las Suertes y El Prado (42 ha)»\n     * Indicador: «✓ ESTÁS TRABAJANDO AQUÍ AHORA» (sin botón, estado activo resaltado).\n   - Opción Finca B:\n     * «Finca Vega del Río (18 ha)»\n     * Botón de acción directo (64px de alto): «PONME EN ESTA FINCA».\n\n8. Botón inferior de salida:\n   - Botón ancho «← VOLVER AL INICIO» (64px alto, fondo gris claro/surface-variant, borde verde).\n   - Pie institucional de CUE Digital · Junta de Castilla y León: «Diseñado para trabajar al sol, con una mano y sin cobertura.»",
+            "name": "projects/4347842392867690825/screens/44237a34a8de40c4abd64e69fc29e724",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "INTER",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "INTER",
+              "bodyFont": "INTER",
+              "labelFont": "INTER",
+              "namedColors": {
+                "surface_tint": "#3c6847",
+                "surface": "#ffffff",
+                "surface_container_highest": "#e2e3de",
+                "on_primary_fixed_variant": "#244f31",
+                "tertiary_container": "#65323d",
+                "surface_container_lowest": "#ffffff",
+                "surface_dim": "#d9dad6",
+                "on_tertiary": "#ffffff",
+                "inverse_primary": "#a2d2aa",
+                "on_primary": "#ffffff",
+                "primary_container": "#1f4a2c",
+                "tertiary": "#4a1c27",
+                "primary-overlay": "#3a6446",
+                "surface-variant": "#f4f6f3",
+                "on_error": "#ffffff",
+                "surface_bright": "#f9faf5",
+                "on-primary": "#ffffff",
+                "surface_container_low": "#f3f4ef",
+                "inverse_surface": "#2f312e",
+                "on_tertiary_container": "#e09ba8",
+                "on-surface-variant": "#43503f",
+                "on_primary_container": "#8bb992",
+                "surface_variant": "#e2e3de",
+                "secondary-container": "#ffe9a8",
+                "inverse_on_surface": "#f0f1ec",
+                "error": "#8c1d18",
+                "outline": "#a9b6a8",
+                "on_secondary_container": "#775b00",
+                "secondary": "#765a00",
+                "focus": "#ffd24a",
+                "secondary_container": "#ffd56c",
+                "on_surface": "#1a1c19",
+                "primary_fixed_dim": "#a2d2aa",
+                "on-error-container": "#4a0f0b",
+                "on_secondary_fixed": "#251a00",
+                "error_container": "#ffdad6",
+                "surface_container_high": "#e8e9e4",
+                "primary-container": "#2f6b40",
+                "on_primary_fixed": "#00210c",
+                "on_background": "#1a1c19",
+                "surface_container": "#edeee9",
+                "on-surface": "#10190f",
+                "on_tertiary_fixed": "#360c18",
+                "primary-dark": "#0d2b18",
+                "secondary_fixed_dim": "#eac25a",
+                "secondary_fixed": "#ffdf95",
+                "background": "#f9faf5",
+                "error-dark": "#5c110d",
+                "primary_fixed": "#beeec5",
+                "on_tertiary_fixed_variant": "#6b3742",
+                "error-container": "#fbe3e1",
+                "outline_variant": "#c1c9bf",
+                "tertiary_fixed": "#ffd9de",
+                "on_error_container": "#93000a",
+                "primary-overlay-border": "#8fae97",
+                "primary": "#043317",
+                "tertiary_fixed_dim": "#fbb3c0",
+                "on_secondary_fixed_variant": "#594400",
+                "on_secondary": "#ffffff",
+                "on_surface_variant": "#414941",
+                "on-secondary-container": "#3d2f00"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#8a6a00",
+              "spacingScale": 2,
+              "typography": {
+                "cuerpo-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "dato-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800"
+                },
+                "pregunta": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "boton-principal": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700"
+                },
+                "cuerpo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "pista": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400"
+                },
+                "boton": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700"
+                },
+                "titulo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "campo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400"
+                }
+              },
+              "spacing": {
+                "space-xs": "4px",
+                "space-md": "12px",
+                "gutter": "16px",
+                "margin": "16px",
+                "space-xl": "24px",
+                "space-lg": "16px",
+                "space-sm": "8px",
+                "space-xxl": "32px"
+              },
+              "headlineFontFamily": "Inter",
+              "bodyFontFamily": "Inter",
+              "labelFontFamily": "Inter"
+            },
+            "deviceType": "MOBILE",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "secondary_fixed_dim": "#eac25a",
+                    "focus": "#ffd24a",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "surface_variant": "#e2e3de",
+                    "error": "#8c1d18",
+                    "surface_dim": "#d9dad6",
+                    "surface_tint": "#3c6847",
+                    "inverse_surface": "#2f312e",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#3d2f00",
+                    "primary": "#043317",
+                    "surface_container_highest": "#e2e3de",
+                    "primary-overlay": "#3a6446",
+                    "surface-variant": "#f4f6f3",
+                    "primary-container": "#2f6b40",
+                    "primary-overlay-border": "#8fae97",
+                    "surface_container": "#edeee9",
+                    "inverse_primary": "#a2d2aa",
+                    "on_primary": "#ffffff",
+                    "on-surface-variant": "#43503f",
+                    "on_error": "#ffffff",
+                    "tertiary": "#4a1c27",
+                    "on_tertiary_fixed": "#360c18",
+                    "on_secondary_container": "#775b00",
+                    "outline": "#a9b6a8",
+                    "secondary_container": "#ffd56c",
+                    "tertiary_fixed": "#ffd9de",
+                    "on_tertiary": "#ffffff",
+                    "secondary": "#765a00",
+                    "surface_container_high": "#e8e9e4",
+                    "tertiary_container": "#65323d",
+                    "error-container": "#fbe3e1",
+                    "on_secondary_fixed_variant": "#594400",
+                    "outline_variant": "#c1c9bf",
+                    "on_primary_fixed": "#00210c",
+                    "on_error_container": "#93000a",
+                    "on_background": "#1a1c19",
+                    "error-dark": "#5c110d",
+                    "background": "#f9faf5",
+                    "secondary-container": "#ffe9a8",
+                    "on_surface_variant": "#414941",
+                    "on_primary_container": "#8bb992",
+                    "secondary_fixed": "#ffdf95",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "on-surface": "#10190f",
+                    "primary_fixed": "#beeec5",
+                    "on_primary_fixed_variant": "#244f31",
+                    "inverse_on_surface": "#f0f1ec",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_bright": "#f9faf5",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "primary-dark": "#0d2b18",
+                    "error_container": "#ffdad6",
+                    "primary_container": "#1f4a2c",
+                    "surface_container_low": "#f3f4ef",
+                    "on_secondary_fixed": "#251a00",
+                    "on_surface": "#1a1c19",
+                    "on_secondary": "#ffffff",
+                    "on-error-container": "#4a0f0b",
+                    "surface": "#ffffff",
+                    "on_tertiary_container": "#e09ba8"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    },
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    },
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    }
+                  },
+                  "spacing": {
+                    "space-sm": "8px",
+                    "space-lg": "16px",
+                    "margin": "16px",
+                    "gutter": "16px",
+                    "space-xl": "24px",
+                    "space-xxl": "32px",
+                    "space-xs": "4px",
+                    "space-md": "12px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la pantalla móvil **«Quién entra en mi finca»** para **CUE Digital**, adaptada punto por punto para trabajar de pie en el campo, bajo el sol directo y con una sola mano:\n\n### Decisiones de diseño y cumplimiento de reglas\n1. **Contraste y visibilidad al sol**:\n   - Paleta oficial de CUE Digital con verde primario de alto contraste (`#1f4a2c`), fondos puros claros y avisos en ámbar suave (`#ffe9a8`).\n   - Cero sombras difusas, sin degradados y sin transparencias: todas las separaciones estructurales se realizan con bordes sólidos de 3-4 px.\n   - Tipografía mínima de 18 px en cuerpo y hasta 21-24 px en nombres y titulares, legible a distancia con el brillo del sol.\n\n2. **Sin barras de pestañas ni menús ocultos**:\n   - Flujo vertical directo en una sola columna con cabecera fija (`← VOLVER` y `A+ Letra`), garantizando que no se pierdan opciones bajo gestos accidentales.\n\n3. **Jerarquía clara de roles («Quién manda aquí»)**:\n   - **Tú (titular)**: Destacado con el distintivo **«MANDAS TÚ»** y explicación sobre la responsabilidad legal ante la Junta.\n   - **Ayuda en la finca**: Etiqueta diferenciada con el alcance concreto de lo que puede hacer (anotar labores y tratamientos, sin acceso a firma ni edición de parcelas).\n   - Botón **«QUITARLE EL ACCESO A ESTA FINCA»** diseñado con estilo secundario y borde suave para evitar toques accidentales con guantes o prisa.\n\n4. **Alta sencilla de nuevas cuentas**:\n   - Pregunta directa: *«¿Con qué correo entra?»*, acompañada de la advertencia imprescindible: *«La otra persona tiene que tener ya su cuenta hecha con ese correo: tú no puedes ponerle la clave»*.\n   - Botón táctil de 64 px de alto: **«+ AÑADIR UNA CUENTA»**.\n   - Aviso de confirmación reciente: *«✓ Ya puede entrar en tu finca»*.\n\n5. **Selector «En qué finca estás trabajando»**:\n   - Sección final que muestra la finca activa (*«ESTÁS TRABAJANDO AQUÍ AHORA»*, sin botón de acción redundante) y la alternativa con el botón táctil de cambio inmediato: **«PONME EN ESTA FINCA»**.\n   - Botón inferior ancho de salida: **«← VOLVER AL INICIO»**."
+    },
+    {
+      "suggestion": "Ver la versión de esta pantalla cuando el usuario no es el titular sino un colaborador con permiso de ayuda"
+    },
+    {
+      "suggestion": "Ver el estado vacío cuando no hay nadie más ('De momento solo entras tú')"
+    },
+    {
+      "suggestion": "Ajustar la confirmación al estado 'Ya no entra en tu finca' tras pulsar quitar acceso"
+    }
+  ]
+}

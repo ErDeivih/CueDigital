@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha de Tierra: El Prado - CUE Gestión Despacho (1440x900)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1f4a2c',
+              container: '#2f6b40',
+              dark: '#0d2b18',
+              surface: '#ffffff',
+              bg: '#f4f6f3',
+              border: '#d9dad6',
+              borderDark: '#a9b6a8',
+              text: '#10190f',
+              muted: '#43503f',
+              warning: '#ffe9a8',
+              warningBorder: '#8a6a00',
+              warningText: '#3d2f00',
+              danger: '#fbe3e1',
+              dangerBorder: '#8c1d18',
+              dangerText: '#5c110d',
+              focus: '#ffd24a'
+            }
+          },
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Reglas estrictas: CERO sombras, CERO degradados, CERO animaciones */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+      background-image: none !important;
+    }
+    /* Scrollbar sobrio para entorno de trabajo */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f4f6f3;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2f6b40;
+    }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased text-[14px] leading-snug">
+
+  <!-- CABECERA SUPERIOR DESPACHO (Idéntica a la suite CUE Gestión Despacho) -->
+  <header class="w-full bg-brand text-white border-b-2 border-brand-dark px-4 py-2 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold tracking-tight text-lg text-white flex items-center gap-1.5">
+          <svg class="w-5 h-5 fill-current text-brand-focus" viewBox="0 0 24 24">
+            <path d="M19.5 7.5L12 3 4.5 7.5v9l7.5 4.5 7.5-4.5v-9zM12 4.75l5.5 3.3v6.6l-5.5 3.3-5.5-3.3v-6.6l5.5-3.3zM12 9a3 3 0 100 6 3 3 0 000-6z"/>
+          </svg>
+          CUE Digital
+        </span>
+        <span class="text-[11px] font-mono tracking-widest bg-brand-dark px-1.5 py-0.5 rounded text-white border border-brand-borderDark uppercase">
+          Despacho CyL
+        </span>
+      </div>
+
+      <div class="h-4 w-px bg-brand-container"></div>
+
+      <!-- Selector de Finca Activa -->
+      <div class="flex items-center gap-1 text-[13px] bg-brand-dark/60 hover:bg-brand-dark px-2.5 py-1 rounded border border-brand-borderDark cursor-pointer">
+        <svg class="w-4 h-4 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span class="text-white/80">Finca:</span>
+        <span class="font-semibold text-white">Las Suertes y El Prado</span>
+        <span class="text-[11px] text-white/70 font-mono">(187,42 ha)</span>
+      </div>
+
+      <!-- Selector de Campaña Activa -->
+      <div class="flex items-center gap-1.5 text-[13px] bg-brand-dark/60 px-2 py-1 rounded border border-brand-borderDark">
+        <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="text-white/80">Campaña:</span>
+        <span class="font-bold text-brand-focus font-mono">2026</span>
+        <span class="text-[11px] text-white/60 font-mono">(01/09/25 - 31/08/26)</span>
+      </div>
+
+      <!-- Conexión SIEX / REGEPA -->
+      <div class="flex items-center gap-1.5 text-[12px] bg-brand-dark px-2 py-0.5 rounded border border-brand-borderDark">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="font-mono text-emerald-200">SIEX: Conectado</span>
+      </div>
+    </div>
+
+    <!-- Acciones Rápidas Cabecera -->
+    <div class="flex items-center gap-2">
+      <button class="h-8 px-3 text-[13px] font-semibold bg-brand-focus text-brand-text rounded hover:bg-yellow-400 flex items-center gap-1.5 border border-amber-600">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        NUEVO APUNTE
+      </button>
+
+      <button class="h-8 px-2.5 text-[12px] font-mono bg-brand-container text-white border border-brand-borderDark rounded hover:bg-brand-dark flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Sincronizar
+      </button>
+
+      <div class="h-4 w-px bg-brand-container"></div>
+
+      <div class="text-[12px] text-right font-mono">
+        <span class="block text-white font-semibold leading-tight">Manuel Ruiz Gómez</span>
+        <span class="text-white/60 text-[10px]">NIF: 12345678Z • #49281</span>
+      </div>
+
+      <div class="w-7 h-7 bg-brand-container text-white border border-brand-borderDark rounded flex items-center justify-center font-bold text-xs font-mono">
+        MR
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL: SIDEBAR + ÁREA DE TRABAJO -->
+  <div class="flex w-full min-h-[calc(900px-48px)]">
+
+    <!-- BARRA LATERAL (Idéntica a la navegación de Despacho) -->
+    <aside class="w-64 bg-white border-r-2 border-brand-border flex flex-col justify-between shrink-0">
+      <div>
+        <!-- Ficha técnica rápida de la explotación -->
+        <div class="p-3 bg-brand-bg border-b border-brand-border">
+          <span class="text-[10px] font-mono uppercase text-brand-muted tracking-wide block">Explotación Agraria CyL</span>
+          <span class="font-bold text-[14px] text-brand-text block truncate">Manuel Ruiz e Hijos</span>
+          <span class="text-[11px] font-mono text-brand-muted block">Valladolid / Villalar • REGEPA #49281</span>
+        </div>
+
+        <!-- Módulos de Navegación -->
+        <nav class="p-2 space-y-0.5">
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Resumen General
+            </span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              El Cuaderno
+            </span>
+            <span class="text-[11px] font-mono font-bold bg-gray-100 text-brand-muted px-1.5 py-0.2 rounded border border-gray-300">42</span>
+          </a>
+
+          <!-- ACTIVO: Tierras y mapa -->
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 bg-brand text-white font-bold rounded text-[13px] border-l-4 border-brand-focus">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-focus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+              Tierras y mapa
+            </span>
+            <span class="text-[11px] font-mono font-bold bg-brand-dark text-white px-1.5 py-0.2 rounded border border-brand-borderDark">64</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 0 1 10 10c0 5.5-4.5 10-10 10S2 17.5 2 12A10 10 0 0 1 12 2z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              Qué hay sembrado
+            </span>
+            <span class="text-[11px] font-mono text-amber-700 bg-amber-50 px-1 py-0.2 rounded border border-amber-300">10 sin cultivo</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+              </svg>
+              El Almacén
+            </span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              Lo que he vendido
+            </span>
+            <span class="text-[11px] font-mono bg-gray-100 text-brand-muted px-1.5 py-0.2 rounded border border-gray-300">2</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Facturas y Albaranes
+            </span>
+            <span class="text-[11px] font-mono bg-gray-100 text-brand-muted px-1.5 py-0.2 rounded border border-gray-300">12</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 2v7.31L4.35 18A2 2 0 0 0 6.07 21h11.86a2 2 0 0 0 1.72-3l-5.65-8.69V2"/>
+              </svg>
+              Los Análisis
+            </span>
+            <span class="text-[11px] font-mono bg-gray-100 text-brand-muted px-1.5 py-0.2 rounded border border-gray-300">5</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Papeles y Documentos
+            </span>
+            <span class="text-[11px] font-mono bg-gray-100 text-brand-muted px-1.5 py-0.2 rounded border border-gray-300">6</span>
+          </a>
+
+          <a href="#" class="flex items-center justify-between px-2.5 py-1.5 text-brand-muted hover:bg-brand-bg rounded font-medium text-[13px]">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Productos y Máquinas
+            </span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Pie de navegación / Modo Local -->
+      <div class="p-3 border-t-2 border-brand-border bg-white text-[12px] space-y-2">
+        <div class="flex items-center justify-between text-brand-muted font-mono">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Modo Local Activo
+          </span>
+          <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">SQLite OK</span>
+        </div>
+        <div class="text-[11px] text-brand-muted leading-tight">
+          Sin cortes de red. Las tierras y apuntes quedan guardados en este ordenador.
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <main class="flex-1 flex flex-col min-w-0 bg-white">
+
+      <!-- MIGA DE PAN Y ACCIONES DE VUELTA -->
+      <section class="bg-brand-bg px-5 py-2.5 border-b-2 border-brand-border flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <!-- Botón de retorno conservando filtros -->
+          <a href="#" class="h-8 px-2.5 bg-white hover:bg-gray-100 text-brand font-bold text-[13px] rounded border-2 border-brand-borderDark flex items-center gap-1.5" title="Volver a la tabla conservando los filtros activos">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            VOLVER A TIERRAS
+          </a>
+
+          <div class="h-4 w-px bg-brand-borderDark mx-1"></div>
+
+          <nav class="flex items-center gap-1 text-[13px] font-medium text-brand-muted" aria-label="Miga de pan">
+            <span>Tierras y mapa</span>
+            <span class="text-gray-400">/</span>
+            <span class="text-brand-text font-bold text-[14px]">El Prado</span>
+            <span class="font-mono text-xs bg-gray-200 text-brand-text px-1.5 py-0.5 rounded border border-gray-300 ml-1.5">Ref. 37-70-0-0-503-51-1</span>
+          </nav>
+        </div>
+
+        <!-- Indicador de filtro persistente -->
+        <div class="flex items-center gap-2 text-[12px] font-mono text-brand-muted">
+          <span class="text-gray-500">Filtro origen:</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-semibold text-brand-text">
+            Municipio: Villalar de los Comuneros (4 tierras)
+          </span>
+          <span class="text-[11px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300">
+            Filtros guardados
+          </span>
+        </div>
+      </section>
+
+      <!-- RESUMEN FIJO / HERO STICKY (Siempre visible al bajar) -->
+      <section class="bg-white border-b-4 border-brand p-5 sticky top-[48px] z-40">
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+
+          <!-- Datos de la Tierra, SIGPAC y Forma -->
+          <div class="flex items-start gap-4">
+            <!-- Dibujo SVG de la forma del trozo SIGPAC -->
+            <div class="w-24 h-24 bg-emerald-50 border-2 border-brand rounded flex flex-col items-center justify-center p-1 relative shrink-0">
+              <svg class="w-20 h-16" viewBox="0 0 100 80">
+                <polygon points="12,18 85,10 92,68 24,74" fill="#a3d9b1" stroke="#1f4a2c" stroke-width="3"/>
+                <circle cx="54" cy="42" r="3.5" fill="#ffd24a" stroke="#8a6a00" stroke-width="1.5"/>
+              </svg>
+              <span class="text-[9px] font-mono font-bold text-brand uppercase mt-0.5">Recinto 1 • SIGPAC</span>
+            </div>
+
+            <!-- Título y metadatos -->
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-2xl font-bold text-brand-text tracking-tight">El Prado</h1>
+                <span class="text-xs font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-400">
+                  SECANO DECLARADO
+                </span>
+                <span class="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-300">
+                  Tierra arable (TA)
+                </span>
+                <span class="text-xs font-mono bg-amber-50 text-amber-900 border border-amber-300 px-2 py-0.5 rounded flex items-center gap-1 font-semibold">
+                  <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Zona Nitratos vulnerable (Valle del Duero)
+                </span>
+              </div>
+
+              <!-- Geografía y Registro Oficial -->
+              <div class="flex items-center gap-3 text-[13px] text-brand-muted flex-wrap">
+                <span><strong>Municipio:</strong> Villalar de los Comuneros (Valladolid)</span>
+                <span>•</span>
+                <span><strong>Polígono:</strong> 503</span>
+                <span>•</span>
+                <span><strong>Parcela:</strong> 51</span>
+                <span>•</span>
+                <span><strong>Recinto:</strong> 1</span>
+                <span>•</span>
+                <span class="font-mono text-xs">Catastro: 47197A503000510000EB</span>
+              </div>
+
+              <!-- Comparativa de Superficies y Diferencia -->
+              <div class="flex items-center gap-3 pt-1 flex-wrap">
+                <div class="bg-brand-bg px-2.5 py-1 rounded border border-brand-borderDark text-[13px]">
+                  <span class="text-brand-muted">Superficie gestionada:</span>
+                  <span class="font-bold font-mono text-brand-text text-[15px] ml-1">4,90 ha</span>
+                  <span class="text-xs text-gray-500 font-mono">(49.000 m²)</span>
+                </div>
+
+                <div class="bg-brand-bg px-2.5 py-1 rounded border border-brand-borderDark text-[13px]">
+                  <span class="text-brand-muted">Superficie declarada PAC:</span>
+                  <span class="font-bold font-mono text-brand-text text-[15px] ml-1">4,90 ha</span>
+                </div>
+
+                <div class="bg-emerald-50 px-2 py-1 rounded border border-emerald-300 text-[12px] font-mono text-emerald-900 font-semibold flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Sin descuadre de área (Diferencia: 0,00 ha)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Próximo Trabajo Previsto + Bloque Acciones -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+
+            <!-- Tarjeta Próximo Trabajo Previsto (distinguido explícitamente de hecho) -->
+            <div class="bg-amber-50 border-2 border-brand-warningBorder rounded p-2.5 min-w-[240px]">
+              <div class="flex items-center justify-between text-[11px] font-mono uppercase text-brand-warningText font-bold">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-amber-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/>
+                  </svg>
+                  Próximo Trabajo Previsto
+                </span>
+                <span class="bg-white border border-amber-400 px-1 py-0.2 rounded text-[10px]">Planificado</span>
+              </div>
+              <div class="mt-1">
+                <div class="font-bold text-[14px] text-brand-text">Cosecha de Cebada cervecera</div>
+                <div class="text-[12px] text-brand-muted flex items-center justify-between mt-0.5">
+                  <span>Fecha aprox: <strong>25/06/2026</strong></span>
+                  <span class="font-mono text-xs font-semibold text-emerald-800">Plazo seguro: OK</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botonera de Acciones Principales -->
+            <div class="flex flex-col gap-1.5">
+              <button class="h-10 px-4 bg-brand hover:bg-brand-dark text-white font-bold text-[13px] rounded border-2 border-brand-dark flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-brand-focus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                REGISTRAR TRATAMIENTO O LABOR
+              </button>
+
+              <div class="flex items-center gap-1.5">
+                <button class="h-8 px-2.5 bg-white hover:bg-brand-bg text-brand-text font-semibold text-[12px] rounded border-2 border-brand-borderDark flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                  </svg>
+                  PLANIFICAR
+                </button>
+
+                <button class="h-8 px-2.5 bg-white hover:bg-brand-bg text-brand-text font-semibold text-[12px] rounded border-2 border-brand-borderDark flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  EDITAR TIERRA
+                </button>
+
+                <button class="h-8 px-2.5 bg-white hover:bg-brand-bg text-brand-text font-semibold text-[12px] rounded border-2 border-brand-borderDark flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                  </svg>
+                  VER EN EL MAPA
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- BARRA DE PESTAÑAS TÉCNICAS (ORGANIZACIÓN CON CUENTA EXACTA) -->
+      <section class="bg-brand-bg border-b-2 border-brand-border px-5 pt-3">
+        <div class="flex items-center gap-1 overflow-x-auto">
+          <!-- Pestaña 1: Historia (Activa) -->
+          <button class="px-3.5 py-2 font-bold text-[13px] bg-white text-brand border-t-2 border-x-2 border-b-0 border-brand rounded-t flex items-center gap-2">
+            <span>Historia y Trabajos</span>
+            <span class="font-mono text-xs bg-brand text-white px-1.5 py-0.2 rounded">5</span>
+          </button>
+
+          <!-- Pestaña 2: Cultivos -->
+          <button class="px-3.5 py-2 font-semibold text-[13px] text-brand-muted hover:text-brand-text hover:bg-gray-100 rounded-t border-b-2 border-transparent flex items-center gap-2">
+            <span>Cultivos Multianuales</span>
+            <span class="font-mono text-xs bg-gray-200 text-brand-muted px-1.5 py-0.2 rounded">4 campañas</span>
+          </button>
+
+          <!-- Pestaña 3: Insumos -->
+          <button class="px-3.5 py-2 font-semibold text-[13px] text-brand-muted hover:text-brand-text hover:bg-gray-100 rounded-t border-b-2 border-transparent flex items-center gap-2">
+            <span>Productos y Abono</span>
+            <span class="font-mono text-xs bg-gray-200 text-brand-muted px-1.5 py-0.2 rounded">3 registros</span>
+          </button>
+
+          <!-- Pestaña 4: Cosecha y Cuentas -->
+          <button class="px-3.5 py-2 font-semibold text-[13px] text-brand-muted hover:text-brand-text hover:bg-gray-100 rounded-t border-b-2 border-transparent flex items-center gap-2">
+            <span>Cosecha y Cuentas</span>
+            <span class="font-mono text-xs bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded font-bold">1 pendiente</span>
+          </button>
+
+          <!-- Pestaña 5: Documentos -->
+          <button class="px-3.5 py-2 font-semibold text-[13px] text-brand-muted hover:text-brand-text hover:bg-gray-100 rounded-t border-b-2 border-transparent flex items-center gap-2">
+            <span>Documentos</span>
+            <span class="font-mono text-xs bg-gray-200 text-brand-muted px-1.5 py-0.2 rounded">3 papeles</span>
+          </button>
+
+          <!-- Pestaña 6: PAC -->
+          <button class="px-3.5 py-2 font-semibold text-[13px] text-brand-muted hover:text-brand-text hover:bg-gray-100 rounded-t border-b-2 border-transparent flex items-center gap-2">
+            <span>Compromisos PAC</span>
+            <span class="font-mono text-xs bg-gray-200 text-brand-muted px-1.5 py-0.2 rounded">2 activos</span>
+          </button>
+
+          <div class="ml-auto flex items-center gap-2 pb-1.5">
+            <span class="text-xs text-brand-muted font-mono">Ver histórico completo:</span>
+            <select class="h-7 text-xs font-mono bg-white border border-brand-borderDark rounded px-1.5 text-brand-text">
+              <option>Campaña actual (2026)</option>
+              <option>Campaña 2025</option>
+              <option>Campaña 2024</option>
+              <option>Todo el histórico disponible</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUERPO DE LA FICHA: TABLA DE HISTORIA + PANELES DE CONTROL AGRARIO -->
+      <div class="p-5 space-y-6">
+
+        <!-- AVISO DE CONTEXTO TÉCNICO SI HAY MAQUINARIA CON INSPECCIÓN VENCIDA -->
+        <div class="bg-amber-50 border-2 border-brand-warningBorder p-3 rounded flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <svg class="w-5 h-5 text-amber-800 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <span class="font-bold text-amber-950 text-[13px] block">Aviso de maquinaria en esta explotación: Cuba Aguirre 600L (ITEAF vencida desde 14/03/2026)</span>
+              <span class="text-amber-900 text-[12px] block">
+                Los tratamientos fitosanitarios aplicados con esta máquina en campaña 2026 requieren actualizar el justificante de revisión para no generar inconformidad en inspección SIEX.
+              </span>
+            </div>
+          </div>
+          <button class="h-7 px-2.5 bg-white text-amber-950 font-bold text-xs rounded border border-amber-600 hover:bg-amber-100 shrink-0">
+            Ver Ficha Máquina
+          </button>
+        </div>
+
+        <!-- SECCIÓN 1: HISTORIA DE TRABAJOS (TABLA COMPLETA CON RATÓN, ACCIONES POR FILA Y ORDENACIÓN) -->
+        <section class="border-2 border-brand-border rounded bg-white overflow-hidden">
+          <div class="bg-brand-bg px-4 py-2.5 border-b-2 border-brand-border flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <h2 class="font-bold text-[15px] text-brand-text flex items-center gap-2">
+                <span>Historia de labores y tratamientos</span>
+                <span class="text-xs font-mono font-normal text-brand-muted">(5 eventos en esta parcela)</span>
+              </h2>
+              <span class="text-xs text-brand-muted bg-white px-2 py-0.5 rounded border border-gray-300">
+                Regla: «Una labor mecánica no es un cultivo» • «Previsto ≠ Hecho»
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button class="h-7 px-2 bg-white text-brand-text text-xs rounded border border-brand-borderDark hover:bg-gray-50 flex items-center gap-1 font-semibold">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                Filtrar tipo de trabajo
+              </button>
+              <button class="h-7 px-2.5 bg-brand text-white font-bold text-xs rounded border border-brand-dark hover:bg-brand-dark flex items-center gap-1">
+                + AÑADIR ALGO A ESTA TIERRA
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLA TÉCNICA DE DESPACHO -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-[13px]">
+              <thead>
+                <tr class="bg-gray-100 text-brand-text border-b-2 border-brand-borderDark font-bold text-[12px] uppercase font-mono tracking-wider">
+                  <th class="py-2.5 px-3 w-28 cursor-pointer hover:bg-gray-200">
+                    <div class="flex items-center gap-1">Fecha <span>↓</span></div>
+                  </th>
+                  <th class="py-2.5 px-3 w-40 cursor-pointer hover:bg-gray-200">
+                    <div class="flex items-center gap-1">Tipo de labor <span>↕</span></div>
+                  </th>
+                  <th class="py-2.5 px-3 cursor-pointer hover:bg-gray-200">
+                    <div class="flex items-center gap-1">Detalle del trabajo / Insumos <span>↕</span></div>
+                  </th>
+                  <th class="py-2.5 px-3 w-32 cursor-pointer hover:bg-gray-200">
+                    <div class="flex items-center gap-1">Máquina / Persona <span>↕</span></div>
+                  </th>
+                  <th class="py-2.5 px-3 text-right w-28 cursor-pointer hover:bg-gray-200">
+                    <div class="flex items-center justify-end gap-1">Sup. Tratada <span>↕</span></div>
+                  </th>
+                  <th class="py-2.5 px-3 w-32 text-center">Estado Oficial</th>
+                  <th class="py-2.5 px-3 text-right w-44">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y border-brand-border">
+
+                <!-- FILA 1: TRABAJO PREVISTO (No es hecho) -->
+                <tr class="bg-amber-50/50 hover:bg-amber-50">
+                  <td class="py-2.5 px-3 font-mono font-bold text-amber-900">
+                    25/06/2026
+                    <span class="block text-[10px] text-amber-700 font-sans font-normal">(Previsto)</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                      Cosecha cereal
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-brand-text">Siega y recolección de Cebada Cervecera</div>
+                    <div class="text-xs text-brand-muted">Destino previsto: Silo Cooperativa Comarcal de Medina • Variedad: Planet</div>
+                  </td>
+                  <td class="py-2.5 px-3 text-xs">
+                    <span class="font-medium text-brand-text">Cosechadora Claas</span>
+                    <span class="block text-brand-muted">Servicio a terceros</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-brand-text">
+                    4,90 ha
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="inline-block px-2 py-0.5 rounded text-[11px] font-mono bg-white text-amber-800 border border-amber-400 font-semibold">
+                      Pendiente realizar
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="h-7 px-2 text-xs font-semibold bg-brand text-white rounded hover:bg-brand-dark border border-brand-dark">
+                        Dar por hecho
+                      </button>
+                      <button class="h-7 px-1.5 text-xs bg-white text-brand-text rounded border border-gray-300 hover:bg-gray-100" title="Editar planificación">
+                        Editar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 2: TRATAMIENTO FITOSANITARIO (HECHO) -->
+                <tr class="hover:bg-brand-bg">
+                  <td class="py-2.5 px-3 font-mono font-bold text-brand-text">
+                    12/05/2026
+                    <span class="block text-[10px] text-brand-muted font-sans font-normal">Campaña 2026</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                      Fitosanitario
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-brand-text flex items-center gap-2">
+                      <span>Glifosato 36 SL (Herbicida sistémico)</span>
+                      <span class="text-[11px] font-mono bg-gray-100 px-1 py-0.2 rounded border border-gray-300 text-gray-700">Reg. 18.940</span>
+                    </div>
+                    <div class="text-xs text-brand-muted">
+                      Dosis: 2,00 L/ha • Gasto total: <strong>9,80 L</strong> • Caldo cuba: 122 L/ha • Motivo: Malas hierbas hoja ancha
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3 text-xs">
+                    <span class="font-medium text-brand-text">Manuel Ruiz</span>
+                    <span class="block text-brand-muted font-mono">Cuba 600L (#47-0982)</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-brand-text">
+                    4,90 ha
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold">
+                      <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Validado SIEX
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="h-7 px-2 text-xs font-semibold bg-white text-brand-text rounded border border-brand-borderDark hover:bg-gray-100" title="Ver ficha detallada">
+                        Abrir ficha
+                      </button>
+                      <button class="h-7 px-1.5 text-xs bg-white text-brand-text rounded border border-gray-300 hover:bg-gray-100" title="Corregir apunte">
+                        Editar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 3: ABONADO FOLIAR (HECHO) -->
+                <tr class="hover:bg-brand-bg">
+                  <td class="py-2.5 px-3 font-mono font-bold text-brand-text">
+                    08/05/2026
+                    <span class="block text-[10px] text-brand-muted font-sans font-normal">Campaña 2026</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-900 border border-blue-200">
+                      Fertilización
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-brand-text">Abono Foliar Boro soluble + Nitrógeno orgánico</div>
+                    <div class="text-xs text-brand-muted">
+                      Aporte: 1,50 L/ha (Gasto: 7,35 L) • Vinculado al Plan de Abonado 2026 (Boletín BOL-2026-0842)
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3 text-xs">
+                    <span class="font-medium text-brand-text">Manuel Ruiz</span>
+                    <span class="block text-brand-muted font-mono">Tractor JD 6155M</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-brand-text">
+                    4,90 ha
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold">
+                      Firmado OK
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="h-7 px-2 text-xs font-semibold bg-white text-brand-text rounded border border-brand-borderDark hover:bg-gray-100">
+                        Abrir ficha
+                      </button>
+                      <button class="h-7 px-1.5 text-xs bg-white text-brand-text rounded border border-gray-300 hover:bg-gray-100">
+                        Editar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 4: LABOR MECÁNICA («Una labor mecánica no es un cultivo») -->
+                <tr class="hover:bg-brand-bg">
+                  <td class="py-2.5 px-3 font-mono font-bold text-brand-text">
+                    18/11/2025
+                    <span class="block text-[10px] text-brand-muted font-sans font-normal">Campaña 2026</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-stone-100 text-stone-900 border border-stone-300">
+                      Labor mecánica
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-brand-text">Pase de cultivador y rulo desterronador</div>
+                    <div class="text-xs text-brand-muted">
+                      Preparación de cama de siembra • Sin aportación química ni fitosanitaria
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3 text-xs">
+                    <span class="font-medium text-brand-text">Juan Antonio D.</span>
+                    <span class="block text-brand-muted font-mono">Apero 4m vibro</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-brand-text">
+                    4,90 ha
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold">
+                      Asentado
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="h-7 px-2 text-xs font-semibold bg-white text-brand-text rounded border border-brand-borderDark hover:bg-gray-100">
+                        Abrir ficha
+                      </button>
+                      <button class="h-7 px-1.5 text-xs bg-white text-brand-text rounded border border-gray-300 hover:bg-gray-100">
+                        Editar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FILA 5: SIEMBRA DE CULTIVO -->
+                <tr class="hover:bg-brand-bg">
+                  <td class="py-2.5 px-3 font-mono font-bold text-brand-text">
+                    10/11/2025
+                    <span class="block text-[10px] text-brand-muted font-sans font-normal">Campaña 2026</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                      Siembra
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-brand-text">Siembra de Cebada Cervecera (Variedad RGT Planet)</div>
+                    <div class="text-xs text-brand-muted">
+                      Semilla R-2 certificada • Dosis siembra: 180 kg/ha • Total semilla: 882 kg (Albarán ALB-78214)
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3 text-xs">
+                    <span class="font-medium text-brand-text">Manuel Ruiz</span>
+                    <span class="block text-brand-muted font-mono">Sembradora Solá 3m</span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-brand-text">
+                    4,90 ha
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold">
+                      Oficial PAC
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="h-7 px-2 text-xs font-semibold bg-white text-brand-text rounded border border-brand-borderDark hover:bg-gray-100">
+                        Abrir ficha
+                      </button>
+                      <button class="h-7 px-1.5 text-xs bg-white text-brand-text rounded border border-gray-300 hover:bg-gray-100">
+                        Editar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pie de la tabla con atajos y paginación -->
+          <div class="bg-brand-bg px-4 py-2 border-t-2 border-brand-border flex items-center justify-between text-xs text-brand-muted">
+            <div>
+              Mostrando <strong>5 de 5</strong> registros en esta parcela. <span class="font-mono">[Espacio]</span> abrir fila seleccionada.
+            </div>
+            <div class="flex items-center gap-1 font-mono">
+              <span class="px-2 py-0.5 bg-white border border-gray-300 rounded font-bold text-brand-text">Pág. 1 de 1</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIONES EN REJILLA 2 COLUMNAS (1440px): CULTIVOS MULTIANUALES & COSECHA/CUENTAS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- BLOQUE A: CULTIVOS MULTIANUALES (Los 3 últimos años y el actual) -->
+          <div class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a10 10 0 0 1 10 10c0 5.5-4.5 10-10 10S2 17.5 2 12A10 10 0 0 1 12 2z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Cultivos y rotación multianual (4 campañas)
+              </h3>
+              <span class="text-xs font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold">
+                Rotación reglamentaria SIEX: CUMPLE
+              </span>
+            </div>
+
+            <div class="space-y-2">
+              <!-- Año actual 2026 -->
+              <div class="p-2.5 bg-emerald-50 border-2 border-emerald-300 rounded flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-xs bg-emerald-800 text-white px-1.5 py-0.2 rounded">2026 (ACTUAL)</span>
+                    <span class="font-bold text-[14px] text-emerald-950">Cebada cervecera</span>
+                    <span class="text-xs font-mono text-emerald-800">(RGT Planet)</span>
+                  </div>
+                  <div class="text-xs text-emerald-900 mt-1">
+                    Sembrada: 10/11/2025 • Cosecha prevista: 25/06/2026 • Secano 4,90 ha
+                  </div>
+                </div>
+                <span class="text-xs font-mono font-bold text-emerald-800 bg-white px-2 py-1 rounded border border-emerald-300">
+                  En cultivo
+                </span>
+              </div>
+
+              <!-- Campaña 2025 -->
+              <div class="p-2.5 bg-brand-bg border border-brand-borderDark rounded flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-xs bg-gray-200 text-brand-text px-1.5 py-0.2 rounded">2025</span>
+                    <span class="font-bold text-[13px] text-brand-text">Cebada cervecera (Repite)</span>
+                    <span class="text-xs font-mono text-brand-muted">(RGT Planet)</span>
+                  </div>
+                  <div class="text-xs text-brand-muted mt-0.5">
+                    Producción final: 16.200 kg (3.306 kg/ha) • Justificado por siembra certificada
+                  </div>
+                </div>
+                <span class="text-xs font-mono text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-300">
+                  Cerrada
+                </span>
+              </div>
+
+              <!-- Campaña 2024 -->
+              <div class="p-2.5 bg-brand-bg border border-brand-borderDark rounded flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-xs bg-gray-200 text-brand-text px-1.5 py-0.2 rounded">2024</span>
+                    <span class="font-bold text-[13px] text-brand-text">Trigo blando</span>
+                    <span class="text-xs font-mono text-brand-muted">(Camargo)</span>
+                  </div>
+                  <div class="text-xs text-brand-muted mt-0.5">
+                    Producción final: 18.400 kg (3.755 kg/ha) • Rotación con cereal de invierno
+                  </div>
+                </div>
+                <span class="text-xs font-mono text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-300">
+                  Cerrada
+                </span>
+              </div>
+
+              <!-- Campaña 2023 -->
+              <div class="p-2.5 bg-brand-bg border border-brand-borderDark rounded flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-xs bg-gray-200 text-brand-text px-1.5 py-0.2 rounded">2023</span>
+                    <span class="font-bold text-[13px] text-brand-text">Barbecho tradicional</span>
+                    <span class="text-xs font-mono text-brand-muted">(Semillado previo)</span>
+                  </div>
+                  <div class="text-xs text-brand-muted mt-0.5">
+                    Descanso del suelo según condicionalidad reforzada BCAM 7
+                  </div>
+                </div>
+                <span class="text-xs font-mono text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-300">
+                  Cerrada
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOQUE B: COSECHA Y CUENTAS (Con costes conocidos y cuánto queda sin asignar) -->
+          <div class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Cuentas de la tierra: Costes conocidos y Pendientes (Campaña 2026)
+              </h3>
+              <span class="text-xs font-mono text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-300 font-bold">
+                1 factura sin asignar
+              </span>
+            </div>
+
+            <!-- Resumen numérico estricto (dos decimales y €) -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="p-2 bg-brand-bg rounded border border-brand-borderDark">
+                <span class="text-[11px] text-brand-muted block">Gasto insumos asignado</span>
+                <span class="text-[16px] font-bold font-mono text-brand-text">428,50 €</span>
+                <span class="text-[10px] text-gray-500 block">Semilla + Herbicida</span>
+              </div>
+
+              <div class="p-2 bg-brand-bg rounded border border-brand-borderDark">
+                <span class="text-[11px] text-brand-muted block">Venta cereal prevista</span>
+                <span class="text-[16px] font-bold font-mono text-gray-600">—</span>
+                <span class="text-[10px] text-amber-700 block font-semibold">Pendiente cosecha</span>
+              </div>
+
+              <div class="p-2 bg-amber-50 rounded border border-amber-300">
+                <span class="text-[11px] text-amber-900 block font-bold">Gasto global sin repartir</span>
+                <span class="text-[16px] font-bold font-mono text-amber-950">180,00 €</span>
+                <span class="text-[10px] text-amber-800 block">Factura F-2026/0418</span>
+              </div>
+            </div>
+
+            <!-- Tabla de Costes desglosados en esta parcela -->
+            <div class="border border-brand-border rounded overflow-hidden">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-gray-100 font-mono text-brand-muted border-b border-gray-300 uppercase">
+                  <tr>
+                    <th class="py-1.5 px-2">Concepto</th>
+                    <th class="py-1.5 px-2">Documento</th>
+                    <th class="py-1.5 px-2">Estado del pago</th>
+                    <th class="py-1.5 px-2 text-right">Importe (€)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <tr>
+                    <td class="py-1.5 px-2 font-medium">Semilla RGT Planet (882 kg)</td>
+                    <td class="py-1.5 px-2 font-mono text-brand-muted">Fac. Coop. 2026-B-891</td>
+                    <td class="py-1.5 px-2 text-emerald-800 font-semibold">Pagado completo</td>
+                    <td class="py-1.5 px-2 text-right font-mono font-bold">342,10 €</td>
+                  </tr>
+                  <tr>
+                    <td class="py-1.5 px-2 font-medium">Glifosato 36 SL (9,80 L)</td>
+                    <td class="py-1.5 px-2 font-mono text-brand-muted">Fac. F-2026/0418</td>
+                    <td class="py-1.5 px-2 text-amber-800 font-semibold">Pago parcial (50 %)</td>
+                    <td class="py-1.5 px-2 text-right font-mono font-bold">86,40 €</td>
+                  </tr>
+                  <tr class="bg-amber-50/70">
+                    <td class="py-1.5 px-2 font-medium text-amber-950">Mojante no iónico (Cuba compartida)</td>
+                    <td class="py-1.5 px-2 font-mono text-amber-900">Albarán pendiente</td>
+                    <td class="py-1.5 px-2 text-amber-800 font-bold">Sin asignar proporción</td>
+                    <td class="py-1.5 px-2 text-right font-mono font-bold text-amber-900">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="text-[11px] text-brand-muted bg-gray-50 p-2 rounded border border-gray-200 leading-tight">
+              <strong>Regla de exactitud financiera:</strong> Lo no imputado a la parcela exacta se mantiene como «pendiente de asignar» en el módulo general de Facturas para evitar balances de margen falsos.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECCIÓN 2: PRODUCTOS Y NUTRICIÓN / BALANCES DE ABONADO -->
+        <section class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+          <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+            <div>
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 2v7.31L4.35 18A2 2 0 0 0 6.07 21h11.86a2 2 0 0 0 1.72-3l-5.65-8.69V2"/>
+                </svg>
+                Productos echados y aporte de nutrientes (Plan de Abonado y Nitratos CyL)
+              </h3>
+              <span class="text-xs text-brand-muted">
+                Basado en el Boletín de Análisis Agronómico Oficial <strong>BOL-2026-0842</strong> (Agrolab Duero, muestra de 14/02/2026)
+              </span>
+            </div>
+            <button class="h-7 px-2.5 bg-white text-brand-text font-bold text-xs rounded border border-brand-borderDark hover:bg-gray-100 flex items-center gap-1">
+              Ver Boletín de Análisis
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <!-- Nutriente N -->
+            <div class="p-3 bg-brand-bg rounded border border-brand-borderDark">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-brand-muted uppercase font-mono">Nitrógeno (N)</span>
+                <span class="text-[11px] font-mono text-emerald-800 font-bold">50 kg/ha margen</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-brand-text">90</span>
+                <span class="text-xs text-brand-muted font-mono">de 140 kg/ha previstos</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded mt-1.5 overflow-hidden">
+                <div class="bg-brand h-full" style="width: 64%;"></div>
+              </div>
+            </div>
+
+            <!-- Nutriente P -->
+            <div class="p-3 bg-brand-bg rounded border border-brand-borderDark">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-brand-muted uppercase font-mono">Fósforo (P₂O₅)</span>
+                <span class="text-[11px] font-mono text-emerald-800 font-bold">20 kg/ha margen</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-brand-text">40</span>
+                <span class="text-xs text-brand-muted font-mono">de 60 kg/ha previstos</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded mt-1.5 overflow-hidden">
+                <div class="bg-brand h-full" style="width: 66%;"></div>
+              </div>
+            </div>
+
+            <!-- Nutriente K -->
+            <div class="p-3 bg-brand-bg rounded border border-brand-borderDark">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-brand-muted uppercase font-mono">Potasio (K₂O)</span>
+                <span class="text-[11px] font-mono text-emerald-800 font-bold">20 kg/ha margen</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-brand-text">30</span>
+                <span class="text-xs text-brand-muted font-mono">de 50 kg/ha previstos</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded mt-1.5 overflow-hidden">
+                <div class="bg-brand h-full" style="width: 60%;"></div>
+              </div>
+            </div>
+
+            <!-- Materia Orgánica / Ph -->
+            <div class="p-3 bg-brand-bg rounded border border-brand-borderDark">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-brand-muted uppercase font-mono">Suelo y Caliza</span>
+                <span class="text-[11px] font-mono text-gray-600 font-bold">pH 7,80 (Básico)</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-brand-text">1,85 %</span>
+                <span class="text-xs text-brand-muted font-mono">Mat. Orgánica</span>
+              </div>
+              <span class="text-[11px] text-brand-muted block mt-1">Caliza activa: 6,40 % (Riesgo moderado)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 3: PAPELES VINCULADOS & COMPROMISOS PAC -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Documentos vinculados -->
+          <div class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Documentos vinculados a esta tierra (3 papeles)
+              </h3>
+              <button class="h-6 px-2 text-xs font-semibold bg-white text-brand border border-brand-borderDark rounded hover:bg-gray-100">
+                + Vincular papel
+              </button>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="p-2 bg-brand-bg rounded border border-brand-borderDark flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-300 font-bold text-brand">PDF</span>
+                  <div>
+                    <span class="font-bold text-brand-text block">Contrato de arrendamiento rústico</span>
+                    <span class="text-brand-muted text-[11px]">Herederos de D. Manuel Ruiz • Vigencia hasta 2028</span>
+                  </div>
+                </div>
+                <button class="h-6 px-2 bg-white text-brand-text border border-gray-300 rounded font-semibold hover:bg-gray-100">
+                  Ver
+                </button>
+              </div>
+
+              <div class="p-2 bg-brand-bg rounded border border-brand-borderDark flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-300 font-bold text-brand">PDF</span>
+                  <div>
+                    <span class="font-bold text-brand-text block">Boletín Oficial de Análisis de Tierra</span>
+                    <span class="text-brand-muted text-[11px]">BOL-2026-0842 • Laboratorio Agrolab Duero (Tordesillas)</span>
+                  </div>
+                </div>
+                <button class="h-6 px-2 bg-white text-brand-text border border-gray-300 rounded font-semibold hover:bg-gray-100">
+                  Ver
+                </button>
+              </div>
+
+              <div class="p-2 bg-brand-bg rounded border border-brand-borderDark flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-300 font-bold text-brand">IMG</span>
+                  <div>
+                    <span class="font-bold text-brand-text block">Foto de la etiqueta de semilla RGT Planet</span>
+                    <span class="text-brand-muted text-[11px]">Lote CC-2026-04 • Certificación R-2 de pureza</span>
+                  </div>
+                </div>
+                <button class="h-6 px-2 bg-white text-brand-text border border-gray-300 rounded font-semibold hover:bg-gray-100">
+                  Ver
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compromisos y Ecorregímenes PAC -->
+          <div class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Compromisos PAC y Ecorregímenes declarados
+              </h3>
+              <span class="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
+                2 Prácticas en regla
+              </span>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 bg-emerald-50/70 border border-emerald-300 rounded">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-emerald-950 text-[13px]">P3 - Rotación de cultivos con especies mejorantes</span>
+                  <span class="font-mono text-emerald-800 font-bold text-xs">En regla</span>
+                </div>
+                <p class="text-emerald-900 mt-1 leading-normal">
+                  Cebada cervecera sembrada tras barbecho / girasol en campaña precedente. Cumple con el mínimo de rotación del 50 % de la superficie arable de la explotación.
+                </p>
+              </div>
+
+              <div class="p-2.5 bg-emerald-50/70 border border-emerald-300 rounded">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-emerald-950 text-[13px]">BCAM 8 - Porcentaje mínimo de superficies no productivas</span>
+                  <span class="font-mono text-emerald-800 font-bold text-xs">Lindes protegidas</span>
+                </div>
+                <p class="text-emerald-900 mt-1 leading-normal">
+                  Ribazo norte conservado (140 m lineales de vegetación espontánea) computable para la exención de fitosanitarios en márgenes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECCIÓN 4: BANDEJA DE ESTADOS DEL SISTEMA (EXIGIDOS EN REQUERIMIENTOS: VACÍO, SIN FILTRO, CARGANDO, ERROR, CONFLICTO) -->
+        <section class="border-2 border-brand-border rounded bg-white p-4 space-y-3">
+          <div class="flex items-center justify-between border-b-2 border-brand-border pb-2">
+            <div>
+              <h3 class="font-bold text-[14px] text-brand-text flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                Estados técnicos del sistema (Diagnóstico de interfaz para el agricultor y gestor)
+              </h3>
+              <span class="text-xs text-brand-muted">Muestrario de los 5 estados según disponibilidad del dato y red</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+
+            <!-- Estado 1: Vacío (Recién empezado) -->
+            <div class="border border-dashed border-brand-borderDark p-3 rounded bg-brand-bg text-center space-y-1.5">
+              <span class="font-mono font-bold text-[10px] uppercase text-brand-muted block">1. Estado Vacío</span>
+              <div class="w-7 h-7 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                </svg>
+              </div>
+              <span class="font-bold text-brand-text block">Sin labores previas</span>
+              <span class="text-brand-muted text-[11px] block">Esta parcela no tiene apuntes de abono registrados.</span>
+              <button class="h-6 px-2 text-[11px] bg-white border border-brand-borderDark rounded text-brand font-semibold">
+                Apuntar ahora
+              </button>
+            </div>
+
+            <!-- Estado 2: Sin resultados por filtro -->
+            <div class="border border-brand-borderDark p-3 rounded bg-white text-center space-y-1.5">
+              <span class="font-mono font-bold text-[10px] uppercase text-brand-muted block">2. Filtro sin datos</span>
+              <div class="w-7 h-7 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <span class="font-bold text-brand-text block">Ninguna labor coincide</span>
+              <span class="text-brand-muted text-[11px] block">No hay tratamientos tipo «Insecticida» en 2026.</span>
+              <button class="h-6 px-2 text-[11px] bg-brand-bg border border-gray-300 rounded text-brand-text font-semibold">
+                Quitar filtro
+              </button>
+            </div>
+
+            <!-- Estado 3: Cargando -->
+            <div class="border border-brand-borderDark p-3 rounded bg-white text-center space-y-1.5">
+              <span class="font-mono font-bold text-[10px] uppercase text-brand-muted block">3. Cargando datos</span>
+              <div class="w-7 h-7 mx-auto rounded-full bg-emerald-50 flex items-center justify-center text-brand font-mono font-bold text-xs border border-brand-border">
+                ...
+              </div>
+              <span class="font-bold text-brand-text block">Consultando SIGPAC</span>
+              <span class="text-brand-muted text-[11px] block">Verificando recintos oficiales con la Junta CyL...</span>
+              <span class="text-[10px] font-mono text-gray-400 block">Espera un instante</span>
+            </div>
+
+            <!-- Estado 4: Error de servicio -->
+            <div class="border-2 border-brand-dangerBorder p-3 rounded bg-brand-danger text-center space-y-1.5">
+              <span class="font-mono font-bold text-[10px] uppercase text-brand-dangerText block">4. Error de servicio</span>
+              <div class="w-7 h-7 mx-auto rounded-full bg-white flex items-center justify-center text-brand-dangerText border border-brand-dangerBorder">
+                !
+              </div>
+              <span class="font-bold text-brand-dangerText block">Servidor SIEX ocupado</span>
+              <span class="text-brand-dangerText text-[11px] block">No se pudo cotejar el NIF en este segundo.</span>
+              <button class="h-6 px-2 text-[11px] bg-white border border-brand-dangerBorder text-brand-dangerText rounded font-bold">
+                Reintentar
+              </button>
+            </div>
+
+            <!-- Estado 5: Conflicto registral -->
+            <div class="border-2 border-brand-warningBorder p-3 rounded bg-brand-warning text-center space-y-1.5">
+              <span class="font-mono font-bold text-[10px] uppercase text-brand-warningText block">5. Conflicto detectado</span>
+              <div class="w-7 h-7 mx-auto rounded-full bg-white flex items-center justify-center text-amber-900 border border-brand-warningBorder">
+                ≠
+              </div>
+              <span class="font-bold text-brand-warningText block">Superficie solapada</span>
+              <span class="text-brand-warningText text-[11px] block">Otro declarante reclama 0,40 ha en este recinto.</span>
+              <button class="h-6 px-2 text-[11px] bg-white border border-brand-warningBorder text-brand-warningText rounded font-bold">
+                Revisar alegación
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- BARRA DE ESTADO / FOOTER DESPACHO (SIEX, SQLite, FNMT y atajos) -->
+  <footer class="w-full bg-brand-dark text-white border-t-2 border-brand px-4 py-2 flex items-center justify-between text-xs font-mono select-none sticky bottom-0 z-50">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        SIEX: Conectado y Sincronizado hace 4 min
+      </span>
+      <span class="text-white/40">|</span>
+      <span class="text-white/80">REGEPA: <strong class="text-white">CYL-47-09821</strong> Actualizado</span>
+      <span class="text-white/40">|</span>
+      <span class="text-white/80">Base Local: <strong class="text-white">SQLite Modo Despacho</strong> (Sin cortes de red)</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 text-[11px] text-white/70">
+        <span>Atajos:</span>
+        <span class="bg-brand px-1.5 py-0.5 rounded border border-brand-borderDark text-white">[F2] Buscar tierra</span>
+        <span class="bg-brand px-1.5 py-0.5 rounded border border-brand-borderDark text-white">[Alt + N] Nuevo apunte</span>
+        <span class="bg-brand px-1.5 py-0.5 rounded border border-brand-borderDark text-white">[Esc] Volver a lista</span>
+      </div>
+      <span class="text-white/40">|</span>
+      <span class="text-white/60">Firma Digital FNMT Activa</span>
+      <span class="text-white/40">|</span>
+      <span class="text-emerald-300 font-bold">Servidores Junta CyL: Operativos (14ms)</span>
+    </div>
+  </footer>
+
+</body>
+</html>

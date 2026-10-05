@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Esto es lo que he leído - CUE Digital</title>
+  <style>
+    /* Reset & Base CUE Digital Rules */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #10190f;
+      font-size: 18px;
+      line-height: 1.45;
+      padding-bottom: 40px;
+    }
+
+    /* Contenedor central - ancho móvil 1 columna */
+    .app-container {
+      max-width: 44rem;
+      margin: 0 auto;
+      background-color: #ffffff;
+      min-height: 100vh;
+    }
+
+    /* Cabecera fija */
+    .cabecera {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      padding: 0 16px;
+      border-bottom: 3px solid #0d2b18;
+    }
+
+    .btn-cabecera-volver {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #3a6446;
+      border: 2px solid #8fae97;
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      min-height: 48px;
+    }
+
+    .cabecera-titulo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .btn-cabecera-letra {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background-color: #3a6446;
+      border: 2px solid #8fae97;
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 48px;
+    }
+
+    /* Contenido interior */
+    .contenido {
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Barra origen de lectura */
+    .origen-lectura {
+      background-color: #f4f6f3;
+      border: 2px solid #a9b6a8;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .origen-icono {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .origen-etiqueta {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #43503f;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .origen-texto {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #10190f;
+    }
+
+    .origen-subtexto {
+      font-size: 0.95rem;
+      color: #43503f;
+      margin-top: 2px;
+    }
+
+    /* Bloque aclaración inicial */
+    .bloque-trato-claro {
+      background-color: #ffffff;
+      border: 3px solid #1f4a2c;
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+
+    .titulo-principal {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #10190f;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .trato-texto-franqueza {
+      font-size: 1.15rem;
+      line-height: 1.45;
+      color: #10190f;
+      background-color: #f4f6f3;
+      border-left: 6px solid #1f4a2c;
+      padding: 12px 14px;
+      border-radius: 4px;
+    }
+
+    .trato-texto-franqueza strong {
+      font-weight: 800;
+      color: #1f4a2c;
+    }
+
+    /* Avisos previos */
+    .bloque-avisos {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .seccion-rotulo {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #10190f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .aviso-peligro-repetida {
+      background-color: #ffe9a8;
+      border: 3px solid #8a6a00;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .aviso-cabecera {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #3d2f00;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+
+    .aviso-cuerpo {
+      font-size: 1.1rem;
+      color: #3d2f00;
+      line-height: 1.4;
+    }
+
+    .aviso-cuerpo strong {
+      text-decoration: underline;
+      font-weight: 800;
+    }
+
+    /* Bloque de datos generales de factura */
+    .formulario-bloque {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background-color: #ffffff;
+      border: 2px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 18px 14px;
+    }
+
+    .campo-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .campo-label {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #10190f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .campo-pista {
+      font-size: 0.95rem;
+      color: #43503f;
+      line-height: 1.35;
+    }
+
+    /* Hueco grande para tocar y corregir */
+    .campo-caja {
+      width: 100%;
+      min-height: 64px;
+      background-color: #ffffff;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 1.25rem;
+      font-family: inherit;
+      color: #10190f;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .campo-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #10190f;
+      background: transparent;
+    }
+
+    .campo-input:focus {
+      outline: none;
+    }
+
+    .campo-caja:focus-within {
+      border-color: #1f4a2c;
+      box-shadow: 0 0 0 4px #ffd24a;
+    }
+
+    .campo-caja-total {
+      background-color: #f4f6f3;
+      border: 3px solid #1f4a2c;
+    }
+
+    .campo-caja-total .campo-input {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1f4a2c;
+    }
+
+    .moneda {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1f4a2c;
+      margin-left: 6px;
+    }
+
+    /* Bloque Lo que has comprado */
+    .bloque-compras {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Ficha de cada producto comprado */
+    .ficha-producto {
+      background-color: #ffffff;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ficha-producto.con-error {
+      border-color: #8c1d18;
+      background-color: #ffffff;
+    }
+
+    .ficha-cabecera-num {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed #a9b6a8;
+      padding-bottom: 8px;
+    }
+
+    .ficha-numero {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #1f4a2c;
+    }
+
+    .ficha-tag-aviso {
+      background-color: #fbe3e1;
+      border: 2px solid #8c1d18;
+      color: #5c110d;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Aviso explícito de descuadre dentro de la ficha */
+    .aviso-descuadre {
+      background-color: #fbe3e1;
+      border: 3px solid #8c1d18;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .aviso-descuadre-texto {
+      color: #4a0f0b;
+      font-size: 1.1rem;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    /* Grid dentro de la ficha de producto */
+    .campos-producto-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Selector de si es producto de la explotación */
+    .bloque-clasificacion {
+      background-color: #f4f6f3;
+      border: 2px solid #a9b6a8;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .opcion-radio {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 56px;
+      background-color: #ffffff;
+      border: 2px solid #a9b6a8;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .opcion-radio.elegida {
+      border: 3px solid #1f4a2c;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 2px #ffd24a;
+    }
+
+    .radio-circulo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid #1f4a2c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .radio-punto {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background-color: #1f4a2c;
+    }
+
+    .opcion-texto {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #10190f;
+      line-height: 1.3;
+    }
+
+    /* Bloque acciones finales */
+    .bloque-acciones {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .btn-accion-guardar {
+      width: 100%;
+      min-height: 72px;
+      background-color: #2f6b40;
+      color: #ffffff;
+      border: 3px solid #0d2b18;
+      border-radius: 14px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 14px;
+    }
+
+    .btn-accion-guardar:active {
+      background-color: #1f4a2c;
+    }
+
+    .btn-accion-guardar.guardando {
+      background-color: #43503f;
+      border-color: #10190f;
+      cursor: not-allowed;
+      opacity: 0.9;
+    }
+
+    .btn-volver-pie {
+      width: 100%;
+      min-height: 64px;
+      background-color: #f4f6f3;
+      color: #1f4a2c;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-volver-pie:active {
+      background-color: #dadada;
+    }
+
+    /* Pie legal sin cobertura */
+    .pie-info {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #43503f;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Cabecera de pantalla CUE Digital -->
+    <header class="cabecera">
+      <button class="btn-cabecera-volver" type="button" onclick="history.back()" aria-label="Volver a la pantalla anterior">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Volver</span>
+      </button>
+
+      <span class="cabecera-titulo">CUE Digital</span>
+
+      <button class="btn-cabecera-letra" type="button" onclick="document.body.style.fontSize = document.body.style.fontSize === '21px' ? '18px' : '21px'" aria-label="Agrandar o reducir letra">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19V7l5 12 5-12v12"></path>
+          <path d="M17 12h5"></path>
+          <path d="M19.5 9.5v5"></path>
+        </svg>
+        <span>A+ Letra</span>
+      </button>
+    </header>
+
+    <main class="contenido">
+
+      <!-- Rótulo de origen de la lectura -->
+      <div class="origen-lectura">
+        <div class="origen-icono">
+          <!-- Icono SVG cámara / foto -->
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+        <div>
+          <div class="origen-etiqueta">Leída de</div>
+          <div class="origen-texto">Una foto (repasa las palabras con tilde)</div>
+          <div class="origen-subtexto">Si alguna letra o número no se ve bien por el reflejo, cámbialo tocando en su casilla.</div>
+        </div>
+      </div>
+
+      <!-- Título de pantalla y compromiso de franqueza -->
+      <div class="bloque-trato-claro">
+        <h1 class="titulo-principal">Esto es lo que he leído</h1>
+        <div class="trato-texto-franqueza">
+          Míralo y corrige lo que esté mal. <strong>Lo que se guarda es lo que tú digas, no lo que yo haya entendido.</strong>
+        </div>
+      </div>
+
+      <!-- Bloque: Mira esto antes de guardar -->
+      <div class="bloque-avisos">
+        <h2 class="seccion-rotulo">
+          <!-- Icono SVG de atención / campana -->
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8a6a00" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Mira esto antes de guardar
+        </h2>
+
+        <!-- Aviso principal de factura repetida -->
+        <div class="aviso-peligro-repetida">
+          <div class="aviso-cabecera">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a6a00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Factura posiblemente repetida</span>
+          </div>
+          <div class="aviso-cuerpo">
+            Esta misma factura ya la has subido (nº <strong>F-2026/0418</strong>). Si la guardas otra vez, la contarás dos veces.
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos de la factura uno por uno -->
+      <div class="formulario-bloque">
+        <h2 class="seccion-rotulo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          Datos de la factura
+        </h2>
+
+        <!-- 1. Quién te lo ha vendido -->
+        <div class="campo-item">
+          <label class="campo-label" for="proveedor">¿Quién te lo ha vendido?</label>
+          <div class="campo-pista">El nombre de la empresa, como viene en la factura</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="proveedor" type="text" value="Agrícola del Duero S.L.">
+          </div>
+        </div>
+
+        <!-- 2. NIF -->
+        <div class="campo-item">
+          <label class="campo-label" for="nif">Su NIF</label>
+          <div class="campo-pista">La letra y los números de la empresa que te vendió el producto</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="nif" type="text" value="B-47892301">
+          </div>
+        </div>
+
+        <!-- 3. Número de factura -->
+        <div class="campo-item">
+          <label class="campo-label" for="num_factura">¿Qué número tiene la factura?</label>
+          <div class="campo-pista">Viene arriba a la derecha en el papel</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="num_factura" type="text" value="F-2026/0418">
+          </div>
+        </div>
+
+        <!-- 4. De qué día es -->
+        <div class="campo-item">
+          <label class="campo-label" for="fecha">¿De qué día es?</label>
+          <div class="campo-pista">El día que te hicieron la factura o la compra</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="fecha" type="date" value="2026-04-12">
+          </div>
+        </div>
+
+        <!-- 5. Base imponible -->
+        <div class="campo-item">
+          <label class="campo-label" for="base_imponible">Base imponible</label>
+          <div class="campo-pista">Lo que cuesta el producto antes de sumarle los impuestos</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="base_imponible" type="text" inputmode="decimal" value="840,00">
+            <span class="moneda">€</span>
+          </div>
+        </div>
+
+        <!-- 6. Tipo de IVA -->
+        <div class="campo-item">
+          <label class="campo-label" for="tipo_iva">Tipo de IVA (%)</label>
+          <div class="campo-pista">El porcentaje de impuesto (para abonos y sulfatos suele ser el 10% o el 21%)</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="tipo_iva" type="text" inputmode="decimal" value="10">
+            <span class="moneda">%</span>
+          </div>
+        </div>
+
+        <!-- 7. Cuota de IVA -->
+        <div class="campo-item">
+          <label class="campo-label" for="cuota_iva">Cuota de IVA</label>
+          <div class="campo-pista">El dinero de impuestos que se suma al precio</div>
+          <div class="campo-caja">
+            <input class="campo-input" id="cuota_iva" type="text" inputmode="decimal" value="84,00">
+            <span class="moneda">€</span>
+          </div>
+        </div>
+
+        <!-- 8. Total de la factura -->
+        <div class="campo-item">
+          <label class="campo-label" for="total_factura">Total de la factura</label>
+          <div class="campo-pista">El dinero total que has pagado o te van a cobrar del banco</div>
+          <div class="campo-caja campo-caja-total">
+            <input class="campo-input" id="total_factura" type="text" inputmode="decimal" value="924,00">
+            <span class="moneda">€</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque: Lo que has comprado -->
+      <div class="bloque-compras">
+        <div>
+          <h2 class="seccion-rotulo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            Lo que has comprado
+          </h2>
+          <div class="campo-pista" style="margin-top: 4px;">
+            Revisa cada una de las cosas que vienen en la factura. Si compraste varias, cada una tiene su ficha aquí abajo.
+          </div>
+        </div>
+
+        <!-- Ficha 1: Compra correcta y enlazada con producto -->
+        <div class="ficha-producto">
+          <div class="ficha-cabecera-num">
+            <span class="ficha-numero">Cosa nº 1 de la factura</span>
+            <span style="font-size: 0.95rem; font-weight: 700; color: #1f4a2c; background-color: #f4f6f3; padding: 4px 8px; border-radius: 6px;">
+              Total: 640,00 €
+            </span>
+          </div>
+
+          <div class="campos-producto-lista">
+            <!-- Qué es -->
+            <div class="campo-item">
+              <label class="campo-label">Qué es</label>
+              <div class="campo-pista">Nombre comercial o descripción del producto</div>
+              <div class="campo-caja">
+                <input class="campo-input" type="text" value="Tebuconazol 25% WG (Fungicida)">
+              </div>
+            </div>
+
+            <!-- Cuánto y En qué se mide -->
+            <div style="display: flex; gap: 10px;">
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">Cuánto</label>
+                <div class="campo-pista">Cantidad que compraste</div>
+                <div class="campo-caja">
+                  <input class="campo-input" type="text" inputmode="decimal" value="40">
+                </div>
+              </div>
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">En qué se mide</label>
+                <div class="campo-pista">Kilos, litros o sacos</div>
+                <div class="campo-caja">
+                  <input class="campo-input" type="text" value="Kilos">
+                </div>
+              </div>
+            </div>
+
+            <!-- A cómo y Cuánto suma -->
+            <div style="display: flex; gap: 10px;">
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">A cómo</label>
+                <div class="campo-pista">Precio de cada unidad</div>
+                <div class="campo-caja">
+                  <input class="campo-input" type="text" inputmode="decimal" value="16,00">
+                  <span class="moneda">€</span>
+                </div>
+              </div>
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">Cuánto suma</label>
+                <div class="campo-pista">Multiplicar cantidad por precio</div>
+                <div class="campo-caja">
+                  <input class="campo-input" type="text" inputmode="decimal" value="640,00">
+                  <span class="moneda">€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ¿Es uno de tus productos? -->
+            <div class="bloque-clasificacion">
+              <label class="campo-label">¿Es uno de tus productos?</label>
+              <div class="campo-pista">Para saber si esto entra a tu almacén de campo o si es otro gasto</div>
+
+              <div class="opcion-radio elegida">
+                <div class="radio-circulo">
+                  <div class="radio-punto"></div>
+                </div>
+                <div class="opcion-texto">
+                  Sí: es <strong>Tebuconazol 25% WG</strong> (se sumará al almacén)
+                </div>
+              </div>
+
+              <div class="opcion-radio">
+                <div class="radio-circulo"></div>
+                <div class="opcion-texto">
+                  No es de la cesta (una reparación, unas botas…)
+                </div>
+              </div>
+
+              <div class="opcion-radio">
+                <div class="radio-circulo"></div>
+                <div class="opcion-texto">
+                  No lo tengo apuntado: créalo con estos datos
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ficha 2: Compra con advertencia de que la cuenta no cuadra -->
+        <div class="ficha-producto con-error">
+          <div class="ficha-cabecera-num">
+            <span class="ficha-numero" style="color: #8c1d18;">Cosa nº 2 de la factura</span>
+            <span class="ficha-tag-aviso">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8c1d18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Revisar números
+            </span>
+          </div>
+
+          <!-- Mensaje explícito de descuadre exigido -->
+          <div class="aviso-descuadre">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8c1d18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="aviso-descuadre-texto">
+              La cuenta no cuadra: mira la cantidad, el precio y el importe. (10 garrafas a 18,00 € tendrían que sumar 180,00 €, pero en la factura leída pone 200,00 €).
+            </div>
+          </div>
+
+          <div class="campos-producto-lista">
+            <!-- Qué es -->
+            <div class="campo-item">
+              <label class="campo-label">Qué es</label>
+              <div class="campo-pista">Nombre que viene escrito en la factura</div>
+              <div class="campo-caja" style="border-color: #8c1d18;">
+                <input class="campo-input" type="text" value="Mojante no iónico (Garrafas 5L)">
+              </div>
+            </div>
+
+            <!-- Cuánto y En qué se mide -->
+            <div style="display: flex; gap: 10px;">
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">Cuánto</label>
+                <div class="campo-pista">Cantidad</div>
+                <div class="campo-caja" style="border-color: #8c1d18;">
+                  <input class="campo-input" type="text" inputmode="decimal" value="10">
+                </div>
+              </div>
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">En qué se mide</label>
+                <div class="campo-pista">Unidad</div>
+                <div class="campo-caja">
+                  <input class="campo-input" type="text" value="Garrafas">
+                </div>
+              </div>
+            </div>
+
+            <!-- A cómo y Cuánto suma -->
+            <div style="display: flex; gap: 10px;">
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">A cómo</label>
+                <div class="campo-pista">Precio unitario</div>
+                <div class="campo-caja" style="border-color: #8c1d18;">
+                  <input class="campo-input" type="text" inputmode="decimal" value="18,00">
+                  <span class="moneda">€</span>
+                </div>
+              </div>
+              <div class="campo-item" style="flex: 1;">
+                <label class="campo-label">Cuánto suma</label>
+                <div class="campo-pista">Importe leído</div>
+                <div class="campo-caja" style="border-color: #8c1d18;">
+                  <input class="campo-input" type="text" inputmode="decimal" value="200,00">
+                  <span class="moneda">€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ¿Es uno de tus productos? -->
+            <div class="bloque-clasificacion">
+              <label class="campo-label">¿Es uno de tus productos?</label>
+              <div class="campo-pista">Elige cómo guardarlo en tu cuenta:</div>
+
+              <div class="opcion-radio">
+                <div class="radio-circulo"></div>
+                <div class="opcion-texto">
+                  Sí: buscar en mis productos fitosanitarios
+                </div>
+              </div>
+
+              <div class="opcion-radio">
+                <div class="radio-circulo"></div>
+                <div class="opcion-texto">
+                  No es de la cesta (una reparación, unas botas…)
+                </div>
+              </div>
+
+              <div class="opcion-radio elegida">
+                <div class="radio-circulo">
+                  <div class="radio-punto"></div>
+                </div>
+                <div class="opcion-texto">
+                  <strong>No lo tengo apuntado: créalo con estos datos</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones principales al final del formulario -->
+      <div class="bloque-acciones">
+        <button id="btnGuardarFactura" class="btn-accion-guardar" type="button" onclick="marcarGuardando(this)">
+          <svg id="iconoGuardar" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span id="textoGuardar">SÍ, GUARDAR ESTA FACTURA</span>
+        </button>
+
+        <button class="btn-volver-pie" type="button" onclick="history.back()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>VOLVER</span>
+        </button>
+      </div>
+
+      <!-- Pie explicativo sin cobertura -->
+      <div class="pie-info">
+        CUE Digital · Junta de Castilla y León<br>
+        Tus datos se guardan en el teléfono aunque no tengas cobertura en la tierra.
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function marcarGuardando(boton) {
+      if (boton.classList.contains('guardando')) return;
+      boton.classList.add('guardando');
+      boton.disabled = true;
+      
+      const texto = document.getElementById('textoGuardar');
+      const icono = document.getElementById('iconoGuardar');
+      
+      texto.textContent = 'Guardando la factura…';
+      
+      // Cambio de icono a reloj de arena SVG
+      icono.innerHTML = '<path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>';
+    }
+  </script>
+</body>
+</html>

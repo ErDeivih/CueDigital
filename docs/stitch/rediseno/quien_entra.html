@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quién entra en mi finca - CUE Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#ffffff",
+            "on-background": "#1a1c19",
+            "on-tertiary-container": "#e09ba8",
+            "secondary-container": "#ffe9a8",
+            "primary-container": "#1f4a2c",
+            "error-dark": "#5c110d",
+            "surface-variant": "#f4f6f3",
+            "on-primary": "#ffffff",
+            "surface-container": "#edeee9",
+            "on-secondary-fixed": "#251a00",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "on-error-container": "#4a0f0b",
+            "primary-dark": "#0d2b18",
+            "surface-dim": "#d9dad6",
+            "inverse-surface": "#2f312e",
+            "surface-container-low": "#f3f4ef",
+            "on-secondary": "#ffffff",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "primary-overlay": "#3a6446",
+            "on-primary-fixed-variant": "#244f31",
+            "error-container": "#fbe3e1",
+            "tertiary-fixed": "#ffd9de",
+            "on-surface-variant": "#43503f",
+            "surface-container-high": "#e8e9e4",
+            "secondary-fixed": "#ffdf95",
+            "secondary": "#765a00",
+            "tertiary-container": "#65323d",
+            "primary-fixed-dim": "#a2d2aa",
+            "secondary-fixed-dim": "#eac25a",
+            "inverse-primary": "#a2d2aa",
+            "on-tertiary-fixed": "#360c18",
+            "on-primary-container": "#8bb992",
+            "surface-container-highest": "#e2e3de",
+            "on-primary-fixed": "#00210c",
+            "tertiary": "#4a1c27",
+            "surface-container-lowest": "#ffffff",
+            "primary-fixed": "#beeec5",
+            "on-surface": "#1a1c19",
+            "surface-bright": "#f9faf5",
+            "outline-variant": "#c1c9bf",
+            "surface": "#ffffff",
+            "surface-tint": "#3c6847",
+            "on-secondary-container": "#775b00",
+            "outline": "#a9b6a8",
+            "on-secondary-fixed-variant": "#594400",
+            "error": "#8c1d18",
+            "primary-overlay-border": "#8fae97",
+            "background": "#f9faf5",
+            "primary": "#043317",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#f0f1ec",
+            "focus": "#ffd24a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "16px",
+            "margin": "16px",
+            "space-xl": "24px",
+            "space-xs": "4px",
+            "gutter": "16px",
+            "space-xxl": "32px",
+            "space-sm": "8px",
+            "space-md": "12px"
+          },
+          "fontFamily": {
+            "titulo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "campo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton-principal": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "dato-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "pregunta": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "pista": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"]
+          },
+          "fontSize": {
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-cuerpo antialiased selection:bg-secondary-fixed selection:text-on-secondary-fixed min-h-screen">
+<!-- Interfaz centrada de una sola columna para uso táctil de campo a una mano -->
+<div class="max-w-md mx-auto bg-background min-h-screen border-x-4 border-primary-container flex flex-col justify-between">
+<!-- 1. TopAppBar Conforme al componente compartido -->
+<header class="bg-surface dark:bg-surface border-b-4 border-primary dark:border-primary-fixed-dim docked full-width top-0 sticky z-50 flex justify-between items-center w-full px-margin h-16 min-h-[64px] select-none">
+<button aria-label="Volver a la pantalla anterior" class="flex items-center gap-1 min-h-[48px] px-2 py-1 border-2 border-primary rounded bg-surface hover:bg-surface-container active:bg-secondary-container text-primary font-boton text-boton" type="button">
+<span aria-hidden="true" class="material-symbols-outlined font-bold" data-icon="arrow_back">arrow_back</span>
+<span class="tracking-wide">VOLVER</span>
+</button>
+<h1 class="font-titulo text-titulo text-primary dark:text-primary-fixed text-center px-1 truncate">
+        Quién entra en mi finca
+      </h1>
+<button aria-label="Aumentar tamaño de letra para leer al sol" class="min-h-[48px] px-2 py-1 border-2 border-primary rounded bg-surface text-primary font-boton text-boton hover:bg-surface-container active:bg-secondary-container" type="button">
+        A+ Letra
+      </button>
+</header>
+<!-- Contenido principal con ritmo vertical generoso -->
+<main class="p-margin flex flex-col gap-space-lg flex-1">
+<!-- 2. Tarjeta de estado de conectividad (Sin cobertura / Offline-first) -->
+<section aria-label="Estado del teléfono y cobertura" class="bg-surface-container-lowest border-4 border-primary-container p-space-md rounded flex items-center gap-space-md">
+<div class="w-12 h-12 rounded bg-primary text-on-primary flex items-center justify-center shrink-0 border-2 border-primary-dark">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-background font-medium leading-snug">
+<strong>Funciona sin cobertura en el campo.</strong> Los permisos se guardan en el teléfono.
+        </p>
+</section>
+<!-- 3. Bloque de ubicación actual y autoridad del titular -->
+<section class="bg-surface border-4 border-primary p-space-lg rounded flex flex-col gap-space-sm">
+<div class="flex items-center gap-2">
+<svg aria-hidden="true" class="w-6 h-6 text-primary shrink-0" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
+</svg>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold uppercase tracking-wider">Estás en:</span>
+</div>
+<h2 class="font-pregunta text-pregunta text-primary-dark leading-tight">
+          Finca Las Suertes y El Prado
+        </h2>
+<div class="mt-2 bg-secondary-container border-2 border-secondary p-space-sm rounded">
+<p class="font-cuerpo text-cuerpo text-on-secondary-fixed font-bold flex items-center gap-2">
+<svg aria-hidden="true" class="w-6 h-6 shrink-0 text-secondary" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>
+</svg>
+            Eres el titular de esta finca: puedes añadir y quitar cuentas.
+          </p>
+</div>
+</section>
+<!-- 4. Notificación o aviso de confirmación reciente -->
+<div aria-live="polite" class="bg-primary-fixed border-4 border-primary-container p-space-md rounded flex items-center gap-space-md" role="status">
+<svg aria-hidden="true" class="w-8 h-8 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+<p class="font-cuerpo-grande text-cuerpo-grande text-primary-dark font-extrabold">
+          ✓ Ya puede entrar en tu finca.
+        </p>
+</div>
+<!-- 5. Lista de personas que entran en la finca -->
+<section aria-labelledby="seccion-cuentas" class="flex flex-col gap-space-md">
+<div class="border-b-4 border-primary pb-2">
+<h3 class="font-titulo text-titulo text-primary-dark" id="seccion-cuentas">
+            Cuentas que apuntan en este cuaderno (2 personas)
+          </h3>
+</div>
+<!-- Persona 1: El Titular (El usuario) -->
+<article class="bg-surface border-4 border-primary p-space-lg rounded flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h4 class="font-dato-grande text-dato-grande text-on-surface leading-tight">
+                Manuel Ruiz Gómez
+              </h4>
+<p class="font-campo text-campo text-on-surface-variant font-medium mt-1 select-all break-all">
+                manuel.ruiz.agricola@gmail.com
+              </p>
+</div>
+<span class="bg-primary-container text-on-primary font-boton text-boton px-3 py-1.5 rounded border-2 border-primary-dark whitespace-nowrap tracking-wide">
+              MANDAS TÚ
+            </span>
+</div>
+<div class="mt-2 bg-surface-container-low border-2 border-outline p-space-sm rounded">
+<span class="inline-block bg-primary text-on-primary font-bold text-pista px-2 py-0.5 rounded mb-1">
+              Tú (titular)
+            </span>
+<p class="font-cuerpo text-cuerpo text-on-background">
+              Esta es tu cuenta principal. Como titular, eres el responsable legal ante la Junta.
+            </p>
+</div>
+</article>
+<!-- Persona 2: Colaborador / Aplicador -->
+<article class="bg-surface border-4 border-outline p-space-lg rounded flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h4 class="font-dato-grande text-dato-grande text-on-surface leading-tight">
+                Juan Antonio Delgado
+              </h4>
+<p class="font-campo text-campo text-on-surface-variant font-medium mt-1 select-all break-all">
+                j.delgado.tractor@gmail.com
+              </p>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant font-boton text-boton px-3 py-1.5 rounded border-2 border-outline whitespace-nowrap">
+              Ayuda en la finca
+            </span>
+</div>
+<div class="bg-surface-container-low border-2 border-outline p-space-sm rounded">
+<p class="font-cuerpo text-cuerpo text-on-background">
+              Puede apuntar tratamientos, labores y riegos con su propio móvil. No puede cambiar tus parcelas ni firmar por ti.
+            </p>
+</div>
+<!-- Botón secundario para quitar acceso (mínimo 64px, lo menos accesible por error) -->
+<div class="pt-2 border-t-2 border-outline-variant">
+<button class="w-full min-h-[64px] px-space-md py-space-sm bg-surface-variant hover:bg-error-container active:bg-error border-3 border-error text-error active:text-on-error font-boton text-boton rounded flex items-center justify-center gap-3" type="button">
+<svg aria-hidden="true" class="w-7 h-7 shrink-0 text-error" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+<span>QUITARLE EL ACCESO A ESTA FINCA</span>
+</button>
+<p class="font-pista text-pista text-on-surface-variant mt-2 text-center">
+              Si le quitas el permiso, sus notas anteriores se quedan guardadas en tu cuaderno.
+            </p>
+</div>
+</article>
+</section>
+<!-- 6. Bloque para añadir a alguien nuevo -->
+<section aria-labelledby="titulo-nueva-cuenta" class="bg-surface border-4 border-primary p-space-lg rounded flex flex-col gap-space-md">
+<h3 class="font-pregunta text-pregunta text-primary-dark" id="titulo-nueva-cuenta">
+          Añadir una cuenta nueva
+        </h3>
+<div>
+<label class="block font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface mb-2" for="input-correo">
+            ¿Con qué correo entra?
+          </label>
+<input class="w-full min-h-[64px] px-space-md bg-surface-container-lowest border-4 border-outline text-on-surface font-campo text-campo rounded focus:border-primary focus:ring-4 focus:ring-focus focus:outline-none placeholder:text-outline" id="input-correo" name="correo_colaborador" placeholder="ejemplo: hijo@gmail.com" type="email"/>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-medium mt-2">
+            El correo con el que se dio de alta esa persona.
+          </p>
+</div>
+<div class="bg-secondary-container border-2 border-secondary p-space-md rounded">
+<p class="font-cuerpo text-cuerpo text-on-secondary-fixed font-bold leading-snug">
+            ⚠️ La otra persona tiene que tener ya su cuenta hecha con ese correo: tú no puedes ponerle la clave.
+          </p>
+</div>
+<button class="w-full min-h-[72px] px-space-md py-space-sm bg-primary text-on-primary hover:bg-primary-dark active:bg-primary-overlay font-boton-principal text-boton-principal rounded border-4 border-primary-dark flex items-center justify-center gap-3" type="button">
+<svg aria-hidden="true" class="w-8 h-8 shrink-0 text-on-primary" fill="none" stroke="currentColor" stroke-width="3.5" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="square"></path>
+</svg>
+<span>+ AÑADIR UNA CUENTA</span>
+</button>
+</section>
+<!-- 7. Bloque «En qué finca estás trabajando» -->
+<section aria-labelledby="titulo-cambio-finca" class="bg-surface-variant border-4 border-outline p-space-lg rounded flex flex-col gap-space-md">
+<div>
+<h3 class="font-titulo text-titulo text-primary-dark" id="titulo-cambio-finca">
+            En qué finca estás trabajando
+          </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1 leading-snug">
+            Solo sale porque entras en más de una finca. Toca para cambiar la finca donde estás apuntando ahora mismo:
+          </p>
+</div>
+<!-- Opción Finca A (Actual y activa) -->
+<div class="bg-surface border-4 border-primary p-space-md rounded flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-primary-dark">
+              Finca Las Suertes y El Prado
+            </p>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">42 ha</span>
+</div>
+<div class="bg-primary-fixed border-2 border-primary-container px-space-md py-3 rounded flex items-center justify-center gap-2">
+<svg aria-hidden="true" class="w-6 h-6 text-primary-dark shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="square" stroke-linejoin="miter"></path>
+</svg>
+<span class="font-cuerpo text-cuerpo font-extrabold text-primary-dark">
+              ESTÁS TRABAJANDO AQUÍ AHORA
+            </span>
+</div>
+</div>
+<!-- Opción Finca B (Alternativa) -->
+<div class="bg-surface border-4 border-outline p-space-md rounded flex flex-col gap-3">
+<div class="flex justify-between items-baseline">
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface">
+              Finca Vega del Río
+            </p>
+<span class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">18 ha</span>
+</div>
+<button class="w-full min-h-[64px] px-space-md py-space-sm bg-surface-container-high border-3 border-primary hover:bg-surface-container text-primary font-boton text-boton rounded flex items-center justify-center gap-2 active:bg-secondary-container" type="button">
+<span>PONME EN ESTA FINCA</span>
+</button>
+</div>
+</section>
+<!-- 8. Botón inferior de salida hacia el menú principal -->
+<section class="pt-space-sm">
+<button class="w-full min-h-[64px] px-space-md py-space-sm bg-surface-container border-4 border-primary text-primary hover:bg-surface-container-high active:bg-secondary-container font-boton-principal text-boton-principal rounded flex items-center justify-center gap-3" type="button">
+<span aria-hidden="true" class="material-symbols-outlined font-bold" data-icon="arrow_back">arrow_back</span>
+<span>VOLVER AL INICIO</span>
+</button>
+</section>
+</main>
+<!-- Pie institucional simplificado de CUE Digital · Junta de Castilla y León -->
+<footer class="bg-surface-container-highest border-t-4 border-primary-container p-margin mt-space-lg text-center select-none">
+<p class="font-cuerpo text-cuerpo font-bold text-primary-dark mb-1">
+        CUE Digital · Junta de Castilla y León
+      </p>
+<p class="font-pista text-pista text-on-surface-variant font-medium">
+        Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+</footer>
+</div>
+</body></html>

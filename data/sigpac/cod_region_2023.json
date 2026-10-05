@@ -1,0 +1,86 @@
+{
+ "nombre": "cod_region_2023",
+ "descripcion": "Lista de códigos cod_region_2023.",
+ "codigos": [
+  {
+   "codigo": 1,
+   "descripcion": "1-TCS"
+  },
+  {
+   "codigo": 2,
+   "descripcion": "2-TCS"
+  },
+  {
+   "codigo": 3,
+   "descripcion": "3-TCS"
+  },
+  {
+   "codigo": 4,
+   "descripcion": "4-TCS"
+  },
+  {
+   "codigo": 5,
+   "descripcion": "5-TCS"
+  },
+  {
+   "codigo": 6,
+   "descripcion": "6-TCR"
+  },
+  {
+   "codigo": 7,
+   "descripcion": "7-TCR"
+  },
+  {
+   "codigo": 8,
+   "descripcion": "8-TCR"
+  },
+  {
+   "codigo": 9,
+   "descripcion": "9-TCR"
+  },
+  {
+   "codigo": 10,
+   "descripcion": "10-TCR"
+  },
+  {
+   "codigo": 11,
+   "descripcion": "11-CP"
+  },
+  {
+   "codigo": 12,
+   "descripcion": "12-CP"
+  },
+  {
+   "codigo": 13,
+   "descripcion": "13-CP"
+  },
+  {
+   "codigo": 14,
+   "descripcion": "14-CP"
+  },
+  {
+   "codigo": 15,
+   "descripcion": "15-PP"
+  },
+  {
+   "codigo": 16,
+   "descripcion": "16-PP"
+  },
+  {
+   "codigo": 17,
+   "descripcion": "17-PP"
+  },
+  {
+   "codigo": 18,
+   "descripcion": "18-PP"
+  },
+  {
+   "codigo": 19,
+   "descripcion": "19-PP"
+  },
+  {
+   "codigo": 20,
+   "descripcion": "20"
+  }
+ ]
+}

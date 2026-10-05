@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0" name="viewport"/>
+<title>CUE Castilla y León - Lo que he vendido</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary": "#ffffff",
+            "on-secondary-container": "#3d2f00",
+            "surface-dim": "#d9dad6",
+            "surface-variant": "#e2e3de",
+            "primary-dark": "#0d2b18",
+            "secondary-container": "#ffe9a8",
+            "background": "#f9faf5",
+            "outline": "#a9b6a8",
+            "surface-container-high": "#e8e9e4",
+            "secondary-fixed": "#ffdf95",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "outline-variant": "#c1c9bf",
+            "tertiary": "#4a1c27",
+            "secondary-fixed-dim": "#eac25a",
+            "tertiary-fixed": "#ffd9de",
+            "inverse-surface": "#2f312e",
+            "on-primary-container": "#8bb992",
+            "primary-overlay-border": "#8fae97",
+            "on-surface": "#10190f",
+            "on-surface-variant": "#43503f",
+            "on-primary-fixed": "#00210c",
+            "inverse-primary": "#a2d2aa",
+            "on-error-container": "#4a0f0b",
+            "on-primary": "#ffffff",
+            "on-background": "#1a1c19",
+            "tertiary-container": "#65323d",
+            "primary": "#043317",
+            "on-secondary-fixed": "#251a00",
+            "on-primary-fixed-variant": "#244f31",
+            "primary-container": "#1f4a2c",
+            "surface-tint": "#3c6847",
+            "error-container": "#ffdad6",
+            "primary-overlay": "#3a6446",
+            "surface": "#ffffff",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "on-tertiary-fixed": "#360c18",
+            "inverse-on-surface": "#f0f1ec",
+            "error-dark": "#5c110d",
+            "secondary": "#765a00",
+            "on-secondary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-highest": "#e2e3de",
+            "on-error": "#ffffff",
+            "primary-fixed-dim": "#a2d2aa",
+            "primary-fixed": "#beeec5",
+            "surface-container": "#edeee9",
+            "on-secondary-fixed-variant": "#594400",
+            "focus": "#ffd24a",
+            "surface-bright": "#f9faf5",
+            "error": "#8c1d18",
+            "on-tertiary-container": "#e09ba8",
+            "surface-container-low": "#f3f4ef"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "card": "14px",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-xs": "4px",
+            "space-sm": "8px",
+            "space-md": "12px",
+            "space-lg": "16px",
+            "space-xl": "24px",
+            "space-xxl": "32px",
+            "margin": "16px",
+            "gutter": "16px"
+          },
+          fontFamily: {
+            cuerpo: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            pregunta: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "dato-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            titulo: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            campo: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            boton: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            pista: ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton-principal": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"]
+          },
+          fontSize: {
+            cuerpo: ["18px", { lineHeight: "1.45", fontWeight: "400" }],
+            pregunta: ["1.45rem", { lineHeight: "1.45", fontWeight: "800" }],
+            "dato-grande": ["1.6rem", { fontWeight: "800" }],
+            titulo: ["1.5rem", { lineHeight: "1.45", fontWeight: "700" }],
+            campo: ["1.15rem", { fontWeight: "400" }],
+            boton: ["1.1rem", { fontWeight: "700" }],
+            pista: ["0.95rem", { fontWeight: "400" }],
+            "boton-principal": ["1.35rem", { fontWeight: "700" }],
+            "cuerpo-grande": ["21px", { lineHeight: "1.45", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      background-color: #f9faf5;
+      color: #10190f;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 28;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen bg-background font-cuerpo text-cuerpo text-on-surface antialiased pb-space-xxl">
+<!-- 2. Cabecera fija superior verde oscuro (#1f4a2c) con ejecución exacta del Shared Component JSON -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-lg h-20 bg-primary-container border-b-4 border-primary">
+<!-- Botón Volver -->
+<button aria-label="Volver a la pantalla anterior" class="inline-flex items-center justify-center gap-space-xs min-h-[56px] px-space-md bg-transparent text-on-primary font-boton text-boton border-2 border-on-primary rounded hover:bg-primary active:bg-primary-dark transition-none touch-manipulation focus:ring-4 focus:ring-focus" type="button">
+<svg aria-hidden="true" class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.8" viewbox="0 0 24 24">
+<path d="M19 12H5M12 19l-7-7 7-7"></path>
+</svg>
+<span class="tracking-wide uppercase font-bold text-[17px]">Volver</span>
+</button>
+<!-- Título de cabecera -->
+<div class="text-center px-space-xs truncate flex-1 mx-2">
+<h1 class="font-titulo text-titulo text-on-primary font-bold tracking-tight truncate leading-tight">
+        Lo que he vendido
+      </h1>
+<span class="block text-[13px] font-bold text-on-primary-container tracking-wider uppercase">CUE Castilla y León</span>
+</div>
+<!-- Botón A+ Letra -->
+<button aria-label="Aumentar tamaño de letra para lectura al sol" class="inline-flex items-center justify-center min-h-[56px] px-space-md bg-secondary text-on-secondary font-boton text-boton border-2 border-on-secondary rounded hover:bg-secondary-fixed-variant active:bg-primary-dark transition-none touch-manipulation focus:ring-4 focus:ring-focus whitespace-nowrap" type="button">
+<span class="font-bold text-[19px]">A+ Letra</span>
+</button>
+</header>
+<!-- Espaciador compensatorio para cabecera fija de 80px (h-20) -->
+<div aria-hidden="true" class="h-20 w-full mb-space-md"></div>
+<!-- Contenedor centralizado para uso móvil táctil con una sola mano -->
+<main class="w-full max-w-xl mx-auto px-margin space-y-space-xl">
+<!-- 3. Bloque verde suave superior: Cobertura / Modo Fuera de Línea -->
+<section aria-label="Estado de conexión" class="w-full bg-[#e7f1e9] border-[3px] border-[#1f4a2c] rounded-card p-space-lg flex items-center gap-space-md">
+<div class="flex-shrink-0 bg-primary-container text-on-primary rounded-full p-2">
+<!-- SVG Check rodeado sin emojis -->
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="m8.5 12.5 2.5 2.5 5-5"></path>
+</svg>
+</div>
+<p class="font-cuerpo text-cuerpo font-bold text-primary-dark leading-snug">
+        Funciona sin cobertura en el campo. Los datos se guardan en este teléfono.
+      </p>
+</section>
+<!-- 4. Bloque introductorio con borde de 3px y fondo blanco -->
+<section class="bg-surface border-[3px] border-primary-container rounded-card p-space-lg">
+<div class="flex items-center gap-space-md pb-space-sm border-b-2 border-surface-container-high mb-space-md">
+<!-- Icono Báscula / Transporte / Saco agrícola -->
+<div class="bg-surface-container-high p-3 rounded border-2 border-outline-variant flex-shrink-0">
+<svg aria-hidden="true" class="w-10 h-10 text-primary-container" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewbox="0 0 24 24">
+<path d="M1 3h3l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L22 6H6"></path>
+<circle cx="9" cy="20" r="1.5"></circle>
+<circle cx="18" cy="20" r="1.5"></circle>
+<path d="M10 10h5"></path>
+<path d="M12.5 7.5v5"></path>
+</svg>
+</div>
+<h2 class="font-titulo text-titulo text-on-surface font-extrabold tracking-tight">
+          LO QUE HE VENDIDO
+        </h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface font-normal leading-relaxed">
+        Aquí se apunta lo que sale de la finca: a quién, cuánto y de qué parcelas salió. Es lo que cierra el cuaderno por arriba.
+      </p>
+</section>
+<!-- 5. Contador / resumen simple -->
+<div class="bg-surface-container border-2 border-outline rounded p-space-md text-center">
+<p class="font-dato-grande text-dato-grande text-primary-container font-extrabold">
+        3 ventas apuntadas este año
+      </p>
+<p class="font-boton text-boton text-on-surface-variant font-bold">
+        Campaña 2026
+      </p>
+</div>
+<!-- 6. Lista de fichas de venta, una detrás de otra -->
+<div aria-label="Listado de ventas registradas" class="space-y-space-xl" role="feed">
+<!-- Ficha 1 -->
+<article class="bg-surface border-[4px] border-primary-container rounded-[14px] p-space-lg flex flex-col gap-space-md">
+<!-- Cabecera de la ficha destacada -->
+<div class="bg-surface-container-high border-2 border-outline p-space-md rounded">
+<span class="block font-boton text-boton text-on-surface-variant font-extrabold tracking-wide uppercase text-[15px]">
+            Fecha: 14 de octubre de 2026
+          </span>
+<p class="font-pregunta text-pregunta text-primary-dark font-extrabold mt-1">
+            Cebada cervecera (Cerveza Planet)
+          </p>
+</div>
+<!-- Filas independientes con etiqueta clara y valor destacado -->
+<dl class="divide-y-2 divide-surface-container-high border-y-2 border-surface-container-high py-1">
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cuánto:</dt>
+<dd class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface sm:text-right">
+              32.400 kilos <span class="font-normal text-on-surface-variant">(32,4 toneladas)</span>
+</dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cómo lo vendiste:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              A granel (remolque de dos ejes)
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">A quién:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Cooperativa Comarcal de Medina
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Partida:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Lote CC-2026-04
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Albarán:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              ALB-78214
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">De dónde:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-primary-dark sm:text-right">
+              Parcela El Prado (4,90 ha)
+            </dd>
+</div>
+</dl>
+<!-- Botón de acción dentro de la ficha (mínimo 56px de alto) -->
+<button class="w-full min-h-[58px] bg-surface-container-high border-[3px] border-primary-container text-primary-container font-boton text-boton rounded flex items-center justify-center gap-space-sm active:bg-surface-dim focus:ring-4 focus:ring-focus touch-manipulation" type="button">
+<svg aria-hidden="true" class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 20h9"></path>
+<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+</svg>
+<span>VER O CAMBIAR ESTA VENTA</span>
+</button>
+</article>
+<!-- Ficha 2 -->
+<article class="bg-surface border-[4px] border-primary-container rounded-[14px] p-space-lg flex flex-col gap-space-md">
+<!-- Cabecera de la ficha destacada -->
+<div class="bg-surface-container-high border-2 border-outline p-space-md rounded">
+<span class="block font-boton text-boton text-on-surface-variant font-extrabold tracking-wide uppercase text-[15px]">
+            Fecha: 28 de septiembre de 2026
+          </span>
+<p class="font-pregunta text-pregunta text-primary-dark font-extrabold mt-1">
+            Trigo blando (Camargo)
+          </p>
+</div>
+<!-- Filas individuales -->
+<dl class="divide-y-2 divide-surface-container-high border-y-2 border-surface-container-high py-1">
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cuánto:</dt>
+<dd class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface sm:text-right">
+              48.000 kilos <span class="font-normal text-on-surface-variant">(48 toneladas)</span>
+</dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cómo lo vendiste:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              A granel
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">A quién:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Harinas del Pisuerga S.A.
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Partida:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Lote HP-09
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Albarán:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Nº 10.452
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">De dónde:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-primary-dark sm:text-right">
+              Parcela El Vallejo Llano (8,15 ha)
+            </dd>
+</div>
+</dl>
+<!-- Botón de acción dentro de la ficha -->
+<button class="w-full min-h-[58px] bg-surface-container-high border-[3px] border-primary-container text-primary-container font-boton text-boton rounded flex items-center justify-center gap-space-sm active:bg-surface-dim focus:ring-4 focus:ring-focus touch-manipulation" type="button">
+<svg aria-hidden="true" class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 20h9"></path>
+<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+</svg>
+<span>VER O CAMBIAR ESTA VENTA</span>
+</button>
+</article>
+<!-- Ficha 3 -->
+<article class="bg-surface border-[4px] border-primary-container rounded-[14px] p-space-lg flex flex-col gap-space-md">
+<!-- Cabecera de la ficha destacada -->
+<div class="bg-surface-container-high border-2 border-outline p-space-md rounded">
+<span class="block font-boton text-boton text-on-surface-variant font-extrabold tracking-wide uppercase text-[15px]">
+            Fecha: 5 de septiembre de 2026
+          </span>
+<p class="font-pregunta text-pregunta text-primary-dark font-extrabold mt-1">
+            Girasol alto oleico
+          </p>
+</div>
+<!-- Filas individuales -->
+<dl class="divide-y-2 divide-surface-container-high border-y-2 border-surface-container-high py-1">
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cuánto:</dt>
+<dd class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface sm:text-right">
+              14.500 kilos
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Cómo lo vendiste:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              A granel
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">A quién:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              Agrícola del Duero S.L.
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Partida:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right">
+              G-2026-01
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">Albarán:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-on-surface sm:text-right italic">
+              Pendiente de albarán en papel
+            </dd>
+</div>
+<div class="py-space-sm flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<dt class="font-boton text-boton text-on-surface-variant">De dónde:</dt>
+<dd class="font-cuerpo text-cuerpo font-bold text-primary-dark sm:text-right">
+              Parcela Las Suertes de Arriba (12,30 ha)
+            </dd>
+</div>
+</dl>
+<!-- Botón de acción dentro de la ficha -->
+<button class="w-full min-h-[58px] bg-surface-container-high border-[3px] border-primary-container text-primary-container font-boton text-boton rounded flex items-center justify-center gap-space-sm active:bg-surface-dim focus:ring-4 focus:ring-focus touch-manipulation" type="button">
+<svg aria-hidden="true" class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 20h9"></path>
+<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+</svg>
+<span>VER O CAMBIAR ESTA VENTA</span>
+</button>
+</article>
+</div>
+<!-- 7. Bloque de estado vacío informativo -->
+<section class="bg-surface border-2 border-dashed border-outline rounded-card p-space-md text-center">
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-medium">
+        Si todavía no hay ninguna: <strong class="text-on-surface">Todavía no has apuntado ninguna venta este año.</strong>
+</p>
+</section>
+<!-- 8. Caja de aviso informativo en color ámbar/tostado (#ffe9a8 con texto #3d2f00 y borde #8a6a00) -->
+<aside aria-label="Aviso legal sobre la trazabilidad" class="bg-[#ffe9a8] border-[3px] border-[#8a6a00] rounded-card p-space-lg text-[#3d2f00]">
+<div class="flex items-start gap-space-md">
+<!-- Icono SVG de documento / información -->
+<svg aria-hidden="true" class="w-9 h-9 text-[#8a6a00] flex-shrink-0 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12.01" y1="8" y2="8"></line>
+</svg>
+<div class="space-y-space-xs">
+<p class="font-pregunta text-[1.2rem] font-extrabold leading-tight text-[#3d2f00]">
+            Lo que pide la ley de esta sección es qué, cuánto y cuándo; las cuentas van aparte.
+          </p>
+<p class="font-cuerpo text-cuerpo font-semibold text-[#3d2f00] leading-snug">
+            Aquí no se apunta el precio ni lo que te han pagado. Solo la trazabilidad para la Junta.
+          </p>
+</div>
+</div>
+</aside>
+<!-- 9. Botones de acción al final: tamaño táctil masivo (76px y 64px) -->
+<div class="space-y-space-md pt-space-sm pb-space-lg">
+<!-- Botón principal: + APUNTAR UNA VENTA -->
+<button class="w-full min-h-[76px] bg-primary-container border-[3px] border-primary-dark text-on-primary font-boton-principal text-boton-principal rounded-xl flex items-center justify-center gap-space-md px-space-md active:bg-primary-dark focus:ring-4 focus:ring-focus touch-manipulation" type="button">
+<svg aria-hidden="true" class="w-8 h-8 text-on-primary flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+<span class="tracking-wide">+ APUNTAR UNA VENTA</span>
+</button>
+<!-- Botón secundario: ← VOLVER AL INICIO -->
+<button class="w-full min-h-[64px] bg-surface border-[3px] border-primary-container text-primary-container font-boton text-boton rounded-xl flex items-center justify-center gap-space-md px-space-md active:bg-surface-container focus:ring-4 focus:ring-focus touch-manipulation" type="button">
+<svg aria-hidden="true" class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.8" viewbox="0 0 24 24">
+<path d="M19 12H5M12 19l-7-7 7-7"></path>
+</svg>
+<span class="tracking-wide">VOLVER AL INICIO</span>
+</button>
+</div>
+<!-- 10. Pie de página institucional sobrio -->
+<footer class="pt-space-md pb-space-xl border-t-2 border-outline-variant text-center">
+<p class="font-boton text-[16px] text-on-surface-variant font-bold leading-normal">
+        CUE Digital · Junta de Castilla y León
+      </p>
+<p class="font-pista text-pista text-on-surface-variant mt-1 font-medium">
+        Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+</footer>
+</main>
+</body></html>

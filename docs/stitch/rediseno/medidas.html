@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lo que hago sin echar producto - CUE Digital</title>
+<!-- Estilos e iconos necesarios -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#beeec5",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "secondary": "#765a00",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#8bb992",
+            "surface-variant": "#e2e3de",
+            "primary-overlay-border": "#8fae97",
+            "on-secondary-container": "#775b00",
+            "surface-container-highest": "#e2e3de",
+            "outline-variant": "#c1c9bf",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "secondary-fixed": "#ffdf95",
+            "primary": "#043317",
+            "surface-tint": "#3c6847",
+            "error-dark": "#5c110d",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-high": "#e8e9e4",
+            "on-surface": "#1a1c19",
+            "primary-dark": "#0d2b18",
+            "inverse-surface": "#2f312e",
+            "on-primary-fixed": "#00210c",
+            "tertiary-fixed": "#ffd9de",
+            "on-surface-variant": "#43503f",
+            "on-error-container": "#4a0f0b",
+            "inverse-primary": "#a2d2aa",
+            "tertiary-container": "#65323d",
+            "primary-container": "#1f4a2c",
+            "on-secondary-fixed": "#251a00",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "outline": "#a9b6a8",
+            "primary-overlay": "#3a6446",
+            "on-tertiary-fixed": "#360c18",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#f0f1ec",
+            "focus": "#ffd24a",
+            "on-primary-fixed-variant": "#244f31",
+            "surface-dim": "#d9dad6",
+            "secondary-container": "#ffe9a8",
+            "primary-fixed-dim": "#a2d2aa",
+            "error": "#8c1d18",
+            "secondary-fixed-dim": "#eac25a",
+            "surface-container": "#edeee9",
+            "on-tertiary-container": "#e09ba8",
+            "surface": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-background": "#1a1c19",
+            "surface-container-low": "#f3f4ef",
+            "surface-bright": "#f9faf5",
+            "tertiary": "#4a1c27",
+            "on-secondary-fixed-variant": "#594400",
+            "background": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "space-lg": "16px",
+            "margin": "16px",
+            "gutter": "16px",
+            "space-xxl": "32px",
+            "space-md": "12px",
+            "space-xl": "24px",
+            "space-sm": "8px"
+          },
+          "fontFamily": {
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.35", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.3", "fontWeight": "700" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Directrices para condiciones de luz solar extrema en campo */
+    * {
+      -webkit-tap-highlight-color: rgba(255, 210, 74, 0.4);
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    input:focus, button:focus {
+      outline: 4px solid #ffd24a !important;
+      outline-offset: 2px !important;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-campo antialiased min-h-screen pb-12 selection:bg-secondary-container">
+<!-- CABECERA FIJA (TopAppBar conforme a Shared Components) -->
+<header class="bg-surface sticky top-0 z-40 w-full border-b-[3px] border-primary-dark">
+<div class="flex justify-between items-center w-full px-margin py-space-md min-h-[70px] max-w-screen-md mx-auto">
+<!-- Botón VOLVER accesible con SVG en línea -->
+<button aria-label="Volver a la pantalla anterior" class="flex items-center gap-2 min-h-[58px] px-4 bg-surface-container-high border-[3px] border-primary-dark text-primary-dark active:bg-primary active:text-on-primary font-boton text-boton rounded select-none" onclick="history.back()" type="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-[3.5] stroke-current fill-none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-boton text-boton">VOLVER</span>
+</button>
+<!-- Título de cabecera -->
+<h1 class="font-titulo text-titulo text-primary-dark font-extrabold text-center px-2 leading-tight">
+        Lo que hago sin echar producto
+      </h1>
+<!-- Botón de accesibilidad: Aumentar letra -->
+<button aria-label="Agrandar tamaño de letra" class="flex items-center justify-center min-h-[58px] min-w-[58px] px-3 bg-surface-container-high border-[3px] border-primary-dark text-primary-dark active:bg-primary active:text-on-primary font-boton text-boton rounded select-none" id="btn-tamano" onclick="toggleTextSize()" type="button">
+<span class="font-boton text-boton font-black">A+</span>
+</button>
+</div>
+</header>
+<!-- CONTENEDOR PRINCIPAL FLUIDO PARA MÓVIL DE ALTO CONTRASTE -->
+<main class="w-full max-w-screen-md mx-auto px-margin pt-4 flex flex-col gap-space-lg" id="main-content">
+<!-- 2. AVISO DE MODO SIN COBERTURA -->
+<section aria-label="Estado de conexión del teléfono" class="w-full bg-surface border-[3px] border-primary-dark rounded p-4 flex items-start gap-3 bg-surface-bright">
+<div class="shrink-0 text-primary-dark pt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[3.5] stroke-current fill-none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="10" stroke-width="2.5"></circle>
+<path d="M8 12.5l2.5 2.5 5.5-6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<p class="font-cuerpo text-cuerpo text-primary-dark font-bold">
+          Funciona sin cobertura en el campo. Los datos se guardan en tu teléfono.
+        </p>
+</div>
+</section>
+<!-- 3. BLOQUE EXPLICATIVO PRINCIPAL -->
+<section class="flex flex-col gap-space-sm bg-surface-container-low border-[3px] border-outline p-4 rounded">
+<h2 class="font-pregunta text-pregunta text-primary-dark">
+        Lo que haces en tu tierra para no tener que tratar
+      </h2>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-surface">
+        Antes de echar producto, la ley pide haber probado otras cosas. Marca las que hagas en tu finca: se apuntan una vez y valen para todo el año.
+      </p>
+<div class="mt-2 pt-3 border-t-[2px] border-outline">
+<div class="inline-block bg-primary-dark text-on-primary px-3 py-1 rounded font-boton text-boton tracking-wide">
+          Marca lo que hagas en tu finca
+        </div>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-medium mt-1">
+          Toca las que hagas. Si te equivocas, vuelve a tocarla y se desmarca.
+        </p>
+</div>
+</section>
+<!-- 4. LAS 10 CASILLAS GRANDES TÁCTILES -->
+<div aria-label="Lista de medidas preventivas" class="flex flex-col gap-space-md" role="group">
+<!-- CASILLA 1: Marcada con nota de ejemplo -->
+<article class="bg-surface-bright border-[3px] border-primary-dark rounded p-4 flex flex-col gap-3">
+<button aria-pressed="true" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-primary text-on-primary border-[3px] border-primary-dark rounded flex items-center justify-center mt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[4] stroke-current fill-none" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="flex-1">
+<span class="badge-status inline-block bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-primary-dark">
+              1. ¿Cambias de cultivo de un año a otro?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1">
+              Rotar siembras para que la tierra descanse y no se acostumbren las plagas.
+            </p>
+</div>
+</button>
+<div class="note-container pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-1">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-1" placeholder="Tus palabras (por ejemplo: roto trigo con girasol)" type="text" value="Roto trigo con girasol y barbecho blanco"/>
+</div>
+</article>
+<!-- CASILLA 2: Marcada con nota de ejemplo -->
+<article class="bg-surface-bright border-[3px] border-primary-dark rounded p-4 flex flex-col gap-3">
+<button aria-pressed="true" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-primary text-on-primary border-[3px] border-primary-dark rounded flex items-center justify-center mt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[4] stroke-current fill-none" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="flex-1">
+<span class="badge-status inline-block bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-primary-dark">
+              2. ¿Limpias la máquina al pasar de una parcela a otra?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1">
+              Quitar tierra y semillas de apero, cuba o cosechadora para no llevar malas hierbas a otra finca.
+            </p>
+</div>
+</button>
+<div class="note-container pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-2">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-2" placeholder="Tus palabras (por ejemplo: roto trigo con girasol)" type="text" value="Soplo la cosechadora antes de entrar en parcelas limpias"/>
+</div>
+</article>
+<!-- CASILLA 3: Marcada sin nota -->
+<article class="bg-surface-bright border-[3px] border-primary-dark rounded p-4 flex flex-col gap-3">
+<button aria-pressed="true" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-primary text-on-primary border-[3px] border-primary-dark rounded flex items-center justify-center mt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[4] stroke-current fill-none" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="flex-1">
+<span class="badge-status inline-block bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-primary-dark">
+              3. ¿Quitas o picas los restos del cultivo anterior?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1">
+              Labrar rastrojo, triturar sarmientos o sacar plantas enfermas para que no críen hongos.
+            </p>
+</div>
+</button>
+<div class="note-container pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-3">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-3" placeholder="Tus palabras (por ejemplo: pico los sarmientos en viña)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 4: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+<!-- Vacio para indicar no marcado -->
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              4. ¿Eliges semilla resistente o certificada?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Variedades fuertes que aguantan mejor el frío, la sequía y las enfermedades de la zona.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-4">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-4" placeholder="Tus palabras (por ejemplo: cebada certificada tratada con fungicida)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 5: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              5. ¿Esperas a ver hierba o bicho antes de tratar?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Mirar el campo en persona y solo echar cuando de verdad hace falta, no por costumbre.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-5">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-5" placeholder="Tus palabras (por ejemplo: controlo negrilla cada semana)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 6: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              6. ¿Ajustas la fecha o la dosis de siembra?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Sembrar más pronto o más tarde para esquivar las heladas o el pico de maleza.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-6">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-6" placeholder="Tus palabras (por ejemplo: atraso la siembra de trigo a noviembre)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 7: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              7. ¿Dejas lindes, ribazos o hierba en las orillas?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Mantener setos y márgenes donde viven insectos y pájaros buenos que comen plagas.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-7">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-7" placeholder="Tus palabras (por ejemplo: respeto ribazos en las parcelas del arroyo)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 8: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              8. ¿Riegas solo cuando la planta lo pide?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Medir humedad o vigilar el suelo para no encharcar ni criar hongos en raíz.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-8">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-8" placeholder="Tus palabras (por ejemplo: riego por goteo con tensiómetros)" type="text"/>
+</div>
+</article>
+<!-- CASILLA 9: Marcada con nota de ejemplo -->
+<article class="bg-surface-bright border-[3px] border-primary-dark rounded p-4 flex flex-col gap-3">
+<button aria-pressed="true" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-primary text-on-primary border-[3px] border-primary-dark rounded flex items-center justify-center mt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[4] stroke-current fill-none" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="flex-1">
+<span class="badge-status inline-block bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-primary-dark">
+              9. ¿Tienes la máquina de tratar revisada y a punto?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1">
+              Boquillas limpias, manómetro en regla y cuba calibrada para no tirar líquido de más.
+            </p>
+</div>
+</button>
+<div class="note-container pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-9">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-9" placeholder="Tus palabras (por ejemplo: boquillas antideriva cambiadas)" type="text" value="ITEAF pasada en marzo de 2024 con boquillas antideriva"/>
+</div>
+</article>
+<!-- CASILLA 10: No marcada -->
+<article class="bg-surface border-[3px] border-outline rounded p-4 flex flex-col gap-3">
+<button aria-pressed="false" class="w-full text-left flex items-start gap-4 focus:outline-none" onclick="toggleBox(this)" type="button">
+<div class="checkbox-visual shrink-0 w-11 h-11 bg-surface-container-high border-[3px] border-on-surface-variant rounded flex items-center justify-center mt-1">
+</div>
+<div class="flex-1">
+<span class="badge-status hidden bg-primary-fixed text-primary-dark font-boton text-boton px-2 py-0.5 rounded border border-primary-dark mb-1">
+              HECHO EN MI FINCA
+            </span>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+              10. ¿Apuntas lo que pasa cada año para aprender?
+            </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1">
+              Anotar qué plaga vino, qué tiempo hizo y qué parcela dio mejor resultado.
+            </p>
+</div>
+</button>
+<div class="note-container hidden pt-3 border-t-[2px] border-outline-variant flex flex-col gap-2">
+<label class="font-boton text-boton text-primary-dark" for="nota-10">
+            Lo que quieras añadir:
+          </label>
+<input class="w-full min-h-[58px] px-3 border-[3px] border-primary-dark rounded font-campo text-campo text-on-surface bg-surface" id="nota-10" placeholder="Tus palabras (por ejemplo: libreta de campaña en el tractor)" type="text"/>
+</div>
+</article>
+</div>
+<!-- 5. AVISO LEGAL AL FINAL -->
+<section class="mt-4 bg-secondary-container border-[3px] border-secondary p-4 rounded flex items-start gap-3">
+<div class="shrink-0 text-secondary mt-1">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[2.5] stroke-current fill-none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<p class="font-cuerpo text-cuerpo text-on-secondary-container font-semibold leading-relaxed">
+          Estas diez preguntas son exactamente las que pide la normativa de sanidad vegetal. Al sacar el cuaderno oficial para el inspector, se imprime el nombre de cada práctica que hayas marcado, no un código ni un número.
+        </p>
+</div>
+</section>
+<!-- 6. BOTONES DE ACCIÓN INFERIORES -->
+<section aria-label="Acciones de guardado" class="mt-4 flex flex-col gap-space-md">
+<!-- BOTÓN 1: GUARDAR LO QUE HAGO -->
+<button class="w-full min-h-[68px] bg-primary text-on-primary border-[3px] border-primary-dark rounded flex items-center justify-center gap-3 px-4 active:bg-primary-dark" onclick="guardarCambios()" type="button">
+<svg aria-hidden="true" class="w-8 h-8 stroke-[3.5] stroke-current fill-none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-boton-principal text-boton-principal uppercase tracking-wider font-extrabold">
+          GUARDAR LO QUE HAGO
+        </span>
+</button>
+<!-- BOTÓN 2: No hago ninguna de estas cosas -->
+<button class="w-full min-h-[64px] bg-surface text-on-surface border-[3px] border-outline rounded flex items-center justify-center gap-3 px-4 active:bg-surface-variant" onclick="desmarcarTodas()" type="button">
+<svg aria-hidden="true" class="w-7 h-7 stroke-[3] stroke-current fill-none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M6 18L18 6" stroke-linecap="round"></path>
+</svg>
+<span class="font-boton text-boton text-center">
+          No hago ninguna de estas cosas
+        </span>
+</button>
+<!-- BOTÓN 3: VOLVER SIN GUARDAR -->
+<button class="w-full min-h-[64px] bg-surface-variant text-primary-dark border-[3px] border-outline rounded flex items-center justify-center px-4 active:bg-surface-dim" onclick="history.back()" type="button">
+<span class="font-boton text-boton">
+          VOLVER SIN GUARDAR
+        </span>
+</button>
+</section>
+<!-- PIE INSTITUCIONAL SOBRIO -->
+<footer class="mt-8 pt-4 border-t-[2px] border-outline text-center">
+<p class="font-pista text-pista text-on-surface-variant font-bold leading-normal">
+        CUE Digital · Junta de Castilla y León · Diseñado para trabajar al sol, con una mano y sin cobertura
+      </p>
+</footer>
+</main>
+<!-- INTERACCIÓN TÁCTIL Y ACCESIBILIDAD DIRECTA -->
+<script>
+    // Alternar selección de las casillas con retroalimentación sonora táctil nativa
+    function toggleBox(btn) {
+      const isPressed = btn.getAttribute('aria-pressed') === 'true';
+      const newStatus = !isPressed;
+      btn.setAttribute('aria-pressed', newStatus.toString());
+
+      const article = btn.closest('article');
+      const boxVisual = btn.querySelector('.checkbox-visual');
+      const badge = btn.querySelector('.badge-status');
+      const title = btn.querySelector('h3');
+      const subtitle = btn.querySelector('p');
+      const noteContainer = article.querySelector('.note-container');
+
+      if (newStatus) {
+        // Estado Marcado
+        article.classList.remove('bg-surface', 'border-outline');
+        article.classList.add('bg-surface-bright', 'border-primary-dark');
+        
+        boxVisual.classList.remove('bg-surface-container-high', 'border-on-surface-variant');
+        boxVisual.classList.add('bg-primary', 'text-on-primary', 'border-primary-dark');
+        boxVisual.innerHTML = `
+          <svg class="w-8 h-8 stroke-[4] stroke-current fill-none" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        `;
+
+        badge.classList.remove('hidden');
+        title.classList.remove('text-on-surface');
+        title.classList.add('text-primary-dark');
+        subtitle.classList.remove('text-on-surface-variant');
+        subtitle.classList.add('text-on-surface');
+
+        if (noteContainer) {
+          noteContainer.classList.remove('hidden');
+        }
+      } else {
+        // Estado Desmarcado
+        article.classList.remove('bg-surface-bright', 'border-primary-dark');
+        article.classList.add('bg-surface', 'border-outline');
+
+        boxVisual.classList.remove('bg-primary', 'text-on-primary', 'border-primary-dark');
+        boxVisual.classList.add('bg-surface-container-high', 'border-on-surface-variant');
+        boxVisual.innerHTML = '';
+
+        badge.classList.add('hidden');
+        title.classList.remove('text-primary-dark');
+        title.classList.add('text-on-surface');
+        subtitle.classList.remove('text-on-surface');
+        subtitle.classList.add('text-on-surface-variant');
+
+        if (noteContainer) {
+          noteContainer.classList.add('hidden');
+        }
+      }
+    }
+
+    // Desmarcar todas las opciones
+    function desmarcarTodas() {
+      const allButtons = document.querySelectorAll('article button[aria-pressed="true"]');
+      allButtons.forEach(btn => {
+        toggleBox(btn);
+      });
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    // Simular guardado sin conexión
+    function guardarCambios() {
+      alert("✓ GUARDADO CORRECTAMENTE EN TU TELÉFONO.\nLos datos quedan listos para el Cuaderno Digital incluso sin cobertura.");
+    }
+
+    // Agrandador de letra para facilitar visión al sol
+    let zoomed = false;
+    function toggleTextSize() {
+      const root = document.documentElement;
+      const btn = document.getElementById('btn-tamano');
+      if (!zoomed) {
+        root.style.fontSize = '120%';
+        btn.classList.add('bg-primary', 'text-on-primary');
+        zoomed = true;
+      } else {
+        root.style.fontSize = '100%';
+        btn.classList.remove('bg-primary', 'text-on-primary');
+        zoomed = false;
+      }
+    }
+  </script>
+</body></html>

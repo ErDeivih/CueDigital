@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>El plan de abono del año - CUE Digital</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed": "#ffdf95",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#775b00",
+            "primary": "#043317",
+            "surface-variant": "#e2e3de",
+            "tertiary-fixed": "#ffd9de",
+            "surface-tint": "#3c6847",
+            "on-tertiary-container": "#e09ba8",
+            "on-primary-fixed-variant": "#244f31",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#8bb992",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "primary-overlay": "#3a6446",
+            "error": "#8c1d18",
+            "secondary-container": "#ffe9a8",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed": "#251a00",
+            "inverse-primary": "#a2d2aa",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "inverse-surface": "#2f312e",
+            "surface-container-low": "#f3f4ef",
+            "surface-dim": "#d9dad6",
+            "secondary-fixed-dim": "#eac25a",
+            "on-surface": "#1a1c19",
+            "primary-fixed": "#beeec5",
+            "on-background": "#1a1c19",
+            "primary-overlay-border": "#8fae97",
+            "error-container": "#fbe3e1",
+            "primary-dark": "#0d2b18",
+            "focus": "#ffd24a",
+            "surface-container-highest": "#e2e3de",
+            "on-tertiary-fixed": "#360c18",
+            "background": "#f9faf5",
+            "on-secondary-fixed-variant": "#594400",
+            "surface-container-high": "#e8e9e4",
+            "primary-container": "#2f6b40",
+            "outline-variant": "#c1c9bf",
+            "on-secondary": "#ffffff",
+            "surface-container": "#edeee9",
+            "tertiary": "#4a1c27",
+            "inverse-on-surface": "#f0f1ec",
+            "error-dark": "#5c110d",
+            "secondary": "#765a00",
+            "on-surface-variant": "#43503f",
+            "on-error-container": "#4a0f0b",
+            "tertiary-container": "#65323d",
+            "primary-fixed-dim": "#a2d2aa",
+            "outline": "#a9b6a8",
+            "surface": "#ffffff",
+            "surface-bright": "#f9faf5",
+            "on-primary-fixed": "#00210c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "gutter": "16px",
+            "space-xs": "4px",
+            "space-xl": "24px",
+            "margin": "16px",
+            "space-md": "12px",
+            "space-xxl": "32px",
+            "space-lg": "16px"
+          },
+          "fontFamily": {
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Absolute rejection of shadows, blurs and animations for harsh outdoor sunlight legibility */
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+      -webkit-tap-highlight-color: rgba(255, 210, 74, 0.4);
+    }
+    
+    /* Tactile tactile feedback */
+    button:active, a:active {
+      transform: translateY(2px);
+    }
+
+    /* Accessibility high contrast focus */
+    button:focus-visible, a:focus-visible {
+      outline: 4px solid #ffd24a !important;
+      outline-offset: 2px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-full bg-background text-on-surface antialiased flex flex-col font-cuerpo text-cuerpo pb-12">
+<!-- 1. Cabecera fija verde oscuro (TopAppBar from Shared Components JSON) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-margin h-16 bg-primary dark:bg-primary-dark border-b-4 border-outline dark:border-outline-variant">
+<!-- Botón VOLVER -->
+<button aria-label="Volver atrás" class="flex items-center gap-2 h-12 px-3 bg-primary-container text-on-primary font-boton text-boton rounded-lg border-2 border-primary-overlay-border active:bg-primary-overlay" onclick="history.back()" type="button">
+<span aria-hidden="true" class="material-symbols-outlined text-[26px]">arrow_back</span>
+<span>VOLVER</span>
+</button>
+<!-- Título de cabecera -->
+<h1 class="font-titulo text-titulo text-on-primary text-center truncate px-2 font-bold">
+      El plan de abono
+    </h1>
+<!-- Botón Trailing A+ Letra -->
+<button class="h-12 px-3 bg-primary-container text-on-primary font-boton text-boton rounded-lg border-2 border-primary-overlay-border active:bg-primary-overlay flex items-center justify-center" id="font-toggle-btn" type="button">
+      A+ Letra
+    </button>
+</header>
+<!-- Espaciador para la cabecera fija de 64px -->
+<div class="h-16 w-full flex-shrink-0"></div>
+<!-- 2. Indicador superior de estado sin conexión -->
+<aside aria-label="Estado de conectividad" class="w-full bg-[#e2f1e5] border-b-2 border-primary px-margin py-3">
+<div class="max-w-xl mx-auto flex items-start gap-3">
+<span class="material-symbols-outlined text-[#043317] text-[28px] flex-shrink-0 mt-0.5" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="font-cuerpo text-cuerpo text-primary font-bold leading-snug">
+        Funciona sin cobertura en el campo. Los datos se quedan guardados en este teléfono.
+      </p>
+</div>
+</aside>
+<!-- Contenedor Principal Flotante al ancho de lectura móvil / tableta -->
+<main class="w-full max-w-xl mx-auto px-margin pt-6 flex flex-col gap-6">
+<!-- 3. Título principal y bloque explicativo -->
+<section class="flex flex-col gap-3">
+<h2 class="font-pregunta text-pregunta text-primary font-extrabold tracking-tight">
+        El plan de abono del año
+      </h2>
+<div class="p-4 bg-surface-container border-2 border-outline-variant rounded-lg">
+<p class="font-cuerpo text-cuerpo text-on-surface leading-relaxed">
+          El plan dice qué abono vas a echar, cuánto y en qué momento. Después el programa compara lo que apuntas con lo que tenías previsto, para que no te pases sin darte cuenta.
+        </p>
+</div>
+</section>
+<!-- 4. Aviso oficial de la normativa agraria -->
+<section aria-label="Aviso oficial normativo" class="bg-secondary-container border-[3px] border-[#8a6a00] p-4 rounded-xl flex items-start gap-3.5" role="region">
+<span aria-hidden="true" class="material-symbols-outlined text-on-secondary-fixed text-[36px] flex-shrink-0 mt-1">balance</span>
+<div class="flex flex-col gap-1">
+<span class="font-boton text-boton text-on-secondary-fixed tracking-wide">AVISO OFICIAL DE NORMATIVA</span>
+<p class="font-cuerpo text-cuerpo text-on-secondary-fixed leading-relaxed font-medium">
+          El plan de abono es obligatorio desde el 1 de septiembre de 2026. En regadío lo es desde el 1 de enero de 2026, si el cultivo se sembró o se plantó entre marzo y junio.
+        </p>
+</div>
+</section>
+<!-- 5. Planes de abono activos -->
+<div class="flex flex-col gap-6">
+<!-- TARJETA 1: Cebada cervecera -->
+<article class="bg-surface border-[3px] border-primary rounded-xl p-4 flex flex-col gap-4">
+<!-- Encabezado de tarjeta -->
+<header class="border-b-2 border-surface-variant pb-3 flex flex-col gap-1">
+<div class="inline-block self-start bg-primary-fixed text-on-primary-fixed px-2.5 py-0.5 rounded font-boton text-[15px]">
+            EN REGLA
+          </div>
+<h3 class="font-titulo text-titulo text-primary font-extrabold mt-1">
+            Plan de Cebada cervecera
+          </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">
+            Tierra: El Prado · 4,90 hectáreas · Kilos por hectárea
+          </p>
+</header>
+<!-- Datos de contexto técnico -->
+<div class="bg-surface-container-low p-3.5 rounded-lg border-2 border-outline-variant flex flex-col gap-2">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">El año anterior había:</span> Girasol
+          </p>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Lo hice con una herramienta:</span> Sí (calculado con la herramienta oficial)
+          </p>
+</div>
+<!-- Tabla Nutricional Clara -->
+<div class="overflow-x-auto">
+<div class="border-2 border-primary rounded-lg overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary text-on-primary border-b-2 border-primary">
+<th class="py-2.5 px-3 font-boton text-boton text-left" scope="col">Nutriente</th>
+<th class="py-2.5 px-2 font-boton text-boton text-center" scope="col">Tenías previsto</th>
+<th class="py-2.5 px-2 font-boton text-boton text-center" scope="col">Llevas</th>
+<th class="py-2.5 px-3 font-boton text-boton text-right" scope="col">Te queda</th>
+</tr>
+</thead>
+<tbody class="divide-y-2 divide-surface-variant bg-surface">
+<!-- Fila Nitrógeno -->
+<tr>
+<th class="py-3 px-3 font-bold text-on-surface" scope="row">Nitrógeno (N)</th>
+<td class="py-3 px-2 text-center text-on-surface font-semibold">140 kg/ha</td>
+<td class="py-3 px-2 text-center font-bold text-primary">90 kg/ha</td>
+<td class="py-3 px-3 text-right">
+<span class="font-dato-grande text-dato-grande text-primary leading-none">50</span>
+<span class="text-[14px] font-bold block text-on-surface-variant">kg/ha</span>
+</td>
+</tr>
+<!-- Fila Fósforo -->
+<tr>
+<th class="py-3 px-3 font-bold text-on-surface" scope="row">Fósforo (P)</th>
+<td class="py-3 px-2 text-center text-on-surface font-semibold">60 kg/ha</td>
+<td class="py-3 px-2 text-center font-bold text-primary">40 kg/ha</td>
+<td class="py-3 px-3 text-right">
+<span class="font-dato-grande text-dato-grande text-primary leading-none">20</span>
+<span class="text-[14px] font-bold block text-on-surface-variant">kg/ha</span>
+</td>
+</tr>
+<!-- Fila Potasio -->
+<tr>
+<th class="py-3 px-3 font-bold text-on-surface" scope="row">Potasio (K)</th>
+<td class="py-3 px-2 text-center text-on-surface font-semibold">50 kg/ha</td>
+<td class="py-3 px-2 text-center font-bold text-primary">30 kg/ha</td>
+<td class="py-3 px-3 text-right">
+<span class="font-dato-grande text-dato-grande text-primary leading-none">20</span>
+<span class="text-[14px] font-bold block text-on-surface-variant">kg/ha</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Soporte en análisis -->
+<div class="flex items-start gap-2.5 pt-1">
+<span aria-hidden="true" class="material-symbols-outlined text-primary text-[24px] flex-shrink-0">description</span>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Este plan se apoya en un análisis:</span> Boletín BOL-2026-0842 (Materia orgánica 1,85%, pH 7,8)
+          </p>
+</div>
+<!-- Abonos imputados -->
+<div class="flex items-start gap-2.5 bg-surface-container-high p-3 rounded-lg border border-outline">
+<span aria-hidden="true" class="material-symbols-outlined text-primary text-[24px] flex-shrink-0">inventory_2</span>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium">
+            Un abono apuntado contra este plan (Abono de fondo NPK 8-15-15 el 15/02/2026).
+          </p>
+</div>
+<!-- Acción secundaria -->
+<button class="w-full min-h-[58px] bg-surface border-2 border-primary text-primary font-boton text-boton rounded-lg hover:bg-surface-container active:bg-surface-variant flex items-center justify-center gap-2 mt-1" type="button">
+<span>VER DETALLE DE ESTE PLAN</span>
+<span aria-hidden="true" class="material-symbols-outlined">arrow_forward</span>
+</button>
+</article>
+<!-- TARJETA 2: Maíz dulce de regadío (CON EXCESO) -->
+<article class="bg-surface border-[3px] border-error rounded-xl p-4 flex flex-col gap-4">
+<!-- Encabezado de tarjeta -->
+<header class="border-b-2 border-surface-variant pb-3 flex flex-col gap-1">
+<div class="inline-block self-start bg-error-container text-on-error-container font-bold px-2.5 py-0.5 rounded border border-error text-[15px]">
+            ALERTA: EXCESO
+          </div>
+<h3 class="font-titulo text-titulo text-error-dark font-extrabold mt-1">
+            Plan de Maíz dulce de regadío
+          </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">
+            Tierra: La Vega del Río · 6,40 hectáreas · Kilos por hectárea
+          </p>
+</header>
+<!-- Datos de contexto técnico -->
+<div class="bg-surface-container-low p-3.5 rounded-lg border-2 border-outline-variant flex flex-col gap-2">
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">El año anterior había:</span> Alfalfa
+          </p>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+<span class="font-bold">Lo hice con una herramienta:</span> Sí
+          </p>
+</div>
+<!-- Franja de aviso preventivo en rojo/ámbar -->
+<div class="bg-error-container border-[3px] border-error p-3.5 rounded-lg flex items-start gap-3" role="alert">
+<span aria-hidden="true" class="material-symbols-outlined text-error text-[32px] flex-shrink-0 mt-0.5">warning</span>
+<p class="font-cuerpo text-cuerpo text-on-error-container font-extrabold leading-snug">
+            Ojo: llevas más de lo que tenías previsto. Míralo antes de seguir abonando.
+          </p>
+</div>
+<!-- Tabla Nutricional con Alerta -->
+<div class="overflow-x-auto">
+<div class="border-2 border-error rounded-lg overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-error text-on-error border-b-2 border-error">
+<th class="py-2.5 px-3 font-boton text-boton text-left" scope="col">Nutriente</th>
+<th class="py-2.5 px-2 font-boton text-boton text-center" scope="col">Tenías previsto</th>
+<th class="py-2.5 px-2 font-boton text-boton text-center" scope="col">Llevas</th>
+<th class="py-2.5 px-3 font-boton text-boton text-right" scope="col">Te queda</th>
+</tr>
+</thead>
+<tbody class="divide-y-2 divide-surface-variant bg-surface">
+<!-- Fila Nitrógeno Excedido -->
+<tr class="bg-[#fff2f0]">
+<th class="py-3 px-3 font-extrabold text-error" scope="row">Nitrógeno (N)</th>
+<td class="py-3 px-2 text-center text-on-surface font-semibold">210 kg/ha</td>
+<td class="py-3 px-2 text-center font-extrabold text-error">230 kg/ha</td>
+<td class="py-3 px-3 text-right">
+<span class="inline-block bg-error text-on-error px-2.5 py-1 rounded font-extrabold text-base tracking-wider uppercase">
+                      Pasado
+                    </span>
+</td>
+</tr>
+<!-- Fila Fósforo -->
+<tr>
+<th class="py-3 px-3 font-bold text-on-surface" scope="row">Fósforo (P)</th>
+<td class="py-3 px-2 text-center text-on-surface font-semibold">80 kg/ha</td>
+<td class="py-3 px-2 text-center font-bold text-primary">60 kg/ha</td>
+<td class="py-3 px-3 text-right">
+<span class="font-dato-grande text-dato-grande text-primary leading-none">20</span>
+<span class="text-[14px] font-bold block text-on-surface-variant">kg/ha</span>
+</td>
+</tr>
+<!-- Potasio K omitido deliberadamente según regla: 'antes que un hueco con un rótulo, nada' -->
+</tbody>
+</table>
+</div>
+</div>
+<!-- Soporte en análisis sin soporte + acción para enganchar -->
+<div class="bg-surface-container p-3 rounded-lg border-2 border-outline flex flex-col gap-2.5">
+<div class="flex items-start gap-2.5">
+<span aria-hidden="true" class="material-symbols-outlined text-secondary text-[24px] flex-shrink-0">info</span>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+              Este plan no se apoya en ningún análisis. Si tienes uno de la tierra, se puede enganchar y queda todo junto.
+            </p>
+</div>
+<button class="self-start min-h-[48px] px-4 bg-surface text-primary border-2 border-primary font-boton text-boton rounded-lg hover:bg-surface-variant flex items-center gap-2" type="button">
+<span aria-hidden="true" class="material-symbols-outlined">attach_file</span>
+<span>ENGANCHAR ANÁLISIS DE TIERRA</span>
+</button>
+</div>
+<!-- Abonos imputados -->
+<div class="flex items-start gap-2.5 bg-surface-container-high p-3 rounded-lg border border-outline">
+<span aria-hidden="true" class="material-symbols-outlined text-primary text-[24px] flex-shrink-0">inventory_2</span>
+<p class="font-cuerpo text-cuerpo text-on-surface font-medium">
+            2 abonos apuntados contra este plan.
+          </p>
+</div>
+<!-- Acción secundaria -->
+<button class="w-full min-h-[58px] bg-surface border-2 border-error text-error font-boton text-boton rounded-lg hover:bg-error-container active:bg-error-container flex items-center justify-center gap-2 mt-1" type="button">
+<span>VER DETALLE Y CORREGIR EXCESO</span>
+<span aria-hidden="true" class="material-symbols-outlined">arrow_forward</span>
+</button>
+</article>
+</div>
+<!-- 6. Bloque informativo didáctico para parcelas sin plan -->
+<section class="border-4 border-dashed border-outline-variant bg-surface-container-low p-4 rounded-xl flex items-start gap-3.5">
+<span aria-hidden="true" class="material-symbols-outlined text-on-surface-variant text-[32px] flex-shrink-0 mt-0.5">playlist_add</span>
+<div class="flex flex-col gap-1">
+<h4 class="font-boton text-boton text-on-surface font-bold">
+          Si tienes otra parcela sin plan:
+        </h4>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-medium">
+          Todavía no has hecho el plan para <strong class="text-on-surface font-extrabold">Las Suertes de Arriba</strong>.
+        </p>
+</div>
+</section>
+<!-- 7. Botones principales de acción táctiles (altura >= 64px, rounded-[14px]) -->
+<section aria-label="Acciones principales" class="flex flex-col gap-3.5 pt-2">
+<!-- Botón Primario: Hacer el plan -->
+<button class="w-full min-h-[72px] bg-primary text-on-primary border-[3px] border-primary-overlay-border rounded-[14px] font-boton-principal text-boton-principal flex items-center justify-center gap-3 px-4 active:bg-primary-dark" type="button">
+<span aria-hidden="true" class="material-symbols-outlined text-[32px]">add_circle</span>
+<span class="text-center">+ HACER EL PLAN DE ABONO</span>
+</button>
+<!-- Botón de Consulta: Ver PDF -->
+<button class="w-full min-h-[64px] bg-secondary-fixed text-on-secondary-fixed border-[3px] border-secondary font-boton text-boton rounded-[14px] flex items-center justify-center gap-3 px-4 active:bg-secondary-fixed-dim" type="button">
+<span aria-hidden="true" class="material-symbols-outlined text-[28px] text-on-secondary-fixed">picture_as_pdf</span>
+<span class="text-center">VER EL PLAN DE ABONO COMPLETO EN PDF</span>
+</button>
+<!-- Botón Secundario Claro: Volver al inicio -->
+<button class="w-full min-h-[64px] bg-surface text-on-surface border-[3px] border-outline font-boton text-boton rounded-[14px] flex items-center justify-center gap-3 px-4 hover:bg-surface-variant active:bg-surface-dim" onclick="history.back()" type="button">
+<span aria-hidden="true" class="material-symbols-outlined text-[28px]">arrow_back</span>
+<span>VOLVER AL INICIO</span>
+</button>
+</section>
+<!-- 8. Pie de página institucional -->
+<footer class="pt-6 pb-4 border-t-2 border-surface-variant text-center flex flex-col gap-2">
+<div class="flex items-center justify-center gap-2 text-primary font-bold">
+<span aria-hidden="true" class="material-symbols-outlined text-[24px]">agriculture</span>
+<span class="font-boton text-boton">CUE Digital · Junta de Castilla y León</span>
+</div>
+<p class="font-pista text-pista text-on-surface-variant font-medium">
+        Diseñado para trabajar al sol, con una mano y sin cobertura
+      </p>
+</footer>
+</main>
+<!-- Script para alternar aumento de tamaño de letra de accesibilidad -->
+<script>
+    const fontToggle = document.getElementById('font-toggle-btn');
+    let isEnlarged = false;
+
+    fontToggle.addEventListener('click', () => {
+      isEnlarged = !isEnlarged;
+      if (isEnlarged) {
+        document.documentElement.style.fontSize = '120%';
+        fontToggle.classList.add('bg-focus', 'text-on-secondary-fixed');
+        fontToggle.textContent = 'A- Normal';
+      } else {
+        document.documentElement.style.fontSize = '100%';
+        fontToggle.classList.remove('bg-focus', 'text-on-secondary-fixed');
+        fontToggle.textContent = 'A+ Letra';
+      }
+    });
+  </script>
+</body></html>

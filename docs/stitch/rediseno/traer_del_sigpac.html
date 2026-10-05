@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" name="viewport"/>
+<title>CUE Digital · Traer tierras del SIGPAC</title>
+<!-- Google Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#ffffff",
+            "on-background": "#1a1c19",
+            "primary-fixed-dim": "#a2d2aa",
+            "primary-overlay-border": "#8fae97",
+            "inverse-on-surface": "#f0f1ec",
+            "secondary-container": "#ffe9a8",
+            "on-surface-variant": "#414941",
+            "surface-tint": "#3c6847",
+            "secondary-fixed-dim": "#eac25a",
+            "on-primary-fixed-variant": "#244f31",
+            "on-secondary-fixed": "#251a00",
+            "error-container": "#ffdad6",
+            "surface-container-high": "#e8e9e4",
+            "primary-container": "#1f4a2c",
+            "surface-dim": "#d9dad6",
+            "on-tertiary-container": "#e09ba8",
+            "error-dark": "#5c110d",
+            "primary-overlay": "#3a6446",
+            "surface": "#ffffff",
+            "inverse-primary": "#a2d2aa",
+            "focus": "#ffd24a",
+            "background": "#f9faf5",
+            "tertiary-container": "#65323d",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed": "#ffd9de",
+            "secondary-fixed": "#ffdf95",
+            "on-surface": "#1a1c19",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "surface-bright": "#f9faf5",
+            "on-secondary-container": "#3d2f00",
+            "secondary": "#765a00",
+            "inverse-surface": "#2f312e",
+            "on-secondary-fixed-variant": "#594400",
+            "on-error-container": "#93000a",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "surface-variant": "#e2e3de",
+            "error": "#8c1d18",
+            "outline": "#a9b6a8",
+            "surface-container-highest": "#e2e3de",
+            "on-error": "#ffffff",
+            "primary-fixed": "#beeec5",
+            "on-primary-fixed": "#00210c",
+            "outline-variant": "#c1c9bf",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#360c18",
+            "primary": "#043317",
+            "surface-container": "#edeee9",
+            "tertiary": "#4a1c27",
+            "primary-dark": "#0d2b18",
+            "on-primary-container": "#8bb992",
+            "surface-container-low": "#f3f4ef"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "24px",
+            "space-xs": "4px",
+            "margin": "16px",
+            "space-md": "12px",
+            "space-lg": "16px",
+            "gutter": "16px",
+            "space-xxl": "32px",
+            "space-sm": "8px"
+          },
+          "fontFamily": {
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 48;
+      font-size: 32px;
+      line-height: 1;
+      display: inline-block;
+    }
+    /* Estricta supresión de selecciones accidentales y saltos al sol */
+    input, select, button {
+      touch-action: manipulation;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-cuerpo text-cuerpo min-h-full flex flex-col antialiased selection:bg-focus selection:text-primary-dark">
+<!-- TOP APP BAR (Shared Component Anchor strictly applied) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 min-h-[64px] bg-primary dark:bg-primary-dark border-b-4 border-focus dark:border-focus">
+<!-- Botón Volver -->
+<button aria-label="Volver atrás" class="flex items-center gap-2 h-12 px-3 bg-primary-container text-on-primary font-boton text-boton rounded border-2 border-primary-overlay-border active:scale-95 transition-transform duration-100" type="button">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+<span class="font-bold tracking-wide">VOLVER</span>
+</button>
+<!-- Título / Logotipo CUE Digital -->
+<div class="flex items-center text-center px-2">
+<h1 class="text-titulo font-titulo text-on-primary dark:text-on-primary font-bold tracking-tight">
+        CUE Digital · SIGPAC
+      </h1>
+</div>
+<!-- Botón Tamaño de Letra (A+) -->
+<button aria-label="Aumentar tamaño de letra" class="flex items-center justify-center w-12 h-12 bg-primary-container text-on-primary font-boton text-boton rounded border-2 border-primary-overlay-border active:scale-95 transition-transform duration-100" type="button">
+<span class="material-symbols-outlined" data-icon="text_increase">text_increase</span>
+</button>
+</header>
+<!-- CONTENIDO PRINCIPAL (Optimizado para una mano, sol directo, sin barras flotantes inferiores) -->
+<main class="w-full max-w-xl mx-auto pt-20 pb-16 px-gutter flex flex-col gap-space-xl">
+<!-- 1. AVISO COBERTURA (Borde verde fuerte, sin conexión) -->
+<section class="bg-surface border-4 border-primary p-space-lg rounded flex items-start gap-3">
+<div class="flex-shrink-0 text-primary mt-1">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<p class="font-pregunta text-pregunta text-primary font-bold">
+          Funciona sin cobertura en el campo
+        </p>
+<p class="font-cuerpo text-cuerpo text-on-surface mt-1 leading-snug">
+          Los datos que busques se quedan guardados en tu teléfono aunque no tengas señal.
+        </p>
+</div>
+</section>
+<!-- 2. BLOQUE INTRODUCTORIO EXPLICATIVO (Tarjeta clara) -->
+<section class="bg-surface-container-low border-2 border-outline p-space-lg rounded">
+<h2 class="font-titulo text-titulo text-primary-dark">
+        Traer mis tierras del SIGPAC sin teclear números
+      </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-2 leading-relaxed">
+        Si tienes la referencia del trozo (la que viene en el papel del SIGPAC), el sistema busca y rellena solo la <strong>superficie</strong>, la <strong>pendiente</strong>, el <strong>uso</strong> y el <strong>dibujo</strong>. Así evitas tener que copiar ocho números por cada parcela.
+      </p>
+</section>
+<!-- 3. CAMINO RÁPIDO (RECOMENDADO) -->
+<section class="bg-surface border-4 border-primary rounded p-space-lg flex flex-col gap-space-md">
+<!-- Etiqueta superior contrastada -->
+<div class="inline-block self-start bg-primary text-on-primary px-3 py-1.5 rounded font-boton text-boton tracking-wider">
+        ★ EL CAMINO RÁPIDO (RECOMENDADO)
+      </div>
+<div>
+<h3 class="font-pregunta text-pregunta text-on-surface">
+          La referencia de tu trozo
+        </h3>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1 leading-snug">
+          Pega lo que tengas: la del visor del SIGPAC (<code class="bg-surface-variant px-1 font-bold text-primary-dark">37:70:0:0:503:51</code>), los siete números del papel (<code class="bg-surface-variant px-1 font-bold text-primary-dark">37-70-0-0-503-51-1</code>) o la catastral.
+        </p>
+</div>
+<!-- Campo de texto grande con botón integrado visualmente -->
+<div class="flex flex-col gap-2 mt-1">
+<label class="font-bold text-on-surface font-boton text-boton" for="ref-input">
+          Escribe o pega la referencia:
+        </label>
+<div class="relative">
+<input class="w-full min-h-[64px] px-4 pr-14 text-campo font-campo font-bold text-on-surface bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="ref-input" type="text" value="37-22-0-0-501-427-1"/>
+<div aria-hidden="true" class="absolute right-3 top-1/2 -translate-y-1/2 text-primary-dark pointer-events-none">
+<!-- Icono SVG Portapapeles/Copia limpio -->
+<svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Botón Pegar del portapapeles -->
+<button class="w-full min-h-[64px] bg-surface-container-high border-3 border-outline text-primary-dark font-boton text-boton rounded flex items-center justify-center gap-3 active:bg-secondary-container active:border-primary-dark" type="button">
+<svg aria-hidden="true" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.483-.04 1.08-.074 1.774-.074s1.291.034 1.774.074c1.131.094 1.976 1.057 1.976 2.192V7.5M8.25 7.5h7.5m-7.5 0H6.75A2.25 2.25 0 004.5 9.75v10.5A2.25 2.25 0 006.75 22.5h10.5a2.25 2.25 0 002.25-2.25V9.75a2.25 2.25 0 00-2.25-2.25H15.75" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>PEGAR DEL PORTAPAPELES</span>
+</button>
+<!-- Botón principal de búsqueda -->
+<button class="w-full min-h-[64px] bg-primary text-on-primary font-boton-principal text-boton-principal rounded border-4 border-primary-dark flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" type="button">
+<span>BUSCAR CON ESTA REFERENCIA</span>
+<span class="text-2xl font-black">→</span>
+</button>
+</section>
+<!-- 4. SEPARADOR CLARO -->
+<div class="flex items-center my-2" role="separator">
+<div class="flex-grow border-t-4 border-outline-variant"></div>
+<span class="flex-shrink mx-3 px-3 py-2 bg-surface-variant font-bold text-on-surface-variant text-boton rounded border border-outline">
+        O SI LO PREFIERES: BUSCAR POR PARTES
+      </span>
+<div class="flex-grow border-t-4 border-outline-variant"></div>
+</div>
+<!-- 5. CAMINO SEGUNDO: BUSCAR POR PARTES -->
+<section class="bg-surface-container-lowest border-4 border-outline p-space-lg rounded flex flex-col gap-space-lg">
+<h3 class="font-pregunta text-pregunta text-on-surface border-b-2 border-outline-variant pb-2">
+        Buscar por pueblo, polígono y parcela
+      </h3>
+<!-- Provincia -->
+<div class="flex flex-col gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="provincia-select">
+          1. ¿En qué provincia está esta parcela?
+        </label>
+<p class="font-pista text-pista text-on-surface-variant">
+          Opción abierta por defecto para no tener que elegir si no quieres.
+        </p>
+<select class="w-full min-h-[64px] px-4 text-campo font-campo font-bold bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="provincia-select">
+<option value="all">Todas las provincias (o elige Valladolid, Zamora, Salamanca...)</option>
+<option value="AV">Ávila</option>
+<option value="BU">Burgos</option>
+<option value="LE">León</option>
+<option value="PA">Palencia</option>
+<option selected="" value="SA">Salamanca</option>
+<option value="SG">Segovia</option>
+<option value="SO">Soria</option>
+<option value="VA">Valladolid</option>
+<option value="ZA">Zamora</option>
+</select>
+</div>
+<!-- Pueblo -->
+<div class="flex flex-col gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="pueblo-input">
+          2. ¿En qué pueblo está?
+        </label>
+<p class="font-pista text-pista text-on-surface-variant">
+          Escribe las primeras letras y elígelo de la lista.
+        </p>
+<input class="w-full min-h-[64px] px-4 text-campo font-campo font-bold bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="pueblo-input" type="text" value="Villalar de los Comuneros"/>
+<button class="w-full min-h-[64px] bg-surface-container-high border-3 border-outline text-primary-dark font-boton text-boton rounded flex items-center justify-center gap-2 active:bg-secondary-container" type="button">
+<svg aria-hidden="true" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>BUSCAR EL PUEBLO</span>
+</button>
+</div>
+<!-- Polígono y Parcela (Fila doble táctil) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="poligono-input">
+            3. El polígono
+          </label>
+<input class="w-full min-h-[64px] px-4 text-dato-grande font-dato-grande bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="poligono-input" inputmode="numeric" type="number" value="503"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="parcela-input">
+            4. El número parcela
+          </label>
+<input class="w-full min-h-[64px] px-4 text-dato-grande font-dato-grande bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="parcela-input" inputmode="numeric" type="number" value="51"/>
+</div>
+</div>
+<!-- Nombre personal de la tierra -->
+<div class="flex flex-col gap-2">
+<label class="font-pregunta text-pregunta text-on-surface" for="nombre-input">
+          5. ¿Cómo llamas tú a esa tierra?
+        </label>
+<input class="w-full min-h-[64px] px-4 text-campo font-campo font-bold bg-surface border-4 border-primary-dark rounded focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus" id="nombre-input" type="text" value="El Prado de arriba"/>
+</div>
+<!-- Radio botones gigantes Secano / Regadío -->
+<fieldset class="flex flex-col gap-2">
+<legend class="font-pregunta text-pregunta text-on-surface mb-2">
+          6. ¿Es de secano o de regadío?
+        </legend>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- Opción Secano (Elegida con borde foco) -->
+<label class="flex items-center gap-4 min-h-[64px] p-3 bg-secondary-container border-4 border-primary-dark rounded cursor-pointer ring-4 ring-focus">
+<input checked="" class="w-8 h-8 text-primary border-4 border-primary-dark focus:ring-0" name="tipo-regadio" type="radio" value="secano"/>
+<span class="font-boton-principal text-boton-principal text-on-secondary-container">
+              SECANO
+            </span>
+</label>
+<!-- Opción Regadío -->
+<label class="flex items-center gap-4 min-h-[64px] p-3 bg-surface border-4 border-outline rounded cursor-pointer">
+<input class="w-8 h-8 text-primary border-4 border-outline focus:ring-0" name="tipo-regadio" type="radio" value="regadio"/>
+<span class="font-boton-principal text-boton-principal text-on-surface">
+              REGADÍO
+            </span>
+</label>
+</div>
+</fieldset>
+<!-- Botón de acción por partes -->
+<button class="w-full min-h-[64px] bg-primary text-on-primary font-boton-principal text-boton-principal rounded border-4 border-primary-dark flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" type="button">
+<svg aria-hidden="true" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>BUSCAR MIS TROZOS</span>
+</button>
+</section>
+<!-- 6. SECCIÓN RESULTADOS SIGPAC -->
+<section class="flex flex-col gap-space-lg mt-4">
+<div>
+<h2 class="font-titulo text-titulo text-primary-dark">
+          Los trozos que hay en esa parcela
+        </h2>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant mt-1 leading-snug">
+          El SIGPAC ha encontrado estos trozos. Marca los que sean tuyos y los traigo con su superficie, su uso y su dibujo.
+        </p>
+</div>
+<!-- Tarjeta Trozo 1 (Marcado, alto contraste con borde amarillo focus) -->
+<article class="bg-surface border-4 border-focus rounded p-space-lg flex flex-col gap-space-md ring-4 ring-primary-dark">
+<div class="flex items-center justify-between border-b-2 border-outline-variant pb-3">
+<div class="flex items-center gap-3">
+<span aria-label="Casilla marcada" class="inline-flex items-center justify-center w-10 h-10 bg-primary text-on-primary rounded font-black text-xl">
+              ✓
+            </span>
+<div>
+<span class="font-pregunta text-pregunta text-primary-dark">Trozo 1</span>
+<p class="font-cuerpo text-cuerpo font-mono font-bold text-on-surface">37-70-0-0-503-51-1</p>
+</div>
+</div>
+<span class="bg-primary text-on-primary px-3 py-1 font-bold text-boton rounded tracking-wide">
+            MARCADO
+          </span>
+</div>
+<!-- Fila de datos principales en tipografía grande legible -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface-container-low p-3 rounded border-2 border-outline-variant">
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Superficie</span>
+<span class="font-dato-grande text-dato-grande text-primary-dark">4,90 ha</span>
+</div>
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Pendiente media</span>
+<span class="font-dato-grande text-dato-grande text-primary-dark">2,1 %</span>
+</div>
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Uso del suelo</span>
+<span class="font-campo text-campo font-bold text-primary-dark">Tierra arable (TA)</span>
+</div>
+</div>
+<!-- Dibujo esquemático SVG de la forma de la parcela -->
+<div class="flex flex-col gap-2">
+<span class="font-pista text-pista font-bold text-on-surface-variant">
+            DIBUJO DEL SIGPAC - FORMA DEL TROZO:
+          </span>
+<div class="w-full h-44 bg-surface-container rounded border-3 border-primary-dark flex items-center justify-center p-2 relative">
+<svg class="w-full h-full max-h-36" fill="none" viewbox="0 0 320 160">
+<!-- Parcela completa contorno -->
+<polygon fill="#a2d2aa" fill-opacity="0.3" points="20,30 290,15 280,140 180,145 35,120" stroke="#0d2b18" stroke-dasharray="6 4" stroke-width="4"></polygon>
+<!-- Subparcela/Trozo 1 marcado -->
+<polygon fill="#1f4a2c" fill-opacity="0.8" points="20,30 190,22 180,145 35,120" stroke="#043317" stroke-width="4"></polygon>
+<!-- Etiqueta sobre el dibujo -->
+<text fill="#ffffff" font-size="18" font-weight="bold" x="75" y="85">Trozo 1 (4,90 ha)</text>
+<circle cx="105" cy="55" fill="#ffd24a" r="4"></circle>
+</svg>
+<div class="absolute bottom-2 right-2 bg-surface text-primary-dark px-2 py-1 text-pista font-bold border border-primary-dark rounded">
+              Orientación Norte ↑
+            </div>
+</div>
+</div>
+</article>
+<!-- Tarjeta Trozo 2 (Sin marcar) -->
+<article class="bg-surface border-4 border-outline rounded p-space-lg flex flex-col gap-space-md opacity-90">
+<div class="flex items-center justify-between border-b-2 border-outline-variant pb-3">
+<div class="flex items-center gap-3">
+<span aria-label="Casilla no marcada" class="inline-flex items-center justify-center w-10 h-10 bg-surface-container border-2 border-outline rounded font-black text-xl text-outline">
+</span>
+<div>
+<span class="font-pregunta text-pregunta text-on-surface">Trozo 2</span>
+<p class="font-cuerpo text-cuerpo font-mono font-bold text-on-surface-variant">37-70-0-0-503-51-2</p>
+</div>
+</div>
+<!-- Botón grande para marcar -->
+<button class="min-h-[48px] px-4 bg-surface-container-high border-2 border-primary-dark font-boton text-boton text-primary-dark rounded active:bg-secondary-container" type="button">
+            TOCAR PARA MARCAR
+          </button>
+</div>
+<!-- Fila de datos trozo 2 -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface-container-lowest p-3 rounded border border-outline">
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Superficie</span>
+<span class="font-dato-grande text-dato-grande text-on-surface">1,35 ha</span>
+</div>
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Pendiente</span>
+<span class="font-dato-grande text-dato-grande text-on-surface">1,4 %</span>
+</div>
+<div>
+<span class="font-pista text-pista text-on-surface-variant block">Uso</span>
+<span class="font-campo text-campo font-bold text-on-surface">Pastizal (PA)</span>
+</div>
+</div>
+<!-- Dibujo SVG trozo 2 -->
+<div class="w-full h-32 bg-surface-container rounded border-2 border-outline flex items-center justify-center p-2">
+<svg class="w-full h-full max-h-24" fill="none" viewbox="0 0 320 120">
+<polygon fill="#e2e3de" points="180,10 290,5 280,110 170,115" stroke="#765a00" stroke-width="3"></polygon>
+<text fill="#1a1c19" font-size="16" font-weight="bold" x="200" y="65">Trozo 2 (1,35 ha)</text>
+</svg>
+</div>
+</article>
+<!-- Bloque de aviso ámbar -->
+<aside class="bg-secondary-container border-4 border-secondary p-space-lg rounded text-on-secondary-container">
+<div class="flex items-start gap-3">
+<svg aria-hidden="true" class="w-8 h-8 flex-shrink-0 text-secondary" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<div class="font-cuerpo text-cuerpo leading-snug">
+<strong class="font-bold">Aviso importante:</strong> Marca al menos un trozo para poder traerlo. Si en esa parcela no hay ningún trozo, saldrá: <em>«En esa parcela el SIGPAC no tiene ningún trozo registrado. Comprueba el polígono o la referencia.»</em>
+</div>
+</div>
+</aside>
+<!-- Botón principal de guardado verde oscuro (Mínimo 64px) -->
+<button class="w-full min-h-[72px] bg-primary text-on-primary font-boton-principal text-boton-principal rounded border-4 border-focus flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" type="button">
+<span class="text-3xl font-black">✓</span>
+<span>TRAERME LOS MARCADOS (1 trozo)</span>
+</button>
+<!-- Botón claro de pie: Volver al inicio -->
+<button class="w-full min-h-[64px] bg-surface-container-high text-primary-dark font-boton text-boton rounded border-4 border-outline flex items-center justify-center gap-2 active:bg-surface-variant" type="button">
+<span class="text-2xl font-bold">←</span>
+<span>VOLVER AL INICIO</span>
+</button>
+</section>
+</main>
+<!-- PIE INSTITUCIONAL SOBRIO (Junta de Castilla y León - CUE Digital) -->
+<footer class="mt-auto bg-primary-dark border-t-4 border-primary text-on-primary py-8 px-gutter text-center">
+<div class="max-w-xl mx-auto flex flex-col gap-2">
+<p class="font-pregunta text-pregunta font-bold tracking-wide">
+        CUE Digital · Junta de Castilla y León
+      </p>
+<p class="font-cuerpo text-cuerpo opacity-90">
+        Diseñado para trabajar al sol, con una mano y sin cobertura.
+      </p>
+<p class="font-pista text-pista opacity-75 mt-2">
+        Datos oficiales sincronizados con el Visor Agrario y SIGPAC de Castilla y León.
+      </p>
+</div>
+</footer>
+</body></html>

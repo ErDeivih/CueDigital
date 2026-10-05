@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CUE Digital Despacho CyL - Qué hay sembrado</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-container": "#ffe9a8",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed": "#251a00",
+            "on-surface": "#1a1c19",
+            "on-tertiary-fixed": "#360c18",
+            "on-secondary-fixed-variant": "#594400",
+            "tertiary": "#4a1c27",
+            "outline-variant": "#c1c9bf",
+            "on-surface-variant": "#43503f",
+            "inverse-primary": "#a2d2aa",
+            "primary-container": "#2f6b40",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e2e3de",
+            "on-error": "#ffffff",
+            "tertiary-fixed": "#ffd9de",
+            "surface-tint": "#3c6847",
+            "primary-overlay": "#3a6446",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "error-container": "#ffdad6",
+            "surface": "#ffffff",
+            "tertiary-container": "#65323d",
+            "focus": "#ffd24a",
+            "on-tertiary": "#ffffff",
+            "primary-overlay-border": "#8fae97",
+            "on-background": "#1a1c19",
+            "surface-container-high": "#e8e9e4",
+            "on-error-container": "#4a0f0b",
+            "on-tertiary-container": "#e09ba8",
+            "error-dark": "#5c110d",
+            "primary-dark": "#0d2b18",
+            "primary-fixed-dim": "#a2d2aa",
+            "secondary-fixed": "#ffdf95",
+            "surface-container-highest": "#e2e3de",
+            "secondary": "#765a00",
+            "inverse-on-surface": "#f0f1ec",
+            "secondary-fixed-dim": "#eac25a",
+            "on-secondary-container": "#3d2f00",
+            "surface-container-low": "#f3f4ef",
+            "surface-container": "#edeee9",
+            "on-primary-fixed": "#00210c",
+            "background": "#f9faf5",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "primary": "#043317",
+            "primary-fixed": "#beeec5",
+            "surface-bright": "#f9faf5",
+            "on-primary-container": "#8bb992",
+            "outline": "#a9b6a8",
+            "on-secondary": "#ffffff",
+            "error": "#8c1d18",
+            "on-primary-fixed-variant": "#244f31",
+            "surface-dim": "#d9dad6",
+            "inverse-surface": "#2f312e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "12px",
+            "space-lg": "16px",
+            "gutter": "16px",
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "space-xl": "24px",
+            "margin": "16px",
+            "space-xxl": "32px"
+          },
+          "fontFamily": {
+            "titulo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "pregunta": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "dato-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton-principal": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "boton": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "campo": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "pista": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"],
+            "cuerpo-grande": ["system-ui, -apple-system, Segoe UI, Roboto, sans-serif"]
+          },
+          "fontSize": {
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Estricto estilo ERP sobrio: sin sombras, bordes exactos, texto nítido */
+    * {
+      box-shadow: none !important;
+    }
+    input:focus, select:focus, button:focus {
+      outline: 2px solid #ffd24a !important;
+      outline-offset: 1px;
+    }
+    /* Scrollbar sobria técnica */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #edeee9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a9b6a8;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-cuerpo antialiased h-screen overflow-hidden flex flex-col select-none">
+<!-- TOP BAR (TopNavBar) -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-gutter h-16 w-full bg-primary border-b-4 border-primary-container">
+<!-- Izquierda: Marca y Selectores Clave -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2 pr-4 border-r-2 border-primary-overlay">
+<span class="bg-secondary-fixed text-primary px-2 py-0.5 text-xs font-black tracking-wider uppercase rounded-none">ERP</span>
+<span class="text-titulo font-titulo font-extrabold text-on-primary tracking-tight">CUE Digital CyL</span>
+<span class="text-xs bg-primary-container text-on-primary px-2 py-0.5 font-bold tracking-wide">DESPACHO</span>
+</div>
+<!-- Selector de Finca -->
+<div class="flex items-center bg-primary-dark border-2 border-primary-overlay-border px-3 py-1.5 text-on-primary cursor-pointer hover:bg-primary-overlay">
+<span class="material-symbols-outlined text-secondary-fixed mr-2 text-xl">landscape</span>
+<div class="leading-tight">
+<div class="text-[10px] text-on-primary-container font-bold uppercase tracking-wider">Finca Seleccionada</div>
+<div class="text-sm font-bold truncate max-w-[210px]">Finca Las Suertes y El Prado (187,42 ha)</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant ml-2 text-lg">arrow_drop_down</span>
+</div>
+<!-- Selector de Campaña -->
+<div class="flex items-center bg-primary-dark border-2 border-primary-overlay-border px-3 py-1.5 text-on-primary cursor-pointer hover:bg-primary-overlay">
+<span class="material-symbols-outlined text-secondary-fixed mr-2 text-xl">calendar_today</span>
+<div class="leading-tight">
+<div class="text-[10px] text-on-primary-container font-bold uppercase tracking-wider">Campaña Activa</div>
+<div class="text-sm font-bold">Campaña 2026 <span class="text-xs font-normal text-on-primary-container">(01/09/25 - 31/08/26)</span></div>
+</div>
+<span class="material-symbols-outlined text-outline-variant ml-2 text-lg">arrow_drop_down</span>
+</div>
+<!-- Indicador SIEX / REGEPA -->
+<div class="flex items-center gap-2 px-3 py-1 bg-primary-dark/80 border border-primary-container text-on-primary text-xs">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-secondary-fixed animate-pulse"></span>
+<span class="font-bold tracking-wide">SIEX / REGEPA: <span class="text-secondary-fixed font-black">AL DÍA</span></span>
+</div>
+</div>
+<!-- Derecha: Titular y Botón de Acción Principal -->
+<div class="flex items-center gap-space-lg">
+<div class="text-right leading-tight pr-3 border-r border-primary-overlay">
+<div class="text-xs font-bold text-on-primary">David Pérez Velasco</div>
+<div class="text-[11px] text-on-primary-container font-mono">NIF: 12345678Z · Titular CUE</div>
+</div>
+<!-- Botón Trailing Primary Action -->
+<button class="h-10 px-4 bg-secondary-fixed text-on-secondary-fixed font-bold text-sm flex items-center gap-1.5 border-2 border-secondary hover:bg-secondary-container active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>+ NUEVO APUNTE / CAMBIAR CULTIVOS</span>
+</button>
+<!-- Iconos rápidos -->
+<div class="flex items-center gap-1 text-on-primary">
+<button class="p-2 hover:bg-primary-container border border-transparent hover:border-primary-overlay" title="Sincronizar ahora">
+<span class="material-symbols-outlined text-xl">sync</span>
+</button>
+<button class="p-2 hover:bg-primary-container border border-transparent hover:border-primary-overlay" title="Ayuda técnica">
+<span class="material-symbols-outlined text-xl">help</span>
+</button>
+<button class="p-2 hover:bg-primary-container border border-transparent hover:border-primary-overlay relative" title="Notificaciones">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-secondary-fixed rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<!-- CONTENEDOR PRINCIPAL: SIDEBAR + CANVAS -->
+<div class="flex flex-1 pt-16 pb-10 overflow-hidden bg-background">
+<!-- BARRA LATERAL (SideNavBar) -->
+<aside class="w-72 bg-surface-container-low border-r-4 border-outline flex flex-col justify-between shrink-0 h-full overflow-y-auto">
+<div>
+<!-- Encabezado de la Explotación -->
+<div class="p-4 border-b-2 border-outline-variant bg-surface-container">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center text-on-primary font-black border border-primary-dark text-lg">
+              CYL
+            </div>
+<div class="leading-tight">
+<h2 class="text-sm font-bold text-primary uppercase tracking-tight">Explotación Principal</h2>
+<p class="text-xs font-mono text-on-surface-variant font-semibold">REGEPA: CYL-47-09821</p>
+</div>
+</div>
+<button class="w-full mt-3 py-1.5 bg-surface text-primary border-2 border-primary text-xs font-bold flex items-center justify-center gap-1 hover:bg-primary hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm">cloud_sync</span>
+<span>Sincronizar SIEX</span>
+</button>
+</div>
+<!-- Lista de Módulos de Despacho -->
+<nav class="py-2 flex flex-col text-sm">
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">dashboard</span>
+<span>Resumen General</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">menu_book</span>
+<span>El Cuaderno</span>
+</div>
+<span class="bg-surface-container-highest px-2 py-0.5 text-xs font-bold text-on-surface-variant">24</span>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">landscape</span>
+<span>Tierras y Parcelas</span>
+</div>
+<span class="bg-surface-container-highest px-2 py-0.5 text-xs font-bold text-on-surface-variant">64</span>
+</a>
+<!-- ITEM ACTIVO: QUÉ HAY SEMBRADO -->
+<a class="flex items-center justify-between px-4 py-2.5 bg-primary text-on-primary font-bold border-l-4 border-secondary-fixed" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-secondary-fixed" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span>Qué hay sembrado</span>
+</div>
+<span class="bg-secondary-fixed text-primary px-2 py-0.5 text-xs font-black">ACTIVO</span>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">inventory_2</span>
+<span>El Almacén</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">science</span>
+<span>Los Análisis</span>
+</div>
+<span class="bg-surface-container-highest px-2 py-0.5 text-xs font-bold text-on-surface-variant">5</span>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">spa</span>
+<span>Plan de Abono / Nitratos</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">folder_open</span>
+<span>Papeles y Documentos</span>
+</div>
+<span class="bg-surface-container-highest px-2 py-0.5 text-xs font-bold text-on-surface-variant">6</span>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">receipt_long</span>
+<span>Facturas y Albaranes</span>
+</div>
+<span class="bg-surface-container-highest px-2 py-0.5 text-xs font-bold text-on-surface-variant">12</span>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">agriculture</span>
+<span>Maquinaria y Equipos</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-variant font-medium" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-on-surface-variant">history</span>
+<span>Años del cuaderno</span>
+</div>
+</a>
+</nav>
+</div>
+<!-- Pie del Menú Lateral -->
+<div class="p-3 border-t-2 border-outline-variant bg-surface-container-low text-xs">
+<div class="flex items-center justify-between py-1 text-on-surface-variant">
+<span class="flex items-center gap-1.5 font-bold">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+            Modo Local Activo
+          </span>
+<span class="font-mono text-[11px] text-outline">v4.2.8</span>
+</div>
+<a class="mt-2 flex items-center gap-2 py-1.5 px-2 text-error font-bold hover:bg-error-container/40 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">logout</span>
+<span>Cerrar Sesión</span>
+</a>
+</div>
+</aside>
+<!-- ÁREA DE TRABAJO PRINCIPAL (Canvas con scroll vertical interno) -->
+<main class="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
+<!-- 1. ENCABEZADO DE PÁGINA -->
+<div class="flex items-start justify-between border-b-2 border-outline pb-3">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="text-2xl font-black text-primary tracking-tight">Qué hay sembrado</h1>
+<span class="bg-primary-container text-on-primary text-xs font-bold px-2.5 py-1 tracking-wide">
+              64 parcelas en campaña 2026
+            </span>
+</div>
+<p class="text-sm text-on-surface-variant mt-1 font-medium max-w-4xl">
+            Dinos qué hay este año en cada parcela. Con eso, cuando apuntes un tratamiento o una labor ya no tienes que escribir el cultivo: el programa ya lo sabe.
+          </p>
+</div>
+<!-- Botones de herramientas compactos (32-36px) -->
+<div class="flex items-center gap-2 shrink-0">
+<button class="h-9 px-3 bg-surface border-2 border-outline text-primary text-xs font-bold flex items-center gap-1.5 hover:bg-surface-variant active:translate-y-0.5">
+<span class="material-symbols-outlined text-base">picture_as_pdf</span>
+<span>Sacar listado oficial (PDF)</span>
+</button>
+<button class="h-9 px-3 bg-surface border-2 border-outline text-primary text-xs font-bold flex items-center gap-1.5 hover:bg-surface-variant active:translate-y-0.5">
+<span class="material-symbols-outlined text-base">table_view</span>
+<span>Exportar Excel</span>
+</button>
+<button class="h-9 px-3 bg-primary text-on-primary border-2 border-primary-dark text-xs font-bold flex items-center gap-1.5 hover:bg-primary-overlay active:translate-y-0.5">
+<span class="material-symbols-outlined text-base">playlist_add_check</span>
+<span>+ Asignación rápida masiva</span>
+</button>
+</div>
+</div>
+<!-- 2. BANNER DE AVISO DESTACADO (Ámbar / Amarillo de alerta PAC) -->
+<div class="bg-secondary-container border-2 border-secondary p-3.5 flex items-center justify-between">
+<div class="flex items-start gap-3">
+<div class="bg-secondary text-on-secondary p-1 shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div>
+<div class="text-sm font-black text-on-secondary-container">
+              A 10 parcelas les falta decir qué tienen este año
+            </div>
+<p class="text-xs text-on-secondary-container/90 mt-0.5 font-medium leading-normal">
+              Sin cultivo declarado, la Junta no puede validar los sulfatos ni las labores de estas tierras para las ayudas PAC. Pulsa en DECIRLO o filtra por las pendientes para completarlas en bloque.
+            </p>
+</div>
+</div>
+<button class="h-8 px-3 bg-on-secondary-container text-secondary-container font-black text-xs shrink-0 flex items-center gap-1.5 hover:bg-black transition-colors">
+<span>Ver solo las 10 que faltan</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</div>
+<!-- 3. BARRA DE FILTROS Y HERRAMIENTAS DE TABLA -->
+<div class="bg-surface-container border-2 border-outline-variant p-2.5 flex items-center justify-between gap-3 text-xs">
+<div class="flex items-center gap-2 flex-1">
+<!-- Buscador -->
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-xs bg-surface border-2 border-outline text-on-surface font-medium placeholder:text-outline focus:border-primary" placeholder="Buscar por nombre de tierra, referencia o cultivo..." type="text"/>
+</div>
+<!-- Filtro Estado -->
+<select class="h-8 px-2.5 bg-surface border-2 border-outline font-bold text-on-surface focus:border-primary text-xs cursor-pointer">
+<option>Todos los estados (54 al día, 10 faltan)</option>
+<option>Solo faltan declarar (10)</option>
+<option>Solo completadas al día (54)</option>
+</select>
+<!-- Filtro Cultivo -->
+<select class="h-8 px-2.5 bg-surface border-2 border-outline font-medium text-on-surface focus:border-primary text-xs cursor-pointer">
+<option>Todos los cultivos</option>
+<option>Cebada cervecera</option>
+<option>Trigo blando</option>
+<option>Maíz dulce</option>
+<option>Girasol</option>
+<option>Barbecho</option>
+</select>
+<!-- Filtro Régimen -->
+<select class="h-8 px-2.5 bg-surface border-2 border-outline font-medium text-on-surface focus:border-primary text-xs cursor-pointer">
+<option>Secano / Regadío</option>
+<option>Solo Secano</option>
+<option>Solo Regadío</option>
+</select>
+<!-- Filtro Municipio -->
+<select class="h-8 px-2.5 bg-surface border-2 border-outline font-medium text-on-surface focus:border-primary text-xs cursor-pointer">
+<option>Término municipal (Todos)</option>
+<option>Villalar de los Comuneros</option>
+<option>Tordesillas</option>
+<option>Castronuño</option>
+<option>Pollos</option>
+</select>
+</div>
+<!-- Casilla rápida de repetición -->
+<label class="flex items-center gap-2 cursor-pointer font-bold text-on-surface shrink-0 hover:text-primary">
+<input class="w-4 h-4 border-2 border-outline text-primary rounded-none focus:ring-0" type="checkbox"/>
+<span>Ver sólo las que repiten cultivo del año pasado</span>
+</label>
+</div>
+<!-- 4. TABLA DE DATOS PRINCIPAL (Densa, fija sticky, bordes 1-2px, sin sombras) -->
+<div class="border-2 border-outline bg-surface overflow-hidden">
+<table class="w-full text-left border-collapse text-xs">
+<!-- Cabecera de tabla -->
+<thead class="bg-surface-container-high border-b-2 border-outline uppercase font-bold text-on-surface tracking-wider sticky top-0 z-10">
+<tr>
+<th class="py-2.5 px-3 border-r border-outline-variant cursor-pointer hover:bg-surface-container-highest" scope="col">
+<div class="flex items-center justify-between gap-1">
+<span>Tierra / Parcela</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-44" scope="col">
+<div class="flex items-center justify-between gap-1">
+<span>Ref. SIGPAC</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant text-right w-24" scope="col">
+<div class="flex items-center justify-end gap-1">
+<span>Superficie</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-64" scope="col">
+<div class="flex items-center justify-between gap-1">
+<span>Este año hay (2026)</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-52" scope="col">
+<span>Alerta Rotación</span>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant" scope="col">
+<span>Otros años (histórico)</span>
+</th>
+<th class="py-2.5 px-3 border-r border-outline-variant w-28 text-center" scope="col">
+<span>Estado</span>
+</th>
+<th class="py-2.5 px-3 text-center w-28" scope="col">
+<span>Acción</span>
+</th>
+</tr>
+</thead>
+<!-- Cuerpo con las 10 filas reales especificadas -->
+<tbody class="divide-y divide-outline-variant font-medium">
+<!-- Fila 1: Falta rellenar -->
+<tr class="hover:bg-secondary-container/20 transition-colors bg-error-container/10">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>Las Suertes de Arriba</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Tordesillas</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-186-0-0-102-14-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">12,30 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="text-error font-black uppercase text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">error</span>
+                  Sin cultivo asignado
+                </span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Girasol · <span class="font-bold text-on-surface">2024:</span> Cebada cervecera
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-secondary-container text-on-secondary-container border border-secondary text-[11px] font-black">
+                  Falta rellenar
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-secondary text-on-secondary font-black text-xs hover:bg-on-secondary-container transition-colors border border-on-secondary-fixed">
+                  DECIRLO
+                </button>
+</td>
+</tr>
+<!-- Fila 2: Repite cultivo -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>El Prado</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Villalar de los Comuneros</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">37-70-0-0-503-51-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">4,90 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Cebada cervecera</div>
+<div class="text-[11px] text-on-surface-variant">Cerveza Planet</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-secondary-container text-on-secondary-container border border-secondary text-[10px] font-bold">
+<span class="material-symbols-outlined text-xs">warning</span>
+                  Repite lo del año pasado (consume suelo)
+                </span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Cebada cervecera · <span class="font-bold text-on-surface">2024:</span> Trigo blando
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 3: Al día -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>El Vallejo Llano</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Castronuño</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-212-0-0-205-8-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">8,15 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Trigo blando</div>
+<div class="text-[11px] text-on-surface-variant">Camargo</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Barbecho tradicional · <span class="font-bold text-on-surface">2024:</span> Girasol
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 4: Regadío -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>La Vega del Río</span>
+<span class="text-[10px] px-1 py-0.2 bg-primary-container text-on-primary font-bold">Regadío</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Pollos</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-045-0-0-12-30-2</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">6,40 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Maíz dulce</div>
+<div class="text-[11px] text-on-surface-variant">Syngenta Max</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Alfalfa · <span class="font-bold text-on-surface">2024:</span> Remolacha azucarera
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 5: Al día -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>Majada Honda</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Villalar de los Comuneros</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">37-70-0-0-502-18-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">3,25 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Girasol alto oleico</div>
+<div class="text-[11px] text-on-surface-variant">Pioneer P64</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Cebada cervecera · <span class="font-bold text-on-surface">2024:</span> Trigo
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 6: Falta rellenar -->
+<tr class="hover:bg-secondary-container/20 transition-colors bg-error-container/10">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>El Sotillo Húmedo</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Pollos</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-045-0-0-12-31-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">6,40 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="text-error font-black uppercase text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">error</span>
+                  Sin cultivo asignado
+                </span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Barbecho · <span class="font-bold text-on-surface">2024:</span> Trigo
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-secondary-container text-on-secondary-container border border-secondary text-[11px] font-black">
+                  Falta rellenar
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-secondary text-on-secondary font-black text-xs hover:bg-on-secondary-container transition-colors border border-on-secondary-fixed">
+                  DECIRLO
+                </button>
+</td>
+</tr>
+<!-- Fila 7: Barbecho -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>Los Almendros</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Tordesillas</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-186-0-0-104-9-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">8,20 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Barbecho tradicional</div>
+<div class="text-[11px] text-on-surface-variant">Sin siembra declarada</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Cebada · <span class="font-bold text-on-surface">2024:</span> Girasol
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 8: Al día -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>La Dehesa Vieja</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Tordesillas</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-186-0-0-108-3-2</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">12,40 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Girasol alto oleico</div>
+<div class="text-[11px] text-on-surface-variant">LG 54.78</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Trigo blando · <span class="font-bold text-on-surface">2024:</span> Barbecho
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 9: Alfalfa (Repite cultivo) -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>Tierra Grande</span>
+<span class="text-[10px] px-1 py-0.2 bg-surface-container-high border border-outline text-on-surface-variant font-normal">Secano</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Villalar de los Comuneros</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">37-70-0-0-501-4-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">3,15 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Alfalfa (secano)</div>
+<div class="text-[11px] text-on-surface-variant">Variedad Aragón</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-secondary-container text-on-secondary-container border border-secondary text-[10px] font-bold">
+<span class="material-symbols-outlined text-xs">warning</span>
+                  Repite lo del año pasado (consume suelo)
+                </span>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Alfalfa · <span class="font-bold text-on-surface">2024:</span> Alfalfa (año 1)
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+<!-- Fila 10: Remolacha -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-3 border-r border-outline-variant font-bold text-primary">
+<div class="flex items-center gap-1.5">
+<span>El Carrizal de Abajo</span>
+<span class="text-[10px] px-1 py-0.2 bg-primary-container text-on-primary font-bold">Regadío</span>
+</div>
+<div class="text-[11px] text-on-surface-variant font-normal">Pollos</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant font-mono text-[11px] text-on-surface-variant">47-045-0-0-15-2-1</td>
+<td class="py-2 px-3 border-r border-outline-variant text-right font-bold text-on-surface font-mono">5,10 ha</td>
+<td class="py-2 px-3 border-r border-outline-variant">
+<div class="font-bold text-primary">Remolacha azucarera</div>
+<div class="text-[11px] text-on-surface-variant">KWS Smart</div>
+</td>
+<td class="py-2 px-3 border-r border-outline-variant text-outline">—</td>
+<td class="py-2 px-3 border-r border-outline-variant text-on-surface-variant text-[11px]">
+<span class="font-bold text-on-surface">2025:</span> Maíz dulce · <span class="font-bold text-on-surface">2024:</span> Trigo blando
+              </td>
+<td class="py-2 px-3 border-r border-outline-variant text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-fixed/40 text-primary border border-primary text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Al día
+                </span>
+</td>
+<td class="py-2 px-3 text-center">
+<button class="h-7 w-full bg-surface border border-primary text-primary font-bold text-xs hover:bg-surface-variant transition-colors">
+                  CAMBIARLO
+                </button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- 5. PIE DE TABLA Y PAGINACIÓN -->
+<div class="p-3 bg-surface-container flex items-center justify-between border-t-2 border-outline text-xs">
+<div class="flex items-center gap-3">
+<span class="font-bold text-on-surface">
+              64 tierras · <span class="text-primary font-black">54 con su cultivo dicho</span> (<span class="text-error font-black">10 pendientes</span>)
+            </span>
+<span class="text-outline-variant">|</span>
+<span class="font-mono text-on-surface-variant font-bold">Superficie total declarada: 187,42 ha</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-on-surface-variant font-medium">Mostrando 1 - 10 de 64 tierras</span>
+<div class="flex items-center gap-1">
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-7 h-7 bg-primary text-on-primary font-black border border-primary flex items-center justify-center">1</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">2</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">3</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">4</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">5</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">6</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface hover:bg-surface-container-high flex items-center justify-center">7</button>
+<button class="w-7 h-7 bg-surface border border-outline font-bold text-on-surface flex items-center justify-center hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 6. BLOQUE PEDAGÓGICO DE EXPLICACIÓN AL PIE -->
+<div class="bg-surface-container-low border-2 border-outline p-4 mb-2">
+<div class="flex items-start gap-3.5">
+<div class="w-8 h-8 rounded-none bg-primary text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-lg">info</span>
+</div>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-primary tracking-tight uppercase">¿Para qué sirve tener el cultivo asignado a cada tierra?</h3>
+<div class="grid grid-cols-3 gap-4 mt-2 text-xs text-on-surface-variant font-medium leading-relaxed">
+<div class="p-2.5 bg-surface border border-outline-variant">
+<div class="font-bold text-on-surface text-primary mb-1">1. Relleno automático en el cuaderno</div>
+<p>El cuaderno de cada año dice qué había en la tierra, para que no tengas que escribirlo en cada sulfatada ni labor mecánica.</p>
+</div>
+<div class="p-2.5 bg-surface border border-outline-variant">
+<div class="font-bold text-on-surface text-primary mb-1">2. Control de rotación y ayudas PAC</div>
+<p>Puedes ver qué sembraste los años anteriores —que es lo que ayuda a decidir la rotación y evitar desgastar el terreno o sanciones de ecorregímenes PAC.</p>
+</div>
+<div class="p-2.5 bg-surface border border-outline-variant">
+<div class="font-bold text-on-surface text-primary mb-1">3. Prevención de errores de fecha</div>
+<p>El aviso de «en esa fecha no había cultivo» funciona automáticamente si intentas apuntar una labor fuera de campaña.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BARRA INFERIOR DE ESTADO (Footer de despacho - SIN BARRA MÓVIL) -->
+<footer class="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-margin h-10 w-full bg-primary-dark border-t-2 border-primary-container text-xs text-on-primary">
+<!-- Estado SIEX / REGEPA -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 font-mono">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span>
+<span>SIEX: <span class="text-secondary-fixed font-bold">Sincronizado hace 4 min</span></span>
+</div>
+<span class="text-primary-overlay">|</span>
+<span class="font-mono">REGEPA: <span class="font-bold">CYL-47-09821 Actualizado</span></span>
+<span class="text-primary-overlay">|</span>
+<span>CUE Digital v4.2 Conectado</span>
+</div>
+<!-- Atajos de Teclado Profesionales -->
+<div class="flex items-center gap-3 text-[11px] text-on-primary-container">
+<span>Atajos:</span>
+<span class="bg-primary px-1.5 py-0.5 border border-primary-overlay-border text-on-primary font-mono font-bold">[Ctrl+F] Buscar tierra</span>
+<span class="bg-primary px-1.5 py-0.5 border border-primary-overlay-border text-on-primary font-mono font-bold">[N] Nuevo apunte</span>
+<span class="bg-primary px-1.5 py-0.5 border border-primary-overlay-border text-on-primary font-mono font-bold">[Esc] Limpiar filtros</span>
+</div>
+<!-- Enlaces y Soporte Junta CyL -->
+<div class="flex items-center gap-3 text-xs">
+<a class="hover:text-secondary-fixed flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span>Firma Digital Activa</span>
+</a>
+<span class="text-primary-overlay">|</span>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Estado de Servidores Junta CyL</a>
+<span class="text-primary-overlay">|</span>
+<a class="text-secondary-fixed font-bold hover:underline" href="#">Soporte Técnico</a>
+</div>
+</footer>
+</body></html>

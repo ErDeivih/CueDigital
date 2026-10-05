@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background text-on-surface" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0" name="viewport"/>
+<title>Mi cuaderno - Campaña 2026</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with custom plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#ffffff",
+            "on-primary": "#ffffff",
+            "inverse-primary": "#a2d2aa",
+            "tertiary-fixed-dim": "#fbb3c0",
+            "tertiary-container": "#65323d",
+            "primary-dark": "#0d2b18",
+            "surface-variant": "#f4f6f3",
+            "on-tertiary-fixed": "#360c18",
+            "background": "#f9faf5",
+            "on-secondary-container": "#3d2f00",
+            "on-surface-variant": "#414941",
+            "on-surface": "#10190f",
+            "primary-fixed-dim": "#a2d2aa",
+            "on-error-container": "#4a0f0b",
+            "on-tertiary-container": "#e09ba8",
+            "focus": "#ffd24a",
+            "surface-container-highest": "#e2e3de",
+            "inverse-on-surface": "#f0f1ec",
+            "secondary": "#765a00",
+            "surface": "#ffffff",
+            "outline-variant": "#c1c9bf",
+            "surface-container-high": "#e8e9e4",
+            "primary-container": "#2f6b40",
+            "secondary-container": "#ffd56c",
+            "outline": "#a9b6a8",
+            "on-secondary-fixed-variant": "#594400",
+            "error-container": "#fbe3e1",
+            "on-primary-fixed": "#00210c",
+            "surface-bright": "#f9faf5",
+            "inverse-surface": "#2f312e",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#edeee9",
+            "primary-overlay-border": "#8fae97",
+            "secondary-fixed": "#ffdf95",
+            "on-background": "#1a1c19",
+            "on-primary-fixed-variant": "#244f31",
+            "error": "#8c1d18",
+            "surface-dim": "#d9dad6",
+            "primary-overlay": "#3a6446",
+            "tertiary": "#4a1c27",
+            "surface-tint": "#3c6847",
+            "on-primary-container": "#8bb992",
+            "error-dark": "#5c110d",
+            "primary-fixed": "#beeec5",
+            "on-tertiary-fixed-variant": "#6b3742",
+            "tertiary-fixed": "#ffd9de",
+            "secondary-fixed-dim": "#eac25a",
+            "on-tertiary": "#ffffff",
+            "primary": "#043317",
+            "on-secondary-fixed": "#251a00",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f3f4ef"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "16px",
+            "space-xl": "24px",
+            "gutter": "16px",
+            "space-sm": "8px",
+            "space-md": "12px",
+            "space-lg": "16px",
+            "space-xs": "4px",
+            "space-xxl": "32px"
+          },
+          "fontFamily": {
+            "campo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "titulo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pista": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "boton-principal": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "cuerpo": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "pregunta": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""],
+            "dato-grande": ["\"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\""]
+          },
+          "fontSize": {
+            "campo": ["1.15rem", { "fontWeight": "400" }],
+            "cuerpo-grande": ["21px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "boton": ["1.1rem", { "fontWeight": "700" }],
+            "titulo": ["1.5rem", { "lineHeight": "1.45", "fontWeight": "700" }],
+            "pista": ["0.95rem", { "fontWeight": "400" }],
+            "boton-principal": ["1.35rem", { "fontWeight": "700" }],
+            "cuerpo": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+            "pregunta": ["1.45rem", { "lineHeight": "1.45", "fontWeight": "800" }],
+            "dato-grande": ["1.6rem", { "fontWeight": "800" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Strict Outdoor High-Contrast Utilities */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    
+    /* Disallow subtle gradients or blur filters */
+    button:active {
+      outline: 4px solid #ffd24a !important;
+      outline-offset: 2px;
+    }
+    
+    .border-3 {
+      border-width: 3px;
+    }
+    
+    .border-b-3 {
+      border-bottom-width: 3px;
+    }
+
+    .border-l-6 {
+      border-left-width: 6px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-cuerpo text-cuerpo text-on-surface antialiased min-h-full pb-16 selection:bg-focus selection:text-primary-dark">
+<!-- ================= TOP APP BAR (Shared Component Anchor) ================= -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin h-16 min-h-[64px] bg-primary text-on-primary border-b-4 border-outline select-none">
+<button aria-label="Volver a la pantalla anterior" class="flex items-center justify-center min-w-[56px] min-h-[56px] bg-transparent text-on-primary border-2 border-transparent active:border-focus active:bg-primary-container rounded" type="button">
+<span class="material-symbols-outlined text-[34px] leading-none" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="text-titulo font-titulo font-bold text-on-primary tracking-tight truncate px-2 text-center flex-1">
+      Mi cuaderno
+    </h1>
+<button class="min-h-[48px] px-3 bg-primary-container text-on-primary border-2 border-primary-overlay-border rounded font-boton text-boton tracking-wide active:border-focus flex items-center justify-center gap-1" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="text_fields">text_fields</span>
+<span>A+ Letra</span>
+</button>
+</header>
+<!-- Main Canvas (One-column, no bottom nav bar) -->
+<main class="w-full max-w-[480px] mx-auto pt-20 px-margin flex flex-col gap-space-xl">
+<!-- SUB-CABECERA / ESTADO RURAL -->
+<section aria-label="Estado del cuaderno" class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-pregunta text-pregunta text-primary">Campaña 2026</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 font-boton text-boton border-2 border-secondary font-bold">
+          Año actual: 2026
+        </span>
+</div>
+<div class="flex items-start gap-space-sm mt-space-sm pt-space-sm border-t-2 border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[30px] shrink-0" data-icon="check_circle">check_circle</span>
+<p class="font-cuerpo text-cuerpo text-on-surface font-semibold leading-snug">
+          Tienes datos guardados en el móvil. No necesitas cobertura ahora mismo.
+        </p>
+</div>
+</section>
+<!-- BLOQUE 1: APUNTES DE PRODUCTO (TRATAMIENTOS) -->
+<section class="bg-surface border-3 border-primary-container p-space-lg flex flex-col gap-space-lg">
+<div class="flex items-center gap-space-sm border-b-3 border-primary-container pb-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="menu_book">menu_book</span>
+<h2 class="font-pregunta text-pregunta text-primary">
+          3 apuntes de producto este año
+        </h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-normal">
+        Tratamientos, sulfatos y abonos echados en las tierras durante esta campaña:
+      </p>
+<!-- Lista de las 3 tarjetas de apuntes -->
+<div class="flex flex-col gap-space-md">
+<!-- Apunte 1 -->
+<article class="bg-surface-variant border-2 border-outline p-space-md flex flex-col gap-space-xs">
+<div class="flex justify-between items-baseline border-b-2 border-outline-variant pb-space-xs">
+<span class="font-boton text-boton text-primary">Apunte 1</span>
+<span class="font-boton text-boton text-on-surface-variant">12 de abril de 2026</span>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Producto aplicado:</p>
+<p class="font-dato-grande text-dato-grande text-on-surface leading-tight">
+              Herbicida para la avena loca
+            </p>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Tierra o parcela:</p>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-bold">
+              El Soto (Tierra de abajo)
+            </p>
+</div>
+<div class="bg-surface-container-high p-space-sm mt-space-xs border-2 border-outline">
+<span class="font-cuerpo text-cuerpo font-extrabold text-primary-dark">8,50 hectáreas tratadas</span>
+</div>
+</article>
+<!-- Apunte 2 -->
+<article class="bg-surface-variant border-2 border-outline p-space-md flex flex-col gap-space-xs">
+<div class="flex justify-between items-baseline border-b-2 border-outline-variant pb-space-xs">
+<span class="font-boton text-boton text-primary">Apunte 2</span>
+<span class="font-boton text-boton text-on-surface-variant">28 de marzo de 2026</span>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Producto aplicado:</p>
+<p class="font-dato-grande text-dato-grande text-on-surface leading-tight">
+              Fungicida para el pulgón y la roya
+            </p>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Tierra o parcela:</p>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-bold">
+              Las Viñas viejas
+            </p>
+</div>
+<div class="bg-surface-container-high p-space-sm mt-space-xs border-2 border-outline">
+<span class="font-cuerpo text-cuerpo font-extrabold text-primary-dark">4,20 hectáreas tratadas</span>
+</div>
+</article>
+<!-- Apunte 3 -->
+<article class="bg-surface-variant border-2 border-outline p-space-md flex flex-col gap-space-xs">
+<div class="flex justify-between items-baseline border-b-2 border-outline-variant pb-space-xs">
+<span class="font-boton text-boton text-primary">Apunte 3</span>
+<span class="font-boton text-boton text-on-surface-variant">15 de marzo de 2026</span>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Producto aplicado:</p>
+<p class="font-dato-grande text-dato-grande text-on-surface leading-tight">
+              Abono foliar de primavera
+            </p>
+</div>
+<div class="mt-space-xs">
+<p class="font-pista text-pista text-on-surface-variant">Tierra o parcela:</p>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-surface font-bold">
+              El Monte Alto
+            </p>
+</div>
+<div class="bg-surface-container-high p-space-sm mt-space-xs border-2 border-outline">
+<span class="font-cuerpo text-cuerpo font-extrabold text-primary-dark">12,00 hectáreas tratadas</span>
+</div>
+</article>
+</div>
+<!-- Botón de acción Bloque 1 -->
+<button class="w-full min-h-[64px] bg-primary text-on-primary border-3 border-primary-dark flex items-center justify-center gap-space-md font-boton-principal text-boton-principal uppercase tracking-wide active:bg-primary-container" type="button">
+<span class="material-symbols-outlined text-[36px]" data-icon="add_circle">add_circle</span>
+<span>+ Apuntar otro tratamiento</span>
+</button>
+</section>
+<!-- BLOQUE 2: LO QUE FALTA POR COMPLETAR (Avisos de la Junta) -->
+<section class="bg-[#fff9e6] border-3 border-secondary p-space-lg flex flex-col gap-space-lg">
+<div class="border-b-3 border-secondary pb-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[36px]" data-icon="warning">warning</span>
+<h2 class="font-pregunta text-pregunta text-on-surface">Lo que falta por completar</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface font-semibold mt-space-xs">
+          La Junta pide estos datos antes de cerrar la campaña.
+        </p>
+</div>
+<!-- Pendiente 1 -->
+<div class="bg-surface border-2 border-secondary p-space-md flex flex-col gap-space-sm">
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface">
+          A la parcela "El Prado" le falta decir qué cultivo tiene este año
+        </p>
+<p class="font-pista text-pista text-on-surface-variant">
+          Sin esto, el cuaderno no estará completo ante la inspección.
+        </p>
+<button class="w-full min-h-[64px] bg-primary text-on-primary border-3 border-primary-dark font-boton text-boton flex items-center justify-center gap-space-sm active:bg-primary-container" type="button">
+<span class="material-symbols-outlined text-[30px]" data-icon="edit_note">edit_note</span>
+<span>DECIR QUÉ HAY SEMBRADO</span>
+</button>
+</div>
+<!-- Pendiente 2 -->
+<div class="bg-surface border-2 border-secondary p-space-md flex flex-col gap-space-sm">
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface">
+          Falta apuntar el número de carné de aplicador de Juan
+        </p>
+<p class="font-pista text-pista text-on-surface-variant">
+          Obligatorio para justificar los tratamientos fitosanitarios.
+        </p>
+<button class="w-full min-h-[64px] bg-primary text-on-primary border-3 border-primary-dark font-boton text-boton flex items-center justify-center gap-space-sm active:bg-primary-container" type="button">
+<span class="material-symbols-outlined text-[30px]" data-icon="badge">badge</span>
+<span>PONER EL NÚMERO DE CARNÉ</span>
+</button>
+</div>
+</section>
+<!-- BLOQUE 3: LO QUE HE VENDIDO -->
+<section class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="scale">scale</span>
+<h2 class="font-pregunta text-pregunta text-primary">Lo que he vendido</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+        Albaranes de cosecha de cereal entregada en la cooperativa o al comprador.
+      </p>
+<div class="bg-surface-container-high border-2 border-outline p-space-sm">
+<p class="font-dato-grande text-dato-grande text-on-surface">2 entregas registradas</p>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">42.000 kg de trigo blando</p>
+</div>
+<button class="w-full min-h-[64px] bg-surface-container border-3 border-primary text-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="local_shipping">local_shipping</span>
+<span>VER O APUNTAR UNA VENTA</span>
+</button>
+</section>
+<!-- BLOQUE 4: LABORES SIN PRODUCTO -->
+<section class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="agriculture">agriculture</span>
+<h2 class="font-pregunta text-pregunta text-primary">Lo que hago sin echar producto</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+        Labores de arada, desbroce, siembra, siega y rotación de tierras.
+      </p>
+<div class="bg-surface-container-high border-2 border-outline p-space-sm">
+<p class="font-dato-grande text-dato-grande text-on-surface">4 labores anotadas este año</p>
+<p class="font-pista text-pista text-on-surface-variant">Arada en profundidad, pase de cultivador y siembra</p>
+</div>
+<button class="w-full min-h-[64px] bg-surface-container border-3 border-primary text-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="construction">construction</span>
+<span>VER O APUNTAR UNA LABOR</span>
+</button>
+</section>
+<!-- BLOQUE 5: ANÁLISIS DE TIERRA Y AGUA -->
+<section class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="science">science</span>
+<h2 class="font-pregunta text-pregunta text-primary">Los análisis de tierra y agua</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+        Papeles del laboratorio sobre nutrientes de la tierra o agua del pozo.
+      </p>
+<div class="bg-surface-container-high border-2 border-outline p-space-sm">
+<p class="font-dato-grande text-dato-grande text-on-surface">1 análisis guardado</p>
+<p class="font-cuerpo text-cuerpo text-on-surface-variant font-bold">Muestra de tierra de febrero de 2026</p>
+</div>
+<button class="w-full min-h-[64px] bg-surface-container border-3 border-primary text-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="water_drop">water_drop</span>
+<span>VER LOS ANÁLISIS</span>
+</button>
+</section>
+<!-- BLOQUE 6: PLAN DE ABONO DEL AÑO -->
+<section class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="yard">yard</span>
+<h2 class="font-pregunta text-pregunta text-primary">El plan de abono del año</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+        Cuánto nitrógeno y abono puedes echar como máximo en cada parcela.
+      </p>
+<div class="bg-surface-container-high border-2 border-outline p-space-sm flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[32px]" data-icon="check_circle">check_circle</span>
+<div>
+<p class="font-cuerpo-grande text-cuerpo-grande font-bold text-on-surface">Plan preparado por el técnico</p>
+<p class="font-cuerpo text-cuerpo text-primary font-bold">Estado: Al día y correcto</p>
+</div>
+</div>
+<button class="w-full min-h-[64px] bg-surface-container border-3 border-primary text-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="description">description</span>
+<span>VER EL PLAN DE ABONO</span>
+</button>
+</section>
+<!-- BLOQUE 7: FIRMAR EL CUADERNO -->
+<section class="bg-surface border-3 border-outline p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[36px]" data-icon="draw">draw</span>
+<h2 class="font-pregunta text-pregunta text-primary">Firmar el cuaderno</h2>
+</div>
+<p class="font-cuerpo text-cuerpo text-on-surface">
+        Tu firma para confirmar que lo que hay apuntado es la verdad.
+      </p>
+<div class="bg-error-container border-2 border-error p-space-sm flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-error text-[32px]" data-icon="pending_actions">pending_actions</span>
+<p class="font-cuerpo-grande text-cuerpo-grande text-on-error-container font-extrabold">
+          Pendiente de firmar para la campaña 2026
+        </p>
+</div>
+<button class="w-full min-h-[64px] bg-surface-container border-3 border-primary text-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="signature">signature</span>
+<span>FIRMAR AHORA EN LA PANTALLA</span>
+</button>
+</section>
+<!-- BLOQUE 8: DESTACADO - SACAR MI CUADERNO PARA LA JUNTA -->
+<section class="bg-primary text-on-primary border-3 border-primary-dark p-space-lg flex flex-col gap-space-md">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-focus text-[40px] shrink-0" data-icon="verified_user">verified_user</span>
+<div>
+<h2 class="font-pregunta text-pregunta text-on-primary leading-tight">
+            Para la inspección oficial
+          </h2>
+<p class="font-cuerpo text-cuerpo text-inverse-on-surface mt-space-xs">
+            Si viene el inspector al campo o te lo piden de la oficina comarcal agraria.
+          </p>
+</div>
+</div>
+<!-- BOTÓN PRINCIPAL DE 96PX DE ALTURA -->
+<button class="w-full min-h-[96px] bg-primary-container text-on-primary border-3 border-primary-dark p-space-md flex flex-col items-center justify-center text-center active:bg-primary" type="button">
+<div class="flex items-center justify-center gap-space-sm">
+<span class="material-symbols-outlined text-[36px] text-focus" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-boton-principal text-boton-principal uppercase tracking-wide">
+            SACAR MI CUADERNO PARA LA JUNTA
+          </span>
+</div>
+<span class="font-pista text-pista text-on-primary font-normal mt-1 opacity-90">
+          Prepara el documento oficial con todo en regla
+        </span>
+</button>
+</section>
+<!-- BLOQUE 9: ACCIONES FINALES AL FONDO -->
+<section class="flex flex-col gap-space-md pt-space-sm border-t-3 border-outline-variant">
+<!-- Botón 1: Sacar en papel -->
+<div class="flex flex-col gap-1">
+<button class="w-full min-h-[64px] bg-surface text-primary border-3 border-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="print">print</span>
+<span>SACAR EN PAPEL</span>
+</button>
+<p class="font-pista text-pista text-on-surface-variant text-center">
+          Para imprimir en una impresora o llevar a la gestoría
+        </p>
+</div>
+<!-- Botón 2: Guardar en fichero -->
+<div class="flex flex-col gap-1">
+<button class="w-full min-h-[64px] bg-surface text-primary border-3 border-primary font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="save">save</span>
+<span>GUARDAR LOS DATOS EN UN FICHERO</span>
+</button>
+<p class="font-pista text-pista text-on-surface-variant text-center">
+          Guarda una copia en tu móvil por seguridad
+        </p>
+</div>
+<!-- Botón 3: Volver al inicio -->
+<div class="flex flex-col gap-1 mt-space-sm">
+<button class="w-full min-h-[64px] bg-surface-variant text-primary border-3 border-outline font-boton text-boton flex items-center justify-center gap-space-sm active:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[32px]" data-icon="home">home</span>
+<span>VOLVER AL INICIO</span>
+</button>
+<p class="font-pista text-pista text-on-surface-variant text-center">
+          Vuelve a la pantalla principal
+        </p>
+</div>
+</section>
+<footer class="text-center py-6 text-on-surface-variant font-pista text-pista">
+      CUE Digital Castilla y León • Sin conexión requerida
+    </footer>
+</main>
+</body></html>

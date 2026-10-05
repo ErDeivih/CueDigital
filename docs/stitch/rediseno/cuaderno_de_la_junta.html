@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Traer mis tierras del cuaderno de la Junta - CUE Digital</title>
+  <style>
+    /* Reset & Base strictly following DESIGN.md */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.45;
+      background-color: #ffffff;
+      color: #10190f;
+      padding-top: 68px; /* space for fixed top header */
+      padding-bottom: 40px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Large text accessibility toggle class */
+    body.large-text {
+      font-size: 21px;
+    }
+    body.large-text .btn-touch {
+      min-height: 72px;
+      font-size: 1.3rem;
+    }
+    body.large-text .btn-principal {
+      min-height: 110px;
+      font-size: 1.45rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 0 12px;
+    }
+
+    /* Fixed Top App Bar - 64px min, strictly matching DESIGN.md */
+    header.cue-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      z-index: 100;
+      border-bottom: 3px solid #0d2b18;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .header-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 48px;
+      padding: 0 14px;
+      background-color: #3a6446;
+      border: 2px solid #8fae97;
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .header-title-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .header-app-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .header-app-sub {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    /* Banner sin cobertura / guardado en el móvil */
+    .offline-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background-color: #f4f6f3;
+      border: 2px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin: 14px 0 18px 0;
+      font-size: 18px;
+      color: #10190f;
+    }
+    .offline-notice svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Page Headline & Intro Explanation */
+    .page-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      line-height: 1.3;
+      color: #10190f;
+      margin-bottom: 10px;
+    }
+
+    .page-intro {
+      font-size: 18px;
+      color: #43503f;
+      margin-bottom: 20px;
+      line-height: 1.45;
+    }
+
+    /* Step indicator bar - 3 clearly distinct steps */
+    .steps-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .step-track-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .step-bar {
+      height: 8px;
+      background-color: #a9b6a8;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .step-track-item.active .step-bar,
+    .step-track-item.done .step-bar {
+      background-color: #2f6b40;
+    }
+    .step-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #43503f;
+    }
+    .step-track-item.active .step-label {
+      color: #1f4a2c;
+      font-weight: 800;
+    }
+
+    /* Stage Header Callout - Tells exactly which stage you are on */
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    /* Cards and boxes */
+    .cue-card {
+      background-color: #ffffff;
+      border: 3px solid #a9b6a8;
+      border-radius: 14px;
+      padding: 18px 16px;
+      margin-bottom: 18px;
+    }
+
+    .cue-card.highlight {
+      border: 3px solid #1f4a2c;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #10190f;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Instructions numbered list */
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 12px 0 18px 0;
+    }
+    .step-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .step-text {
+      flex: 1;
+      padding-top: 3px;
+    }
+
+    /* Avisos / Callouts */
+    .aviso-alerta {
+      background-color: #ffe9a8;
+      border: 2px solid #8a6a00;
+      border-radius: 14px;
+      padding: 16px;
+      color: #3d2f00;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.4;
+    }
+    .aviso-alerta svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .aviso-exito {
+      background-color: #f4f6f3;
+      border: 3px solid #2f6b40;
+      border-radius: 14px;
+      padding: 16px;
+      color: #10190f;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    /* File drop / upload button card */
+    .upload-zone {
+      border: 3px dashed #1f4a2c;
+      background-color: #f4f6f3;
+      border-radius: 14px;
+      padding: 24px 16px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .upload-icon-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      border: 3px solid #1f4a2c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1f4a2c;
+    }
+    .upload-filename {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #1f4a2c;
+      word-break: break-all;
+    }
+
+    /* Summary list (grid of items) */
+    .resumen-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 12px 0 18px 0;
+    }
+    .resumen-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 12px 14px;
+      background-color: #f4f6f3;
+      border-radius: 10px;
+      border: 1px solid #a9b6a8;
+    }
+    .resumen-label {
+      font-weight: 600;
+      color: #43503f;
+      font-size: 17px;
+    }
+    .resumen-val {
+      font-weight: 800;
+      color: #10190f;
+      font-size: 1.15rem;
+      text-align: right;
+    }
+
+    /* List of lands to be imported */
+    .parcela-mini-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      border: 2px solid #a9b6a8;
+      border-radius: 12px;
+      background-color: #ffffff;
+      margin-bottom: 10px;
+    }
+    .parcela-info-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #10190f;
+    }
+    .parcela-info-sub {
+      font-size: 0.95rem;
+      color: #43503f;
+      margin-top: 2px;
+    }
+    .parcela-tag {
+      background-color: #f4f6f3;
+      border: 2px solid #1f4a2c;
+      color: #1f4a2c;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    /* Stage 3 counts list */
+    .counts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 14px 0 20px 0;
+    }
+    .count-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      background-color: #f4f6f3;
+      border: 2px solid #1f4a2c;
+      border-radius: 12px;
+    }
+    .count-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #1f4a2c;
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .count-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #10190f;
+    }
+
+    /* Action Buttons strictly conforming to DESIGN.md */
+    .buttons-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-touch {
+      width: 100%;
+      min-height: 64px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    /* Principal Button - 104px height */
+    .btn-principal {
+      min-height: 104px;
+      background-color: #2f6b40;
+      color: #ffffff;
+      border: 3px solid #0d2b18;
+      font-size: 1.35rem;
+      font-weight: 800;
+      flex-direction: column;
+    }
+    .btn-principal .btn-sub {
+      font-size: 0.95rem;
+      font-weight: 400;
+      opacity: 0.95;
+    }
+
+    /* Standard Button */
+    .btn-action {
+      background-color: #2f6b40;
+      color: #ffffff;
+      border: 3px solid #0d2b18;
+    }
+
+    /* Claro Button (Secondary/Exit) */
+    .btn-claro {
+      background-color: #f4f6f3;
+      color: #1f4a2c;
+      border: 3px solid #a9b6a8;
+    }
+
+    /* Disabled State */
+    .btn-disabled {
+      background-color: #d9dad6 !important;
+      color: #43503f !important;
+      border: 3px solid #a9b6a8 !important;
+      cursor: not-allowed !important;
+      opacity: 0.85;
+    }
+
+    /* View Switcher Controls (Demonstrator for user to test all 3 views) */
+    .stage-switch-bar {
+      margin-top: 30px;
+      padding: 16px;
+      background-color: #f4f6f3;
+      border: 2px dashed #a9b6a8;
+      border-radius: 14px;
+      text-align: center;
+    }
+    .stage-switch-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #43503f;
+      margin-bottom: 10px;
+    }
+    .stage-pills {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .stage-pill-btn {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 2px solid #1f4a2c;
+      background-color: #ffffff;
+      color: #1f4a2c;
+      cursor: pointer;
+    }
+    .stage-pill-btn.active {
+      background-color: #1f4a2c;
+      color: #ffffff;
+    }
+
+    /* Footer stamp */
+    footer.cue-footer {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #43503f;
+      margin-top: 32px;
+      padding: 16px 0;
+      border-top: 2px solid #a9b6a8;
+    }
+
+    /* Utility hide */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar strictly 64px, fixed, with Back and Font size toggle -->
+  <header class="cue-header">
+    <button class="header-btn" onclick="handleVolver()" id="top-btn-volver" aria-label="Volver atrás">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span>VOLVER</span>
+    </button>
+    <div class="header-title-box">
+      <div class="header-app-name">CUE Digital</div>
+      <div class="header-app-sub">Castilla y León</div>
+    </div>
+    <button class="header-btn" onclick="toggleTextSize()" id="btn-text-size" aria-label="Agrandar letra">
+      <span>A+ Letra</span>
+    </button>
+  </header>
+
+  <main class="container">
+
+    <!-- Sin cobertura notice -->
+    <div class="offline-notice">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <div>
+        <strong>Funciona sin cobertura.</strong> No necesitas internet en la tierra para abrir este fichero.
+      </div>
+    </div>
+
+    <!-- Step Visual Progress -->
+    <div class="steps-indicator" aria-label="Progreso de la importación">
+      <div class="step-track-item active" id="prog-step-1">
+        <div class="step-bar"></div>
+        <div class="step-label">1. Elegir fichero</div>
+      </div>
+      <div class="step-track-item" id="prog-step-2">
+        <div class="step-bar"></div>
+        <div class="step-label">2. Revisar resumen</div>
+      </div>
+      <div class="step-track-item" id="prog-step-3">
+        <div class="step-bar"></div>
+        <div class="step-label">3. Guardadas</div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- PANTALLA 1: ELEGIR EL FICHERO                                            -->
+    <!-- ========================================================================= -->
+    <section id="pantalla-1">
+      <div class="stage-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span>PASO 1 DE 3: EL FICHERO DE LA JUNTA</span>
+      </div>
+
+      <h1 class="page-title">Traer mis tierras del cuaderno de la Junta</h1>
+      <p class="page-intro">
+        Si ya llevas el cuaderno en la aplicación de la Junta, no hace falta que escribas tus tierras otra vez: sube aquí el cuaderno que descargas y el programa las apunta por ti.
+      </p>
+
+      <div class="cue-card">
+        <div class="card-title">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Cómo se hace (en dos minutos)</span>
+        </div>
+        
+        <ol class="steps-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <span class="step-text">Entra en la aplicación de la Junta con tu certificado digital o DNI electrónico.</span>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <span class="step-text">Descarga el cuaderno de la campaña y guarda el fichero en el ordenador o en el móvil.</span>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <span class="step-text">Después súbelo aquí tocando el recuadro verde de abajo.</span>
+          </li>
+        </ol>
+      </div>
+
+      <!-- File upload trigger area -->
+      <div class="upload-zone" onclick="simularSeleccionFichero()" id="drop-zone" role="button" tabindex="0" aria-label="Toca para seleccionar el fichero del cuaderno">
+        <div class="upload-icon-circle">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #1f4a2c;">
+          Toca aquí para elegir tu fichero
+        </div>
+        <div id="file-chosen-text" style="font-size: 1rem; color: #43503f;">
+          Fichero preparado: <span class="upload-filename">cuaderno_campana_2026_jcyl.xml</span>
+        </div>
+        <div style="font-size: 0.95rem; color: #43503f; background: #ffffff; padding: 4px 10px; border-radius: 6px; border: 1px solid #a9b6a8;">
+          Vale el fichero descargado en formato XML, ZIP o PDF oficial
+        </div>
+      </div>
+
+      <!-- Warning info note -->
+      <div class="aviso-alerta">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8a6a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+          <strong>Leer el fichero no apunta nada todavía.</strong> Primero verás en pantalla todo lo que trae y tú decides si quieres guardarlo.
+        </div>
+      </div>
+
+      <!-- Main Action: TRAER MIS TIERRAS -->
+      <div class="buttons-stack">
+        <button class="btn-touch btn-principal" id="btn-traer-tierras" onclick="empezarLecturaFichero()">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span id="btn-text-main">TRAER MIS TIERRAS</span>
+          </span>
+          <span class="btn-sub" id="btn-sub-main">Abrir el fichero y comprobar qué tierras vienen</span>
+        </button>
+
+        <button class="btn-touch btn-claro" onclick="alert('Volviendo a la pantalla principal sin cambios')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>VOLVER</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- PANTALLA 2: RESUMEN DE LO QUE TRAE                                        -->
+    <!-- ========================================================================= -->
+    <section id="pantalla-2" class="hidden">
+      <div class="stage-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <span>PASO 2 DE 3: COMPROBAR ANTES DE GUARDAR</span>
+      </div>
+
+      <h1 class="page-title">Esto es lo que trae tu cuaderno</h1>
+      <p class="page-intro">
+        He leído el fichero de la Junta. Mira bien estos números. Si son correctos, dale a «SÍ, SON MIS TIERRAS» para apuntarlas todas de golpe.
+      </p>
+
+      <!-- Warning reminder that reading does not write -->
+      <div class="aviso-alerta">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8a6a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+          <strong>Todavía no se ha guardado nada en tu teléfono.</strong> Lo que entra en el cuaderno lo decides tú ahora después de verlo.
+        </div>
+      </div>
+
+      <!-- Resumen Card with exactly the requested fields -->
+      <div class="cue-card highlight">
+        <div class="card-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+            <line x1="9" y1="17" x2="13" y2="17"/>
+          </svg>
+          <span>Datos encontrados en el fichero</span>
+        </div>
+
+        <div class="resumen-list">
+          <div class="resumen-row">
+            <span class="resumen-label">Campaña:</span>
+            <span class="resumen-val">2026</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Titular:</span>
+            <span class="resumen-val">Juan Manuel García Díez</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Tierras apuntadas en el papel:</span>
+            <span class="resumen-val">56 parcelas</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Tierras distintas:</span>
+            <span class="resumen-val">52 fincas</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Hectáreas que declaras:</span>
+            <span class="resumen-val">124,60 ha</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Pueblos:</span>
+            <span class="resumen-val">Villalar, Tordesillas, Pozaldez</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Lo que tienes sembrado:</span>
+            <span class="resumen-val">Cebada, Trigo blando, Barbecho</span>
+          </div>
+          <div class="resumen-row" style="background-color: #ffe9a8; border-color: #8a6a00;">
+            <span class="resumen-label" style="color: #3d2f00; font-weight:700;">Tierras en zona de nitratos:</span>
+            <span class="resumen-val" style="color: #3d2f00;">14 tierras</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- List of lands that will be added -->
+      <div class="cue-card">
+        <div class="card-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <span>Las tierras que va a apuntar</span>
+        </div>
+        <p style="font-size: 0.95rem; color: #43503f; margin-bottom: 12px;">
+          Primeras tierras leídas del archivo oficial (se apuntarán las 56 en total):
+        </p>
+
+        <div class="parcela-mini-item">
+          <div>
+            <div class="parcela-info-title">1. El Prado (Villalar)</div>
+            <div class="parcela-info-sub">SIGPAC: 37-70-0-0-503-51-1 • Cebada cervecera</div>
+          </div>
+          <div class="parcela-tag">4,90 ha</div>
+        </div>
+
+        <div class="parcela-mini-item">
+          <div>
+            <div class="parcela-info-title">2. Las Suertes de Arriba (Tordesillas)</div>
+            <div class="parcela-info-sub">SIGPAC: 47-186-0-0-102-14-1 • Trigo blando</div>
+          </div>
+          <div class="parcela-tag">12,30 ha</div>
+        </div>
+
+        <div class="parcela-mini-item">
+          <div>
+            <div class="parcela-info-title">3. El Vallejo Llano (Villalar)</div>
+            <div class="parcela-info-sub">SIGPAC: 47-212-0-0-205-8-1 • Cebada cervecera</div>
+          </div>
+          <div class="parcela-tag">8,15 ha</div>
+        </div>
+
+        <div class="parcela-mini-item">
+          <div>
+            <div class="parcela-info-title">4. La Dehesa Vieja (Pozaldez)</div>
+            <div class="parcela-info-sub">SIGPAC: 47-124-0-0-88-2-1 • Barbecho (Nitratos)</div>
+          </div>
+          <div class="parcela-tag">12,40 ha</div>
+        </div>
+
+        <div style="text-align: center; padding: 10px; background-color: #f4f6f3; border-radius: 8px; font-weight: 700; color: #1f4a2c; margin-top: 6px;">
+          + 52 parcelas más preparadas para apuntarse
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="buttons-stack">
+        <button class="btn-touch btn-principal" onclick="confirmarImportacion()">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>SÍ, SON MIS TIERRAS</span>
+          </span>
+          <span class="btn-sub">Guardarlas en mi teléfono y empezar a apuntar labores</span>
+        </button>
+
+        <button class="btn-touch btn-claro" onclick="irAPantalla(1)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>NO, VOLVER</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- PANTALLA 3: RESULTADO DE LA IMPORTACIÓN                                    -->
+    <!-- ========================================================================= -->
+    <section id="pantalla-3" class="hidden">
+      <div class="stage-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>PASO 3 DE 3: PROCESO TERMINADO</span>
+      </div>
+
+      <h1 class="page-title">Tus tierras ya están apuntadas</h1>
+      <p class="page-intro">
+        Todo el cuaderno se ha guardado en tu teléfono. Ya no tienes que teclear ninguna tierra a mano cuando vayas a sulfatar o abonar.
+      </p>
+
+      <!-- Success Callout -->
+      <div class="aviso-exito">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2f6b40" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <div>
+          <strong style="font-size: 1.15rem; color: #1f4a2c; display:block; margin-bottom: 4px;">Guardado sin fallos en este móvil</strong>
+          Ya puedes usarlas en el campo aunque no tengas ni una raya de cobertura.
+        </div>
+      </div>
+
+      <!-- Specific breakdown of counts in separate rows; zeros omitted as requested -->
+      <div class="cue-card highlight">
+        <div class="card-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <span>Resumen de lo que se ha hecho</span>
+        </div>
+
+        <div class="counts-list">
+          <!-- Row 1 -->
+          <div class="count-item">
+            <div class="count-badge">51</div>
+            <div class="count-text">Tierras nuevas</div>
+          </div>
+          <!-- Row 2 -->
+          <div class="count-item">
+            <div class="count-badge">3</div>
+            <div class="count-text">Tierras que ya tenías y les he puesto lo que siembras</div>
+          </div>
+          <!-- Row 3 -->
+          <div class="count-item">
+            <div class="count-badge">2</div>
+            <div class="count-text">Tierras que ya estaban apuntadas</div>
+          </div>
+        </div>
+
+        <div style="background-color: #ffffff; border: 2px solid #a9b6a8; border-radius: 10px; padding: 14px; margin-top: 12px;">
+          <div style="font-weight: 700; color: #43503f; font-size: 0.95rem; margin-bottom: 4px;">
+            De tus datos de titular he rellenado:
+          </div>
+          <div style="font-weight: 800; font-size: 1.15rem; color: #10190f;">
+            Nombre y NIF (Juan Manuel García Díez • 09.314.882-K)
+          </div>
+        </div>
+      </div>
+
+      <!-- Cosas que conviene que mires -->
+      <div class="cue-card">
+        <div class="card-title" style="color: #8a6a00;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a6a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>Cosas que conviene que mires</span>
+        </div>
+
+        <div class="steps-list" style="margin-top: 8px;">
+          <div class="step-item">
+            <span class="step-num" style="background-color: #8a6a00;">!</span>
+            <div class="step-text">
+              <strong>14 parcelas están en zona de nitratos:</strong> el programa te avisará antes de pasarte de kilos de abono al sulfatar.
+            </div>
+          </div>
+          <div class="step-item">
+            <span class="step-num" style="background-color: #8a6a00;">!</span>
+            <div class="step-text">
+              <strong>Hay 2 parcelas con barbecho declarado:</strong> si las siembras más adelante, solo tienes que tocar la tierra y cambiar el cultivo.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note on re-uploading -->
+      <div class="aviso-alerta" style="background-color: #f4f6f3; border-color: #1f4a2c; color: #10190f;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f4a2c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+        <div>
+          <strong>Puedes subir el cuaderno las veces que quieras:</strong> la misma tierra no se apunta dos veces. Si la Junta cambia algo, vuelves a subir el archivo y se actualiza solo.
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="buttons-stack">
+        <button class="btn-touch btn-principal" onclick="alert('Abriendo listado de Mis Parcelas y Tierras con las 56 fincas')">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>VER MIS TIERRAS</span>
+          </span>
+          <span class="btn-sub">Ir a la lista para verlas todas con su forma SIGPAC</span>
+        </button>
+
+        <button class="btn-touch btn-claro" onclick="irAPantalla(1)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>VOLVER</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Visual Interactive switcher for previewing stages during review -->
+    <div class="stage-switch-bar">
+      <div class="stage-switch-title">Ver cada una de las 3 fases de la pantalla:</div>
+      <div class="stage-pills">
+        <button class="stage-pill-btn active" id="pill-1" onclick="irAPantalla(1)">1. Elegir fichero</button>
+        <button class="stage-pill-btn" id="pill-2" onclick="irAPantalla(2)">2. Resumen</button>
+        <button class="stage-pill-btn" id="pill-3" onclick="irAPantalla(3)">3. Resultado</button>
+      </div>
+    </div>
+
+    <footer class="cue-footer">
+      <div>CUE Digital • Castilla y León</div>
+      <div style="font-size: 0.85rem; margin-top: 4px;">Diseñado para trabajar al sol, con una mano y sin cobertura</div>
+    </footer>
+
+  </main>
+
+  <script>
+    let currentStage = 1;
+
+    function irAPantalla(stepNumber) {
+      currentStage = stepNumber;
+      
+      // Hide all screens
+      document.getElementById('pantalla-1').classList.add('hidden');
+      document.getElementById('pantalla-2').classList.add('hidden');
+      document.getElementById('pantalla-3').classList.add('hidden');
+
+      // Show selected screen
+      document.getElementById('pantalla-' + stepNumber).classList.remove('hidden');
+
+      // Update progress tracker
+      for (let i = 1; i <= 3; i++) {
+        const progItem = document.getElementById('prog-step-' + i);
+        const pillBtn = document.getElementById('pill-' + i);
+        
+        if (i < stepNumber) {
+          progItem.className = 'step-track-item done';
+          pillBtn.className = 'stage-pill-btn';
+        } else if (i === stepNumber) {
+          progItem.className = 'step-track-item active';
+          pillBtn.className = 'stage-pill-btn active';
+        } else {
+          progItem.className = 'step-track-item';
+          pillBtn.className = 'stage-pill-btn';
+        }
+      }
+
+      // Scroll smoothly to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function simularSeleccionFichero() {
+      const dropZone = document.getElementById('drop-zone');
+      dropZone.style.borderColor = '#2f6b40';
+      dropZone.style.backgroundColor = '#e8f0eb';
+      document.getElementById('file-chosen-text').innerHTML = 
+        'Fichero seleccionado: <span class="upload-filename" style="color:#1f4a2c;">✓ Cuaderno_PAC_2026_CastillayLeon.xml</span>';
+    }
+
+    function empezarLecturaFichero() {
+      const btn = document.getElementById('btn-traer-tierras');
+      const textMain = document.getElementById('btn-text-main');
+      const subMain = document.getElementById('btn-sub-main');
+
+      // Disable button and change state text
+      btn.classList.add('btn-disabled');
+      btn.disabled = true;
+      textMain.textContent = 'Abriendo el cuaderno…';
+      subMain.textContent = 'Leyendo parcelas de la Junta, espera un segundo…';
+
+      // Simulate parsing delay then progress to stage 2
+      setTimeout(() => {
+        btn.classList.remove('btn-disabled');
+        btn.disabled = false;
+        textMain.textContent = 'TRAER MIS TIERRAS';
+        subMain.textContent = 'Abrir el fichero y comprobar qué tierras vienen';
+        irAPantalla(2);
+      }, 900);
+    }
+
+    function confirmarImportacion() {
+      // Transition to stage 3
+      irAPantalla(3);
+    }
+
+    function handleVolver() {
+      if (currentStage > 1) {
+        irAPantalla(currentStage - 1);
+      } else {
+        alert('Volviendo al menú anterior de CUE Digital');
+      }
+    }
+
+    function toggleTextSize() {
+      document.body.classList.toggle('large-text');
+      const btn = document.getElementById('btn-text-size');
+      if (document.body.classList.contains('large-text')) {
+        btn.innerHTML = '<span>A- Normal</span>';
+      } else {
+        btn.innerHTML = '<span>A+ Letra</span>';
+      }
+    }
+  </script>
+</body>
+</html>

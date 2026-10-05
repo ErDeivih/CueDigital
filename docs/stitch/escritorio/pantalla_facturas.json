@@ -1,0 +1,338 @@
+{
+  "projectId": "4347842392867690825",
+  "sessionId": "10020298643045804493",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/4347842392867690825/files/fd42a596ba7e4a68999e86e53bf514e8",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1WBggkQBbLpvNrYJfIvyu3m1zxRKGIufpMFlgTG3QIm7DMq5KAKBWDSkdRFkhQmT3xpM8e9WQBOoSwjCa40ZA4fP-ce0fQisIpE8-1Wm26LBHuoztTixoTeBs-jlYEcuVwjxwes7ZGZEUjoxVKRKUfJbddUws-ljc7yNVn70w71_VtVPKDGgsqZI-dflqd_4sF-3PvpbVR8T9I5yAXO5HBaTExdmNpQSlR0Cy6rmPKgF5Uayj6F1Wpdhzg"
+            },
+            "htmlCode": {
+              "name": "projects/4347842392867690825/files/158c61a2b37a4e6db012211bbd77ae7d",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2M4YzBkYmU1OTk2ZTQ4YzI5YjZhNGFjYTlhZTFlNWVlEgsSBxDa8sKnzx0YAZIBIwoKcHJvamVjdF9pZBIVQhM0MzQ3ODQyMzkyODY3NjkwODI1&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "83f867e364fc49ef8b4d2446c90530bc",
+            "generatedBy": "figaro_agent",
+            "width": "2560",
+            "height": "2048",
+            "title": "Mis facturas - CUE Gestión Despacho (1440x900)",
+            "prompt": "Pantalla completa de escritorio (1440x900) para CUE Digital CyL - Gestión Despacho: «Mis facturas: la tabla de las facturas de compra del año».\n\nEstructura y directrices estrictas:\n1. Shell de escritorio ERP idéntico a las pantallas existentes ({{DATA:SCREEN:SCREEN_11}}, {{DATA:SCREEN:SCREEN_12}}, {{DATA:SCREEN:SCREEN_4}}):\n   - Barra superior (Top bar) fija: Identificador 'CUE Digital CyL' + insignia 'DESPACHO', selector de Finca ('Finca Las Suertes y El Prado 187,42 ha'), Campaña 2026, estado 'SIEX / REGEPA: AL DÍA', titular David Pérez Velasco (NIF: 12345678Z), y botón primario '+ AÑADIR UNA FACTURA'. Iconos SVG limpios, sin emojis.\n   - Menú lateral izquierdo (SideNavBar, 280-320px de ancho): módulos del ERP con 'Facturas y Albaranes' (o 'Mis facturas') marcado como ACTIVO con fondo verde destacado y borde indicador. Otros módulos: Resumen General, El Cuaderno, Tierras y Parcelas, Qué hay sembrado, El Almacén, Los Análisis, Plan de Abono / Nitratos, Papeles y Documentos, Maquinaria y Equipos, Años del cuaderno. En la parte inferior del menú: Modo local activo v4.2.8 y Cerrar sesión.\n   - Barra inferior de estado (Footer) fija: 'SIEX: Sincronizado hace 4 min | REGEPA: CYL-47-09821 Actualizado | CUE Digital v4.2 Conectado' con atajos de teclado [Ctrl+F Buscar] [N Nueva Factura] [Firma Digital Activa] [Soporte Técnico]. Sin barra de pestañas móvil abajo.\n\n2. Área de contenido principal:\n   - Cabecera de módulo:\n     * Título claro: «Mis facturas» con contador en píldora: «3 facturas guardadas en la campaña 2026» (o las reales de la explotación de Don David).\n     * Explicación clara sin jerga: «Aquí guardas las facturas y albaranes de lo que compras (abonos, sulfatos, gasóleo, semilla). Sirven para justificar gastos, cuadrar las existencias del almacén y presentarlas ante cualquier inspección de la Junta.»\n     * Botones de acción rápida superiores: [Sacar listado en PDF] [Exportar Excel] y botón principal verde destacado [+ AÑADIR UNA FACTURA].\n\n   - Barra de filtros y herramientas de búsqueda rápida (compacta, 36-40px):\n     * Buscador rápido de texto: «Buscar por proveedor, NIF, nº factura o producto...»\n     * Filtros desplegables: «Todos los estados del papel (Con foto / Falta el papel)», «Todos los proveedores», «Rango de fechas (Campaña 2026)».\n     * Tarjetas resumen métricas compactas (Kpis sin sombras, bordes de 3px según sistema):\n       1) Facturas registradas: 3 facturas\n       2) Base imponible total: 2.740,00 €\n       3) IVA soportado: 274,00 €\n       4) Total invertido: 3.014,00 €\n       5) Estado documental de inspección: 1 con «Falta el papel» (alerta ámbar preventiva)\n\n   - LA TABLA PRINCIPAL DE FACTURAS (formato empresarial para ratón y teclado, sin sombras ni degradados, con bordes nítidos, cabecera de tabla fija con indicadores de ordenación ↑↓):\n     Columnas exactas:\n     1. «Fecha» (ordenada descendente con indicador de ordenación)\n     2. «Quién te lo vendió» (Nombre de la empresa/proveedor y NIF)\n     3. «Nº de factura» (en monoespaciado o negrita clara)\n     4. «Base» (alineado a la derecha, en €, 2 decimales; si no se sabe se deja en blanco o con raya '—', nunca cero inventado)\n     5. «IVA» (alineado a la derecha, porcentaje e importe en €, p. ej. '10% (84,00 €)')\n     6. «Total» (alineado a la derecha, cifra destacada en negrita con € y 2 decimales)\n     7. «El papel» (insignia visual muy clara: si está subido: badge verde suave '✓ Con el papel subido (PDF)'; si NO está subido: insignia llamativa en ÁMBAR DE AVISO bordado '⚠ Falta el papel' para inspección)\n     8. «Acciones» (botones compactos de 32-36px con bordes limpios: botón 'Ver el papel' o 'Subir papel', botón 'Editar', y botón 'Borrar' con estilo peligro sutil bordeado rojo).\n\n     Filas reales con coherencia de datos con las pantallas previas (como Agricola del Duero S.L., Cooperativa Comarcal de Medina, etc.):\n     * Fila 1: 12/03/2026 | Agrícola del Duero S.L. (B-47892301) | F-2026/0418 | 840,00 € | 10% (84,00 €) | 924,00 € | [✓ Con el papel subido (PDF)] | [Ver papel] [Editar] [Borrar]\n     * Fila 2: 22/02/2026 | Cooperativa Comarcal de Medina (F-47109283) | 2026-B-891 | 1.318,18 € | 10% (131,82 €) | 1.450,00 € | [⚠ Falta el papel] | [Subir papel] [Editar] [Borrar]\n     * Fila 3: 15/01/2026 | Cereales y Abonos Castillenses S.A. (A-47029811) | 45/A | — | — | 640,00 € | [✓ Con el papel subido (Foto)] | [Ver papel] [Editar] [Borrar] (demuestra que la base/IVA desconocida no es cero, sino '—')\n\n   - Fila de pie de tabla / resumen oficial:\n     «Total de campaña 2026: 3 facturas guardadas · 3.014,00 € (Base computable: 2.158,18 € + pendientes de desglose) · 1 pendiente de justificar con papel».\n\n   - Debajo de la tabla:\n     Recuadro informativo y de asistencia con borde según el sistema de diseño:\n     «El lector de fotos está funcionando con el idioma español: todo lo que lea te lo enseño para que lo confirmes. Si tienes tickets o facturas arrugadas o en papel térmico, hazles la foto con el móvil o súbelas aquí en PDF para no perder deducciones ni justificaciones en inspecciones de la PAC.»\n\nDiseño limpio, profesional, sin degradados ni sombras, con contraste alto, iconos SVG inline de alta calidad, acorde con las directrices de CUE Digital y AgroCastilla Gestión Despacho.",
+            "name": "projects/4347842392867690825/screens/83f867e364fc49ef8b4d2446c90530bc",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "INTER",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1f4a2c",
+              "headlineFont": "INTER",
+              "bodyFont": "INTER",
+              "labelFont": "INTER",
+              "namedColors": {
+                "focus": "#ffd24a",
+                "primary_container": "#1f4a2c",
+                "on-secondary-container": "#3d2f00",
+                "error-dark": "#5c110d",
+                "secondary": "#765a00",
+                "on_secondary_container": "#775b00",
+                "on-error-container": "#4a0f0b",
+                "surface_bright": "#f9faf5",
+                "secondary_fixed": "#ffdf95",
+                "tertiary_fixed_dim": "#fbb3c0",
+                "primary-container": "#2f6b40",
+                "on_tertiary_container": "#e09ba8",
+                "on_tertiary_fixed": "#360c18",
+                "on_error": "#ffffff",
+                "surface_container": "#edeee9",
+                "on_tertiary_fixed_variant": "#6b3742",
+                "surface_tint": "#3c6847",
+                "secondary-container": "#ffe9a8",
+                "on_error_container": "#93000a",
+                "tertiary": "#4a1c27",
+                "inverse_surface": "#2f312e",
+                "error_container": "#ffdad6",
+                "surface_dim": "#d9dad6",
+                "on_tertiary": "#ffffff",
+                "surface_container_lowest": "#ffffff",
+                "background": "#f9faf5",
+                "surface_container_highest": "#e2e3de",
+                "on_secondary_fixed": "#251a00",
+                "primary-overlay": "#3a6446",
+                "on_primary": "#ffffff",
+                "outline": "#a9b6a8",
+                "primary_fixed_dim": "#a2d2aa",
+                "secondary_fixed_dim": "#eac25a",
+                "error-container": "#fbe3e1",
+                "surface_container_high": "#e8e9e4",
+                "primary_fixed": "#beeec5",
+                "surface-variant": "#f4f6f3",
+                "inverse_on_surface": "#f0f1ec",
+                "on_primary_fixed_variant": "#244f31",
+                "on_primary_container": "#8bb992",
+                "primary-overlay-border": "#8fae97",
+                "tertiary_fixed": "#ffd9de",
+                "on_secondary_fixed_variant": "#594400",
+                "surface_variant": "#e2e3de",
+                "outline_variant": "#c1c9bf",
+                "surface_container_low": "#f3f4ef",
+                "on_primary_fixed": "#00210c",
+                "primary-dark": "#0d2b18",
+                "on_background": "#1a1c19",
+                "on-primary": "#ffffff",
+                "on_surface_variant": "#414941",
+                "error": "#8c1d18",
+                "on-surface-variant": "#43503f",
+                "on_surface": "#1a1c19",
+                "secondary_container": "#ffd56c",
+                "surface": "#ffffff",
+                "primary": "#043317",
+                "inverse_primary": "#a2d2aa",
+                "on-surface": "#10190f",
+                "on_secondary": "#ffffff",
+                "tertiary_container": "#65323d"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1f4a2c",
+              "overrideSecondaryColor": "#8a6a00",
+              "spacingScale": 2,
+              "typography": {
+                "campo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.15rem",
+                  "fontWeight": "400"
+                },
+                "pista": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "0.95rem",
+                  "fontWeight": "400"
+                },
+                "cuerpo-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "21px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "boton": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.1rem",
+                  "fontWeight": "700"
+                },
+                "boton-principal": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.35rem",
+                  "fontWeight": "700"
+                },
+                "cuerpo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "1.45"
+                },
+                "titulo": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.5rem",
+                  "fontWeight": "700",
+                  "lineHeight": "1.45"
+                },
+                "pregunta": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.45rem",
+                  "fontWeight": "800",
+                  "lineHeight": "1.45"
+                },
+                "dato-grande": {
+                  "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                  "fontSize": "1.6rem",
+                  "fontWeight": "800"
+                }
+              },
+              "spacing": {
+                "gutter": "16px",
+                "margin": "16px",
+                "space-xl": "24px",
+                "space-lg": "16px",
+                "space-md": "12px",
+                "space-sm": "8px",
+                "space-xxl": "32px",
+                "space-xs": "4px"
+              },
+              "headlineFontFamily": "Inter",
+              "bodyFontFamily": "Inter",
+              "labelFontFamily": "Inter"
+            },
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/87c81708ca75482bb84bcecc667cd7d9",
+              "designSystem": {
+                "displayName": "CUE Digital",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered specifically for uncompromising legibility and direct, utilitarian interaction in harsh outdoor environments. Tailored for older adults (ages 50 to 70) operating under direct sunlight with one hand and potentially zero network connectivity, the design prioritizes extreme contrast, massive touch targets, and unambiguous visual feedback. \n\nThe aesthetic style is **High-Contrast / Functional Tactile**: heavy borders, oversized typography, zero ambiguity, and deep earthy tones rooted in agriculture, combined with high-visibility indicators for outdoor readability.\n\n## Layout & Spacing\n\nThe layout follows a robust, predictable fluid grid optimized for one-handed thumb navigation on mobile devices. Spacing values are generous to prevent accidental taps in the field. \n\n- **Gutters & Margins:** Standardized at 16px to maintain comfortable breathing room on smaller field screens.\n- **Component Gaps:** Generous vertical rhythm using `space-md` (12px) to `space-xl` (24px) ensures distinct visual separation between interactive targets.\n\n## Elevation & Depth\n\nVisual hierarchy is established primarily through high-contrast structural borders and solid tonal layering rather than subtle shadows, which wash out in direct sunlight. \n- **Borders:** Thick, purposeful accent lines (2px to 6px) ground interactive components.\n- **Surfaces:** Flat, high-contrast background shifts delineate containers, alerts, and active states instantly.\n\n## Components\n\nAll components are engineered for heavy-duty outdoor usage, oversized touch targets, and unmistakable active states.\n\n- **Buttons:** Extra-tall touch targets (64px standard, 104px for primary actions) with bold typography and high-contrast bounding borders. Variants include primary, secondary, clear, chosen, and danger states.\n- **Input Fields:** Generous 64px height with clear typography, accompanied by distinct structural helper boxes and high-contrast focus rings (`#ffd24a`).\n- **Cards & Lists:** Large surface items featuring 16px padding, clear typographic hierarchy, and solid separation for effortless scanning under glare.\n- **Alerts & Notices:** Prominent container blocks utilizing tertiary and error background tones with thick accent borders for critical field warnings.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1f4a2c",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "secondary_fixed": "#ffdf95",
+                    "surface": "#ffffff",
+                    "primary": "#043317",
+                    "primary_fixed_dim": "#a2d2aa",
+                    "primary-dark": "#0d2b18",
+                    "error": "#8c1d18",
+                    "secondary_fixed_dim": "#eac25a",
+                    "inverse_on_surface": "#f0f1ec",
+                    "surface_bright": "#f9faf5",
+                    "error-dark": "#5c110d",
+                    "on_primary_fixed_variant": "#244f31",
+                    "secondary_container": "#ffd56c",
+                    "on_error": "#ffffff",
+                    "on_primary_fixed": "#00210c",
+                    "tertiary_container": "#65323d",
+                    "background": "#f9faf5",
+                    "inverse_surface": "#2f312e",
+                    "error_container": "#ffdad6",
+                    "on_secondary": "#ffffff",
+                    "primary-overlay": "#3a6446",
+                    "on-surface-variant": "#43503f",
+                    "surface_container_low": "#f3f4ef",
+                    "on_surface_variant": "#414941",
+                    "tertiary": "#4a1c27",
+                    "on_secondary_container": "#775b00",
+                    "secondary": "#765a00",
+                    "outline": "#a9b6a8",
+                    "on-secondary-container": "#3d2f00",
+                    "tertiary_fixed_dim": "#fbb3c0",
+                    "outline_variant": "#c1c9bf",
+                    "surface_variant": "#e2e3de",
+                    "primary_container": "#1f4a2c",
+                    "on-error-container": "#4a0f0b",
+                    "on_tertiary_fixed": "#360c18",
+                    "on_primary": "#ffffff",
+                    "surface-variant": "#f4f6f3",
+                    "error-container": "#fbe3e1",
+                    "primary-container": "#2f6b40",
+                    "primary_fixed": "#beeec5",
+                    "tertiary_fixed": "#ffd9de",
+                    "inverse_primary": "#a2d2aa",
+                    "focus": "#ffd24a",
+                    "on-surface": "#10190f",
+                    "on_secondary_fixed_variant": "#594400",
+                    "on_secondary_fixed": "#251a00",
+                    "surface_container_highest": "#e2e3de",
+                    "primary-overlay-border": "#8fae97",
+                    "surface_container": "#edeee9",
+                    "on_background": "#1a1c19",
+                    "surface_container_high": "#e8e9e4",
+                    "on_surface": "#1a1c19",
+                    "on_error_container": "#93000a",
+                    "on_tertiary_container": "#e09ba8",
+                    "on_tertiary_fixed_variant": "#6b3742",
+                    "on_tertiary": "#ffffff",
+                    "surface_dim": "#d9dad6",
+                    "surface_tint": "#3c6847",
+                    "on_primary_container": "#8bb992",
+                    "secondary-container": "#ffe9a8",
+                    "surface_container_lowest": "#ffffff",
+                    "on-primary": "#ffffff"
+                  },
+                  "designMd": "---\nname: CUE Digital\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#d9dad6'\n  surface-bright: '#f9faf5'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4ef'\n  surface-container: '#edeee9'\n  surface-container-high: '#e8e9e4'\n  surface-container-highest: '#e2e3de'\n  on-surface: '#10190f'\n  on-surface-variant: '#43503f'\n  inverse-surface: '#2f312e'\n  inverse-on-surface: '#f0f1ec'\n  outline: '#a9b6a8'\n  outline-variant: '#c1c9bf'\n  surface-tint: '#3c6847'\n  primary: '#043317'\n  on-primary: '#ffffff'\n  primary-container: '#2f6b40'\n  on-primary-container: '#8bb992'\n  inverse-primary: '#a2d2aa'\n  secondary: '#765a00'\n  on-secondary: '#ffffff'\n  secondary-container: '#ffe9a8'\n  on-secondary-container: '#3d2f00'\n  tertiary: '#4a1c27'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#65323d'\n  on-tertiary-container: '#e09ba8'\n  error: '#8c1d18'\n  on-error: '#ffffff'\n  error-container: '#fbe3e1'\n  on-error-container: '#4a0f0b'\n  primary-fixed: '#beeec5'\n  primary-fixed-dim: '#a2d2aa'\n  on-primary-fixed: '#00210c'\n  on-primary-fixed-variant: '#244f31'\n  secondary-fixed: '#ffdf95'\n  secondary-fixed-dim: '#eac25a'\n  on-secondary-fixed: '#251a00'\n  on-secondary-fixed-variant: '#594400'\n  tertiary-fixed: '#ffd9de'\n  tertiary-fixed-dim: '#fbb3c0'\n  on-tertiary-fixed: '#360c18'\n  on-tertiary-fixed-variant: '#6b3742'\n  background: '#f9faf5'\n  on-background: '#1a1c19'\n  surface-variant: '#f4f6f3'\n  primary-dark: '#0d2b18'\n  primary-overlay: '#3a6446'\n  primary-overlay-border: '#8fae97'\n  error-dark: '#5c110d'\n  focus: '#ffd24a'\ntypography:\n  pregunta:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.45rem\n    fontWeight: '800'\n    lineHeight: '1.45'\n  titulo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.5rem\n    fontWeight: '700'\n    lineHeight: '1.45'\n  boton:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.1rem\n    fontWeight: '700'\n  boton-principal:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.35rem\n    fontWeight: '700'\n  campo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.15rem\n    fontWeight: '400'\n  cuerpo:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  cuerpo-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 21px\n    fontWeight: '400'\n    lineHeight: '1.45'\n  pista:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 0.95rem\n    fontWeight: '400'\n  dato-grande:\n    fontFamily: system-ui, -apple-system, Segoe UI, Roboto, sans-serif\n    fontSize: 1.6rem\n    fontWeight: '800'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 16px\n  margin: 16px\n  space-xs: 4px\n  space-sm: 8px\n  space-md: 12px\n  space-lg: 16px\n  space-xl: 24px\n  space-xxl: 32px\n---\n\nversion: alpha\nname: CUE Digital\ndescription: El cuaderno de campo digital. Diseñado para un agricultor de 50 a 70 años, al sol, con una mano y sin cobertura.\ncolors:\n  primary: \"#1f4a2c\"\n  primary-container: \"#2f6b40\"\n  primary-dark: \"#0d2b18\"\n  primary-overlay: \"#3a6446\"\n  primary-overlay-border: \"#8fae97\"\n  on-primary: \"#ffffff\"\n  tertiary: \"#8a6a00\"\n  secondary-container: \"#ffe9a8\"\n  on-secondary-container: \"#3d2f00\"\n  surface: \"#ffffff\"\n  surface-variant: \"#f4f6f3\"\n  on-surface: \"#10190f\"\n  on-surface-variant: \"#43503f\"\n  outline: \"#a9b6a8\"\n  error: \"#8c1d18\"\n  error-dark: \"#5c110d\"\n  error-container: \"#fbe3e1\"\n  on-error-container: \"#4a0f0b\"\n  focus: \"#ffd24a\"\ntypography:\n  pregunta:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.45rem\"\n    fontWeight: \"800\"\n    lineHeight: \"1.45\"\n  titulo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.5rem\"\n    fontWeight: \"700\"\n    lineHeight: \"1.45\"\n  boton:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.1rem\"\n    fontWeight: \"700\"\n  boton-principal:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.35rem\"\n    fontWeight: \"700\"\n  campo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.15rem\"\n    fontWeight: \"400\"\n  cuerpo:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"18px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  cuerpo-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"21px\"\n    fontWeight: \"400\"\n    lineHeight: \"1.45\"\n  pista:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"0.95rem\"\n    fontWeight: \"400\"\n  dato-grande:\n    fontFamily: \"system-ui, -apple-system, Segoe UI, Roboto, sans-serif\"\n    fontSize: \"1.6rem\"\n    fontWeight: \"800\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\n  lg: \"10px\"\n  xl: \"14px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\n  md: \"12px\"\n  lg: \"16px\"\n  xl: \"24px\"\n  xxl: \"32px\"\ncomponents:\n  boton:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"16px\"\n  boton-principal:\n    backgroundColor: \"{colors.primary-container}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton-principal}\"\n    rounded: \"{rounded.xl}\"\n    height: \"104px\"\n    padding: \"16px\"\n  boton-claro:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-secundario:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-elegido:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-peligro:\n    backgroundColor: \"{colors.error}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n  boton-letra:\n    backgroundColor: \"{colors.primary-overlay}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.boton}\"\n    rounded: \"{rounded.lg}\"\n    height: \"48px\"\n  cabecera:\n    backgroundColor: \"{colors.primary}\"\n    textColor: \"{colors.on-primary}\"\n    typography: \"{typography.titulo}\"\n    height: \"64px\"\n    padding: \"12px\"\n  campo:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.campo}\"\n    rounded: \"{rounded.xl}\"\n    height: \"64px\"\n    padding: \"12px\"\n  foco:\n    backgroundColor: \"{colors.focus}\"\n    size: \"4px\"\n  aviso:\n    backgroundColor: \"{colors.secondary-container}\"\n    textColor: \"{colors.on-secondary-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  aviso-error:\n    backgroundColor: \"{colors.error-container}\"\n    textColor: \"{colors.on-error-container}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  ayuda-campo:\n    backgroundColor: \"{colors.surface-variant}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pista}\"\n    rounded: \"{rounded.md}\"\n    padding: \"12px\"\n  lista-item:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.cuerpo}\"\n    rounded: \"{rounded.xl}\"\n    padding: \"16px\"\n  paso:\n    backgroundColor: \"{colors.outline}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  paso-hecho:\n    backgroundColor: \"{colors.primary-container}\"\n    rounded: \"{rounded.sm}\"\n    height: \"8px\"\n  dato:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.dato-grande}\"\n  pregunta-pantalla:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface}\"\n    typography: \"{typography.pregunta}\"\n  borde-boton:\n    backgroundColor: \"{colors.primary-dark}\"\n    height: \"3px\"\n  borde-boton-secundario:\n    backgroundColor: \"{colors.primary}\"\n    height: \"3px\"\n  borde-boton-peligro:\n    backgroundColor: \"{colors.error-dark}\"\n    height: \"3px\"\n  borde-borde-letra:\n    backgroundColor: \"{colors.primary-overlay-border}\"\n    size: \"2px\"\n  borde-campo:\n    backgroundColor: \"{colors.outline}\"\n    height: \"3px\"\n  borde-aviso:\n    backgroundColor: \"{colors.tertiary}\"\n    size: \"2px\"\n  borde-aviso-error:\n    backgroundColor: \"{colors.error}\"\n    size: \"2px\"\n  borde-ayuda:\n    backgroundColor: \"{colors.primary-container}\"\n    size: \"6px\"\n  pista:\n    backgroundColor: \"{colors.surface}\"\n    textColor: \"{colors.on-surface-variant}\"\n    typography: \"{typography.pista}\"",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1f4a2c",
+                  "overrideSecondaryColor": "#8a6a00",
+                  "spacingScale": 2,
+                  "typography": {
+                    "boton-principal": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.35rem",
+                      "fontWeight": "700"
+                    },
+                    "campo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.15rem",
+                      "fontWeight": "400"
+                    },
+                    "dato-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.6rem",
+                      "fontWeight": "800"
+                    },
+                    "pregunta": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.45rem",
+                      "fontWeight": "800",
+                      "lineHeight": "1.45"
+                    },
+                    "cuerpo-grande": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "21px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "pista": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "0.95rem",
+                      "fontWeight": "400"
+                    },
+                    "cuerpo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "1.45"
+                    },
+                    "titulo": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.5rem",
+                      "fontWeight": "700",
+                      "lineHeight": "1.45"
+                    },
+                    "boton": {
+                      "fontFamily": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+                      "fontSize": "1.1rem",
+                      "fontWeight": "700"
+                    }
+                  },
+                  "spacing": {
+                    "space-xs": "4px",
+                    "space-sm": "8px",
+                    "space-md": "12px",
+                    "space-lg": "16px",
+                    "space-xxl": "32px",
+                    "margin": "16px",
+                    "space-xl": "24px",
+                    "gutter": "16px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "He diseñado la pantalla de escritorio (1440×900) **«Mis facturas»** para el módulo de Gestión de Despacho de **CUE Digital CyL**, optimizada específicamente para el trabajo ágil con teclado y ratón sin perder la sencillez ni el rigor normativo agrario:\n\n### Decisiones de diseño y arquitectura de información:\n1. **Armazón de Despacho (Desktop Shell):**\n   - **Barra superior corporativa:** Muestra la explotación activa (*Finca Las Suertes y El Prado 187,42 ha*), campaña 2026, estado de sincronización con SIEX/REGEPA al día, titular y el botón de acción rápida `+ AÑADIR UNA FACTURA`.\n   - **Navegación lateral de despacho:** Módulo **«Facturas y Albaranes»** seleccionado como activo, manteniendo visible todo el mapa del cuaderno para el técnico/agricultor.\n   - **Barra de estado inferior:** Diagnóstico del sistema local y atajos de teclado (`Ctrl+F`, `N` para nueva factura, firma digital activa). Sin barra de pestañas móvil.\n\n2. **Panel de control y métricas de campaña:**\n   - Resumen superior compacto con KPIs directos: número de facturas activas, desglose de base imponible e IVA, importe total acumulado y **alerta de inspección** preventiva (`1 pendiente: Falta el papel`).\n\n3. **Tabla de gestión de facturas:**\n   - **Columnas ordenables:** *Fecha*, *Quién te lo vendió* (con NIF y desglose del producto), *Nº de factura*, *Base*, *IVA*, *Total* (con importes tabulares alineados a la derecha en `€` y dos decimales), *El papel* y *Acciones*.\n   - **Tratamiento estricto de datos desconocidos:** Tal como establece la norma de diseño, los importes no desglosados no se falsean con ceros, sino que se indican con raya (`—`).\n   - **Control visual documental («El papel»):** Las facturas con justificante cuentan con indicador claro (`Con el papel subido`), mientras que las pendientes destacan con **etiqueta en ámbar `Falta el papel`**, prioritario para cualquier inspección de campo de la Junta o justificación PAC.\n   - **Acciones compactas (32–40 px):** Botón contextual directo (*«Subir papel»* o *«Ver papel»*), *«Editar»* y *«Borrar»* (en rojo de peligro sobrio).\n\n4. **Aviso del asistente de lectura:**\n   - Recuadro explicativo al pie confirmando que el lector automático de facturas opera en español y siempre requerirá confirmación previa del titular antes de alterar cualquier asiento del almacén o del cuaderno."
+    },
+    {
+      "suggestion": "Añadir el modal de «Subir el papel o PDF» de una factura existente"
+    },
+    {
+      "suggestion": "Ver la vista filtrada de «Solo facturas sin papel» para preparar una inspección"
+    },
+    {
+      "suggestion": "Diseñar el detalle lateral de cuadratura entre la factura y las existencias del almacén"
+    }
+  ]
+}

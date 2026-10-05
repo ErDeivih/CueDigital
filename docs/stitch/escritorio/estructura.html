@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tierras y Parcelas - CUE Gestión Despacho (1440x900)</title>
+  <style>
+    /* Reset & variables base del sistema CUE Digital */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #1f4a2c;
+      --primary-container: #2f6b40;
+      --primary-dark: #0d2b18;
+      --primary-light: #eaf2ec;
+      --on-primary: #ffffff;
+      
+      --surface: #ffffff;
+      --surface-variant: #f4f6f3;
+      --surface-dim: #e6eae4;
+      --on-surface: #10190f;
+      --on-surface-variant: #43503f;
+      
+      --outline: #a9b6a8;
+      --outline-light: #d1ded0;
+      
+      --tertiary: #8a6a00;
+      --secondary-container: #ffe9a8;
+      --on-secondary-container: #3d2f00;
+      
+      --error: #8c1d18;
+      --error-dark: #5c110d;
+      --error-container: #fbe3e1;
+      --on-error-container: #4a0f0b;
+      
+      --focus: #ffd24a;
+      
+      --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--on-surface);
+      background-color: var(--surface-variant);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout principal de tres columnas / armazón ERP */
+    .app-container {
+      display: grid;
+      grid-template-columns: 240px 1fr 340px;
+      grid-template-rows: 64px 1fr 32px;
+      height: 100vh;
+      width: 100vw;
+      background: var(--surface);
+    }
+
+    /* 1) BARRA SUPERIOR GENERAL */
+    header.top-bar {
+      grid-column: 1 / -1;
+      background-color: var(--primary-dark);
+      color: var(--on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 2px solid #000;
+      z-index: 20;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 220px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+    }
+
+    .brand-tag {
+      background: #183e23;
+      border: 1px solid #3c7d50;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #a8dfb7;
+    }
+
+    .header-context {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .finca-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .finca-selector strong {
+      font-weight: 700;
+    }
+
+    .finca-tag {
+      background: #2b7040;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .campaign-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #081d10;
+      border: 1px solid #234f30;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .campaign-badge span.label {
+      color: #8fae97;
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .campaign-badge span.year {
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #eaf2ec;
+      border-left: 1px solid rgba(255,255,255,0.15);
+      padding-left: 14px;
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: #8fae97;
+    }
+
+    .btn-header-apuntar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #2b743f;
+      color: #ffffff;
+      border: 2px solid #3fa85f;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-header-apuntar:hover {
+      background-color: #348a4d;
+    }
+
+    /* 2) MENÚ LATERAL IZQUIERDO */
+    aside.sidebar {
+      background-color: #132418;
+      border-right: 2px solid #000;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .sidebar-finca-header {
+      padding: 16px 14px;
+      border-bottom: 1px solid #1f3726;
+      background: #0f1d13;
+    }
+
+    .sidebar-finca-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #799781;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .sidebar-finca-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-nav {
+      list-style: none;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b2c5b7;
+      text-decoration: none;
+      transition: none;
+    }
+
+    .nav-link svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .nav-link:hover {
+      background-color: #1a3222;
+      color: #ffffff;
+    }
+
+    .nav-item.active .nav-link {
+      background-color: #21442c;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background-color: var(--focus);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #2b5538;
+      color: #a7dfb6;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    .nav-badge.warning {
+      background: #e5a100;
+      color: #2e1d00;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: #1f3726;
+      margin: 8px 12px;
+    }
+
+    .sidebar-footer-note {
+      margin-top: auto;
+      padding: 14px;
+      background: #0d1a10;
+      border-top: 1px solid #1a3021;
+      font-size: 11px;
+      color: #7b9983;
+      line-height: 1.4;
+    }
+
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #a4e0b3;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #38c15c;
+      border-radius: 50%;
+      border: 1px solid #0d2b18;
+    }
+
+    /* 3) ÁREA CENTRAL DE CONTENIDO */
+    main.content-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #ffffff;
+      border-right: 2px solid var(--outline);
+    }
+
+    /* Cabecera de la pantalla interior */
+    .page-header-strip {
+      padding: 14px 20px 10px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--outline-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .page-title-group h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .page-title-group p {
+      font-size: 12px;
+      color: var(--on-surface-variant);
+      margin-top: 2px;
+    }
+
+    .page-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Botones compactos (32-38px) para ratón */
+    .btn-compact {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: none;
+      border: 2px solid transparent;
+    }
+
+    .btn-primary-action {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary-dark);
+    }
+    .btn-primary-action:hover {
+      background: var(--primary-container);
+    }
+
+    .btn-secondary-action {
+      background: var(--surface-variant);
+      color: var(--primary-dark);
+      border-color: var(--outline);
+    }
+    .btn-secondary-action:hover {
+      background: #e5ece3;
+      border-color: var(--primary);
+    }
+
+    /* Barra de filtros y herramientas */
+    .toolbar-strip {
+      padding: 10px 20px;
+      background: #fafbfa;
+      border-bottom: 2px solid var(--outline-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 10px;
+      width: 15px;
+      height: 15px;
+      stroke: var(--on-surface-variant);
+      fill: none;
+      pointer-events: none;
+    }
+
+    .search-input {
+      height: 34px;
+      width: 240px;
+      padding: 0 10px 0 32px;
+      border: 2px solid var(--outline);
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--on-surface);
+    }
+
+    .search-input:focus {
+      outline: 3px solid var(--focus);
+      border-color: var(--primary);
+    }
+
+    .select-filter {
+      height: 34px;
+      padding: 0 28px 0 10px;
+      border: 2px solid var(--outline);
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: inherit;
+      background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%2343503f" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>') no-repeat right 8px center;
+      appearance: none;
+      color: var(--on-surface);
+      cursor: pointer;
+    }
+
+    .select-filter:focus {
+      outline: 3px solid var(--focus);
+      border-color: var(--primary);
+    }
+
+    .checkbox-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 34px;
+      padding: 0 10px;
+      background: var(--surface-variant);
+      border: 2px solid var(--outline);
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--on-surface);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-pill input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-pill.active {
+      background: var(--secondary-container);
+      border-color: var(--tertiary);
+      color: var(--on-secondary-container);
+      font-weight: 700;
+    }
+
+    /* Contenedor de la Tabla */
+    .table-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: auto;
+      background: #ffffff;
+      position: relative;
+    }
+
+    table.tierras-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    /* Cabecera pegada fija al hacer scroll */
+    table.tierras-table thead th {
+      position: sticky;
+      top: 0;
+      background: #f1f4f0;
+      color: #1f3b25;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 9px 12px;
+      border-bottom: 2px solid var(--primary-dark);
+      border-top: 1px solid var(--outline-light);
+      z-index: 5;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    table.tierras-table thead th:hover {
+      background: #e3ebe1;
+    }
+
+    table.tierras-table thead th.sorted {
+      background: #d8e5d6;
+      color: var(--primary-dark);
+    }
+
+    .sort-icon {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 4px;
+      width: 12px;
+      height: 12px;
+    }
+
+    table.tierras-table tbody tr {
+      border-bottom: 1px solid #e1e7e0;
+      cursor: pointer;
+    }
+
+    table.tierras-table tbody tr:hover {
+      background-color: #f7faf6;
+    }
+
+    table.tierras-table tbody tr.row-selected {
+      background-color: #eaf3eb;
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
+
+    table.tierras-table td {
+      padding: 8px 12px;
+      vertical-align: middle;
+      color: var(--on-surface);
+    }
+
+    .col-num {
+      width: 42px;
+      color: #637766;
+      font-weight: 700;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .col-nombre {
+      font-weight: 700;
+      color: var(--primary-dark);
+      white-space: nowrap;
+    }
+
+    .col-sigpac {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2b4530;
+      white-space: nowrap;
+    }
+
+    .col-pueblo {
+      color: var(--on-surface-variant);
+      white-space: nowrap;
+    }
+
+    .col-ha {
+      text-align: right;
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .col-ha span.unit {
+      font-family: var(--font-stack);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--on-surface-variant);
+      margin-left: 2px;
+    }
+
+    .col-cultivo {
+      min-width: 200px;
+    }
+
+    .col-sistema {
+      white-space: nowrap;
+    }
+
+    .col-acciones {
+      width: 130px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Badges de cultivo / avisos de falta */
+    .cultivo-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cultivo-nombre {
+      font-weight: 600;
+      color: var(--on-surface);
+    }
+
+    .cultivo-variedad {
+      font-size: 11px;
+      color: var(--on-surface-variant);
+      background: #edf1eb;
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--outline-light);
+    }
+
+    .badge-falta-cultivo {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--secondary-container);
+      color: var(--on-secondary-container);
+      border: 1px solid var(--tertiary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .btn-decir-cultivo {
+      background: #735400;
+      color: #ffffff;
+      border: 1px solid #4a3600;
+      padding: 1px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .btn-decir-cultivo:hover {
+      background: #574000;
+    }
+
+    /* Sistema (secano/regadío) */
+    .badge-sistema {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+    }
+
+    .sistema-secano {
+      background: #f0f3ed;
+      color: #3b503d;
+      border-color: #c9d6c7;
+    }
+
+    .sistema-regadio {
+      background: #e2f0fb;
+      color: #0d4677;
+      border-color: #a4ceef;
+    }
+
+    /* Botones de acción en fila */
+    .btn-row-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 26px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: #f1f4f0;
+      color: var(--primary-dark);
+    }
+
+    .btn-row-action:hover {
+      background: #dbe4da;
+      border-color: var(--outline);
+    }
+
+    .btn-row-action.danger {
+      color: var(--error);
+      background: #fdf2f1;
+    }
+
+    .btn-row-action.danger:hover {
+      background: var(--error-container);
+      border-color: var(--error);
+    }
+
+    /* Barra de pie de tabla / paginación */
+    .table-footer {
+      padding: 8px 20px;
+      background: #f8faf7;
+      border-top: 2px solid var(--outline-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .table-summary {
+      font-weight: 700;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .table-summary .summary-pill {
+      background: #e2ecdf;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: #173820;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .page-btn {
+      min-width: 28px;
+      height: 28px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--outline);
+      background: #ffffff;
+      color: var(--on-surface);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .page-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+
+    .page-btn:hover:not(.active) {
+      background: var(--surface-variant);
+    }
+
+    /* 4) PANEL LATERAL DERECHO DE DETALLE */
+    aside.detail-panel {
+      background-color: #fafbfa;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      border-left: 1px solid var(--outline-light);
+    }
+
+    .detail-header {
+      padding: 14px 18px;
+      background: #eaf1e9;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .detail-header h2 {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--primary-dark);
+    }
+
+    .detail-state-tag {
+      background: #255a33;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .detail-content {
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .detail-title-card {
+      background: #ffffff;
+      border: 2px solid var(--outline);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .detail-tierra-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.2;
+    }
+
+    .detail-tierra-sigpac {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #3b5a41;
+      margin-top: 4px;
+    }
+
+    .detail-stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--outline-light);
+    }
+
+    .stat-box {
+      background: var(--surface-variant);
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--outline-light);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--on-surface-variant);
+    }
+
+    .stat-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--on-surface);
+    }
+
+    /* Croquis de la Parcela (SVG puro sin mapas pesados) */
+    .shape-card {
+      background: #ffffff;
+      border: 2px solid var(--outline);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .shape-card-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .shape-container {
+      background: #f1f6ef;
+      border: 1px dashed #7a9c82;
+      border-radius: 6px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .shape-compass {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 9px;
+      font-weight: 800;
+      color: #55775d;
+      background: rgba(255,255,255,0.7);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* Cultivo actual en el panel */
+    .cultivo-card {
+      background: #ffffff;
+      border: 2px solid var(--outline);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .cultivo-card-header {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-bottom: 6px;
+    }
+
+    .cultivo-destacado {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cultivo-destacado-icon {
+      width: 32px;
+      height: 32px;
+      background: #e4efe4;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+    }
+
+    .cultivo-destacado-text h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--on-surface);
+    }
+
+    .cultivo-destacado-text p {
+      font-size: 11px;
+      color: var(--on-surface-variant);
+    }
+
+    /* Últimos apuntes del cuaderno para esa tierra */
+    .apuntes-card {
+      background: #ffffff;
+      border: 2px solid var(--outline);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .apuntes-card-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .apuntes-card-title span.count {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .timeline-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .timeline-item {
+      padding: 8px 10px;
+      background: var(--surface-variant);
+      border-left: 3px solid var(--primary);
+      border-radius: 0 4px 4px 0;
+      font-size: 11px;
+    }
+
+    .timeline-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--on-surface-variant);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .timeline-desc {
+      font-weight: 700;
+      color: var(--on-surface);
+    }
+
+    .timeline-dose {
+      font-size: 11px;
+      color: #556654;
+      margin-top: 1px;
+    }
+
+    .btn-ver-tierra {
+      width: 100%;
+      height: 40px;
+      background: var(--primary);
+      color: var(--on-primary);
+      border: 2px solid var(--primary-dark);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      margin-top: 4px;
+    }
+
+    .btn-ver-tierra:hover {
+      background: var(--primary-container);
+    }
+
+    /* 5) BARRA DE ESTADO INFERIOR */
+    footer.status-bar {
+      grid-column: 1 / -1;
+      background-color: #0b170e;
+      color: #9ab49f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 11px;
+      border-top: 1px solid #1c3623;
+      z-index: 20;
+    }
+
+    .status-left, .status-center, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #7ceba0;
+      font-weight: 700;
+    }
+
+    /* Utilidades de icono SVG */
+    .icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 1) BARRA SUPERIOR GENERAL -->
+    <header class="top-bar">
+      <div class="brand-section">
+        <div class="brand-badge">
+          <svg class="icon" style="width:20px; height:20px; stroke:#62dc84;" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span>CUE Digital</span>
+        </div>
+        <span class="brand-tag">DESPACHO</span>
+      </div>
+
+      <div class="header-context">
+        <div class="finca-selector">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Finca: <strong>Finca Las Suertes y El Prado</strong></span>
+          <span class="finca-tag">187,42 ha</span>
+          <svg class="icon" style="width:12px; height:12px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="campaign-badge">
+          <span class="label">Campaña:</span>
+          <span class="year">2026</span>
+          <span style="color:#8fae97; font-size:11px;">(01/09/25 - 31/08/26)</span>
+        </div>
+
+        <div class="user-pill">
+          <svg class="icon" style="stroke:#8fae97;" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div>
+            <strong>David Pérez Velasco</strong>
+            <div class="user-role">Titular · NIF: 12345678Z</div>
+          </div>
+        </div>
+
+        <button class="btn-header-apuntar">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          APUNTAR
+        </button>
+      </div>
+    </header>
+
+
+    <!-- 2) MENÚ LATERAL IZQUIERDO (240px) -->
+    <aside class="sidebar">
+      <div class="sidebar-finca-header">
+        <div class="sidebar-finca-title">Explotación Agraria</div>
+        <div class="sidebar-finca-name">
+          <span>Castilla y León · Secano y Riego</span>
+          <svg class="icon" style="width:14px; height:14px; stroke:#799781;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <ul class="sidebar-nav">
+        <!-- Panel -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Panel</span>
+          </a>
+        </li>
+
+        <!-- Cuaderno -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Cuaderno</span>
+            <span class="nav-badge">42</span>
+          </a>
+        </li>
+
+        <!-- Tierras (ACTIVO) -->
+        <li class="nav-item active">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            <span>Tierras</span>
+            <span class="nav-badge warning">64</span>
+          </a>
+        </li>
+
+        <!-- Almacén -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>Almacén</span>
+          </a>
+        </li>
+
+        <!-- Análisis -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><path d="M10 2v7.31L4.39 19.06A2 2 0 0 0 6.11 22h11.78a2 2 0 0 0 1.72-2.94L14 9.31V2"/></svg>
+            <span>Análisis</span>
+          </a>
+        </li>
+
+        <!-- Ventas -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>Ventas</span>
+          </a>
+        </li>
+
+        <!-- Plan de abono -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Plan de abono</span>
+          </a>
+        </li>
+
+        <!-- Documentos -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Documentos</span>
+          </a>
+        </li>
+
+        <!-- Facturas -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Facturas</span>
+          </a>
+        </li>
+
+        <!-- Productos y máquinas -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/><path d="M10 17h4V9H7l-3 4v4h3"/><path d="M14 9h3l3 4v4h-3"/></svg>
+            <span>Productos y máquinas</span>
+          </a>
+        </li>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Años del cuaderno -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Años del cuaderno</span>
+          </a>
+        </li>
+
+        <!-- Mis datos -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Mis datos</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer-note">
+        <div class="sync-status">
+          <span class="status-dot"></span>
+          <span>Base local al día</span>
+        </div>
+        <div>Conectado con Registro General de Explotaciones (REGEPA) y SIGPAC Castilla y León.</div>
+      </div>
+    </aside>
+
+
+    <!-- 3) CONTENIDO PRINCIPAL: HERRAMIENTAS Y TABLA DE TIERRAS -->
+    <main class="content-area">
+      
+      <!-- Franja título de pantalla -->
+      <div class="page-header-strip">
+        <div class="page-title-group">
+          <h1>Tierras</h1>
+          <p>Catálogo oficial de parcelas y recintos de la explotación, asignación de cultivos de la campaña y control de superficie declarada.</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn-compact btn-primary-action">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            AÑADIR UNA TIERRA
+          </button>
+          <button class="btn-compact btn-secondary-action">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            SACAR EN EXCEL
+          </button>
+          <button class="btn-compact btn-secondary-action">
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            IMPRIMIR
+          </button>
+        </div>
+      </div>
+
+      <!-- Franja de filtros y búsqueda -->
+      <div class="toolbar-strip">
+        <div class="filter-group">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="search-input" placeholder="Buscar entre tus tierras (nombre, ref...)">
+          </div>
+
+          <select class="select-filter">
+            <option value="">Todos los pueblos</option>
+            <option value="villalar">Villalar de los Comuneros (38)</option>
+            <option value="tordesillas">Tordesillas (16)</option>
+            <option value="castronuno">Castronuño (10)</option>
+          </select>
+
+          <select class="select-filter">
+            <option value="">Todos los cultivos</option>
+            <option value="cebada">Cebada cervecera</option>
+            <option value="trigo">Trigo blando</option>
+            <option value="girasol">Girasol alto oleico</option>
+            <option value="maiz">Maíz dulce de regadío</option>
+            <option value="alfalfa">Alfalfa</option>
+            <option value="sin_asignar">Sin asignar</option>
+          </select>
+
+          <label class="checkbox-pill">
+            <input type="checkbox">
+            <span>Sólo las que les falta decir qué tienen</span>
+          </label>
+        </div>
+
+        <div style="font-size:12px; color:var(--on-surface-variant); font-weight:600;">
+          Mostrando <strong>1 - 10</strong> de <strong>64 tierras</strong>
+        </div>
+      </div>
+
+      <!-- Tabla de Tierras con thead fijo -->
+      <div class="table-viewport">
+        <table class="tierras-table">
+          <thead>
+            <tr>
+              <th class="col-num">Nº</th>
+              <th class="col-nombre sorted">
+                Nombre
+                <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </th>
+              <th class="col-sigpac">Referencia SIGPAC <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></th>
+              <th class="col-pueblo">Pueblo <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></th>
+              <th class="col-ha" style="text-align:right;">Hectáreas <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></th>
+              <th class="col-cultivo">Qué tiene este año <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></th>
+              <th class="col-sistema">Sistema <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg></th>
+              <th class="col-acciones">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila 1 (ELEGIDA / ACTIVA EN PANEL DERECHO) -->
+            <tr class="row-selected">
+              <td class="col-num">1</td>
+              <td class="col-nombre">
+                <strong>El Prado</strong>
+              </td>
+              <td class="col-sigpac">37-70-0-0-503-51-1</td>
+              <td class="col-pueblo">Villalar de los Comuneros</td>
+              <td class="col-ha">4,90 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Cebada cervecera</span>
+                  <span class="cultivo-variedad">Cerveza Planet</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action" title="Editar datos de la parcela">Editar</button>
+                <button class="btn-row-action danger" title="Borrar tierra">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 2 (CON FALTA DE CULTIVO) -->
+            <tr>
+              <td class="col-num">2</td>
+              <td class="col-nombre">
+                <strong>Las Suertes de Arriba</strong>
+              </td>
+              <td class="col-sigpac">47-186-0-0-102-14-1</td>
+              <td class="col-pueblo">Tordesillas</td>
+              <td class="col-ha">12,30 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="badge-falta-cultivo">
+                    <svg class="icon" style="width:12px; height:12px; stroke:#8a6a00;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Falta cultivo
+                  </span>
+                  <button class="btn-decir-cultivo">DECIRLO</button>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 3 -->
+            <tr>
+              <td class="col-num">3</td>
+              <td class="col-nombre">
+                <strong>El Vallejo Llano</strong>
+              </td>
+              <td class="col-sigpac">47-212-0-0-205-8-1</td>
+              <td class="col-pueblo">Villalar de los Comuneros</td>
+              <td class="col-ha">8,15 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Trigo blando</span>
+                  <span class="cultivo-variedad">Camargo</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 4 -->
+            <tr>
+              <td class="col-num">4</td>
+              <td class="col-nombre">
+                <strong>La Vega del Río</strong>
+              </td>
+              <td class="col-sigpac">47-045-0-0-12-30-2</td>
+              <td class="col-pueblo">Castronuño</td>
+              <td class="col-ha">6,40 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Maíz dulce de regadío</span>
+                  <span class="cultivo-variedad">Syngenta Max</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-regadio">Regadío (Aspersión)</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 5 -->
+            <tr>
+              <td class="col-num">5</td>
+              <td class="col-nombre">
+                <strong>Majada Honda</strong>
+              </td>
+              <td class="col-sigpac">37-70-0-0-502-18-1</td>
+              <td class="col-pueblo">Villalar de los Comuneros</td>
+              <td class="col-ha">3,25 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Cebada cervecera</span>
+                  <span class="cultivo-variedad">RGT Planet</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 6 (CON FALTA DE CULTIVO) -->
+            <tr>
+              <td class="col-num">6</td>
+              <td class="col-nombre">
+                <strong>El Sotillo Húmedo</strong>
+              </td>
+              <td class="col-sigpac">47-045-0-0-12-31-1</td>
+              <td class="col-pueblo">Castronuño</td>
+              <td class="col-ha">6,40 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="badge-falta-cultivo">
+                    <svg class="icon" style="width:12px; height:12px; stroke:#8a6a00;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Falta cultivo
+                  </span>
+                  <button class="btn-decir-cultivo">DECIRLO</button>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-regadio">Regadío (Goteo)</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 7 -->
+            <tr>
+              <td class="col-num">7</td>
+              <td class="col-nombre">
+                <strong>Los Almendros</strong>
+              </td>
+              <td class="col-sigpac">47-186-0-0-104-9-1</td>
+              <td class="col-pueblo">Tordesillas</td>
+              <td class="col-ha">8,20 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Barbecho blanco</span>
+                  <span class="cultivo-variedad">—</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 8 -->
+            <tr>
+              <td class="col-num">8</td>
+              <td class="col-nombre">
+                <strong>La Dehesa Vieja</strong>
+              </td>
+              <td class="col-sigpac">47-186-0-0-108-3-2</td>
+              <td class="col-pueblo">Tordesillas</td>
+              <td class="col-ha">12,40 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Girasol alto oleico</span>
+                  <span class="cultivo-variedad">LG 54.78</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 9 -->
+            <tr>
+              <td class="col-num">9</td>
+              <td class="col-nombre">
+                <strong>Tierra Grande</strong>
+              </td>
+              <td class="col-sigpac">37-70-0-0-501-4-1</td>
+              <td class="col-pueblo">Villalar de los Comuneros</td>
+              <td class="col-ha">3,15 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Alfalfa forrajera</span>
+                  <span class="cultivo-variedad">Aragón</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-secano">Secano</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+
+            <!-- Fila 10 -->
+            <tr>
+              <td class="col-num">10</td>
+              <td class="col-nombre">
+                <strong>El Carrizal de Abajo</strong>
+              </td>
+              <td class="col-sigpac">47-045-0-0-15-2-1</td>
+              <td class="col-pueblo">Castronuño</td>
+              <td class="col-ha">5,10 <span class="unit">ha</span></td>
+              <td class="col-cultivo">
+                <div class="cultivo-cell">
+                  <span class="cultivo-nombre">Remolacha azucarera</span>
+                  <span class="cultivo-variedad">KWS Duna</span>
+                </div>
+              </td>
+              <td class="col-sistema">
+                <span class="badge-sistema sistema-regadio">Regadío (Aspersión)</span>
+              </td>
+              <td class="col-acciones">
+                <button class="btn-row-action">Editar</button>
+                <button class="btn-row-action danger">Borrar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pie de la tabla con resumen y paginación -->
+      <div class="table-footer">
+        <div class="table-summary">
+          <span class="summary-pill">64 tierras registradas</span>
+          <span>Superficie total: <strong>187,42 ha</strong></span>
+          <span style="color:#8a6a00; font-weight:700;">(2 tierras pendientes de cultivo)</span>
+        </div>
+
+        <div class="pagination">
+          <button class="page-btn" disabled>«</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn">5</button>
+          <button class="page-btn">6</button>
+          <button class="page-btn">7</button>
+          <button class="page-btn">»</button>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- 4) PANEL LATERAL DERECHO DE DETALLE (340px) -->
+    <aside class="detail-panel">
+      <div class="detail-header">
+        <h2>Ficha de la tierra elegida</h2>
+        <span class="detail-state-tag">AL DÍA</span>
+      </div>
+
+      <div class="detail-content">
+        <!-- Ficha de identidad básica -->
+        <div class="detail-title-card">
+          <div class="detail-tierra-name">El Prado</div>
+          <div class="detail-tierra-sigpac">Referencia: 37-70-0-0-503-51-1</div>
+          
+          <div class="detail-stats-row">
+            <div class="stat-box">
+              <div class="stat-label">Superficie</div>
+              <div class="stat-val">4,90 ha</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Municipio</div>
+              <div class="stat-val" style="font-size:12px; line-height:1.2; padding-top:2px;">Villalar de los C.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dibujo de la forma del trozo SIGPAC -->
+        <div class="shape-card">
+          <div class="shape-card-title">
+            <span>Forma SIGPAC del trozo</span>
+            <span style="font-size:10px; color:#628169;">Recinto 1</span>
+          </div>
+          <div class="shape-container">
+            <span class="shape-compass">Norte ↑</span>
+            <!-- Polígono SVG representativo del recinto SIGPAC -->
+            <svg width="220" height="96" viewBox="0 0 220 96">
+              <!-- Parcela vecina tenue -->
+              <polygon points="10,25 90,15 85,85 15,80" fill="#e2ebd8" stroke="#a3bfa8" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <text x="25" y="55" font-size="9" fill="#75937a" font-family="system-ui">Colindante</text>
+              
+              <!-- Trozo El Prado seleccionado -->
+              <polygon points="90,15 205,10 190,88 85,85" fill="#3a754b" stroke="#102e19" stroke-width="2.5"/>
+              <circle cx="140" cy="50" r="3" fill="#ffd24a"/>
+              <text x="110" y="45" font-size="11" font-weight="bold" fill="#ffffff" font-family="system-ui">El Prado</text>
+              <text x="115" y="60" font-size="9" fill="#d2ecd7" font-family="monospace">4,90 ha</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Qué tiene sembrado este año -->
+        <div class="cultivo-card">
+          <div class="cultivo-card-header">Cultivo declarado en campaña 2026</div>
+          <div class="cultivo-destacado">
+            <div class="cultivo-destacado-icon">
+              <svg class="icon" style="width:20px; height:20px;" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="cultivo-destacado-text">
+              <h4>Cebada cervecera</h4>
+              <p>Variedad: <strong>Cerveza Planet</strong> (Siembra: 10/11/2025)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tres últimos apuntes del cuaderno para esta tierra -->
+        <div class="apuntes-card">
+          <div class="apuntes-card-title">
+            <span>Últimos apuntes en esta tierra</span>
+            <span class="count">3 apuntes</span>
+          </div>
+
+          <ul class="timeline-list">
+            <li class="timeline-item">
+              <div class="timeline-meta">
+                <span>12/05/2026</span>
+                <span style="color:#1f4a2c;">Tratamiento</span>
+              </div>
+              <div class="timeline-desc">Glifosato 36 SL</div>
+              <div class="timeline-dose">2,00 L/ha · Plazo cosecha: 26/05/2026</div>
+            </li>
+
+            <li class="timeline-item">
+              <div class="timeline-meta">
+                <span>08/05/2026</span>
+                <span style="color:#785c00;">Abono foliar</span>
+              </div>
+              <div class="timeline-desc">Estimulante Boro soluble</div>
+              <div class="timeline-dose">1,50 L/ha · Foco de nitrógeno</div>
+            </li>
+
+            <li class="timeline-item">
+              <div class="timeline-meta">
+                <span>15/04/2026</span>
+                <span style="color:#1f4a2c;">Tratamiento</span>
+              </div>
+              <div class="timeline-desc">Tebuconazol 25% WG</div>
+              <div class="timeline-dose">2,00 kg/ha · Gasto: 9,80 kg total</div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Botón de acción final para ir a la vista completa -->
+        <a href="#" class="btn-ver-tierra">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          VER LA TIERRA ENTERA
+        </a>
+      </div>
+    </aside>
+
+
+    <!-- 5) BARRA DE ESTADO INFERIOR -->
+    <footer class="status-bar">
+      <div class="status-left">
+        <span class="status-badge-live">
+          <span class="status-dot"></span>
+          <span>CUE Despacho v2.4 Activo</span>
+        </span>
+        <span>Resolución optimizada: 1440 × 900 píxeles</span>
+      </div>
+
+      <div class="status-center">
+        <span>Cumple Real Decreto 1054/2022 (SIEX) y normativa Junta de Castilla y León</span>
+      </div>
+
+      <div class="status-right">
+        <span>Última sincronización: Hoy a las 11:42</span>
+        <span>Atajos: [Ctrl+F] Buscar · [N] Nueva tierra</span>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
