@@ -43,7 +43,7 @@ como tal en cada fila y **no cuenta como cerrado**.
 | Ticket | Qué entrega | Depende de | Estado | Responsable | Evidencia / siguiente paso |
 |---|---|---|---|---|---|
 | **T01 / E0** | Inventario ruta→pantalla→API→modelo→pruebas y estados realmente existentes | — | **implementado** y **revisado** en su parte de seguridad (falta la aceptación de T04) | coordinador + 3 subagentes | Tres informes con fichero:línea: `docs/INVENTARIO_T01_SERVIDOR.md` (26 tablas, 170 rutas), `docs/INVENTARIO_T01_INTERFAZ.md` (29 pantallas, contrato de pantalla punto por punto), `docs/INVENTARIO_T01_PRUEBAS.md` (cobertura por área, A01–A16, riesgos). **Y la revisión ruta por ruta de las 24 rutas sin sesión** (ronda 2): `docs/T01_REVISION_RUTAS_SIN_SESION.md`, con la tabla de decisión (públicas / hay que limitarlas / deberían pedir sesión / no son para personas). Los hallazgos que cambian el plan están en el apartado 4 de este documento. **Y en la ronda 35 (apartado 43) se cerró por fin la parte de seguridad de esa revisión**: seis rutas que se servían sin entrar ya piden sesión (las cuatro que el informe marcaba como «deberían pedirla», más la búsqueda del SIGPAC y el toque en el mapa, que hacían **hasta 26 llamadas al FEGA por petición** sin ningún tope), `GET /api/sigpac/estado` ya no dice dónde está la carpeta de datos del servidor, y el documento **se ha convertido en prueba** (`tests/test_lo_que_no_pide_sesion.py`): de 26 rutas sin sesión a **21, todas declaradas con su motivo**, y probado contra el defecto. **Lo que queda de T01** —el límite de peticiones por cuenta, la caché de `mapa/imagen` y de zonas vulnerables, el `?llamar=1` de IUWS— está listado en el apartado 43.6 y escrito en la cabecera de ese fichero de pruebas |
-| **T02 / E0** | Auditar valores por defecto (autorización, ecológico, nutrientes) y plan de migración sin inventar históricos | T01 | **entregado en su parte grave · A10–A14 PENDIENTES** (no está cerrado) | coordinador (+ subagentes de datos y de revisión) | `docs/T02_VALORES_POR_DEFECTO.md`: **15 hallazgos (A1–A15)**. **Arreglados y verificados: los siete de gravedad alta (A1–A7)** —apartados 6.1–6.3 y 10.2— **y A9** (los ceros que el PDF y el CSV del cuaderno escribían donde no se sabe, ronda 29). **Lo que NO está hecho, y por eso este ticket no se cierra**: **A10** (`sistema = "secano"` por defecto en **cinco** entradas, no cuatro), **A11** (`titularidad = "propia"` en tres), **A12** (`masa_agua_cerca` y `captacion_consumo_humano`: dos booleanos que dicen «no» sin que nadie lo haya dicho, y de los que dependen las reglas de abonado), **A13** (`produccion_ecologica = False`, que **apaga la comprobación ecológica** y además **sale en el documento que se firma**) y **A14** (seis sitios del cliente que suman ceros, no tres). Los cinco están **medidos línea a línea en el apartado 40** y se cierran en la ronda 39 con los tres estados de punta a punta. La migración de esquema (13 columnas que dejan de ser obligatorias) va **al arrancar**, con copia coherente, y está **ensayada sobre copias** de la copia de seguridad (apartado 6.4 y 10.4). Lo que no se reescribe (los históricos firmados, la autorización del catálogo antiguo) se declara |
+| **T02 / E0** | Auditar valores por defecto (autorización, ecológico, nutrientes) y plan de migración sin inventar históricos | T01 | **entregado en su parte grave · A10–A13 PENDIENTES** (no está cerrado) | coordinador (+ subagentes de datos y de revisión) | `docs/T02_VALORES_POR_DEFECTO.md`: **15 hallazgos (A1–A15)**. **Arreglados y verificados: los siete de gravedad alta (A1–A7)** —apartados 6.1–6.3 y 10.2—, **A9** (los ceros que el PDF y el CSV del cuaderno escribían donde no se sabe, ronda 29) y **A14** (los seis sitios de la interfaz que sumaban ceros que nadie ha dicho, **ronda 39**: la cuenta se hace ya en un solo sitio, `sumandoLoQueSeSabe` en `nucleo.js`, con su cuenta de lo que falta y con 5 pruebas nuevas **comprobadas contra el defecto**). **Lo que NO está hecho, y por eso este ticket no se cierra**: **A10** (`sistema = "secano"` por defecto en **cinco** entradas, no cuatro), **A11** (`titularidad = "propia"` en tres), **A12** (`masa_agua_cerca` y `captacion_consumo_humano`: dos booleanos que dicen «no» sin que nadie lo haya dicho, y de los que dependen las reglas de abonado) y **A13** (`produccion_ecologica = False`, que **apaga la comprobación ecológica** y además **sale en el documento que se firma**). Los cuatro están **medidos línea a línea en el apartado 40** y se cierran en la ronda 40 con los tres estados de punta a punta. La migración de esquema (13 columnas que dejan de ser obligatorias) va **al arrancar**, con copia coherente, y está **ensayada sobre copias** de la copia de seguridad (apartado 6.4 y 10.4). Lo que no se reescribe (los históricos firmados, la autorización del catálogo antiguo) se declara |
 | **T03 / E1** | Prototipos Stitch de S01 (Inicio), S02 (Tierras y mapa) y S03 (Ficha de tierra) y navegación | T01 | **implementado** (falta la aceptación de las tres tareas, que necesita T04) | coordinador | Los tres diseños están en `docs/stitch/escritorio/`: `crm_inicio`, `crm_tierras`, `crm_ficha_tierra` (captura, explicación y HTML). La lista de lo que fijan, y el mapa honesto de lo que se puede construir hoy, están en el apartado 3 de este documento |
 | **T04 / E1** | Armazón común reutilizable: contexto (explotación, campaña), tablas, filtros, fichas y estados; 390/1024/1440 px | T03 | **implementado** · **verificado en navegador** (las dos entregas) | coordinador + subagente de navegación | Direcciones reproducibles con fragmento (`react/rutas.js` + el cableado en `app.js`), cabecera con la finca y el cambio de finca, memoria de la vista de cada lista, pantalla propia para las direcciones que no llevan a nada, y **las 13 pantallas que faltaban ya decididas** (7 con dirección, 6 pasos que no la tienen porque su contenido vive en memoria, con el porqué escrito en `docs/T04_CONTRATO_NAVEGACION.md`). Aceptación comprobada a 390, 1024 y 1440 px (apartados 10.1 y 11.4). **Pendiente**: los filtros que aún no viajan (`faltan=1`, `elegida`, paginación, el zoom del mapa), los estados «copia local antigua»/«conflicto», la miga de pan, los contadores del menú, la ficha de tierra entera y el recorrido de teclado en un navegador real |
 | **T05 / E2** | Identidad y versiones de recinto; importación repetible sobre copia | T02 | **cerrado, con un defecto arreglado en la ronda 6** (la pantalla es de T06) | subagente datos/servidor + coordinador | Tabla `versiones_de_recinto` (`models.VersionDeRecinto`), servicio `app/versiones_de_recinto.py`, cinco rutas en `routers/versiones_api.py` y `geo.py` ampliado con la medida del área y los solapes. **62 pruebas** (57 + 5 nuevas), 0 fallos. La migración está **ensayada sobre copia de la base real**: 26 → 32 tablas y **0 filas cambiadas** (apartado 12.2). La idempotencia y «previsualizar no escribe» están **medidas contra servidor aislado** (apartado 12.5). Documento: `docs/T05_IDENTIDAD_Y_VERSIONES_DEL_RECINTO.md`. **Defecto encontrado por el coordinador en la ronda 6 y arreglado**: con referencias completas compartidas por varias tierras (en sus datos, hasta 9) la versión se colgaba a una de ellas sin decir nada (apartado 13.5). **No hay pantalla** y la forma se compara por su texto |
@@ -4737,3 +4737,119 @@ medido en el apartado 40 y el vocabulario de tres estados copiable de `maquinari
 **T20** (extractos), el **límite de peticiones** que pide T01 §5.2, y lo que T14 deja declarado (el coste de
 las averías es del T13; el tipo de papel «inspección», del T08; y las dos decisiones de pantalla y de
 exportación).
+
+---
+
+## 47. Ronda 39 (05/10/2026) — **el estado real corregido, un repositorio de verdad, y A14 cerrado**
+
+Esta ronda nace de seis encargos que van en este orden: **corregir el estado real**, **proteger lo que viene**,
+**cerrar A10–A14**, **lanzar T13/T20/T15**, **desbloquear la parte ejecutable de T08** y **cerrar los recorridos
+que faltan**. Lo hecho y lo que no, con lo que se ha medido.
+
+### 47.1 El estado real estaba mintiendo en tres sitios, y ya no
+
+| Lo que decía | Lo que es |
+|---|---|
+| «Última actualización: **02/10/2026**» | **05/10/2026**. Una fecha vieja hace dudar de todo lo demás |
+| **T11 y T12: «pendiente»**, con sus apartados donde se cuentan cerrados y revisados | los dos están **revisados** (T11 con **un requisito pendiente**, ver abajo; T12 con los 12 defectos de su revisión y el 13.º del dinero arreglados) |
+| **T02: «cerrado»** | **«entregado en su parte grave · A10–A13 PENDIENTES»**. Los siete hallazgos `alta` y A9 y A14 están; **A10, A11, A12 y A13 no**, y por eso el ticket no se cierra |
+| «implementado / verificado / bloqueado», con «implementado» significando dos cosas | **pendiente · en curso · entregado · verificado · revisado · bloqueado**, con la diferencia escrita: «entregado» es lo que nadie independiente ha intentado romper todavía |
+| Los requisitos pendientes, contados en una nota al pie | **en la última columna de su fila**, que es donde se leen. T11 ya no se presenta como cerrado teniendo la trazabilidad sin hacer |
+
+Y una regla nueva, escrita en el apartado 0: **un ticket no se cierra tapando requisitos pendientes en una
+nota**; si le falta algo, lo dice su estado.
+
+### 47.2 Un repositorio de verdad, y un defecto que se cazó antes de confirmarlo
+
+No había control de versiones (ni `.git`), y eso ya había costado: el accidente de acentos de `app.js` **no se
+puede comprobar hacia atrás** porque no existe un original con el que comparar. Ya hay repositorio **local, sin
+remoto**, creado con tres commits:
+
+1. **Estado del proyecto al 05/10/2026** — 632 ficheros, el árbol tal y como está, con el mensaje diciendo
+   **qué no demuestra** (que no puede reconstruir cómo era antes del accidente, y por qué).
+2. **Arreglo de la regla de los adjuntos** — ver abajo: se cazó revisando la lista de ignorados.
+3. **A14** — los totales de la interfaz.
+
+**Lo que queda fuera, comprobado con `git check-ignore` antes y con `git cat-file -s` después** (los 632
+ficheros entran con los mismos bytes que en disco, y con `core.autocrlf=false` para que Git no cambie finales
+de línea en un proyecto que compara bytes): **la base del agricultor y sus tres copias**, los adjuntos
+(`datos/`), los restos de comprobaciones (`backend/revision57b_adjuntos/`), las cachés, el entorno virtual y
+las credenciales. **Sí entran las fuentes oficiales** (`data/`: zonas vulnerables, municipios del INE, la Orden
+MAV/398/2022, los anexos del FEGA) y el modelo de OCR: la regla general es para lo que el programa **escribe**,
+no para lo que **lee**.
+
+**Y el defecto que se cazó**: el `.gitignore` decía `datos/` sin anclar, así que además de los adjuntos
+excluía **`backend/tests/datos/`**, que son **fixtures** —el cuaderno de ejemplo en xlsx que leen tres ficheros
+de prueba—. En un clon limpio faltarían y esas pruebas fallarían. Ahora la regla está anclada (`/datos/`) y hay
+otra para cualquier carpeta llamada `adjuntos`, esté donde esté. **Se descubrió mirando la lista de ignorados
+antes de dar el primer commit por bueno**, que es exactamente para lo que el encargo pedía revisarla.
+
+### 47.3 A14, cerrado: los totales dejan de sumar ceros que nadie ha dicho
+
+Los seis sitios del apartado 40 que sumaban con `Number(...) || 0` están arreglados, y **la cuenta se hace ya
+en un solo sitio**: `sumandoLoQueSeSabe` en `nucleo.js` (que es donde vive la lógica que se puede probar sin
+navegador). No devuelve solo la suma: devuelve `{suma, sin_decir}`, **porque quien suma tiene que poder decir
+lo que falta**.
+
+| Dónde | Qué se hacía | Qué se hace |
+|---|---|---|
+| Panel de mando: hectáreas tratadas | `(Number(...) \|\| 0)` | suma lo que consta y dice cuántos apuntes no traen sus hectáreas |
+| Panel de mando: hectáreas de la finca | se sumaban a mano | **las dice el servidor**, que ya cuenta aparte las tierras sin superficie |
+| Panel de mando: kilos vendidos | `(venta.kilos \|\| 0)` | suma lo que consta y dice cuántas ventas no traen sus kilos |
+| Pie de la tabla de tierras | `(Number(tierra.superficie_ha) \|\| 0)` | suma lo que consta y **«Sin hectáreas dichas: N»** |
+| Pie de la tabla de apuntes | `(Number(ficha.hectareas) \|\| 0)` | lo mismo |
+| Pantalla de entregas | `(venta.kilos \|\| 0)` | lo mismo |
+| Tabla de cultivos | `Number(parcela.superficie_ha) \|\| 0` | **el hueco se queda hueco** (y su detalle ya no enseña « ha» suelto) |
+
+Tres frases nuevas en `textos.TABLA` (tierras sin hectáreas, apuntes sin hectáreas, ventas sin kilos), **con
+su singular y su plural** —«1 tierra sin decir sus hectáreas» es lo primero que hace desconfiar de un
+programa— y sus copias en los dos ficheros de pruebas de JavaScript que las copian.
+
+**Y las pruebas, probadas contra el defecto**: hay 5 pruebas nuevas en `tests_js/nucleo.test.js`, y al volver
+a poner `|| 0` en la función **3 se ponen rojas** (las otras dos siguen verdes porque vigilan otras caras del
+mismo defecto, que es lo correcto). Una de ellas falló la primera vez **por un error mío**: comparaba
+`4.9 + 3.2` con `8.1` y en coma flotante eso da `8.100000000000001`; está arreglado **con el porqué escrito en
+la prueba**, no escondido.
+
+**Un aviso del propio proceso, que sirvió**: el guardián de textos (`test_que_no_falte_ningun_texto.py`) cazó
+que había puesto las frases en un diccionario (`tierra_y_mapa`) **que `app.js` no puede leer** porque no se
+sirve en `/api/interfaz`. Las moví a `TABLA`, que sí se sirve y que `app.js` ya lee. **Sin ese guardián, las
+tres frases habrían salido en blanco en la pantalla.**
+
+### 47.4 Lo que **no** se ha hecho en esta ronda, y por qué
+
+- **A10, A11, A12 y A13**: siguen pendientes. Tocar `models.py`, `schemas.py`, `validaciones.py` y `app.js`
+  para darles tres estados de punta a punta (formulario → API → modelo → cálculo → pantalla → exportación)
+  es el trabajo del **coordinador**, y va **antes** de abrir los tres frentes nuevos, porque **T13, T20 y T15
+  necesitan esos mismos ficheros** (models, schemas, main, app.js). Es la misma regla de siempre: **dos
+  escritores en el mismo fichero no se permiten**, y el coordinador es el que reserva e integra lo compartido.
+- **T13, T20 y T15**: **definidos y con su mapa de ficheros escrito** (apartado 47.5), pero **no lanzados**.
+  Lanzarlos ahora sería abrir tres frentes que escriben en los ficheros que estoy a punto de tocar para A10–A13.
+- **T08 (parte ejecutable)**: definido en su fila de la tabla (subida, clasificación a mano, revisión
+  original/propuesta, vinculación, duplicados, rectificativas y documentos de inspección), **sin empezar**, y
+  con la advertencia escrita de que **la precisión del OCR no se mide** sin el corpus de T07.
+- **Los recorridos que faltan** (crear artículos desde pantalla, relaciones de abonos por identificador, los
+  pendientes de T04 y que la exportación diga si lleva seleccionados, filtrados o todos): **en la cola**.
+
+### 47.5 El mapa de ficheros de los tres frentes, para que nadie escriba donde escribe otro
+
+| Frente | Ficheros **exclusivos** del subagente | Ficheros **compartidos**, que integra el coordinador |
+|---|---|---|
+| **T13** — gastos, inversiones, repartos, coste de averías | `app/gastos.py`, `app/routers/gastos_api.py`, `tests/test_gastos.py`, `web/react/pantallas/gastos.js`, `tests_js/gastos.test.js`, `docs/T13_GASTOS.md` | el bloque de tablas en `models.py`, sus esquemas en `schemas.py`, el `include_router` en `main.py`, el menú y el enrutador en `app.js`, su fila en la caché de `service-worker.js` y sus textos en `textos.py` |
+| **T20** — extractos y conciliación reversible | `app/extractos.py`, `app/routers/extractos_api.py`, `tests/test_extractos.py` | los mismos cinco, más su pantalla (nace dentro de la de gastos o en `web/react/pantallas/extractos.js`, a decidir con T13) |
+| **T15** — trabajos por tierra, historial y estado derivados | `app/trabajos.py`, `app/routers/trabajos_api.py`, `tests/test_trabajos.py`, `web/react/pantallas/trabajos.js`, `tests_js/trabajos.test.js`, `docs/T15_TRABAJOS.md` | **`models.Labor` ya existe**: lo que haga falta añadir allí, y los mismos cinco puntos de integración |
+
+**El orden, y por qué**: primero el coordinador cierra A10–A13 y **deja los modelos y los esquemas de los tres
+tickets escritos** (las tablas, los tres estados y sus puertas); después se lanzan los tres a la vez, cada uno
+en sus ficheros. Así el trabajo de los tres no depende de que yo termine, pero tampoco empiezan sobre un
+terreno que voy a mover.
+
+### 47.6 Estado al cerrar
+
+| Medida | Valor |
+|---|---|
+| Suite de Python | **3960 pruebas, 0 rojos** (con los recuentos alineados) |
+| JavaScript | **901, 0 rojos** (896 + las 5 de A14) |
+| Repositorio | **3 commits locales**, sin remoto, árbol limpio, sensibles fuera (comprobado) |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`) |
+| **PostgreSQL** | **sigue bloqueado**: el motor de Docker no responde. **No se ha tocado ningún volumen ni dato** para intentar arreglarlo, como pide el encargo |
