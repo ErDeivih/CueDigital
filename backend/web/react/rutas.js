@@ -157,6 +157,13 @@ export const PANTALLAS = [
   // buscar cuál de sus entregas era.
   { clave: "venta_importe", patron: ["ventas", ":id", "importe"] },
   { clave: "venta_ajuste", patron: ["ventas", ":id", "ajuste"] },
+  // **Las cuentas de la explotación** (T13, 05/10/2026). La lista se reconstruye entera al abrir su
+  // dirección —pide sus datos al servidor— y **la ficha de un gasto también** (se pide a su puerta),
+  // así que las dos se pueden enlazar, recargar y mandar a quien ayuda. El tramo de texto fijo va
+  // **antes** que el identificador, como en todas las familias de esta tabla: el día que exista
+  // `#/cuentas/nuevo`, tiene que ir por encima de `#/cuentas/:id`.
+  { clave: "gastos", patron: ["cuentas"] },
+  { clave: "gasto", patron: ["cuentas", ":id"] },
   { clave: "medidas", patron: ["medidas"] },
   // **La maquinaria y una máquina** (T14, 03/10/2026). La lista se reconstruye entera al abrir su
   // dirección —pide sus datos al servidor—, y la ficha de una máquina **también** (se pide a su puerta),

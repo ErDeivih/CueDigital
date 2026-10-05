@@ -1184,7 +1184,7 @@ ORIGENES_DE_UN_MOVIMIENTO = ("recepcion", "tratamiento", "fertilizacion", "factu
 # el abono: la semilla que se siembra sale del almacén, y lo que sale tiene que venir de un apunte
 # para poder comprobarse y, sobre todo, **revertirse**. Sin esto habría que restar la semilla por
 # otra puerta, y un almacén con dos formas de descontar es un almacén que un día no cuadra.
-APUNTES_QUE_GASTAN = ("tratamiento", "fertilizacion", "siembra")
+APUNTES_QUE_GASTAN = ("tratamiento", "fertilizacion", "siembra", "labor")
 # Las cuatro pestañas del almacén (contrato §4 y la pantalla S08: «productos de tratamiento, abonos,
 # semillas y otros insumos»). Las etiquetas que lee el agricultor están en `textos.ALMACEN`; aquí
 # viven los códigos, que es lo que se guarda.
@@ -1470,6 +1470,10 @@ def estado_de_los_origenes(
         # contar, igual que la de un tratamiento anulado. Sin esta línea, anular una siembra dejaría la
         # semilla descontada para siempre y habría que ir a borrar el movimiento a mano.
         "siembra": (models.Siembra, "anulada"),
+        # Las labores (T15, 05/10/2026). Es lo que hace que **anular un trabajo devuelva al almacén lo
+        # que gastó sin tocar el libro**, igual que un tratamiento o una siembra anulados (A01/A04): el
+        # movimiento se queda con su fecha y su autor, y deja de contar.
+        "labor": (models.Labor, "anulado"),
     }
     codigos = {
         "recepcion": "AL34_el_albaran_esta_anulado",
@@ -1477,6 +1481,7 @@ def estado_de_los_origenes(
         "fertilizacion": "AL35_el_apunte_esta_anulado",
         "factura": "AL36_la_factura_esta_anulada",
         "siembra": "SM29_la_siembra_esta_anulada",
+        "labor": "AL35_el_apunte_esta_anulado",
     }
     por_tipo: dict[str, set[int]] = {}
     for movimiento in movimientos:
@@ -1962,6 +1967,25 @@ def lo_que_gasta_un_apunte(
             # De dónde sale el total, para poder explicarlo: de lo que el agricultor escribió en el
             # apunte (`cantidad_total`, que el programa calcula como dosis × hectáreas al guardarlo).
             "como_se_sabe": "cantidad_total",
+        }
+    if apunte_tipo == "labor":
+        # Un trabajo hecho (T15). La cantidad de lo que gasta la dice su propio apunte de salida —el
+        # router la manda—, y aquí se contesta lo que se sabe del trabajo: que existe, si está anulado y
+        # de qué día es. **Lo que la labor no sabe es el total de cada insumo** (un insumo sin cantidad
+        # no se resta), así que `cantidad` va en `None` y la puerta de las salidas pedirá el total en vez
+        # de inventárselo.
+        apunte = db.get(models.Labor, apunte_id)
+        if apunte is None or apunte.explotacion_id != explotacion_id:
+            return {"existe": False}
+        return {
+            "existe": True,
+            "anulado": apunte.anulado,
+            "cantidad": None,
+            "unidad": None,
+            "fecha": apunte.fecha,
+            "superficie_ha": apunte.superficie_ha,
+            "dosis_por_ha": None,
+            "como_se_sabe": "lo_dice_el_apunte_de_salida",
         }
     if apunte_tipo == "fertilizacion":
         apunte = db.get(models.RegistroFertilizacion, apunte_id)

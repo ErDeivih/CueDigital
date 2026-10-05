@@ -32,6 +32,7 @@ from .routers import (
     fincas_api,
     firmas_api,
     gastos_api,
+    trabajos_api,
     interfaz,
     iuws_api,
     maestros,
@@ -204,6 +205,10 @@ app.include_router(maquinaria_api.router)
 # formas de pago (`ventas.FORMAS_DE_COBRO`) y porque el orden de los routers no decide nada: cada uno
 # tiene su prefijo (`/api/gastos`).
 app.include_router(gastos_api.router)
+# **Los trabajos por tierra (T15, E9, 05/10/2026).** El previsto y el hecho, la historia de una tierra y
+# el estado derivado. Va detrás de los gastos porque un trabajo puede costar dinero y detrás de la
+# maquinaria porque dice con qué máquina se hizo.
+app.include_router(trabajos_api.router)
 
 
 @app.get("/health", tags=["sistema"])

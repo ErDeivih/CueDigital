@@ -355,7 +355,11 @@ COLUMNAS = {
     "fertilizante_id": ["articulos", "fertilizaciones", "lineas_de_factura"],
     "aplicador_id": ["tratamientos"],
     "asesor_id": ["tratamientos"],
-    "equipo_id": ["labores", "tratamientos"],
+    # **Y desde el T15 (E9, 05/10/2026) hay una tercera: el trabajo planificado.** Un plan dice con qué
+    # máquina se piensa hacer —«pasar el rodillo con este tractor»—, así que es una dependencia de
+    # verdad: sin la ficha del equipo, el plan se queda sin decir con qué se iba a hacer (y la base de
+    # datos no admitiría la fila). Igual que las otras dos, contesta 409 con su cuenta.
+    "equipo_id": ["labores", "trabajos_previstos", "tratamientos"],
     "instalacion_id": ["analiticas", "tratamientos"],
 }
 

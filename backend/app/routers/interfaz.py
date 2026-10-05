@@ -245,6 +245,9 @@ def interfaz() -> dict:
         # depende. Sin esto, el agricultor creería que una cifra que no aparece es un fallo del
         # programa en vez de un dato que falta (la receta de `AGENTS.md`).
         "gastos_que_falta": list(gastos.QUE_FALTA),
+        # Los trabajos por tierra (T15, 05/10/2026): la agenda, la ficha de un trabajo y la historia de
+        # una tierra. Sin esto, las tres pantallas salen con los botones en blanco.
+        "agenda": textos.AGENDA,
         # **Las tierras en el mapa y en la tabla, y lo que ha sido una tierra** (T06, 03/10/2026): las
         # palabras de las dos pantallas nuevas. Se sirven aquí —y no solo dentro de
         # `/api/parcelas/vista`— por un motivo que se vio al escribirlas: la ficha de una tierra con sus

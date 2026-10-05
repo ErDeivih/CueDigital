@@ -140,6 +140,11 @@ import { camposDelMaestro } from "./react/piezas/campos_del_maestro.js";
 // son la misma cosa mirada de dos maneras —lo mismo que las semillas—, y va aquí, con las demás, para
 // que el import diga de un vistazo que esta pantalla ya está en React.
 import { pantallaDeLaMaquinaria, pantallaDeUnaMaquina } from "./react/pantallas/maquinaria.js";
+// **Las cuentas de la explotación (T13, E7, 05/10/2026).** Un fichero con las dos pantallas del
+// contrato: la lista (`#/cuentas`) y la ficha de un gasto (`#/cuentas/<id>`). Es un solo fichero
+// porque las dos comparten las mismas piezas —la tarjeta de cifras, el cuadre del reparto y los
+// formularios— y separarlas obligaría a copiarlas.
+import { pantallaDeLasCuentas, pantallaDeUnGasto } from "./react/pantallas/gastos.js";
 
 /**
  * Qué pantallas están ya en React y cuáles todavía no.
@@ -233,6 +238,11 @@ const PANTALLAS_EN_REACT = new Set([
   // del campo, por lo de siempre: la lista de máquinas se mira en la nave —para saber si se puede contar
   // con el tractor— y ahí es donde peor va la cobertura.
   "maquinaria",
+  // T13 (05/10/2026): las cuentas de la explotación. Un solo fichero (`gastos.js`) con las dos
+  // pantallas: la lista con su tabla y la ficha de un gasto, que es donde se reparte a las tierras,
+  // los cultivos y las máquinas. Va aquí, y en la caché del campo, por lo de siempre: las cuentas se
+  // miran en el despacho y también de pie en la nave.
+  "gastos",
 ]);
 
 // ---------------------------------------------------------------- almacenamiento
@@ -779,6 +789,10 @@ const DIRECCION_PROPIA = {
   // y **la ficha de una máquina tiene la suya** (`#/maquinaria/12`), porque se puede enlazar y recargar:
   // sus datos y sus inspecciones se piden al servidor al abrirla.
   PantallaDeUnaMaquina: "maquina",
+  // Las cuentas (T13, 05/10/2026): la lista coge la dirección de su renglón del menú (`#/cuentas`), y
+  // **la ficha de un gasto tiene la suya** (`#/cuentas/12`), porque se puede enlazar y recargar: sus
+  // repartos y sus pagos se piden al servidor al abrirla.
+  PantallaDeUnGasto: "gasto",
 };
 
 /**
@@ -1148,6 +1162,10 @@ function abrirLaPantalla(clave, parametros = {}) {
   if (clave === "maquina") {
     return abrirUnaMaquina(parametros.id);
   }
+  // **Las cuentas de la explotación (T13, E7, 05/10/2026)**: la lista y la ficha de un gasto. Las dos
+  // se piden al servidor al abrirlas, así que se pueden enlazar y recargar.
+  if (clave === "gastos") return abrirLasCuentas();
+  if (clave === "gasto") return abrirUnGasto(parametros.id);
   return ABRIR_LA_PANTALLA[clave] ? ABRIR_LA_PANTALLA[clave](parametros) : pantallaInicio();
 }
 
@@ -1315,6 +1333,10 @@ const MODULOS = [
   // mira cuando hay que decidir si se puede contar con el tractor para un trabajo, y su ficha es donde
   // están las cinco cosas que hay que pasarle (ITV, ITEAF, mantenimiento, seguro y ROMA).
   { clave: "maquinaria", texto: "maquinaria.titulo", accion: "maquinaria-ver" },
+  // **Las cuentas (T13, 05/10/2026).** Va detrás de la maquinaria y delante de los papeles: es lo que
+  // se mira cuando se quiere saber cómo va el año —lo que ha costado y lo que falta por pagar—, y no
+  // al final, con lo que se toca una vez al año.
+  { clave: "cuentas", texto: "gastos.titulo", accion: "gastos-ver" },
   { clave: "papeles", texto: "documentos.titulo", accion: "papel-ver-todos" },
   { clave: "facturas", texto: "facturas.titulo", accion: "facturas-abrir" },
   { clave: "anos", texto: "campanas.titulo", accion: "campanas-abrir" },
@@ -1413,6 +1435,10 @@ const MODULO_DE_LA_PANTALLA = {
   // renglón: no saber dónde estás es la mitad de para qué sirve un menú.
   PantallaDeLaMaquinaria: "maquinaria",
   PantallaDeUnaMaquina: "maquinaria",
+  // Las cuentas (T13): las dos pantallas cuelgan del renglón de las cuentas, que es de donde se llega
+  // y donde el agricultor tiene que verse marcado.
+  PantallaDeLasCuentas: "cuentas",
+  PantallaDeUnGasto: "cuentas",
 };
 
 /**
@@ -4813,7 +4839,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-03-68";
+const VERSION_DE_LA_APLICACION = "2026-10-05-69";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -18923,6 +18949,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     await recargarLaMaquinaria();
     return pantallaUnaMaquina();
   }
+  // Las cuentas de la explotación (T13, E7, 05/10/2026)
+  const enLasCuentas = await atenderLasCuentas(nombre, elemento);
+  if (enLasCuentas !== false) return enLasCuentas;
 });
 
 window.addEventListener("online", () => {
@@ -18931,6 +18960,625 @@ window.addEventListener("online", () => {
 });
 
 window.addEventListener("offline", pintarAvisoPendientes);
+
+// ---------------------------------------------------------------------------
+// Las cuentas de la explotación (T13, E7, 05/10/2026)
+// ---------------------------------------------------------------------------
+//
+// LO QUE ESTE BLOQUE HACE, Y LO QUE NO. Hace tres cosas y ninguna más:
+//
+//   1. **Pide los datos** a `GET /api/gastos` y los pasa a la pantalla, que no calcula nada.
+//   2. **Recoge lo que el agricultor escribe** por los `id` de los campos y lo manda al servidor.
+//   3. **Atiende las 17 acciones** de sus botones, una por una.
+//
+// Lo que **no** hace: ni una cuenta de dinero. Todos los importes, los repartos, los cuadres y los
+// márgenes llegan calculados del servidor (`app/gastos.py`, con `Decimal`), porque en el navegador
+// todo número es de coma flotante y el total de la pantalla dejaría de coincidir con el de la base
+// por céntimos.
+
+/** El estado de las cuentas, creado la primera vez que hace falta (como el del almacén). */
+function estadoDeLasCuentas() {
+  if (!estado.cuentas) {
+    estado.cuentas = {
+      // Lo que devolvió `GET /api/gastos`: las cinco listas, las tres columnas del coste, la caja,
+      // los márgenes y lo que falta.
+      datos: null,
+      // La ficha de un gasto abierta (`GET /api/gastos/<id>`), o nada.
+      gasto: null,
+      // El formulario que está abierto: apuntar un gasto, repartirlo, apuntar un pago, una inversión
+      // o una ayuda. `clase` dice cuál, y es lo que el botón de guardar manda al servidor.
+      formulario: null,
+      // El borrador: lo que el agricultor ha ido eligiendo (la categoría, el método de reparto, los
+      // destinos). **Vive aquí y no en el DOM**: al repintar para enseñar una cosa nueva se perdería.
+      borrador: null,
+      anulando: null,
+      filtro: "",
+      guardando: false,
+      error: "",
+      aviso: "",
+    };
+  }
+  return estado.cuentas;
+}
+
+/** El vocabulario de estas pantallas: el de las cuentas y los dos botones de corregir y borrar. */
+function textosDeLasCuentas() {
+  return {
+    gasto: t("gastos", {}),
+    acciones: accion("volver") ? { volver: accion("volver") } : {},
+    tabla: t("tabla", {}),
+  };
+}
+
+/** Abre «mis cuentas»: se pinta enseguida y se vuelve a pintar con lo que contesta el servidor. */
+async function abrirLasCuentas() {
+  const suyo = estadoDeLasCuentas();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.borrador = null;
+  suyo.anulando = null;
+  suyo.gasto = null;
+  pantallaLasCuentas();
+  await recargarLasCuentas();
+  pantallaLasCuentas();
+}
+
+/** Vuelve a pedir las cuentas de la finca. */
+async function recargarLasCuentas() {
+  const suyo = estadoDeLasCuentas();
+  const campana = campanaActual();
+  const consulta = campana && campana.id ? `?campana_id=${campana.id}` : "";
+  try {
+    suyo.datos = await apiJson(`/api/gastos${consulta}`);
+    suyo.error = "";
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return suyo;
+}
+
+/** La lista de las cuentas, ya en React. */
+function pantallaLasCuentas() {
+  const suyo = estadoDeLasCuentas();
+  const g = t("gastos", {});
+  const datos = suyo.datos || {};
+  const casan = (datos.gastos || []).filter((gasto) => {
+    const busca = (suyo.filtro || "").toLocaleLowerCase("es");
+    if (!busca) return true;
+    return `${gasto.concepto || ""} ${gasto.proveedor || ""}`
+      .toLocaleLowerCase("es")
+      .includes(busca);
+  });
+  const cuantos = casan.length;
+  return montar(() =>
+    pantallaDeLasCuentas({
+      textos: textosDeLasCuentas(),
+      // El singular y el plural con las dos formas del servidor: «Tienes 1 gastos» es lo primero que
+      // hace desconfiar de un programa.
+      cuentas: { ...datos, gastos: casan },
+      resumen: cuantos ? conCuenta(g, "cuantas", cuantos) : "",
+      filtro: suyo.filtro,
+      tabla: tablaDeLasCuentas(casan),
+      formulario: elFormularioDeLasCuentas(suyo.formulario, suyo.borrador),
+      anulando: suyo.anulando,
+      guardando: suyo.guardando,
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/** La tabla del ordenador: una celda menos que columnas (la última, «Acciones», la pone la pieza). */
+function tablaDeLasCuentas(gastos) {
+  const g = t("gastos", {});
+  const col = (clave) => t(`tabla.cuentas_${clave}`, "");
+  const columnas = [
+    { texto: col("concepto"), campo: "concepto" },
+    { texto: col("coste") },
+    { texto: col("va_a") },
+    { texto: col("pagado") },
+    { texto: col("pendiente") },
+    { texto: col("estado") },
+    { texto: col("acciones") },
+  ];
+  const filas = (gastos || []).map((gasto) => ({
+    celdas: [
+      {
+        texto: gasto.concepto,
+        accion: "gasto-abrir",
+        datos: { id: gasto.id },
+      },
+      // **Un importe que no consta se enseña con su palabra, no con un cero.**
+      { texto: gasto.importe ? gasto.texto_importe : g.no_se_sabe },
+      {
+        texto: gasto.repartos.length
+          ? gasto.repartos.map((uno) => uno.etiqueta_destino || uno.destino).filter(Boolean).join(", ")
+          : g.sin_asignar_corto,
+        pista: gasto.esta_sin_repartir ? g.sin_asignar_explica : "",
+      },
+      { texto: gasto.texto_pagado },
+      { texto: gasto.pendiente ? gasto.texto_pendiente : g.no_se_sabe },
+      { texto: g[`estado_${gasto.estado}`] || "" },
+    ],
+    acciones: [],
+  }));
+  return {
+    clave: "gastos",
+    etiqueta: g.titulo,
+    columnas,
+    filas,
+    resumen: filas.length
+      ? rellena(t("tabla.resumen_cuentas", ""), {
+          cuantas: filas.length,
+          total: (estadoDeLasCuentas().datos || {}).coste_por_clase
+            ? estadoDeLasCuentas().datos.coste_por_clase.texto_total_conocido
+            : "",
+        })
+      : "",
+  };
+}
+
+/** Abre la ficha de un gasto, pidiéndola a su puerta (`GET /api/gastos/<id>`). */
+async function abrirUnGasto(id) {
+  const suyo = estadoDeLasCuentas();
+  if (!id) return abrirLasCuentas();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.borrador = null;
+  suyo.anulando = null;
+  let respuesta = null;
+  try {
+    respuesta = await api(`/api/gastos/${id}`);
+  } catch (fallo) {
+    respuesta = null;
+  }
+  if (!respuesta) {
+    if (!navigator.onLine) return pantallaDeUnaDireccionQueNoSePuedeComprobar();
+    avisarDelError(mensaje("no_se_pudo"));
+    return;
+  }
+  if (respuesta.status === 404) return pantallaDeDireccionQueNoLlevaANingunaParte();
+  if (!respuesta.ok) {
+    avisarDelError(mensaje("no_se_pudo"));
+    return;
+  }
+  suyo.gasto = await respuesta.json();
+  pantallaUnGasto();
+}
+
+/** La ficha de un gasto, ya en React. */
+function pantallaUnGasto() {
+  const suyo = estadoDeLasCuentas();
+  const gasto = suyo.gasto || {};
+  const susPagos = [];
+  for (const pago of (suyo.datos || {}).pagos || []) {
+    for (const aplicacion of pago.aplicaciones || []) {
+      if (aplicacion.gasto_id !== gasto.id) continue;
+      susPagos.push({
+        id: pago.id,
+        aplicacion_id: aplicacion.id,
+        texto_importe: pago.texto_importe,
+        texto_aplicado: aplicacion.texto_importe,
+      });
+    }
+  }
+  return montar(() =>
+    pantallaDeUnGasto({
+      textos: textosDeLasCuentas(),
+      gasto,
+      pagos: susPagos,
+      formulario: elFormularioDeLasCuentas(suyo.formulario, suyo.borrador),
+      repartiendo:
+        suyo.formulario && suyo.formulario.clase === "reparto"
+          ? elFormularioDeLasCuentas(suyo.formulario, suyo.borrador)
+          : null,
+      anulando: suyo.anulando,
+      guardando: suyo.guardando,
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/**
+ * El formulario que está abierto, con sus bloques.
+ *
+ * **Los campos llevan su `id` y los botones de elegir su `campo`**: es lo único que este fichero
+ * tiene para leer lo que el agricultor ha escrito. Y **ninguna pregunta nace contestada**: lo que no
+ * haya elegido él va con `elegido: ""`, y la pantalla no marca ninguna opción.
+ */
+function elFormularioDeLasCuentas(cual, borrador) {
+  if (!cual) return null;
+  const g = t("gastos", {});
+  const b = borrador || {};
+  const opcionesDe = (lista, elegido) =>
+    (lista || []).map((uno) => ({ valor: uno.valor, texto: uno.texto, elegido: uno.valor === elegido }));
+  const base = {
+    guardar: g.guardar,
+    cancelar: g.cancelar,
+    guardando: g.guardando,
+    datos: { clase: cual.clase, id: cual.id || "" },
+    bloques: [],
+  };
+  if (cual.clase === "gasto") {
+    return {
+      ...base,
+      titulo: cual.id ? g.form_corregir_titulo : g.form_nuevo_titulo,
+      pista: cual.id ? g.form_corregir_pista : g.form_nuevo_pista,
+      bloques: [
+        { tipo: "texto", id: "gasto-concepto", etiqueta: g.campo_concepto, pista: g.campo_concepto_pista, valor: cual.concepto || "" },
+        {
+          tipo: "opciones",
+          campo: "categoria",
+          etiqueta: g.campo_categoria,
+          pista: g.campo_categoria_pista,
+          elegido: b.categoria || cual.categoria || "",
+          opciones: opcionesDe((estado.interfaz || {}).categorias_de_gasto, b.categoria || cual.categoria),
+        },
+        { tipo: "numero", id: "gasto-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: cual.importe || "" },
+        { tipo: "numero", id: "gasto-base", etiqueta: g.campo_base, valor: cual.base_imponible || "" },
+        { tipo: "numero", id: "gasto-cuota", etiqueta: g.campo_cuota, valor: cual.cuota_iva || "" },
+        { tipo: "fecha", id: "gasto-fecha", etiqueta: g.campo_fecha, valor: cual.fecha || "" },
+        { tipo: "fecha", id: "gasto-vencimiento", etiqueta: g.campo_vencimiento, pista: g.campo_vencimiento_pista, valor: cual.vencimiento || "" },
+        { tipo: "texto", id: "gasto-proveedor", etiqueta: g.campo_proveedor, valor: cual.proveedor || "" },
+      ],
+    };
+  }
+  if (cual.clase === "reparto") {
+    return {
+      ...base,
+      titulo: g.form_repartir_titulo,
+      pista: g.form_repartir_pista,
+      bloques: [
+        {
+          tipo: "opciones",
+          campo: "metodo",
+          etiqueta: g.campo_metodo,
+          elegido: b.metodo || "",
+          opciones: opcionesDe((estado.interfaz || {}).metodos_de_reparto, b.metodo),
+        },
+        {
+          tipo: "opciones",
+          campo: "destino_tipo",
+          etiqueta: g.campo_destino,
+          elegido: b.destino_tipo || "",
+          opciones: [
+            { valor: "tierra", texto: t("tabla.cuentas_tierra", ""), elegido: b.destino_tipo === "tierra" },
+            { valor: "cultivo", texto: t("tabla.cuentas_cultivo", ""), elegido: b.destino_tipo === "cultivo" },
+            { valor: "maquina", texto: t("maquinaria.titulo", ""), elegido: b.destino_tipo === "maquina" },
+          ],
+        },
+        // Las horas o los litros de cada sitio: un campo por tierra elegida (los monta el borrador).
+        ...(b.pesos || []).map((uno) => ({
+          tipo: "numero",
+          id: `gasto-peso-${uno.clave}`,
+          etiqueta: uno.nombre,
+          sufijo: b.metodo === "horas" ? g.campo_horas : g.campo_litros,
+          valor: uno.valor || "",
+        })),
+      ],
+    };
+  }
+  if (cual.clase === "pago") {
+    return {
+      ...base,
+      titulo: g.form_pago_titulo,
+      pista: g.form_pago_pista,
+      bloques: [
+        { tipo: "numero", id: "pago-importe", etiqueta: g.campo_importe, valor: "" },
+        { tipo: "fecha", id: "pago-fecha", etiqueta: g.campo_fecha, valor: hoy() },
+        { tipo: "texto", id: "pago-proveedor", etiqueta: g.campo_proveedor, valor: "" },
+        {
+          tipo: "opciones",
+          campo: "forma",
+          etiqueta: t("cobro.forma", ""),
+          elegido: b.forma || "transferencia",
+          opciones: opcionesDe((estado.interfaz || {}).formas_de_pago, b.forma || "transferencia"),
+        },
+      ],
+    };
+  }
+  if (cual.clase === "inversion") {
+    return {
+      ...base,
+      titulo: g.form_inversion_titulo,
+      pista: g.form_inversion_pista,
+      bloques: [
+        { tipo: "texto", id: "inversion-concepto", etiqueta: g.campo_concepto, valor: "" },
+        {
+          tipo: "opciones",
+          campo: "categoria",
+          etiqueta: g.campo_categoria,
+          elegido: b.categoria || "",
+          opciones: opcionesDe((estado.interfaz || {}).categorias_de_inversion, b.categoria),
+        },
+        { tipo: "numero", id: "inversion-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: "" },
+        { tipo: "fecha", id: "inversion-fecha", etiqueta: g.campo_fecha, valor: "" },
+        { tipo: "texto", id: "inversion-proveedor", etiqueta: g.campo_proveedor, valor: "" },
+      ],
+    };
+  }
+  if (cual.clase === "ayuda") {
+    return {
+      ...base,
+      titulo: g.form_ayuda_titulo,
+      pista: g.form_ayuda_pista,
+      bloques: [
+        { tipo: "texto", id: "ayuda-concepto", etiqueta: g.campo_concepto, valor: "" },
+        { tipo: "texto", id: "ayuda-organismo", etiqueta: g.campo_proveedor, valor: "" },
+        { tipo: "numero", id: "ayuda-previsto", etiqueta: g.ayuda_prevista, valor: "" },
+        { tipo: "numero", id: "ayuda-concedido", etiqueta: g.ayuda_concedida, valor: "" },
+        { tipo: "numero", id: "ayuda-cobrado", etiqueta: g.ayuda_cobrada, valor: "" },
+      ],
+    };
+  }
+  return null;
+}
+
+/** Guarda lo que haya abierto, con la clase que diga el botón. */
+async function guardarLasCuentas(datos) {
+  const suyo = estadoDeLasCuentas();
+  const clase = (datos && datos.clase) || "";
+  const id = datos && datos.id ? Number(datos.id) : null;
+  const b = suyo.borrador || {};
+  const campos = (ids) => {
+    const salida = {};
+    for (const nombre of ids) salida[nombre] = valorDeLaCasilla(nombre);
+    return salida;
+  };
+  suyo.guardando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaLasCuentas();
+  let ruta = "/api/gastos";
+  let cuerpo = {};
+  let metodo = "POST";
+  if (clase === "gasto") {
+    const suyos = campos(["gasto-concepto", "gasto-importe", "gasto-base", "gasto-cuota", "gasto-fecha", "gasto-vencimiento", "gasto-proveedor"]);
+    cuerpo = {
+      concepto: suyos["gasto-concepto"],
+      // **Un importe vacío viaja como `null`**, nunca como 0: es la regla del encargo de punta a punta.
+      importe: suyos["gasto-importe"] || null,
+      base_imponible: suyos["gasto-base"] || null,
+      cuota_iva: suyos["gasto-cuota"] || null,
+      fecha: suyos["gasto-fecha"] || null,
+      vencimiento: suyos["gasto-vencimiento"] || null,
+      proveedor: suyos["gasto-proveedor"],
+      categoria: b.categoria || "otro",
+      campana_id: campanaActual() ? campanaActual().id : null,
+      clave_de_reenvio: claveDeReenvio("gasto"),
+    };
+    if (id) {
+      metodo = "PUT";
+      ruta = `/api/gastos/${id}`;
+      delete cuerpo.clave_de_reenvio;
+    }
+  } else if (clase === "reparto") {
+    metodo = "POST";
+    ruta = `/api/gastos/${id}/repartos`;
+    cuerpo = {
+      metodo: b.metodo || "manual",
+      destino_tipo: b.destino_tipo || "tierra",
+      parcela_ids: b.parcela_ids || [],
+      pesos: b.pesosRecogidos || {},
+      trozos: b.trozos || [],
+      confirmado: true,
+    };
+  } else if (clase === "pago") {
+    cuerpo = {
+      importe: valorDeLaCasilla("pago-importe"),
+      fecha: valorDeLaCasilla("pago-fecha") || null,
+      proveedor: valorDeLaCasilla("pago-proveedor"),
+      forma: b.forma || "transferencia",
+      clave_de_reenvio: claveDeReenvio("pago"),
+      aplicaciones: b.aplicaciones || [],
+    };
+  } else if (clase === "inversion") {
+    cuerpo = {
+      concepto: valorDeLaCasilla("inversion-concepto"),
+      importe: valorDeLaCasilla("inversion-importe") || null,
+      fecha: valorDeLaCasilla("inversion-fecha") || null,
+      proveedor: valorDeLaCasilla("inversion-proveedor"),
+      categoria: b.categoria || "otro",
+      campana_id: campanaActual() ? campanaActual().id : null,
+      clave_de_reenvio: claveDeReenvio("inversion"),
+    };
+  } else if (clase === "ayuda") {
+    cuerpo = {
+      concepto: valorDeLaCasilla("ayuda-concepto"),
+      organismo: valorDeLaCasilla("ayuda-organismo"),
+      importe_previsto: valorDeLaCasilla("ayuda-previsto") || null,
+      importe_concedido: valorDeLaCasilla("ayuda-concedido") || null,
+      importe_cobrado: valorDeLaCasilla("ayuda-cobrado") || null,
+      campana_id: campanaActual() ? campanaActual().id : null,
+      clave_de_reenvio: claveDeReenvio("ayuda"),
+    };
+  }
+  try {
+    const respuesta = await api(ruta, { metodo, cuerpo });
+    if (!respuesta.ok) {
+      suyo.error = mensaje("no_se_pudo");
+    } else {
+      const contestado = await respuesta.json();
+      suyo.aviso = (contestado.avisos || []).join(" ");
+      suyo.formulario = null;
+      suyo.borrador = null;
+      await recargarLasCuentas();
+    }
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  if (suyo.gasto) {
+    await abrirUnGasto(suyo.gasto.id);
+  } else {
+    pantallaLasCuentas();
+  }
+}
+
+/** Las 17 acciones de los botones de estas pantallas. */
+async function atenderLasCuentas(nombre, elemento) {
+  const suyo = estadoDeLasCuentas();
+  const g = t("gastos", {});
+  const id = Number(elemento.dataset.id || 0);
+  if (nombre === "gastos-ver") return abrirLasCuentas();
+  if (nombre === "gasto-abrir") return abrirUnGasto(id);
+  if (nombre === "gastos-ver-todas") {
+    suyo.filtro = "";
+    return pantallaLasCuentas();
+  }
+  if (nombre === "gasto-nuevo") {
+    suyo.formulario = { clase: "gasto", id: id || null };
+    suyo.borrador = {};
+    return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  if (nombre === "gasto-pago-nuevo") {
+    suyo.formulario = { clase: "pago" };
+    suyo.borrador = { aplicaciones: [] };
+    return pantallaLasCuentas();
+  }
+  if (nombre === "gasto-inversion-nueva") {
+    suyo.formulario = { clase: "inversion" };
+    suyo.borrador = {};
+    return pantallaLasCuentas();
+  }
+  if (nombre === "gasto-ayuda-nueva") {
+    suyo.formulario = { clase: "ayuda" };
+    suyo.borrador = {};
+    return pantallaLasCuentas();
+  }
+  if (nombre === "gasto-repartir") {
+    suyo.formulario = { clase: "reparto", id };
+    // Las tierras que se pueden elegir, con sus hectáreas: el servidor las leerá al repartir, y aquí
+    // solo se ofrecen para que el agricultor diga a cuáles.
+    suyo.borrador = { metodo: "", destino_tipo: "tierra", parcela_ids: [], pesos: [] };
+    return pantallaUnGasto();
+  }
+  if (nombre === "gasto-sin-asignar") {
+    suyo.guardando = true;
+    pantallaUnGasto();
+    try {
+      const respuesta = await api(`/api/gastos/${id}/sin-asignar`, {
+        metodo: "POST",
+        cuerpo: { porque: "no_se_reparte_porque_no_ha_dicho_el_metodo" },
+      });
+      const contestado = await respuesta.json();
+      suyo.gasto = contestado.gasto;
+      suyo.aviso = (contestado.avisos || []).join(" ");
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    suyo.guardando = false;
+    return pantallaUnGasto();
+  }
+  if (nombre === "gasto-reparto-quitar") {
+    const reparto = Number(elemento.dataset.reparto || 0);
+    try {
+      const respuesta = await api(`/api/gastos/${id}/repartos/${reparto}`, { metodo: "DELETE" });
+      const contestado = await respuesta.json();
+      suyo.gasto = contestado.gasto;
+      suyo.aviso = (contestado.avisos || []).join(" ");
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    return pantallaUnGasto();
+  }
+  if (nombre === "gasto-elegir") {
+    // **El borrador vive aquí y no en el DOM**: al repintar se perdería, y el agricultor tendría que
+    // volver a elegir lo que ya había elegido.
+    const campo = elemento.dataset.campo || "";
+    const valor = elemento.dataset.valor || "";
+    suyo.borrador = { ...(suyo.borrador || {}), [campo]: valor };
+    return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  if (nombre === "gasto-guardar") return guardarLasCuentas(elemento.dataset);
+  if (nombre === "gasto-cancelar") {
+    suyo.formulario = null;
+    suyo.borrador = null;
+    suyo.anulando = null;
+    suyo.error = "";
+    return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  if (nombre === "gasto-anular") {
+    const clase = elemento.dataset.clase || "gasto";
+    suyo.anulando = {
+      titulo: `${g.anular} · ${clase === "pago" ? g.pagos_titulo : g.titulo}`,
+      pista: g.anular_motivo,
+      id: "gasto-motivo-anulacion",
+      confirmar: g.anular_confirmar,
+      cancelar: g.cancelar,
+      datos: { id, clase },
+      error: "",
+    };
+    return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  if (nombre === "gasto-anular-confirmar") {
+    // **Sin motivo no se anula**: dentro de un año, ese motivo es lo único que explicará por qué está
+    // tachado. El servidor también lo exige; aquí se dice antes para no hacer el viaje.
+    const motivo = (valorDeLaCasilla("gasto-motivo-anulacion") || "").trim();
+    if (!motivo) {
+      suyo.anulando.error = mensaje("G22_para_anular_hace_falta_el_motivo");
+      return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+    }
+    const clase = elemento.dataset.clase || "gasto";
+    const rutaBase =
+      clase === "pago"
+        ? `/api/gastos/pagos/${id}/anular`
+        : clase === "inversion"
+          ? `/api/gastos/inversiones/${id}/anular`
+          : clase === "ayuda"
+            ? `/api/gastos/subvenciones/${id}/anular`
+            : `/api/gastos/${id}/anular`;
+    try {
+      const respuesta = await api(rutaBase, { metodo: "POST", cuerpo: { motivo } });
+      const contestado = await respuesta.json();
+      suyo.aviso = (contestado.avisos || []).join(" ");
+      suyo.anulando = null;
+      if (clase === "gasto" && contestado.gasto) suyo.gasto = contestado.gasto;
+      await recargarLasCuentas();
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    return suyo.gasto && clase === "gasto" ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  if (nombre === "gasto-pago-conciliar") {
+    // **Conciliar un pago no crea un gasto**: se dice contra qué va y ya está. Se reparte solo, por
+    // orden y el más antiguo primero, que es la regla de cualquier cuenta corriente.
+    const deudos = (suyo.datos.gastos || [])
+      .filter((gasto) => gasto.pendiente && Number(gasto.pendiente) > 0)
+      .map((gasto) => gasto.id);
+    try {
+      const respuesta = await api(`/api/gastos/pagos/${id}/conciliar`, {
+        metodo: "POST",
+        cuerpo: { automatico: true, gastos: deudos, aplicaciones: [] },
+      });
+      const contestado = await respuesta.json();
+      suyo.aviso = (contestado.avisos || []).join(" ");
+      await recargarLasCuentas();
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    return pantallaLasCuentas();
+  }
+  if (nombre === "gasto-pago-deshacer") {
+    const aplicacion = Number(elemento.dataset.aplicacion || 0);
+    try {
+      const respuesta = await api(`/api/gastos/pagos/${id}/aplicaciones/${aplicacion}`, {
+        metodo: "DELETE",
+      });
+      const contestado = await respuesta.json();
+      suyo.aviso = (contestado.avisos || []).join(" ");
+      await recargarLasCuentas();
+      if (suyo.gasto) suyo.gasto = await apiJson(`/api/gastos/${suyo.gasto.id}`);
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+  }
+  return false;
+}
 
 // --------------------------------------------------------------------- arranque
 

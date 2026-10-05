@@ -244,6 +244,9 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     // T14 (03/10/2026): la ficha de una máquina. Su identificador va en el camino, así que se comprueba
     // con su forma completa; sin él no tiene dirección (hay prueba propia más abajo), igual que una tierra.
     maquina: { id: 12 },
+    // T13 (05/10/2026): la ficha de un gasto. Su identificador va en el camino, así que se comprueba con
+    // su forma completa; sin él no tiene dirección (hay prueba propia más abajo), igual que una tierra.
+    gasto: { id: 12 },
   };
   for (const pantalla of pantallas()) {
     const parametros = {
@@ -326,6 +329,15 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     "factura_emitida",
     "venta_importe",
     "venta_ajuste",
+    // T13 (05/10/2026): las cuentas de la explotación. La lista se reconstruye entera al abrir su
+    // dirección —pide sus datos al servidor— y **la ficha de un gasto también** (se pide a su puerta),
+    // así que las dos se pueden enlazar, recargar y mandar a quien ayuda. Los formularios de las cuentas
+    // (apuntar un gasto, repartirlo, apuntar un pago, una inversión y una ayuda) **no tienen dirección a
+    // propósito**: son formularios que al recargar saldrían vacíos. El tramo de texto fijo va antes que
+    // el identificador, como en todas las familias de esta tabla, y las dos van **detrás de las ventas y
+    // delante de las medidas**, que es donde el informe del ticket las pone.
+    "gastos",
+    "gasto",
     "medidas",
     // T14 (03/10/2026): la maquinaria y la ficha de una máquina. Las dos piden sus datos al servidor al
     // abrir su dirección —la ficha, a su puerta—, así que se pueden enlazar, recargar y mandar a quien

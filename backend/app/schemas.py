@@ -3639,3 +3639,102 @@ class SubvencionEntrada(EntradaBase):
     )
 
     _lo_que_no_cabe = _revisa_lo_que_no_cabe(models.Subvencion)
+
+# --------------------------------------------------------------------------
+# Los trabajos por tierra (T15, 05/10/2026)
+# --------------------------------------------------------------------------
+
+
+class InsumoDeUnTrabajoEntrada(EntradaBase):
+    """Lo que un trabajo gasta de un envase, o lo que se piensa gastar.
+
+    `cantidad` y `unidad` son opcionales: lo que no se sabe **no se resta** (se dice por qué), y un total
+    inventado aquí sería un descuento que nadie ha hecho.
+    """
+
+    articulo_id: int | None = None
+    lote_id: int | None = None
+    cantidad: float | None = Field(default=None, gt=0)
+    unidad: str | None = None
+    # Para lo previsto: lo de cada hectárea, que es lo que permite estimar el total sin confundirlo con él.
+    dosis_por_ha: float | None = Field(default=None, ge=0)
+    aceptar_descuadre: bool = False
+
+
+class TrabajoEntrada(EntradaBase):
+    """Un trabajo **hecho**: lo que pasó, con su día y lo que se gastó de verdad."""
+
+    campana_id: int
+    tipo: str
+    subtipo: str | None = None
+    fecha: dt.date
+    parcela_id: int | None = None
+    grupo_id: int | None = None
+    superficie_ha: float | None = Field(default=None, ge=0)
+    cultivo: str | None = None
+    variedad: str | None = None
+    equipo_id: int | None = None
+    horas: float | None = Field(default=None, ge=0)
+    observaciones: str | None = None
+    insumos: list[InsumoDeUnTrabajoEntrada] | None = None
+    previsto_id: int | None = None
+    clave_de_reenvio: str | None = None
+    id_local: str | None = None
+
+
+class TrabajoPrevistoEntrada(EntradaBase):
+    """Un trabajo **planificado**. Todo lo que no se sepa se queda en blanco."""
+
+    campana_id: int
+    tipo: str
+    subtipo: str | None = None
+    fecha_prevista: dt.date | None = None
+    fecha_fin_prevista: dt.date | None = None
+    parcela_id: int | None = None
+    grupo_id: int | None = None
+    superficie_ha: float | None = Field(default=None, ge=0)
+    cultivo: str | None = None
+    variedad: str | None = None
+    equipo_id: int | None = None
+    persona: str | None = None
+    horas: float | None = Field(default=None, ge=0)
+    observaciones: str | None = None
+    lineas: list["LineaDeTrabajoPrevistoEntrada"] | None = None
+    clave_de_reenvio: str | None = None
+    id_local: str | None = None
+
+
+class LineaDeTrabajoPrevistoEntrada(EntradaBase):
+    """Una tierra del plan, con **su cantidad dicha**. No se reparte el total por igual."""
+
+    parcela_id: int
+    superficie_ha: float | None = Field(default=None, ge=0)
+    cantidad: float | None = Field(default=None, ge=0)
+    unidad: str | None = None
+    dosis_por_ha: float | None = Field(default=None, ge=0)
+    articulo_id: int | None = None
+    lote_id: int | None = None
+    horas: float | None = Field(default=None, ge=0)
+    observaciones: str | None = None
+
+
+class MarcarHechoEntrada(EntradaBase):
+    """Lo que de verdad se hizo, cuando se cumple un plan. **El plan no se copia: se apunta el hecho.**"""
+
+    fecha: dt.date
+    superficie_ha: float | None = Field(default=None, ge=0)
+    cultivo: str | None = None
+    variedad: str | None = None
+    equipo_id: int | None = None
+    horas: float | None = Field(default=None, ge=0)
+    observaciones: str | None = None
+    insumos: list[InsumoDeUnTrabajoEntrada] | None = None
+    clave_de_reenvio: str | None = None
+    id_local: str | None = None
+
+
+class ReprogramarEntrada(EntradaBase):
+    """Mover un plan de día, con su motivo. **Lo que ya se hizo no se mueve.**"""
+
+    fecha_prevista: dt.date
+    motivo: str | None = Field(default=None, max_length=500)

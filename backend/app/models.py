@@ -1718,10 +1718,121 @@ class Labor(Base):
     # Detalles que cambian según el tipo y no encajan en ninguno de los de arriba. Van en
     # JSON en vez de en treinta columnas casi siempre vacías.
     detalles: Mapped[dict | None] = mapped_column(JSON)
+    # ── Lo que el T15 necesita de una labor (05/10/2026) ──────────────────
+    #
+    # El subtipo de una labor de suelo (rodillo, cultivador, arado…). El contrato lo pide con nombre y
+    # número (§4, S05) y `detalles` es un JSON donde no se puede consultar ni sumar. **Mientras no
+    # exista, el router lo lee de `detalles`**, así que se puede dejar fuera; lo que no se puede es
+    # dejar fuera las tres de abajo.
+    subtipo: Mapped[str | None] = mapped_column(String(30))
+    # Las horas que se estuvo. Los «medios» de un trabajo las piden (§4, S04/S05) y hasta ahora no había
+    # dónde apuntarlas: van en `detalles`, que no se puede sumar ni volcar. Vacío es «no se sabe».
+    horas: Mapped[float | None] = mapped_column(Float)
+    # La clave del móvil, como en los tratamientos, los albaranes y los movimientos: **es lo que impide
+    # que la cola del móvil apunte el mismo trabajo dos veces** (A12) y que descuente dos veces.
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120), index=True)
+    # Qué trabajo planificado cumplió esta labor, cuando alguien lo ha dicho. **No se empareja por
+    # parecido**: el vínculo lo dice el agricultor (A05).
+    previsto_id: Mapped[int | None] = mapped_column(ForeignKey("trabajos_previstos.id"), index=True)
     observaciones: Mapped[str | None] = mapped_column(Text)
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class TrabajoPrevisto(Base):
+    """**Un trabajo PLANIFICADO**: lo que se piensa hacer, no lo que se ha hecho.
+
+    POR QUÉ ESTA TABLA EXISTE, Y POR QUÉ NO ES UNA COLUMNA DE `Labor`
+
+    Lo previsto y lo hecho son dos cosas distintas y el encargo lo dice con todas las letras: *un
+    trabajo previsto no consume existencias ni acredita trabajo hecho*. La forma de que eso no se pueda
+    confundir es que **vivan en tablas distintas**: una fila de `labores` es un hecho por construcción
+    (el agricultor apunta ahí lo que ya ha pasado), y una fila de aquí es un plan.
+
+    Y por eso `Labor` **no** lleva una columna `estado`: con un valor por defecto «previsto», todos los
+    apuntes que el agricultor ya tiene en su cuaderno —que son hechos— pasarían a leerse como
+    planificados. Es exactamente el defecto que este ticket persigue (`app/trabajos.py` lo explica).
+
+    Lo que sí puede pasar: `estado` aquí admite vacío (`None` = «no consta»), y la lógica pura no lo
+    toma ni por previsto ni por hecho.
+    """
+
+    __tablename__ = "trabajos_previstos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    campana_id: Mapped[int] = mapped_column(ForeignKey("campanas.id"), index=True)
+
+    tipo: Mapped[str] = mapped_column(String(30), index=True)
+    # El apero, para las labores de suelo: rodillo, cultivador, arado, grada… Es un dato del contrato
+    # (§4, S05) y va en su columna, no en un JSON, por la regla de la casa: un dato con nombre y número
+    # tiene que poder consultarse y sumarse.
+    subtipo: Mapped[str | None] = mapped_column(String(30))
+    # **Sin valor por defecto, y es una decisión**: lo pone quien crea el plan, a la vista, para que
+    # ninguna puerta futura pueda convertir en «previsto» algo que nadie ha dicho. Vacío es «no consta».
+    estado: Mapped[str | None] = mapped_column(String(20), index=True)
+
+    fecha_prevista: Mapped[dt.date | None] = mapped_column(Date, index=True)
+    fecha_fin_prevista: Mapped[dt.date | None] = mapped_column(Date)
+    # El día que tenía antes de moverlo: cambiar una fecha sin dejar la anterior es de las cosas que
+    # después nadie puede explicar.
+    fecha_prevista_antes: Mapped[dt.date | None] = mapped_column(Date)
+
+    parcela_id: Mapped[int | None] = mapped_column(ForeignKey("parcelas.id"), index=True)
+    grupo_id: Mapped[int | None] = mapped_column(ForeignKey("grupos_parcelas.id"))
+    superficie_ha: Mapped[float | None] = mapped_column(Float)
+    cultivo: Mapped[str | None] = mapped_column(String(120))
+    variedad: Mapped[str | None] = mapped_column(String(120))
+    equipo_id: Mapped[int | None] = mapped_column(ForeignKey("equipos_aplicacion.id"))
+    persona: Mapped[str | None] = mapped_column(String(120))
+    # Las horas que se **piensan** estar. No son las que se estuvo: hasta que el trabajo se haga, esto
+    # es una previsión y se enseña como tal.
+    horas_previstas: Mapped[float | None] = mapped_column(Float)
+
+    observaciones: Mapped[str | None] = mapped_column(Text)
+    # El motivo de cancelarlo, cuando se cancela. Un plan cancelado no se borra: queda y se explica.
+    motivo_cancelacion: Mapped[str | None] = mapped_column(Text)
+
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120), index=True)
+
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+    actualizado_en: Mapped[dt.datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+    lineas: Mapped[list["LineaDeTrabajoPrevisto"]] = relationship(
+        back_populates="trabajo", cascade="all, delete-orphan"
+    )
+
+
+class LineaDeTrabajoPrevisto(Base):
+    """Una tierra de un trabajo planificado, **con su cantidad dicha**.
+
+    El contrato (§4, S04) pide que un trabajo de varias tierras tenga «cabecera y líneas por tierra, con
+    cantidades asignadas explícitas» y dice, con esas palabras, que **no se reparta automáticamente el
+    total por igual**: repartirlo sería inventarse lo que se va a hacer en cada tierra. Por eso cada
+    línea lleva su superficie, su cantidad y sus horas, y lo que no se sepa se queda vacío.
+    """
+
+    __tablename__ = "lineas_de_trabajo_previsto"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    trabajo_previsto_id: Mapped[int] = mapped_column(
+        ForeignKey("trabajos_previstos.id", ondelete="CASCADE"), index=True
+    )
+    parcela_id: Mapped[int] = mapped_column(ForeignKey("parcelas.id"), index=True)
+    superficie_ha: Mapped[float | None] = mapped_column(Float)
+    cantidad: Mapped[float | None] = mapped_column(Float)
+    unidad: Mapped[str | None] = mapped_column(String(10))
+    dosis_por_ha: Mapped[float | None] = mapped_column(Float)
+    articulo_id: Mapped[int | None] = mapped_column(ForeignKey("articulos.id"))
+    lote_id: Mapped[int | None] = mapped_column(ForeignKey("lotes.id"))
+    horas: Mapped[float | None] = mapped_column(Float)
+    observaciones: Mapped[str | None] = mapped_column(Text)
+
+    trabajo: Mapped["TrabajoPrevisto"] = relationship(back_populates="lineas")
 
 
 class Auditoria(Base):

@@ -589,6 +589,10 @@ class TestLoQueSeCuentaAntesDeBorrar:
         dependencias de verdad: sin la tierra, esas filas se quedarían sin decir a qué se referían (y
         la base de datos no las admitiría). Así que una tierra con cuentas apuntadas **se corrige,
         no se borra**, con el mismo mensaje que las demás.
+
+        **Y las dos del trabajo planificado** (T15, E9, 05/10/2026): `trabajos_previstos` (un plan se
+        piensa para una tierra) y `lineas_de_trabajo_previsto` (cada línea del plan dice de qué tierra
+        es el insumo). Las dos son dependencias de verdad por el mismo motivo que las demás.
         """
         from app.routers import parcelas
 
@@ -598,23 +602,32 @@ class TestLoQueSeCuentaAntesDeBorrar:
             "gastos",
             "inversiones_de_la_finca",
             "labores",
+            "lineas_de_trabajo_previsto",
             "parcela_cultivos",
             "planes_abonado",
             "repartos_de_coste",
             "siembras",
+            "trabajos_previstos",
             "tratamientos",
             "ventas_de_cosecha",
             "versiones_de_recinto",
         ]
 
     def test_las_tablas_que_apuntan_a_un_grupo_se_cuentan_todas(self):
-        """Y las cinco que apuntan a un grupo: los apuntes que se hicieron sobre él."""
+        """Y las seis que apuntan a un grupo: los apuntes que se hicieron sobre él.
+
+        **La sexta es el trabajo planificado** (T15, E9, 05/10/2026): un plan también se piensa para un
+        grupo de tierras que se llevan igual («rodar las seis del trigo»). Es una dependencia de verdad
+        por el mismo motivo que las otras cinco: sin el grupo, el plan se queda sin decir sobre qué
+        tierras era.
+        """
         from app.routers import parcelas
 
         assert [modelo.__tablename__ for modelo in parcelas._tablas_que_apuntan_a("grupo_id")] == [
             "fertilizaciones",
             "labores",
             "planes_abonado",
+            "trabajos_previstos",
             "tratamientos",
             "ventas_de_cosecha",
         ]

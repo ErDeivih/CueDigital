@@ -1365,6 +1365,13 @@ class TestLoQueSeCuentaAntesDeBorrar:
         decisión que con el cobro**: el dinero sale un día y salda un gasto, y es el gasto quien tiene
         la campaña; colgarlo del año obligaría a decidir de qué año es un pago de enero que salda la
         compra de diciembre, y esa decisión no la tiene el programa (`models.PagoDeGasto`).
+
+        **Y la decimoctava es `trabajos_previstos`** (T15, E9, 05/10/2026): un trabajo planificado
+        **es de un año** —se piensa hacer en esa campaña, y así la agenda del año lo cuenta y borrar
+        el año no se lleva por delante lo que estaba pensado—, así que cuelga del año y está
+        clasificada en `OTRAS_COSAS`. **Sus líneas no están aquí y es lo correcto**: una línea dice
+        qué insumo lleva el plan y **no tiene año propio**; el año lo tiene el plan del que cuelga
+        (`models.LineaDeTrabajoPrevisto`).
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("campana_id")
@@ -1383,6 +1390,7 @@ class TestLoQueSeCuentaAntesDeBorrar:
             "planes_abonado",
             "repartos_de_coste",
             "subvenciones",
+            "trabajos_previstos",
             "tratamientos",
             "ventas_de_cosecha",
             "versiones_de_recinto",

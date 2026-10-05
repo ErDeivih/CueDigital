@@ -257,7 +257,12 @@
 // esto se mira **en la nave y en el campo**: «¿puedo contar hoy con el tractor?» y «¿qué le toca pasar?»
 // son preguntas que se hacen de pie, con el móvil en la mano, y una pantalla que no está en la caché es un
 // hueco justo cuando más falta hace.
-const CACHE = "cuedigital-2026-10-03-68";
+// Y vigésimo cuarta, el 05/10/2026: **las cuentas de la explotación** (T13). Entra **un fichero con
+// dos pantallas** —`gastos.js`: la lista de lo que ha costado, con sus tres columnas de coste, la
+// caja, las inversiones, las ayudas y el margen; y la ficha de un gasto, con sus repartos y su
+// cuadre—. Se guarda para el campo por el mismo motivo que las demás, y aquí con más razón: las
+// cuentas se miran también de pie en la nave, y una cifra de dinero a medias es peor que ninguna.
+const CACHE = "cuedigital-2026-10-05-69";
 
 const FICHEROS = [
   "/",
@@ -331,6 +336,7 @@ const FICHEROS = [
   "/react/pantallas/revision_de_contactos.js",
   // La maquinaria (T14, 03/10/2026): la lista y la ficha de una máquina.
   "/react/pantallas/maquinaria.js",
+  "/react/pantallas/gastos.js",
   // 30/09/2026: el armazón del ordenador (el menú lateral y la barra de arriba). Es lo primero que se pinta
   // al abrir la aplicación en un ordenador: sin este fichero en la caché, la pantalla sale sin menú.
   "/react/piezas/marco.js",

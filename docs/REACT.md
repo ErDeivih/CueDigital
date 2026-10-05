@@ -166,6 +166,7 @@ Las tres últimas, por orden:
 | **Los cobros** (`backend/web/react/pantallas/cobros.js`) | ✅ En React (T12) |
 | **Apuntar un cobro** (`backend/web/react/pantallas/cobro_nuevo.js`) | ✅ En React (T12) |
 | **Mi maquinaria, y la ficha de una máquina** (`backend/web/react/pantallas/maquinaria.js`) | ✅ En React (T14) |
+| **Mis cuentas, y la ficha de un gasto** (`backend/web/react/pantallas/gastos.js`) | ✅ En React (T13) |
 
 **Y desde el T06 (03/10/2026) son treinta y siete**: las treinta y cinco de antes más las dos de las
 tierras en el mapa y en la tabla (`tierras_mapa`, `#/tierras/mapa`) y lo que ha sido una tierra
@@ -230,7 +231,9 @@ del cuaderno), al principio de
 `backend/web/app.js`. **Y desde el T09 (03/10/2026) son treinta y cinco**: los veintiocho de antes más las
 seis del libro del almacén (`libro_del_almacen`, `nuevo_albaran`, `recepcion`, `movimiento_de_almacen`,
 `sacar_de_un_lote` y `enganchar_la_factura`) y la ficha de un albarán, que se cuenta aparte porque
-`libro_del_almacen` es su lista. La cuenta que la prueba de la migración exige («veintiocho») sigue
+`libro_del_almacen` es su lista. **Y desde el T13 (05/10/2026) son treinta y seis**: las cuentas de la
+explotación (`gastos.js`, con la lista y la ficha de un gasto en un solo fichero, como la maquinaria).
+La cuenta que la prueba de la migración exige («veintiocho») sigue
 escrita, con la fecha en la que dejó de ser el número: **una lista escrita a mano se queda vieja y nadie
 se entera**, y este párrafo es justo eso.
 

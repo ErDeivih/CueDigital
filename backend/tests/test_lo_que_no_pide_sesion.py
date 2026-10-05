@@ -148,6 +148,13 @@ RUTAS_PUBLICAS_DECLARADAS: dict[tuple[str, str], str] = {
         "resumen del IVA) con lo que es y de quién depende. No lleva ni un dato de ninguna finca: la "
         "respuesta es `gastos.QUE_FALTA`, una constante del módulo."
     ),
+    ("GET", "/api/trabajos/que-falta"): (
+        "Y lo mismo para los trabajos (T15, 05/10/2026): lo que el programa no sabe hacer de un "
+        "trabajo (la lluvia no acredita nascencia, la nascencia solo la dice quien la ha visto), lo "
+        "que le falta al módulo para funcionar entero, y sus listas cerradas (los estados, los tipos "
+        "y los aperos). **Ni un dato de ninguna finca**: todo sale de constantes de `trabajos.py` y "
+        "`trabajos_api.py`."
+    ),
     ("GET", "/api/iuws/version"): (
         "No es una ruta para personas: dice qué versión del interfaz de la Junta está configurada "
         "y la usa el técnico de la integración. **`?llamar=1` sale a la Junta sin identificarse** "
@@ -523,19 +530,20 @@ class TestElEstadoDelSigpacYaNoDiceDondeEstaLaCarpeta:
 
 
 def test_las_publicas_que_quedan_son_las_que_estan_escritas():
-    """El recuento, medido: **22 rutas sin sesión**, todas declaradas.
+    """El recuento, medido: **23 rutas sin sesión**, todas declaradas.
 
     Estaba en **26** cuando se hizo el inventario de T01. Las cinco que faltan son las cuatro que
     «deberían pedir sesión» y la búsqueda del SIGPAC; más otras dos que se han cerrado por el
-    mismo motivo (el toque en el mapa), y a cambio han entrado dos nuevas que sí lo dicen
-    (`GET /api/maquinaria/que-falta`, del ticket de maquinaria, y `GET /api/gastos/que-falta`, de las
-    cuentas del T13: las dos son la misma lista de «lo que el programa todavía no calcula» para todo
-    el mundo). El número no es el objetivo —una ruta pública con motivo es tan buena como una
-    cerrada—; lo que importa es que **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
+    mismo motivo (el toque en el mapa), y a cambio han entrado tres nuevas que sí lo dicen
+    (`GET /api/maquinaria/que-falta`, del ticket de maquinaria, y `GET /api/gastos/que-falta` y
+    `GET /api/trabajos/que-falta`, de las cuentas del T13 y de los trabajos del T15: las tres son la
+    misma lista de «lo que el programa todavía no calcula» para todo el mundo). El número no es el
+    objetivo —una ruta pública con motivo es tan buena como una cerrada—; lo que importa es que
+    **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
     """
     _, sin_sesion = _pares_con_sesion()
-    assert len(sin_sesion) == 22, (
-        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 22: "
+    assert len(sin_sesion) == 23, (
+        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 23: "
         f"{sorted(sin_sesion)}"
     )
     assert sin_sesion == set(RUTAS_PUBLICAS_DECLARADAS)

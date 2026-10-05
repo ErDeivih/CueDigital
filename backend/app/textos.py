@@ -5533,6 +5533,9 @@ def textos_visibles() -> list[str]:
     # los estados de una ayuda): con `.values()` esos textos llegarían al test de jerga como
     # diccionarios en vez de como frases, y son justo los que más se leen.
     textos.extend(_recoger(GASTOS))
+    # **La agenda de los trabajos (T15, 05/10/2026).** Igual que los del T13: se recogen enteros para
+    # que el test de jerga los mire, que es lo que le pasó a `TABLA` en el T14.
+    textos.extend(AGENDA.values())
     return textos
 
 
@@ -7517,3 +7520,184 @@ MENSAJES.update(
         "G47_gastos_sin_saber_a_donde_van_varios": "{cuantos} gastos sin saber a dónde van",
     }
 )
+
+MENSAJES.update({
+    "TJ1_el_previsto_no_gasta": (
+        "Este trabajo está previsto y todavía no se ha hecho: no ha gastado nada del almacén."
+    ),
+    "TJ2_no_consta_si_se_hizo": (
+        "De este trabajo no consta si se llegó a hacer, así que no cuenta como trabajo hecho. "
+        "Dilo y queda apuntado."
+    ),
+    "TJ3_el_apunte_esta_anulado": (
+        "Este apunte está anulado: lo que había salido del almacén vuelve a contar."
+    ),
+    "TJ4_lo_que_salio_cambio": (
+        "Se corrigió el trabajo: la salida de antes ya no cuenta y se ha apuntado la nueva."
+    ),
+    "TJ5_falta_el_motivo_para_anular": (
+        "Para anular un trabajo hace falta decir por qué. Escríbelo y vuelve a pulsar."
+    ),
+    "TJ6_el_trabajo_ya_estaba_anulado": (
+        "Este trabajo ya estaba anulado, así que no ha cambiado nada."
+    ),
+    "TJ7_de_la_lluvia_no_sale_la_nascencia": (
+        "Que haya llovido no quiere decir que la planta haya nacido: eso se mira en el campo y se "
+        "apunta como una observación."
+    ),
+    "TJ8_un_rodillo_no_cambia_lo_sembrado": (
+        "Pasar el rodillo no cambia lo que tienes sembrado: la siembra sigue apuntada."
+    ),
+    "TJ9_no_se_reprograma_lo_ya_hecho": (
+        "Este trabajo ya se hizo, así que su fecha es la del día en que se hizo. Si hiciste otro, "
+        "apúntalo."
+    ),
+    "TJ10_lo_firmado_no_se_borra": (
+        "Este apunte está firmado y no se puede borrar: se anula, con su motivo, y queda el rastro."
+    ),
+    "TJ11_el_trabajo_ya_estaba": (
+        "Este trabajo ya estaba apuntado: no se ha vuelto a descontar del almacén."
+    ),
+    "TJ12_no_se_pudo_comprobar_si_ya_estaba": (
+        "Esta petición no trae la clave para saber si ya se había apuntado, así que no he podido "
+        "comprobarlo."
+    ),
+    "TJ13_faltan_las_hectareas": (
+        "Hay trabajos de este año que no dicen cuántas hectáreas se trabajaron, así que las que se "
+        "ven son solo las que constan."
+    ),
+    "TJ14_faltan_las_horas": (
+        "Hay trabajos de este año que no dicen cuántas horas se estuvo, así que las que se ven son "
+        "solo las que constan."
+    ),
+    "TJ15_la_tierra_quedo_o_no": (
+        "Se cogió la cosecha, pero no consta si la tierra quedó con algo o vacía: eso se mira en el "
+        "campo y se apunta como una observación."
+    ),
+    "TJ16_sin_maquina": "Hay trabajos apuntados sin decir con qué máquina se hicieron.",
+    "TJ17_un_plan_no_es_un_trabajo": (
+        "Esto está planificado y todavía no es un trabajo hecho: cuando lo hagas, apunta lo que de "
+        "verdad pasó, con su día y lo que gastaste."
+    ),
+    "TJ18_sin_tierra": (
+        "Hay trabajos que no dicen de qué tierra eran, así que no salen en el historial de ninguna."
+    ),
+    "TJ19_la_revision_de_lo_firmado": (
+        "Lo firmado no se cambia: queda la revisión nueva, y la firma de antes sigue valiendo para lo "
+        "que se firmó."
+    ),
+    "TJ20_no_se_pueden_sumar_unidades": (
+        "Hay cantidades en unidades distintas, así que no se pueden juntar en una sola cifra."
+    ),
+    "TJ21_falta_la_cantidad": (
+        "Hay un consumo apuntado sin cantidad, así que no se puede saber lo que queda."
+    ),
+    "TJ22_falta_la_unidad": (
+        "Hay un consumo apuntado sin decir en qué se mide, así que no se puede hacer la cuenta."
+    ),
+    "TJ23_faltan_las_hectareas_de_la_tierra": (
+        "Esta tierra no dice cuántas hectáreas tiene, así que no se puede comparar con lo trabajado."
+    ),
+    "TJ24_no_hay_fecha_de_hoy": (
+        "No sé qué día es hoy, así que no te puedo decir cuánto falta ni cuánto se ha pasado."
+    ),
+    "TJ25_la_fecha_prevista_no_se_sabe": (
+        "Este trabajo está planificado sin día, así que no se puede decir cuándo toca."
+    ),
+    "TJ26_el_apunte_del_consumo_no_esta": (
+        "Hay una salida del almacén que dice venir de un trabajo que no encuentro, así que no la he "
+        "podido comprobar."
+    ),
+    "TJ27_no_se_sabe_si_nacio": (
+        "No consta si la planta ha nacido: eso se mira en el campo y se apunta como una observación."
+    ),
+    "TJ28_no_se_sabe_que_se_sembro": (
+        "La siembra está apuntada, pero no dice qué se sembró. Apúntalo y el estado de la tierra "
+        "quedará completo."
+    ),
+})
+
+AGENDA: dict[str, str] = {
+    "titulo": "Los trabajos",
+    "explica": "Aquí tienes lo que tienes pensado hacer y lo que ya has hecho, en dos listas separadas. Lo que está pensado no ha gastado nada del almacén: lo que se gasta se apunta cuando el trabajo se hace.",
+    "buscando": "Buscando…",
+    "ver_el_cuaderno": "VER MI CUADERNO",
+    "volver_a_los_trabajos": "VOLVER A LOS TRABAJOS",
+    "previstos_titulo": "Lo que tengo pensado hacer",
+    "previstos_explica": "Lo que está pensado no es un trabajo hecho y no ha gastado nada.",
+    "previstos_vacio": "No tienes nada planificado. Cuando sepas lo que vas a hacer, apúntalo aquí.",
+    "planificar": "PLANIFICAR UN TRABAJO",
+    "planificar_titulo": "Planificar un trabajo",
+    "planificar_explica": "Apunta lo que piensas hacer. No gasta nada del almacén: eso se apunta el día que lo hagas, con lo que de verdad gastes.",
+    "guardar_previsto": "GUARDAR LO QUE PIENSO HACER",
+    "ya_lo_he_hecho": "YA LO HE HECHO",
+    "cambiarlo_de_dia": "CAMBIARLO DE DÍA",
+    "cancelarlo": "CANCELARLO",
+    "reprogramar_titulo": "Cambiar de día este trabajo",
+    "reprogramar_explica": "Elige el día nuevo. El día que tenía queda apuntado, para que se pueda explicar el cambio.",
+    "cambiar_el_dia": "CAMBIARLO DE DÍA",
+    "hechos_titulo": "Lo que he hecho",
+    "hechos_explica": "Cada trabajo con su día, su tierra, su máquina y lo que se gastó. Lo anulado sale también, con su motivo.",
+    "hechos_vacio": "Todavía no has apuntado ningún trabajo hecho.",
+    "hecho_titulo": "Lo que he hecho de verdad",
+    "hecho_explica": "Apunta lo que de verdad has hecho: el día, las hectáreas y las horas de verdad, y lo que gastaste. No tiene que ser igual que lo que habías pensado.",
+    "lo_que_estaba_previsto": "Lo que tenías pensado",
+    "lo_previsto_no_gasta": "Lo pensado no ha gastado nada del almacén.",
+    "guardar_trabajo": "APUNTAR LO QUE HE HECHO",
+    "corregir_titulo": "Corregir este trabajo",
+    "corregirlo": "CORREGIRLO",
+    "guardar_correccion": "GUARDAR LA CORRECCIÓN",
+    "anular_titulo": "Anular este trabajo",
+    "anularlo": "ANULARLO",
+    "anular_explica": "Un trabajo no se borra: se anula y queda dicho por qué. Lo que había salido del almacén vuelve a contar.",
+    "anular_confirmar": "ANULARLO",
+    "motivo_anulacion": "Por qué lo anulas",
+    "motivo_anulacion_pista": "Escríbelo pensando en que lo vas a leer dentro de dos años.",
+    "guardando": "Guardando…",
+    "tipo": "Qué trabajo",
+    "tipo_pista": "Rodillo, cultivador, siembra, riego…",
+    "elige_el_trabajo": "Elige el trabajo",
+    "subtipo": "Con qué apero",
+    "subtipo_pista": "Solo para las labores de suelo: rodillo, cultivador, arado…",
+    "sin_decir": "Sin decir",
+    "tierra": "En qué tierra",
+    "elige_la_tierra": "Elige la tierra",
+    "dia": "Qué día lo hiciste",
+    "dia_pista": "El día de verdad, que es el que va al cuaderno.",
+    "dia_previsto": "Para qué día lo tienes pensado",
+    "dia_previsto_pista": "Si todavía no lo sabes, déjalo en blanco: se queda sin día.",
+    "hectareas": "Cuántas hectáreas has trabajado",
+    "hectareas_previstas": "Cuántas hectáreas piensas trabajar",
+    "hectareas_pista": "Si no lo sabes, déjalo en blanco. No se pone un cero.",
+    "horas": "Cuántas horas has estado",
+    "horas_previstas": "Cuántas horas piensas estar",
+    "horas_pista": "Si no lo sabes, déjalo en blanco.",
+    "maquina": "Con qué máquina",
+    "maquina_pista": "La máquina con la que lo hiciste. Si fue a mano, déjalo sin decir.",
+    "sin_maquina": "Sin máquina dicha",
+    "insumo": "Qué gastaste del almacén",
+    "insumo_pista": "De qué envase sale lo que gastaste. Si no gastaste nada, déjalo sin decir.",
+    "insumo_previsto_pista": "Lo que crees que vas a gastar. No se descuenta hasta que lo hagas.",
+    "sin_insumo": "No gasté nada",
+    "cantidad": "Cuánto",
+    "cantidad_pista": "El total gastado, no lo de cada hectárea.",
+    "unidad": "En qué se mide",
+    "observaciones": "Lo que quieras apuntar",
+    "repaso": "Antes de guardar, mira esto",
+    "historia_titulo": "Lo que ha pasado en esta tierra",
+    "que_hay_hoy": "Qué hay hoy",
+    "lo_que_esta_sembrado": "Lo que hay sembrado",
+    "variedad": "Variedad",
+    "desde_cuando": "Desde",
+    "sin_cultivo_declarado": "De esta tierra no consta que haya nada sembrado.",
+    "ultima_labor": "La última labor",
+    "historial_titulo": "Todo lo que ha pasado",
+    "historial_explica": "Sale todo, también lo anulado, con el motivo por el que se anuló. Nada se borra.",
+    "historial_vacio": "En esta tierra no hay ningún trabajo apuntado.",
+    "revisado": "Corregido después",
+    "firmado": "Está firmado: no se puede borrar, solo anular",
+    "observaciones_de_campo": "Lo que he visto en el campo",
+    "no_consta": "Lo que no consta",
+    "sin_tierras": "Para planificar un trabajo hace falta tener una tierra dada de alta.",
+    "anadir_tierra": "VER MIS TIERRAS",
+}

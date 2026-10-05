@@ -301,6 +301,16 @@ OTRAS_COSAS = (
     "InversionDeLaFinca",
     "RepartoDeCoste",
     "Subvencion",
+    # **Y el trabajo planificado (T15, E9, 05/10/2026).** Es la decimonovena tabla que cuelga del año,
+    # y la prueba `test_todas_las_tablas_del_ano_estan_clasificadas` avisó de que había que decidir qué
+    # es. Decidido: **una de las demás cosas**. No es un apunte del cuaderno —un plan **no es un
+    # trabajo hecho**, y por eso no puede contar como apunte, que es justo lo que el ticket persigue— ni
+    # una tierra con su cultivo dicho: es lo que se piensa hacer ese año. Y cuenta para el total, porque
+    # borrar el año se llevaría por delante lo que estaba pensado.
+    #
+    # **Sus líneas (`LineaDeTrabajoPrevisto`) no están aquí, y es correcto**: una línea dice qué insumo
+    # lleva el plan y no tiene año propio; el año lo tiene el plan del que cuelga.
+    "TrabajoPrevisto",
 )
 
 

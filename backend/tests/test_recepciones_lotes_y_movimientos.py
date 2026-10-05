@@ -1712,7 +1712,50 @@ class TestGastarDeUnLote:
         assert respuesta.json()["movimiento"]["fecha"] == apunte["fecha"] == "2026-05-05"
 
     def test_no_se_puede_sacar_de_un_apunte_que_no_gasta(self, cliente, cuenta, campana, parcela_grande):
-        """Una labor no gasta producto del almacén, así que no puede restar nada."""
+        """Un apunte que no gasta producto del almacén **se rechaza**, y se dice por qué.
+
+        **Esta prueba usaba una labor como ejemplo de «apunte que no gasta», y desde el T15 (E9,
+        05/10/2026) ya no lo es**: un trabajo **sí** puede gastar del almacén —es lo que hace que
+        marcar lo hecho descuente lo que de verdad se gastó, y que anularlo lo devuelva—, así que se
+        usa un análisis, que nunca ha gastado nada. El caso de la labor, que es el interesante, está
+        justo debajo.
+        """
+        analitica = cliente.post(
+            "/api/analiticas",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "parcela_id": parcela_grande["id"],
+                "fecha": "2026-04-01",
+                "tipo": "suelo",
+                "fecha_toma_muestra": "2026-04-01",
+            },
+        )
+        assert analitica.status_code in (200, 201), analitica.text
+        lote = self._con_lote(cliente, cuenta)
+        respuesta = _una_salida(
+            cliente,
+            cuenta["cabeceras"],
+            apunte_tipo="analitica",
+            apunte_id=analitica.json()["id"],
+            lote_id=lote["lote_id"],
+        )
+        assert respuesta.status_code == 400
+        assert "no saca producto" in respuesta.json()["detail"]
+
+    def test_de_una_labor_si_se_saca_y_la_puerta_pide_el_total(
+        self, cliente, cuenta, campana, parcela_grande
+    ):
+        """Una labor **sí** puede gastar del almacén (T15, E9, 05/10/2026): la puerta pide el total.
+
+        **Lo que esta prueba fijaba antes era lo contrario** («una labor no gasta producto del
+        almacén»), y era verdad mientras una labor fuera solo lo que se apunta a mano. Desde el T15,
+        un trabajo hecho descuenta lo que gastó (y anularlo lo devuelve), así que lo que hay que
+        comprobar es otra cosa: que la puerta **no se inventa el total**. Una labor apuntada a mano no
+        dice cuánto gastó —eso lo sabe el apunte de salida que manda el router del trabajo—, así que
+        contesta 409 pidiendo el total en vez de multiplicar la dosis por las hectáreas por su cuenta
+        (que es la confusión de diez veces que el proyecto prohíbe).
+        """
         lote = self._con_lote(cliente, cuenta)
         labor = cliente.post(
             "/api/labores",
@@ -1733,8 +1776,25 @@ class TestGastarDeUnLote:
             apunte_id=labor.json()["id"],
             lote_id=lote["lote_id"],
         )
-        assert respuesta.status_code == 400
-        assert "no saca producto" in respuesta.json()["detail"]
+        assert respuesta.status_code == 409, (
+            "la labor ya no se rechaza por ser una labor: lo que se pide es el total, que es lo que "
+            f"sabe quien la hizo. Contesta: {respuesta.status_code} {respuesta.text[:120]}"
+        )
+        assert "total" in respuesta.json()["detail"].lower(), respuesta.json()["detail"]
+
+        # Y con el total dicho, la salida se apunta: es lo que hace que un trabajo descuente del
+        # almacén. Es la misma puerta que usan los tratamientos y las siembras.
+        con_total = _una_salida(
+            cliente,
+            cuenta["cabeceras"],
+            apunte_tipo="labor",
+            apunte_id=labor.json()["id"],
+            lote_id=lote["lote_id"],
+            cantidad=1.5,
+            unidad="L",
+        )
+        assert con_total.status_code in (200, 201), con_total.text
+        assert con_total.json()["movimiento"]["cantidad"] == 1.5
 
     def test_de_un_apunte_anulado_no_se_saca_nada(self, cliente, cuenta, campana, parcela_grande):
         producto = _producto(cliente, cuenta["cabeceras"])

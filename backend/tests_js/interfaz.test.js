@@ -942,6 +942,13 @@ const RESPUESTAS = {
     maquinaria: {
       titulo: "Mi maquinaria",
     },
+    // **Las cuentas (T13, 05/10/2026)**: el título de su renglón del menú. Aquí va **el bloque entero
+    // del servidor** (`textos.GASTOS` se sirve tal cual y la pantalla lee de él muchas frases), porque
+    // su copia de verdad es `tests_js/gastos.test.js`: aquí solo hace falta que el armazón encuentre
+    // `gastos.titulo`, que es lo que pide su renglón y sin lo cual el renglón saldría sin nombre.
+    gastos: {
+      titulo: "Mis cuentas",
+    },
     // El panel de mando del ordenador (fase 4, 30/09/2026): sus textos van con los de la pantalla de
     // inicio, porque es la misma pantalla mirada de otra forma.
     panel_de_mando: {
@@ -2813,6 +2820,12 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
     // por el mismo motivo que las semillas y los contactos: esta lista es la que vigila que el menú del
     // ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
     "maquinaria",
+    // **Las cuentas de la explotación (T13, 05/10/2026)**: detrás de la maquinaria y delante de los
+    // papeles, porque es lo que se mira cuando se quiere saber cómo va el año —lo que ha costado y lo
+    // que falta por pagar— y no al final, con lo que se toca una vez al año. Se apunta aquí por el
+    // mismo motivo que las semillas, los contactos y la maquinaria: esta lista es la que vigila que el
+    // menú del ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
+    "cuentas",
     "papeles",
     "facturas",
     "anos",
