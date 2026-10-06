@@ -80,6 +80,13 @@ export const PANTALLAS = [
   // La pantalla de inicio: no lleva tramos. `""`, `"#"`, `"#/"` y `"/"` son esta, las cuatro.
   { clave: "inicio", patron: [] },
   { clave: "tierras", patron: ["tierras"] },
+  // **Los trabajos (T15, 05/10/2026)**: la agenda, y la historia de una tierra (`#/tierras/<id>/historial`).
+  // Las dos piden sus datos al servidor al abrir su dirección, así que se pueden enlazar y recargar. La
+  // ficha de un trabajo **no tiene dirección**: es un formulario, y uno que al recargar saldría vacío es
+  // peor que no tenerla. El tramo de texto fijo (`historial`) va **antes** que el identificador, como en
+  // todas las familias de esta tabla.
+  { clave: "trabajos", patron: ["trabajos"] },
+  { clave: "trabajo_tierra", patron: ["tierras", ":id", "historial"] },
   // **Las tierras en el mapa y en la tabla** (T06, 03/10/2026). Es la vista que pide el contrato en su
   // apartado 2.1: las 64 tierras con buscador, filtros, agrupación, selección múltiple y el mapa de la
   // finca al lado, enlazados. Va **con su propio tramo de texto fijo** y no en `tierras` por un motivo

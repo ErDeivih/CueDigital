@@ -167,6 +167,7 @@ Las tres últimas, por orden:
 | **Apuntar un cobro** (`backend/web/react/pantallas/cobro_nuevo.js`) | ✅ En React (T12) |
 | **Mi maquinaria, y la ficha de una máquina** (`backend/web/react/pantallas/maquinaria.js`) | ✅ En React (T14) |
 | **Mis cuentas, y la ficha de un gasto** (`backend/web/react/pantallas/gastos.js`) | ✅ En React (T13) |
+| **Los trabajos, la ficha de un trabajo y la historia de una tierra** (`backend/web/react/pantallas/trabajos.js`) | ✅ En React (T15) |
 
 **Y desde el T06 (03/10/2026) son treinta y siete**: las treinta y cinco de antes más las dos de las
 tierras en el mapa y en la tabla (`tierras_mapa`, `#/tierras/mapa`) y lo que ha sido una tierra

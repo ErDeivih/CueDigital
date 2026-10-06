@@ -262,6 +262,12 @@
 // caja, las inversiones, las ayudas y el margen; y la ficha de un gasto, con sus repartos y su
 // cuadre—. Se guarda para el campo por el mismo motivo que las demás, y aquí con más razón: las
 // cuentas se miran también de pie en la nave, y una cifra de dinero a medias es peor que ninguna.
+// Y vigésimo quinta, el mismo día: **los trabajos por tierra** (T15). Entra **otro fichero con tres
+// pantallas** —`trabajos.js`: la agenda (lo que se piensa hacer y lo que se ha hecho, en dos listas
+// separadas), la ficha de un trabajo (planificarlo, marcar lo que de verdad se hizo, cambiarlo de día,
+// corregirlo o anularlo) y la historia de una tierra, con todo lo que ha pasado—. Se sube el número
+// porque esto es, literalmente, el campo: lo que se piensa hacer se mira antes de salir y lo que se ha
+// hecho se apunta allí mismo, donde peor va la cobertura.
 const CACHE = "cuedigital-2026-10-05-69";
 
 const FICHEROS = [
@@ -337,6 +343,9 @@ const FICHEROS = [
   // La maquinaria (T14, 03/10/2026): la lista y la ficha de una máquina.
   "/react/pantallas/maquinaria.js",
   "/react/pantallas/gastos.js",
+  // Los trabajos por tierra (T15, 05/10/2026): la agenda, la ficha de un trabajo y la historia de una
+  // tierra, las tres en un fichero.
+  "/react/pantallas/trabajos.js",
   // 30/09/2026: el armazón del ordenador (el menú lateral y la barra de arriba). Es lo primero que se pinta
   // al abrir la aplicación en un ordenador: sin este fichero en la caché, la pantalla sale sin menú.
   "/react/piezas/marco.js",

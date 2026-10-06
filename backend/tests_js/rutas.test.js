@@ -247,6 +247,9 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     // T13 (05/10/2026): la ficha de un gasto. Su identificador va en el camino, así que se comprueba con
     // su forma completa; sin él no tiene dirección (hay prueba propia más abajo), igual que una tierra.
     gasto: { id: 12 },
+    // T15 (05/10/2026): la historia de una tierra. Como las demás fichas, su identificador va en el
+    // camino; sin él no tiene dirección (lo comprueba la prueba de abajo, con `trabajo_tierra`).
+    trabajo_tierra: { id: 12 },
   };
   for (const pantalla of pantallas()) {
     const parametros = {
@@ -277,6 +280,12 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
   assert.deepEqual(pantallas(), [
     "inicio",
     "tierras",
+    // **Los trabajos (T15, 05/10/2026)**: la agenda (`#/trabajos`) y la historia de una tierra
+    // (`#/tierras/<id>/historial`). Las dos piden sus datos al servidor al abrir su dirección, así que
+    // se pueden enlazar, recargar y mandar a quien ayuda. **La ficha de un trabajo no tiene dirección a
+    // propósito**: es un formulario, y uno que al recargar saldría vacío es peor que no tenerla.
+    "trabajos",
+    "trabajo_tierra",
     // T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra. Las dos se
     // reconstruyen enteras al abrir su dirección (la primera pide `/api/parcelas/vista` y la segunda
     // las versiones de esa tierra), así que las dos tienen dirección propia.

@@ -949,6 +949,29 @@ const RESPUESTAS = {
     gastos: {
       titulo: "Mis cuentas",
     },
+    // **Los trabajos (T15, 05/10/2026)**: lo mismo, el título de su renglón del menú. El bloque entero
+    // (`AGENDA`) está en su copia, `tests_js/trabajos.test.js`.
+    agenda: {
+      titulo: "Los trabajos",
+      // Y la frase que impide el malentendido del ticket, que la agenda pinta en cada plan: **lo
+      // pensado no ha gastado nada del almacén**. Se copia de `textos.AGENDA`, como todo lo de aquí.
+      lo_previsto_no_gasta: "Lo pensado no ha gastado nada del almacén.",
+      // **«Sin decir»**, que es lo que se lee cuando un dato no consta: un plan sin día no se rellena
+      // con el de hoy ni con el de mañana, y un hueco se dice como hueco.
+      sin_decir: "Sin decir",
+      // Y los rótulos que `app.js` necesita para montar cada línea de la agenda y del historial (los
+      // mismos que la ficha usa como etiquetas de sus campos). Copiados de `textos.AGENDA`: si uno
+      // cambia allí y no aquí, esta prueba enseñaría un hueco y no lo que se lee de verdad.
+      dia: "Qué día lo hiciste",
+      dia_previsto: "Para qué día lo tienes pensado",
+      hectareas: "Cuántas hectáreas has trabajado",
+      hectareas_previstas: "Cuántas hectáreas piensas trabajar",
+      horas: "Cuántas horas has estado",
+      horas_previstas: "Cuántas horas piensas estar",
+      maquina: "Con qué máquina",
+      tipo: "Qué trabajo",
+      insumo: "Qué gastaste del almacén",
+    },
     // El panel de mando del ordenador (fase 4, 30/09/2026): sus textos van con los de la pantalla de
     // inicio, porque es la misma pantalla mirada de otra forma.
     panel_de_mando: {
@@ -1111,6 +1134,19 @@ const RESPUESTAS = {
         "Falta decir en qué se mide esa cantidad. Sin eso no se puede restar de lo que hay en el almacén: pon litros, kilos o unidades.",
       AL17_el_apunte_no_dice_el_total:
         "Ese apunte solo tiene la dosis por hectárea, y eso no es lo que se gastó: la dosis es lo que se echa en cada hectárea. Escribe cuánto has sacado del lote en total, o completa el apunte con la cantidad total.",
+      // **El de los días que faltan (T15, 05/10/2026)**: lo usa `app.js` para escribir el «cuándo» de un
+      // trabajo previsto («Dentro de…»), y es una frase que ya existía para los días de espera de un
+      // tratamiento. Sin ella en la copia, la agenda de las pruebas diría «20/04/2026 · » y nadie lo
+      // vería, que es exactamente para lo que está esta copia.
+      V8_faltan_dias: "Faltan {cuantos} días.",
+      // **Los dos de los trabajos (T15) que `app.js` traduce a frase**: el que dice que un apunte
+      // anulado no cuenta (sale en la agenda y en el historial, marcado y con su motivo) y el que dice
+      // que **un rodillo detrás de una siembra no borra lo sembrado**, que es lo primero que se pregunta
+      // al ver un apero justo después de sembrar.
+      TJ3_el_apunte_esta_anulado:
+        "Este apunte está anulado: lo que había salido del almacén vuelve a contar.",
+      TJ8_un_rodillo_no_cambia_lo_sembrado:
+        "Pasar el rodillo o el cultivador no cambia lo que hay sembrado: eso lo cambia sembrar o plantar.",
     },
     etiquetas: {
       // Estas preguntas se piden desde el mapa de campos de `app.js` (`t("etiquetas.<clave>.pregunta")`) y **no estaban** en esta copia: mientras faltaban, las
@@ -2799,6 +2835,11 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
     "panel",
     "cuaderno",
     "tierras",
+    // **Los trabajos (T15, 05/10/2026)**: el contrato lo pide **el tercero**, justo detrás de «Tierras y
+    // mapa», porque lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
+    // campo. Se apunta aquí por el mismo motivo que los demás: esta lista es la que vigila que el menú
+    // del ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
+    "trabajos",
     "cultivos",
     "grupos",
     "almacen",
@@ -13219,6 +13260,286 @@ test("leer la etiqueta sin haber elegido la foto no manda nada al servidor", asy
     "se ha ido al servidor a leer una foto que no se ha elegido",
   );
   assert.ok(ultimoMontaje().props.error, "y no se dice nada, que deja al agricultor sin saber qué pasa");
+});
+
+// ---------------------------------------------------------------------------
+// Los trabajos por tierra (T15, E9, 05/10/2026)
+//
+// **Lo que se comprueba aquí, y por qué aquí.** El servidor del T15 tiene sus 70 pruebas y la pantalla
+// tiene las suyas (24, en `tests_js/trabajos.test.js`), pero las dos cosas estaban sin coser: la pantalla
+// espera cada línea **ya escrita** y el servidor devuelve los trabajos en crudo. Esa costura la escribe
+// el coordinador en `app.js`, y es la que se prueba en este bloque: que las líneas salgan con sus
+// palabras, que lo previsto y lo hecho no se mezclen, y que guardar llame a la puerta que toca.
+// ---------------------------------------------------------------------------
+
+/** Una explotación con dos tierras, un plan, un trabajo hecho y una máquina. */
+function conLosTrabajos(cambios = {}) {
+  return cargarAplicacion({
+    "GET /api/trabajos": {
+      hechos: [
+        {
+          id: 34,
+          de_donde: "hecho",
+          tipo: "siembra",
+          subtipo: null,
+          fecha: "2026-03-01",
+          parcela_id: 1,
+          superficie_ha: 3.0,
+          horas: null,
+          equipo_id: 5,
+          anulado: false,
+          observaciones: null,
+          insumos: [],
+        },
+      ],
+      previstos: [
+        {
+          id: 12,
+          de_donde: "previsto",
+          tipo: "laboreo",
+          subtipo: "cultivador",
+          fecha_prevista: "2026-04-20",
+          dias_que_faltan: 19,
+          parcela_id: 2,
+          superficie_ha: null,
+          horas_previstas: 4,
+          anulado: false,
+          insumos: [],
+        },
+        {
+          // **Sin día**: el plan del que no se sabe cuándo. Tiene que decirse así, y no con un día
+          // inventado ni con el de hoy.
+          id: 13,
+          de_donde: "previsto",
+          tipo: "laboreo",
+          subtipo: "rodillo",
+          fecha_prevista: null,
+          dias_que_faltan: null,
+          parcela_id: 1,
+          anulado: false,
+          insumos: [],
+        },
+      ],
+      reenviados: 0,
+      no_se_pudo_comprobar_si_ya_estaba: 0,
+      aviso_codigo: "",
+      lo_previsto_y_lo_hecho: [],
+      hoy: "2026-04-01",
+      textos: {},
+    },
+    "GET /api/trabajos/que-falta": {
+      tipos: ["siembra", "laboreo", "riego"],
+      subtipos_de_laboreo: ["rodillo", "cultivador", "arado"],
+    },
+    "GET /api/maquinaria": { maquinas: [{ id: 5, nombre: "El Landini" }] },
+    "GET /api/almacen/existencias": { articulos: [] },
+    ...cambios,
+  });
+}
+
+test("la agenda monta lo previsto y lo hecho, en dos listas y con sus frases", async () => {
+  const { entorno } = await conLosTrabajos();
+  await pulsar(entorno, "trabajos-ver");
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeLosTrabajos");
+  const props = elemento.props;
+  assert.equal(props.previstos.length, 2, "no llegan los dos planes");
+  assert.equal(props.hechos.length, 1, "no llega el trabajo hecho");
+
+  // **Lo previsto y lo hecho no se mezclan**: es la mitad del ticket. Un plan nunca sale como hecho.
+  const idsPrevistos = props.previstos.map((uno) => uno.id);
+  const idsHechos = props.hechos.map((uno) => uno.id);
+  assert.deepEqual(idsPrevistos, [12, 13]);
+  assert.deepEqual(idsHechos, [34]);
+
+  // La línea del plan: su tipo y su apero, su día **y los días que faltan**, con la frase del servidor.
+  const plan = props.previstos[0];
+  assert.match(plan.titulo, /LABRADO/, `el título del plan no dice qué trabajo es: «${plan.titulo}»`);
+  assert.match(plan.titulo, /cultivador/, "no dice con qué apero");
+  assert.match(plan.cuando, /20\/04\/2026/, `el día del plan no está: «${plan.cuando}»`);
+  assert.match(plan.cuando, /19 días/, `no dice cuántos días faltan: «${plan.cuando}»`);
+  // Y la frase que impide el malentendido: esto no ha gastado nada.
+  assert.ok(plan.no_gasta, "no se dice que lo previsto no ha gastado nada");
+
+  // **Un plan sin día lo dice**, y no se le pone el de hoy: «sin decir» es la respuesta del programa.
+  assert.equal(props.previstos[1].cuando, "Sin decir", "un plan sin día se ha rellenado con algo");
+
+  // El trabajo hecho: su día y **lo que le falta decir**, que es un dato y no un cero.
+  const hecho = props.hechos[0];
+  assert.match(hecho.cuando, /01\/03\/2026/);
+  assert.ok(
+    hecho.faltan.some((linea) => /horas/i.test(linea)),
+    `no se dice que al trabajo le faltan las horas: ${JSON.stringify(hecho.faltan)}`,
+  );
+  assert.ok(hecho.faltan.every((linea) => /Sin decir/.test(linea)), "un hueco no se dice como hueco");
+});
+
+test("marcar lo hecho enseña al lado lo que se había pensado", async () => {
+  const { entorno } = await conLosTrabajos();
+  await pulsar(entorno, "trabajos-ver");
+  await pulsar(entorno, "trabajo-hecho", { id: "12" });
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeUnTrabajo");
+  assert.equal(elemento.props.modo, "hecho", "no se ha abierto la ficha en modo de apuntar lo hecho");
+  assert.ok(elemento.props.previsto, "no se enseña lo que se había pensado al lado de lo que pasó");
+  assert.ok(
+    elemento.props.previsto.filas.some((fila) => /cultivador/.test(fila.valor)),
+    "lo que se había pensado no dice qué trabajo era",
+  );
+});
+
+test("guardar un trabajo llama a la puerta que le toca, según lo que se esté haciendo", async () => {
+  // **Cinco modos, cinco puertas.** Es lo que impide que apuntar lo hecho se guarde como un plan (o al
+  // revés), que es justo lo que el ticket viene a separar: lo previsto no gasta y lo hecho sí.
+  const casos = [
+    {
+      que: "planificar",
+      pulsaciones: [["trabajo-planificar"], ["trabajo-previsto-guardar"]],
+      comprobacion: (envio) => {
+        assert.equal(envio.metodo, "POST");
+        assert.equal(envio.ruta, "/api/trabajos/previstos");
+      },
+    },
+    {
+      que: "marcar lo hecho",
+      pulsaciones: [["trabajo-hecho", { id: "12" }], ["trabajo-hecho-guardar"]],
+      comprobacion: (envio) => {
+        assert.equal(envio.metodo, "POST");
+        assert.equal(envio.ruta, "/api/trabajos/previstos/12/hecho");
+      },
+    },
+    {
+      que: "corregir",
+      pulsaciones: [["trabajo-corregir", { id: "34" }], ["trabajo-guardar"]],
+      comprobacion: (envio) => {
+        assert.equal(envio.metodo, "PUT");
+        assert.equal(envio.ruta, "/api/trabajos/34");
+      },
+    },
+    {
+      que: "anular un trabajo hecho",
+      pulsaciones: [["trabajo-anular", { id: "34" }], ["trabajo-anular-confirmar"]],
+      comprobacion: (envio) => {
+        assert.equal(envio.metodo, "POST");
+        assert.equal(envio.ruta, "/api/trabajos/34/anular");
+      },
+    },
+    {
+      que: "cancelar un plan",
+      pulsaciones: [["trabajo-cancelar", { id: "12" }], ["trabajo-anular-confirmar"]],
+      comprobacion: (envio) => {
+        assert.equal(envio.metodo, "POST");
+        assert.equal(
+          envio.ruta,
+          "/api/trabajos/previstos/12/cancelar",
+          "un plan se cancela, no se anula: son dos puertas distintas",
+        );
+      },
+    },
+  ];
+  for (const caso of casos) {
+    const { entorno, servidor } = await conLosTrabajos();
+    await pulsar(entorno, "trabajos-ver");
+    for (const [accion, datos] of caso.pulsaciones) await pulsar(entorno, accion, datos || {});
+    // El motivo de anular y de cancelar hace falta: sin él la pantalla no manda nada (y lo dice).
+    if (caso.que.startsWith("anular") || caso.que.startsWith("cancelar")) {
+      escribir(entorno, "trabajo-motivo", "Se rompió el apero");
+      await pulsar(entorno, caso.pulsaciones[caso.pulsaciones.length - 1][0]);
+    }
+    const envio = servidor.enviados.find(
+      (uno) => uno.ruta.startsWith("/api/trabajos") && uno.metodo !== "GET",
+    );
+    assert.ok(envio, `«${caso.que}» no ha mandado nada al servidor`);
+    caso.comprobacion(envio);
+  }
+});
+
+test("la historia de una tierra se abre por su dirección y enseña todo lo que ha pasado", async () => {
+  const { entorno, servidor } = await conLosTrabajos({
+    "GET /api/trabajos/tierra/1": {
+      tierra: { id: 1, alias: "El Prado", superficie_ha: 3.0 },
+      historial: {
+        lineas: [
+          {
+            id: 34,
+            trabajo: {
+              id: 34,
+              tipo: "siembra",
+              fecha: "2026-03-01",
+              superficie_ha: 3.0,
+              horas: null,
+              equipo_id: 5,
+              insumos: [],
+            },
+            anulado: false,
+            revisado: false,
+            firmado: false,
+            motivo_anulacion: null,
+          },
+          {
+            id: 35,
+            trabajo: {
+              id: 35,
+              tipo: "laboreo",
+              subtipo: "rodillo",
+              fecha: "2026-03-10",
+              superficie_ha: 3.0,
+              horas: 2.0,
+              equipo_id: 5,
+              insumos: [],
+            },
+            anulado: true,
+            motivo_anulacion: "Se pasó dos veces",
+            revisado: false,
+            firmado: false,
+          },
+        ],
+      },
+      estado: {
+        cultivo_declarado: { cultivo: "Trigo blando", variedad: "Meseta", fecha: "2026-03-01" },
+        // El nombre del campo es el que devuelve el servidor (`trabajos.py`, con su `un_` delante).
+        un_apero_no_cambia_lo_sembrado_codigo: "TJ8_un_rodillo_no_cambia_lo_sembrado",
+        ultima_labor: { tipo: "laboreo", subtipo: "rodillo", fecha: "2026-03-10" },
+        que_queda_previsto: [{ id: 12, tipo: "laboreo", subtipo: "cultivador", fecha_prevista: "2026-04-20" }],
+      },
+      lo_que_no_se_sabe: {},
+    },
+  });
+  // **La dirección manda**: se abre la historia de una tierra poniendo su dirección, que es como llega
+  // desde un enlace o al recargar. Se lee de la barra con `laDireccion` como en las demás pruebas de T04.
+  entorno.window.location.hash = "#/tierras/1/historial";
+  await entorno.manejadores.popstate();
+  await new Promise((resolver) => setTimeout(resolver, 60));
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeLaTierra");
+  const props = elemento.props;
+  assert.ok(
+    servidor.llamadas.some((r) => r.includes("/api/trabajos/tierra/1")),
+    "no se ha pedido la historia de esa tierra",
+  );
+  assert.equal(props.tierra.nombre, "El Prado");
+  assert.equal(props.historial.length, 2, "no sale todo lo que ha pasado");
+  // **Lo anulado sale dentro, con su motivo**: esconderlo haría que el agricultor no pudiera explicar su
+  // cuaderno, que es la regla del ticket.
+  const anulada = props.historial.find((linea) => linea.anulado);
+  assert.ok(anulada, "lo anulado se ha escondido");
+  assert.equal(anulada.motivo_anulacion, "Se pasó dos veces");
+  assert.match(anulada.titulo, /rodillo/, "la línea anulada no dice qué trabajo era");
+  // Y las horas que no constan se leen como «sin decir», nunca como un cero.
+  const sembrada = props.historial.find((linea) => /SEMBRADO/.test(linea.titulo));
+  assert.ok(sembrada, `no sale la siembra en el historial: ${JSON.stringify(props.historial.map((l) => l.titulo))}`);
+  assert.ok(
+    sembrada.filas.some((fila) => /horas/i.test(fila.etiqueta) && fila.valor === "Sin decir"),
+    "las horas que no constan no se dicen como un hueco",
+  );
+  // El estado: qué hay sembrado, el apero que no cambia nada y lo que queda previsto, aparte de lo hecho.
+  assert.equal(props.estado.cultivo_declarado.cultivo, "Trigo blando");
+  assert.ok(props.estado.apero_no_cambia, "no se dice que el rodillo no borra lo sembrado");
+  assert.equal(props.estado.previstos.length, 1);
+  assert.match(props.estado.previstos[0].cuando, /20\/04\/2026/);
 });
 
 

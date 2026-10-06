@@ -145,6 +145,15 @@ import { pantallaDeLaMaquinaria, pantallaDeUnaMaquina } from "./react/pantallas/
 // porque las dos comparten las mismas piezas —la tarjeta de cifras, el cuadre del reparto y los
 // formularios— y separarlas obligaría a copiarlas.
 import { pantallaDeLasCuentas, pantallaDeUnGasto } from "./react/pantallas/gastos.js";
+// **Los trabajos por tierra (T15, E9, 05/10/2026).** Un fichero con las tres pantallas del contrato: la
+// agenda (`#/trabajos`), la ficha de un trabajo (que es un formulario y **no** tiene dirección) y la
+// historia de una tierra (`#/tierras/<id>/historial`). Es un solo fichero porque las tres comparten lo
+// mismo: el previsto y el hecho, que es lo que este ticket viene a separar.
+import {
+  pantallaDeLosTrabajos,
+  pantallaDeUnTrabajo,
+  pantallaDeLaTierra,
+} from "./react/pantallas/trabajos.js";
 
 /**
  * Qué pantallas están ya en React y cuáles todavía no.
@@ -243,6 +252,11 @@ const PANTALLAS_EN_REACT = new Set([
   // los cultivos y las máquinas. Va aquí, y en la caché del campo, por lo de siempre: las cuentas se
   // miran en el despacho y también de pie en la nave.
   "gastos",
+  // T15 (05/10/2026): los trabajos por tierra. La clave de esta lista es **el nombre del fichero**
+  // (`trabajos.js`), que trae las tres pantallas: la agenda, la ficha de un trabajo y la historia de
+  // una tierra. Va aquí por el mismo motivo que las demás: lo que está pensado y lo que se ha hecho se
+  // mira en el campo, y sin este fichero en la caché esa pantalla se queda en blanco.
+  "trabajos",
 ]);
 
 // ---------------------------------------------------------------- almacenamiento
@@ -793,6 +807,11 @@ const DIRECCION_PROPIA = {
   // **la ficha de un gasto tiene la suya** (`#/cuentas/12`), porque se puede enlazar y recargar: sus
   // repartos y sus pagos se piden al servidor al abrirla.
   PantallaDeUnGasto: "gasto",
+  // Los trabajos (T15, 05/10/2026): la agenda coge la dirección de su renglón del menú (`#/trabajos`) y
+  // la historia de una tierra tiene la suya (`#/tierras/<id>/historial`), porque se puede enlazar y
+  // recargar. **La ficha de un trabajo NO está aquí a propósito**: es un formulario, y uno que al
+  // recargar saldría vacío es peor que no tener dirección.
+  PantallaDeLaTierra: "trabajo_tierra",
 };
 
 /**
@@ -1166,6 +1185,10 @@ function abrirLaPantalla(clave, parametros = {}) {
   // se piden al servidor al abrirlas, así que se pueden enlazar y recargar.
   if (clave === "gastos") return abrirLasCuentas();
   if (clave === "gasto") return abrirUnGasto(parametros.id);
+  // **La historia de una tierra (T15, E9, 05/10/2026)**: se pide a su puerta, que contesta 404 si esa
+  // tierra no es de esta finca. Los tres finales de siempre: se abre, «eso no está en tu cuaderno» o,
+  // sin cobertura, «no lo he podido comprobar».
+  if (clave === "trabajo_tierra") return abrirLaHistoriaDeUnaTierra(parametros.id);
   return ABRIR_LA_PANTALLA[clave] ? ABRIR_LA_PANTALLA[clave](parametros) : pantallaInicio();
 }
 
@@ -1315,6 +1338,10 @@ const MODULOS = [
   { clave: "panel", texto: "menu.panel", accion: "ir-inicio" },
   { clave: "cuaderno", texto: "cuaderno.titulo", accion: "inicio", datos: { ir: "mi_cuaderno" } },
   { clave: "tierras", texto: "maestros.titulo", accion: "inicio", datos: { ir: "mis_cosas" } },
+  // **Los trabajos (T15, E9, 05/10/2026).** El contrato lo pide **el tercero**, justo detrás de
+  // «Tierras y mapa»: lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
+  // campo, y no al final con lo que se toca una vez al año.
+  { clave: "trabajos", texto: "agenda.titulo", accion: "trabajos-ver" },
   { clave: "cultivos", texto: "cultivos.titulo", accion: "cultivo-ver-todos" },
   { clave: "grupos", texto: "grupos.titulo", accion: "inicio", datos: { ir: "grupos" } },
   { clave: "almacen", texto: "cesta.titulo", accion: "cesta-ver" },
@@ -1439,6 +1466,12 @@ const MODULO_DE_LA_PANTALLA = {
   // y donde el agricultor tiene que verse marcado.
   PantallaDeLasCuentas: "cuentas",
   PantallaDeUnGasto: "cuentas",
+  // Los trabajos (T15, 05/10/2026): las tres pantallas cuelgan del renglón de los trabajos. La de la
+  // historia de una tierra tiene dirección propia (`DIRECCION_PROPIA`), pero el menú tiene que marcar el
+  // renglón: no saber dónde estás es la mitad de para qué sirve un menú.
+  PantallaDeLosTrabajos: "trabajos",
+  PantallaDeUnTrabajo: "trabajos",
+  PantallaDeLaTierra: "trabajos",
 };
 
 /**
@@ -18952,6 +18985,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   // Las cuentas de la explotación (T13, E7, 05/10/2026)
   const enLasCuentas = await atenderLasCuentas(nombre, elemento);
   if (enLasCuentas !== false) return enLasCuentas;
+  // Los trabajos por tierra (T15, E9, 05/10/2026)
+  const enLosTrabajos = await atenderLosTrabajos(nombre, elemento);
+  if (enLosTrabajos !== false) return enLosTrabajos;
 });
 
 window.addEventListener("online", () => {
@@ -19577,6 +19613,528 @@ async function atenderLasCuentas(nombre, elemento) {
     }
     return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
   }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Los trabajos por tierra (T15, E9, 05/10/2026)
+// ---------------------------------------------------------------------------
+//
+// LO QUE ESTE BLOQUE HACE, Y LO QUE NO. Hace lo mismo que el de las cuentas: pide los datos, recoge lo
+// que el agricultor escribe y atiende las doce acciones de sus botones.
+//
+// **Y aquí sí hay una cosa que no hace ningún otro bloque: montar las frases de cada línea.** El
+// servidor devuelve los trabajos en crudo (`{tipo, subtipo, fecha_prevista, dias_que_faltan…}`) y la
+// pantalla espera la línea ya escrita («Laboreo · cultivador», «20/04/2026 · Faltan 19 días.»). Esa
+// composición se hace **con las palabras del servidor y ninguna escrita aquí**: los rótulos salen de
+// `textos.agenda` (los mismos que la pantalla usa para sus campos) y las frases del aviso, de
+// `textos.mensaje` con su código. Lo que el programa no sabe decir todavía **no se dice**: la
+// estimación de lo que gastaría un plan (`gastaria`) no se enseña porque no hay frase para decirla sin
+// inventarla, y la fecha de un plan que ya pasó se enseña sola, sin contar días hacia atrás.
+
+/** El estado de los trabajos, creado la primera vez que hace falta (como el de las cuentas). */
+function estadoDeLosTrabajos() {
+  if (!estado.trabajos) {
+    estado.trabajos = {
+      // Lo que devolvió `GET /api/trabajos`: lo previsto, lo hecho, los reenvíos quitados y los textos.
+      datos: null,
+      // La historia y el estado de una tierra (`GET /api/trabajos/tierra/<id>`), cuando se abre.
+      tierra: null,
+      // La ficha que está abierta: `modo` (planificar | reprogramar | hecho | corregir | anular), el
+      // identificador del trabajo, lo que va en los campos y si lo que se está anulando es un plan
+      // (que se **cancela**, no se anula: son dos puertas distintas y con la misma pantalla).
+      formulario: null,
+      // El vocabulario de la ficha: los tipos, los aperos y las máquinas de la finca.
+      tipos: null,
+      subtipos: [],
+      maquinas: null,
+      // Los envases del almacén, para poder decir de cuál sale lo que se gastó.
+      insumos: null,
+      cargando: false,
+      guardando: false,
+      error: "",
+      aviso: "",
+    };
+  }
+  return estado.trabajos;
+}
+
+/** El vocabulario de estas pantallas: la agenda y los botones que ya existen. */
+function textosDeLosTrabajos() {
+  return { agenda: t("agenda", {}), acciones: accion("volver") ? { volver: accion("volver") } : {} };
+}
+
+/** La tierra de un trabajo, por su nombre: un número de parcela no le dice nada a nadie. */
+function laTierraDeUnTrabajo(trabajo) {
+  if (!trabajo) return "";
+  if (trabajo.grupo_id) return t("agenda.tierra", "");
+  if (!trabajo.parcela_id) return "";
+  const suya = (estado.parcelas || []).find((una) => Number(una.id) === Number(trabajo.parcela_id));
+  return suya ? suya.alias : "";
+}
+
+/**
+ * Cuándo es un trabajo, escrito.
+ *
+ * Lo que se dice, y lo que **no**:
+ *   · Un trabajo **hecho**: su día, o «sin decir» si no lo tiene. Un trabajo sin fecha no es el más
+ *     antiguo, es uno que no se sabe cuándo fue.
+ *   · Un trabajo **previsto**: su día y, si el servidor sabe cuántos días faltan, la frase que ya
+ *     existe para eso (`V8_faltan_dias`). Si el día ya pasó **no se cuentan días hacia atrás**: se
+ *     enseña la fecha y ya está, porque «faltan -3 días» es una frase que no dice nada.
+ *   · Un plan **sin día**: «sin decir», que es la respuesta del programa cuando no se sabe.
+ */
+function cuandoEsUnTrabajo(trabajo) {
+  const esPlan = trabajo.de_donde === "previsto";
+  const fecha = esPlan ? trabajo.fecha_prevista : trabajo.fecha;
+  if (!fecha) return t("agenda.sin_decir", "");
+  const elDia = formateaFecha(fecha);
+  const dias = Number(trabajo.dias_que_faltan);
+  if (esPlan && Number.isFinite(dias) && dias >= 0) {
+    return `${elDia} · ${mensaje("V8_faltan_dias", { cuantos: dias })}`;
+  }
+  return elDia;
+}
+
+/** Lo que a un trabajo hecho le falta decir, con la palabra del servidor y sin inventar una frase. */
+function loQueLeFaltaAUnTrabajo(trabajo) {
+  const a = t("agenda", {}) || {};
+  const sinDecir = a.sin_decir || "";
+  const faltan = [];
+  if (!trabajo.fecha) faltan.push(`${a.dia} · ${sinDecir}`);
+  if (trabajo.superficie_ha === null || trabajo.superficie_ha === undefined) {
+    faltan.push(`${a.hectareas} · ${sinDecir}`);
+  }
+  if (trabajo.horas === null || trabajo.horas === undefined) faltan.push(`${a.horas} · ${sinDecir}`);
+  if (!trabajo.equipo_id) faltan.push(`${a.maquina} · ${sinDecir}`);
+  return faltan;
+}
+
+/** Los avisos de «lo que no consta» del servidor, ya con su frase y su cuenta. */
+function loQueNoConstaDeLosTrabajos(datos) {
+  const avisos = [];
+  // Los reenvíos del móvil que se han quitado: la misma petición dos veces es un trabajo, no dos, y lo
+  // que se ha quitado **se cuenta** para que nadie crea que se ha perdido.
+  if (datos.reenviados) avisos.push({ texto: mensaje("TJ11_el_trabajo_ya_estaba"), cuantos: datos.reenviados });
+  // Y lo que no se ha podido comprobar: sin clave de reenvío no se puede saber si ya estaba apuntado.
+  if (datos.aviso_codigo) avisos.push({ texto: mensaje(datos.aviso_codigo) });
+  return avisos;
+}
+
+/** Abre «los trabajos»: se pinta enseguida y se vuelve a pintar con lo que contesta el servidor. */
+async function abrirLosTrabajos() {
+  const suyo = estadoDeLosTrabajos();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.tierra = null;
+  suyo.cargando = true;
+  pantallaLosTrabajos();
+  try {
+    suyo.datos = await apiJson("/api/trabajos");
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.cargando = false;
+  return pantallaLosTrabajos();
+}
+
+/** La agenda, con lo previsto y lo hecho en dos listas y sin mezclarse. */
+function pantallaLosTrabajos() {
+  const suyo = estadoDeLosTrabajos();
+  const datos = suyo.datos || {};
+  return montar(() =>
+    pantallaDeLosTrabajos({
+      textos: textosDeLosTrabajos(),
+      previstos: (datos.previstos || []).map((plan) => ({
+        id: plan.id,
+        titulo: etiquetaDeUnTrabajo(plan),
+        cuando: cuandoEsUnTrabajo(plan),
+        tierra: laTierraDeUnTrabajo(plan),
+        // **La frase que impide el malentendido del ticket**: esto no ha gastado nada.
+        no_gasta: t("agenda.lo_previsto_no_gasta", ""),
+      })),
+      hechos: (datos.hechos || []).map((hecho) => ({
+        id: hecho.id,
+        titulo: etiquetaDeUnTrabajo(hecho),
+        cuando: cuandoEsUnTrabajo(hecho),
+        tierra: laTierraDeUnTrabajo(hecho),
+        faltan: loQueLeFaltaAUnTrabajo(hecho),
+        anulado: Boolean(hecho.anulado),
+        motivo_anulacion: hecho.motivo_anulacion || "",
+        no_cuenta: mensaje("TJ3_el_apunte_esta_anulado"),
+      })),
+      lo_que_no_se_sabe: loQueNoConstaDeLosTrabajos(datos),
+      error: suyo.error || "",
+      cargando: suyo.cargando,
+      // **Sin tierras no se puede planificar**, y el aviso trae el botón que lo arregla.
+      puedePlanificar: (estado.parcelas || []).length > 0,
+    }),
+  );
+}
+
+/** Cómo se llama un trabajo: su tipo y, si es una labor de suelo, con qué apero. */
+function etiquetaDeUnTrabajo(trabajo) {
+  const tipos = t("trabajos", []) || [];
+  const suyos = t("trabajos_de_labor", []) || [];
+  const todos = [...tipos, ...suyos];
+  const encontrado = todos.find((uno) => uno && uno.id === trabajo.tipo);
+  const base = encontrado ? encontrado.texto : trabajo.tipo || "";
+  if (!trabajo.subtipo) return base;
+  // **El nombre de un apero es su propio código** (`rodillo`, `cultivador`…): son palabras que el
+  // agricultor dice y el servidor no tiene otra lista de nombres para ellos. Igual que las unidades.
+  return `${base} · ${trabajo.subtipo}`;
+}
+
+/** Los aperos de una labor de suelo, con su nombre, del servidor. */
+function losSubtiposDeLaboreo() {
+  // **El nombre de un apero es su propio código**, como el de las unidades (`unidades: {valor, texto}`):
+  // `rodillo`, `cultivador`, `arado`… son palabras que el agricultor dice, y el servidor no tiene otra
+  // lista de nombres para ellos. El día que se quieran en mayúscula o con tilde, van a `textos.py` y se
+  // sirven con nombre propio, como los tipos.
+  return (estadoDeLosTrabajos().subtipos || []).map((uno) => ({ valor: uno, texto: uno }));
+}
+
+/** Las tierras, para elegir en qué se hace el trabajo. */
+function lasTierrasParaUnTrabajo() {
+  return (estado.parcelas || []).map((una) => ({ valor: una.id, texto: una.alias }));
+}
+
+/** Los tipos de trabajo que el programa conoce, con el nombre que ya usa en sus botones. */
+function losTiposDeUnTrabajo() {
+  const suyos = estadoDeLosTrabajos();
+  const dichos = [...(t("trabajos", []) || []), ...(t("trabajos_de_labor", []) || [])];
+  return (suyos.tipos || []).map((codigo) => {
+    const encontrado = dichos.find((uno) => uno && uno.id === codigo);
+    return { valor: codigo, texto: encontrado ? encontrado.texto : codigo };
+  });
+}
+
+/**
+ * El vocabulario de la ficha: los tipos y los aperos, y las máquinas de la finca.
+ *
+ * Se piden **la primera vez que se abre una ficha** y se guardan: son listas que no cambian mientras se
+ * trabaja, y pedirlas en cada repintado sería pedir cinco veces lo mismo. Los tipos y los aperos salen
+ * de la puerta que el propio ticket tiene para eso (`GET /api/trabajos/que-falta`), que es la que dice
+ * cuáles conoce el programa; las máquinas, de la maquinaria de la finca.
+ */
+async function cargarElVocabularioDeLosTrabajos() {
+  const suyo = estadoDeLosTrabajos();
+  if (suyo.tipos && suyo.maquinas) return;
+  try {
+    if (!suyo.tipos) {
+      const vocabulario = await apiJson("/api/trabajos/que-falta");
+      suyo.tipos = vocabulario.tipos || [];
+      suyo.subtipos = vocabulario.subtipos_de_laboreo || [];
+    }
+    if (!suyo.maquinas) {
+      const tabla = await apiJson("/api/maquinaria");
+      suyo.maquinas = (tabla.maquinas || []).map((una) => ({ valor: una.id, texto: una.nombre }));
+    }
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+}
+
+/** Los envases del almacén, para decir de cuál sale lo que se gastó. */
+async function cargarLosInsumosSiHacenFalta() {
+  const suyo = estadoDeLosTrabajos();
+  if (suyo.insumos) return suyo.insumos;
+  try {
+    const libro = await apiJson("/api/almacen/existencias");
+    suyo.insumos = [];
+    for (const articulo of libro.articulos || []) {
+      for (const envase of articulo.envases || []) {
+        suyo.insumos.push({
+          valor: envase.lote_id,
+          texto: [articulo.nombre, envase.numero_lote].filter(Boolean).join(" · "),
+        });
+      }
+    }
+  } catch (fallo) {
+    suyo.insumos = [];
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return suyo.insumos;
+}
+
+/**
+ * Abre la ficha de un trabajo, en el modo que se le diga.
+ *
+ * Los cinco modos y lo que cambia en cada uno (lo dice la pantalla, no esto): planificar, reprogramar
+ * (solo el día), marcar lo que de verdad se hizo, corregir y anular. El trabajo se busca **en lo que ya
+ * está cargado** —el plan o el hecho— porque la agenda los trae todos: pedirlo otra vez sería pedir dos
+ * veces lo mismo.
+ */
+async function abrirUnTrabajo(modo, id) {
+  const suyo = estadoDeLosTrabajos();
+  suyo.error = "";
+  suyo.aviso = "";
+  const datos = suyo.datos || {};
+  const deDonde = modo === "planificar" || modo === "reprogramar" || modo === "hecho";
+  const fuente = deDonde
+    ? (datos.previstos || []).find((uno) => Number(uno.id) === Number(id))
+    : (datos.hechos || []).find((uno) => Number(uno.id) === Number(id));
+  const trabajo = fuente || null;
+  // **Anular un plan es cancelarlo**, y son dos puertas distintas del servidor: se mira de dónde viene
+  // el identificador y se guarda, para que el botón de guardar llame a la que toca.
+  const esPlan = modo !== "anular" ? false : !(datos.hechos || []).some((uno) => Number(uno.id) === Number(id));
+  const borrador = {
+    tipo: trabajo ? trabajo.tipo : "",
+    subtipo: trabajo ? trabajo.subtipo || "" : "",
+    parcela_id: trabajo && trabajo.parcela_id ? trabajo.parcela_id : "",
+    fecha_prevista: trabajo && trabajo.fecha_prevista ? trabajo.fecha_prevista : "",
+    fecha: trabajo && trabajo.fecha ? trabajo.fecha : "",
+    superficie_ha: trabajo && trabajo.superficie_ha !== null ? trabajo.superficie_ha : "",
+    horas: trabajo && trabajo.horas !== null ? trabajo.horas : "",
+    equipo_id: trabajo && trabajo.equipo_id ? trabajo.equipo_id : "",
+    lote_id: "",
+    cantidad: "",
+    unidad: "",
+    observaciones: trabajo ? trabajo.observaciones || "" : "",
+    motivo_anulacion: "",
+  };
+  suyo.formulario = { modo, id: trabajo ? trabajo.id : null, trabajo, borrador, repaso: [], esPlan };
+  if (modo !== "anular") {
+    await cargarElVocabularioDeLosTrabajos();
+    await cargarLosInsumosSiHacenFalta();
+  }
+  return pantallaUnTrabajo();
+}
+
+/** La ficha: sus campos, sus opciones y lo que se había pensado (cuando se está marcando lo hecho). */
+function pantallaUnTrabajo() {
+  const suyo = estadoDeLosTrabajos();
+  const suyoFormulario = suyo.formulario || { modo: "planificar", borrador: {} };
+  const trabajo = suyoFormulario.trabajo;
+  const a = t("agenda", {}) || {};
+  const filasDelPrevisto = trabajo
+    ? [
+        { etiqueta: a.tipo, valor: etiquetaDeUnTrabajo(trabajo) },
+        { etiqueta: a.dia_previsto, valor: cuandoEsUnTrabajo(trabajo) },
+        trabajo.superficie_ha !== null && trabajo.superficie_ha !== undefined
+          ? { etiqueta: a.hectareas_previstas, valor: formateaNumero(trabajo.superficie_ha, 2) }
+          : null,
+        trabajo.horas !== null && trabajo.horas !== undefined
+          ? { etiqueta: a.horas_previstas, valor: formateaNumero(trabajo.horas, 2) }
+          : null,
+      ].filter(Boolean)
+    : [];
+  return montar(() =>
+    pantallaDeUnTrabajo({
+      textos: textosDeLosTrabajos(),
+      modo: suyoFormulario.modo,
+      borrador: suyoFormulario.borrador || {},
+      tipos: losTiposDeUnTrabajo(),
+      subtipos: losSubtiposDeLaboreo(),
+      tierras: lasTierrasParaUnTrabajo(),
+      maquinas: suyo.maquinas || [],
+      insumos: suyo.insumos || [],
+      unidades: (t("unidades", []) || []).map((una) => ({ valor: una, texto: una })),
+      previsto: suyoFormulario.modo === "hecho" && trabajo ? { filas: filasDelPrevisto } : null,
+      repaso: suyoFormulario.repaso || [],
+      guardando: suyo.guardando,
+      error: suyo.error || "",
+    }),
+  );
+}
+
+/** Lo que se ha escrito en la ficha, en los nombres que espera el servidor. */
+function loEscritoEnLaFicha(modo) {
+  const numero = (id) => {
+    const escrito = valorDeLaCasilla(id);
+    return escrito === "" ? null : Number(escrito);
+  };
+  const texto = (id) => {
+    const escrito = (valorDeLaCasilla(id) || "").trim();
+    return escrito === "" ? null : escrito;
+  };
+  const borrador = {
+    tipo: texto("trabajo-tipo"),
+    subtipo: texto("trabajo-subtipo"),
+    parcela_id: numero("trabajo-tierra"),
+    superficie_ha: numero("trabajo-superficie"),
+    horas: numero("trabajo-horas"),
+    equipo_id: numero("trabajo-maquina"),
+    observaciones: texto("trabajo-observaciones"),
+  };
+  if (modo === "reprogramar") return { fecha_prevista: texto("trabajo-fecha-prevista") };
+  if (modo === "anular") return { motivo: texto("trabajo-motivo") };
+  const esPlan = modo === "planificar";
+  const comun = esPlan
+    ? { ...borrador, fecha_prevista: texto("trabajo-fecha-prevista") }
+    : { ...borrador, fecha: texto("trabajo-fecha") };
+  const lote = numero("trabajo-insumo");
+  const cantidad = numero("trabajo-cantidad");
+  const unidad = texto("trabajo-unidad");
+  return lote && cantidad
+    ? { ...comun, insumos: [{ lote_id: lote, cantidad, unidad: unidad || null }] }
+    : comun;
+}
+
+/** Guarda lo que se ha escrito, por la puerta que toca según el modo. */
+async function guardarElTrabajo() {
+  const suyo = estadoDeLosTrabajos();
+  const formulario = suyo.formulario || {};
+  const modo = formulario.modo;
+  const id = formulario.id;
+  const cuerpo = loEscritoEnLaFicha(modo);
+  const campana_id = estado.campana ? estado.campana.id : null;
+  const puertas = {
+    planificar: ["POST", "/api/trabajos/previstos", { ...cuerpo, campana_id }],
+    reprogramar: ["POST", `/api/trabajos/previstos/${id}/reprogramar`, cuerpo],
+    hecho: ["POST", `/api/trabajos/previstos/${id}/hecho`, { ...cuerpo, campana_id }],
+    corregir: ["PUT", `/api/trabajos/${id}`, cuerpo],
+    // **Un plan se cancela y un hecho se anula**: son dos puertas distintas con la misma pantalla (la
+    // que pide el motivo), y por eso la puerta se elige con `esPlan` y no solo con el modo.
+    anular: formulario.esPlan
+      ? ["POST", `/api/trabajos/previstos/${id}/cancelar`, cuerpo]
+      : ["POST", `/api/trabajos/${id}/anular`, cuerpo],
+  };
+  const [metodo, ruta, datos] = puertas[modo] || puertas.planificar;
+  suyo.guardando = true;
+  suyo.error = "";
+  const resultado = await mandarCambio(ruta, metodo, datos);
+  suyo.guardando = false;
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaUnTrabajo();
+  }
+  // **Lo que el servidor ha comprobado se enseña antes de dar nada por bueno** cuando avisa de algo:
+  // sin eso, un aviso que no se lee es un aviso que no existe.
+  const avisos = (resultado.datos && resultado.datos.avisos) || [];
+  if (avisos.length) {
+    suyo.formulario.repaso = avisos;
+    suyo.aviso = avisos.join(" ");
+  }
+  await abrirLosTrabajos();
+  return pantallaLosTrabajos();
+}
+
+/** Abre la historia de una tierra: qué hay hoy, todo lo que ha pasado y lo que queda previsto. */
+async function abrirLaHistoriaDeUnaTierra(parcelaId) {
+  const suyo = estadoDeLosTrabajos();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.cargando = true;
+  pantallaLaHistoria();
+  try {
+    suyo.tierra = await apiJson(`/api/trabajos/tierra/${Number(parcelaId)}`);
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    suyo.tierra = null;
+  }
+  suyo.cargando = false;
+  return pantallaLaHistoria();
+}
+
+/** La historia de una tierra, con sus líneas ya montadas. */
+function pantallaLaHistoria() {
+  const suyo = estadoDeLosTrabajos();
+  const datos = suyo.tierra || {};
+  const a = t("agenda", {}) || {};
+  const tierra = datos.tierra || {};
+  const estadoDeLaTierra = datos.estado || null;
+  const sinDecir = a.sin_decir || "";
+  const valor = (numero) => (numero === null || numero === undefined ? sinDecir : formateaNumero(numero, 2));
+  const nombreDeLaMaquina = (id) => {
+    const suya = (estado.maquinaria || {}).maquinas || [];
+    const encontrada = suya.find((una) => Number(una.id) === Number(id));
+    return encontrada ? encontrada.nombre : sinDecir;
+  };
+  return montar(() =>
+    pantallaDeLaTierra({
+      textos: textosDeLosTrabajos(),
+      tierra: {
+        nombre: tierra.alias || "",
+        superficie: valor(tierra.superficie_ha),
+      },
+      historial: ((datos.historial || {}).lineas || []).map((linea) => {
+        const trabajo = linea.trabajo || {};
+        return {
+          titulo: etiquetaDeUnTrabajo(trabajo),
+          cuando: cuandoEsUnTrabajo({ ...trabajo, de_donde: "hecho" }),
+          filas: [
+            { etiqueta: a.hectareas, valor: valor(trabajo.superficie_ha) },
+            { etiqueta: a.horas, valor: valor(trabajo.horas) },
+            { etiqueta: a.maquina, valor: trabajo.equipo_id ? nombreDeLaMaquina(trabajo.equipo_id) : sinDecir },
+            ...(trabajo.insumos || []).map((insumo) => ({
+              etiqueta: a.insumo,
+              valor: [insumo.articulo, insumo.cantidad, insumo.unidad].filter(Boolean).join(" "),
+            })),
+          ],
+          anulado: Boolean(linea.anulado),
+          motivo_anulacion: linea.motivo_anulacion || "",
+          no_cuenta: mensaje("TJ3_el_apunte_esta_anulado"),
+          revisado: Boolean(linea.revisado),
+          firmado: Boolean(linea.firmado),
+        };
+      }),
+      estado: estadoDeLaTierra
+        ? {
+            cultivo_declarado: estadoDeLaTierra.cultivo_declarado || null,
+            // **Un apero detrás de una siembra no borra lo sembrado**, y el servidor lo dice con su
+            // código: aquí se traduce a su frase, que es lo que se pregunta al ver un rodillo.
+            apero_no_cambia: estadoDeLaTierra.un_apero_no_cambia_lo_sembrado_codigo
+              ? mensaje(estadoDeLaTierra.un_apero_no_cambia_lo_sembrado_codigo)
+              : "",
+            ultima_labor: Boolean(estadoDeLaTierra.ultima_labor),
+            ultima_labor_titulo: estadoDeLaTierra.ultima_labor
+              ? etiquetaDeUnTrabajo(estadoDeLaTierra.ultima_labor)
+              : "",
+            ultima_labor_cuando: estadoDeLaTierra.ultima_labor
+              ? cuandoEsUnTrabajo({ ...estadoDeLaTierra.ultima_labor, de_donde: "hecho" })
+              : "",
+            previstos: (estadoDeLaTierra.que_queda_previsto || []).map((linea) => ({
+              titulo: etiquetaDeUnTrabajo(linea.previsto || {}),
+              cuando: cuandoEsUnTrabajo({ ...linea, de_donde: "previsto" }),
+            })),
+          }
+        : null,
+      // Lo que no se puede saber de esta tierra, con su frase: la nascencia de una lluvia, lo que quedó
+      // en el suelo después de la cosecha y lo que no se sembró.
+      no_consta: [
+        estadoDeLaTierra && estadoDeLaTierra.no_se_puede_deducir_la_nascencia_porque_codigo,
+        estadoDeLaTierra && estadoDeLaTierra.no_se_puede_deducir_el_suelo_porque_codigo,
+        estadoDeLaTierra && estadoDeLaTierra.no_se_sabe_que_se_sembro_codigo,
+      ]
+        .filter(Boolean)
+        .map((codigo) => ({ texto: mensaje(codigo) })),
+      error: suyo.error || "",
+    }),
+  );
+}
+
+/**
+ * Las doce acciones de los botones de los trabajos, una por una.
+ *
+ * Va aparte del manejador de clics por el mismo motivo que el de las cuentas: el manejador es uno solo
+ * y ya tiene ochenta ramas, y este bloque se lee entero de una tirada. Devuelve `false` cuando la acción
+ * no es suya, que es lo que hace que el manejador siga con las demás.
+ */
+async function atenderLosTrabajos(nombre, elemento) {
+  const suyo = estadoDeLosTrabajos();
+  const id = Number(elemento.dataset.id);
+  if (nombre === "trabajos-ver") return abrirLosTrabajos();
+  if (nombre === "trabajo-planificar") return abrirUnTrabajo("planificar", null);
+  if (nombre === "trabajo-previsto-guardar") return guardarElTrabajo();
+  if (nombre === "trabajo-abrir") return abrirUnTrabajo("reprogramar", id);
+  if (nombre === "trabajo-reprogramar") return guardarElTrabajo();
+  if (nombre === "trabajo-cancelar") {
+    // **Cancelar un plan no es borrarlo**: se abre la pantalla que pide el motivo (la misma que la de
+    // anular, porque es la misma pregunta) y al guardar se llama a la puerta de cancelar.
+    suyo.error = "";
+    suyo.aviso = "";
+    suyo.formulario = { modo: "anular", id, trabajo: null, borrador: {}, repaso: [], esPlan: true };
+    return pantallaUnTrabajo();
+  }
+  if (nombre === "trabajo-hecho") return abrirUnTrabajo("hecho", id);
+  if (nombre === "trabajo-hecho-guardar") return guardarElTrabajo();
+  if (nombre === "trabajo-corregir") return abrirUnTrabajo("corregir", id);
+  if (nombre === "trabajo-guardar") return guardarElTrabajo();
+  if (nombre === "trabajo-anular") return abrirUnTrabajo("anular", id);
+  if (nombre === "trabajo-anular-confirmar") return guardarElTrabajo();
   return false;
 }
 
