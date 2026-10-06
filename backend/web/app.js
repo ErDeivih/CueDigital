@@ -6345,7 +6345,10 @@ async function anularAlgo(tipo, id) {
 
 async function sacarPapel() {
   try {
-    const respuesta = await api("/api/cuaderno/pdf");
+    // **El año que se está mirando** (06/10/2026), como las otras tres descargas del cuaderno: la ruta,
+    // sin decírselo, sacaba la campaña **más nueva** de la finca (`_campana`, `anio.desc()`), así que el
+    // papel que se imprimía podía ser de otro año que el que se tenía delante.
+    const respuesta = await api(conLaCampana("/api/cuaderno/pdf"));
     if (!respuesta.ok) throw new Error(mensaje("no_se_pudo"));
     const blob = await respuesta.blob();
     const enlace = document.createElement("a");
