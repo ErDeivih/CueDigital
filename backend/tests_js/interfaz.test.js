@@ -948,6 +948,10 @@ const RESPUESTAS = {
     // `gastos.titulo`, que es lo que pide su renglón y sin lo cual el renglón saldría sin nombre.
     gastos: {
       titulo: "Mis cuentas",
+      // Y las dos formas del resumen, que `app.js` monta con `conCuenta`: el singular y el plural
+      // tienen que estar los dos, porque «Tienes 1 gastos» es lo primero que hace desconfiar.
+      cuantas: "Tienes {cuantos} gastos apuntados.",
+      cuantas_uno: "Tienes 1 gasto apuntado.",
     },
     // **Los trabajos (T15, 05/10/2026)**: lo mismo, el título de su renglón del menú. El bloque entero
     // (`AGENDA`) está en su copia, `tests_js/trabajos.test.js`.
@@ -13263,14 +13267,71 @@ test("leer la etiqueta sin haber elegido la foto no manda nada al servidor", asy
 });
 
 // ---------------------------------------------------------------------------
-// Los trabajos por tierra (T15, E9, 05/10/2026)
+// Los trabajos por tierra (T15, E9, 05/10/2026) y las cuentas (T13, E7)
 //
-// **Lo que se comprueba aquí, y por qué aquí.** El servidor del T15 tiene sus 70 pruebas y la pantalla
-// tiene las suyas (24, en `tests_js/trabajos.test.js`), pero las dos cosas estaban sin coser: la pantalla
-// espera cada línea **ya escrita** y el servidor devuelve los trabajos en crudo. Esa costura la escribe
-// el coordinador en `app.js`, y es la que se prueba en este bloque: que las líneas salgan con sus
-// palabras, que lo previsto y lo hecho no se mezclen, y que guardar llame a la puerta que toca.
+// **Lo que se comprueba aquí, y por qué aquí.** Las dos pantallas tienen sus propias pruebas
+// (`tests_js/trabajos.test.js` con 24 y `tests_js/gastos.test.js` con 26) y sus servidores tienen las
+// suyas, pero **el cableado de `app.js` no lo probaba nadie**: que el renglón del menú abra la pantalla,
+// que le lleguen los datos del servidor y que guardar llame a la puerta que toca. Eso lo escribió el
+// coordinador al integrarlas, y es lo que se prueba en este bloque.
+//
+// En el caso de los trabajos hay algo más: la pantalla espera cada línea **ya escrita** y el servidor
+// devuelve los trabajos en crudo, así que la costura (montar las frases) es de `app.js` y se prueba
+// aquí: que las líneas salgan con sus palabras, que lo previsto y lo hecho no se mezclen, y que un dato
+// que no se sabe se lea como un hueco.
 // ---------------------------------------------------------------------------
+
+test("las cuentas se abren desde su renglón del menú y les llegan los gastos del servidor", async () => {
+  const { entorno, servidor } = await cargarAplicacion({
+    // **La ruta con su campaña, tal y como la pide la pantalla**: las cuentas son las de un año, y
+    // `abrirLasCuentas` pregunta por el que se está llevando (el 1 en esta copia del servidor). Si la
+    // ruta no casara, el servidor de mentira contestaría vacío y la prueba daría por bueno un hueco.
+    "GET /api/gastos?campana_id=1": {
+      gastos: [
+        {
+          id: 7,
+          concepto: "Abono 15-15-15",
+          categoria: "abono",
+          importe: "663.00",
+          texto_importe: "663,00 €",
+          pagado: "0.00",
+          pendiente: "663.00",
+          estado: "sin_pagar",
+          esta_sin_repartir: true,
+          anulado: false,
+          repartos: [],
+          cuadre: { cuadra: true },
+        },
+      ],
+      pagos: [],
+      inversiones: [],
+      subvenciones: [],
+      cuenta: { gastos: 1 },
+      caja: {},
+      margenes: {},
+      coste_por_clase: {},
+      por_pagar: {},
+      que_falta: [],
+    },
+  });
+  await pulsar(entorno, "gastos-ver");
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeLasCuentas");
+  assert.ok(
+    servidor.llamadas.some((ruta) => ruta.includes("/api/gastos")),
+    "no se ha pedido la lista de gastos al abrir la pantalla",
+  );
+  assert.equal(elemento.props.cuentas.gastos.length, 1, "no le llega el gasto del servidor");
+  assert.equal(elemento.props.cuentas.gastos[0].concepto, "Abono 15-15-15");
+  // **El resumen lo monta `app.js` con las dos formas del servidor**: «Tienes 1 gastos» es lo primero
+  // que hace desconfiar de un programa.
+  assert.ok(elemento.props.resumen, "no se dice cuántos gastos hay");
+  assert.ok(!/1 gastos/.test(elemento.props.resumen), `el singular está mal: «${elemento.props.resumen}»`);
+  // Y la tabla del ordenador se prepara aquí, con sus columnas del servidor.
+  assert.ok(elemento.props.tabla, "no le llega la tabla del ordenador");
+  assert.equal(elemento.props.tabla.columnas.length, 7);
+});
 
 /** Una explotación con dos tierras, un plan, un trabajo hecho y una máquina. */
 function conLosTrabajos(cambios = {}) {

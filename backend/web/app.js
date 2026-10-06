@@ -19063,7 +19063,7 @@ async function abrirLasCuentas() {
 /** Vuelve a pedir las cuentas de la finca. */
 async function recargarLasCuentas() {
   const suyo = estadoDeLasCuentas();
-  const campana = campanaActual();
+  const campana = estado.campana;
   const consulta = campana && campana.id ? `?campana_id=${campana.id}` : "";
   try {
     suyo.datos = await apiJson(`/api/gastos${consulta}`);
@@ -19383,7 +19383,7 @@ async function guardarLasCuentas(datos) {
       vencimiento: suyos["gasto-vencimiento"] || null,
       proveedor: suyos["gasto-proveedor"],
       categoria: b.categoria || "otro",
-      campana_id: campanaActual() ? campanaActual().id : null,
+      campana_id: estado.campana ? estado.campana.id : null,
       clave_de_reenvio: claveDeReenvio("gasto"),
     };
     if (id) {
@@ -19418,7 +19418,7 @@ async function guardarLasCuentas(datos) {
       fecha: valorDeLaCasilla("inversion-fecha") || null,
       proveedor: valorDeLaCasilla("inversion-proveedor"),
       categoria: b.categoria || "otro",
-      campana_id: campanaActual() ? campanaActual().id : null,
+      campana_id: estado.campana ? estado.campana.id : null,
       clave_de_reenvio: claveDeReenvio("inversion"),
     };
   } else if (clase === "ayuda") {
@@ -19428,7 +19428,7 @@ async function guardarLasCuentas(datos) {
       importe_previsto: valorDeLaCasilla("ayuda-previsto") || null,
       importe_concedido: valorDeLaCasilla("ayuda-concedido") || null,
       importe_cobrado: valorDeLaCasilla("ayuda-cobrado") || null,
-      campana_id: campanaActual() ? campanaActual().id : null,
+      campana_id: estado.campana ? estado.campana.id : null,
       clave_de_reenvio: claveDeReenvio("ayuda"),
     };
   }
