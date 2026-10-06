@@ -1976,17 +1976,23 @@ def _filas_del_csv(fichero: pathlib.Path, separador: str = ";") -> list[list[str
 
 
 def _la_pista_del_boton(nav: NavegadorDeVerdad, selector: str) -> str:
-    """Lo que la pantalla dice del botón que se va a pulsar (su texto y su pista de debajo).
+    """Lo que la pantalla dice del botón que se va a pulsar: su texto y **el bloque donde vive**.
 
     Es lo que permite comprobar el «alcance anunciado» del encargo: si un botón se lleva lo
-    filtrado, la pantalla tiene que decirlo.
+    filtrado, la pantalla tiene que decirlo. Y se lee **el bloque, no la pantalla entera**: buscar la
+    frase en toda la pantalla da falsos positivos —«todo el año» también está en el bloque de las
+    medidas preventivas—, y una comprobación que pasa por el motivo equivocado no vale nada. Se sube
+    por los antepasados hasta el último que **no** es el contenedor de la pantalla (`main#pantalla`),
+    que es lo que se llama «el bloque donde vive el botón».
     """
     return (
         nav.evaluar(
             "(() => { const boton = document.querySelector("
             f"{json.dumps(selector)}); if (!boton) return '';"
-            " const pista = boton.querySelector('.pista-boton');"
-            " return boton.innerText + ' || ' + (pista ? pista.innerText : ''); })()"
+            " let caja = boton.parentElement; let bloque = boton;"
+            " while (caja && caja.tagName !== 'MAIN' && caja.tagName !== 'BODY'"
+            " && caja.tagName !== 'HTML') { bloque = caja; caja = caja.parentElement; }"
+            " return boton.innerText + ' || ' + bloque.innerText; })()"
         )
         or ""
     )
@@ -2044,10 +2050,29 @@ def _las_descargas(
             not no_se_cuela(texto),
             f"descargas · el fichero de datos no lleva nada de otra explotación ({no_se_cuela(texto)})",
         )
-        # El alcance que anuncia la pantalla, leído de la pantalla: el botón no lleva pista propia,
-        # así que lo que se anuncia es lo que dice el bloque donde vive. Se deja dicho en el informe.
+        # **El alcance anunciado**, que es lo que pide el encargo: si un botón solo puede llevar una
+        # cosa (todo, lo filtrado o lo seleccionado), tiene que decir cuál. Este botón se lleva **el
+        # cuaderno entero del año que está abierto**, y eso no lo dice ni su etiqueta ni el bloque
+        # donde vive: se comprueba y, si no lo dice, se dice —que es lo que hay que hacer con un
+        # hallazgo, en vez de taparlo—.
         anuncio = _la_pista_del_boton(nav, '[data-accion="sacar-datos"]')
-        print(f"    (lo que la pantalla dice del botón: {anuncio[:160] or 'nada'})")
+        comprobar(
+            any(
+                frase in anuncio
+                for frase in (
+                    "todo el año",
+                    "todos los años",
+                    "el año que está abierto",
+                    "lo que estás viendo",
+                    "Se abre con Excel",
+                )
+            ),
+            "descargas · el botón «GUARDAR LOS DATOS EN UN FICHERO» dice qué se lleva: ni su etiqueta "
+            "ni la barra de botones donde vive dicen si son todos los años, el año que está abierto "
+            "o lo que se ve. (El texto que lo explicaba existe en el servidor —`cuaderno.datos_pista`, "
+            "«Se abre con Excel. Guárdalo: es tu cuaderno, por si te lo piden»— y no lo pinta ninguna "
+            "pantalla.)",
+        )
 
     # --------------------------------------------------------------- 2. el papel (PDF)
     fichero = _el_fichero_descargado(
@@ -2079,8 +2104,12 @@ def _las_descargas(
             fichero.name == "cuaderno-de-la-junta.xlsx",
             f"descargas · el cuaderno de la Junta se llama «cuaderno-de-la-junta.xlsx» (se llama «{fichero.name}»)",
         )
-        anuncio = _la_pista_del_boton(nav, '[data-accion="cuaderno-sacar"]')
-        print(f"    (lo que la pantalla dice del botón: {anuncio[:200] or 'nada'})")
+        # Y **su alcance, anunciado en la pantalla**: «todo lo que tienes apuntado». Es la otra mitad
+        # de lo que pide el encargo y aquí sí se dice, así que se exige.
+        comprobar(
+            "todo lo que tienes apuntado" in _la_pista_del_boton(nav, '[data-accion="cuaderno-sacar"]'),
+            "descargas · la pantalla dice qué se lleva el cuaderno de la Junta (todo lo apuntado)",
+        )
         try:
             import openpyxl
 

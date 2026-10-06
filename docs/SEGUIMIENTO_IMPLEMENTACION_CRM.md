@@ -5931,3 +5931,204 @@ comprobación que la sostiene. Lo que no está comprobado se dice aquí y no se 
 | `node --test "tests_js/*.test.js"` | **1.046 · 0 rojos** |
 | `scripts/comprobar_en_un_navegador.py` | **559 comprobaciones · 0 fallos** (al empezar la ronda 9: 523) |
 | Base de datos del agricultor | **intacta** (`F0512F06…8227A5`, 696.320 bytes), no se ha abierto en toda la ronda |
+
+Los números de hoy están en el §52.6, que es el que manda.
+
+---
+
+## 52. Las cuatro aceptaciones ejecutables, y qué salió en cada una (06/10/2026)
+
+Esta sección existe porque el cierre del §51 tenía cuatro cosas **ejecutables** apuntadas como pendientes —o
+directamente mal contadas— y no se podían dejar ahí: se han hecho, se han medido y aquí está lo que salió,
+incluido lo que **no** se puede dar por bueno. Las cuatro venían de una revisión del trabajo anterior y son
+estas: (1) que las existencias cuadren, (2) datos representativos de verdad, (3) las exportaciones pulsando
+el botón y mirando el fichero, y (4) el teclado y el zoom reales.
+
+### 52.1 Las existencias cuadran, y las dos vistas dicen el mismo número
+
+**El problema, medido:** había **dos libros** y no se hablaban. La cesta (`GET /api/productos/cesta/situacion`)
+contestaba «te queda» con **lo comprado por factura menos lo echado**; el almacén (T09) con **lo que entró por
+albarán menos lo que salió**. Del mismo producto, dos números distintos en dos pantallas.
+
+**Lo que se ha hecho** (ticket T21, `docs/T21_EXISTENCIAS.md`):
+
+1. **Se distinguen los cuatro hechos**: una **compra** es un papel (factura), una **recepción** es mercancía
+   que entra (albarán + lote), un **consumo** es lo que sale (con su apunte detrás) y las **existencias
+   físicas** son el saldo del libro. Comprar y recibir son cosas distintas y ahora se ven distintas.
+2. **La relación va por identificador, nunca por nombre**: `ProductoFitosanitario.id` ↔ `Articulo.producto_id`
+   ↔ `Lote.articulo_id`. Hay pruebas que lo fuerzan: dos fichas con el mismo nombre **no** se unen, y si dos
+   artículos reclaman la misma ficha manda el de identificador más bajo.
+3. **No se suman los dos libros**: el número que manda es el físico, y la cuenta de los papeles viaja **al
+   lado y con su nombre**. En la pantalla, «Te queda (lo que hay en el almacén)» es la fila destacada y
+   «Según los papeles (lo comprado menos lo echado)» va debajo; en la tabla del ordenador, la columna lleva
+   **el mismo número que el titular** (si llevara otro, la misma pantalla diría dos cosas según el ancho).
+4. **Un dato antiguo sin correspondencia queda pendiente, no en cero**: un producto sin artículo, o sin
+   ninguna entrada en el almacén, sale con `saldo_fisico: null` y **su motivo** (`A24`, `A26`, `A27`, `A28`).
+   La pantalla lo dice con esas palabras en vez de enseñar un hueco.
+
+**Lo comprobado, con números** (`pytest tests/test_las_existencias_cuadran.py` → **61 pruebas, 0 rojos**),
+incluido el caso que el encargo pedía letra por letra:
+
+| Lo que pedía el encargo | La prueba que lo mide |
+|---|---|
+| recepción de 40 L → trabajo que consume 6 L → **todas las vistas físicas muestran 34 L** | `test_el_trabajo_consume_seis_y_todas_las_vistas_fisicas_dicen_34` |
+| el reenvío no duplica | `test_reenviar_el_trabajo_no_duplica_el_consumo`, `test_reenviar_el_albaran_no_duplica_la_entrada`, `test_reenviar_la_salida_del_tratamiento_no_descuenta_dos_veces` |
+| corregir y anular actualizan todas las vistas | `test_anular_el_trabajo_devuelve_los_seis_litros_a_todas_las_vistas`, `test_corregir_el_trabajo_actualiza_todas_las_vistas` (y a la baja) |
+| una factura posterior al albarán **no añade otra entrada** | `test_la_factura_posterior_al_albaran_no_anade_otra_entrada` |
+| un tratamiento registrado **por otra puerta** no cuenta dos veces | `test_el_consumo_del_trabajo_se_cruza_con_el_apunte_y_no_se_cuenta_dos_veces`, `test_el_tratamiento_y_su_salida_bajan_el_almacen_una_sola_vez`, `test_un_tratamiento_sin_salida_no_ha_movido_ningun_envase` |
+| la cesta y el almacén dicen el mismo saldo | `test_la_cesta_sirve_el_saldo_fisico_de_cada_producto`, `test_la_vista_de_las_existencias_dice_el_mismo_saldo` |
+
+Y en la pantalla, dos pruebas de JavaScript que pulsan: con saldo físico manda el almacén (y los papeles van
+apartados), y sin él manda el papel **con el motivo del servidor**.
+
+**Una prueba del T09 se ha tenido que cambiar, y por qué**: `test_recibir_un_albaran_no_cambia_ni_un_numero_
+de_la_cesta` comparaba **la respuesta entera** de la cesta antes y después de recibir un albarán. Desde el T21
+la cesta lleva además el saldo físico, que es justo lo que el albarán cambia (de 0 a 5 L). Ahora compara **la
+cuenta de los papeles** (`comprado`, `gastado`, `queda`), que es lo que tiene que seguir quieto, y **añade**
+que el saldo físico de la cesta es el mismo 5 del almacén. La promesa que defendía sigue viva; lo que cambió
+es el ticket.
+
+**Lo que NO se ha hecho, y se dice**: la relación entre un producto y su artículo **la tiene que hacer el
+agricultor** (enlazarlos). Mientras no lo haga, el saldo físico de ese producto **no se sabe** y se dice con
+su motivo; el programa no adivina por el nombre.
+
+### 52.2 Datos representativos: 64 tierras, listas largas y datos incompletos
+
+**Lo que había**: la comprobación del navegador usaba **dos tierras y una campaña**. Eso no prueba ni una
+lista larga, ni un buscador, ni una selección múltiple.
+
+**Lo que hay** (`backend/scripts/datos_representativos.py`, nuevo): una explotación de usar y tirar con
+**64 tierras** —nombres de 60 a 81 caracteres—, **3 campañas**, 30 papeles, 40 gastos, 36 movimientos de
+banco, 24 trabajos, 24 tratamientos, 12 productos, 20 contactos, 8 artículos de almacén, 8 máquinas y 10
+ventas. Deja **a propósito** 9 tierras sin superficie, 58 sin forma, 25 sin cultivo, 10 sin pueblo y 11 sin
+referencia SIGPAC, y crea **una segunda explotación ajena** con la marca «OTRA EXPLOTACION NO DEBE SALIR»
+para cazar fugas entre fincas. **Devuelve los identificadores** que ha creado: la comprobación no dice «la
+primera tierra» en ningún sitio.
+
+**Lo medido** (`scripts/comprobar_en_un_navegador.py` → **661 comprobaciones, 0 fallos**; 102 nuevas):
+
+  · **10 pantallas × 390, 1024 y 1440 px**: se dibujan, dicen en qué dirección acabaron y **ninguna se sale**
+    de lo que cabe. Aquí salió el fallo que se ha arreglado: «mi cuaderno» **se salía 343 px a 1024**
+    (`scrollWidth` 1.367 en una ventana de 1.024) porque su tabla de apuntes no estaba dentro de
+    `.tabla-scroll`, como sí lo están las otras cinco tablas largas.
+  · **Búsqueda, filtros y selección con 64 tierras**: «dehesa boyal» deja **8 de 64** y pinta 8 (lo que no
+    casa **no sale**); el filtro TRIGO BLANDO deja 13; MARCAR LAS QUE SE VEN marca **64 casillas** y lo dice;
+    QUITAR LA SELECCIÓN deja 0; una casilla suelta deja 1.
+  · **Datos incompletos**: una tierra sin superficie se lee «Sin hectáreas dichas» y **nunca 0,00 ha**; sin
+    cultivo, «Sin decir qué tiene»; sin forma, «SIN FORMA»; un alias de 81 caracteres se lee entero y no
+    rompe la tarjeta a 390 px.
+
+### 52.3 Las exportaciones: se pulsa el botón y se mira el fichero
+
+**Lo que había**: las tres exportaciones estaban probadas **por la API**, y el §51 decía que pulsarlas no se
+podía comprobar porque «una descarga no se ve en la página». Eso era verdad con la herramienta de entonces
+(`--dump-dom`); **con el protocolo de depuración sí se ve**, y por eso se escribió
+`backend/scripts/navegador_cdp.py` (Chrome sin ventana manejado por CDP: teclas de verdad, clic de verdad,
+escala, zoom y **descargas observadas**).
+
+**Los seis botones que existen, pulsados, con el fichero delante**:
+
+| Botón | Fichero que sale | Qué se comprobó |
+|---|---|---|
+| GUARDAR LOS DATOS EN UN FICHERO (`#/cuaderno`) | `cuaderno_2026.csv` | cabecera con la **explotación y el año**, las 64 tierras, 147 líneas |
+| SACAR EN PAPEL (`#/cuaderno`) | `cuaderno.pdf` | que es un PDF de verdad (`%PDF`) |
+| SACAR MI CUADERNO (`#/cuaderno`, la Junta) | `cuaderno-de-la-junta.xlsx` | **25 hojas** abiertas con `openpyxl`; la hoja 2.1 con las 53 tierras con referencia y su polígono y su parcela |
+| DESCARGAR EL EXTRACTO (`#/cuentas/bancos`) | `extracto.csv` | **30 filas sin filtro** y **10 con el filtro «COSECHERA»**: los 20 de fuera, 0 apariciones. **Es el «10 de 64» del encargo** |
+| VER EL PAPEL (la bandeja) | el fichero del papel | se llama como el que se subió y **es el mismo byte a byte** |
+| (por API, y con prueba en el servidor) | — | las tres descargas del cuaderno llevan **el año que se está mirando** |
+
+**Y ninguna exportación lleva un registro de la otra explotación** (los cuatro ficheros).
+
+**Los dos defectos que salieron aquí, arreglados:**
+
+  · **El extracto se llevaba todo aunque la lista estuviera filtrada.** La pantalla tenía filtro de texto y de
+    estado, y el botón solo mandaba la cuenta: quien filtraba, veía 2 movimientos y pulsaba DESCARGAR EL
+    EXTRACTO se llevaba los 30. Ahora la ruta acepta los mismos filtros que la lista (`texto` y `estado`), la
+    pantalla los manda, y **la pista del botón dice el alcance con esas palabras** («lo que estás viendo»).
+    Hay una prueba que lo mide: 7 filas sin filtro, menos con texto, y el recuento de la lista cuadra con las
+    filas del fichero.
+  · **El botón de guardar los datos no decía qué se llevaba**, y el texto que lo explicaba
+    (`cuaderno.datos_pista`) **no lo pintaba ninguna pantalla**: era texto muerto. Ahora `BotonSencillo` sabe
+    llevar pista (como `Boton`) y ese botón la lleva.
+
+**Y dos cosas que se descubrieron de paso, del mismo tipo** (las cuatro descargas del cuaderno sacaban **otro
+año** que el que se estaba mirando: el CSV y el PDF, la campaña más nueva de la finca; el de la Junta y el de
+firmar, el año en curso): las cuatro, y las tres puertas de la firma, piden ahora **el año que se está
+mirando** (`conLaCampana`), con pruebas en el servidor para el año y el aislamiento (404 si es de otra finca).
+
+**Lo que NO existe, dicho con esas palabras**: **no hay ningún botón de exportar en las pantallas de tierras,
+papeles, contactos, trabajos, almacén, cuentas ni ventas.** La lista de tierras se puede filtrar (8 de 64,
+medido) pero **no se puede sacar a un fichero**. Es un hueco de funcionalidad, no un fallo de lo que hay; y no
+se ha inventado aquí porque ninguna pantalla lo promete.
+
+### 52.4 El teclado y el zoom, de verdad
+
+**Lo que había**: el zoom al 200 % se comprobaba **midiendo a 720 px de ancho** —lo que ve una ventana de 1440
+con el zoom al 200 %—, y eso es una comprobación de **adaptación de pantalla**, no de zoom. Y el teclado no se
+probaba en ninguna parte (el DOM de mentira no mueve el foco; un `KeyboardEvent` inventado **tampoco**).
+
+**Lo medido** (`backend/scripts/comprobar_teclado_y_zoom.py`, nuevo → **193 comprobaciones, 0 fallos**):
+
+  · **El recorrido con teclado, entero y tres veces** (una por forma de zoom): entrar escribiendo → abrir la
+    ficha → CORREGIR → teclear concepto e importe → GUARDAR → abrir y cerrar la pregunta de anular → volver.
+    Con **quién tiene el foco** en cada paso, y el guardado comprobado **contra el servidor** (`300,50 €`).
+  · **El foco se ve, y se dice qué cambia**: medido con `getComputedStyle` **y comparado con el mismo elemento
+    sin el foco**. Los campos: `outline: 4px solid #ffd24a` (y el borde cambia). Los botones y los enlaces:
+    **solo el contorno del navegador**.
+  · **El orden de navegación**: 6 paseos desde la pantalla recién cargada; el anillo **se cierra** (no hay
+    ningún sitio del que no se pueda salir), Mayús+Tab va al revés, y no hay saltos de región.
+  · **183 controles en 6 pantallas, todos con nombre accesible**, y **ninguno** con `tabindex="-1"` (la
+    aplicación no usa `tabindex` en ningún sitio).
+  · **El zoom, con las dos cosas separadas y dichas**: la **escala del dispositivo** al 200 %
+    (`--force-device-scale-factor=2`: `devicePixelRatio` 2, el ancho lógico **no** cambia) y el **zoom de
+    página** (Ctrl+«=» **de verdad**, 5 pulsaciones: de 1.424 a **712 px lógicos**, `scrollWidth` 704 ≤
+    `clientWidth` 704, y el recorrido entero funciona). El **pellizco** se mide aparte y se dice que no es lo
+    mismo. **La prueba de los 720 px se conserva** con su alcance correcto: adaptación de pantalla.
+  · **Las comprobaciones pueden fallar**: con `--romper outline` fallan 3, con `--romper nombre` fallan 5. Las
+    roturas se hacen dentro del navegador (no se toca ningún fichero).
+
+**Los 7 hallazgos que quedan abiertos** (medidos, con su detalle en `docs/ACEPTACION_TECLADO_Y_ZOOM.md` §4):
+
+  1. **Escape no cierra nada**: la aplicación no tiene ni un manejador de teclado, así que quien va con el
+     teclado tiene que tabular hasta CANCELAR. Es la mejora más clara de las siete.
+  2. **En la pantalla de entrar hacen falta 24 Tabs** para llegar al correo: el menú de escritorio se tabula
+     entero antes que el formulario, y el agricultor que no ha entrado no puede usar ese menú.
+  3. **A 712 px (zoom al 200 %) el menú de módulos no se dibuja** y con el teclado no se llega a «Mis cuentas»
+     desde el inicio (se llega por la dirección). El menú es de escritorio; el corte es el de siempre.
+  4. **Los botones y los enlaces no tienen estilo de foco propio** (solo el `auto` del navegador, que ni se
+     puede medir de color).
+  5. El **contorno de foco de los campos** tiene un **contraste de 1,44:1** con el fondo.
+  6. El **mismo botón se ve distinto según el ancho** (enlace de tabla: contorno amarillo a 1440, del
+     navegador a 712).
+  7. **`#/entrar` no lleva a ninguna pantalla** —y **eso es una decisión**, no un fallo: la pantalla de entrar
+     es un paso y una dirección que al recargar deja a medias es peor que no tenerla (`tests_js/rutas.test.js`
+     lo defiende). Lo que sí se ha corregido es el guion del proyecto que entraba por ahí: ahora entra por
+     `/`.
+
+**Lo que NO se ha podido automatizar** (con sus pasos manuales en el informe): el aspecto **pintado** al 200 %
+y el color real del contorno `auto` (el navegador no lo expone), un lector de pantalla, dónde queda el foco
+al volver con Alt+←, y un móvil de verdad.
+
+### 52.5 Los límites de fuera, separados de lo que no se ha hecho
+
+  · **La precisión del OCR (T07)**: no hay corpus, y **medir precisión necesita las fotos de verdad**. La
+    bandeja está entera y probada con papeles inventados; lo que no se puede afirmar es qué porcentaje acierta.
+  · **PostgreSQL**: el motor de Docker sigue bloqueado en esta máquina. Todo lo ejecutable se ha hecho con
+    SQLite y las bases temporales.
+  · **Los datos reales del agricultor**: no se han tocado (la base sigue con su huella). Lo que eso deja sin
+    medir es el comportamiento con **sus** papeles (tamaños, escaneos, nombres), no con datos representativos.
+
+Las tres son límites de fuera o protecciones del encargo, **no trabajo pendiente**: lo que se podía hacer sin
+ellos está hecho y medido.
+
+### 52.6 Los números, con su fecha
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.529 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.048 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` (volumen y descargas) | **661 comprobaciones · 0 fallos** (antes: 559) |
+| `scripts/comprobar_teclado_y_zoom.py` (teclado y zoom) | **193 comprobaciones · 0 fallos** |
+| `tests/test_las_existencias_cuadran.py` (T21) | **61 · 0 rojos** (incluye 40 L → 6 L → 34) |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`, 696.320 bytes), no se ha abierto |
+| Recuentos de los tres documentos | alineados (4.529 Python / 1.048 JavaScript) |

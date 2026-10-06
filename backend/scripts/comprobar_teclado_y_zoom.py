@@ -131,20 +131,38 @@ FOCO = r"""
 
 # El estilo del foco, medido **en el elemento que tiene el foco**. `outline-style: auto` es el contorno que
 # pinta el navegador por su cuenta, y se dice: de ese no se puede saber de qué color se ve de verdad.
+# El estilo del foco, medido **en el elemento que tiene el foco** y comparado con **el mismo elemento sin
+# el foco** (un clon fuera de la pantalla). Sin esa comparación, un borde de siempre —que está con foco y
+# sin él— pasaría por señal de foco, y la comprobación diría que se ve algo que no cambia. Se dice **qué**
+# cambia (contorno, sombra, borde, fondo o letra), porque «hay algo» no es una medida.
+#
+# `outline-style: auto` es el contorno que pinta el navegador por su cuenta, y se dice: de ese no se puede
+# saber de qué color se ve de verdad (por eso su contraste no se calcula).
 ESTILO_DEL_FOCO = r"""
 (() => {
   const el = document.activeElement;
   if (!el || el === document.body || el === document.documentElement) return null;
   const e = getComputedStyle(el);
-  const anchoContorno = parseFloat(e.outlineWidth) || 0;
-  const hayContorno = e.outlineStyle !== "none" && anchoContorno > 0;
-  const haySombra = Boolean(e.boxShadow) && e.boxShadow !== "none";
-  const hayBorde = parseFloat(e.borderTopWidth) > 0 && e.borderTopStyle !== "none";
+  const clon = el.cloneNode(false);
+  clon.removeAttribute("id");
+  clon.style.position = "fixed";
+  clon.style.left = "-10000px";
+  clon.style.top = "0";
+  clon.style.pointerEvents = "none";
+  document.body.appendChild(clon);
+  const sinFoco = getComputedStyle(clon);
+  const cambia = [];
+  if (e.outlineStyle !== sinFoco.outlineStyle || e.outlineWidth !== sinFoco.outlineWidth ||
+      e.outlineColor !== sinFoco.outlineColor) cambia.push("contorno");
+  if (e.boxShadow !== sinFoco.boxShadow) cambia.push("sombra");
+  if (e.borderTopColor !== sinFoco.borderTopColor || e.borderTopWidth !== sinFoco.borderTopWidth ||
+      e.borderTopStyle !== sinFoco.borderTopStyle) cambia.push("borde");
+  if (e.backgroundColor !== sinFoco.backgroundColor) cambia.push("fondo");
+  if (e.color !== sinFoco.color) cambia.push("letra");
+  clon.remove();
   const accion = (el.dataset && el.dataset.accion) || "";
-  // El color del contorno contra lo que hay detrás (el primer fondo que no sea transparente subiendo por
-  // el árbol). Se calcula la razón de contraste de la WCAG, que es un número que se puede comparar. **Solo
-  // vale para un contorno declarado por la aplicación**: el `auto` del navegador no se sabe de qué color se
-  // pinta, y ahí no se calcula nada.
+  // El color del contorno contra lo que hay detrás (el primer fondo que no sea transparente subiendo por el
+  // árbol), con la razón de contraste de la WCAG, que es un número que se puede comparar.
   const luminancia = (color) => {
     const numeros = String(color).match(/\d+(\.\d+)?/g);
     if (!numeros || numeros.length < 3) return null;
@@ -171,7 +189,8 @@ ESTILO_DEL_FOCO = r"""
     borde: e.borderTopWidth + " " + e.borderTopStyle + " " + e.borderTopColor,
     fondoDetras: fondo,
     contraste: contraste,
-    seVe: Boolean(hayContorno || haySombra || hayBorde),
+    cambia: cambia,
+    seVe: cambia.length > 0,
     loPintaElNavegador: e.outlineStyle === "auto",
   };
 })()
@@ -479,20 +498,21 @@ def el_foco_se_ve(nav: NavegadorDeVerdad, donde: str, *, romper: str | None = No
         return None
     comprobar(
         estilo["seVe"],
-        f"{donde}: el foco se ve en {estilo['quien']} — contorno «{estilo['contorno']}», "
-        f"sombra «{estilo['sombra']}», borde «{estilo['borde']}»",
+        f"{donde}: el foco se ve en {estilo['quien']} — cambia {estilo['cambia'] or 'nada'} "
+        f"(contorno «{estilo['contorno']}», sombra «{estilo['sombra']}», borde «{estilo['borde']}»)",
     )
-    if not estilo["loPintaElNavegador"] and estilo["contraste"] is not None:
+    if "contorno" in estilo["cambia"] and not estilo["loPintaElNavegador"] and estilo["contraste"] is not None:
         print(
             f"           (el contorno «{estilo['contorno']}» contra el fondo «{estilo['fondoDetras']}»: "
             f"razón de contraste {estilo['contraste']}:1)"
         )
-    if estilo["loPintaElNavegador"]:
+    if estilo["loPintaElNavegador"] and estilo["cambia"] == ["contorno"]:
         hallazgo(
-            f"{donde}: el contorno del foco lo pinta el navegador (`outline-style: auto`, "
-            f"{estilo['contornoAncho']}), no la hoja de estilos de la aplicación (que sí declara uno de 4 px "
-            f"para los campos: `input:focus{{outline:4px solid var(--foco)}}`). De un contorno `auto` no se "
-            f"puede saber de qué color se ve de verdad, así que su contraste no se mide"
+            f"{donde}: el único cambio del foco en {estilo['quien']} es el contorno que pinta el navegador "
+            f"(`outline-style: auto`, {estilo['contornoAncho']}): la hoja de estilos de la aplicación no "
+            f"declara nada para él (sí lo declara para los campos: `input:focus{{outline:4px solid "
+            f"var(--foco)}}`). De un contorno `auto` no se puede saber de qué color se ve de verdad, así que "
+            f"su contraste no se mide"
         )
     return estilo
 
@@ -784,10 +804,11 @@ def la_direccion_de_entrar(nav: NavegadorDeVerdad, datos: dict) -> None:
     )
     if "no lleva a ninguna parte" in texto:
         hallazgo(
-            "entrar desde la dirección `#/entrar` (la que abren `comprobar_en_un_navegador.py` y "
-            f"`humo_cdp.py`) deja al agricultor en «{texto[:60]}…» aunque la cuenta se haya abierto: `entrar` "
-            "no está en la tabla de rutas de `web/react/rutas.js`, así que la dirección no lleva a ninguna "
-            "pantalla y la única salida es su botón de volver al principio"
+            "entrar desde la dirección `#/entrar` (la que abre `humo_cdp.py`, el humo de esta herramienta) "
+            f"deja al agricultor en «{texto[:60]}…» aunque la cuenta se haya abierto: `entrar` no está en la "
+            "tabla de rutas de `web/react/rutas.js`, así que la dirección no lleva a ninguna pantalla y la "
+            "única salida es su botón de volver al principio. `comprobar_en_un_navegador.py` abre la "
+            f"dirección pelada ({direccion}/) y por eso no le pasa"
         )
     else:
         print(f"  [OK   ] desde `#/entrar` se llega a una pantalla con contenido («{texto[:60]}»)")
@@ -1240,8 +1261,9 @@ def main() -> int:
     for etiqueta, donde, como in RECORRIDOS:
         print(f"  · {etiqueta}: {donde or '(sin hash)'} — {como}")
     if HALLAZGOS:
-        print(f"\nHallazgos (medidos, no son fallos de la comprobación): {len(HALLAZGOS)}")
-        for uno in HALLAZGOS:
+        distintos = list(dict.fromkeys(HALLAZGOS))
+        print(f"\nHallazgos: {len(HALLAZGOS)} medidas, {len(distintos)} distintos (los mismos salen en cada pasada de zoom)")
+        for uno in distintos:
             print(f"  · {uno}")
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     for uno in FALLOS:
