@@ -4837,7 +4837,7 @@ async function cargarDatos() {  const [
     apiJson("/api/cultivos").catch(() => null),
     apiJson("/api/grupos").catch(() => []),
     apiJson(conLaCampana("/api/cuaderno/falta")).catch(() => null),
-    apiJson("/api/firmas/estado").catch(() => null),
+    apiJson(conLaCampana("/api/firmas/estado")).catch(() => null),
     apiJson("/api/facturas").catch(() => []),
     apiJson("/api/facturas/estado").catch(() => null),
     apiJson(conLaCampana("/api/cuaderno-cyl/que-falta")).catch(() => null),
@@ -4850,7 +4850,7 @@ async function cargarDatos() {  const [
     apiJson("/api/tratamientos").catch(() => []),
     apiJson("/api/fertilizaciones").catch(() => []),
     apiJson("/api/labores").catch(() => []),
-    apiJson("/api/firmas").catch(() => []),
+    apiJson(conLaCampana("/api/firmas")).catch(() => []),
     apiJson("/api/cuaderno/resumen").catch(() => null),
     // T12: la tabla de lo que se ha vendido con su pie (el servidor calcula el agregado del conjunto
     // filtrado), las facturas nuestras y los cobros.
@@ -12296,7 +12296,12 @@ function pantallaFirmar() {
 
 async function descargarFicheroAFirmar() {
   try {
-    const respuesta = await api("/api/firmas/fichero");
+    // **El año que se está mirando** (06/10/2026). Sin esto había dos problemas a la vez: la pantalla
+    // enseñaba el fichero y el estado de **la campaña más nueva** (la ruta, sin año, coge esa), y al
+    // guardar la firma se apuntaba contra **el año que se estaba mirando** —así que la firma podía
+    // quedar guardada contra un fichero que no era el que se había firmado—. Ahora las dos cosas piden
+    // el mismo año.
+    const respuesta = await api(conLaCampana("/api/firmas/fichero"));
     if (!respuesta.ok) throw new Error(mensaje("no_se_pudo"));
     const blob = await respuesta.blob();
     const nombre = (estado.firmaEstado && estado.firmaEstado.nombre_del_fichero) || "cuaderno.txt";
