@@ -3899,6 +3899,22 @@ CESTA: dict[str, str] = {
     "comprado": "Compraste",
     "gastado": "Llevas echado",
     "queda": "Te queda",
+    # ── Los dos números, cada uno con su nombre (T21, 06/10/2026) ─────────────
+    #
+    # **Por qué hay dos filas y no una.** Hasta hoy esta pantalla contestaba «te queda» con *lo comprado
+    # por factura menos lo echado*, y el libro del almacén contestaba lo mismo con *lo que ha entrado por
+    # albarán menos lo que ha salido*: dos números distintos del mismo producto, en dos pantallas, y el
+    # agricultor sin saber cuál creerse. Desde el T21 manda **el del almacén** (que es lo que hay de
+    # verdad dentro), y la cuenta de los papeles se sigue enseñando **al lado y con su nombre**, porque
+    # no es lo mismo: lo comprado no está dentro hasta que llega el albarán.
+    #
+    # **No se suman ni se mezclan**: son dos hechos distintos y cada uno va con su etiqueta.
+    "queda_en_el_almacen": "Te queda (lo que hay en el almacén)",
+    "queda_en_el_almacen_pista": (
+        "Es lo que hay de verdad: lo que ha entrado por albarán menos lo que ha salido del almacén."
+    ),
+    "queda_segun_los_papeles": "Según los papeles (lo comprado menos lo echado)",
+    "no_se_sabe_lo_que_hay": "Lo que hay en el almacén todavía no se puede decir",
     "apuntes": "En {cuantos} apuntes",
     "sin_cantidad": "Sin saber cuánto compraste",
     "no_se_puede_comparar": "No se puede comparar",

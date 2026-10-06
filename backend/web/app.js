@@ -9016,11 +9016,32 @@ function pantallaCesta() {
     if (producto.proveedor) {
       filas.push({ etiqueta: c("donde_lo_compraste"), valor: producto.proveedor });
     }
-    filas.push({
-      etiqueta: c("queda"),
-      valor: numeroConUnidad(producto.queda, producto.unidad_compra),
-      destacada: true,
-    });
+    // **Y la fila de «te queda»: la del almacén si se sabe, y los papeles con su nombre** (T21,
+    // 06/10/2026). Antes esta fila era *lo comprado menos lo echado* y el libro del almacén contestaba
+    // otra cosa al mismo producto; ahora la destacada es **lo que hay de verdad dentro** y la cuenta de
+    // los papeles va debajo, etiquetada como lo que es. **No se suman**: son dos hechos distintos.
+    //
+    // Y cuando el saldo físico no se puede saber (el producto no está enlazado con el almacén, o no hay
+    // ninguna entrada suya), se dice **por qué** y la fila destacada sigue siendo la de los papeles con
+    // su nombre: un hueco explicado, nunca un cero.
+    const elFisicoSeSabe = Boolean(producto.saldo_fisico_conocido) && producto.saldo_fisico !== null && producto.saldo_fisico !== undefined;
+    if (elFisicoSeSabe) {
+      filas.push({
+        etiqueta: c("queda_en_el_almacen"),
+        valor: numeroConUnidad(producto.saldo_fisico, producto.unidad_compra),
+        destacada: true,
+      });
+      filas.push({
+        etiqueta: c("queda_segun_los_papeles"),
+        valor: numeroConUnidad(producto.queda, producto.unidad_compra),
+      });
+    } else {
+      filas.push({
+        etiqueta: c("queda_segun_los_papeles"),
+        valor: numeroConUnidad(producto.queda, producto.unidad_compra),
+        destacada: true,
+      });
+    }
 
     const sinCompra = producto.comprado === null || producto.comprado === undefined;
     // **Dos formas de lo mismo, y a propósito** (30/09/2026): la frase entera para la tarjeta del móvil
@@ -9040,10 +9061,17 @@ function pantallaCesta() {
       estadoCorto = { texto: col("estado_mirar"), tipo: "mirar" };
     }
 
+    // **El motivo de que no haya número físico también se dice** (T21): si el producto no está enlazado
+    // con el almacén, o no hay ninguna entrada suya, el agricultor tiene que leer **por qué** en vez de
+    // ver una fila con un hueco. Se añade al motivo de la cuenta de los papeles, que es otro.
+    const motivoFisico = elFisicoSeSabe ? "" : producto.motivo_fisico || "";
+    const motivos = [producto.motivo, motivoFisico].filter(Boolean);
+    const motivo = motivos.length > 1 && motivos[0] !== motivos[1] ? motivos.join(" ") : motivos[0] || "";
+
     return {
       nombre_comercial: producto.nombre_comercial,
       materia_activa: producto.materia_activa,
-      motivo: producto.motivo,
+      motivo,
       estado,
       estadoCorto,
       filas,
@@ -9057,7 +9085,16 @@ function pantallaCesta() {
       gastado: producto.gastado,
       unidad_gastado: producto.unidad_gastado || "",
       apuntes: producto.apuntes,
-      queda: producto.queda,
+      // **La columna «Te queda» de la tabla lleva el mismo número que el titular de la tarjeta**: el del
+      // almacén cuando se sabe, y el de los papeles cuando no. Si llevara otro, la misma pantalla
+      // enseñaría dos números distintos del mismo producto según se mire en el móvil o en el ordenador.
+      queda: elFisicoSeSabe ? producto.saldo_fisico : producto.queda,
+      saldo_fisico: producto.saldo_fisico,
+      saldo_fisico_conocido: Boolean(producto.saldo_fisico_conocido),
+      // El número de los papeles, aparte y con su nombre: es el que se enseña en la fila «según los
+      // papeles», y no se pierde al cambiar el titular.
+      queda_segun_los_papeles: producto.queda,
+      motivo_fisico: producto.motivo_fisico || "",
       se_puede_comparar: producto.se_puede_comparar,
       comprado_de_donde: producto.comprado_de_donde || "",
       fecha_compra: producto.fecha_compra || "",

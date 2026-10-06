@@ -231,6 +231,14 @@ const RESPUESTAS = {
       comprado: "Compraste",
       gastado: "Llevas echado",
       queda: "Te queda",
+      // **Los dos «te queda», cada uno con su nombre** (T21, 06/10/2026), copiados de `textos.CESTA`: el
+      // del almacén (el que manda cuando se sabe) y el de los papeles. Sin estas cuatro en la copia, la
+      // fila salía con la etiqueta en blanco, que es lo que caza esta copia.
+      queda_en_el_almacen: "Te queda (lo que hay en el almacén)",
+      queda_en_el_almacen_pista:
+        "Es lo que hay de verdad: lo que ha entrado por albarán menos lo que ha salido del almacén.",
+      queda_segun_los_papeles: "Según los papeles (lo comprado menos lo echado)",
+      no_se_sabe_lo_que_hay: "Lo que hay en el almacén todavía no se puede decir",
       apuntes: "En {cuantos} apuntes",
       cuando: "Cuándo",
       donde_lo_compraste: "Dónde lo compraste",
@@ -3126,7 +3134,15 @@ test("el almacén se le pide a React, con las cuentas ya hechas", async () => {
   const etiquetas = producto.filas.map((fila) => fila.etiqueta);
   assert.ok(etiquetas.includes("Compraste"), `no lleva lo comprado: ${etiquetas.join(", ")}`);
   assert.ok(etiquetas.includes("Llevas echado"), "no lleva lo echado");
-  assert.ok(etiquetas.includes("Te queda"), "no lleva lo que queda");
+  // **Los dos «te queda», cada uno con su nombre** (T21, 06/10/2026). Esta prueba pedía la etiqueta
+  // «Te queda» a secas, y esa etiqueta ya no existe a propósito: desde el T21 la fila destacada es el
+  // saldo **del almacén** cuando se sabe, y la cuenta de los papeles va con su nombre, porque no son lo
+  // mismo (lo comprado no está dentro hasta que llega el albarán). Este producto de mentira no trae
+  // `saldo_fisico`, así que aquí manda la de los papeles; el caso con almacén está en la prueba de abajo.
+  assert.ok(
+    etiquetas.includes("Según los papeles (lo comprado menos lo echado)"),
+    `no lleva lo que queda: ${etiquetas.join(", ")}`,
+  );
   const donde = producto.filas.find((fila) => fila.etiqueta === "Dónde lo compraste");
   assert.ok(donde && donde.valor.includes("Cooperativa de Peñaranda"), "no dice dónde se compró");
 
@@ -3134,7 +3150,11 @@ test("el almacén se le pide a React, con las cuentas ya hechas", async () => {
   // destacada**, y cada producto lleva su etiqueta de estado, que es lo que dice de un vistazo cuál hay
   // que mirar. Se comprueba aquí porque lo prepara `app.js`: la pantalla solo lo pinta.
   const ultima = producto.filas[producto.filas.length - 1];
-  assert.equal(ultima.etiqueta, "Te queda", "«Te queda» ya no cierra la tarjeta");
+  assert.equal(
+    ultima.etiqueta,
+    "Según los papeles (lo comprado menos lo echado)",
+    "el número de lo que queda ya no cierra la tarjeta",
+  );
   assert.equal(ultima.destacada, true, "«Te queda» no va destacada");
   assert.equal(producto.estado.texto, "Las cuentas cuadran", "no le llega la etiqueta de estado");
   assert.equal(producto.estado.tipo, "bien");
@@ -3156,6 +3176,83 @@ function tablaDeLaCestaPedida() {
   assert.ok(pantalla.props.tabla, "el almacén no lleva tabla");
   return pantalla.props.tabla;
 }
+
+/** El almacén con un producto al que se le pueden cambiar los números del saldo físico. */
+async function conElSaldoFisico(cambios) {
+  const base = RESPUESTAS["/api/productos/cesta/situacion"];
+  const producto = { ...base.productos[0], ...cambios };
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/productos/cesta/situacion": { ...base, productos: [producto] },
+  });
+  await pulsar(entorno, "cesta-ver");
+  return { entorno, servidor, producto: ultimoMontaje().props.productos[0] };
+}
+
+test("cuando el almacén sabe lo que hay, «te queda» es lo del almacén y los papeles van aparte", async () => {
+  // **Lo que el T21 viene a arreglar** (06/10/2026): el mismo producto tenía dos números —lo comprado
+  // menos lo echado (papeles) y lo que hay dentro del almacén (movimientos)— en dos pantallas distintas,
+  // y el agricultor sin saber cuál creerse. Ahora manda **el del almacén** y la cuenta de los papeles se
+  // enseña al lado, con su nombre. **No se suman ni se mezclan**: son dos hechos distintos.
+  const { producto } = await conElSaldoFisico({
+    saldo_fisico: 4,
+    saldo_fisico_conocido: true,
+    saldo_fisico_unidad: "L",
+    // Y los papeles dicen otra cosa, a propósito: es el caso normal (comprado sin albarán todavía).
+    queda: 5,
+  });
+
+  const etiquetas = producto.filas.map((fila) => fila.etiqueta);
+  assert.ok(
+    etiquetas.includes("Te queda (lo que hay en el almacén)"),
+    `no dice lo que hay en el almacén: ${etiquetas.join(", ")}`,
+  );
+  assert.ok(
+    etiquetas.includes("Según los papeles (lo comprado menos lo echado)"),
+    "no se enseña la cuenta de los papeles, que es otro hecho distinto",
+  );
+
+  const delAlmacen = producto.filas.find((fila) => fila.etiqueta === "Te queda (lo que hay en el almacén)");
+  assert.equal(delAlmacen.valor, "4,00 L", "el número de lo que hay no es el del almacén");
+  assert.equal(delAlmacen.destacada, true, "lo que hay en el almacén no va destacado");
+  const deLosPapeles = producto.filas.find(
+    (fila) => fila.etiqueta === "Según los papeles (lo comprado menos lo echado)",
+  );
+  assert.equal(deLosPapeles.valor, "5,00 L");
+  assert.notEqual(deLosPapeles.destacada, true, "los papeles no pueden ir destacados: manda el almacén");
+
+  // Y **la tabla del ordenador lleva el mismo número que el titular de la tarjeta**, no otro.
+  assert.equal(tablaDeLaCestaPedida().filas[0].celdas[3].texto, "4,00 L");
+});
+
+test("cuando el almacén no sabe lo que hay, se dice por qué y manda el número de los papeles", async () => {
+  // Un producto que no está enlazado con nada del almacén: su saldo físico es **desconocido**, y eso se
+  // dice con su motivo. Lo que **no** se hace es poner un cero (diría que no queda nada) ni esconder la
+  // fila (el agricultor se quedaría buscando el número que viene a ver).
+  const { producto } = await conElSaldoFisico({
+    saldo_fisico: null,
+    saldo_fisico_conocido: false,
+    motivo_fisico:
+      "Este producto no está enlazado con nada del almacén, así que de lo que te queda no se puede decir nada aquí.",
+    queda: 5,
+  });
+
+  const etiquetas = producto.filas.map((fila) => fila.etiqueta);
+  assert.ok(
+    etiquetas.includes("Según los papeles (lo comprado menos lo echado)"),
+    `no queda ningún número: ${etiquetas.join(", ")}`,
+  );
+  const destacada = producto.filas.find((fila) => fila.destacada);
+  assert.equal(
+    destacada.etiqueta,
+    "Según los papeles (lo comprado menos lo echado)",
+    "sin saldo físico, lo que manda es lo que dicen los papeles",
+  );
+  assert.ok(
+    /no está enlazado con nada del almacén/.test(producto.motivo),
+    `no se dice por qué no hay número del almacén: «${producto.motivo}»`,
+  );
+  assert.ok(!etiquetas.includes("Te queda (lo que hay en el almacén)"), "enseña un saldo físico que no tiene");
+});
 
 test("la tabla del almacén llega con sus columnas, sus números y el pie", async () => {
   // **30/09/2026.** El libro de entradas y salidas, de arriba abajo, como en el diseño de escritorio que
