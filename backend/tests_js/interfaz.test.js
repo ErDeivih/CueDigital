@@ -13767,6 +13767,216 @@ test("el reparto por horas manda las horas de cada tierra, sin perder las que ya
   assert.deepEqual(reparto.cuerpo.trozos, []);
 });
 
+test("repartir un gasto entre máquinas manda las máquinas, y no las tierras", async () => {
+  // **La otra mitad del defecto del reparto por clases.** El formulario ofrecía «entre tierras, entre
+  // cultivos o entre máquinas», pero lo que se podía marcar era siempre la lista de tierras: eligiendo
+  // «máquina» se mandaban tierras con la etiqueta «máquina» y el servidor guardaba una fila que decía
+  // una cosa falsa (ahora lo rechaza, y hay su prueba). Aquí se comprueba el cableado bueno: elegir
+  // «máquina» cambia **lo que se marca**, quita de en medio el método de las hectáreas (una máquina no
+  // tiene superficie) y lo que sale hacia el servidor son nombres de máquinas.
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/parcelas": [
+      { id: 3, alias: "El Prado", ref_sigpac: "37-70-0-0-503-51", superficie_ha: 4.9 },
+    ],
+    "GET /api/maquinaria": {
+      maquinas: [
+        { id: 5, nombre: "El Landini" },
+        { id: 6, nombre: "La cosechadora" },
+      ],
+    },
+    "GET /api/cultivos": {
+      campana_id: 1,
+      parcelas: [
+        // **La forma de verdad de `GET /api/cultivos`**: el cultivo de este año va dentro de `actual`, y
+        // ahí se llama `especie`. La tierra que todavía no lo ha dicho trae `actual: null` (y
+        // `falta_decirlo: true`), que es el caso que no puede salir como destino.
+        { parcela_id: 3, alias: "El Prado", actual: { especie: "TRIGO BLANDO" } },
+        { parcela_id: 4, alias: "Las Suertes de Arriba", actual: { especie: "CEBADA" } },
+        { parcela_id: 5, alias: "El quiñón", actual: { especie: "TRIGO BLANDO" } },
+        { parcela_id: 6, alias: "La era", actual: null, falta_decirlo: true },
+      ],
+    },
+    "GET /api/gastos?campana_id=1": {
+      gastos: [
+        {
+          id: 7,
+          concepto: "El seguro del tractor",
+          categoria: "seguro",
+          importe: "320.00",
+          texto_importe: "320,00 €",
+          pagado: "0.00",
+          pendiente: "320.00",
+          estado: "sin_pagar",
+          esta_sin_repartir: true,
+          anulado: false,
+          repartos: [],
+          cuadre: { cuadra: true },
+        },
+      ],
+      pagos: [],
+      inversiones: [],
+      subvenciones: [],
+      cuenta: { gastos: 1 },
+      caja: {},
+      margenes: {},
+      coste_por_clase: {},
+      por_pagar: {},
+      que_falta: [],
+    },
+    "GET /api/gastos/7": {
+      id: 7,
+      concepto: "El seguro del tractor",
+      importe: "320.00",
+      texto_importe: "320,00 €",
+      pagado: "0.00",
+      pendiente: "320.00",
+      estado: "sin_pagar",
+      anulado: false,
+      repartos: [],
+      cuadre_del_reparto: { repartido: "0.00", texto_repartido: "0,00 €", cuadra: false },
+    },
+  });
+  await pulsar(entorno, "gastos-ver");
+  await pulsar(entorno, "gasto-abrir", { id: "7" });
+  await pulsar(entorno, "gasto-repartir", { id: "7" });
+
+  // Nace en tierras: eso no cambia.
+  let repartiendo = ultimoMontaje().props.repartiendo;
+  const marcasIniciales = repartiendo.bloques.find((bloque) => bloque.tipo === "marcas");
+  assert.deepEqual(marcasIniciales.opciones.map((uno) => uno.texto), ["El Prado"]);
+
+  // Se elige repartir **entre máquinas**: la lista de lo que se marca pasa a ser sus máquinas.
+  await pulsar(entorno, "gasto-elegir", { campo: "destino_tipo", valor: "maquina" });
+  repartiendo = ultimoMontaje().props.repartiendo;
+  const marcas = repartiendo.bloques.find((bloque) => bloque.tipo === "marcas");
+  assert.deepEqual(
+    marcas.opciones.map((uno) => uno.texto),
+    ["El Landini", "La cosechadora"],
+    `lo que se marca no son las máquinas: ${JSON.stringify(marcas.opciones)}`,
+  );
+  assert.deepEqual(marcas.marcadas, [], "al cambiar de destino siguen marcadas las tierras");
+  // Y el método de las hectáreas no se ofrece: una máquina no tiene superficie.
+  const metodo = repartiendo.bloques.find((bloque) => bloque.campo === "metodo");
+  assert.ok(
+    !metodo.opciones.some((uno) => uno.valor === "area"),
+    "se ofrece repartir por hectáreas entre máquinas, y el servidor lo va a rechazar",
+  );
+
+  // Por horas, con las dos máquinas marcadas y sus horas.
+  await pulsar(entorno, "gasto-elegir", { campo: "metodo", valor: "horas" });
+  await pulsar(entorno, "gasto-marcar-todas");
+  escribir(entorno, "gasto-peso-El_Landini", "6");
+  escribir(entorno, "gasto-peso-La_cosechadora", "2");
+  await pulsar(entorno, "gasto-guardar", { clase: "reparto", id: "7" });
+
+  const reparto = servidor.enviados.find(
+    (envio) => envio.metodo === "POST" && envio.ruta === "/api/gastos/7/repartos",
+  );
+  assert.ok(reparto, "el botón de repartir no ha llamado a la puerta");
+  assert.equal(reparto.cuerpo.destino_tipo, "maquina");
+  assert.deepEqual(
+    reparto.cuerpo.parcela_ids,
+    [],
+    "se mandan tierras en un reparto entre máquinas: es el defecto que afirmaba algo falso",
+  );
+  assert.deepEqual(
+    reparto.cuerpo.pesos,
+    { "El Landini": "6", "La cosechadora": "2" },
+    `lo que viaja no son las máquinas con sus horas: ${JSON.stringify(reparto.cuerpo.pesos)}`,
+  );
+});
+
+test("repartir un gasto entre cultivos marca los cultivos que tiene sembrados", async () => {
+  // Y la tercera clase: los cultivos. Salen de lo que el agricultor tiene sembrado este año —los mismos
+  // que lee en «qué hay sembrado»—, por su nombre, y **sin colar el que no dice nada**: repartir «a lo
+  // que no se sabe» sería inventarse el sitio.
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/parcelas": [{ id: 3, alias: "El Prado", superficie_ha: 4.9 }],
+    "GET /api/cultivos": {
+      campana_id: 1,
+      parcelas: [
+        // La forma de verdad: el cultivo del año va en `actual.especie`.
+        { parcela_id: 3, alias: "El Prado", actual: { especie: "TRIGO BLANDO" } },
+        { parcela_id: 4, alias: "Las Suertes de Arriba", actual: { especie: "CEBADA" } },
+        { parcela_id: 5, alias: "El quiñón", actual: { especie: "TRIGO BLANDO" } },
+        { parcela_id: 6, alias: "La era", actual: null, falta_decirlo: true },
+      ],
+    },
+    "GET /api/gastos?campana_id=1": {
+      gastos: [
+        {
+          id: 7,
+          concepto: "El gasóleo de la siega",
+          categoria: "gasoleo",
+          importe: "254.10",
+          texto_importe: "254,10 €",
+          pagado: "0.00",
+          pendiente: "254.10",
+          estado: "sin_pagar",
+          esta_sin_repartir: true,
+          anulado: false,
+          repartos: [],
+          cuadre: { cuadra: true },
+        },
+      ],
+      pagos: [],
+      inversiones: [],
+      subvenciones: [],
+      cuenta: { gastos: 1 },
+      caja: {},
+      margenes: {},
+      coste_por_clase: {},
+      por_pagar: {},
+      que_falta: [],
+    },
+    "GET /api/gastos/7": {
+      id: 7,
+      concepto: "El gasóleo de la siega",
+      importe: "254.10",
+      pagado: "0.00",
+      pendiente: "254.10",
+      estado: "sin_pagar",
+      anulado: false,
+      repartos: [],
+      cuadre_del_reparto: { repartido: "0.00", cuadra: false },
+    },
+  });
+  await pulsar(entorno, "gastos-ver");
+  await pulsar(entorno, "gasto-abrir", { id: "7" });
+  await pulsar(entorno, "gasto-repartir", { id: "7" });
+  await pulsar(entorno, "gasto-elegir", { campo: "destino_tipo", valor: "cultivo" });
+
+  const repartiendo = ultimoMontaje().props.repartiendo;
+  const marcas = repartiendo.bloques.find((bloque) => bloque.tipo === "marcas");
+  assert.deepEqual(
+    marcas.opciones.map((uno) => uno.texto),
+    ["TRIGO BLANDO", "CEBADA"],
+    `los cultivos del reparto no son los que tiene sembrados: ${JSON.stringify(marcas.opciones)}`,
+  );
+
+  // A mano, un importe a cada cultivo: lo que viaja son los nombres de los cultivos.
+  await pulsar(entorno, "gasto-elegir", { campo: "metodo", valor: "manual" });
+  await pulsar(entorno, "gasto-marcar-todas");
+  escribir(entorno, "gasto-peso-TRIGO_BLANDO", "150,00");
+  escribir(entorno, "gasto-peso-CEBADA", "104,10");
+  await pulsar(entorno, "gasto-guardar", { clase: "reparto", id: "7" });
+
+  const reparto = servidor.enviados.find(
+    (envio) => envio.metodo === "POST" && envio.ruta === "/api/gastos/7/repartos",
+  );
+  assert.ok(reparto, "el botón de repartir no ha llamado a la puerta");
+  assert.equal(reparto.cuerpo.destino_tipo, "cultivo");
+  assert.deepEqual(reparto.cuerpo.parcela_ids, [], "se mandan tierras en un reparto entre cultivos");
+  assert.deepEqual(
+    reparto.cuerpo.trozos,
+    [
+      { destino_tipo: "cultivo", destino: "TRIGO BLANDO", importe: "150,00" },
+      { destino_tipo: "cultivo", destino: "CEBADA", importe: "104,10" },
+    ],
+    `lo que viaja no son los cultivos con su importe: ${JSON.stringify(reparto.cuerpo.trozos)}`,
+  );
+});
+
 /** Una explotación con dos tierras, un plan, un trabajo hecho y una máquina. */
 function conLosTrabajos(cambios = {}) {
   return cargarAplicacion({

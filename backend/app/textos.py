@@ -7330,6 +7330,16 @@ GASTOS: dict = {
     "campo_proveedor": "¿A quién se lo compraste?",
     "campo_metodo": "¿Cómo lo reparto?",
     "campo_destino": "¿A qué se reparte?",
+    # **Qué es cada destino, y qué se puede marcar en cada uno** (ronda 9). El formulario ofrecía
+    # repartir entre tierras, cultivos o máquinas, pero lo que se marcaba era siempre la lista de
+    # tierras: eligiendo «máquina» se guardaba un reparto que decía máquina y apuntaba a una tierra.
+    # Ahora cada destino trae sus cosas, y estas tres frases son las que preguntan cuáles.
+    "campo_destino_pista": (
+        "Las tierras se reparten por hectáreas, por horas, por lo que se gastó o a mano. Los cultivos y las "
+        "máquinas, por horas, por lo que se gastó o a mano: no tienen hectáreas propias."
+    ),
+    "campo_cultivos": "¿Entre qué cultivos?",
+    "campo_maquinas": "¿Entre qué máquinas?",
     "campo_pesos": "¿Cuánto en cada sitio?",
     "campo_horas": "Horas",
     "campo_litros": "Litros o kilos",
@@ -7563,6 +7573,24 @@ MENSAJES.update(
         "G46_faltan_importes_por_saber_varios": "Faltan {cuantos} importes por saber",
         "G47_gastos_sin_saber_a_donde_van_uno": "1 gasto sin saber a dónde va",
         "G47_gastos_sin_saber_a_donde_van_varios": "{cuantos} gastos sin saber a dónde van",
+        # --- a qué clase de sitio se reparte (ronda 9) ---
+        "G48_las_hectareas_son_de_una_tierra": (
+            "Repartir por hectáreas solo se puede hacer entre tierras: las hectáreas son de una tierra, y un "
+            "cultivo o una máquina no tienen superficie propia. Elige otro método para repartirlo."
+        ),
+        "G49_un_destino_sin_nombre": (
+            "Hay un sitio al que repartir sin decir cuál es. Míralo y vuelve a repartirlo."
+        ),
+        "G50_esa_tierra_no_esta_en_tu_cuaderno": (
+            "Una de las tierras a las que repartes no está en tu cuaderno. Míralas y vuelve a repartirlo."
+        ),
+        "G51_eso_es_una_tierra_y_no_un_cultivo": (
+            "Estás repartiendo entre cultivos, pero lo que has dicho que es un cultivo es el número de una tierra. "
+            "Elige el cultivo por su nombre, o reparte entre tierras."
+        ),
+        "G52_esa_maquina_no_esta_en_tu_cuaderno": (
+            "Una de las máquinas a las que repartes no está en tu cuaderno. Míralas y vuelve a repartirlo."
+        ),
     }
 )
 

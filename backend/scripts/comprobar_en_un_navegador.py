@@ -861,6 +861,63 @@ PANTALLAS = [
             "QUITARLO DE AQUÍ",
         ],
     ),
+    # **Y el mismo gasto repartido entre las máquinas** (ronda 9), que es la otra clase de destino que
+    # ofrece el formulario. Es la mitad que faltaba: el desplegable decía «entre tierras, entre cultivos o
+    # entre máquinas», pero lo que se podía marcar era **siempre la lista de tierras**, así que eligiendo
+    # «máquina» se guardaba un reparto que decía máquina y apuntaba a una tierra —una afirmación falsa en
+    # el libro de cuentas—. Ahora se marcan las máquinas de verdad, y por eso el método de las hectáreas
+    # no sale (una máquina no tiene superficie). Lo que se comprueba es que el reparto queda **con el
+    # nombre de la máquina** y con las horas que se escribieron.
+    (
+        "el recorrido 2: repartir el gasto entre las máquinas",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="gasto-abrir"]',
+            '[data-accion="gasto-repartir"]',
+            '[data-accion="gasto-elegir"][data-campo="destino_tipo"][data-valor="maquina"]',
+            '[data-accion="gasto-elegir"][data-campo="metodo"][data-valor="horas"]',
+            '[data-accion="gasto-marcar-todas"]',
+            # El campo del peso lleva el nombre de la máquina en su `id`, **con los espacios cambiados por
+            # guiones bajos** (ver `idDelPesoDelReparto`).
+            "escribir:#gasto-peso-El_tractor=4",
+            '[data-accion="gasto-guardar"]',
+        ],
+        [
+            "El tractor",
+            "QUITARLO DE AQUÍ",
+            "En tierras, cultivos o máquinas",
+        ],
+    ),
+    # **Y entre los cultivos** (ronda 9), la tercera clase de destino. Los cultivos que se ofrecen son los
+    # que el agricultor tiene **sembrados este año**, leídos de `GET /api/cultivos` (donde el de este año
+    # va en `actual.especie`). Esta ruta es la que cazó ese nombre: la prueba de cableado se había escrito
+    # con `fila.cultivo`, que es un campo que el servidor **no manda**, así que la lista salía vacía y la
+    # prueba daba por bueno un hueco. Con el navegador delante, no: si la lista está vacía, no hay nada
+    # que marcar y el paso que marca todas falla diciéndolo.
+    (
+        "el recorrido 2: repartir el gasto entre los cultivos",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="gasto-abrir"]',
+            '[data-accion="gasto-repartir"]',
+            '[data-accion="gasto-elegir"][data-campo="destino_tipo"][data-valor="cultivo"]',
+            '[data-accion="gasto-elegir"][data-campo="metodo"][data-valor="manual"]',
+            '[data-accion="gasto-marcar-todas"]',
+            "escribir:#gasto-peso-TRIGO_BLANDO=254,10",
+            '[data-accion="gasto-guardar"]',
+        ],
+        [
+            "TRIGO BLANDO",
+            "QUITARLO DE AQUÍ",
+            # **El método va en dos trozos, no en una frase**: el rótulo («Se repartió») y el método («a
+            # mano») son dos elementos distintos, así que «Se repartió a mano» **no está junto en el
+            # HTML**. Es la misma trampa que «El importe No consta» en el recorrido 3: se buscan por
+            # separado.
+            "Se repartió",
+            "a mano",
+            "En tierras, cultivos o máquinas",
+        ],
+    ),
     # **El recorrido 3 (T20): de un movimiento del banco a contra qué papel va.** El extracto ya está
     # importado (lo deja `siembra_datos`, leyendo un fichero de verdad), así que lo que se recorre es
     # la mitad que importa: abrir un movimiento y ver **las cuentas que cuadran con él y por qué**, con

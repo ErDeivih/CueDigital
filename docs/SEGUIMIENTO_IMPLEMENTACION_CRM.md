@@ -5769,3 +5769,83 @@ sigue bloqueado por Docker. Y hay una cosa que se ha visto al recorrer esto y **
 producto de un tratamiento lleva su cuenta de «comprado / echado / te queda» en su ficha, y el almacén
 lleva la suya por envases. Hoy son dos libros distintos y el trabajo que gasta del envase mueve el del
 almacén; **comprobar si el otro debería enterarse es una decisión, no un arreglo**, y se deja dicha.
+
+### 50.17 Ronda 9 (tercera parte): **un reparto que decía «máquina» y apuntaba a una tierra**
+
+**El defecto, tal y como se encontró.** Recorriendo el recorrido 2 con el navegador delante, el formulario
+de repartir un gasto ofrece tres destinos: **entre tierras, entre cultivos o entre máquinas**. Lo que se
+podía marcar, en cambio, era **siempre la lista de tierras**. Eligiendo «máquina» y marcando las tierras,
+el servidor **aceptaba la petición** y guardaba filas que decían `maquina` con el número de una parcela
+dentro:
+
+```
+POST /api/gastos/5/repartos  {"metodo": "area", "destino_tipo": "maquina", "parcela_ids": [3, 4]}
+→ 200  "va_a": "3"   repartos: [("maquina", "3", "127,04 €"), ("maquina", "4", "82,96 €")]
+```
+
+Es decir: **el libro de cuentas quedaba afirmando algo falso** —«este dinero fue a la máquina 3», siendo el
+3 una tierra— sin un solo error y sin que nadie se enterara. En este proyecto eso es lo que no se puede
+dejar pasar: un dato inventado, y encima en las cuentas. Se ha arreglado por los dos lados, porque el
+defecto tenía dos mitades.
+
+**1. El servidor comprueba de qué clase es cada destino, antes de escribir nada** (`_comprueba_los_destinos`
+en `gastos_api.py`). Y lo que no se puede cumplir **se dice**:
+
+  · **Por hectáreas solo se reparte entre tierras**: las hectáreas son de una tierra, y ni un cultivo ni
+    una máquina tienen superficie propia. El aviso **dice qué hacer** (elegir otro método), que es la regla
+    de la casa para un «no se puede» (`G48_las_hectareas_son_de_una_tierra`).
+  · **Una tierra** se identifica por su número o por su nombre, y tiene que estar en esta finca.
+  · **Un cultivo** va con su nombre, y si lo que llega es un número se dice que eso es una tierra y no un
+    cultivo (`G51_eso_es_una_tierra_y_no_un_cultivo`): es exactamente el defecto de arriba, cazado en la
+    puerta.
+  · **Una máquina** va con su nombre, y ese nombre tiene que ser el de una máquina de la finca
+    (`G52_esa_maquina_no_esta_en_tu_cuaderno`): un destino que no existe es un destino
+    inventado.
+
+**2. La pantalla dice qué se marca en cada destino, y manda lo que se está viendo** (ronda 9,
+`lasCosasParaUnReparto`): tierras por su número; **cultivos por su nombre** —los que el agricultor tiene
+sembrados este año, los mismos que lee en «qué hay sembrado», y sin colar el que no dice nada—; y
+**máquinas por su nombre** —que es como las llama el resto del programa—. Y como una máquina no tiene
+hectáreas, **el método de las hectáreas no se ofrece** para cultivos ni para máquinas: no se enseña un
+camino que la puerta va a cerrar. Cambiar de destino **cambia lo que se marca** (y limpia lo marcado
+antes, porque un nombre de tierra no es un nombre de máquina), y las máquinas se piden solo **cuando hacen
+falta** (`cargarLasMaquinasSiHacenFalta`), que hasta ahora no se descargaban en esta pantalla.
+
+**Y un detalle que salió al escribirlo:** el campo donde se escribe lo que le toca a cada destino lleva el
+nombre del destino en su `id`, y «El tractor» o «TRIGO BLANDO» **rompen un selector** (`#gasto-peso-El
+tractor` son dos cosas para el navegador). Los `id` se sanean en un solo sitio
+(`idDelPesoDelReparto`), usado al pintar el campo y al leerlo.
+
+**Lo que se ha comprobado, y cómo.** Tres pruebas de Python por las puertas de verdad (el reparto «a una
+máquina» con el número de una tierra y con una máquina que no existe: las dos 422 **y sin dejar ni una
+fila escrita**; las hectáreas entre cultivos: 422 con su instrucción, y el mismo gasto repartido entre
+cultivos **por su nombre** con su nombre en `va_a`; y una máquina de verdad aceptada y guardada con su
+nombre y **sin tierra asociada**). Dos pruebas de cableado (elegir «máquina» cambia la lista de lo que se
+marca, quita el método de las hectáreas y manda `parcela_ids: []` con los nombres de las máquinas; elegir
+«cultivo» marca los cultivos **distintos** que tiene sembrados y manda sus nombres). Y **una ruta más del
+navegador**: el mismo gasto repartido entre las máquinas, que acaba en la ficha con «El tractor · Se
+repartió por horas». Las cinco comprobadas en rojo: con el defecto puesto, se ven los mensajes exactos
+—incluido el `200` con `"destino_tipo": "maquina"` y `"destino": "3"`— y ninguna pasa.
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.442 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.046 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **551 comprobaciones · 0 fallos** (al empezar la ronda: 523) |
+| El recorrido 2 | **entero**: apuntar, la ficha con lo que queda por pagar, y repartir **entre tierras, entre cultivos y entre máquinas** |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+**Y la tercera clase —los cultivos— se recorrió pulsando, y volvió a pagar.** La ruta del navegador
+«repartir el gasto entre los cultivos» encontró **el mismo defecto que la de los envases del almacén**: la
+pantalla leía el cultivo de este año en `fila.cultivo`, y `GET /api/cultivos` lo manda en
+**`actual.especie`** (con `actual: null` en la tierra que todavía no lo ha dicho). La lista salía vacía y
+la prueba de cableado **daba por bueno el hueco**, porque se había escrito con la misma suposición
+equivocada que el código: el fiambre se cambió por la forma de verdad de la respuesta, y el arreglo se
+comprobó en rojo. Es la lección que este seguimiento repite: **una prueba escrita con la misma suposición
+que el código no comprueba nada**, y lo que la caza es pulsar en un navegador de verdad. Con eso, el
+recorrido 2 queda entero: apuntar un gasto, consultar su ficha (lo que costó, lo pagado y lo que queda por
+pagar) y repartirlo **entre tierras, entre cultivos y entre máquinas**.
+
+**Y siguen los tres límites de fuera**, dichos otra vez para que no se pierdan: el T08 sin probar con las
+64 tierras y los papeles reales, la precisión del OCR sin poder medirse (no hay corpus: T07 está bloqueado)
+y PostgreSQL bloqueado por Docker.

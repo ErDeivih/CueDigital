@@ -1277,6 +1277,10 @@ def repartir_un_gasto(
         codigo="G26_eso_no_es_un_sitio_donde_repartir",
         lista=", ".join(gastos.DESTINOS_DE_UN_REPARTO),
     )
+    # **Los destinos tienen que ser de la clase que se dice**, y se comprueba antes de escribir nada.
+    # Ver `_comprueba_los_destinos`: sin esto, decir «cultivo» o «máquina» y mandar tierras guardaba un
+    # reparto que **afirmaba una cosa falsa** en el libro de cuentas.
+    _comprueba_los_destinos(db, explotacion, datos=datos, metodo=metodo, destino_tipo=destino_tipo)
 
     if metodo == gastos.MANUAL:
         hecho = gastos.reparto_a_mano(
@@ -1335,6 +1339,97 @@ def repartir_un_gasto(
         "residual_en": hecho.residual_en,
         "avisos": avisos,
     }
+
+
+def _comprueba_los_destinos(db: Db, explotacion, *, datos, metodo: str, destino_tipo: str) -> None:
+    """Que cada destino sea **de la clase que se dice que es**, antes de escribir ni una fila.
+
+    ## El defecto que esto arregla, y por qué es de los que no se pueden dejar pasar
+
+    Se encontró recorriendo el recorrido 2 en un navegador: la pantalla ofrece repartir un gasto
+    **entre tierras, entre cultivos o entre máquinas**, pero el nombre de cada cosa que se puede marcar
+    lo ponía siempre la lista de tierras. Con `destino_tipo = "maquina"` y las tierras marcadas, el
+    servidor **aceptaba** la petición y guardaba filas que decían `maquina` con el número de una tierra
+    dentro: el libro de cuentas quedaba **afirmando algo falso** —«este dinero fue a la máquina 3»
+    cuando el 3 es una parcela— sin un solo error y sin que nadie se enterara. Un dato inventado es lo
+    que este proyecto no puede permitirse, así que lo que no se puede cumplir **se dice**:
+
+      · **Por hectáreas solo se reparte entre tierras.** Las hectáreas son de una tierra: un cultivo o
+        una máquina no tienen superficie propia, así que ahí no hay nada que pesar. Se dice **y se dice
+        qué hacer** (elegir otro método), que es la regla de la casa para un «no se puede».
+      · **Una tierra** se identifica por su número en el cuaderno (es lo que manda la pantalla) o por su
+        nombre (que es como lo guarda el coste directo del gasto): el destino tiene que ser una de las
+        dos cosas y existir en esta finca.
+      · **Un cultivo** va con su nombre («TRIGO BLANDO»), no con un número: si lo que llega es un número,
+        lo que se está repartiendo es una tierra con la etiqueta equivocada, y eso es exactamente el
+        defecto de arriba.
+      · **Una máquina** va con su nombre, y ese nombre tiene que ser el de una máquina de esta finca:
+        una máquina que no existe es un destino inventado.
+    """
+    if metodo == gastos.AREA:
+        if destino_tipo != gastos.TIERRA:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=textos.mensaje("G48_las_hectareas_son_de_una_tierra"),
+            )
+        destinos = [str(uno) for uno in datos.parcela_ids]
+    elif metodo == gastos.MANUAL:
+        destinos = [str(trozo.destino) for trozo in datos.trozos]
+    else:
+        destinos = [str(clave) for clave in datos.pesos]
+
+    for destino in destinos:
+        limpio = destino.strip()
+        if not limpio:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=textos.mensaje("G49_un_destino_sin_nombre"),
+            )
+        if destino_tipo == gastos.TIERRA:
+            if _la_tierra_del_destino(db, explotacion, limpio) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=textos.mensaje("G50_esa_tierra_no_esta_en_tu_cuaderno"),
+                )
+        elif destino_tipo == gastos.CULTIVO:
+            if limpio.isdigit():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=textos.mensaje("G51_eso_es_una_tierra_y_no_un_cultivo"),
+                )
+        elif destino_tipo == gastos.MAQUINA:
+            if not _es_una_maquina_de_la_finca(db, explotacion, limpio):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=textos.mensaje("G52_esa_maquina_no_esta_en_tu_cuaderno"),
+                )
+
+
+def _la_tierra_del_destino(db: Db, explotacion, destino: str) -> models.Parcela | None:
+    """La tierra de un destino de reparto: por su número (lo que manda la pantalla) o por su nombre."""
+    if destino.isdigit():
+        return db.scalar(
+            select(models.Parcela).where(
+                models.Parcela.explotacion_id == explotacion.id, models.Parcela.id == int(destino)
+            )
+        )
+    return db.scalar(
+        select(models.Parcela).where(
+            models.Parcela.explotacion_id == explotacion.id, models.Parcela.alias == destino
+        )
+    )
+
+
+def _es_una_maquina_de_la_finca(db: Db, explotacion, nombre: str) -> bool:
+    """Si ese nombre es el de una máquina de esta finca. **Por el nombre, que es lo que se guarda.**"""
+    return (
+        db.scalar(
+            select(models.Maquina).where(
+                models.Maquina.explotacion_id == explotacion.id, models.Maquina.nombre == nombre
+            )
+        )
+        is not None
+    )
 
 
 def _las_hectareas_de_las_tierras(db: Db, explotacion, parcela_ids) -> dict[str, Decimal | None]:

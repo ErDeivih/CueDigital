@@ -1173,6 +1173,153 @@ class TestElRecorridoDeUnGastoDePuntaAPunta:
         importes = sorted(uno["importe"] for uno in cuerpo["gasto"]["repartos"])
         assert importes == ["33.33", "33.33", "33.34"]
 
+    def test_un_reparto_no_puede_decir_que_va_a_una_maquina_y_mandar_una_tierra(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """**El defecto que esto fija, y es de los que no se pueden dejar pasar.**
+
+        Se encontró recorriendo el recorrido 2 en un navegador: la pantalla ofrece repartir **entre
+        tierras, entre cultivos o entre máquinas**, pero la lista de lo que se puede marcar era siempre
+        la de tierras. Con `destino_tipo = "maquina"` y las tierras marcadas, el servidor **aceptaba** y
+        guardaba filas que decían `maquina` con el número de una tierra dentro: el libro de cuentas
+        quedaba **afirmando algo falso** —«este dinero fue a la máquina 3», siendo el 3 una parcela— sin
+        un solo error. Lo que no se puede cumplir se dice, y aquí se comprueba que se dice.
+        """
+        parcela = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        gasto = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="La reparación del remolque",
+            importe="210.00",
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-reparacion-1",
+        )["gasto"]
+
+        # Una máquina que no existe, o el número de una tierra: las dos cosas tienen que decirse.
+        for destino in (str(parcela["id"]), "La cosechadora que no tengo"):
+            respuesta = cliente.post(
+                f"/api/gastos/{gasto['id']}/repartos",
+                headers=cuenta["cabeceras"],
+                json={
+                    "metodo": "horas",
+                    "destino_tipo": "maquina",
+                    "pesos": {destino: "4"},
+                    "trozos": [],
+                },
+            )
+            assert respuesta.status_code == 422, (
+                f"un reparto «a una máquina» con «{destino}» se ha aceptado: "
+                f"{respuesta.status_code} {respuesta.text[:200]}"
+            )
+            assert "no está en tu cuaderno" in respuesta.json()["detail"]
+
+        # Y no ha quedado ni un reparto: lo que se rechaza no se escribe a medias.
+        suyo = cliente.get(f"/api/gastos/{gasto['id']}", headers=cuenta["cabeceras"]).json()
+        assert suyo["repartos"] == [], "un reparto rechazado ha dejado filas escritas"
+
+    def test_las_hectareas_solo_se_reparten_entre_tierras(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """Un cultivo o una máquina no tienen hectáreas, así que por hectáreas no se reparte ahí.
+
+        Se dice **y se dice qué hacer** (elegir otro método), que es la regla de la casa para un «no se
+        puede»: un aviso sin salida deja al agricultor mirando una pantalla que no le deja avanzar.
+        """
+        parcela = crear_parcela(alias="El Prado", superficie_ha=4.0)
+        gasto = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="El gasóleo de la siega",
+            importe="254.10",
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-gasoleo-1",
+        )["gasto"]
+
+        respuesta = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta[" cabeceras".strip()],
+            json={
+                "metodo": "area",
+                "destino_tipo": "cultivo",
+                "parcela_ids": [parcela["id"]],
+                "pesos": {},
+                "trozos": [],
+            },
+        )
+        assert respuesta.status_code == 422, respuesta.text
+        detalle = respuesta.json()["detail"]
+        assert "hectáreas" in detalle and "entre tierras" in detalle
+        assert "Elige otro método" in detalle, "un «no se puede» sin decir qué hacer no vale"
+
+        # Y por horas, entre cultivos **de verdad** (por su nombre), sí se reparte.
+        por_cultivo = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={
+                "metodo": "horas",
+                "destino_tipo": "cultivo",
+                "pesos": {"TRIGO BLANDO": "3", "CEBADA": "1"},
+                "trozos": [],
+            },
+        )
+        assert por_cultivo.status_code == 200, por_cultivo.text
+        repartos = por_cultivo.json()["gasto"]["repartos"]
+        assert [uno["destino"] for uno in repartos] == ["TRIGO BLANDO", "CEBADA"]
+        assert all(uno["destino_tipo"] == "cultivo" for uno in repartos)
+        # Y con lo que se puede leer: un cultivo se llama por su nombre, no por un número.
+        assert por_cultivo.json()["gasto"]["va_a"] == "TRIGO BLANDO"
+
+    def test_un_gasto_repartido_a_una_maquina_la_nombra(
+        self, cliente, cuenta, campana, crear_parcela, db_sesion
+    ):
+        """Y la máquina, por su nombre: es lo que se guarda y lo que se lee después."""
+        from app import models as modelos
+
+        crear_parcela(alias="El Prado", superficie_ha=4.0)
+        cliente.post(
+            "/api/maquinaria",
+            headers=cuenta["cabeceras"],
+            json={
+                "nombre": "El tractor",
+                "clase": "tractor",
+                "propiedad": "propia",
+                "disponibilidad": "disponible",
+            },
+        )
+        gasto = self._un_gasto(
+            cliente,
+            cuenta,
+            campana_id=campana["id"],
+            concepto="El seguro del tractor",
+            importe="320.00",
+            base_imponible=None,
+            cuota_iva=None,
+            clave_de_reenvio="movil-seguro-tractor-1",
+        )["gasto"]
+        respuesta = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={
+                "metodo": "horas",
+                "destino_tipo": "maquina",
+                "pesos": {"El tractor": "6"},
+                "trozos": [],
+            },
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        repartos = respuesta.json()["gasto"]["repartos"]
+        assert [(uno["destino_tipo"], uno["destino"]) for uno in repartos] == [("maquina", "El tractor")]
+        assert respuesta.json()["gasto"]["va_a"] == "El tractor"
+        # Y queda guardado así: el nombre en la fila, y sin tierra asociada (no es una tierra).
+        fila = db_sesion.query(modelos.RepartoDeCoste).one()
+        assert fila.destino_tipo == "maquina"
+        assert fila.destino == "El tractor"
+        assert fila.parcela_id is None
+
     def test_anular_un_gasto_revierte_sus_efectos_y_deja_el_rastro(
         self, cliente, cuenta, campana, crear_parcela, db_sesion
     ):

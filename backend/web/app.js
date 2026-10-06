@@ -19341,6 +19341,80 @@ function lasTierrasParaUnReparto() {
 }
 
 /**
+ * **Lo que se puede marcar para repartir un gasto, según a qué clase de sitio va** (ronda 9).
+ *
+ * POR QUÉ EXISTE ESTA FUNCIÓN, Y ES UN DEFECTO ARREGLADO: el formulario ofrecía repartir «entre tierras,
+ * entre cultivos o entre máquinas», pero lo que se podía marcar era **siempre la lista de tierras**.
+ * Eligiendo «máquina» y marcando tierras, el servidor guardaba un reparto que decía `maquina` con el
+ * número de una tierra dentro: el libro de cuentas afirmaba algo falso, sin un solo error. Ahora cada
+ * destino trae **sus** cosas, y lo que viaja es lo que se está viendo:
+ *
+ *  · **tierra**: su número en el cuaderno (el servidor le pone el nombre al enseñarlo);
+ *  · **cultivo**: los cultivos que el agricultor tiene sembrados este año, por su nombre —los mismos que
+ *    lee en «qué hay sembrado»—, que es lo que el servidor guarda y lo que se lee después;
+ *  · **máquina**: sus máquinas, por su nombre, que es lo mismo que hace el resto del programa con ellas.
+ *
+ * Y **sin hectáreas para los cultivos y las máquinas**: un cultivo o una máquina no tienen superficie
+ * propia, así que el método de las hectáreas solo se ofrece para las tierras (ver `losMetodosDelReparto`).
+ */
+function lasCosasParaUnReparto(destino) {
+  if (destino === "cultivo") {
+    const dichos = [];
+    for (const fila of ((estado.cultivos || {}).parcelas || [])) {
+      // **El cultivo de este año está en `actual`, y ahí dentro en `especie`** (`GET /api/cultivos`
+      // devuelve, por tierra, lo que tiene sembrado este año y los anteriores). No es `fila.cultivo` ni
+      // `fila.especie`: eso se dio por supuesto al escribirlo y la lista salía **vacía** —el mismo
+      // defecto que el de los envases del almacén, y por eso lo cazó la ruta del navegador y no una
+      // prueba de cableado, que se escribió con la misma suposición equivocada—. Una tierra que todavía
+      // no dice qué tiene trae `actual: null`, y entonces no hay cultivo que ofrecer.
+      const cultivo = (((fila || {}).actual || {}).especie || "").trim();
+      if (cultivo && !dichos.some((uno) => uno.nombre === cultivo)) {
+        dichos.push({ clave: cultivo, nombre: cultivo, hectareas: null });
+      }
+    }
+    return dichos;
+  }
+  if (destino === "maquina") {
+    // Las máquinas viven en el estado de los trabajos (ver `cargarLasMaquinasSiHacenFalta`), y quien
+    // llama a esta función **ya se ha ocupado de que estén cargadas** antes de pintar el formulario.
+    return ((estadoDeLosTrabajos().maquinas) || []).map((maquina) => ({
+      clave: maquina.texto || "",
+      nombre: maquina.texto || "",
+      hectareas: null,
+    }));
+  }
+  return lasTierrasParaUnReparto();
+}
+
+/**
+ * Los métodos de reparto que se pueden usar según a qué se reparte.
+ *
+ * **«Por hectáreas» solo vale para las tierras**: las hectáreas son de una tierra, y ni un cultivo ni una
+ * máquina tienen superficie propia. El servidor lo dice igual (`G48_las_hectareas_son_de_una_tierra`), y
+ * aquí no se ofrece, que es la otra mitad: no se enseña un camino que la puerta va a cerrar.
+ */
+function losMetodosDelReparto(destino) {
+  const todos = ((estado.interfaz || {}).metodos_de_reparto) || [];
+  if (destino === "tierra") return todos.map((uno) => ({ valor: uno.valor, texto: uno.texto }));
+  return todos
+    .filter((uno) => uno.valor !== "area" && uno.valor !== "hectareas")
+    .map((uno) => ({ valor: uno.valor, texto: uno.texto }));
+}
+
+/**
+ * El `id` del campo donde se escribe lo que le toca a un destino del reparto.
+ *
+ * **Sin espacios ni tildes, y por eso hay una función**: un destino puede llamarse «El tractor» o
+ * «TRIGO BLANDO», y un `id` con un espacio **no se puede buscar con un selector** (`#gasto-peso-El
+ * tractor` son dos cosas para el navegador: el campo `#gasto-peso-El` y un elemento `tractor` dentro).
+ * Se cambia todo lo que no sea letra, número o guion bajo por un guion bajo, **en los dos sitios** —al
+ * pintar el campo y al leerlo—, y el nombre del destino se sigue leyendo entero.
+ */
+function idDelPesoDelReparto(clave) {
+  return `gasto-peso-${String(clave).replace(/[^0-9A-Za-z_]/g, "_")}`;
+}
+
+/**
  * El borrador del reparto con esas tierras marcadas, **conservando lo que ya estaba escrito**.
  *
  * POR QUÉ SE CONSERVA: marcar una tierra repinta el formulario —como elegir una categoría—, así que
@@ -19351,7 +19425,7 @@ function conLasTierrasMarcadas(borrador, marcadas) {
   const suyo = borrador || {};
   const antes = {};
   for (const peso of suyo.pesos || []) {
-    const escrito = valorDeLaCasilla(`gasto-peso-${peso.clave}`);
+    const escrito = valorDeLaCasilla(idDelPesoDelReparto(peso.clave));
     if (escrito !== "") antes[peso.clave] = escrito;
   }
   const tierras = suyo.tierras || [];
@@ -19369,6 +19443,7 @@ function elFormularioDeLasCuentas(cual, borrador) {
   if (!cual) return null;
   const g = t("gastos", {});
   const b = borrador || {};
+  const elDestinoDelReparto = (suyo) => (suyo || {}).destino_tipo || "tierra";
   const opcionesDe = (lista, elegido) =>
     (lista || []).map((uno) => ({ valor: uno.valor, texto: uno.texto, elegido: uno.valor === elegido }));
   // **Lo que el agricultor ya tiene escrito manda sobre lo que venía del cuaderno** (06/10/2026).
@@ -19419,30 +19494,39 @@ function elFormularioDeLasCuentas(cual, borrador) {
       titulo: g.form_repartir_titulo,
       pista: g.form_repartir_pista,
       bloques: [
-        {
-          tipo: "opciones",
-          campo: "metodo",
-          etiqueta: g.campo_metodo,
-          elegido: b.metodo || "",
-          opciones: opcionesDe((estado.interfaz || {}).metodos_de_reparto, b.metodo),
-        },
+        // **A qué se reparte, y qué se puede marcar** (ronda 9). El destino manda: sus cosas son las que
+        // se marcan, y sus métodos son los que se ofrecen. Ver `lasCosasParaUnReparto`.
         {
           tipo: "opciones",
           campo: "destino_tipo",
           etiqueta: g.campo_destino,
-          elegido: b.destino_tipo || "",
+          pista: g.campo_destino_pista,
+          elegido: b.destino_tipo || "tierra",
           opciones: [
             { valor: "tierra", texto: t("tabla.cuentas_tierra", ""), elegido: b.destino_tipo === "tierra" },
             { valor: "cultivo", texto: t("tabla.cuentas_cultivo", ""), elegido: b.destino_tipo === "cultivo" },
             { valor: "maquina", texto: t("maquinaria.titulo", ""), elegido: b.destino_tipo === "maquina" },
           ],
         },
-        // **Entre qué tierras** (06/10/2026): las de la finca, para marcarlas. Sin esto los cuatro
-        // métodos se quedaban sin saber a qué tierras repartir.
+        {
+          tipo: "opciones",
+          campo: "metodo",
+          etiqueta: g.campo_metodo,
+          elegido: b.metodo || "",
+          opciones: opcionesDe(losMetodosDelReparto(elDestinoDelReparto(b)), b.metodo),
+        },
+        // **Entre qué se reparte**: las tierras, los cultivos o las máquinas, según lo que se haya
+        // elegido arriba. Sin esto los cuatro métodos se quedaban sin saber a qué repartir, y con la
+        // lista equivocada se guardaba un reparto que decía una cosa y apuntaba a otra.
         {
           tipo: "marcas",
           campo: "parcela_ids",
-          etiqueta: g.campo_tierras,
+          etiqueta:
+            elDestinoDelReparto(b) === "cultivo"
+              ? g.campo_cultivos
+              : elDestinoDelReparto(b) === "maquina"
+                ? g.campo_maquinas
+                : g.campo_tierras,
           pista: g.campo_tierras_pista,
           todas: g.marcar_todas,
           marcadas: b.parcela_ids || [],
@@ -19460,7 +19544,7 @@ function elFormularioDeLasCuentas(cual, borrador) {
         // están pidiendo horas, litros o euros.
         ...(b.pesos || []).map((uno) => ({
           tipo: "numero",
-          id: `gasto-peso-${uno.clave}`,
+          id: idDelPesoDelReparto(uno.clave),
           etiqueta: uno.nombre,
           pista:
             b.metodo === "horas"
@@ -19581,7 +19665,7 @@ async function guardarLasCuentas(datos) {
     const marcadas = (b.parcela_ids || []).map(String);
     const escritos = {};
     for (const clave of marcadas) {
-      const escrito = valorDeLaCasilla(`gasto-peso-${clave}`);
+      const escrito = valorDeLaCasilla(idDelPesoDelReparto(clave));
       if (escrito !== "") escritos[clave] = escrito;
     }
     const destino = b.destino_tipo || "tierra";
@@ -19589,7 +19673,10 @@ async function guardarLasCuentas(datos) {
     cuerpo = {
       metodo: b.metodo || "manual",
       destino_tipo: destino,
-      parcela_ids: marcadas,
+      // **`parcela_ids` solo cuando se reparte entre tierras**: es la lista de tierras, y para un cultivo
+      // o una máquina las cosas que se marcan viajan **por su nombre** en los pesos (o en los trozos, si
+      // es a mano), que es lo que el servidor guarda y lo que se lee después en la ficha del gasto.
+      parcela_ids: destino === "tierra" ? marcadas : [],
       pesos: aMano ? {} : escritos,
       trozos: aMano
         ? marcadas
@@ -19692,14 +19779,15 @@ async function atenderLasCuentas(nombre, elemento) {
   }
   if (nombre === "gasto-repartir") {
     suyo.formulario = { clase: "reparto", id };
-    // **Las tierras entre las que se puede repartir** (06/10/2026), con sus hectáreas: son las que ya
-    // están descargadas (`estado.parcelas`), así que no hace falta pedir nada al servidor para
-    // ofrecerlas. El agricultor marca las que sean y el servidor reparte entre ellas.
+    // **Lo que se puede marcar para repartir** (06/10/2026, y sus tres clases desde la ronda 9): las
+    // tierras, los cultivos o las máquinas ya están descargadas —cada una en su sitio—, así que no hace
+    // falta pedir nada al servidor para ofrecerlas. Nace en «tierra», que es lo que se reparte casi
+    // siempre; si el agricultor elige cultivo o máquina, se cambia la lista entera (ver `gasto-elegir`).
     suyo.borrador = {
       metodo: "",
       destino_tipo: "tierra",
       parcela_ids: [],
-      tierras: lasTierrasParaUnReparto(),
+      tierras: lasCosasParaUnReparto("tierra"),
       pesos: [],
     };
     return pantallaUnGasto();
@@ -19754,7 +19842,29 @@ async function atenderLasCuentas(nombre, elemento) {
     // volver a elegir lo que ya había elegido.
     const campo = elemento.dataset.campo || "";
     const valor = elemento.dataset.valor || "";
-    suyo.borrador = { ...(suyo.borrador || {}), [campo]: valor };
+    const antes = suyo.borrador || {};
+    // **Cambiar de destino cambia lo que se marca** (ronda 9): las tierras, los cultivos y las máquinas
+    // no comparten ni un nombre, así que lo marcado antes no vale para el destino nuevo y se empieza de
+    // cero con **sus** cosas. Si no, quedarían marcadas tierras mientras el reparto dice «máquina», que
+    // es el defecto que se arregló en el servidor: aquí se evita antes de llegar.
+    if (campo === "destino_tipo" && valor !== antes.destino_tipo) {
+      // **Y las máquinas hay que traerlas**: no se descargan al arrancar (ver
+      // `cargarLasMaquinasSiHacenFalta`), así que sin esto el destino «máquina» saldría con la lista
+      // vacía y el agricultor creería que no tiene ninguna.
+      if (valor === "maquina") await cargarLasMaquinasSiHacenFalta();
+      suyo.borrador = {
+        ...antes,
+        destino_tipo: valor,
+        parcela_ids: [],
+        tierras: lasCosasParaUnReparto(valor),
+        pesos: [],
+        // Y el método también se limpia si el que estaba ya no se ofrece (las hectáreas, para cultivos y
+        // máquinas): un método elegido que no está en la lista no puede quedar escondido en el borrador.
+        metodo: losMetodosDelReparto(valor).some((uno) => uno.valor === antes.metodo) ? antes.metodo : "",
+      };
+      return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
+    }
+    suyo.borrador = { ...antes, [campo]: valor };
     return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
   }
   if (nombre === "gasto-guardar") return guardarLasCuentas(elemento.dataset);
@@ -20824,6 +20934,28 @@ async function cargarElVocabularioDeLosTrabajos() {
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
   }
+}
+
+/**
+ * Las máquinas de la finca, para **repartir un gasto entre ellas** (y para decir con cuál se hizo un
+ * trabajo, que es lo otro que las usa).
+ *
+ * **Se piden cuando hacen falta, y no al arrancar**: la pantalla de las cuentas no las necesita para
+ * nada más, y una lista que no se va a mirar no se descarga. Vive en el estado de los trabajos, que es
+ * donde ya estaba —la ficha de un trabajo también las pide—, así que las dos pantallas comparten una
+ * lista y no dos que puedan decir cosas distintas.
+ */
+async function cargarLasMaquinasSiHacenFalta() {
+  const suyo = estadoDeLosTrabajos();
+  if (suyo.maquinas) return suyo.maquinas;
+  try {
+    const tabla = await apiJson("/api/maquinaria");
+    suyo.maquinas = (tabla.maquinas || []).map((una) => ({ valor: una.id, texto: una.nombre }));
+  } catch (fallo) {
+    suyo.maquinas = [];
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return suyo.maquinas;
 }
 
 /**
