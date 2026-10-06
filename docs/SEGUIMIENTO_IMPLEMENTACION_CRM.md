@@ -5348,3 +5348,30 @@ es una puerta del propio ticket.
 endpoints están listos y comprobados, pero el agricultor todavía no puede subir su extracto desde la
 aplicación. Es el siguiente trabajo, y con él queda T08 (la bandeja de documentos) y la verificación en
 navegador de las tres pantallas nuevas (T13, T15 y la que traiga el T20).
+
+### 50.11 Y la pantalla de las cuentas estaba muerta, y lo dijo su primera prueba de verdad
+
+Al escribir la prueba del cableado del T13 —abrir las cuentas desde su renglón del menú y comprobar que le
+llegan los gastos del servidor— salió esto:
+
+```
+ReferenceError: campanaActual is not defined
+```
+
+**La pantalla de las cuentas reventaba al abrirse.** El bloque que se integró del informe llamaba a un
+ayudante `campanaActual()` que **no existe en `app.js`** (siete llamadas). Nadie lo había visto porque **cada
+pieza tenía sus pruebas y la costura no la probaba nadie**: las del ticket comprueban la pantalla con sus
+propiedades montadas a mano (`tests_js/gastos.test.js`) y el servidor con la API (`tests/test_gastos.py`), así
+que un `ReferenceError` en el cableado dejaba la pantalla muerta al pulsar su renglón del menú **con las dos
+suites en verde**. Es exactamente la clase de defecto que el encargo llama «una pantalla cuyos botones no
+completan el recorrido», y es el argumento de por qué el cableado se prueba.
+
+Arreglado con lo que usa el resto de la aplicación (`estado.campana`), y **con la prueba que lo cazó**: ahora
+hay una prueba que abre las cuentas desde el menú y comprueba que llegan los gastos, que el resumen está bien
+montado (singular y plural: «Tienes 1 gastos» es lo primero que hace desconfiar de un programa) y que la tabla
+del ordenador tiene sus siete columnas. Y se ha mirado que no quede **ninguna otra** llamada a un ayudante que
+no exista en los bloques integrados del T13, el T15 y el T20.
+
+**Lo que esto dice del método, y conviene que quede escrito:** integrar bloques literales y pasar las suites
+**no basta**; faltaba una prueba que pulsara el botón de entrada de la pantalla. Ya está, y el mismo día
+apareció el fallo. Queda por hacer lo mismo con **la pantalla del T20** cuando exista.
