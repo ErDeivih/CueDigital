@@ -8042,7 +8042,15 @@ BANCOS: dict[str, str] = {
     "buscar_boton": "BUSCAR",
     "ver_todo": "VER TODO",
     "exportar": "DESCARGAR EL EXTRACTO",
-    "exportar_pista": "Se descarga en un fichero, con el importe en blanco donde no consta.",
+    # **Se dice qué se lleva el fichero** (06/10/2026), y no es un adorno: hasta hoy el botón bajaba
+    # **todo el extracto de la cuenta** aunque el agricultor tuviera la lista filtrada, y como no lo decía,
+    # parecía que se llevaba lo que estaba viendo. Ahora se lleva lo que se ve (los filtros van con la
+    # descarga) y la pista lo dice con esas palabras, que es lo que el encargo pide: «verifica el alcance
+    # anunciado: seleccionados, filtrados o todos; si solo permite uno, debe decir cuál».
+    "exportar_pista": (
+        "Se descarga en un fichero lo que estás viendo: con el filtro y la cuenta que tengas puestos. "
+        "Donde el importe no consta, la casilla va en blanco."
+    ),
     "estado": "Cuáles ver",
     "todos_los_estados": "Todos",
     "fecha": "El día",

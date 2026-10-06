@@ -20460,11 +20460,21 @@ async function importarElExtracto() {
   pantallaLosBancos();
 }
 
-/** Baja el extracto en un fichero, como `sacarDatos()`: con el token y por un enlace de descarga. */
+/** Baja el extracto en un fichero, como `sacarDatos()`: con el token y por un enlace de descarga.
+ *
+ * **Con los filtros que el agricultor tiene puestos en la pantalla** (06/10/2026). Antes solo mandaba la
+ * cuenta, así que quien filtraba por texto o por estado —y veía, por ejemplo, 10 movimientos— pulsaba
+ * EXPORTAR y se llevaba **todo el extracto**, sin que nada lo dijera. Es justo lo que el encargo llama
+ * «no debe exportar silenciosamente las 64»: el fichero tiene que ser **lo que se está viendo**.
+ */
 async function exportarElExtracto() {
   const suyo = estadoDeLosBancos();
   try {
-    const consulta = suyo.cuentaElegida ? `?cuenta_id=${suyo.cuentaElegida}` : "";
+    const partes = [];
+    if (suyo.cuentaElegida) partes.push(`cuenta_id=${suyo.cuentaElegida}`);
+    if (suyo.filtro) partes.push(`texto=${encodeURIComponent(suyo.filtro)}`);
+    if (suyo.estado) partes.push(`estado=${encodeURIComponent(suyo.estado)}`);
+    const consulta = partes.length ? `?${partes.join("&")}` : "";
     const respuesta = await api(`/api/bancos/movimientos.csv${consulta}`);
     if (!respuesta.ok) throw new Error(mensaje("no_se_pudo"));
     const blob = await respuesta.blob();

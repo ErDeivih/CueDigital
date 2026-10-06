@@ -1420,6 +1420,61 @@ class TestElRecorridoPorLaApi:
         assert la_del_importe_desconocido.split(";")[4] == ""
         assert "0,00" not in la_del_importe_desconocido
 
+    def test_el_csv_lleva_lo_que_se_esta_viendo_y_no_todo(self, cliente, cuenta):
+        """**El alcance de la exportación** (aceptación 3 del encargo, 06/10/2026).
+
+        El agricultor filtra la lista —por texto o por estado— y pulsa DESCARGAR EL EXTRACTO. El fichero
+        tiene que llevar **lo que está viendo**, no todo: si la pantalla enseña 2 movimientos filtrados y
+        el fichero se lleva 7, la exportación miente sobre lo que se ha pedido (es el «no debe exportar
+        silenciosamente las 64» del encargo, con 7 en vez de 64).
+
+        Antes de esto, la ruta del CSV **solo aceptaba la cuenta y las fechas**: los filtros de la pantalla
+        se quedaban fuera y el fichero se lo llevaba todo. Lo encontró el subagente de las descargas.
+        """
+        cuenta_bancaria = self._crear_cuenta(cliente, cuenta)
+        self._importar(cliente, cuenta, cuenta_bancaria["id"])
+        cabeceras = cuenta["cabeceras"]
+
+        todo = cliente.get(
+            f"/api/bancos/movimientos.csv?cuenta_id={cuenta_bancaria['id']}", headers=cabeceras
+        )
+        assert todo.status_code == 200
+        # La primera línea es la cabecera (los nombres de las columnas): las filas son las de después.
+        filas_todas = [linea for linea in todo.text.splitlines() if linea.strip()][1:]
+        assert len(filas_todas) == 7, f"el fichero no lleva los 7 movimientos: {len(filas_todas)}"
+
+        # El mismo filtro de texto que la lista: el fichero tiene que traer **solo** lo que casa.
+        con_texto = cliente.get(
+            f"/api/bancos/movimientos.csv?cuenta_id={cuenta_bancaria['id']}&texto=COOPERATIVA",
+            headers=cabeceras,
+        )
+        assert con_texto.status_code == 200
+        filas_filtradas = [linea for linea in con_texto.text.splitlines() if linea.strip()][1:]
+        assert 0 < len(filas_filtradas) < len(filas_todas)
+        assert all("COOPERATIVA" in linea for linea in filas_filtradas), (
+            "el filtro del CSV deja pasar movimientos que la lista no enseñaría"
+        )
+
+        # Y el estado, que se filtra después de armar la vista: sin conciliar no puede salir lo conciliado.
+        sin_conciliar = cliente.get(
+            f"/api/bancos/movimientos.csv?cuenta_id={cuenta_bancaria['id']}"
+            f"&estado={extractos.SIN_CONCILIAR}",
+            headers=cabeceras,
+        )
+        assert sin_conciliar.status_code == 200
+        assert len([linea for linea in sin_conciliar.text.splitlines() if linea.strip()][1:]) <= len(
+            filas_todas
+        )
+
+        # Y la lista, con el mismo filtro, dice el mismo número: las dos puertas cuentan lo mismo.
+        listado = cliente.get(
+            f"/api/bancos/movimientos?cuenta_id={cuenta_bancaria['id']}&texto=COOPERATIVA",
+            headers=cabeceras,
+        ).json()
+        assert listado["total"] == len(filas_filtradas), (
+            "el recuento de la lista y las filas del fichero no cuadran"
+        )
+
     def test_un_pago_parcial_y_deshacerlo_deja_todo_como_estaba(self, cliente, cuenta, db_sesion):
         """El caso A06 con un movimiento del banco: factura de 1.205,40 y un pago de 500."""
         from app import models as modelos

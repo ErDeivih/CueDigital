@@ -1390,6 +1390,8 @@ def exportar_los_movimientos(
     cuenta_id: int | None = None,
     desde: dt.date | None = None,
     hasta: dt.date | None = None,
+    texto: str | None = None,
+    estado: str | None = None,
 ) -> Response:
     """El extracto en un fichero, con el estado de cada movimiento y **sin ceros de relleno**.
 
@@ -1397,9 +1399,23 @@ def exportar_los_movimientos(
     exportación reutiliza la misma consulta y permisos»), y lo escribe `extractos.a_csv`, que deja la
     casilla **en blanco** cuando el importe no consta. Un `0,00` ahí sería decir que ese movimiento fue
     de cero euros, que es lo contrario de lo que dice el banco.
+
+    **Y desde el 06/10/2026 acepta los mismos filtros que la lista** (`texto` y `estado`, además de la
+    cuenta y las fechas). Antes no los aceptaba, y eso era un problema de los que no hacen ruido: **el
+    agricultor filtraba la pantalla, pulsaba «EXPORTAR» y el fichero se llevaba todo**, sin decir nada.
+    Lo encontró la comprobación de descargas (aceptación 3 del encargo: «un filtro de 10 tierras entre 64
+    no debe exportar silenciosamente las 64»). El estado se filtra **después** de calcular la vista, con
+    el mismo camino que la lista, para que las dos digan lo mismo.
     """
     lista = listar_movimientos(
-        explotacion=explotacion, db=db, cuenta_id=cuenta_id, desde=desde, hasta=hasta, limite=10_000
+        explotacion=explotacion,
+        db=db,
+        cuenta_id=cuenta_id,
+        desde=desde,
+        hasta=hasta,
+        texto=texto,
+        estado=estado,
+        limite=10_000,
     )
     filas = [
         _como_fila_de_extracto(
