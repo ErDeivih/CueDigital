@@ -5875,3 +5875,57 @@ que sí importa —que cada clase se nombre bien— está cubierto donde corresp
 | `scripts/comprobar_en_un_navegador.py` | **559 comprobaciones · 0 fallos** (al empezar la ronda: 523) |
 | Los cinco recorridos del encargo | **los cinco, pulsando**, y el 1 con **tres** clases de enlace |
 | Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+## 51. El encargo, punto por punto, y **dónde se comprueba cada cosa** (06/10/2026)
+
+Esta sección existe para que el cierre del objetivo se pueda auditar: cada exigencia del encargo, con la
+comprobación que la sostiene. Lo que no está comprobado se dice aquí y no se disimula.
+
+### 51.1 Los cinco recorridos
+
+| Recorrido del encargo | Cómo se ha recorrido, pulsando |
+|---|---|
+| 1. Subir un documento → revisar → vincular a una compra, un gasto, una venta, una máquina o un trabajo, conservando el original | **Tres rutas del navegador**: «la bandeja de los papeles», «la ficha de un papel» (el original a un lado y lo leído al otro) y **enlazar con una compra, con un gasto y con una máquina** (la clase se elige por su valor, como en la pantalla). Las otras clases (venta, trabajo, inspección) tienen su prueba en el servidor, una por clase |
+| 2. Registrar un gasto → asignarlo a tierras, cultivo, máquina o campaña → importe conocido, repartos y pendiente de pagar | **Cuatro rutas**: apuntar un gasto, su ficha (lo que costó, lo pagado y **lo que queda por pagar**) y **repartirlo entre tierras, entre cultivos y entre máquinas**. La campaña entra con el gasto (el formulario apunta a la campaña que se está llevando) |
+| 3. Importar un extracto → revisar → conciliar pagos y cobros → pendientes sin duplicar | **Tres rutas**: el movimiento sin importe, contra qué papel va, y **conciliar** con la propuesta del servidor, ver a qué papel fue y poder deshacerlo. La comprobación exige además que **no se ofrezca apuntar lo que ya está apuntado**, que es la mitad del «sin duplicar» |
+| 4. Planificar un trabajo → marcar lo realizado → tierras, máquinas, horas e insumos → historial y existencias → cuaderno | **Cuatro rutas**: planificar, marcar lo hecho, **de qué envase salió** (con el producto y la cantidad en la historia de la tierra) y **el envase con lo gastado descontado** (34 L de 40, con su salida de 6). El cuaderno lo comprueba la suite del servidor (`/api/cuaderno/resumen` cuenta el trabajo hecho) |
+| 5. Abrir una tierra → cultivo, trabajos hechos, previsto, costes conocidos, con enlaces | **Una ruta**: «la historia de una tierra», que entra pulsando y comprueba el cultivo, la última labor, el historial, lo previsto, lo que ha costado y el enlace al gasto |
+
+### 51.2 Lo que el encargo pide comprobar pulsando, y con qué se comprueba
+
+| Lo que pide | Dónde se comprueba |
+|---|---|
+| Guardar y corregir | Rutas del navegador de «corregir un apunte», «corregir una tierra», «corregir un producto», «corregir un papel», «corregir una factura: guardar», y las de guardar de cada recorrido; más las pruebas de la API de cada módulo |
+| Anular y reenviar | Rutas de anular/borrar de apunte, tierra, producto, venta y factura. El **reenvío** desde el móvil no duplica (trabajos, consumos, pagos, extractos, gastos): lo comprueban las pruebas del servidor con `clave_de_reenvio`, que es donde vive esa regla |
+| Abrir un registro por su dirección y recargar | Todas las rutas se abren por su dirección, y **la comprobación mide la dirección en la que acaba la aplicación** y exige que sea la pedida (si no, daría por buena otra pantalla). Recargar deja al agricultor donde estaba: pruebas de `interfaz.test.js` |
+| Volver conservando filtros | Rutas de los dos buscadores de tierras (con lo que no casa **no puede salir**) y las pruebas de la dirección de T06, que es donde viven los filtros |
+| Consultar una cifra y llegar a sus registros | La historia de una tierra (la cifra de lo que ha costado → **VER EL GASTO**), el recuento de las cuentas y el botón que lleva de las cuentas a los bancos |
+| Exportar indicando seleccionados, filtrados o todos | Las **puertas** `GET /api/cuaderno/export.csv`, `GET /api/cuaderno-cyl/exportar` (XLSX, con su nombre de fichero en la cabecera) y `GET /api/bancos/movimientos.csv`, con sus pruebas en el servidor, y los enlaces de descarga de las pantallas con las suyas. **No se pulsa en el navegador a propósito**: una descarga no se ve en la página, así que el volcado del DOM no podría distinguir «descargó» de «no hizo nada» — y una comprobación que no puede fallar no comprueba nada |
+| 390, 1024 y 1440 px, con teclado y zoom 200 % | La comprobación del navegador mide las **16 pantallas largas** en los tres anchos y el zoom al 200 %, con la pantalla sin salirse y diciendo en qué dirección acabó cada medida |
+
+### 51.3 Lo que queda sin hacer, y por qué
+
+  · **La evaluación de la precisión del OCR**: no hay corpus (T07 está bloqueado por fuera). La bandeja se
+    entrega entera sin ella —subir, clasificar, proponer, confirmar, vincular, duplicados, rectificativas,
+    documentos de inspección— y la fila del T08 lo dice con esas palabras: que el programa **proponga** una
+    lectura no es que la lectura esté **evaluada**.
+  · **La pasada en PostgreSQL**: Docker está bloqueado en esta máquina. Todo el trabajo ejecutable se ha
+    hecho con SQLite.
+  · **El T08 con los papeles reales y las 64 tierras de David**: sus datos no se tocan (la base sigue
+    intacta, con su huella), así que la comprobación del navegador usa la finca de prueba. Lo que esto
+    deja sin medir es el **volumen**: una bandeja con muchos papeles y una finca con 64 tierras.
+  · **Una decisión, y no un arreglo**: la ficha de un producto lleva su cuenta de «comprado / echado / te
+    queda» y el almacén lleva la suya **por envases**. Hoy son dos libros, y un trabajo que gasta de un
+    envase mueve el del almacén. Comprobar si el primero debería enterarse es decidirlo.
+  · **La comprobación del navegador usa dos tierras y dos campañas**, no 64: sembrar 64 tierras en la base
+    temporal es lo siguiente si se quiere medir con volumen (y hay que hacerlo sabiendo que varias rutas se
+    apoyan en «la primera tierra» y en los recuentos).
+
+### 51.4 Y los números, con su fecha
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.442 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.046 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **559 comprobaciones · 0 fallos** (al empezar la ronda 9: 523) |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`, 696.320 bytes), no se ha abierto en toda la ronda |
