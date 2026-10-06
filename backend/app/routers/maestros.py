@@ -318,6 +318,25 @@ def situacion_de_la_cesta(
         explotacion_id=explotacion.id,
         campana_id=campana.id if campana else None,
     )
+    # **El saldo físico, que es el número que hay que enseñar.** Lo comprado y lo echado siguen ahí
+    # (`comprado`, `gastado`), pero como lo que son: lo que dicen los papeles. El «te queda» de verdad
+    # sale del libro de movimientos, relacionado por identificador. Si un producto no tiene artículo, su
+    # `saldo_fisico` es `null` con su motivo (`A24`) y **no un cero**.
+    saldos = servicios.el_saldo_fisico_de_una_cesta(db, explotacion_id=explotacion.id)
+    for fila in filas:
+        # La relación **ya viene hecha** desde `servicios`, por el identificador del artículo
+        # (`saldos["por_producto"][producto_id]["articulo_id"]`). Aquí no se relaciona otra vez: si se
+        # hiciera por el nombre, la pantalla y el almacén podrían decir cosas distintas del mismo
+        # producto.
+        suyo = saldos["por_articulo"].get(
+            saldos["por_producto"].get(fila["producto_id"], {}).get("articulo_id")
+        )
+        fila["saldo_fisico"] = suyo.saldo_fisico if suyo else None
+        fila["saldo_fisico_conocido"] = bool(suyo and suyo.se_puede_saber)
+        fila["situacion"] = suyo.situacion if suyo else "pendiente"
+        fila["motivo_fisico"] = (suyo.que_pasa or suyo.motivo) if suyo else textos.MENSAJES["A24_el_producto_no_tiene_articulo"]
+        fila["lotes_del_articulo"] = suyo.lotes if suyo else []
+        fila["el_mismo_consumo"] = suyo.el_mismo_consumo if suyo else []
     # La ficha del producto no se manda entera: la cesta enseña cuentas, y el objeto de dentro
     # no es JSON. Se devuelve lo que se ve.
     for fila in filas:

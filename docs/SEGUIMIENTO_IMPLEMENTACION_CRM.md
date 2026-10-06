@@ -5900,26 +5900,28 @@ comprobación que la sostiene. Lo que no está comprobado se dice aquí y no se 
 | Abrir un registro por su dirección y recargar | Todas las rutas se abren por su dirección, y **la comprobación mide la dirección en la que acaba la aplicación** y exige que sea la pedida (si no, daría por buena otra pantalla). Recargar deja al agricultor donde estaba: pruebas de `interfaz.test.js` |
 | Volver conservando filtros | Rutas de los dos buscadores de tierras (con lo que no casa **no puede salir**) y las pruebas de la dirección de T06, que es donde viven los filtros |
 | Consultar una cifra y llegar a sus registros | La historia de una tierra (la cifra de lo que ha costado → **VER EL GASTO**), el recuento de las cuentas y el botón que lleva de las cuentas a los bancos |
-| Exportar indicando seleccionados, filtrados o todos | Las **puertas** `GET /api/cuaderno/export.csv`, `GET /api/cuaderno-cyl/exportar` (XLSX, con su nombre de fichero en la cabecera) y `GET /api/bancos/movimientos.csv`, con sus pruebas en el servidor, y los enlaces de descarga de las pantallas con las suyas. **No se pulsa en el navegador a propósito**: una descarga no se ve en la página, así que el volcado del DOM no podría distinguir «descargó» de «no hizo nada» — y una comprobación que no puede fallar no comprueba nada |
-| 390, 1024 y 1440 px, con teclado y zoom 200 % | La comprobación del navegador mide las **16 pantallas largas** en los tres anchos y el zoom al 200 %, con la pantalla sin salirse y diciendo en qué dirección acabó cada medida |
+| Exportar indicando seleccionados, filtrados o todos | **Pulsando el botón y mirando el fichero**: desde el 06/10/2026 el navegador se maneja por el protocolo de depuración (`backend/scripts/navegador_cdp.py`), así que **una descarga sí se puede observar** —se le dice al navegador dónde dejarla y se mira nombre, formato y filas—. Lo que se comprueba en cada pantalla exportable está en el §52.3, con lo que salió. Y en el servidor: `GET /api/bancos/movimientos.csv` **lleva los filtros que se están viendo** (texto y estado, además de la cuenta), y las tres descargas del cuaderno (`export.csv`, `pdf` y `cuaderno-cyl/exportar`) y las de firma piden **el año que se está mirando**, no el año en curso ni el más nuevo |
+| 390, 1024 y 1440 px, con teclado y zoom 200 % | La comprobación del navegador mide las **16 pantallas largas** en los tres anchos. **Y el zoom al 200 % y el teclado tienen su propia pasada** (§52.4): el ancho de 720 px que se medía antes era una comprobación de **adaptación de pantalla** —lo que ve una ventana de 1440 con el zoom al 200 %—, no el zoom del navegador, y así está dicho en el código desde entonces |
 
 ### 51.3 Lo que queda sin hacer, y por qué
 
   · **La evaluación de la precisión del OCR**: no hay corpus (T07 está bloqueado por fuera). La bandeja se
     entrega entera sin ella —subir, clasificar, proponer, confirmar, vincular, duplicados, rectificativas,
     documentos de inspección— y la fila del T08 lo dice con esas palabras: que el programa **proponga** una
-    lectura no es que la lectura esté **evaluada**.
+    lectura no es que la lectura esté **evaluada**. **Esto es un límite de fuera**, no algo que se pueda
+    comprobar con datos inventados: medir precisión necesita las fotos de verdad.
   · **La pasada en PostgreSQL**: Docker está bloqueado en esta máquina. Todo el trabajo ejecutable se ha
-    hecho con SQLite.
+    hecho con SQLite. También es un límite de fuera.
   · **El T08 con los papeles reales y las 64 tierras de David**: sus datos no se tocan (la base sigue
-    intacta, con su huella), así que la comprobación del navegador usa la finca de prueba. Lo que esto
-    deja sin medir es el **volumen**: una bandeja con muchos papeles y una finca con 64 tierras.
-  · **Una decisión, y no un arreglo**: la ficha de un producto lleva su cuenta de «comprado / echado / te
-    queda» y el almacén lleva la suya **por envases**. Hoy son dos libros, y un trabajo que gasta de un
-    envase mueve el del almacén. Comprobar si el primero debería enterarse es decidirlo.
-  · **La comprobación del navegador usa dos tierras y dos campañas**, no 64: sembrar 64 tierras en la base
-    temporal es lo siguiente si se quiere medir con volumen (y hay que hacerlo sabiendo que varias rutas se
-    apoyan en «la primera tierra» y en los recuentos).
+    intacta, con su huella). Lo que esto deja sin medir es **el volumen con sus datos**, y eso sí se ha
+    separado de lo que no se puede hacer: la explotación **ficticia** de 64 tierras, varias campañas, papeles
+    y movimientos se ha preparado y recorrido (§52.2). Lo que sigue sin medirse es el comportamiento con
+    **sus** papeles (tamaños, escaneos, nombres), no con datos representativos.
+  · ~~Una decisión, y no un arreglo: los dos libros de existencias~~ y ~~la comprobación con dos tierras, no
+    64~~: **las dos se han cerrado el 06/10/2026** (§52.1 y §52.2). Los dos libros se relacionan ahora por
+    identificador y las vistas físicas enseñan el mismo saldo; y la comprobación del navegador tiene un
+    escenario de 64 tierras y varias campañas. Lo que no se puede contar como cerrado está dicho en cada
+    apartado.
 
 ### 51.4 Y los números, con su fecha
 

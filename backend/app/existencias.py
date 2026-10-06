@@ -319,6 +319,9 @@ def la_deduplicacion(apuntes: list[dict], movimientos: list[dict]) -> dict:
     """
     ya_contados: dict[tuple[str, int], list[dict]] = {}
     for movimiento in movimientos:
+        # Solo los que cuentan hoy: un consumo anulado no justifica nada.
+        if not servicio_contado(movimiento):
+            continue
         clave = la_clave_de_un_consumo(movimiento)
         if clave is not None:
             ya_contados.setdefault(clave, []).append(movimiento)
@@ -637,7 +640,10 @@ def el_saldo_fisico_de_una_cesta(
     renglones = los_articulos_en_el_saldo_fisico(articulos, movimientos)
 
     por_articulo = {fila.articulo_id: fila for fila in renglones}
-    productos_usados: set[tuple[str, int]] = set()
+    # **Las fichas que sí han encontrado su artículo**, que es lo único que exime a un producto de la
+    # lista de pendientes. Apuntar aquí todas las fichas vistas —aunque no tuvieran artículo— dejaría
+    # fuera de la revisión justo los productos que hay que revisar.
+    productos_con_articulo: set[tuple[str, int]] = set()
 
     for fila_de_la_cesta in sorted(
         filas_de_la_cesta, key=lambda fila: (fila.get("nombre_comercial") or "", fila.get("producto_id") or 0)
@@ -645,10 +651,10 @@ def el_saldo_fisico_de_una_cesta(
         clase, ficha_id = _la_ficha_de_una_fila_de_la_cesta(fila_de_la_cesta)
         if clase is None or ficha_id is None:
             continue
-        productos_usados.add((clase, ficha_id))
         articulo_id = el_articulo_de_una_ficha(clase, ficha_id, relacion)
         if articulo_id is None or articulo_id not in por_articulo:
             continue
+        productos_con_articulo.add((clase, ficha_id))
         renglon = por_articulo[articulo_id]
         _pegar_la_cesta_al_articulo(
             renglon,
@@ -658,12 +664,10 @@ def el_saldo_fisico_de_una_cesta(
             articulos=articulos,
         )
 
-    # Los apuntes que la cesta no ha sabido colocar (un consumo cuyo producto ya no está en la lista)
-    # no se tiran: se devuelven, porque un apunte que desaparece es un litro que nadie cuenta.
     for renglon in renglones:
         renglon.situacion, renglon.que_pasa = la_situacion(renglon)
 
-    pendientes = _los_productos_sin_articulo(filas_de_la_cesta, productos_usados)
+    pendientes = _los_productos_sin_articulo(filas_de_la_cesta, productos_con_articulo)
 
     for renglon in renglones:
         if renglon.situacion == "pendiente" and renglon.que_pasa:
@@ -790,7 +794,11 @@ def los_apuntes_por_ficha(
     }
     por_ficha: dict[tuple[str, int], list[dict]] = {}
     for movimiento in movimientos:
-        if not es_consumo(movimiento):
+        # **Solo los que cuentan.** Una salida anulada —o cuyo apunte está anulado, que es la mitad de la
+        # regla de que una anulación revierte el efecto— no ha gastado nada, así que no puede aparecer
+        # como el consumo de nadie: si apareciera, el mismo consumo seguiría cruzándose después de
+        # anularlo y la vista diría que no ha vuelto el producto.
+        if not es_consumo(movimiento) or not servicio_contado(movimiento):
             continue
         ficha = la_ficha_de_cada_articulo.get(movimiento.get("articulo_id"))
         if ficha is None:

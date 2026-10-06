@@ -1479,11 +1479,24 @@ class TestElLibroNoSeSumaALaCesta:
     La decisión está escrita en `servicios.py`: la cesta (`/api/productos/cesta/situacion`) sigue
     calculando lo comprado con las facturas y lo gastado con los tratamientos, **sin haberla tocado**,
     y el libro cuenta solo sus movimientos. Son dos vistas distintas de lo mismo y **no se suman
-    nunca**. Estas pruebas son las que impiden que alguien las sume un día «para que cuadre»."""
+    nunca**. Estas pruebas son las que impiden que alguien las sume un día «para que cuadre».
 
-    def test_recibir_un_albaran_no_cambia_ni_un_numero_de_la_cesta(self, cliente, cuenta):
-        """La cesta de la pantalla del almacén tiene que seguir diciendo lo mismo que decía antes de
-        que existiera el libro. Es la promesa que el encargo pide por escrito."""
+    **Y desde el T21 (06/10/2026) la cesta trae además el saldo físico** (`saldo_fisico`), que es el
+    número que enseñan las dos pantallas. Eso no es sumar los dos libros: la cuenta vieja sigue
+    intacta en sus campos (`comprado`, `gastado`, `queda`) y el saldo físico viaja **al lado**, con su
+    nombre. Lo que cambia una recepción es el saldo físico, no la cuenta de los papeles.
+    """
+
+    def test_recibir_un_albaran_no_cambia_ni_un_numero_de_la_cuenta_de_los_papeles(self, cliente, cuenta):
+        """La cuenta de los papeles de la cesta sigue diciendo lo mismo que decía antes de que existiera
+        el libro. Es la promesa que el encargo pide por escrito, y aquí se mide campo a campo.
+
+        **Esta prueba comparaba la respuesta entera (`despues == antes`) y ya no puede**: desde el T21 la
+        cesta lleva también `saldo_fisico`, que es lo que el albarán sí cambia (de 0 a 5 litros). El
+        cambio de la prueba es el ticket: lo que tiene que seguir quieto es la **cuenta de los papeles**
+        —lo comprado, lo echado y su resta—, y eso es lo que se compara ahora. Si alguien sumara los dos
+        libros, estos tres números se moverían y la prueba se pondría roja.
+        """
         producto = _producto(
             cliente, cuenta["cabeceras"], cantidad_comprada=20.0, unidad_compra="L"
         )
@@ -1501,11 +1514,19 @@ class TestElLibroNoSeSumaALaCesta:
             ],
         )
         despues = _la_cesta(cliente, cuenta["cabeceras"])
-        assert despues == antes
+
+        def la_cuenta_de_los_papeles(cesta):
+            fila = _fila_de_la_cesta(cesta, producto["id"])
+            return {clave: fila[clave] for clave in ("comprado", "gastado", "queda", "unos", "apuntes") if clave in fila}
+
+        assert la_cuenta_de_los_papeles(despues) == la_cuenta_de_los_papeles(antes)
         # Y el número de la ficha del producto sigue siendo 20, no 25.
         assert _fila_de_la_cesta(despues, producto["id"])["comprado"] == 20.0
         # Mientras el libro dice 5: lo que entró por el albarán, que es otra pregunta.
         assert _el_articulo(_existencias(cliente, cuenta["cabeceras"]), "Ejemplo 25 EC")["saldo"] == 5.0
+        # **Y el saldo físico de la cesta es ese mismo 5**, que es lo que el T21 viene a arreglar: las
+        # dos pantallas que enseñan «te queda» dicen el mismo número, sin sumar nada.
+        assert _fila_de_la_cesta(despues, producto["id"])["saldo_fisico"] == 5.0
 
     def test_el_saldo_del_libro_sale_solo_de_los_movimientos(self, cliente, cuenta):
         """Con una factura de 101 L y ningún albarán, el libro dice **cero**, no 101: las facturas no

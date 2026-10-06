@@ -46,7 +46,7 @@ import datetime as dt
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
 
-from .. import models, servicios, textos
+from .. import existencias, models, servicios, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
@@ -1560,6 +1560,29 @@ def ver_las_existencias(
         # **Lo comprado que todavía no ha entrado.** Va aparte de las existencias y no se le suma
         # nunca: es la respuesta a «por qué mi almacén sale vacío si yo he comprado», y sin ella el
         # silencio parecería que el programa ha perdido el producto.
+        # **La vista que tienen que consultar todas las pantallas que enseñan «te queda».** Se monta con
+        # lo que ya se ha leído arriba y **no suma los dos libros**: cada artículo sale una vez con su
+        # `saldo_fisico`, y la cesta (cuando la haya) va al lado.
+        "el_saldo_fisico": existencias.el_saldo_fisico_de_una_cesta(
+            [],
+            [
+                {
+                    "id": fila["articulo_id"],
+                    "nombre": fila["nombre"],
+                    "categoria": fila["categoria"],
+                    "unidad": fila["unidad"],
+                    "producto_id": fila["producto_id"],
+                    "fertilizante_id": fila["fertilizante_id"],
+                }
+                for fila in filas
+            ],
+            servicios.movimientos_del_almacen(
+                db, explotacion_id=explotacion.id, solo_los_que_cuentan=True
+            ),
+            compra_sin_entrar=servicios.lo_comprado_que_no_ha_entrado(
+                db, explotacion_id=explotacion.id
+            ),
+        ),
         "comprado_sin_entrar": servicios.lo_comprado_que_no_ha_entrado(
             db, explotacion_id=explotacion.id
         ),

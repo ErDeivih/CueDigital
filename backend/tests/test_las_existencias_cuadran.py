@@ -146,8 +146,8 @@ def _una_salida(cliente, cabeceras, **cambios):
     return cliente.post("/api/almacen/salidas", headers=cabeceras, json=cuerpo)
 
 
-def _un_trabajo(cliente, cabeceras, campana, parcela, **cambios):
-    """Un trabajo hecho que gasta de un envase. La puerta es `POST /api/trabajos`."""
+def _pedir_trabajo(cliente, cabeceras, campana, parcela, **cambios):
+    """Manda un trabajo hecho y devuelve la respuesta entera: el código importa (201 o 200)."""
     cuerpo = {
         "campana_id": campana["id"],
         "tipo": "tratamiento",
@@ -157,9 +157,27 @@ def _un_trabajo(cliente, cabeceras, campana, parcela, **cambios):
         "observaciones": "Se echó con el pulverizador grande",
     }
     cuerpo.update(cambios)
-    respuesta = cliente.post("/api/trabajos", headers=cabeceras, json=cuerpo)
+    return cliente.post("/api/trabajos", headers=cabeceras, json=cuerpo)
+
+
+def _un_trabajo(cliente, cabeceras, campana, parcela, **cambios):
+    """Un trabajo hecho que gasta de un envase. La puerta es `POST /api/trabajos`."""
+    respuesta = _pedir_trabajo(cliente, cabeceras, campana, parcela, **cambios)
     assert respuesta.status_code == 201, respuesta.text
     return respuesta.json()
+
+
+def _corregir_trabajo(cliente, cabeceras, campana, parcela, labor_id, **cambios):
+    """Corregir un trabajo hecho: la puerta pide el cuerpo entero (`TrabajoEntrada`)."""
+    cuerpo = {
+        "campana_id": campana["id"],
+        "tipo": "tratamiento",
+        "fecha": "2026-05-20",
+        "parcela_id": parcela["id"],
+        "superficie_ha": 2.0,
+    }
+    cuerpo.update(cambios)
+    return cliente.put(f"/api/trabajos/{labor_id}", headers=cabeceras, json=cuerpo)
 
 
 def _una_factura(cliente, cuenta, **cambios) -> dict:
@@ -202,6 +220,15 @@ def _el_libro(cliente, cabeceras, **params) -> list[dict]:
     return respuesta.json()
 
 
+def _el_libro_que_cuenta(cliente, cabeceras, **params) -> list[dict]:
+    """El libro **solo con lo que cuenta hoy**.
+
+    Es lo que hay que pasarle al saldo: un movimiento anulado, o cuyo apunte está anulado, sigue en el
+    libro —nada se borra— pero no ha movido nada. Contarlo daría un saldo que no es el de verdad.
+    """
+    return _el_libro(cliente, cabeceras, solo_los_que_cuentan=True, **params)
+
+
 def _los_articulos_crudos(cliente, cabeceras) -> list[dict]:
     """Los artículos tal y como los devuelve su puerta, con **su `id`**, que es lo que enlaza.
 
@@ -224,7 +251,7 @@ def _la_vista_fisica(cliente, cabeceras) -> dict:
     sirven** por las puertas que existen.
     """
     cesta = _la_cesta(cliente, cabeceras)
-    movimientos = _el_libro(cliente, cabeceras)
+    movimientos = _el_libro_que_cuenta(cliente, cabeceras)
     return existencias.el_saldo_fisico_de_una_cesta(
         cesta["productos"],
         _los_articulos_crudos(cliente, cabeceras),
@@ -787,9 +814,9 @@ class TestLaVistaQueSeTieneQuePintar:
         assert vista["cuantos"] == 2
         assert {fila.articulo_id for fila in vista["articulos"]} == {1, 2}
 
-    def test_el_texto_de_un_saldo_sin_unidad_no_ensena_un_numero_suelto(self):
-        """«34» sin decir de qué no significa nada, así que se dice que la cantidad está y que en qué
-        se mide no consta."""
+    def test_sin_unidad_no_se_hace_la_cuenta_y_se_dice_que_falta_la_unidad(self):
+        """Sin saber **en qué se mide** una entrada no se puede restar nada: no es un cero, es un «no
+        se puede saber», y el texto que se enseña lo dice en lugar de dejar un número suelto."""
         vista = self._la_vista(
             cesta=[
                 {
@@ -831,9 +858,13 @@ class TestLaVistaQueSeTieneQuePintar:
             ],
             apuntes=[],
         )
-        texto = existencias.el_texto_de_un_saldo(_el_renglon(vista, 7))
-        assert texto.startswith("34,00")
-        assert "(" in texto and texto.endswith(")")
+        renglon = _el_renglon(vista, 7)
+        assert renglon.saldo_fisico is None
+        assert renglon.se_puede_saber is False
+        assert renglon.motivo_codigo == "AL32_falta_la_unidad"
+        texto = existencias.el_texto_de_un_saldo(renglon)
+        assert "en qué se miden" in texto
+        assert not texto.startswith("0")
 
     def test_cuando_no_se_puede_saber_el_texto_es_el_motivo(self):
         vista = self._la_vista(
@@ -900,6 +931,21 @@ class TestLosTextosDeEsteTicket:
         for codigo in existencias.CODIGOS_DE_TEXTO:
             assert codigo in existencias.MENSAJES
             assert existencias.MENSAJES[codigo].strip()
+
+    def test_las_frases_estan_en_el_sitio_donde_vive_todo_el_texto(self):
+        """**Las frases que ve el agricultor viven en `app/textos.py`** y no en el módulo.
+
+        Mientras el coordinador no integre el bloque, esto se queda en rojo: es el recordatorio de que
+        un texto escrito en un módulo de lógica deja de estar cubierto por la revisión de jerga y por el
+        guardián que exige que toda clave que pide la pantalla exista.
+        """
+        faltan = [codigo for codigo in existencias.CODIGOS_DE_TEXTO if codigo not in textos.MENSAJES]
+        assert not faltan, (
+            "faltan en app/textos.py las frases de este ticket: "
+            f"{faltan}. El bloque literal está en docs/T21_EXISTENCIAS.md"
+        )
+        for codigo in existencias.CODIGOS_DE_TEXTO:
+            assert textos.MENSAJES[codigo] == existencias.MENSAJES[codigo]
 
     def test_cada_hueco_se_puede_rellenar(self):
         """Un mensaje que se pide y sale en blanco es lo primero que hace desconfiar de un programa."""
@@ -1026,14 +1072,35 @@ class TestElCasoDelEncargo:
     def test_reenviar_el_trabajo_no_duplica_el_consumo(self, cliente, el_escenario):
         """La cola del móvil reintenta sin preguntar. El trabajo se reconoce por su clave de reenvío y
         el consumo **no se descuenta dos veces**."""
-        primera = self._un_trabajo_que_gasta(
-            cliente, el_escenario, clave_de_reenvio="movil-1", id_local="movil-1"
+        insumos = [
+            {
+                "articulo_id": el_escenario["articulo"]["articulo_id"],
+                "lote_id": el_escenario["lote"]["lote_id"],
+                "cantidad": 6.0,
+                "unidad": "L",
+            }
+        ]
+        primera = _un_trabajo(
+            cliente,
+            el_escenario["cabeceras"],
+            el_escenario["campana"],
+            el_escenario["parcela"],
+            insumos=insumos,
+            clave_de_reenvio="movil-1",
+            id_local="movil-1",
         )
-        segunda = self._un_trabajo_que_gasta(
-            cliente, el_escenario, clave_de_reenvio="movil-1", id_local="movil-1"
+        segunda = _pedir_trabajo(
+            cliente,
+            el_escenario["cabeceras"],
+            el_escenario["campana"],
+            el_escenario["parcela"],
+            insumos=insumos,
+            clave_de_reenvio="movil-1",
+            id_local="movil-1",
         )
-        assert segunda.get("ya_estaba") is True
-        assert segunda["hecho"]["id"] == primera["hecho"]["id"]
+        assert segunda.status_code == 200, segunda.text
+        assert segunda.json()["ya_estaba"] is True
+        assert segunda.json()["hecho"]["id"] == primera["hecho"]["id"]
         articulo = _el_articulo(_existencias(cliente, el_escenario["cabeceras"]), "Glifosato 36 SL")
         assert articulo["saldo"] == 34.0, "el reenvío ha descontado el consumo dos veces"
         assert len(
@@ -1097,19 +1164,20 @@ class TestElCasoDelEncargo:
         hecho = self._un_trabajo_que_gasta(cliente, el_escenario)
         assert _el_articulo(_existencias(cliente, el_escenario["cabeceras"]), "Glifosato 36 SL")["saldo"] == 34.0
 
-        correccion = cliente.put(
-            f"/api/trabajos/{hecho['hecho']['id']}",
-            headers=el_escenario["cabeceras"],
-            json={
-                "insumos": [
-                    {
-                        "articulo_id": el_escenario["articulo"]["articulo_id"],
-                        "lote_id": el_escenario["lote"]["lote_id"],
-                        "cantidad": 10.0,
-                        "unidad": "L",
-                    }
-                ]
-            },
+        correccion = _corregir_trabajo(
+            cliente,
+            el_escenario["cabeceras"],
+            el_escenario["campana"],
+            el_escenario["parcela"],
+            hecho["hecho"]["id"],
+            insumos=[
+                {
+                    "articulo_id": el_escenario["articulo"]["articulo_id"],
+                    "lote_id": el_escenario["lote"]["lote_id"],
+                    "cantidad": 10.0,
+                    "unidad": "L",
+                }
+            ],
         )
         assert correccion.status_code == 200, correccion.text
 
@@ -1130,19 +1198,20 @@ class TestElCasoDelEncargo:
     def test_corregir_a_la_baja_actualiza_todas_las_vistas(self, cliente, el_escenario):
         """Y corregir a menos (de 6 a 2) sube el saldo: la vista no se queda con el número viejo."""
         hecho = self._un_trabajo_que_gasta(cliente, el_escenario)
-        correccion = cliente.put(
-            f"/api/trabajos/{hecho['hecho']['id']}",
-            headers=el_escenario["cabeceras"],
-            json={
-                "insumos": [
-                    {
-                        "articulo_id": el_escenario["articulo"]["articulo_id"],
-                        "lote_id": el_escenario["lote"]["lote_id"],
-                        "cantidad": 2.0,
-                        "unidad": "L",
-                    }
-                ]
-            },
+        correccion = _corregir_trabajo(
+            cliente,
+            el_escenario["cabeceras"],
+            el_escenario["campana"],
+            el_escenario["parcela"],
+            hecho["hecho"]["id"],
+            insumos=[
+                {
+                    "articulo_id": el_escenario["articulo"]["articulo_id"],
+                    "lote_id": el_escenario["lote"]["lote_id"],
+                    "cantidad": 2.0,
+                    "unidad": "L",
+                }
+            ],
         )
         assert correccion.status_code == 200, correccion.text
         articulo = _el_articulo(_existencias(cliente, el_escenario["cabeceras"]), "Glifosato 36 SL")
@@ -1489,14 +1558,25 @@ class TestElInformeDiceLoMismoQueElCodigo:
         )
 
     def test_el_informe_lleva_los_bloques_que_el_coordinador_necesita(self):
-        """Los cambios compartidos, cada uno con su ancla: si falta uno, el que integra se queda a
-        medias y las pantallas seguirían sin decir lo mismo."""
+        """Los cambios compartidos, cada uno con su ancla y su fichero: si falta uno, el que integra se
+        queda a medias y las pantallas seguirían sin decir lo mismo.
+
+        No se busca una lista de deseos: se busca **lo que de verdad hay que pegar** en los ficheros que
+        no son de este ticket, que es el único motivo por el que este informe existe.
+        """
         texto = EL_INFORME.read_text(encoding="utf-8")
         for pieza in (
+            # El bloque 3.1: las cinco frases, tal y como se leen con ast.literal_eval.
+            "MENSAJES.update({",
+            # El bloque 3.2: la función de servicios y su import.
             "def el_saldo_fisico_de_una_cesta(",
-            "from . import existencias",
+            "from . import borradores, catalogos, correcciones, existencias, geo, legal, models, textos",
+            # El bloque 3.2, segunda mitad: la puerta de la cesta.
             "saldo_fisico",
             "situacion",
-            "MENSAJES.update({",
+            # El bloque 3.3: la vista física en la puerta del almacén.
+            "el_saldo_fisico",
+            # Y el enganche por identificador, que es la decisión del ticket.
+            "articulo_id",
         ):
             assert pieza in texto, f"al informe le falta el bloque o la línea «{pieza}»"

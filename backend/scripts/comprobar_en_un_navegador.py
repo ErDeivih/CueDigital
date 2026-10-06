@@ -51,6 +51,7 @@ Si no encuentra ningún navegador, lo dice y no falla: es una comprobación de m
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import pathlib
@@ -58,10 +59,18 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+# Y su propia carpeta, para poder usar las dos piezas que viven aquí al lado: el navegador manejado
+# por el protocolo de depuración (`navegador_cdp.py`) y la preparación del volumen
+# (`datos_representativos.py`).
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import httpx  # noqa: E402
+
+import datos_representativos  # noqa: E402
+from navegador_cdp import NavegadorDeVerdad, SinNavegador  # noqa: E402
 
 DIRECCION_POR_DEFECTO = "http://127.0.0.1:8010"
 
@@ -1520,6 +1529,712 @@ NO_SE_RECORREN = {
 }
 
 
+# ==========================================================================
+# 6 y 7. El volumen de verdad, y las descargas pulsando el botón
+# ==========================================================================
+#
+# ## Por qué estas dos secciones existen
+#
+# Todo lo de arriba se comprueba con **dos tierras y una campaña**, y con un navegador que solo sabe
+# volcar el HTML (`--dump-dom`). Eso deja fuera justo lo que el encargo pide comprobar:
+#
+#   · Que una lista larga diga el número que de verdad tiene, que el buscador **filtre**, que los
+#     filtros dejen ver 10 de 64, que la selección múltiple marque y desmarque, y que un nombre de
+#     ochenta caracteres no rompa una tarjeta ni ensanche una tabla. Con dos tierras, nada de eso se
+#     puede ver: una lista de dos filas se lee igual esté bien o esté mal.
+#   · Que una exportación **se lleve lo que se está viendo**. Eso no está en el DOM: está en un
+#     fichero que el navegador guarda. Un volcado de HTML no puede distinguir «descargó 10» de
+#     «descargó 64», ni siquiera «descargó» de «no hizo nada».
+#
+# Las dos cosas las sabe hacer `navegador_cdp.NavegadorDeVerdad` (el navegador manejado por el
+# protocolo de depuración): pulsa de verdad y observa las descargas. Y los datos los deja
+# `datos_representativos.preparar`, que devuelve **los identificadores que ha creado** para no tener
+# que hablar de «la primera tierra».
+
+# Los tres anchos del contrato. Se miden cambiando las métricas del dispositivo, no abriendo otra
+# ventana: medir es lo que da valor a la comprobación (si un ancho no se mide, no se ha comprobado).
+ANCHOS_DEL_CONTRATO = (390, 1024, 1440)
+
+# Las pantallas con lista larga, con lo que tiene que salir en cada una. Los textos que se buscan
+# **salen del escenario** —el número de tierras, los alias, los conceptos— y no se escriben a mano:
+# un número escrito a mano deja de ser verdad en cuanto cambia el escenario, y entonces la
+# comprobación pasa por el motivo equivocado.
+PANTALLAS_CON_VOLUMEN = (
+    (
+        "las tierras",
+        "#/tierras",
+        lambda e: [
+            f"Tienes {len(e.tierras)} tierras apuntadas",
+            e.tierras[0].alias,
+            e.tierras[-1].alias,
+        ],
+    ),
+    (
+        "las tierras en el mapa y en la tabla",
+        "#/tierras/mapa",
+        lambda e: [
+            # **Sin filtro el pie no dice «ves N de M»**: dice el total de la finca y los tres «sin».
+            # La frase «ves N de M» sale cuando hay filtro, y eso se comprueba más abajo, buscando y
+            # filtrando de verdad.
+            f"{len(e.tierras)} tierras",
+            "MARCAR LAS QUE SE VEN",
+            "QUITAR LA SELECCIÓN",
+            "No has marcado ninguna tierra.",
+        ],
+    ),
+    (
+        "los papeles",
+        "#/papeles",
+        lambda e: ["Los papeles", "VER EL PAPEL", "SUBIR EL PAPEL"],
+    ),
+    (
+        "las cuentas",
+        "#/cuentas",
+        lambda e: [f"Tienes {len(e.gastos)} gastos apuntados.", "Gasto de la prueba"],
+    ),
+    (
+        "el banco y los papeles",
+        "#/cuentas/bancos",
+        lambda e: [
+            "DESCARGAR EL EXTRACTO",
+            # **El alcance que anuncia la pantalla**, que es la mitad de lo que pide el encargo:
+            # «se descarga lo que estás viendo». Si esto cambiara, la comprobación lo dice.
+            "Se descarga en un fichero lo que estás viendo",
+            # **El recuento de la lista**: es el número que tiene que salir también en el fichero.
+            # (El primer movimiento del extracto **no se busca aquí**: la lista enseña los más nuevos
+            # y el «COSECHERA 01» cae más abajo, fuera de lo que la pantalla pinta. Lo que se lleva el
+            # fichero se comprueba en la sección de las descargas, contando sus filas.)
+            f"Tienes {e.movimientos_de_la_cuenta_principal} movimientos",
+        ],
+    ),
+    (
+        "los contactos",
+        "#/contactos",
+        lambda e: [f"Tienes {len(e.contactos)} fichas apuntadas.", "Proveedor de la prueba 01 S.L."],
+    ),
+    (
+        "los trabajos",
+        "#/trabajos",
+        lambda e: ["Lo que tengo pensado hacer", "Lo que he hecho", "YA LO HE HECHO"],
+    ),
+    (
+        "el libro del almacén",
+        "#/almacen/libro",
+        lambda e: ["El libro del almacén", "Lo que queda en el almacén"],
+    ),
+    (
+        "mi cuaderno",
+        "#/cuaderno",
+        lambda e: [
+            "apuntes en el cuaderno",
+            "Lo que falta por completar",
+            # El botón del fichero de datos y el del cuaderno de la Junta: los dos exportan, y los
+            # dos tienen que existir con este volumen (el de la Junta solo sale cuando el servidor
+            # sabe qué hojas llevan datos, o sea cuando de verdad hay algo que sacar).
+            "GUARDAR LOS DATOS EN UN FICHERO",
+            "SACAR MI CUADERNO",
+        ],
+    ),
+    (
+        "lo que he vendido",
+        "#/ventas",
+        lambda e: ["Lo que he vendido", f"{e.cuantas['ventas']} ventas apuntadas"],
+    ),
+)
+
+
+def _texto_de_la_pantalla(nav: NavegadorDeVerdad) -> str:
+    """Lo que se lee en la pantalla, para poder comprobar los recuentos y las frases."""
+    return (
+        nav.evaluar(
+            "document.querySelector('#pantalla') ? document.querySelector('#pantalla').innerText : ''"
+        )
+        or ""
+    )
+
+
+def _lo_que_se_sale(nav: NavegadorDeVerdad) -> str:
+    """Cuánto se sale la página de lo ancho («1367 de 1024»), o vacío si cabe entera.
+
+    Se mide el ancho **de verdad** de la página contra el ancho **de verdad** de la ventana. Sin
+    esto, una comprobación de anchura que midiera otra cosa diría que todo cabe sin haber mirado.
+    """
+    dentro = int(nav.evaluar("window.innerWidth") or 0)
+    ancho = int(
+        nav.evaluar(
+            "Math.max(document.documentElement.scrollWidth, "
+            "document.body ? document.body.scrollWidth : 0)"
+        )
+        or 0
+    )
+    return f"{ancho} de {dentro}" if ancho > dentro + 1 else ""
+
+
+def _abrir_con_la_sesion(
+    nav: NavegadorDeVerdad, direccion: str, ruta: str, paso: int, *, segundos: float = 25.0
+) -> bool:
+    """Abre una pantalla **con la sesión puesta** y espera a que la aplicación la monte.
+
+    Dos cosas que costaron una vuelta cada una y que no se pueden «simplificar»:
+
+      · **La consulta cambia en cada vuelta** (`?paso=3#/tierras`). Cambiar solo el trozo de la
+        dirección (`#/...`) **no recarga la página**: el navegador solo avisa del cambio de trozo, y
+        la aplicación se queda con el token y los datos que leyó al arrancar. Con la consulta
+        distinta, cada pantalla es un documento nuevo, que es lo que se quiere medir.
+      · **El token se pone en cada documento nuevo** (`Page.addScriptToEvaluateOnNewDocument`), antes
+        de que arranque la aplicación: el navegador se abre sin ventana y no hay nadie para teclear
+        en la pantalla de entrar.
+    """
+    nav.abrir(f"{direccion}/index.html?paso={paso}{ruta}")
+    return nav.esperar(
+        "document.querySelector('#pantalla') && "
+        "document.querySelector('#pantalla').innerText.length > 200",
+        segundos=segundos,
+    )
+
+
+def _el_volumen(
+    nav: NavegadorDeVerdad, direccion: str, escenario: datos_representativos.Escenario, paso: list[int]
+) -> None:
+    """Las pantallas con lista larga, a los tres anchos del contrato."""
+    for nombre, ruta, esperadas in PANTALLAS_CON_VOLUMEN:
+        paso[0] += 1
+        montada = _abrir_con_la_sesion(nav, direccion, ruta, paso[0])
+        comprobar(montada, f"volumen · {nombre}: la pantalla se monta con {len(escenario.tierras)} tierras y lo demás")
+        if not montada:
+            continue
+        # **Y se espera a los datos, no solo a que la pantalla esté montada.** Hay pantallas —las
+        # cuentas, el banco— que se pintan primero con sus explicaciones y piden lo suyo al servidor
+        # después: leer el texto en cuanto hay 200 caracteres lee la pantalla **antes** de que lleguen
+        # los gastos, y entonces la comprobación diría que no sale un recuento que sí sale.
+        esperadas_aqui = [esperado for esperado in esperadas(escenario) if esperado]
+        if esperadas_aqui:
+            nav.esperar(
+                " && ".join(
+                    f"document.body.innerText.includes({json.dumps(esperado)})"
+                    for esperado in esperadas_aqui
+                ),
+                segundos=20,
+            )
+        texto = _texto_de_la_pantalla(nav)
+        falta = [esperado for esperado in esperadas_aqui if esperado not in texto]
+        comprobar(
+            falta == [],
+            f"volumen · {nombre}: sale lo que tiene que salir "
+            f"({', '.join(falta) if falta else 'los recuentos y los datos de verdad'})",
+        )
+        for ancho in ANCHOS_DEL_CONTRATO:
+            nav.medir(ancho, 900)
+            # Un respiro para que el navegador termine de recolocar lo que cambia de forma al pasar
+            # de móvil a ordenador: medir a media transición daría un ancho que no es el de nadie.
+            time.sleep(0.3)
+            se_sale = _lo_que_se_sale(nav)
+            comprobar(
+                se_sale == "",
+                f"volumen · {nombre}: a {ancho} px no se sale de lo ancho "
+                f"({'se sale ' + se_sale + ' px' if se_sale else 'cabe entera'})",
+            )
+        nav.medir(1440, 900)
+
+
+def _cuantas_tierras_se_ven(nav: NavegadorDeVerdad) -> int:
+    """Cuántas tierras tiene **pintadas** la tabla de la vista de las tierras.
+
+    Se cuentan las casillas de marcar, que son una por fila. Es la mitad que hace que un recuento
+    valga: la pantalla puede decir «ves 10 de 64» y estar pintando 64 filas, y eso es justo lo que
+    hay que cazar.
+    """
+    return int(nav.evaluar("document.querySelectorAll('[data-accion=\"t06-marcar\"]').length") or 0)
+
+
+def _el_volumen_se_busca_y_se_marca(
+    nav: NavegadorDeVerdad, direccion: str, escenario: datos_representativos.Escenario, paso: list[int]
+) -> None:
+    """El buscador, los filtros, la selección múltiple y los datos incompletos, **pulsando**.
+
+    Es la mitad que no se puede comprobar con dos tierras: con 64, un buscador que no filtre deja
+    64 filas y un filtro que no filtre deja el pie diciendo «ves 64 de 64».
+    """
+    total = len(escenario.tierras)
+    paso[0] += 1
+    comprobar(
+        _abrir_con_la_sesion(nav, direccion, "#/tierras/mapa", paso[0]),
+        "volumen · la vista de las tierras se abre para buscar y marcar",
+    )
+    # --- lo primero, sin tocar nada ------------------------------------------------------------
+    nav.esperar("document.body.innerText.includes('No has marcado ninguna tierra.')", segundos=15)
+    texto = _texto_de_la_pantalla(nav)
+    pintadas = _cuantas_tierras_se_ven(nav)
+    # **Sin filtro el pie no dice «ves N de M», dice el total de la finca** (y los tres «sin»): por
+    # eso no se busca la misma frase que con el filtro puesto.
+    comprobar(
+        f"{total} tierras" in texto and pintadas == total,
+        f"volumen · sin filtros, el pie dice que hay {total} tierras y la tabla pinta {pintadas}",
+    )
+
+    # --- la selección múltiple: marcar todo, desmarcarlo y marcar una ---------------------------
+    nav.pulsar('[data-accion="t06-marcar-todas"]')
+    texto = _texto_de_la_pantalla(nav)
+    casillas = int(nav.evaluar("document.querySelectorAll('[data-accion=\"t06-marcar\"]:checked').length") or 0)
+    comprobar(
+        f"Has marcado {total} tierras" in texto and casillas == total,
+        f"volumen · MARCAR LAS QUE SE VEN marca las {total} tierras y su recuento cuadra "
+        f"(dice «{'Has marcado ' + str(total) + ' tierras' if f'Has marcado {total} tierras' in texto else 'otra cosa'}» y hay {casillas} casillas marcadas)",
+    )
+    nav.pulsar('[data-accion="t06-desmarcar-todas"]')
+    texto = _texto_de_la_pantalla(nav)
+    casillas = int(nav.evaluar("document.querySelectorAll('[data-accion=\"t06-marcar\"]:checked').length") or 0)
+    comprobar(
+        "No has marcado ninguna tierra." in texto and casillas == 0,
+        f"volumen · QUITAR LA SELECCIÓN desmarca las {total} tierras ({casillas} casillas marcadas)",
+    )
+    # Y una sola, **por su identificador** (el que devolvió la preparación): es lo que comprueba que
+    # la casilla de una fila concreta marca esa fila y no otra.
+    una = escenario.tierras[0]
+    nav.pulsar(f'[data-accion="t06-marcar"][data-id="{una.id}"]')
+    texto = _texto_de_la_pantalla(nav)
+    casillas = int(nav.evaluar("document.querySelectorAll('[data-accion=\"t06-marcar\"]:checked').length") or 0)
+    comprobar(
+        "Has marcado 1 tierra" in texto and casillas == 1,
+        "volumen · la casilla de una tierra la marca sola, y el recuento lo dice en singular",
+    )
+    nav.pulsar(f'[data-accion="t06-marcar"][data-id="{una.id}"]')
+    comprobar(
+        "No has marcado ninguna tierra." in _texto_de_la_pantalla(nav),
+        "volumen · volver a pulsar la casilla la desmarca",
+    )
+
+    # --- el buscador: lo que casa sale, lo que no casa no ---------------------------------------
+    nav.evaluar(
+        "(() => { const campo = document.querySelector('#t06_buscar');"
+        f" campo.value = {json.dumps(escenario.búsqueda_de_tierra)};"
+        " campo.dispatchEvent(new Event('input', { bubbles: true })); return null; })()"
+    )
+    nav.pulsar('[data-accion="t06-buscar"]')
+    nav.esperar("document.body.innerText.includes('Ves ')", segundos=10)
+    texto = _texto_de_la_pantalla(nav)
+    casan = escenario.cuantas_casan
+    pintadas = _cuantas_tierras_se_ven(nav)
+    comprobar(
+        f"Ves {casan} de {total} tierras" in texto and pintadas == casan,
+        f"volumen · el buscador «{escenario.búsqueda_de_tierra}» deja {casan} de {total} tierras "
+        f"y la tabla pinta {pintadas} "
+        f"(el pie dice «{'Ves ' + str(casan) + ' de ' + str(total) + ' tierras' if f'Ves {casan} de {total} tierras' in texto else 'otra cosa'}»)",
+    )
+    # **La mitad que importa**: la tierra que no casa no puede seguir ahí. Se busca una que no casó
+    # (por construcción) y se exige que no esté en la pantalla.
+    sin_casar = next(
+        tierra for tierra in escenario.tierras if escenario.búsqueda_de_tierra.lower() not in tierra.alias.lower()
+    )
+    comprobar(
+        sin_casar.alias not in texto,
+        f"volumen · el buscador no deja la tierra que no casa ({sin_casar.alias[:40]}…)",
+    )
+    nav.pulsar('[data-accion="t06-quitar-filtros"]')
+    pintadas = _cuantas_tierras_se_ven(nav)
+    comprobar(
+        f"{total} tierras" in _texto_de_la_pantalla(nav) and pintadas == total,
+        f"volumen · QUITAR LOS FILTROS devuelve las {total} tierras a la vista (pinta {pintadas})",
+    )
+
+    # --- un filtro por lo sembrado ---------------------------------------------------------------
+    # El valor de la opción lo da la pantalla, no se escribe a mano: se busca el botón cuyo texto es
+    # el cultivo y se pulsa **ese**, por su `data-valor`.
+    cultivo = "TRIGO BLANDO"
+    sin_ese_cultivo = next(
+        tierra for tierra in escenario.tierras if tierra.cultivo != cultivo
+    )
+    valor = nav.evaluar(
+        "(() => { const boton = Array.from(document.querySelectorAll("
+        "'[data-accion=\"t06-filtrar\"][data-campo=\"cultivo\"]')).find((b) => b.innerText.trim() === "
+        f"{json.dumps(cultivo)}); return boton ? boton.dataset.valor : null; }})()"
+    )
+    comprobar(
+        valor is not None,
+        f"volumen · la vista de las tierras ofrece el filtro «{cultivo}» (valor {valor!r})",
+    )
+    if valor is not None:
+        nav.pulsar(f'[data-accion="t06-filtrar"][data-campo="cultivo"][data-valor="{valor}"]')
+        texto = _texto_de_la_pantalla(nav)
+        con_ese_cultivo = escenario.cuantas_casan_por_cultivo.get(cultivo, 0)
+        pintadas = _cuantas_tierras_se_ven(nav)
+        comprobar(
+            f"Ves {con_ese_cultivo} de {total} tierras" in texto and pintadas == con_ese_cultivo,
+            f"volumen · el filtro de «{cultivo}» deja {con_ese_cultivo} de {total} tierras "
+            f"(la tabla pinta {pintadas})",
+        )
+        comprobar(
+            sin_ese_cultivo.alias not in texto,
+            "volumen · el filtro de cultivo deja fuera lo que no tiene ese cultivo "
+            f"({sin_ese_cultivo.cultivo or 'sin decir'})",
+        )
+        nav.pulsar('[data-accion="t06-quitar-filtros"]')
+
+    # --- los datos que no se saben: un hueco, nunca un cero ---------------------------------------
+    sin_superficie = escenario.tierras_sin_superficie[0]
+    fila = nav.evaluar(
+        "(() => { const boton = document.querySelector("
+        f"'[data-accion=\"t06-elegir-fila\"][data-id=\"{sin_superficie.id}\"]');"
+        " return boton ? boton.closest('tr').innerText : null; })()"
+    )
+    comprobar(
+        fila is not None and "Sin hectáreas dichas" in fila,
+        "volumen · una tierra sin superficie se lee «Sin hectáreas dichas»",
+    )
+    comprobar(
+        fila is not None and "0,00" not in fila and "0 ha" not in fila,
+        "volumen · una tierra sin superficie NO se lee como cero hectáreas",
+    )
+    sin_cultivo = escenario.tierras_sin_cultivo[0]
+    fila = nav.evaluar(
+        "(() => { const boton = document.querySelector("
+        f"'[data-accion=\"t06-elegir-fila\"][data-id=\"{sin_cultivo.id}\"]');"
+        " return boton ? boton.closest('tr').innerText : null; })()"
+    )
+    comprobar(
+        fila is not None and "Sin decir qué tiene" in fila,
+        "volumen · una tierra sin cultivo declarado se lee «Sin decir qué tiene»",
+    )
+    sin_forma = escenario.tierras_sin_forma[0]
+    fila = nav.evaluar(
+        "(() => { const boton = document.querySelector("
+        f"'[data-accion=\"t06-elegir-fila\"][data-id=\"{sin_forma.id}\"]');"
+        " return boton ? boton.closest('tr').innerText : null; })()"
+    )
+    comprobar(
+        fila is not None and "SIN FORMA" in fila,
+        "volumen · una tierra sin forma se dice con palabras («SIN FORMA»), no con un color",
+    )
+
+    # --- el nombre largo, en la lista de tarjetas ------------------------------------------------
+    paso[0] += 1
+    comprobar(
+        _abrir_con_la_sesion(nav, direccion, "#/tierras", paso[0]),
+        "volumen · la lista de tarjetas se abre con nombres largos",
+    )
+    largo = max(escenario.tierras, key=lambda tierra: len(tierra.alias))
+    nav.esperar(
+        f"document.body.innerText.includes({json.dumps(largo.alias)})", segundos=15
+    )
+    texto = _texto_de_la_pantalla(nav)
+    comprobar(
+        largo.alias in texto,
+        f"volumen · el nombre más largo ({len(largo.alias)} caracteres) se lee entero: {largo.alias[:60]}…",
+    )
+    nav.medir(390, 900)
+    comprobar(
+        _lo_que_se_sale(nav) == "",
+        "volumen · el nombre más largo no rompe la tarjeta a 390 px "
+        f"({'se sale ' + _lo_que_se_sale(nav) if _lo_que_se_sale(nav) else 'cabe entera'})",
+    )
+    nav.medir(1440, 900)
+
+
+def _el_fichero_descargado(
+    nav: NavegadorDeVerdad,
+    direccion: str,
+    ruta: str,
+    selector: str,
+    carpeta: pathlib.Path,
+    paso: list[int],
+    *,
+    antes: list[str] | None = None,
+) -> pathlib.Path | None:
+    """Abre una pantalla, **pulsa el botón de verdad** y devuelve el fichero que ha bajado.
+
+    Cada descarga va a **su propia carpeta vacía**: el ayudante devuelve el fichero más reciente de
+    la carpeta, así que con una sola carpeta para todas no se sabría de qué botón es cada fichero (y
+    el navegador añade «(1)» al nombre cuando ya existe otro igual).
+
+    `antes` son los pasos que hay que dar en esa pantalla antes de descargar (escribir en el
+    buscador y pulsarlo, por ejemplo). Un paso que empieza por `pulsar:` es un clic; lo demás es
+    JavaScript que se ejecuta en la página.
+    """
+    carpeta.mkdir(parents=True, exist_ok=True)
+    for viejo in carpeta.iterdir():
+        viejo.unlink()
+    paso[0] += 1
+    if not _abrir_con_la_sesion(nav, direccion, ruta, paso[0]):
+        return None
+    for accion in antes or []:
+        if accion.startswith("pulsar:"):
+            nav.pulsar(accion[len("pulsar:") :])
+        else:
+            nav.evaluar(accion)
+    nav.descargas_en(str(carpeta))
+    try:
+        nav.pulsar(selector)
+    except RuntimeError:
+        return None
+    return nav.lo_descargado(segundos=60)
+
+
+def _filas_del_csv(fichero: pathlib.Path, separador: str = ";") -> list[list[str]]:
+    """Las filas de un CSV, sin las vacías. El del cuaderno trae marca de orden de bytes al principio."""
+    texto = fichero.read_text(encoding="utf-8-sig")
+    return [fila for fila in csv.reader(texto.splitlines(), delimiter=separador) if any(fila)]
+
+
+def _la_pista_del_boton(nav: NavegadorDeVerdad, selector: str) -> str:
+    """Lo que la pantalla dice del botón que se va a pulsar (su texto y su pista de debajo).
+
+    Es lo que permite comprobar el «alcance anunciado» del encargo: si un botón se lleva lo
+    filtrado, la pantalla tiene que decirlo.
+    """
+    return (
+        nav.evaluar(
+            "(() => { const boton = document.querySelector("
+            f"{json.dumps(selector)}); if (!boton) return '';"
+            " const pista = boton.querySelector('.pista-boton');"
+            " return boton.innerText + ' || ' + (pista ? pista.innerText : ''); })()"
+        )
+        or ""
+    )
+
+
+def _las_descargas(
+    nav: NavegadorDeVerdad,
+    direccion: str,
+    escenario: datos_representativos.Escenario,
+    paso: list[int],
+    temporal: pathlib.Path,
+) -> None:
+    """**Pulsar cada botón de exportar y mirar el fichero que se descarga.**
+
+    Se comprueba lo que no se puede comprobar por la API: que el botón existe, que hace algo, cómo se
+    llama el fichero, en qué formato sale, qué filas lleva, de qué explotación y de qué campaña es, y
+    **si se lleva lo que la pantalla dice que se lleva**. Y que no aparezca ni un registro de otra
+    explotación (la preparación crea dos cuentas justo para esto).
+    """
+    jena = [marca for marca in escenario.marcas_ajenas if marca]
+
+    def no_se_cuela(texto: str) -> str:
+        """La marca de la explotación ajena que apareciera, o vacío. Ninguna puede aparecer."""
+        return next((marca for marca in jena if marca in texto), "")
+
+    # --------------------------------------------------------------- 1. el fichero de datos
+    fichero = _el_fichero_descargado(
+        nav,
+        direccion,
+        "#/cuaderno",
+        '[data-accion="sacar-datos"]',
+        temporal / "datos",
+        paso,
+    )
+    comprobar(fichero is not None, "descargas · el botón «GUARDAR LOS DATOS EN UN FICHERO» descarga algo")
+    if fichero is not None:
+        anio = escenario.volumen.campana_actual.anio
+        comprobar(
+            fichero.name == f"cuaderno_{anio}.csv",
+            f"descargas · el fichero de datos se llama «cuaderno_{anio}.csv» (se llama «{fichero.name}»)",
+        )
+        texto = fichero.read_text(encoding="utf-8-sig")
+        primera = texto.splitlines()[0] if texto.splitlines() else ""
+        comprobar(
+            escenario.volumen.nombre in primera and str(anio) in primera,
+            f"descargas · el fichero de datos dice de qué explotación y de qué campaña es («{primera[:90]}»)",
+        )
+        tierras_en_el_fichero = sum(1 for tierra in escenario.tierras if tierra.alias in texto)
+        comprobar(
+            tierras_en_el_fichero == len(escenario.tierras),
+            f"descargas · el fichero de datos lleva las {len(escenario.tierras)} tierras "
+            f"({tierras_en_el_fichero} de {len(escenario.tierras)})",
+        )
+        comprobar(
+            not no_se_cuela(texto),
+            f"descargas · el fichero de datos no lleva nada de otra explotación ({no_se_cuela(texto)})",
+        )
+        # El alcance que anuncia la pantalla, leído de la pantalla: el botón no lleva pista propia,
+        # así que lo que se anuncia es lo que dice el bloque donde vive. Se deja dicho en el informe.
+        anuncio = _la_pista_del_boton(nav, '[data-accion="sacar-datos"]')
+        print(f"    (lo que la pantalla dice del botón: {anuncio[:160] or 'nada'})")
+
+    # --------------------------------------------------------------- 2. el papel (PDF)
+    fichero = _el_fichero_descargado(
+        nav, direccion, "#/cuaderno", '[data-accion="sacar-papel"]', temporal / "papel", paso
+    )
+    comprobar(fichero is not None, "descargas · el botón «SACAR EN PAPEL» descarga algo")
+    if fichero is not None:
+        comprobar(
+            fichero.name == "cuaderno.pdf",
+            f"descargas · el papel se llama «cuaderno.pdf» (se llama «{fichero.name}»)",
+        )
+        comprobar(
+            fichero.read_bytes()[:4] == b"%PDF",
+            "descargas · el fichero del papel es un PDF de verdad (empieza por %PDF)",
+        )
+
+    # --------------------------------------------------------------- 3. el cuaderno de la Junta
+    fichero = _el_fichero_descargado(
+        nav,
+        direccion,
+        "#/cuaderno",
+        '[data-accion="cuaderno-sacar"]',
+        temporal / "junta",
+        paso,
+    )
+    comprobar(fichero is not None, "descargas · el botón «SACAR MI CUADERNO» descarga algo")
+    if fichero is not None:
+        comprobar(
+            fichero.name == "cuaderno-de-la-junta.xlsx",
+            f"descargas · el cuaderno de la Junta se llama «cuaderno-de-la-junta.xlsx» (se llama «{fichero.name}»)",
+        )
+        anuncio = _la_pista_del_boton(nav, '[data-accion="cuaderno-sacar"]')
+        print(f"    (lo que la pantalla dice del botón: {anuncio[:200] or 'nada'})")
+        try:
+            import openpyxl
+
+            libro = openpyxl.load_workbook(fichero, read_only=True)
+            comprobar(
+                len(libro.sheetnames) == 25,
+                f"descargas · el cuaderno de la Junta es un XLSX que se abre y trae las 25 hojas "
+                f"({len(libro.sheetnames)})",
+            )
+            todo = []
+            for hoja in libro.worksheets:
+                for fila in hoja.iter_rows(values_only=True):
+                    todo.extend(str(celda) for celda in fila if celda is not None)
+            dentro = "\n".join(todo)
+            comprobar(
+                escenario.volumen.nombre in dentro and str(escenario.volumen.campana_actual.anio) in dentro,
+                "descargas · el cuaderno de la Junta dice de qué explotación y de qué año es",
+            )
+            # **Las tierras van por sus números del SIGPAC, no por el alias del agricultor**, y está
+            # bien: el cuaderno de la Junta no conoce los nombres que él les pone. Lo que se
+            # comprueba es que **cada tierra con referencia** tiene su fila, con su polígono y su
+            # parcela, en la hoja 2.1 (la de «datos de las parcelas»). Buscar el alias ahí sería
+            # buscar algo que ese fichero no debe llevar.
+            hoja_parcelas = next(
+                (hoja for hoja in libro.worksheets if hoja.title.startswith("2.1")), None
+            )
+            comprobar(
+                hoja_parcelas is not None,
+                "descargas · el cuaderno de la Junta trae la hoja 2.1 de los datos de las parcelas",
+            )
+            if hoja_parcelas is not None:
+                filas = list(hoja_parcelas.iter_rows(values_only=True))
+                en_el_fichero = {
+                    (str(fila[6]), str(fila[7]))
+                    for fila in filas
+                    if len(fila) > 7 and fila[6] not in (None, "") and fila[7] not in (None, "")
+                }
+                esperadas = {
+                    (tierra.ref_sigpac.split("-")[4], tierra.ref_sigpac.split("-")[5])
+                    for tierra in escenario.tierras
+                    if tierra.ref_sigpac
+                }
+                faltan = sorted(esperadas - en_el_fichero)
+                comprobar(
+                    not faltan,
+                    f"descargas · el cuaderno de la Junta lleva las {len(esperadas)} tierras con "
+                    f"referencia, cada una con su polígono y su parcela "
+                    f"({len(esperadas) - len(faltan)} de {len(esperadas)}"
+                    + (f"; faltan {faltan[:3]}" if faltan else "") + ")",
+                )
+            comprobar(
+                not no_se_cuela(dentro),
+                f"descargas · el cuaderno de la Junta no lleva nada de otra explotación ({no_se_cuela(dentro)})",
+            )
+            libro.close()
+        except ImportError:  # pragma: no cover - openpyxl está en requirements.txt
+            comprobar(False, "descargas · no se ha podido abrir el XLSX (falta openpyxl)")
+
+    # --------------------------------------------------------------- 4. el extracto, entero
+    fichero = _el_fichero_descargado(
+        nav,
+        direccion,
+        "#/cuentas/bancos",
+        '[data-accion="banco-exportar"]',
+        temporal / "extracto-todo",
+        paso,
+    )
+    comprobar(fichero is not None, "descargas · el botón «DESCARGAR EL EXTRACTO» descarga algo")
+    sin_filtro = ""
+    if fichero is not None:
+        comprobar(
+            fichero.name == "extracto.csv",
+            f"descargas · el extracto se llama «extracto.csv» (se llama «{fichero.name}»)",
+        )
+        sin_filtro = fichero.read_text(encoding="utf-8-sig")
+        filas = _filas_del_csv(fichero)
+        comprobar(
+            filas and "Concepto" in filas[0],
+            f"descargas · el extracto lleva sus cabeceras ({' · '.join(filas[0][:4]) if filas else 'sin cabecera'})",
+        )
+        de_la_principal = escenario.movimientos_de_la_cuenta_principal
+        comprobar(
+            sin_filtro.count("CUOTA DE LA COSECHERA") == escenario.movimientos_que_casan
+            and sin_filtro.count("GASTO CORRIENTE DE LA NAVE") == de_la_principal - escenario.movimientos_que_casan,
+            "descargas · sin filtro, el extracto se lleva los movimientos de la cuenta que está puesta "
+            f"({len(filas) - 1} filas)",
+        )
+        comprobar(
+            not no_se_cuela(sin_filtro),
+            f"descargas · el extracto no lleva nada de otra explotación ({no_se_cuela(sin_filtro)})",
+        )
+        anuncio = _la_pista_del_boton(nav, '[data-accion="banco-exportar"]')
+        comprobar(
+            "lo que estás viendo" in anuncio,
+            f"descargas · la pantalla del banco dice qué se lleva el fichero («{anuncio[:120]}»)",
+        )
+
+    # --------------------------------------------------------------- 5. el extracto, filtrado
+    # **La comprobación que pidió el encargo con sus palabras**: «un filtro de 10 tierras entre 64 no
+    # debe exportar silenciosamente las 64». Se filtra la lista por un texto que casa con 10 de los 30
+    # movimientos de la cuenta y se mira el fichero: tiene que llevar 10, no 30.
+    escribir_el_filtro = (
+        "(() => { const campo = document.querySelector('#banco-buscar');"
+        f" campo.value = {json.dumps(escenario.búsqueda_del_banco)};"
+        " campo.dispatchEvent(new Event('input', { bubbles: true })); return null; })()"
+    )
+    fichero = _el_fichero_descargado(
+        nav,
+        direccion,
+        "#/cuentas/bancos",
+        '[data-accion="banco-exportar"]',
+        temporal / "extracto-filtrado",
+        paso,
+        antes=[escribir_el_filtro, 'pulsar:[data-accion="banco-buscar"]'],
+    )
+    comprobar(fichero is not None, "descargas · el extracto filtrado se descarga")
+    if fichero is not None and sin_filtro:
+        texto = fichero.read_text(encoding="utf-8-sig")
+        filas = _filas_del_csv(fichero)
+        casan = escenario.movimientos_que_casan
+        comprobar(
+            texto.count("CUOTA DE LA COSECHERA") == casan,
+            f"descargas · con «{escenario.búsqueda_del_banco}» puesto, el fichero lleva los {casan} "
+            f"movimientos que se ven, no los {escenario.movimientos_de_la_cuenta_principal} "
+            f"(lleva {texto.count('CUOTA DE LA COSECHERA')})",
+        )
+        comprobar(
+            "GASTO CORRIENTE DE LA NAVE" not in texto,
+            "descargas · el extracto filtrado NO se lleva los movimientos que el filtro deja fuera",
+        )
+        comprobar(
+            len(filas) - 1 == casan,
+            f"descargas · el extracto filtrado tiene {casan} filas de datos ({len(filas) - 1})",
+        )
+
+    # --------------------------------------------------------------- 6. el papel de un documento
+    # Este no es una exportación de una lista: es la descarga del fichero de un papel. Se comprueba
+    # igual (nombre, formato y que el contenido sea el que se subió) porque es un botón de descargar.
+    fichero = _el_fichero_descargado(
+        nav, direccion, "#/papeles", '[data-accion="papel-ver"]', temporal / "papel-de-un-documento", paso
+    )
+    comprobar(fichero is not None, "descargas · el botón «VER EL PAPEL» de un papel descarga su fichero")
+    if fichero is not None:
+        comprobar(
+            fichero.name == datos_representativos.NOMBRE_DEL_PAPEL_CON_FICHERO,
+            f"descargas · el papel descargado se llama como el que se subió "
+            f"(«{fichero.name}», se subió «{datos_representativos.NOMBRE_DEL_PAPEL_CON_FICHERO}»)",
+        )
+        comprobar(
+            fichero.read_bytes() == datos_representativos.UN_PNG_DE_UN_PIXEL,
+            "descargas · el papel descargado es el mismo fichero que se subió, byte a byte",
+        )
+
+
 def pagina_de_pantalla(token: str, direccion: str, ruta: list[str]) -> pathlib.Path:
     """Una página que deja la sesión puesta y arranca la aplicación, **servida por el propio programa**.
 
@@ -2892,6 +3607,60 @@ def main() -> int:
             not list((pathlib.Path(__file__).resolve().parents[1] / "web").glob("_comprobacion*")),
             "no queda ningún fichero de la comprobación dentro de la aplicación",
         )
+
+        # ==================================================================
+        # 6 y 7. El volumen de verdad, y las descargas pulsando el botón
+        # ==================================================================
+        #
+        # **Estas dos van al final a propósito**: crean su propia explotación con 64 tierras (unos
+        # minutos y unas cuatrocientas peticiones) y no tocan nada de lo de arriba. Si fallaran, lo de
+        # arriba ya está comprobado y contado.
+        print("\n6. El volumen: 64 tierras, listas largas, búsqueda, filtros y selección")
+        escenario = None
+        try:
+            escenario = datos_representativos.preparar(direccion)
+        except Exception as error:  # noqa: BLE001 - se dice lo que ha pasado y se sigue
+            comprobar(False, f"la preparación del volumen ha fallado: {error}")
+        if escenario is not None:
+            print(f"   (lo que ha creado la preparación: {escenario.resumen().replace(chr(10), chr(10) + '    ')})")
+            comprobar(
+                len(escenario.tierras) == 64,
+                f"volumen · la preparación deja las 64 tierras (deja {len(escenario.tierras)})",
+            )
+            comprobar(
+                0 < escenario.cuantas_casan < len(escenario.tierras),
+                f"volumen · la búsqueda de la prueba casa con parte de las tierras, no con todas "
+                f"({escenario.cuantas_casan} de {len(escenario.tierras)})",
+            )
+            comprobar(
+                len(escenario.tierras_sin_superficie) > 0
+                and len(escenario.tierras_sin_forma) > 0
+                and len(escenario.tierras_sin_cultivo) > 0,
+                "volumen · la preparación deja a propósito tierras sin superficie, sin forma y sin cultivo",
+            )
+            try:
+                with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
+                    # El token, en **cada documento nuevo**: el navegador se abre sin ventana y no hay
+                    # nadie para teclear en la pantalla de entrar.
+                    nav.orden(
+                        "Page.addScriptToEvaluateOnNewDocument",
+                        {
+                            "source": "window.localStorage.setItem('cuedigital.token', "
+                            f"{json.dumps(escenario.volumen.token)});"
+                        },
+                    )
+                    paso = [0]
+                    _el_volumen(nav, direccion, escenario, paso)
+                    _el_volumen_se_busca_y_se_marca(nav, direccion, escenario, paso)
+                    print("\n7. Las descargas: se pulsa el botón de verdad y se mira el fichero")
+                    with tempfile.TemporaryDirectory(prefix="cuedigital-descargas-") as descargas:
+                        _las_descargas(
+                            nav, direccion, escenario, paso, pathlib.Path(descargas)
+                        )
+            except SinNavegador as error:
+                # Es la misma regla que al principio: sin navegador esto no se puede comprobar, y se
+                # dice; no es un fallo del programa.
+                comprobar(False, f"no se ha podido comprobar el volumen en un navegador: {error}")
 
     print()
     if FALLOS:

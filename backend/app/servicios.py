@@ -1741,6 +1741,120 @@ def existencias_del_almacen(
     return devueltos
 
 
+def el_saldo_fisico_de_una_cesta(db: Session, *, explotacion_id: int) -> dict:
+    """El saldo **físico** de cada artículo, relacionado con la cesta **por identificador**.
+
+    Es la pieza que hace que las dos pantallas que enseñan «te queda» digan lo mismo. Hasta hoy la cesta
+    (`situacion_de_la_cesta`) contestaba con facturas menos tratamientos y el almacén con el libro de
+    movimientos, y los dos números podían no parecerse. Aquí se juntan **sin sumarlos**: el número que se
+    enseña es el físico, y lo que dice la cesta viaja al lado con su nombre.
+
+    La lógica pura —qué es una entrada, qué es un consumo y cómo se relacionan producto, artículo y
+    lote— vive en `app/existencias.py`, que se prueba sin base de datos ni servidor. Aquí solo se leen
+    las filas y se le pasan.
+
+    **Lo que no se hace:** unir dos cosas por el nombre, sumar los dos libros, ni convertir en cero un
+    producto que no tenga artículo. Un dato sin correlación **queda pendiente** y se declara
+    (`pendientes`, con su aviso `A24`).
+
+    **Devuelve `por_articulo` con la clave `articulo_id`**, que es el identificador del artículo del
+    almacén (`Articulo.id`). Es `None` cuando el producto de la cesta **no tiene artículo**: entonces el
+    producto no está en `por_articulo` y sale en `pendientes`. La puerta de la cesta se queda con ese
+    `articulo_id` y **no vuelve a relacionar nada**: relacionar dos veces es como un día las dos
+    relaciones dicen cosas distintas.
+
+    `apuntes` es la lista de consumos ya apuntados en el cuaderno (los tratamientos de la campaña, con
+    `origen_tipo="tratamiento"`). Se pasan para poder decir «este consumo está apuntado y no ha salido de
+    ningún envase», que es una de las cosas que hay que revisar. Sin ellos, el cruce se hace con los
+    propios movimientos del almacén y se detecta igual el mismo consumo por las dos puertas.
+    """
+    # **El import va aquí dentro y no arriba a propósito**: `app/existencias.py` importa este módulo
+    # en su cabecera (`from . import legal, servicios, textos`), así que importarlo arriba sería un
+    # ciclo entre los dos. Dentro de la función no hay ciclo, y el módulo ya está cargado cuando se
+    # llama a esto.
+    from . import existencias
+
+    articulos = list(
+        db.scalars(
+            select(models.Articulo).where(models.Articulo.explotacion_id == explotacion_id)
+        )
+    )
+    movimientos = movimientos_del_almacen(
+        db, explotacion_id=explotacion_id, solo_los_que_cuentan=True
+    )
+    apuntes = [
+        {
+            "origen_tipo": "tratamiento",
+            "origen_id": tratamiento.id,
+            "producto_id": tratamiento.producto_id,
+            "cantidad": tratamiento.cantidad_total,
+            "unidad": (tratamiento.unidad_cantidad_aplicada or "").strip()
+            or legal.unidad_de_una_dosis(tratamiento.unidad_dosis),
+        }
+        for tratamiento in db.scalars(
+            select(models.TratamientoFitosanitario).where(
+                models.TratamientoFitosanitario.explotacion_id == explotacion_id,
+                models.TratamientoFitosanitario.anulado.is_(False),
+            )
+        )
+    ]
+    # **La relación se calcula una vez, aquí**, y viaja en la respuesta: así la puerta de la cesta no
+    # tiene que volver a relacionar por su cuenta (y no puede equivocarse haciéndolo de otra manera).
+    relacion = existencias.la_relacion_por_identificador(
+        [
+            {
+                "id": articulo.id,
+                "producto_id": articulo.producto_id,
+                "fertilizante_id": articulo.fertilizante_id,
+            }
+            for articulo in articulos
+        ]
+    )
+    por_producto: dict[int, dict] = {}
+    for fila in situacion_de_la_cesta(db, explotacion_id=explotacion_id, campana_id=None):
+        por_producto[fila["producto_id"]] = {
+            "producto_id": fila["producto_id"],
+            # El identificador del artículo del almacén, que es lo que engancha las dos vistas. `None`
+            # es «este producto no tiene artículo», y entonces sale en `pendientes` con su aviso.
+            "articulo_id": existencias.el_articulo_de_una_ficha(
+                "producto", fila["producto_id"], relacion
+            ),
+            "nombre_comercial": fila["nombre_comercial"],
+            "numero_registro": fila["numero_registro"],
+            "unidad_compra": fila["unidad_compra"],
+            "comprado": fila["comprado"],
+            "comprado_de_donde": fila["comprado_de_donde"],
+            "gastado": fila["gastado"],
+            "apuntes": fila["apuntes"],
+        }
+    vista = existencias.el_saldo_fisico_de_una_cesta(
+        list(por_producto.values()),
+        [
+            {
+                "id": articulo.id,
+                "nombre": articulo.nombre,
+                "categoria": articulo.categoria,
+                "unidad": articulo.unidad,
+                "producto_id": articulo.producto_id,
+                "fertilizante_id": articulo.fertilizante_id,
+            }
+            for articulo in articulos
+        ],
+        movimientos,
+        apuntes=apuntes,
+        compra_sin_entrar=lo_comprado_que_no_ha_entrado(db, explotacion_id=explotacion_id),
+    )
+    return {
+        "por_articulo": {fila.articulo_id: fila for fila in vista["articulos"]},
+        "por_producto": por_producto,
+        "pendientes": vista["pendientes"],
+        "compra_sin_entrar": vista["compra_sin_entrar"],
+        "avisos": vista["avisos"],
+        "sin_saldo_conocido": vista["sin_saldo_conocido"],
+        "descuadres": vista["descuadres"],
+    }
+
+
 def lo_comprado_que_no_ha_entrado(db: Session, *, explotacion_id: int) -> list[dict]:
     """Lo que está comprado por factura y **todavía no ha entrado** en el almacén.
 
