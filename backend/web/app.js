@@ -1129,6 +1129,14 @@ async function abrirLaDireccion() {
     pantallaDeDireccionQueNoLlevaANingunaParte();
     return;
   }
+  // **Sin sesión no se abre ninguna pantalla de dentro** (06/10/2026). Esto solo lo miraba `arrancar()`:
+  // escribiendo una dirección de dentro —o volviendo con «atrás»— después de salir, la aplicación
+  // pintaba la pantalla igual (vacía y con un error de permiso detrás) en vez de pedir que se entre. La
+  // puerta de entrada es su propia dirección (`#/entrar`), así que se puede volver a ella.
+  if (!estado.token && leida.pantalla !== "entrar") {
+    pantallaEntrar("entrar");
+    return;
+  }
   const finca = leida.parametros.finca;
   if (finca && estado.miFinca && Number(finca) !== Number(estado.miFinca.id)) {
     // Cambiar de finca vuelve a pintar por su cuenta (y pasa por `olvidarLoDeLaFincaAnterior`).
@@ -2160,7 +2168,14 @@ function datosDelPanelDeMando() {
           datos: { ir: "papel" },
           clase: "boton-claro",
         },
-        { etiqueta: t("cuaderno.sacar_datos", ""), accion: "sacar-datos", clase: "boton-claro" },
+        {
+          etiqueta: t("cuaderno.sacar_datos", ""),
+          accion: "sacar-datos",
+          clase: "boton-claro",
+          // Y con su pista, por el mismo motivo que en la pantalla del cuaderno: el fichero es el del año
+          // que se está mirando y hay que decirlo antes de pulsar (`cuaderno.datos_pista`).
+          pista: t("cuaderno.datos_pista", ""),
+        },
         // El de firmar es **el mismo botón del móvil** (`firma.boton`), no una frase nueva: firmar el cuaderno
         // es lo mismo en las dos formas de la aplicación.
         { etiqueta: t("firma.boton", ""), accion: "firmar-abrir", clase: "boton-claro" },
@@ -2754,7 +2769,11 @@ function datosDelCuaderno() {
         principal: true,
         sencillo: true,
       },
-      { etiqueta: `💾 ${c("sacar_datos")}`, accion: "sacar-datos", sencillo: true },
+      // **Y la pista dice qué se lleva el fichero** (06/10/2026): el cuaderno del año que se está
+      // mirando. Estaba escrita en el servidor desde siempre (`cuaderno.datos_pista`) y **no la pintaba
+      // ninguna pantalla** —era texto muerto—, así que el agricultor pulsaba «GUARDAR LOS DATOS EN UN
+      // FICHERO» sin saber qué se llevaba (lo encontró la comprobación de descargas).
+      { etiqueta: `💾 ${c("sacar_datos")}`, accion: "sacar-datos", sencillo: true, pista: c("datos_pista") },
       { etiqueta: accion("volver"), accion: "ir-inicio", sencillo: true },
     ],
   };

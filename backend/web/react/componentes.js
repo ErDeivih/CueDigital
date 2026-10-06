@@ -258,7 +258,7 @@ export function Boton({ etiqueta, pista, icono, accion, datos, clase = "", flech
  * el BORRAR de un año del cuaderno que tiene cosas dentro. Un botón apagado sin decir por qué es un botón
  * roto; por eso la pantalla que lo apaga pone al lado la frase que lo explica, y en el mismo sitio.
  */
-export function BotonSencillo({ etiqueta, accion, datos, clase = "boton-claro", deshabilitado = false }) {
+export function BotonSencillo({ etiqueta, accion, datos, clase = "boton-claro", deshabilitado = false, pista = "" }) {
   return html`
     <button
       type="button"
@@ -268,6 +268,14 @@ export function BotonSencillo({ etiqueta, accion, datos, clase = "boton-claro", 
       ...${datosDelBoton(datos)}
     >
       ${frase(etiqueta)}
+      ${
+        // **La pista también cabe en un botón sencillo** (06/10/2026). `Boton` la llevaba desde siempre y
+        // este no, así que los botones que van en una lista (`Botones`) no podían decir **qué hacen**:
+        // el de «GUARDAR LOS DATOS EN UN FICHERO», por ejemplo, se llevaba el cuaderno entero del año y
+        // no lo decía en ninguna parte (el texto existía en el servidor y **no lo pintaba nadie**). Se
+        // pinta igual que en `Boton`, para que los dos se lean igual.
+        pista ? html`<span className="pista-boton">${frase(pista)}</span>` : null
+      }
     </button>
   `;
 }
@@ -303,6 +311,7 @@ function UnBotonDeLaLista({ boton }) {
       accion=${boton.accion}
       datos=${boton.datos}
       clase=${clase}
+      pista=${boton.pista}
     />`;
   }
   return html`<${Boton}
@@ -311,6 +320,7 @@ function UnBotonDeLaLista({ boton }) {
     accion=${boton.accion}
     datos=${boton.datos}
     clase=${clase}
+    pista=${boton.pista}
   />`;
 }
 

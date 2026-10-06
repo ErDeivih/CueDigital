@@ -19,7 +19,11 @@ from navegador_cdp import NavegadorDeVerdad  # noqa: E402
 DIRECCION = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8013"
 
 with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
-    nav.abrir(f"{DIRECCION}/#/entrar")
+    # **Se entra por `/`, no por `#/entrar`**: esa dirección **no está en la tabla de rutas a propósito**
+    # (la pantalla de entrar es un paso, y una dirección que al recargar deja a medias es peor que no
+    # tenerla: lo defiende `tests_js/rutas.test.js`). Este humo la usaba y por eso salía «esa dirección no
+    # lleva a ninguna parte»; lo encontró la comprobación de teclado el 06/10/2026.
+    nav.abrir(f"{DIRECCION}/")
     print("titulo:", nav.evaluar("document.title"))
     print("pantalla montada:", nav.evaluar("Boolean(document.querySelector('#pantalla'))"))
 

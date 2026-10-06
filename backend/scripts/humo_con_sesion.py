@@ -63,3 +63,13 @@ with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
     nav.abrir(f"{DIRECCION}/#/cuaderno-de-la-junta")
     print("junta:", nav.evaluar("document.body.innerText.slice(0, 80).replace(/\\n/g, ' | ')"))
     print("errores:", nav.evaluar("JSON.stringify(window.__errores || [])"))
+
+    # **Y sin sesión, una dirección de dentro no pinta la pantalla: pide entrar** (06/10/2026). Antes la
+    # pintaba (vacía, con un error de permiso detrás) porque el `popstate` no miraba si había token; solo
+    # lo miraba el arranque.
+    nav.evaluar("(() => { localStorage.removeItem('cuedigital.token'); return null; })()")
+    nav.abrir(f"{DIRECCION}/#/tierras")
+    texto = nav.evaluar("document.body.innerText.slice(0, 120).replace(/\\n/g, ' | ')")
+    print("sin sesion, #/tierras:", texto)
+    print("pide entrar:", nav.evaluar("Boolean(document.querySelector('#correo'))"))
+    print("errores:", nav.evaluar("JSON.stringify(window.__errores || [])"))

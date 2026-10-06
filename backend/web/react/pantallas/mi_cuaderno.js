@@ -91,7 +91,15 @@ function BloqueDeApuntes({ apuntes }) {
       // abajo, con las mismas acciones. En el ordenador se mira de arriba abajo —qué se hizo, dónde,
       // cuántas hectáreas y cuándo— y se puede ordenar por cualquier columna; en el móvil, la tarjeta de
       // siempre. El CSS enseña una u otra según el ancho.
-      apuntes.tabla ? html`<div className="solo-escritorio"><${Tabla} tabla=${apuntes.tabla} /></div>` : null
+      //
+      // **Y va dentro de `.tabla-scroll`** (06/10/2026): sin esa caja, la tabla **se sale de la pantalla**
+      // —medido por la comprobación del volumen con datos de verdad: 1.367 px de ancho en una ventana de
+      // 1.024, o sea 343 px fuera— y el agricultor tiene que arrastrar la página entera de lado para ver
+      // la última columna. Es la misma caja que llevan las otras cinco tablas largas (dinero, gastos,
+      // maquinaria, ventas y banco): la tabla se desplaza dentro de su caja y la pantalla no se mueve.
+      apuntes.tabla
+        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${apuntes.tabla} /></div>`
+        : null
     }
     ${
       apuntes.hay
