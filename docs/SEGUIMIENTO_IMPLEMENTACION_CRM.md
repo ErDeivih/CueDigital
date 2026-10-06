@@ -5541,3 +5541,89 @@ volver a comprobar la pantalla equivocada.
 una foto de verdad**: el lector propone y no mide (no hay corpus, T07 sigue bloqueado por fuera, y la
 pantalla lo dice). Tampoco se ha probado el T08 con las 64 tierras y los papeles reales del agricultor, ni
 su OCR con `tesseract` (no está instalado). Y PostgreSQL sigue bloqueado por el motor de Docker.
+
+---
+
+### 50.14 Ronda 8: los cinco recorridos, recorridos de verdad (y seis defectos más)
+
+**Lo que se ha hecho.** El guion del navegador ya **recorría** las pantallas nuevas de la ronda anterior,
+pero **no los formularios**: apuntar un gasto, conciliar un movimiento o planificar un trabajo se
+comprobaba «por pantalla». En esta ronda se han añadido los **cinco recorridos del encargo** al guion,
+pulsando los botones y escribiendo en los campos de verdad, y se han ido arreglando uno por uno los
+defectos que salían. El resultado: **523 comprobaciones, 0 fallos**, con los cinco recorridos hechos de
+punta a punta desde la aplicación.
+
+**1. `produccion_ecologica`, `masa_agua_cerca` y `captacion_consumo_humano` (A12 y A13): estaban
+arreglados y no los sujetaba nadie.** Los tres campos eran de tres estados desde la ronda 5, con sus
+avisos escritos (`V11_no_se_si_hay_agua`, `V15_no_se_si_la_finca_es_ecologica`) y el documento que se
+firma escribiendo «no se sabe» en vez de un «no». Pero **al devolver el defecto** (los tres otra vez en
+`False`) las suites del agua y del ecológico **solo se pusieron rojas por un `NOT NULL`**, no por la
+regla: el arreglo estaba y nadie lo vigilaba. Se han añadido **once pruebas** (ocho de A12/A13 y tres del
+importe con coma): creación sin contestar, «no lo sé» frente a «no», una sola de las dos preguntas
+contestada, la corrección que no convierte un hueco en un «no», el aviso que se dice y el que se calla, y
+**las tres formas del documento que se firma** («si», «no» y «no se sabe»). Comprobadas contra el
+defecto: con los valores por defecto viejos, cuatro de ellas se ponen rojas con su frase.
+
+**2. Un importe escrito con coma no se podía guardar.** La pantalla manda el importe **tal y como se
+teclea**, así que un «254,10» —que es como lo escribe cualquiera aquí, y lo que da el teclado decimal del
+móvil— llegaba al servidor y **Pydantic lo rechazaba** («Input should be a valid decimal»): el agricultor
+veía «No se ha podido» y **no podía apuntar el gasto**. El proyecto ya tenía la regla escrita y probada
+(`dinero.de_texto`: «se acepta lo que escribe un agricultor»), pero los importes de T13, T15 y T20 se
+declararon como `Decimal` a secas. Se arregla con **un tipo de entrada compartido** (`ImporteDeEntrada`),
+que es lo que hace que el siguiente importe que se añada herede las dos puertas —aceptar la coma y
+rechazar el número de coma flotante—, y con dos líneas de la pantalla que mandan el número en la forma
+canónica. **Tres pruebas nuevas**, la del coma y la del `float`, y la del hueco que sigue siendo «no se
+sabe».
+
+**3. El botón de guardar de las cuentas leía los campos DESPUÉS de pintar la pantalla.** Con un grabador
+delante de la aplicación se vio la petición exacta: `POST /api/gastos` con
+`{"concepto":"","importe":null,"fecha":null,…}` y el servidor contestando 422 («un gasto tiene que decir
+qué fue»). La causa: `guardarLasCuentas` repintaba y **después** leía los campos, y `montarEn` limpia el
+contenedor (`innerHTML = ""`) antes de que React pinte, así que entre una cosa y otra la pantalla está
+**vacía**. Es la regla de la casa al revés —«pintar la pantalla borra la casilla»—: se lee primero y se
+pinta después. **Y de paso**: elegir una categoría repintaba y **borraba lo ya escrito** («el gasóleo de
+la siega» desaparecía al tocar la categoría), porque el formulario se construía solo con lo que venía del
+cuaderno; ahora mira **primero lo que hay en la pantalla** (el mismo patrón que la ficha de una máquina).
+
+**4. Marcar un trabajo como hecho contestaba 500, siempre.** `POST /api/trabajos/previstos/<id>/hecho`
+escribía en la auditoría `datos.subtipo`, y `MarcarHechoEntrada` **no tiene ese campo**: la segunda mitad
+del recorrido 4 —«planificar un trabajo → marcar lo que de verdad se hizo»— **no se podía hacer desde la
+aplicación**, y las pruebas del ticket no lo veían porque ejercitaban la lógica pura y el fichero del
+router, no la puerta. Se encontró recorriendo ese recorrido en un navegador. Arreglado con el subtipo de
+la labor (y **guardándolo en su columna**, que es donde el contrato lo pide, en vez de en `detalles`), y
+con **tres pruebas nuevas que recorren el recorrido 4 por las puertas de verdad**: planificar → marcar
+hecho → que llegue al historial de la tierra y al cuaderno, que no se pueda marcar dos veces y que lo
+previsto no gaste nada del almacén.
+
+**5. Un gasto apuntado con su tierra salía como «sin asignar»** y con el aviso «estas cuentas no cierran:
+hay una parte del gasto que no está ni en un sitio ni en el otro» — cuando el agricultor acababa de decir
+de qué tierra era. El ticket dice lo contrario: «**El coste directo**: cuando el gasto ya dice de qué
+tierra o de qué cultivo es». Y la propia respuesta del servidor ya lo clasificaba como directo en su
+resumen: dos mitades de la misma respuesta diciendo cosas distintas. Arreglado en el servidor (el coste
+directo entra en el cuadre y el gasto dice **a dónde va** en palabras) y la pantalla solo coloca lo que
+le llega. **Tres pruebas nuevas**, incluida la que impide el error contrario: un gasto repartido **no**
+suma además su coste directo (el mismo dinero dos veces).
+
+**6. Dos comprobaciones del guion que daban por bueno lo que no había pasado.** El recorrido 2 buscaba «El
+gasóleo de la siega», y ese texto está en el `<input>` del formulario mientras el formulario sigue
+abierto: **pasaba aunque el gasto no se hubiera guardado** (y de hecho no se guardaba, por el defecto 3).
+Ahora busca el recuento de la lista, que solo puede venir del servidor. Y el recorrido 3 buscaba «El
+importe No consta», que son el rótulo y el valor en dos elementos distintos: se buscan por separado. Es la
+lección de siempre —una comprobación que no puede fallar no comprueba nada— aplicada al guion.
+
+**Y una cosa que hace falta para poder recorrer formularios:** el guion sabe elegir **la primera opción de
+verdad** de un desplegable (`elegir-ejemplo:#trabajo-tierra`). Hacía falta porque el identificador de una
+tierra **no se puede escribir en una ruta**: es del servidor y cambia con cada base, y una ruta con un
+número fijo empezaría a apuntar el trabajo a la tierra que no es en cuanto cambiara la base.
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.438 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.034 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **523 comprobaciones · 0 fallos** (antes: 499) |
+| Los cinco recorridos del encargo | **los cinco, pulsando**, con datos de verdad |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+**Lo que queda para el objetivo, sin adornos:** la lectura de una foto de verdad sigue sin medirse (no hay
+corpus: T07 está bloqueado por fuera, y la pantalla lo dice en vez de inventarse un porcentaje); el T08 no
+se ha probado con las 64 tierras y los papeles reales; y PostgreSQL sigue bloqueado por Docker.

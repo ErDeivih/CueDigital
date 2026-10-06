@@ -206,7 +206,11 @@ function FichaDeUnGasto({ gasto = {}, textos = {} }) {
           <dt>${frase(g.su_tierra)}</dt>
           <dd>
             ${frase(
-              gasto.repartos.length ? gasto.repartos[0].etiqueta_destino : g.sin_asignar_corto,
+              // **A dónde va lo dice el servidor** (`va_a`, 06/10/2026): su tierra o su cultivo —el
+              // «coste directo» del ticket— o su primer reparto. Antes esto miraba solo los repartos,
+              // así que un gasto apuntado **con su tierra** salía como «Sin asignar», y decía lo
+              // contrario de lo que el agricultor acababa de escribir.
+              gasto.va_a || g.sin_asignar_corto,
             )}
           </dd>
         </div>

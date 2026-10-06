@@ -1250,3 +1250,141 @@ class TestLoQueElAgricultorDeclaro:
         assert estado["cultivo_declarado"] is None, (
             "el cultivo de 2025 ha salido como lo que hay sembrado en 2026"
         )
+
+# ==========================================================================
+# El recorrido 4, por las puertas de verdad (06/10/2026)
+# ==========================================================================
+#
+# **Estas pruebas existen por un defecto de verdad.** La puerta de marcar un plan como hecho
+# (`POST /api/trabajos/previstos/<id>/hecho`) contestaba **500 siempre**: dentro escribía
+# `datos.subtipo`, y `MarcarHechoEntrada` no tiene ese campo. Es decir: **la segunda mitad del recorrido
+# 4 —«planificar un trabajo → marcar lo que de verdad se hizo»— no se podía hacer desde la aplicación**,
+# y las pruebas del ticket no lo veían porque solo ejercitaban la lógica pura (`trabajos.marcar_como_hecho`)
+# y el fichero del router. Lo encontró el guion del navegador al recorrerlo pulsando: la pantalla decía
+# «No se ha podido» y el registro del servidor tenía la traza.
+#
+# Lo que se comprueba aquí es el recorrido entero, que es lo que el encargo pide: se planifica, se marca
+# lo que de verdad se hizo, y el hecho **llega al historial de su tierra** y al cuaderno, con el plan
+# marcado como realizado.
+
+
+class TestElRecorrido4PorLasPuertas:
+    def _planificar(self, cliente, cuenta, campana, parcela, **cambios):
+        datos = {
+            "campana_id": campana["id"],
+            "tipo": "laboreo",
+            "subtipo": "cultivador",
+            "fecha_prevista": "2026-09-20",
+            "parcela_id": parcela["id"],
+            "superficie_ha": 4.9,
+            "horas": 3,
+            "observaciones": "Pensado para después de la cosecha",
+        }
+        datos.update(cambios)
+        respuesta = cliente.post("/api/trabajos/previstos", headers=cuenta["cabeceras"], json=datos)
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()["previsto"]
+
+    def test_planificar_marcar_lo_hecho_y_que_llegue_al_historial(
+        self, cliente, cuenta, campana, crear_parcela, db_sesion
+    ):
+        """El recorrido, de punta a punta, y con lo que de verdad se hizo **distinto** de lo pensado."""
+        parcela = crear_parcela(alias="El Prado")
+        plan = self._planificar(cliente, cuenta, campana, parcela)
+        assert plan["estado"] == "previsto"
+
+        # **Este envío es el que contestaba 500.** Se manda lo que la pantalla manda: el día de verdad y
+        # las horas de verdad, que no tienen por qué ser las del plan.
+        hecho = cliente.post(
+            f"/api/trabajos/previstos/{plan['id']}/hecho",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-11-20", "horas": 5, "observaciones": "Al final fui por la tarde"},
+        )
+        assert hecho.status_code == 201, (
+            f"marcar un plan como hecho contesta {hecho.status_code}: el recorrido 4 se queda a medias "
+            f"({hecho.text[:200]})"
+        )
+        suyo = hecho.json()["hecho"]
+        assert suyo["fecha"] == "2026-11-20", "el hecho no se ha apuntado con su día de verdad"
+        assert suyo["horas"] == 5.0
+        # La tierra y el tipo **son los del plan**: el hecho se apunta por la puerta del plan, que es
+        # donde el agricultor dijo qué iba a hacer.
+        assert suyo["parcela_id"] == parcela["id"]
+        assert suyo["tipo"] == "laboreo"
+        assert suyo["subtipo"] == "cultivador"
+
+        # Y el plan queda cumplido, apuntando a lo que se hizo.
+        planes = cliente.get("/api/trabajos/previstos", headers=cuenta["cabeceras"]).json()
+        # La lista trae cada plan con lo que gastaría y los días que faltan: el plan va dentro.
+        suyo_plan = next((uno["previsto"] for uno in planes if uno["previsto"]["id"] == plan["id"]), None)
+        assert suyo_plan is not None, "el plan ha desaparecido de la lista"
+        assert suyo_plan["estado"] == "realizado", "el plan no dice que se cumplió"
+
+        # **Y llega al historial de su tierra**, que es la mitad que el agricultor mira.
+        historial = cliente.get(
+            f"/api/trabajos/historial/{parcela['id']}", headers=cuenta["cabeceras"]
+        ).json()
+        assert historial["cuantos"] == 1, "el trabajo hecho no ha llegado al historial de la tierra"
+        assert historial["cifras"]["trabajos_hechos"] == 1
+
+        # Y el rastro dice lo que se apuntó, con su apero: **es la línea que estaba rota** (pedía el
+        # subtipo a un cuerpo que no lo trae), así que aquí se ata el dato bueno.
+        from app import models
+
+        rastro = db_sesion.query(models.Auditoria).filter_by(entidad="labor", accion="crear").all()
+        assert rastro, "no se ha apuntado el rastro del trabajo hecho"
+        assert rastro[-1].datos["subtipo"] == "cultivador"
+        assert rastro[-1].datos["de_que_plan"] == plan["id"]
+
+    def test_marcar_dos_veces_el_mismo_plan_no_apunta_dos_trabajos(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """Y la regla del contrato: **si ya se hizo, es otro trabajo**. La segunda vez se dice (409) en
+        vez de apuntar dos hechos del mismo plan."""
+        parcela = crear_parcela(alias="El Prado")
+        plan = self._planificar(cliente, cuenta, campana, parcela)
+        primera = cliente.post(
+            f"/api/trabajos/previstos/{plan['id']}/hecho",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-11-20"},
+        )
+        assert primera.status_code == 201, primera.text
+
+        segunda = cliente.post(
+            f"/api/trabajos/previstos/{plan['id']}/hecho",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-11-21"},
+        )
+        assert segunda.status_code == 409, (
+            "un plan ya cumplido se ha vuelto a marcar como hecho: el trabajo quedaría dos veces"
+        )
+        historial = cliente.get(
+            f"/api/trabajos/historial/{parcela['id']}", headers=cuenta["cabeceras"]
+        ).json()
+        assert historial["cuantos"] == 1, "hay dos hechos del mismo plan"
+
+    def test_lo_previsto_no_gasta_nada_hasta_que_se_hace(
+        self, cliente, cuenta, campana, crear_parcela, crear_producto
+    ):
+        """La regla que el contrato pide con nombre: **un plan no consume existencias**. Y al marcarlo
+        hecho, sí: lo que se gastó sale del almacén por la puerta de las salidas."""
+        parcela = crear_parcela(alias="El Prado")
+        plan = self._planificar(
+            cliente, cuenta, campana, parcela, tipo="siembra", subtipo=None, cultivo="Trigo blando"
+        )
+        # El plan no ha tocado ningún envase.
+        existencias = cliente.get("/api/almacen/existencias", headers=cuenta["cabeceras"])
+        assert existencias.status_code == 200, existencias.text
+        assert existencias.json()["articulos"] == [], "lo previsto ha gastado algo del almacén"
+
+        hecho = cliente.post(
+            f"/api/trabajos/previstos/{plan['id']}/hecho",
+            headers=cuenta["cabeceras"],
+            json={"fecha": "2026-11-20", "horas": 5},
+        )
+        assert hecho.status_code == 201, hecho.text
+        # Y el cuaderno lo cuenta: el trabajo hecho es un apunte del año, con su día.
+        cuaderno = cliente.get(
+            f"/api/cuaderno/resumen?campana_id={campana['id']}", headers=cuenta["cabeceras"]
+        )
+        assert cuaderno.status_code == 200, cuaderno.text

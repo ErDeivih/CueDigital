@@ -1411,3 +1411,69 @@ class TestElCosteDeLasAveriasPorLaApi:
         assert all(uno["averia_id"] != averia["id"] for uno in coste["averias"])
         assert coste["reparaciones_sin_averia"]["cuantos"] == 0
 
+# ==========================================================================
+# El importe, como lo escribe un agricultor (06/10/2026)
+# ==========================================================================
+#
+# **Estas dos pruebas se añadieron al recorrer el recorrido 2 en un navegador de verdad**, y el defecto
+# era de los que dejan al agricultor sin poder trabajar: la pantalla manda el importe **tal y como se
+# teclea**, así que un «254,10» —que es como lo escribe cualquiera aquí, y lo que da el teclado decimal
+# del móvil— llegaba al servidor y Pydantic lo rechazaba con un 422
+# («Input should be a valid decimal»). El agricultor veía «No se ha podido» y **no podía apuntar el
+# gasto**. El proyecto ya tenía la regla escrita (`dinero.de_texto`: «se acepta lo que escribe un
+# agricultor»), pero los importes de este ticket se declararon como `Decimal` a secas, así que no
+# pasaban por ella. Ahora todos los importes de entrada usan el mismo tipo (`schemas.ImporteDeEntrada`).
+
+
+class TestElImporteComoLoEscribeUnAgricultor:
+    def test_un_importe_con_coma_se_entiende_y_se_guarda_exacto(self, cliente, cuenta):
+        """«254,10» son doscientos cincuenta y cuatro euros con diez céntimos, y se guarda así."""
+        respuesta = cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={
+                "concepto": "El gasóleo de la siega",
+                "categoria": "gasoleo",
+                "importe": "254,10",
+                "base_imponible": "1.234,56",
+            },
+        )
+        assert respuesta.status_code == 201, (
+            f"un importe escrito con coma no se ha aceptado: {respuesta.text}"
+        )
+        suyo = respuesta.json()["gasto"]
+        # **Exacto**: el texto decimal llega al `Decimal` sin pasar por coma flotante.
+        assert suyo["importe"] == "254.10"
+        assert suyo["texto_importe"] == "254,10 €"
+
+        # Y queda guardado de verdad: se lee de vuelta con el mismo número. (`GET /api/gastos/<id>` sí
+        # devuelve el gasto directo: el envoltorio de `gasto` es del alta y de la corrección.)
+        leido = cliente.get(f"/api/gastos/{suyo['id']}", headers=cuenta["cabeceras"]).json()
+        assert leido["importe"] == "254.10"
+
+    def test_un_numero_de_coma_flotante_se_sigue_rechazando(self, cliente, cuenta):
+        """Y la otra mitad, que es la que el proyecto no quiere perder: un `float` de JSON ya perdió
+        céntimos antes de llegar, así que **no vale** — el dinero viaja como texto decimal."""
+        respuesta = cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={"concepto": "El gasóleo", "categoria": "gasoleo", "importe": 254.10},
+        )
+        assert respuesta.status_code == 422, (
+            "un importe de coma flotante se ha aceptado: `Decimal(254.10)` no es 254,10"
+        )
+        assert "coma flotante" in respuesta.text or "float" in respuesta.text.lower()
+
+    def test_vacio_sigue_siendo_no_se_sabe(self, cliente, cuenta):
+        """Un importe que no se sabe **no es un cero**: la regla del encargo, y la que más veces se
+        rompe al tocar esto."""
+        respuesta = cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={"concepto": "Sin saber cuánto", "categoria": "otro"},
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        suyo = respuesta.json()["gasto"]
+        assert suyo["importe"] is None, "un gasto sin importe ha salido con un cero"
+        assert suyo["texto_importe"] in (None, ""), "se ha escrito un importe que no consta"
+        assert suyo["texto_pendiente"] in (None, ""), "lo que falta por pagar de un importe que no consta"

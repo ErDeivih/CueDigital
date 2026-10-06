@@ -10,8 +10,16 @@ from __future__ import annotations
 
 import datetime as dt
 from decimal import Decimal
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from . import dinero, models, textos
 
@@ -101,6 +109,16 @@ def _un_importe_que_cabe(valor, *, es_precio: bool = False):
             )
         )
     return numero
+
+
+# **Un importe que entra, con la regla del dinero de la casa.** Se declara una vez y se usa en todos
+# los importes de entrada, en vez de repetir un validador por campo: así el día que se añade un importe
+# nuevo, escribir este tipo es lo único que hay que hacer para que herede las dos puertas —«se acepta
+# como lo escribe un agricultor» (`dinero.de_texto`: «254,10», «1.234,56») y «un número de coma
+# flotante se rechaza»—. Sin esto, el importe de un gasto escrito con coma se rechazaba con un 422 y
+# el agricultor veía «No se ha podido» sin saber por qué.
+ImporteDeEntrada = Annotated[Decimal, BeforeValidator(_un_importe_que_cabe)]
+ImporteDeEntradaOpcional = Annotated[Decimal | None, BeforeValidator(_un_importe_que_cabe)]
 
 
 class EntradaBase(BaseModel):
@@ -3647,10 +3665,10 @@ class GastoEntrada(EntradaBase):
     # **Los cuatro pueden venir vacíos**, cada uno por su cuenta: el total escrito manda, si no se
     # suman base y cuota, si no se aplica el tipo a la base, y si no hay nada el gasto **no tiene
     # importe** (`gastos.importe_de_un_gasto`).
-    base_imponible: Decimal | None = None
-    cuota_iva: Decimal | None = None
+    base_imponible: ImporteDeEntradaOpcional = None
+    cuota_iva: ImporteDeEntradaOpcional = None
     tipo_iva_pct: float | None = None
-    importe: Decimal | None = None
+    importe: ImporteDeEntradaOpcional = None
     notas: str | None = None
     clave_de_reenvio: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.Gasto, "clave_de_reenvio")
@@ -3678,8 +3696,8 @@ class InversionEntrada(EntradaBase):
     factura_id: int | None = None
     maquina_id: int | None = None
     parcela_id: int | None = None
-    importe: Decimal | None = None
-    valor_residual: Decimal | None = None
+    importe: ImporteDeEntradaOpcional = None
+    valor_residual: ImporteDeEntradaOpcional = None
     notas: str | None = None
     clave_de_reenvio: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.InversionDeLaFinca, "clave_de_reenvio")
@@ -3693,7 +3711,8 @@ class TrozoDeRepartoEntrada(BaseModel):
 
     destino_tipo: str = "tierra"
     destino: str = ""
-    importe: Decimal | None = None
+    # El importe de un trozo escrito a mano: la misma regla del dinero que los demás.
+    importe: ImporteDeEntradaOpcional = None
 
 
 class RepartoDeUnGastoEntrada(EntradaBase):
@@ -3724,7 +3743,8 @@ class AplicacionDePagoEntrada(BaseModel):
     """Cuánto de un pago va contra un gasto. Sin importe, va lo que falte de ese gasto."""
 
     gasto_id: int
-    importe: Decimal | None = None
+    # Y el de lo que un pago salda de un gasto: también como lo escribe un agricultor.
+    importe: ImporteDeEntradaOpcional = None
 
 
 class PagoEntrada(EntradaBase):
@@ -3737,7 +3757,7 @@ class PagoEntrada(EntradaBase):
     fecha: dt.date | None = None
     # **Obligatorio y mayor que cero**: un pago de cero euros no es un pago. Lo comprueba el router
     # con la frase del agricultor.
-    importe: Decimal | None = None
+    importe: ImporteDeEntradaOpcional = None
     proveedor: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.PagoDeGasto, "proveedor")
     )
@@ -3781,9 +3801,9 @@ class SubvencionEntrada(EntradaBase):
     fecha_solicitud: dt.date | None = None
     fecha_concesion: dt.date | None = None
     fecha_cobro: dt.date | None = None
-    importe_previsto: Decimal | None = None
-    importe_concedido: Decimal | None = None
-    importe_cobrado: Decimal | None = None
+    importe_previsto: ImporteDeEntradaOpcional = None
+    importe_concedido: ImporteDeEntradaOpcional = None
+    importe_cobrado: ImporteDeEntradaOpcional = None
     notas: str | None = None
     clave_de_reenvio: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.Subvencion, "clave_de_reenvio")

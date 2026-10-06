@@ -191,20 +191,34 @@ def _lo_pagado(db: Db, explotacion_id: int, gasto_id: int) -> Decimal:
     return dinero.suma(*[aplicacion.importe for aplicacion in aplicaciones])
 
 
-def _el_cuadre_del_reparto(gasto: models.Gasto, repartos) -> gastos.CuadreDelReparto:
-    """El cuadre que el contrato pide, con los repartos que hay apuntados."""
-    cuadre = gastos.cuadre_del_reparto(
-        gasto.importe,
-        [
-            {
-                "destino_tipo": reparto.destino_tipo,
-                "destino": reparto.destino,
-                "importe": reparto.importe,
-                "metodo": reparto.metodo,
-            }
-            for reparto in repartos
-        ],
-    )
+def _el_cuadre_del_reparto(
+    gasto: models.Gasto, repartos, *, nombre_de_la_tierra: str | None = None
+) -> gastos.CuadreDelReparto:
+    """El cuadre que el contrato pide: los repartos que hay apuntados **y el coste directo**.
+
+    **El gasto que ya dice de qué tierra o de qué cultivo es cuenta como asignado** (06/10/2026), y lo
+    dice el ticket con estas palabras: «El coste directo: cuando el gasto ya dice de qué tierra o de qué
+    cultivo es. Lo que no se sabe a qué va se apunta sin estos dos campos y se reparte después».
+    Antes, un gasto apuntado **con su tierra** salía en la pantalla como «Sin asignar», con 0,00 € en
+    «en tierras, cultivos o máquinas», y con el aviso de que **las cuentas no cierran** —«hay una parte
+    del gasto que no está ni en un sitio ni en el otro»—, que es exactamente lo contrario de lo que el
+    agricultor acababa de decir. Se encontró recorriendo el recorrido 2 en un navegador de verdad.
+    """
+    trozos = [
+        {
+            "destino_tipo": reparto.destino_tipo,
+            "destino": reparto.destino,
+            "importe": reparto.importe,
+            "metodo": reparto.metodo,
+        }
+        for reparto in repartos
+    ]
+    # **El directo solo cuando no hay repartos**: si el gasto se repartió, el reparto es lo que dice a
+    # dónde va cada trozo, y contar además el directo sumaría el mismo dinero dos veces.
+    directo = _el_destino_directo(gasto, nombre_de_la_tierra) if not trozos else None
+    if directo is not None:
+        trozos.append(directo)
+    cuadre = gastos.cuadre_del_reparto(gasto.importe, trozos)
     # **El motivo por el que no se pudo repartir se lee del trozo que lo guarda** (05/10/2026). El
     # cuadre se recalcula al abrir el gasto y el motivo no se puede deducir del importe: sin esto, la
     # pantalla enseñaría «sin asignar 663,00 €» sin decir qué falta para poder repartirlo, que es
@@ -214,6 +228,47 @@ def _el_cuadre_del_reparto(gasto: models.Gasto, repartos) -> gastos.CuadreDelRep
             (reparto.no_se_reparte for reparto in repartos if reparto.no_se_reparte), ""
         )
     return cuadre
+
+
+def _el_destino_directo(gasto: models.Gasto, nombre_de_la_tierra: str | None) -> dict | None:
+    """A dónde va un gasto **por decirlo él**: su tierra o su cultivo. Es el «coste directo» del ticket.
+
+    Devuelve un trozo con la misma forma que un reparto —para que el cuadre lo cuente y la pantalla lo
+    enseñe igual que los demás—, o `None` si el gasto no dice de dónde es o no dice lo que costó (sin
+    importe no hay nada que asignar, y un cero sería mentira).
+    """
+    if gasto.importe is None:
+        return None
+    if gasto.parcela_id:
+        return {
+            "destino_tipo": gastos.TIERRA,
+            "destino": nombre_de_la_tierra or str(gasto.parcela_id),
+            "importe": gasto.importe,
+            "metodo": gastos.DIRECTO,
+        }
+    if (gasto.cultivo or "").strip():
+        return {
+            "destino_tipo": gastos.CULTIVO,
+            "destino": gasto.cultivo,
+            "importe": gasto.importe,
+            "metodo": gastos.DIRECTO,
+        }
+    return None
+
+
+def _a_donde_va(gasto: models.Gasto, repartos, nombre_de_la_tierra: str | None) -> str:
+    """A dónde va el gasto, **en palabras**, para que la pantalla no tenga que traducirlo.
+
+    Lo que el gasto dice de sí mismo (su tierra o su cultivo) manda, porque es lo que el agricultor
+    escribió al apuntarlo; si no dice nada, lo dice su primer reparto. Y si no hay nada de eso, vacío:
+    la pantalla enseña entonces su «sin asignar», que es la verdad.
+    """
+    directo = _el_destino_directo(gasto, nombre_de_la_tierra)
+    if directo is not None and not repartos:
+        return directo["destino"]
+    if repartos:
+        return _la_etiqueta_del_destino(repartos[0], nombre_de_la_tierra)
+    return ""
 
 
 def _la_etiqueta_del_destino(reparto: models.RepartoDeCoste, nombre_de_la_tierra: str | None) -> str:
@@ -233,7 +288,12 @@ def _como_se_ve_un_gasto(db: Db, explotacion, gasto: models.Gasto) -> dict:
     repartos = _sus_repartos(db, explotacion.id, gasto.id)
     pagado = _lo_pagado(db, explotacion.id, gasto.id)
     pendiente = gastos.pendiente_de(gasto.importe, pagado)
-    cuadre_del_reparto = _el_cuadre_del_reparto(gasto, repartos)
+    # **El nombre de la tierra del propio gasto** (06/10/2026): hace falta para el cuadre del coste
+    # directo y para decir a dónde va sin que la pantalla traduzca un identificador.
+    nombre_de_la_tierra = _el_nombre_de_una_tierra(db, explotacion.id, gasto.parcela_id)
+    cuadre_del_reparto = _el_cuadre_del_reparto(
+        gasto, repartos, nombre_de_la_tierra=nombre_de_la_tierra
+    )
     nombres = _nombres_de_las_tierras(db, explotacion.id, repartos)
     return {
         "id": gasto.id,
@@ -274,6 +334,10 @@ def _como_se_ve_un_gasto(db: Db, explotacion, gasto: models.Gasto) -> dict:
             total=gasto.importe,
             tipo_iva_pct=dinero.cantidad_a_decimal(gasto.tipo_iva_pct),
         ).como_dict(),
+        # **A dónde va, en palabras** (06/10/2026): lo que el gasto dice de sí mismo —su tierra o su
+        # cultivo, que es el «coste directo» del ticket— o, si no dice nada, su primer reparto. Vacío
+        # cuando no hay nada: la pantalla enseña entonces su «sin asignar», que es la verdad.
+        "va_a": _a_donde_va(gasto, repartos, nombre_de_la_tierra),
         "repartos": [
             {
                 "id": reparto.id,
@@ -312,6 +376,20 @@ def _como_se_ve_un_gasto(db: Db, explotacion, gasto: models.Gasto) -> dict:
         "esta_sin_repartir": bool(cuadre_del_reparto.repartido == dinero.CERO),
         "no_cuadra": not cuadre_del_reparto.cuadra,
     }
+
+
+def _el_nombre_de_una_tierra(db: Db, explotacion_id: int, parcela_id: int | None) -> str | None:
+    """Cómo se llama esa tierra, si es de esta finca. `None` si no hay tierra o no es suya."""
+    if not parcela_id:
+        return None
+    parcela = db.scalar(
+        select(models.Parcela).where(
+            models.Parcela.explotacion_id == explotacion_id, models.Parcela.id == parcela_id
+        )
+    )
+    if parcela is None:
+        return None
+    return parcela.alias or parcela.ref_sigpac or f"#{parcela.id}"
 
 
 def _nombres_de_las_tierras(db: Db, explotacion_id: int, repartos) -> dict[int, str]:

@@ -231,3 +231,99 @@ class TestLoQueHaCostadoUnaTierra:
 
         assert de_este_ano["directos"] == "100.00"
         assert todo["directos"] == "170.00", "sin pedir año, la cuenta es la de todos los apuntes"
+
+# ==========================================================================
+# El gasto que dice su tierra está asignado (06/10/2026)
+# ==========================================================================
+#
+# **Estas pruebas se añadieron al recorrer el recorrido 2 en un navegador de verdad.** Un gasto apuntado
+# **con su tierra** salía en la pantalla como «Su tierra: Sin asignar», con 0,00 € en «en tierras,
+# cultivos o máquinas» y con el aviso «Estas cuentas no cierran: hay una parte del gasto que no está ni
+# en un sitio ni en el otro» — cuando el agricultor acababa de decir de qué tierra era—. El ticket dice
+# lo contrario: «**El coste directo**: cuando el gasto ya dice de qué tierra o de qué cultivo es. Lo que
+# no se sabe a qué va se apunta sin estos dos campos y se reparte después». Y la propia respuesta del
+# servidor ya clasificaba ese gasto como directo en su resumen de costes: las dos mitades de la misma
+# respuesta decían cosas distintas.
+
+
+class TestUnGastoQueDiceSuTierraEstaAsignado:
+    def _un_gasto(self, cliente, cuenta, campana, parcela, **cambios):
+        datos = {
+            "campana_id": campana["id"],
+            "fecha": "2026-04-12",
+            "concepto": "El gasóleo de la siega",
+            "categoria": "gasoleo",
+            "importe": "254.10",
+            "parcela_id": parcela["id"],
+        }
+        datos.update(cambios)
+        respuesta = cliente.post("/api/gastos", headers=cuenta["cabeceras"], json=datos)
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()["gasto"]
+
+    def test_su_tierra_es_la_que_dice_y_no_sin_asignar(self, cliente, cuenta, campana, crear_parcela):
+        """El gasto dice a dónde va, y lo dice con el nombre de la tierra."""
+        parcela = crear_parcela(alias="El Prado")
+        gasto = self._un_gasto(cliente, cuenta, campana, parcela)
+        assert gasto["va_a"] == "El Prado", (
+            f"un gasto apuntado con su tierra dice que va a «{gasto['va_a']}»: es lo contrario de lo "
+            "que escribió el agricultor"
+        )
+        # Y el cuadre lo cuenta como asignado, así que **no falta nada**.
+        cuadre = gasto["cuadre_del_reparto"]
+        assert cuadre["texto_repartido"] == "254,10 €", (
+            "el coste directo no se cuenta como asignado: la pantalla dirá que las cuentas no cierran"
+        )
+        assert cuadre["cuadra"] is True
+        assert cuadre["texto_sin_asignar"] == "0,00 €"
+        assert gasto["no_cuadra"] is False
+
+    def test_sin_decir_a_que_va_sigue_estando_sin_asignar(self, cliente, cuenta, campana):
+        """El otro lado: un gasto que **no** dice de dónde es no está asignado, y eso se dice.
+
+        Es la mitad que impide que el arreglo se pase de largo: si todo cuadrara siempre, el aviso del
+        coste sin asignar no valdría para nada.
+        """
+        respuesta = cliente.post(
+            "/api/gastos",
+            headers=cuenta["cabeceras"],
+            json={
+                "campana_id": campana["id"],
+                "concepto": "La reparación del remolque",
+                "categoria": "reparacion",
+                "importe": "80.00",
+            },
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        gasto = respuesta.json()["gasto"]
+        assert gasto["va_a"] == "", "un gasto que no dice a dónde va dice que va a algún sitio"
+        assert gasto["cuadre_del_reparto"]["texto_repartido"] == "0,00 €"
+        assert gasto["no_cuadra"] is True, "sin decir a qué va, las cuentas tienen que avisar"
+        # Y el resumen de la respuesta lo cuenta como sin asignar, que es su columna.
+        assert gasto["esta_sin_repartir"] is True
+
+    def test_con_repartos_manda_el_reparto_y_no_se_cuenta_dos_veces(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """Un gasto repartido **no** suma además su coste directo: el mismo dinero no puede contarse dos
+        veces. Es la trampa que este arreglo podía traer, así que se prueba."""
+        parcela = crear_parcela(alias="El Prado")
+        gasto = self._un_gasto(cliente, cuenta, campana, parcela, importe="300.00")
+        repartido = cliente.post(
+            f"/api/gastos/{gasto['id']}/repartos",
+            headers=cuenta["cabeceras"],
+            json={
+                "metodo": "manual",
+                "destino_tipo": "tierra",
+                "trozos": [{"destino_tipo": "tierra", "destino": str(parcela["id"]), "importe": "300.00"}],
+                "confirmado": True,
+            },
+        )
+        assert repartido.status_code in (200, 201), repartido.text
+        ficha = cliente.get(f"/api/gastos/{gasto['id']}", headers=cuenta["cabeceras"]).json()
+        cuadre = ficha["cuadre_del_reparto"]
+        assert cuadre["texto_repartido"] == "300,00 €", (
+            "el gasto repartido cuenta el dinero dos veces: el reparto y su coste directo"
+        )
+        assert cuadre["texto_sin_asignar"] == "0,00 €"
+        assert cuadre["cuadra"] is True

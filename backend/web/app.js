@@ -19332,6 +19332,17 @@ function elFormularioDeLasCuentas(cual, borrador) {
   const b = borrador || {};
   const opcionesDe = (lista, elegido) =>
     (lista || []).map((uno) => ({ valor: uno.valor, texto: uno.texto, elegido: uno.valor === elegido }));
+  // **Lo que el agricultor ya tiene escrito manda sobre lo que venía del cuaderno** (06/10/2026).
+  // Pintar la pantalla borra las casillas, y **elegir una categoría repinta**: sin esto, escribir «el
+  // gasóleo de la siega» y después tocar la categoría «Gasóleo» dejaba el concepto —y el importe, y la
+  // fecha— **en blanco**, así que al guardar salía «No se ha podido» y el agricultor no sabía por qué.
+  // Se mira primero lo que hay en la pantalla y solo si esa casilla no está (el primer pintado) se usa
+  // lo que traía el formulario. Es la misma trampa que este fichero ya cuenta para la ficha de una
+  // máquina: «el agricultor escribe la matrícula, toca “Es mía” y la matrícula desaparece».
+  const loQueYaEstaba = (id, siNo) => {
+    const nodo = id ? document.getElementById(id) : null;
+    return nodo ? nodo.value : siNo;
+  };
   const base = {
     guardar: g.guardar,
     cancelar: g.cancelar,
@@ -19345,7 +19356,7 @@ function elFormularioDeLasCuentas(cual, borrador) {
       titulo: cual.id ? g.form_corregir_titulo : g.form_nuevo_titulo,
       pista: cual.id ? g.form_corregir_pista : g.form_nuevo_pista,
       bloques: [
-        { tipo: "texto", id: "gasto-concepto", etiqueta: g.campo_concepto, pista: g.campo_concepto_pista, valor: cual.concepto || "" },
+        { tipo: "texto", id: "gasto-concepto", etiqueta: g.campo_concepto, pista: g.campo_concepto_pista, valor: loQueYaEstaba("gasto-concepto", cual.concepto || "") },
         {
           tipo: "opciones",
           campo: "categoria",
@@ -19354,12 +19365,12 @@ function elFormularioDeLasCuentas(cual, borrador) {
           elegido: b.categoria || cual.categoria || "",
           opciones: opcionesDe((estado.interfaz || {}).categorias_de_gasto, b.categoria || cual.categoria),
         },
-        { tipo: "numero", id: "gasto-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: cual.importe || "" },
-        { tipo: "numero", id: "gasto-base", etiqueta: g.campo_base, valor: cual.base_imponible || "" },
-        { tipo: "numero", id: "gasto-cuota", etiqueta: g.campo_cuota, valor: cual.cuota_iva || "" },
-        { tipo: "fecha", id: "gasto-fecha", etiqueta: g.campo_fecha, valor: cual.fecha || "" },
-        { tipo: "fecha", id: "gasto-vencimiento", etiqueta: g.campo_vencimiento, pista: g.campo_vencimiento_pista, valor: cual.vencimiento || "" },
-        { tipo: "texto", id: "gasto-proveedor", etiqueta: g.campo_proveedor, valor: cual.proveedor || "" },
+        { tipo: "numero", id: "gasto-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: loQueYaEstaba("gasto-importe", cual.importe || "") },
+        { tipo: "numero", id: "gasto-base", etiqueta: g.campo_base, valor: loQueYaEstaba("gasto-base", cual.base_imponible || "") },
+        { tipo: "numero", id: "gasto-cuota", etiqueta: g.campo_cuota, valor: loQueYaEstaba("gasto-cuota", cual.cuota_iva || "") },
+        { tipo: "fecha", id: "gasto-fecha", etiqueta: g.campo_fecha, valor: loQueYaEstaba("gasto-fecha", cual.fecha || "") },
+        { tipo: "fecha", id: "gasto-vencimiento", etiqueta: g.campo_vencimiento, pista: g.campo_vencimiento_pista, valor: loQueYaEstaba("gasto-vencimiento", cual.vencimiento || "") },
+        { tipo: "texto", id: "gasto-proveedor", etiqueta: g.campo_proveedor, valor: loQueYaEstaba("gasto-proveedor", cual.proveedor || "") },
       ],
     };
   }
@@ -19404,9 +19415,9 @@ function elFormularioDeLasCuentas(cual, borrador) {
       titulo: g.form_pago_titulo,
       pista: g.form_pago_pista,
       bloques: [
-        { tipo: "numero", id: "pago-importe", etiqueta: g.campo_importe, valor: "" },
-        { tipo: "fecha", id: "pago-fecha", etiqueta: g.campo_fecha, valor: hoy() },
-        { tipo: "texto", id: "pago-proveedor", etiqueta: g.campo_proveedor, valor: "" },
+        { tipo: "numero", id: "pago-importe", etiqueta: g.campo_importe, valor: loQueYaEstaba("pago-importe", "") },
+        { tipo: "fecha", id: "pago-fecha", etiqueta: g.campo_fecha, valor: loQueYaEstaba("pago-fecha", hoy()) },
+        { tipo: "texto", id: "pago-proveedor", etiqueta: g.campo_proveedor, valor: loQueYaEstaba("pago-proveedor", "") },
         {
           tipo: "opciones",
           campo: "forma",
@@ -19423,7 +19434,7 @@ function elFormularioDeLasCuentas(cual, borrador) {
       titulo: g.form_inversion_titulo,
       pista: g.form_inversion_pista,
       bloques: [
-        { tipo: "texto", id: "inversion-concepto", etiqueta: g.campo_concepto, valor: "" },
+        { tipo: "texto", id: "inversion-concepto", etiqueta: g.campo_concepto, valor: loQueYaEstaba("inversion-concepto", "") },
         {
           tipo: "opciones",
           campo: "categoria",
@@ -19431,9 +19442,9 @@ function elFormularioDeLasCuentas(cual, borrador) {
           elegido: b.categoria || "",
           opciones: opcionesDe((estado.interfaz || {}).categorias_de_inversion, b.categoria),
         },
-        { tipo: "numero", id: "inversion-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: "" },
-        { tipo: "fecha", id: "inversion-fecha", etiqueta: g.campo_fecha, valor: "" },
-        { tipo: "texto", id: "inversion-proveedor", etiqueta: g.campo_proveedor, valor: "" },
+        { tipo: "numero", id: "inversion-importe", etiqueta: g.campo_importe, pista: g.campo_importe_pista, valor: loQueYaEstaba("inversion-importe", "") },
+        { tipo: "fecha", id: "inversion-fecha", etiqueta: g.campo_fecha, valor: loQueYaEstaba("inversion-fecha", "") },
+        { tipo: "texto", id: "inversion-proveedor", etiqueta: g.campo_proveedor, valor: loQueYaEstaba("inversion-proveedor", "") },
       ],
     };
   }
@@ -19443,11 +19454,11 @@ function elFormularioDeLasCuentas(cual, borrador) {
       titulo: g.form_ayuda_titulo,
       pista: g.form_ayuda_pista,
       bloques: [
-        { tipo: "texto", id: "ayuda-concepto", etiqueta: g.campo_concepto, valor: "" },
-        { tipo: "texto", id: "ayuda-organismo", etiqueta: g.campo_proveedor, valor: "" },
-        { tipo: "numero", id: "ayuda-previsto", etiqueta: g.ayuda_prevista, valor: "" },
-        { tipo: "numero", id: "ayuda-concedido", etiqueta: g.ayuda_concedida, valor: "" },
-        { tipo: "numero", id: "ayuda-cobrado", etiqueta: g.ayuda_cobrada, valor: "" },
+        { tipo: "texto", id: "ayuda-concepto", etiqueta: g.campo_concepto, valor: loQueYaEstaba("ayuda-concepto", "") },
+        { tipo: "texto", id: "ayuda-organismo", etiqueta: g.campo_proveedor, valor: loQueYaEstaba("ayuda-organismo", "") },
+        { tipo: "numero", id: "ayuda-previsto", etiqueta: g.ayuda_prevista, valor: loQueYaEstaba("ayuda-previsto", "") },
+        { tipo: "numero", id: "ayuda-concedido", etiqueta: g.ayuda_concedida, valor: loQueYaEstaba("ayuda-concedido", "") },
+        { tipo: "numero", id: "ayuda-cobrado", etiqueta: g.ayuda_cobrada, valor: loQueYaEstaba("ayuda-cobrado", "") },
       ],
     };
   }
@@ -19468,7 +19479,12 @@ async function guardarLasCuentas(datos) {
   suyo.guardando = true;
   suyo.error = "";
   suyo.aviso = "";
-  pantallaLasCuentas();
+  // **Los campos se leen ANTES de pintar** (06/10/2026). Aquí estaba `pantallaLasCuentas()` primero, y
+  // eso vaciaba los campos: `montarEn` limpia el contenedor (`innerHTML = ""`) y React pinta en su
+  // siguiente vuelta, así que lo que se leyera entre una cosa y otra era **vacío**. El gasto se mandaba
+  // sin concepto ni importe, el servidor lo rechazaba («un gasto tiene que decir qué fue») y el
+  // agricultor veía «No se ha podido». Se encontró recorriendo el recorrido 2 en un navegador de
+  // verdad, con un grabador delante de la aplicación.
   let ruta = "/api/gastos";
   let cuerpo = {};
   let metodo = "POST";
@@ -19533,6 +19549,8 @@ async function guardarLasCuentas(datos) {
       clave_de_reenvio: claveDeReenvio("ayuda"),
     };
   }
+  // Y **ahora sí**: se pinta con lo que se va a guardar ya leído (el botón dice que está guardando).
+  pantallaLasCuentas();
   try {
     // **`method` y `body`, no `metodo` y `cuerpo`** (05/10/2026). Aquí ponía `api(ruta, { method: metodo, body: JSON.stringify(cuerpo) })`,
     // y `api` pasa sus opciones tal cual a `fetch`, que solo entiende `method` y `body`: el resultado era
@@ -20792,8 +20810,13 @@ function pantallaUnTrabajo() {
 /** Lo que se ha escrito en la ficha, en los nombres que espera el servidor. */
 function loEscritoEnLaFicha(modo) {
   const numero = (id) => {
+    // **Con `aNumero` y no con `Number`** (06/10/2026): `Number("4,9")` es `NaN`, así que un agricultor
+    // que escribiera las hectáreas con coma —que es como se escriben aquí, y lo que da el teclado
+    // decimal del móvil— veía el trabajo guardado **sin hectáreas**, sin ningún error y sin saber por
+    // qué. `aNumero` es la regla de la casa para leer un número escrito a mano (acepta la coma y los
+    // miles) y la usan los demás formularios.
     const escrito = valorDeLaCasilla(id);
-    return escrito === "" ? null : Number(escrito);
+    return escrito === "" ? null : aNumero(escrito);
   };
   const texto = (id) => {
     const escrito = (valorDeLaCasilla(id) || "").trim();

@@ -1914,3 +1914,219 @@ class TestA11UnaMaquinaSinDuenoConocidoYaNoEsTuya:
         assert traida.json()["propiedad"] == "no_se", (
             "la ficha de la maquinaria decía «es tuya» de una máquina que puede ser de otro"
         )
+
+class TestA12ElAguaQueNadieDijoYaNoAligeraLaFranja:
+    """A12 — «`masa_agua_cerca` y `captacion_consumo_humano` sin el tercer estado»
+    (`docs/T02_VALORES_POR_DEFECTO.md`, A12).
+
+    **EL DEFECTO.** Los dos campos nacían en `False`, así que una tierra que **nadie había
+    contestado** se leía como «aquí no hay ni río ni toma de agua». Y de esos dos campos dependen
+    **dos cosas de la ley**: las restricciones de abonado de la Orden MAV/398/2022 y la **franja de
+    seguridad** de un tratamiento. Un «no» que nadie ha dicho **aligera las reglas que le aplican al
+    agricultor**, y lo hace en silencio: el programa no avisa de nada porque cree que ya lo sabe.
+
+    **LO QUE EXIGE AHORA.** Los dos campos son de tres estados (`True`, `False` y `None` = «no lo
+    sé»), y con el tercero:
+      · si consta que hay agua, se pide la franja de seguridad (`V11_franja_seguridad`) como siempre;
+      · si consta que **no** hay agua, no se pregunta nada —que es lo correcto: ya lo dijo—;
+      · y si **no se sabe**, el programa **lo dice** (`V11_no_se_si_hay_agua`) en vez de callarse y
+        dejar pasar el tratamiento como si no hubiera nada que respetar.
+
+    **Y las tres pruebas están hechas contra el defecto**: devolviendo `default=False` a los dos
+    campos, la primera se pone roja porque la tierra sale con `False` y el aviso del agua no aparece.
+    """
+
+    def _validar(self, cliente, cuenta, nuevo_tratamiento, tierra, **cambios):
+        respuesta = cliente.post(
+            "/api/tratamientos/validar",
+            headers=cuenta["cabeceras"],
+            json=nuevo_tratamiento(parcela_id=tierra["id"], **cambios),
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        return {aviso["codigo"]: aviso for aviso in respuesta.json()["avisos"]}
+
+    def test_una_tierra_que_no_dice_si_hay_agua_no_aligera_la_franja(
+        self, cliente, cuenta, crear_parcela, nuevo_tratamiento
+    ):
+        """**El caso del defecto**: nadie ha contestado, así que el programa no puede dar por hecho
+        que no hay agua. Las dos formas de no contestar —no mandar el campo y mandarlo en blanco—
+        tienen que dar lo mismo."""
+        for cambios, como in (
+            ({}, "sin los campos"),
+            ({"masa_agua_cerca": None, "captacion_consumo_humano": None}, "con los campos en blanco"),
+        ):
+            tierra = crear_parcela(alias=f"La del río ({como})", **cambios)
+            assert tierra["masa_agua_cerca"] is None, (
+                f"una tierra apuntada {como} sale diciendo que no hay agua al lado: con eso, el "
+                f"tratamiento pasa sin que nadie mire la franja de seguridad ({DOCUMENTO}, A12)"
+            )
+            assert tierra["captacion_consumo_humano"] is None
+
+            avisos = self._validar(
+                cliente, cuenta, nuevo_tratamiento, tierra, franja_seguridad_respetada=None
+            )
+            assert "V11_no_se_si_hay_agua" in avisos, (
+                "el programa se calla sobre el agua de una tierra que no lo ha dicho: lo que no se "
+                f"sabe tiene que decirse ({DOCUMENTO}, A12)"
+            )
+            assert not avisos["V11_no_se_si_hay_agua"]["bloquea"], (
+                "no saberlo no puede impedir apuntar el tratamiento: se avisa, no se bloquea"
+            )
+            assert "V11_franja_seguridad" not in avisos, (
+                "no se puede pedir la franja de seguridad de un agua que no consta que exista"
+            )
+
+    def test_una_tierra_que_dice_que_no_hay_agua_no_se_pregunta_nada(
+        self, cliente, cuenta, crear_parcela, nuevo_tratamiento
+    ):
+        """El otro lado: cuando **consta** que no hay agua, el programa se calla, que es lo correcto.
+
+        Sin esta prueba, «avisar siempre» pasaría por bueno y el agricultor tendría un aviso en cada
+        tratamiento de cada tierra sin agua: un aviso que sale siempre es un aviso que no se lee.
+        """
+        tierra = crear_parcela(
+            alias="El llano", masa_agua_cerca=False, captacion_consumo_humano=False
+        )
+        assert tierra["masa_agua_cerca"] is False, "lo que se dice se guarda"
+
+        avisos = self._validar(
+            cliente, cuenta, nuevo_tratamiento, tierra, franja_seguridad_respetada=None
+        )
+        assert "V11_no_se_si_hay_agua" not in avisos, "consta que no hay agua: no hay nada que decir"
+        assert "V11_franja_seguridad" not in avisos
+
+    def test_con_una_sola_de_las_dos_contestada_todavia_no_se_sabe(
+        self, cliente, cuenta, crear_parcela, nuevo_tratamiento
+    ):
+        """Saber que no hay río **no es** saber que no hay toma de agua para beber.
+
+        Es la mitad que hace que el tercer estado haga falta de verdad: los dos campos son dos
+        preguntas distintas, y una contestada no contesta la otra.
+        """
+        tierra = crear_parcela(alias="Media contestada", masa_agua_cerca=False)
+        assert tierra["captacion_consumo_humano"] is None
+
+        avisos = self._validar(cliente, cuenta, nuevo_tratamiento, tierra)
+        assert "V11_no_se_si_hay_agua" in avisos, (
+            "con una de las dos contestada el programa ya da por sabido el agua: la captación para "
+            f"beber sigue sin saberse ({DOCUMENTO}, A12)"
+        )
+
+    def test_corregir_una_tierra_no_convierte_el_agua_en_un_no(
+        self, cliente, cuenta, crear_parcela
+    ):
+        """**La corrección.** Al corregir una tierra, lo que no se manda se queda en «no lo sé», y
+        nunca en `False`: un «no» que el agricultor no ha escrito es el defecto de A12 otra vez, por
+        la puerta de detrás."""
+        tierra = crear_parcela(alias="El Soto", masa_agua_cerca=True)
+        assert tierra["masa_agua_cerca"] is True
+
+        corregida = cliente.put(
+            f"/api/parcelas/{tierra['id']}",
+            headers=cuenta["cabeceras"],
+            json={"alias": "El Soto de arriba", "superficie_ha": 2.5},
+        )
+        assert corregida.status_code == 200, corregida.text
+        assert corregida.json()["masa_agua_cerca"] is None, (
+            "corregir el nombre de la tierra ha dejado escrito que no hay agua al lado: lo que no "
+            f"se manda es «no lo sé», no un no ({DOCUMENTO}, A12)"
+        )
+        assert corregida.json()["captacion_consumo_humano"] is None
+
+
+class TestA13UnaFincaQueNoDiceSiEsEcologicaYaNoSeCalla:
+    """A13 — «`produccion_ecologica = False` apaga la comprobación ecológica»
+    (`docs/T02_VALORES_POR_DEFECTO.md`, A13).
+
+    **EL DEFECTO.** La finca nacía en `False`, así que la comprobación ecológica entera se apagaba
+    en cuanto nadie marcaba la casilla: **una finca ecológica podía echar un producto que no vale
+    para ecológico y el programa no decía nada**, porque creía que la finca no era ecológica. Y
+    además el «False» salía escrito en **el documento que se firma**.
+
+    **LO QUE EXIGE AHORA.** Tres estados también aquí:
+      · si **consta** que es ecológica, se comprueba como siempre (`V15_no_ecologico` bloquea);
+      · si **no consta**, se dice que no se ha podido comprobar (`V15_no_se_si_la_finca_es_ecologica`)
+        en vez de callarse;
+      · y solo si **consta** que no es ecológica el programa se calla, que es lo correcto.
+    """
+
+    def _avisos(self, cliente, cuenta, nuevo_tratamiento, **cambios):
+        respuesta = cliente.post(
+            "/api/tratamientos/validar",
+            headers=cuenta["cabeceras"],
+            json=nuevo_tratamiento(**cambios),
+        )
+        assert respuesta.status_code == 200, respuesta.text
+        return {aviso["codigo"]: aviso for aviso in respuesta.json()["avisos"]}
+
+    def test_una_finca_que_no_dice_si_es_ecologica_lo_dice(
+        self, cliente, cuenta, nuevo_tratamiento
+    ):
+        """**El caso del defecto**: la cuenta es nueva y nadie ha dicho si la finca es ecológica."""
+        finca = cliente.get("/api/mi-finca", headers=cuenta["cabeceras"]).json()
+        assert finca["produccion_ecologica"] is None, (
+            "una finca nueva sale diciendo que no es ecológica sin que nadie lo haya dicho: con eso "
+            f"la comprobación ecológica queda apagada ({DOCUMENTO}, A13)"
+        )
+
+        avisos = self._avisos(cliente, cuenta, nuevo_tratamiento)
+        assert "V15_no_se_si_la_finca_es_ecologica" in avisos, (
+            "el programa se calla cuando no sabe si la finca es ecológica: lo que no se sabe tiene "
+            f"que decirse ({DOCUMENTO}, A13)"
+        )
+        assert not avisos["V15_no_se_si_la_finca_es_ecologica"]["bloquea"], (
+            "no saberlo no puede impedir apuntar: se avisa, no se bloquea"
+        )
+
+    def test_si_la_finca_dice_que_no_es_ecologica_se_calla(self, cliente, cuenta, nuevo_tratamiento):
+        """Y el otro lado: cuando consta que no es ecológica, no hay nada que comprobar."""
+        dicha = cliente.put(
+            "/api/mi-finca", headers=cuenta["cabeceras"], json={"produccion_ecologica": False}
+        )
+        assert dicha.status_code == 200, dicha.text
+        assert dicha.json()["produccion_ecologica"] is False
+
+        avisos = self._avisos(cliente, cuenta, nuevo_tratamiento)
+        assert "V15_no_se_si_la_finca_es_ecologica" not in avisos, (
+            "consta que no es ecológica: preguntarlo otra vez sería un aviso que sale siempre"
+        )
+
+    def test_lo_que_no_se_sabe_no_se_firma_como_un_no(self, cliente, cuenta):
+        """**El documento que se firma.** Un «no» firmado no se puede corregir sin firmar otra vez.
+
+        Se mira el texto canónico de verdad, el que se manda a firmar (`/api/firmas/preparar`), y las
+        tres formas a la vez: es la única prueba que ata las dos mitades —el dato y el papel—.
+        """
+        preparado = cliente.get("/api/firmas/preparar", headers=cuenta["cabeceras"])
+        assert preparado.status_code == 200, preparado.text
+        contenido = preparado.json()["contenido"]
+        assert "En ecológico: no se sabe" in contenido, (
+            "el cuaderno que se firma no dice que no se sabe si la finca es ecológica: o lo calla o "
+            f"afirma un «no» que nadie ha dicho ({DOCUMENTO}, A13)"
+        )
+
+        cliente.put(
+            "/api/mi-finca", headers=cuenta["cabeceras"], json={"produccion_ecologica": False}
+        )
+        dicho_no = cliente.get("/api/firmas/preparar", headers=cuenta["cabeceras"]).json()["contenido"]
+        assert "En ecológico: no" in dicho_no
+
+        cliente.put(
+            "/api/mi-finca", headers=cuenta["cabeceras"], json={"produccion_ecologica": True}
+        )
+        dicho_si = cliente.get("/api/firmas/preparar", headers=cuenta["cabeceras"]).json()["contenido"]
+        assert "En ecológico: si" in dicho_si
+
+    def test_los_dos_estados_de_siempre_se_siguen_escribiendo_igual(self):
+        """Y el ayudante, por dentro: `True` y `False` se escriben como siempre **a propósito**, para
+        que las firmas ya hechas no cambien ni un byte, y solo el tercero estrena palabras.
+
+        Si alguien cambiara «si»/«no» por otra cosa, todos los cuadernos firmados del agricultor
+        dejarían de cuadrar con su huella y la aplicación diría que han sido manipulados.
+        """
+        assert firma.si_no_o_no_se(True) is True
+        assert firma.si_no_o_no_se(False) is False
+        assert firma.si_no_o_no_se(None) == "no se sabe"
+        assert firma.valor_para_firmar(True) == "si"
+        assert firma.valor_para_firmar(False) == "no"
+        assert firma.valor_para_firmar(firma.si_no_o_no_se(None)) == "no se sabe"

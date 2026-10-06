@@ -847,9 +847,13 @@ def _la_labor_del_trabajo(datos: TrabajoEntrada, explotacion, db) -> models.Labo
         observaciones=(datos.observaciones or "").strip()[:500] or None,
         clave_de_reenvio=_la_clave(datos),
         previsto_id=datos.previsto_id,
-        # El subtipo (rodillo, cultivador, arado…) va en su columna cuando exista y, mientras no exista,
-        # en `detalles`, que es el cajón para lo que no encaja. Ver `_el_subtipo`.
-        detalles={"subtipo": datos.subtipo} if (datos.subtipo or "").strip() else None,
+        # **El subtipo va en su columna** (06/10/2026). Aquí ponía `detalles={"subtipo": …}` con el
+        # comentario «va en su columna cuando exista, y mientras no exista en `detalles`»: la columna
+        # **existe desde que se integró el T15**, y la regla de la casa es que un dato del contrato
+        # —y el subtipo lo es (§4, S05): «con nombre y número»— viva en su columna y no en un JSON de
+        # texto libre, que no se puede consultar ni sumar. `_el_subtipo` lee la columna primero y
+        # `detalles` después, así que los apuntes escritos antes de esto se siguen leyendo igual.
+        subtipo=(datos.subtipo or "").strip()[:30] or None,
     )
     if not labor.cultivo:
         # El cultivo, igual que en el resto del programa: si el apunte no lo trae, se pone el que el
@@ -1040,7 +1044,15 @@ def marcar_lo_que_de_verdad_se_hizo(
             accion="crear",
             datos={
                 "tipo": labor.tipo,
-                "subtipo": datos.subtipo,
+                # **El subtipo es el de la labor, no `datos.subtipo`** (06/10/2026). Aquí ponía
+                # `datos.subtipo`, y `MarcarHechoEntrada` **no tiene ese campo**: marcar un plan como
+                # hecho contestaba **500** siempre, con un `AttributeError`, así que la segunda mitad del
+                # recorrido 4 —«planificar un trabajo → marcar lo que de verdad se hizo»— **no se podía
+                # hacer desde la aplicación**. Se encontró recorriendo ese recorrido en un navegador de
+                # verdad: la pantalla decía «No se ha podido» y el registro del servidor tenía la traza.
+                # El dato bueno es el de la labor que se acaba de crear, que es la que guarda el apero
+                # (y viene del plan, que es de donde sale el trabajo).
+                "subtipo": labor.subtipo,
                 "tierra": labor.parcela_id,
                 "fecha": logica.como_json(labor.fecha),
                 "superficie_ha": labor.superficie_ha,

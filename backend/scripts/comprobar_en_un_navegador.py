@@ -774,6 +774,137 @@ PANTALLAS = [
             "Calvarrasa de Arriba",
         ],
     ),
+    # ======================================================================
+    # Los recorridos 2, 3 y 4, **pulsando**, que es como los hace el agricultor
+    # ======================================================================
+    #
+    # Hasta el 06/10/2026 estas pantallas se comprobaban dibujadas (y sus flujos estaban probados en
+    # las pruebas de cableado y en las del servidor), pero el guion del navegador **no recorría los
+    # formularios**: apuntar un gasto, conciliarlo o planificar un trabajo se comprobaba «por
+    # pantalla», no palmo a palmo. Estos cuatro recorridos son lo que faltaba para poder decir que el
+    # agricultor los completa desde la aplicación: **se escribe en los campos de verdad y se pulsan
+    # los botones de verdad**, y lo que se comprueba es lo que sale después.
+    #
+    # **El recorrido 2 (T13): apuntar un gasto y ver su ficha.** Se apunta con su concepto, su
+    # categoría (que se elige pulsando, como en el móvil), su importe **con coma** —que es como lo
+    # escribe un agricultor y como lo tiene que leer el programa— y su fecha. Lo que se busca después
+    # es el gasto en la lista y, en su ficha, lo que consta que costó, lo que queda por pagar y el
+    # botón de repartirlo. Si el guardado no llegara al servidor, la lista no lo enseñaría.
+    (
+        "el recorrido 2: apuntar un gasto",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="gasto-nuevo"]',
+            "escribir:#gasto-concepto=El gasóleo de la siega",
+            # La categoría se elige **por su valor** y no «la primera»: un gasto de gasóleo tiene que
+            # quedar en la categoría del gasóleo, y esa lista la sirve el servidor.
+            '[data-accion="gasto-elegir"][data-campo="categoria"][data-valor="gasoleo"]',
+            "escribir:#gasto-importe=254,10",
+            "escribir:#gasto-fecha=2026-05-20",
+            '[data-accion="gasto-guardar"]',
+        ],
+        # **El recuento, y no solo el texto que se escribió**: mientras el formulario sigue abierto, lo
+        # que se tecleó está en su `<input>`, así que buscar «El gasóleo de la siega» pasaría **aunque
+        # el gasto no se hubiera guardado** (falso positivo que se vio al arreglar la lectura de los
+        # campos, con el grabador delante). El recuento de la lista solo puede venir del servidor: el
+        # guion deja un gasto y esta ruta apunta otro.
+        ["Mis cuentas", "Tienes 2 gastos apuntados.", "El gasóleo de la siega", "254,10"],
+    ),
+    # Y **su ficha**, que es donde se contesta la pregunta del recorrido: qué importe consta, qué se
+    # ha pagado y **qué queda pendiente**. Va después de la ruta de arriba a propósito: se apoya en
+    # el gasto que aquella acaba de guardar, que es el más nuevo y por eso el primero de la lista.
+    (
+        "el recorrido 2: la ficha del gasto, con lo que queda por pagar",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="gasto-abrir"]',
+        ],
+        [
+            "El gasóleo de la siega",
+            "Falta por pagar",
+            "REPARTIRLO",
+            "ANULAR",
+        ],
+    ),
+    # **El recorrido 3 (T20): de un movimiento del banco a contra qué papel va.** El extracto ya está
+    # importado (lo deja `siembra_datos`, leyendo un fichero de verdad), así que lo que se recorre es
+    # la mitad que importa: abrir un movimiento y ver **las cuentas que cuadran con él y por qué**, con
+    # la salida de apuntarlo a mano. Conciliar de verdad —elegir la propuesta— se comprueba en las
+    # pruebas del servidor y en las de cableado, porque depende de qué papeles haya ese día.
+    (
+        "el recorrido 3: un movimiento del que no consta el importe",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="bancos-ver"]',
+            '[data-accion="banco-abrir"]',
+        ],
+        # **El primero de la lista es el que no trae importe** (el fichero de ejemplo tiene una línea
+        # así a propósito), y esa es la mitad que más importa de este recorrido: el programa dice que
+        # **no consta** —no escribe un cero—, **no ofrece cuadrarlo** con ningún papel (no se puede
+        # repartir lo que no se sabe) y da la salida de escribirlo a mano. Si algún día esto enseñara
+        # «0,00 €», el agricultor cuadraría su extracto contra un número inventado.
+        [
+            "Este movimiento del banco",
+            "ANOTACION SIN IMPORTE EJEMPLO",
+            # **El rótulo y el valor van en elementos distintos**, así que la frase «El importe No consta»
+            # no está junta en el HTML: se buscan por separado, y con la frase entera que sí existe.
+            "El importe",
+            "No consta",
+            "De este movimiento no consta el importe",
+            "CORREGIR EL IMPORTE A MANO",
+            "Contra qué papel va",
+        ],
+    ),
+    # Y **uno con importe**, que es donde se puede cuadrar: la segunda línea de la lista (la de la
+    # comisión), que sí lo trae. Se llega con `li:nth-child(2)`, porque la lista del móvil es una
+    # `<ul>` con un `<li>` por movimiento y el primero es el que no consta.
+    (
+        "el recorrido 3: contra qué papel va un movimiento",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="bancos-ver"]',
+            'li:nth-child(2) [data-accion="banco-abrir"]',
+        ],
+        [
+            "Este movimiento del banco",
+            "Contra qué papel va",
+            "Elige una y el dinero queda apuntado a ese papel",
+            "APUNTAR ESTE DINERO",
+        ],
+    ),
+    # **El recorrido 4 (T15): planificar un trabajo y marcarlo hecho.** Las dos mitades del ticket, y
+    # en su orden: primero se apunta lo que se piensa hacer (que **no gasta nada**) y después se
+    # apunta lo que de verdad se hizo, con su día y sus horas. Se comprueba el día en las dos listas,
+    # que es lo que demuestra que el plan se guardó y que el hecho llegó a su sitio.
+    (
+        "el recorrido 4: planificar un trabajo",
+        [
+            '[data-accion="trabajos-ver"]',
+            '[data-accion="trabajo-planificar"]',
+            "escribir:#trabajo-tipo=siembra",
+            # **La primera tierra, sin escribir su número**: el identificador es del servidor y no se
+            # puede saber al escribir la ruta (y una ruta con un número fijo empezaría a apuntar el
+            # trabajo a la tierra que no es en cuanto cambiara la base). Por eso el guion sabe elegir
+            # «la primera opción de verdad» de un desplegable.
+            "elegir-ejemplo:#trabajo-tierra",
+            "escribir:#trabajo-fecha-prevista=2026-11-15",
+            "escribir:#trabajo-superficie=4,9",
+            "escribir:#trabajo-horas=3",
+            '[data-accion="trabajo-previsto-guardar"]',
+        ],
+        ["Los trabajos", "Lo que tengo pensado hacer", "15/11/2026"],
+    ),
+    (
+        "el recorrido 4: marcar lo que se ha hecho de verdad",
+        [
+            '[data-accion="trabajos-ver"]',
+            '[data-accion="trabajo-hecho"]',
+            "escribir:#trabajo-fecha=2026-11-20",
+            "escribir:#trabajo-horas=5",
+            '[data-accion="trabajo-hecho-guardar"]',
+        ],
+        ["Los trabajos", "Lo que he hecho", "20/11/2026"],
+    ),
     # **La historia de una tierra** (T15, 05/10/2026): **el recorrido 5 entero, pulsando**, que es como lo
     # hace el agricultor —«abrir tierra → qué cultivo tiene, qué trabajos se han hecho, qué queda previsto
     # y qué costes conocidos tiene»—. Se entra por «mis cosas» y se pulsa el botón de la ficha de la
@@ -839,7 +970,10 @@ PANTALLAS = [
     (
         "las cuentas",
         ['[data-accion="gastos-ver"]'],
-        ["Mis cuentas", "EL BANCO Y LOS PAPELES", "Tienes 1 gasto apuntado."],
+        # **Dos y no uno**: el recorrido 2 —que va antes— apunta un gasto de verdad, así que al llegar
+        # aquí la finca tiene el del guion y el suyo. Se dice el número de verdad y se explica por qué,
+        # en vez de dejar una comprobación que un día diga que no cuadra sin decir de qué.
+        ["Mis cuentas", "EL BANCO Y LOS PAPELES", "Tienes 2 gastos apuntados."],
     ),
     # **Los trabajos** (T15, 05/10/2026): la agenda. Se comprueban **las dos listas a la vez** —lo
     # pensado y lo hecho—, porque el guion deja una cosa de cada: con una sola lista comprobada, la otra
@@ -1194,6 +1328,21 @@ def pagina_de_pantalla(token: str, direccion: str, ruta: list[str]) -> pathlib.P
               // con «el plan de abono», que se quedó en «mi cuaderno» y aun así «pasó», porque los
               // textos que se buscaban también estaban allí. Por eso se apunta en el título.
               window.pasosSinEncontrar.push("escribir:" + resto.slice(0, corte));
+            }}
+          }} else if (paso.startsWith("elegir-ejemplo:")) {{
+            // `elegir-ejemplo:#trabajo-tierra`: se elige **la primera opción de verdad** del
+            // desplegable (la de después de «sin decir»). Hace falta porque un identificador de la base
+            // —el de una tierra— **no se puede escribir en la ruta**: es del servidor y cambia con cada
+            // base, así que la ruta dice «la primera tierra» y no un número que un día no existirá.
+            const desplegable = document.querySelector(paso.slice("elegir-ejemplo:".length));
+            if (desplegable && desplegable.options && desplegable.options.length > 1) {{
+              desplegable.value = desplegable.options[1].value;
+              // Se avisa a la página como lo haría una persona: sin esto, el valor cambia en la
+              // pantalla pero quien lo lea por un escuchador no se entera.
+              desplegable.dispatchEvent(new Event("input", {{ bubbles: true }}));
+              desplegable.dispatchEvent(new Event("change", {{ bubbles: true }}));
+            }} else {{
+              window.pasosSinEncontrar.push(paso);
             }}
           }} else {{
             const boton = document.querySelector(paso);
@@ -1666,9 +1815,12 @@ def siembra_datos(direccion: str, token: str) -> list[str]:
                 "categoria": "gasoleo",
                 "proveedor": "Cooperativa Agrícola de Peñaranda",
                 "parcela_id": parcela.json()["id"],
-                "base_imponible": 210.0,
-                "cuota_iva": 44.1,
-                "importe": 254.1,
+                # **Los importes van como texto decimal**, que es la regla del dinero en este programa:
+                # un número de JSON es una coma flotante y ya ha perdido céntimos antes de entrar, así
+                # que el servidor lo rechaza (igual que en las ventas, los cobros y los pagos).
+                "base_imponible": "210.00",
+                "cuota_iva": "44.10",
+                "importe": "254.10",
             },
         )
         if gasto.status_code == 201:
