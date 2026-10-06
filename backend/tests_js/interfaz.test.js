@@ -8297,13 +8297,16 @@ test("cuando no falta nada, se dice en vez de dejar la lista vacía", async () =
   );
 });
 
-test("sacar el cuaderno pide el fichero al servidor", async () => {
+test("sacar el cuaderno pide el fichero del año que se está mirando", async () => {
+  // Y **del año que se está mirando**, no del que le parezca al servidor (06/10/2026): la ruta, sin
+  // decírselo, sacaba el del año en curso, así que quien tenía delante el cuaderno de otro año
+  // descargaba uno distinto del que la pantalla le estaba describiendo.
   const { entorno, servidor } = await cargarAplicacion();
   await pulsar(entorno, "inicio", { ir: "mi_cuaderno" });
   await pulsar(entorno, "cuaderno-sacar");
   assert.ok(
-    servidor.llamadas.includes("/api/cuaderno-cyl/exportar"),
-    "no ha pedido el fichero del cuaderno",
+    servidor.llamadas.includes("/api/cuaderno-cyl/exportar?campana_id=1"),
+    `no ha pedido el fichero del cuaderno del año que se ve: ${servidor.llamadas.filter((u) => u.includes("cuaderno-cyl")).join(", ")}`,
   );
 });
 
