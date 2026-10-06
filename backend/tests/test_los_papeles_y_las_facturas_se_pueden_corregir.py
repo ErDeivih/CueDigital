@@ -1123,10 +1123,18 @@ class TestLoQueSeCuentaAntesDeBorrar:
 
         Y ojo con lo que **no** cuenta: el decreto de la máquina no es una dependencia de esta tabla (va
         por `maquina_id`), y una inspección sin papel no apunta a ningún documento.
+
+        **Y desde el T20 (05/10/2026) hay una segunda: `conciliaciones_de_movimiento`.** El agricultor
+        puede decir «este dinero del banco va contra este papel», y esa decisión queda apuntada con el
+        papel al que se refiere. Es una dependencia de verdad por el mismo motivo que la inspección:
+        borrar el papel dejaría la conciliación diciendo contra qué se cuadró sin que exista. Contesta
+        409, y lo que sí se puede hacer siempre es **anular el papel** (que lo deja con su motivo y con
+        su fichero) o **deshacer la conciliación**, que es una puerta del propio T20 y deja todo como
+        estaba.
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("documento_id")
-        ] == ["inspecciones_de_maquina"]
+        ] == ["conciliaciones_de_movimiento", "inspecciones_de_maquina"]
 
     def test_lo_que_una_correccion_no_toca_es_lo_que_el_formulario_no_manda(self):
         """La regla de la corrección, escrita y con nombre, para el papel **y** para la factura.

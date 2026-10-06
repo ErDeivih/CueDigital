@@ -64,7 +64,7 @@ como tal en cada fila y **no cuenta como cerrado**.
 | **T17 / E10** | Lluvia piloto en 3 tierras, cobertura y observaciones | T06, T15 | **bloqueado (parcial)** | — | La fuente de lluvia (estación o proveedor) no está elegida ni contratada: sin ella se puede construir el registro manual y la estructura, no la integración |
 | **T18 / E10** | Satélite piloto, nubes y coste medido antes de escalar a 64 | T17 | **bloqueado** | — | Requiere credenciales de un proveedor de imágenes (Sentinel/otro) y medir coste antes de generalizar |
 | **T19 / E10** | Paneles con consultas explicables y cifras contrastadas | T12, T13, T15 | pendiente | — | **No se empieza antes**: el contrato prohíbe paneles con cifras cuyos cálculos no existan |
-| **T20 / E11** | Extractos y conciliación reversible; A07 y duplicados | T12 | **entregado** · **la integración la lleva el coordinador** | subagente «extractos y conciliación» + coordinador | **Entregado con código y medido (05/10/2026)**: `app/extractos.py` (2.293 líneas, lógica pura), `routers/extractos_api.py` (16 rutas bajo `/api/bancos`), `tests/test_extractos.py` → **78 en verde, 11 saltadas que dicen qué falta, 0 rojos**, cuatro extractos de ejemplo **inventados** en `tests/datos/` y `docs/T20_EXTRACTOS.md` (todos los cambios compartidos en bloques literales). **Solo importación por fichero: nada de conexión bancaria** —ni real ni simulada—, y hay una prueba que lee el código y comprueba que no hay ni un `import` de red, ni una URL, ni un sitio para una credencial. Las columnas se buscan **por su etiqueta y nunca por su letra** (hay una prueba que cambia dos columnas de sitio), la cuenta se reconoce **solo por sus cuatro últimos dígitos**, y el fichero se lee **sin adivinar**: se rechazan con motivo y número de línea las fechas de doble lectura (`03/04/2026` sin formato declarado), los importes sin signo —salvo que el saldo del propio fichero lo demuestre—, las letras de signo ambiguas (`C`/`D` significan cosas contrarias según el banco), las filas con Debe y Haber a la vez y los movimientos de 0,00 €. Reglas comprobadas: importar dos veces **no duplica** (clave de duplicado + **contador de apariciones dentro del fichero**, sin el cual dos compras idénticas del mismo día perderían un movimiento, + huella SHA-256 y clave de reenvío); **un pago conciliado no crea otro gasto** (conciliar solo escribe un vínculo y una fila de auditoría); **un traspaso propio no crea ingreso** —medido: entradas 1.708,65 → 1.208,65 y salidas 1.126,15 → 626,15—; **deshacer no borra** (guarda quién, cuándo y por qué, y los pendientes vuelven exactos: 121 € → 81 € → 121 €); y **un importe que no consta sigue siendo desconocido de punta a punta**, hasta en la casilla en blanco del CSV. **El router sí se ha ejecutado**, fuera del repositorio y contra las cinco tablas propuestas: **48 comprobaciones, todas en verde**. **Falta**: las cinco tablas de `models.py`, el `include_router` (**antes** del `app.mount` final: registrado después, las 16 rutas contestan 405 sin dar ningún error), las 59 claves de texto, la línea del `.gitignore` (**ya hecha**, ronda 42) y la pantalla S14. **No comprobado**: PostgreSQL y OFX/QFX/CAMT.053/Norma 43, que **no se han escrito a ciegas** y están declarados con su motivo en `extractos.FORMATOS_QUE_FALTAN` |
+| **T20 / E11** | Extractos y conciliación reversible; A07 y duplicados | T12 | **integrado por el servidor** (ronda 42) · **su pantalla (S14) es lo que falta** | subagente «extractos y conciliación» + coordinador | **El servidor está dentro y ejecutándose** (05/10/2026): las cinco tablas, los **59 mensajes `T20_*`** y el `include_router` (antes del montaje de la web, que es lo que el informe avisa con motivo). **`pytest tests/test_extractos.py` → 89 pruebas, 0 rojos, 0 saltadas**: las 11 que se saltaban ya se ejecutan, así que **el recorrido del extracto está comprobado por la API** (subir → vista previa con lo que se entiende y lo que se rechaza con su motivo → apuntar → conciliar exacto, parcial y agrupado → pendientes → deshacer con rastro). Reglas comprobadas: **importar dos veces el mismo extracto no añade ni un movimiento** (clave de duplicado + contador de apariciones dentro del fichero + huella); **conciliar no crea ningún gasto** (solo un vínculo y una fila de auditoría); **un traspaso entre cuentas propias no es ingreso ni gasto**; **deshacer no borra** (121 € → 81 € → 121 €); y **un importe que no consta sigue siendo desconocido** hasta en el CSV. **Sin nada de conexión bancaria**: solo se lee el fichero que se sube, y hay una prueba que lee el código y comprueba que no hay ni un `import` de red ni un sitio para una credencial. **Al ejecutarlo por primera vez apareció un defecto** (una prueba que sumaba importes en texto y reventaba: nunca se había ejecutado) y está arreglado y contado en el apartado 50.10. **Falta**: la pantalla S14 (el propio informe lo dice: no está hecha), la pasada en PostgreSQL (bloqueada por Docker) y OFX/QFX/CAMT.053/Norma 43, que **no se han escrito a ciegas** y están declarados con su motivo en `extractos.FORMATOS_QUE_FALTAN` |
 | **T21 / E12** | Historial, compromisos y escenarios; motor con reglas revisadas | T05, T10, T15 | **bloqueado (parcial)** | — | Las reglas PAC necesitan fuente, versión y ámbito (`docs/MATRIZ_NORMATIVA_CRM.md`): hay trabajo legal pendiente acotado. La estructura de escenarios sí se puede construir |
 | **T22 / E12** | Piloto BCAM/rotación elegida y paquete preparatorio PAC | T21 | **bloqueado (parcial)** | — | Necesita la solicitud PAC previa y los criterios de la campaña (PLAN §10) |
 | **T23 / E13** | Ampliar práctica por práctica, con fuente y excepciones | T22 | pendiente | — | |
@@ -5305,3 +5305,46 @@ que dicen y que los datos viajan bien, no cómo se ve**. Y la comprobación de c
 (`test_trabajos.py`) y **por el cableado** (las cinco pruebas de arriba, con las puertas y los cuerpos), pero
 no con el servidor y la pantalla a la vez en un navegador. Es el siguiente paso de verificación, y el T20 y el
 T08 siguen esperando su turno.
+
+### 50.10 Y el servidor del T20, dentro (misma ronda, al final del todo)
+
+**El tercer ticket del encargo ya tiene su motor ejecutándose.** Integrado con el mismo método: las **cinco
+tablas** (`cuentas_bancarias`, `perfiles_de_extracto`, `importaciones_de_extracto`,
+`movimientos_de_extracto` y `conciliaciones_de_movimiento`, colocadas detrás de `AjusteDeEntrega`, que es
+donde vive lo que ya está hecho sobre facturas y cobros), los **59 mensajes** `T20_*` con su
+`MENSAJES.update`, y el `include_router` **antes** del montaje de la web —que es lo que el informe avisa con
+motivo: registrado después, las 16 rutas contestan 405 sin dar ningún error—. **Los esquemas se han dejado
+donde estaban** (dentro de `app/routers/extractos_api.py`): el propio informe dice que vale, y así lo
+comprobado es lo entregado; lo que no se puede es tenerlos en los dos sitios.
+
+**`pytest tests/test_extractos.py` → 89 pruebas, 0 rojos, 0 saltadas.** Las 11 que se saltaban **ya se
+ejecutan**, así que **el recorrido del extracto está comprobado por la API**: subir el fichero → ver la vista
+previa con lo que se entiende y lo que se rechaza con su motivo → apuntar los movimientos → conciliar pagos y
+cobros (exacto, parcial y agrupado) → consultar pendientes → deshacer con rastro. Y las reglas del encargo,
+una por una: **importar dos veces el mismo extracto no añade ni un movimiento**, **conciliar no crea ningún
+gasto** (solo un vínculo y una fila de auditoría), **un traspaso entre cuentas propias no es ingreso ni
+gasto**, y **un importe que no consta sigue siendo desconocido** de punta a punta.
+
+**Y un defecto que apareció al ejecutarlo por primera vez** (la misma historia que con el T13: el test se
+saltaba, así que nadie lo había corrido): una prueba sumaba los importes **en texto** (`sum(h["importe"] …)`,
+que empieza con un entero) y reventaba con `TypeError`. Lo correcto es lo que hace el resto del programa: los
+importes viajan como **texto decimal** (`dinero.a_texto`) y se suman convirtiéndolos. Arreglado en la prueba,
+con el porqué escrito dentro.
+
+**Y el guardián que avisó**: `conciliaciones_de_movimiento` apunta a un **papel** (`documento_id`), así que la
+lista de lo que bloquea borrar un documento tiene una segunda tabla. **Decidido: es una dependencia de
+verdad** —la conciliación dice contra qué papel se cuadró ese dinero; borrar el papel dejaría esa frase sin
+sujeto—, contesta 409, y lo que siempre se puede hacer es anular el papel o **deshacer la conciliación**, que
+es una puerta del propio ticket.
+
+| Medida (05/10/2026) | Valor |
+|---|---|
+| `pytest tests` | **4.264 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **955 · 0 rojos** |
+| `test_gastos.py` / `test_trabajos.py` / `test_extractos.py` | **93 · 70 · 89**, los tres 0 rojos y 0 saltadas |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+**Lo que falta de T20, y es su pantalla**: el propio informe lo dice (§9.6): **la S14 no está hecha**. Los 16
+endpoints están listos y comprobados, pero el agricultor todavía no puede subir su extracto desde la
+aplicación. Es el siguiente trabajo, y con él queda T08 (la bandeja de documentos) y la verificación en
+navegador de las tres pantallas nuevas (T13, T15 y la que traiga el T20).

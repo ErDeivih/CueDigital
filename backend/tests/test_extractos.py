@@ -1533,7 +1533,12 @@ class TestElRecorridoPorLaApi:
         assert respuesta.status_code == 200, respuesta.text
         hechas = respuesta.json()["conciliaciones"]
         assert len(hechas) == 2
-        assert sum(h["importe"] for h in hechas) == Decimal("705.40")
+        # **Los importes viajan como texto decimal, y eso es el contrato de la casa** (`dinero.a_texto`):
+        # un `float` en el navegador haría que el total de la pantalla dejara de coincidir con el de la
+        # base por céntimos. Así que se suman convirtiéndolos, y con el cero también `Decimal` para que
+        # `sum` no empiece con un entero. Esta línea estaba escrita como `sum(h["importe"] …)` y **no se
+        # había ejecutado nunca**: era una de las pruebas que se saltaban hasta integrar las tablas.
+        assert sum((Decimal(h["importe"]) for h in hechas), Decimal("0")) == Decimal("705.40")
         assert respuesta.json()["movimiento"]["estado"] == extractos.CONCILIADO_EN_PARTE
         # Y los dos papeles quedan saldados.
         pendientes = cliente.get("/api/bancos/pendientes", headers=cuenta["cabeceras"]).json()

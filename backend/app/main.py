@@ -28,6 +28,7 @@ from .routers import (
     cuaderno_cyl_api,
     documentos_api,
     explotacion,
+    extractos_api,
     facturas_api,
     fincas_api,
     firmas_api,
@@ -205,6 +206,11 @@ app.include_router(maquinaria_api.router)
 # formas de pago (`ventas.FORMAS_DE_COBRO`) y porque el orden de los routers no decide nada: cada uno
 # tiene su prefijo (`/api/gastos`).
 app.include_router(gastos_api.router)
+# Los extractos de banco y la conciliación (T20, 05/10/2026): subir un fichero que el agricultor ha
+# descargado de su banca, verlo antes de apuntarlo y cuadrarlo con las facturas y los cobros. Va detrás
+# de ventas_api porque concilia contra sus facturas emitidas y sus cobros. **No se conecta ningún
+# banco**: solo se lee el fichero que se sube.
+app.include_router(extractos_api.router)
 # **Los trabajos por tierra (T15, E9, 05/10/2026).** El previsto y el hecho, la historia de una tierra y
 # el estado derivado. Va detrás de los gastos porque un trabajo puede costar dinero y detrás de la
 # maquinaria porque dice con qué máquina se hizo.

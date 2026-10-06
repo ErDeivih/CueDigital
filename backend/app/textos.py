@@ -7701,3 +7701,81 @@ AGENDA: dict[str, str] = {
     "sin_tierras": "Para planificar un trabajo hace falta tener una tierra dada de alta.",
     "anadir_tierra": "VER MIS TIERRAS",
 }
+
+# --------------------------------------------------------------------------
+# Los extractos de banco y la conciliación (T20, 05/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Ninguna de estas frases es una explicación técnica**: son las que el agricultor lee cuando una
+# línea de su extracto no se ha podido leer (y tiene que poder arreglarla) o cuando el programa le
+# propone a qué factura va un dinero. Las claves las pide `app/routers/extractos_api.py`, y hay una
+# prueba que las lee de allí y avisa de las que falten.
+MENSAJES_DE_LOS_EXTRACTOS: dict[str, str] = {
+    # --- una fila que no se entiende (cada motivo dice qué mirar) ---
+    "T20_sin_fecha": "Una línea del extracto no trae fecha, así que no se ha apuntado. Mira esa línea en el fichero de tu banco.",
+    "T20_fecha_dudosa": "La fecha de una línea se puede leer de dos maneras (día/mes o mes/día) y no se ha adivinado. Dinos cómo escribe las fechas tu banco y vuelve a subir el extracto.",
+    "T20_fecha_ilegible": "La fecha de una línea no se ha podido leer. Mira esa línea en el fichero de tu banco.",
+    "T20_sin_signo": "En una línea, el importe no dice si el dinero entra o sale, y no se ha adivinado. Dinos cómo lo escribe tu banco y vuelve a subir el extracto.",
+    "T20_debe_y_haber": "Una línea trae número en la columna de debe y en la de haber a la vez, así que no se sabe qué hizo ese dinero. Mira esa línea en el fichero de tu banco.",
+    "T20_signo_desconocido": "Una línea trae una señal de cargo o abono que este programa no conoce. Dinos qué quiere decir y vuelve a subir el extracto.",
+    "T20_importe_cero": "Una línea del extracto trae 0,00 € y no se ha apuntado: un movimiento de cero euros no es un movimiento.",
+    "T20_importe_ilegible": "El importe de una línea no se ha podido leer. Mira esa línea en el fichero de tu banco y escríbelo a mano.",
+    "T20_columnas_de_mas": "Una línea trae más columnas que la cabecera, así que no se sabe qué número es cada cosa. Mira esa línea en el fichero de tu banco.",
+    "T20_sin_cabeceras": "En este fichero no se encuentran las cabeceras de las columnas, así que no se sabe qué es cada número. Descarga el extracto otra vez desde tu banca.",
+    "T20_esa_linea_no_se_ha_entendido": "Hay una línea del extracto que no se ha podido entender y no se ha apuntado. Mira la vista previa para ver cuál es.",
+    # --- los avisos de la lectura ---
+    "T20_no_se_sabe_de_que_cuenta_es": "En el fichero no se lee de qué cuenta es. Elige la cuenta tú antes de apuntarlo.",
+    "T20_hay_importes_que_no_constan": "En las líneas {lineas} no consta el importe: se apuntan sin él y no cuentan en los totales. Escribe el importe a mano en cada una cuando lo sepas.",
+    "T20_hay_filas_que_no_se_entienden": "Hay líneas del extracto que no se han entendido (las {lineas}) y no se han apuntado. Mira la vista previa para ver qué pasa en cada una.",
+    "T20_el_saldo_no_cuadra": "El saldo de las líneas {lineas} no cuadra con el movimiento anterior. Revisa esas líneas: puede haberse leído mal una columna.",
+    "T20_el_orden_de_las_filas_es_dudoso": "Los saldos de este fichero no cuadran ni de arriba abajo ni de abajo arriba. Comprueba que no te hayas bajado otro extracto.",
+    "T20_el_formato_de_la_fecha_no_esta_declarado": "No nos has dicho cómo escribe las fechas tu banco y en este fichero no se puede saber. Dínoslo y vuelve a subir el extracto.",
+    "T20_el_formato_de_la_fecha_se_ha_deducido": "Las fechas se han leído como {formato} porque las líneas {lineas} lo demuestran.",
+    "T20_el_signo_se_ha_deducido_del_saldo": "En las líneas {lineas} el importe no trae signo, y se ha leído por el saldo del fichero. Revísalo antes de dar por bueno el extracto.",
+    "T20_hay_filas_sin_signo": "En las líneas {lineas} el importe no dice si el dinero entra o sale. Dinos cómo lo escribe tu banco y vuelve a subir el extracto.",
+    # --- al conciliar ---
+    "T20_el_movimiento_no_dice_cuanto": "En este movimiento no consta el importe, así que no se sabe cuánto se puede apuntar a un papel. Escribe el importe y vuelve a intentarlo.",
+    "T20_esa_cantidad_no_vale": "Esa cantidad no vale para apuntarla a un papel. Escribe un importe mayor que cero.",
+    "T20_no_se_sabe_cuanto_le_falta": "De ese papel no se sabe cuánto le falta por pagar o por cobrar, así que no se puede decir qué parte le toca. Escribe su importe primero.",
+    "T20_mas_de_lo_que_le_falta": "Estás apuntando más dinero del que le falta a ese papel. Apunta lo que le falta y deja el resto sin apuntar.",
+    "T20_mas_de_lo_que_dice_el_movimiento": "Estás apuntando más dinero del que dice este movimiento del banco. Quita papeles o apunta menos cantidad en cada uno.",
+    "T20_el_mismo_papel_dos_veces": "Ese papel aparece dos veces en la misma conciliación. Deja una sola vez.",
+    "T20_ese_papel_no_va_por_ese_lado": "Ese papel no se paga con este movimiento: lo que entra salda lo que te deben y lo que sale paga lo que debes. Mira de qué papel se trata.",
+    "T20_eso_no_esta_en_tu_cuaderno": "Eso no está en tu cuaderno. Elige un papel de tu finca.",
+    "T20_no_se_ha_podido_apuntar_eso": "No se ha podido apuntar eso a ningún papel. Míralo y vuelve a intentarlo.",
+    "T20_no_hay_nada_que_apuntar": "No hay ningún papel al que apuntar este dinero. Apunta antes la factura o el cobro.",
+    "T20_no_hay_nada_que_deshacer": "Este movimiento no tiene nada apuntado que deshacer.",
+    "T20_no_se_puede_corregir_conciliado": "Este movimiento ya tiene dinero apuntado a un papel, así que no se puede cambiar. Deshaz primero la conciliación y vuelve a intentarlo.",
+    "T20_dinos_si_entra_o_sale": "Dinos también si ese dinero entró o salió, porque un importe sin eso no se puede sumar.",
+    "T20_correccion_a_mano": "Corregido a mano",
+    "T20_deshacer_a_mano": "Se deshizo a mano",
+    # --- qué es cada papel, y por qué se propone ---
+    "T20_que_es_una_factura_nuestra": "Una factura tuya, de lo que has vendido",
+    "T20_que_es_un_cobro_sin_factura": "Un dinero que entró y todavía no sabes de qué factura es",
+    "T20_que_es_una_factura_de_compra": "Una factura de lo que has comprado",
+    "T20_porque_la_referencia_esta_en_el_concepto": "la referencia está en el concepto del movimiento",
+    "T20_porque_el_nombre_esta_en_el_concepto": "el nombre de la otra parte está en el concepto",
+    "T20_porque_el_importe_cuadra": "el importe cuadra exacto",
+    "T20_porque_la_suma_cuadra": "la suma de los papeles cuadra exacto",
+    "T20_porque_la_fecha_esta_cerca": "la fecha está cerca",
+    "T20_porque_la_fecha_esta_lejos": "la fecha no está tan cerca",
+    "T20_porque_no_se_sabe": "no se sabe por qué",
+    # --- el traspaso propio (A07) ---
+    "T20_parece_un_traspaso_tuyo": "Estos dos movimientos parecen el mismo dinero pasado de una cuenta tuya a otra. Si es así, dilos como traspaso para que no cuenten como ingreso ni como gasto.",
+    "T20_el_traspaso_necesita_dos_movimientos": "Un traspaso son dos movimientos: elige el otro. Si te has equivocado, quita el traspaso.",
+    "T20_un_traspaso_va_entre_dos_cuentas": "Un traspaso va entre dos cuentas distintas. Elige un movimiento de otra cuenta tuya.",
+    "T20_eso_no_parece_un_traspaso": "Estos dos movimientos no son el mismo dinero: para ser un traspaso tienen que ser del mismo importe y uno tiene que entrar y el otro salir. Míralos otra vez.",
+    "T20_esos_movimientos_ya_estan_atados": "Uno de esos dos movimientos ya está atado a otro traspaso. Quita ese traspaso primero.",
+    "T20_traspaso_atado": "Atados: este dinero ya no cuenta como ingreso ni como gasto, solo ha cambiado de cuenta.",
+    "T20_ese_movimiento_no_es_un_traspaso": "Este movimiento no está atado a ningún traspaso, así que no hay nada que quitar.",
+    "T20_traspaso_quitado": "Quitado el traspaso: estos dos movimientos vuelven a contar cada uno por su lado.",
+    # --- lo que se apuntó, dicho con su número ---
+    "T20_apuntado_contra_un_papel": "Apuntados {importe} de este movimiento a {cuantos} papel(es).",
+    "T20_todavia_queda_dinero_sin_apuntar": "Todavía quedan {sobrante} de este movimiento sin apuntar a ningún papel.",
+    "T20_deshecho_el_movimiento_sigue_apuntado": "Deshecho: {importe} vuelven a estar pendientes. El movimiento del banco sigue apuntado igual.",
+    # --- la subida ---
+    "T20_el_mismo_fichero_ya_estaba": "Este mismo fichero ya lo subiste antes: no se ha apuntado nada nuevo. Si tu banco ha añadido movimientos, vuelve a descargar el extracto y súbelo otra vez.",
+    "T20_los_movimientos_que_ya_estaban": "De este extracto, {cuantos} movimientos ya estaban apuntados y no se han repetido.",
+    "T20_esa_importacion_ya_estaba_hecha": "Esa subida ya se había hecho antes: no se ha apuntado nada nuevo.",
+}
+MENSAJES.update(MENSAJES_DE_LOS_EXTRACTOS)

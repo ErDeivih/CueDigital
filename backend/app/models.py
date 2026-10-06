@@ -1564,6 +1564,264 @@ class AjusteDeEntrega(Base):
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class CuentaBancaria(Base):
+    """Una cuenta de la casa. **No se pide ningún dato de la banca**: ni claves, ni acceso.
+
+    Lo único que se guarda para reconocerla es su nombre, el banco (si se quiere apuntar) y **los
+    cuatro últimos dígitos del número**. El número completo no hace falta para cuadrar nada y sí es un
+    dato que no queremos tener guardado: por eso el esquema de entrada lo recorta antes de guardarlo
+    (`CuentaBancariaEntrada._solo_los_cuatro_ultimos`) y hay una prueba que comprueba que el IBAN
+    completo no aparece en nada de lo que devuelve el lector.
+    """
+
+    __tablename__ = "cuentas_bancarias"
+    __table_args__ = (
+        # Reenviar la misma alta (el móvil sin cobertura) devuelve la cuenta que ya había, no otra.
+        Index(
+            "uq_cuenta_bancaria_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    nombre: Mapped[str] = mapped_column(String(80))
+    banco: Mapped[str | None] = mapped_column(String(80))
+    # Los cuatro últimos dígitos, y solo esos: es lo que se lee en un extracto.
+    ultimos_digitos: Mapped[str | None] = mapped_column(String(4))
+    # Si es una cuenta de la casa. **Es lo que hace que un traspaso propio no cuente como ingreso ni
+    # como gasto** (A07): un pago a un proveedor y un cobro del mismo importe no son un traspaso.
+    propia: Mapped[bool] = mapped_column(Boolean, default=True)
+    activa: Mapped[bool] = mapped_column(Boolean, default=True)
+    notas: Mapped[str | None] = mapped_column(Text)
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class PerfilDeExtracto(Base):
+    """Cómo está escrito el extracto de este banco (S14: «perfiles de formato guardables»).
+
+    **Los tres campos que pueden cambiarle el sentido a un número van en su propia columna y admiten
+    nulo**: el separador decimal, el formato de la fecha y qué quiere decir un importe sin signo.
+    Nulo es «no me lo has dicho», y con eso el programa lee lo que el propio fichero demuestra y
+    **rechaza** lo que no, en vez de elegir por su cuenta.
+
+    Y las columnas también van en columnas y no en un JSON, por la regla de siempre en este programa:
+    **un dato con nombre va en su sitio**, no dentro de un texto libre. Aquí, además, tiene una
+    consecuencia práctica: el perfil se puede corregir desde el formulario campo por campo.
+    """
+
+    __tablename__ = "perfiles_de_extracto"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    cuenta_id: Mapped[int | None] = mapped_column(ForeignKey("cuentas_bancarias.id"), index=True)
+    nombre: Mapped[str] = mapped_column(String(80))
+    delimitador: Mapped[str] = mapped_column(String(4), default=";")
+    decimal: Mapped[str | None] = mapped_column(String(1))
+    formato_de_fecha: Mapped[str | None] = mapped_column(String(20))
+    # en_el_importe | debe_haber | en_su_columna (ver `extractos.SIGNOS`/`ESTILOS_DE_SIGNO`)
+    estilo_del_signo: Mapped[str] = mapped_column(String(30), default="en_el_importe")
+    # entra | sale | nulo (nulo es «no me lo has dicho»)
+    sin_signo_quiere_decir: Mapped[str | None] = mapped_column(String(10))
+    # Lo que escribe el fichero cuando el dinero entra y cuando sale, con `|` de separador
+    # («A|ABONO|HABER»), para el estilo que trae el signo en su propia columna.
+    dicen_que_entra: Mapped[str | None] = mapped_column(String(200))
+    dicen_que_sale: Mapped[str | None] = mapped_column(String(200))
+    # El nombre de cada dato **en este fichero** («Fecha», «F. Valor», «Concepto ampliado»…).
+    columna_fecha: Mapped[str | None] = mapped_column(String(80))
+    columna_fecha_valor: Mapped[str | None] = mapped_column(String(80))
+    columna_concepto: Mapped[str | None] = mapped_column(String(80))
+    columna_importe: Mapped[str | None] = mapped_column(String(80))
+    columna_saldo: Mapped[str | None] = mapped_column(String(80))
+    columna_referencia: Mapped[str | None] = mapped_column(String(80))
+    columna_debe: Mapped[str | None] = mapped_column(String(80))
+    columna_haber: Mapped[str | None] = mapped_column(String(80))
+    columna_signo: Mapped[str | None] = mapped_column(String(80))
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ImportacionDeExtracto(Base):
+    """Una subida de un fichero de extracto: qué se leyó, qué se apuntó y de quién era el fichero.
+
+    Es el «original, extracción, campos corregidos, autor y fecha» del contrato (§2), con **una
+    decisión que se dice**: el fichero **no se guarda**. Un extracto lleva el número de cuenta
+    completo y los nombres de terceros, y los movimientos guardados son ya todo lo que hace falta
+    (fecha, concepto, importe, referencia y saldo). Lo que sí se guarda es **su huella**, para poder
+    decir «este mismo fichero ya lo importaste», que es lo que pide el ticket.
+
+    Los tres campos que el agricultor haya corregido del perfil se copian aquí: así, dentro de un año,
+    se sabe **con qué lectura** se apuntó cada movimiento, aunque después se cambie el perfil.
+    """
+
+    __tablename__ = "importaciones_de_extracto"
+    __table_args__ = (
+        Index(
+            "uq_importacion_de_extracto_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+        # La huella se busca en cada subida: es lo que dice «este fichero ya estaba».
+        Index("ix_importacion_de_extracto_huella", "explotacion_id", "huella"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    cuenta_id: Mapped[int] = mapped_column(ForeignKey("cuentas_bancarias.id"), index=True)
+    perfil_id: Mapped[int | None] = mapped_column(ForeignKey("perfiles_de_extracto.id"))
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    # El nombre del fichero **solo para enseñarlo**: el programa no guarda su contenido ni lo usa
+    # como ruta (la regla de siempre, ver `adjuntos.py`).
+    fichero_nombre: Mapped[str | None] = mapped_column(String(200))
+    huella: Mapped[str | None] = mapped_column(String(64))
+    lineas_leidas: Mapped[int] = mapped_column(Integer, default=0)
+    movimientos_creados: Mapped[int] = mapped_column(Integer, default=0)
+    movimientos_repetidos: Mapped[int] = mapped_column(Integer, default=0)
+    movimientos_sin_importe: Mapped[int] = mapped_column(Integer, default=0)
+    filas_rechazadas: Mapped[int] = mapped_column(Integer, default=0)
+    decimal: Mapped[str | None] = mapped_column(String(1))
+    formato_de_fecha: Mapped[str | None] = mapped_column(String(20))
+    sin_signo_quiere_decir: Mapped[str | None] = mapped_column(String(10))
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class MovimientoDeExtracto(Base):
+    """Una línea del extracto, ya apuntada. **Importar no crea ningún ingreso ni ningún gasto.**
+
+    Es el hecho del banco, tal cual: su día, su concepto, su importe, su referencia y el saldo que
+    quedó después. No es un ingreso ni un gasto de la explotación —eso lo dice el signo, y lo dice el
+    banco, no el programa— y **no es un apunte del cuaderno**: mover dinero de una cuenta a otra no
+    puede aparecer en el margen de un cultivo.
+
+    ## Las dos columnas que pueden quedar nulas, y por qué
+
+    - **`importe`**: nulo es «no consta». Es la regla del ticket de punta a punta, y se apoya en que la
+      columna es `Dinero` (texto decimal exacto, ver `dinero.ImporteExacto`), que admite nulo sin
+      convertir nada en cero.
+    - **`signo`**: nulo **solo** cuando el importe no consta. Los dos van juntos o no va ninguno: un
+      movimiento con importe y sin signo sería un movimiento del que no se sabe si suma o resta, y ese
+      movimiento no se puede sumar, ni conciliar, ni cuadrar. Hay una prueba que recorre todo lo leído
+      y comprueba que esa pareja nunca se rompe.
+
+    ## Y las dos que hacen que no se cuente dos veces
+
+    - **`clave_de_duplicado`**, con índice único por finca y cuenta: subir el mismo extracto dos veces
+      no puede apuntar la misma línea dos veces, y no depende de que alguien se acuerde de mirarlo.
+    - **`pareja_de_traspaso_id`**: las dos patas de un traspaso propio se apuntan la una a la otra. Es
+      lo que hace que el resumen las deje fuera del ingreso y del gasto (A07), y también se cumple
+      cuando se lee lo guardado, sin necesitar la lista de traspasos.
+    """
+
+    __tablename__ = "movimientos_de_extracto"
+    __table_args__ = (
+        # **El índice que impide apuntar dos veces la misma línea del banco.** Es parcial a propósito:
+        # si algún día una línea se anula, su clave tiene que quedar libre.
+        Index(
+            "uq_movimiento_de_extracto",
+            "explotacion_id",
+            "cuenta_id",
+            "clave_de_duplicado",
+            unique=True,
+        ),
+        Index("ix_movimiento_de_extracto_fecha", "explotacion_id", "fecha"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    cuenta_id: Mapped[int] = mapped_column(ForeignKey("cuentas_bancarias.id"), index=True)
+    importacion_id: Mapped[int | None] = mapped_column(
+        ForeignKey("importaciones_de_extracto.id"), index=True
+    )
+    fecha: Mapped[dt.date | None] = mapped_column(Date, index=True)
+    fecha_valor: Mapped[dt.date | None] = mapped_column(Date)
+    concepto: Mapped[str | None] = mapped_column(Text)
+    referencia: Mapped[str | None] = mapped_column(String(120))
+    # Nulo es «no consta el importe». **Nunca un cero de relleno.**
+    importe: Mapped[Decimal | None] = mapped_column(Dinero)
+    # entra | sale. Nulo **solo** cuando el importe no consta.
+    signo: Mapped[str | None] = mapped_column(String(6))
+    saldo: Mapped[Decimal | None] = mapped_column(Dinero)
+    # Lo que identifica la línea dentro del fichero del banco (ver `extractos.clave_de_duplicado`).
+    clave_de_duplicado: Mapped[str] = mapped_column(String(300))
+    # La otra pata de un traspaso entre dos cuentas propias (A07), y la marca que lo saca del resumen.
+    pareja_de_traspaso_id: Mapped[int | None] = mapped_column(
+        ForeignKey("movimientos_de_extracto.id"), index=True
+    )
+    # Lo que se escribió a mano y por qué: un importe que no consta se puede corregir, y tiene que
+    # quedar dicho que ese número no lo trajo el banco.
+    corregido: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_de_la_correccion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ConciliacionDeMovimiento(Base):
+    """Cuánto de un movimiento del banco va contra un papel. **Muchos a muchos.**
+
+    Una fila por pareja (movimiento, papel) y con su importe. Con eso salen los tres casos que el
+    contrato pide, sin ninguna tabla más:
+
+    - **pago parcial**: una fila con un importe menor que lo que le falta al papel (A06: 40 € de 121);
+    - **pago agrupado**: varias filas del mismo movimiento apuntando a varios papeles;
+    - **varios pagos a un papel**: varias filas de movimientos distintos apuntando al mismo papel.
+
+    ## Lo que NO hace, y es la regla del ticket
+
+    **Conciliar no crea ningún documento.** Esta tabla apunta a papeles que ya existen (`clase` +
+    `documento_id`): ni una factura, ni un gasto, ni un cobro, ni un movimiento. `clase` es una lista
+    cerrada (`cobro`, `factura_emitida`, `factura_de_compra`; lo que falte —un gasto sin factura, una
+    inversión, una nómina— es del T13 y está declarado en `extractos.CLASES_QUE_FALTAN`).
+
+    ## Y deshacer no borra
+
+    La fila **no se borra al deshacer**: se marca `anulada` y se queda con **quién** la deshizo
+    (`deshecha_por_usuario_id`), **cuándo** (`deshecha_en`) y **con qué motivo**
+    (`motivo_del_deshacer`), además de conservar el importe que se había imputado. El índice único es
+    parcial (`anulada = 0`), así que deshacer deja la pareja libre para volver a conciliarla. El
+    movimiento del banco no se toca: el banco ya movió ese dinero.
+    """
+
+    __tablename__ = "conciliaciones_de_movimiento"
+    __table_args__ = (
+        Index(
+            "uq_conciliacion_de_movimiento",
+            "explotacion_id",
+            "movimiento_id",
+            "clase",
+            "documento_id",
+            unique=True,
+            sqlite_where=text("anulada = 0"),
+            postgresql_where=text("anulada = false"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    movimiento_id: Mapped[int] = mapped_column(
+        ForeignKey("movimientos_de_extracto.id"), index=True
+    )
+    # cobro | factura_emitida | factura_de_compra (y lo que traiga el T13)
+    clase: Mapped[str] = mapped_column(String(30))
+    documento_id: Mapped[int] = mapped_column(Integer, index=True)
+    # Lo que de este movimiento se apunta a ese papel. Obligatorio: una conciliación sin importe no
+    # dice nada, y el programa reparte por orden cuando el agricultor no dice cuánto.
+    importe: Mapped[Decimal] = mapped_column(Dinero, nullable=False)
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    anulada: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_de_anulacion: Mapped[str | None] = mapped_column(Text)
+    deshecha_en: Mapped[dt.datetime | None] = mapped_column(DateTime)
+    deshecha_por_usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    motivo_del_deshacer: Mapped[str | None] = mapped_column(Text)
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class RegistroFertilizacion(Base):
     """Registro de abonado. Obligatorio desde el 01/01/2026."""
 
