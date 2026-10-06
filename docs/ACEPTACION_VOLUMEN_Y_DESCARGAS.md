@@ -412,6 +412,13 @@ saber al leer estas medidas:
    —el trabajo está— pero explica por qué `datos_representativos.py` aparece ya en el historial sin
    que yo haya hecho ningún commit.
 
-Los dos hallazgos de §3 **siguen en pie en el árbol de ahora mismo** (comprobado después de la
-medición: `mi_cuaderno.js:94` sigue sin `tabla-scroll` y `datos_pista` sigue sin pintarse en ninguna
-pantalla).
+Los dos hallazgos de §3 **se han arreglado después de este informe**, por el coordinador (commit
+`66b9633`):
+
+* `mi_cuaderno.js` **ya lleva `tabla-scroll`**, como las otras cinco tablas largas.
+* El botón **ya dice qué se lleva**: `BotonSencillo` aprendió a llevar pista (como `Boton`) y el botón de
+  guardar los datos la lleva con la frase que estaba muerta en el servidor.
+
+**Y se ha vuelto a medir con el árbol de después del arreglo: `661 comprobaciones, 0 fallos`** (el 7/10/2026,
+sobre `450ab05`). O sea que los dos fallos de la tabla de arriba están cerrados y la comprobación entera
+—las 559 de siempre más las 102 nuevas— está en verde en el árbol de ahora mismo.

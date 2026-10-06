@@ -502,6 +502,21 @@ listan con lo que se ha medido y con el sitio del código donde está el motivo.
 | **H7** | El **mismo botón se ve distinto según el ancho**: la ficha del gasto es un enlace de tabla en el ordenador (contorno amarillo de 3 px, el de la aplicación) y un botón suelto en el móvil (contorno del navegador) | Medido a 1440: `solid 3px rgb(255, 210, 74)`; a 712: `auto 1px rgb(16, 16, 16)` | `estilos.css:1813-1814` (`.tabla-enlace:focus-visible`) frente a la pieza `.boton`, que no tiene regla de foco |
 | **H8** | El contraste del contorno de foco de la aplicación es **1,44 : 1** (amarillo `#ffd24a` sobre el fondo blanco de la tarjeta) | Calculado con la razón de contraste de la WCAG sobre los colores que da `getComputedStyle` | `--foco: #ffd24a` (`estilos.css:51`) aplicado como `outline: 4px solid var(--foco)`. **Es una medición, no un veredicto**: el anillo se apoya en el fondo de la tarjeta y lo pintado no se ha podido ver (§6.1) |
 
+### 8.1 Y lo que se ha hecho después de este informe (coordinador, commit `66b9633`)
+
+* **H5 está arreglado**: `abrirLaDireccion` mira el token antes de abrir nada, así que sin sesión se pide
+  entrar en vez de pintar la pantalla de dentro. Comprobado en un navegador de verdad
+  (`scripts/humo_con_sesion.py`): con el token quitado, `#/tierras` pinta el formulario de entrar.
+* **H1 no se arregla, y se explica por qué**: `#/entrar` **no lleva a ninguna pantalla a propósito**. La
+  pantalla de entrar es un paso, y una dirección que al recargar deja al agricultor en un formulario a medias
+  es peor que no tenerla; hay una prueba que defiende esa decisión (`tests_js/rutas.test.js`, «un paso de un
+  formulario no tiene dirección, y eso es una decisión»). Lo que sí se ha corregido es **el guion del
+  proyecto que entraba por ahí**: `scripts/humo_cdp.py` entra por `/`, que es la puerta de verdad.
+* **H2, H3, H4, H6, H7 y H8 siguen abiertos**, tal y como están medidos aquí. El más claro para el agricultor
+  que va con el teclado es **H3** (Escape no cierra el diálogo).
+* **Y se ha vuelto a medir después de esos cambios: `193 comprobaciones, 0 fallos`** (sobre `450ab05`), con
+  los mismos hallazgos.
+
 ---
 
 ## 9. Lo que se deja dicho, en cuatro líneas
