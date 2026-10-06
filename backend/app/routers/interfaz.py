@@ -248,6 +248,13 @@ def interfaz() -> dict:
         # Los trabajos por tierra (T15, 05/10/2026): la agenda, la ficha de un trabajo y la historia de
         # una tierra. Sin esto, las tres pantallas salen con los botones en blanco.
         "agenda": textos.AGENDA,
+        # **El extracto del banco y la conciliación (T20, E11, 06/10/2026).** Sin esto, la pantalla de S14
+        # sale con todos sus botones y sus rótulos en blanco. Y va **aquí** y no solo dentro de la
+        # respuesta de `/api/bancos/movimientos` porque la ficha de un movimiento se abre directamente por
+        # su dirección (`#/cuentas/bancos/12`) y entonces no hay ninguna lista que traiga sus palabras; y
+        # porque esto se guarda en el móvil (`localStorage`, la clave `cuedigital.interfaz`), así que la
+        # pantalla sigue teniendo sus palabras **sin cobertura**.
+        "bancos": textos.BANCOS,
         # **Las tierras en el mapa y en la tabla, y lo que ha sido una tierra** (T06, 03/10/2026): las
         # palabras de las dos pantallas nuevas. Se sirven aquí —y no solo dentro de
         # `/api/parcelas/vista`— por un motivo que se vio al escribirlas: la ficha de una tierra con sus

@@ -4923,6 +4923,19 @@ TABLA: dict[str, str] = {
     "resumen_cuentas": "{cuantas} gastos · {total} de coste conocido",
     "resumen_cuentas_uno": "1 gasto · {total} de coste conocido",
     "resumen_cuentas_filtrado": "{cuantas} de {total} gastos",
+    # --- La tabla de los movimientos del banco (T20, 06/10/2026) ---
+    "bancos_etiqueta": "Los movimientos del banco, en una tabla",
+    "bancos_fecha": "El día",
+    "bancos_concepto": "Qué fue",
+    "bancos_cuenta": "La cuenta",
+    "bancos_importe": "El importe",
+    "bancos_estado": "Cómo está",
+    "bancos_por_conciliar": "Le queda por cuadrar",
+    "bancos_abrir": "¿CONTRA QUÉ PAPEL VA?",
+    # El pie de la lista, con singular y plural (`conCuenta` busca `<base>_uno` y `<base>`, y rellena
+    # `{cuantos}`): «Tienes 1 movimientos» es lo primero que hace desconfiar de un programa.
+    "bancos_resumen_uno": "Tienes 1 movimiento",
+    "bancos_resumen": "Tienes {cuantos} movimientos",
 }
 
 # ── El panel de detalle, al lado de la tabla (fase 3, 30/09/2026) ──
@@ -5536,6 +5549,11 @@ def textos_visibles() -> list[str]:
     # **La agenda de los trabajos (T15, 05/10/2026).** Igual que los del T13: se recogen enteros para
     # que el test de jerga los mire, que es lo que le pasó a `TABLA` en el T14.
     textos.extend(AGENDA.values())
+    # **El extracto del banco y la conciliación (T20, E11, 06/10/2026).** Se recoge entero —con `_recoger`
+    # y no con `.values()`— por el mismo motivo que los del T13 y el T15: dentro lleva las cuatro familias
+    # de claves compuestas, y `_recoger` las recorre todas. Un texto de pantalla que no pase por aquí es un
+    # texto que se lee sin que el test de jerga lo mire.
+    textos.extend(_recoger(BANCOS))
     return textos
 
 
@@ -7342,6 +7360,7 @@ GASTOS: dict = {
         "concedida": "Concedida, sin cobrar",
         "cobrada": "Cobrada",
     },
+    "los_bancos": "EL BANCO Y LOS PAPELES",
 }
 
 
@@ -7803,3 +7822,272 @@ MENSAJES_DE_LOS_EXTRACTOS: dict[str, str] = {
     "T20_esa_importacion_ya_estaba_hecha": "Esa subida ya se había hecho antes: no se ha apuntado nada nuevo.",
 }
 MENSAJES.update(MENSAJES_DE_LOS_EXTRACTOS)
+
+# --------------------------------------------------------------------------
+# El extracto del banco y la conciliación (T20, E11, 06/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Las palabras de S14**: subir el extracto, mirarlo sin apuntar nada, cuadrarlo con las facturas y los
+# cobros, deshacerlo y mirar lo que queda. Y las cuatro familias de claves que se leen **compuestas**,
+# dichas aquí para que nadie las busque en balde:
+#
+#   · `estado_<estado>` — cómo está un movimiento (`sin_conciliar`, `conciliado_en_parte`, `conciliado`,
+#     `no_se_puede_conciliar`). El servidor manda la clave en `MovimientoSalida.estado`, no la frase.
+#   · `falta_<lo_que_falta>` — qué no consta de una línea (`importe_no_consta`, `saldo_no_consta`,
+#     `referencia_no_consta`, `concepto_no_consta`, `importe_ilegible_en_la_fila`, `saldo_ilegible`).
+#   · `por_que_no_<clave>` — por qué un movimiento no se puede cuadrar (`no_consta_el_importe`,
+#     `es_un_traspaso_entre_cuentas_tuyas`).
+#   · `propuesta_<tipo>` — cómo cuadra una propuesta (`exacta`, `agrupada`, `parcial`).
+#
+# Las claves de las cuatro familias salen de `app/extractos.py` (sus constantes), y hay una prueba que las
+# recorre enteras: **la que falte sale en blanco en la pantalla sin que salte nada**, y un renglón en
+# blanco en medio de una pantalla de dinero es lo peor que puede pasar aquí. **Y ojo con `no_se_puede_conciliar`:
+# no es «sin cuadrar»** — uno dice «se puede y no lo has hecho» y el otro «no se puede, y aquí está por qué».
+BANCOS: dict[str, str] = {
+    # --- la pantalla ---
+    "titulo": "El banco y los papeles",
+    "explica": (
+        "Aquí subes el extracto que has descargado de tu banca y lo cuadras con las facturas y los cobros. "
+        "El programa no se conecta a ningún banco: solo lee el fichero que le das tú."
+    ),
+    "buscando": "Buscando…",
+    "volver_a_los_movimientos": "VOLVER A LOS MOVIMIENTOS",
+    # --- subir el fichero (leer NO guarda nada) ---
+    "subir_titulo": "Subir el extracto",
+    "subir_explica": (
+        "Elige el fichero que has descargado de tu banca. El programa lo lee y te enseña lo que ha "
+        "entendido, sin apuntar nada todavía."
+    ),
+    "nada_se_apunta": "Leer no apunta nada: primero lo miras y después decides.",
+    "fichero": "El fichero del extracto",
+    "fichero_pista": "Es el fichero que te has descargado de tu banca.",
+    "fichero_elegido": "El fichero que has elegido es",
+    "cuenta": "De qué cuenta es",
+    "cuenta_pista": "La cuenta de la que has descargado el extracto.",
+    "elige_la_cuenta": "Elige la cuenta",
+    "perfil": "Cómo escribe tu banco",
+    "perfil_pista": "Si ya nos dijiste cómo escribe las fechas y los importes, elígelo aquí.",
+    "sin_perfil": "Todavía no lo he dicho",
+    "leer_el_extracto": "LEER EL EXTRACTO",
+    "leyendo": "Leyendo el extracto…",
+    "anadir_una_cuenta": "AÑADIR UNA CUENTA",
+    "anadir_un_perfil": "DECIR CÓMO ESCRIBE MI BANCO",
+    "sin_cuentas": "Para subir un extracto hace falta decir antes de qué cuenta es.",
+    # --- la vista previa: lo que se va a apuntar, y lo que no ---
+    "vista_titulo": "Lo que he entendido del fichero",
+    "vista_nada_apuntado": "Esto todavía no está apuntado. Míralo y, si está bien, apúntalo.",
+    "ya_estaba_el_fichero": "Este mismo fichero ya lo subiste antes.",
+    "cuenta_detectada": "En el fichero pone que es la cuenta",
+    "cuenta_no_detectada": "En el fichero no se lee de qué cuenta es.",
+    "lineas_leidas": "Líneas leídas",
+    "movimientos_leidos": "Movimientos entendidos",
+    "se_apuntaran": "Se van a apuntar",
+    "ya_estaban": "Ya estaban apuntados",
+    "ya_estaban_explica": "Estos no se apuntan otra vez: ya los tenías.",
+    "rechazadas_cuantas": "Líneas que no se han entendido",
+    "entradas": "Dinero que entra",
+    "salidas": "Dinero que sale",
+    "sin_importe": "Líneas sin importe",
+    "sin_importe_explica": (
+        "De esas no se sabe cuánto, y no cuentan en los totales. Escribe el importe a mano."
+    ),
+    "formato_de_fecha": "Las fechas del fichero",
+    "formato_no_dicho": "No nos has dicho cómo son",
+    "saldo_final": "El saldo que queda",
+    "no_consta": "No consta",
+    "no_se_sabe": "No lo sé",
+    "avisos_titulo": "Lo que hay que mirar de esta lectura",
+    "rechazadas_titulo": "Líneas que no se han podido leer",
+    "rechazadas_explica": "Estas líneas no se van a apuntar. Cada una dice qué le pasa y en qué línea está.",
+    "linea_numero": "Línea",
+    "se_van_a_apuntar": "Lo que se va a apuntar",
+    "no_hay_ninguno_nuevo": "De este fichero no hay ningún movimiento nuevo que apuntar.",
+    "ya_estaba_esta_linea": "Esta línea ya estaba apuntada.",
+    "apuntar_los_movimientos": "APUNTAR ESTOS MOVIMIENTOS",
+    "importando": "Apuntando…",
+    "descartar": "NO APUNTAR NADA",
+    "apuntado_titulo": "Lo que se ha apuntado",
+    "apuntados": "Movimientos apuntados",
+    "repetidos": "Que ya estaban",
+    "repetidos_explica": "No se han repetido: ya los tenías apuntados.",
+    # --- los traspasos entre cuentas propias (A07) ---
+    "traspasos_titulo": "Dinero que ha cambiado de cuenta",
+    "traspasos_explica": "Parece el mismo dinero pasado de una cuenta tuya a otra.",
+    "traspaso_sale_de": "Sale de",
+    "traspaso_entra_en": "Entra en",
+    "traspaso_dias": "Días de diferencia",
+    "traspaso_donde": "Márcalo abriendo uno de los dos movimientos y diciendo cuál es el otro.",
+    # --- la lista de movimientos ---
+    "movimientos_titulo": "Los movimientos del banco",
+    "movimientos_explica": "Cada línea del extracto, con lo que le queda por cuadrar.",
+    "movimientos_vacio": (
+        "Todavía no has apuntado ningún movimiento. Sube el extracto de tu banca para empezar."
+    ),
+    "sin_resultados": (
+        "Ningún movimiento coincide con lo que buscas. Prueba con otras letras o pulsa VER TODO."
+    ),
+    "buscar": "Buscar en los movimientos",
+    "buscar_pista": "Escribe parte del concepto o de la referencia.",
+    "buscar_boton": "BUSCAR",
+    "ver_todo": "VER TODO",
+    "exportar": "DESCARGAR EL EXTRACTO",
+    "exportar_pista": "Se descarga en un fichero, con el importe en blanco donde no consta.",
+    "estado": "Cuáles ver",
+    "todos_los_estados": "Todos",
+    "fecha": "El día",
+    "referencia": "La referencia",
+    "importe": "El importe",
+    "saldo": "El saldo que quedó",
+    "su_cuenta": "La cuenta",
+    "como_esta": "Cómo está",
+    "imputado": "Ya apuntado a papeles",
+    "por_conciliar": "Le queda por cuadrar",
+    "abrir": "¿CONTRA QUÉ PAPEL VA?",
+    "es_traspaso": "Es un traspaso entre cuentas tuyas: ese dinero solo ha cambiado de sitio.",
+    "corregido_a_mano": "Este importe lo escribiste tú.",
+    "sin_importe_aviso": (
+        "De este movimiento no consta el importe, así que no se puede cuadrar con ningún papel. "
+        "Escríbelo a mano."
+    ),
+    # --- lo que queda por cuadrar, de los dos lados ---
+    "pendientes_titulo": "Lo que queda por cuadrar",
+    "pendientes_explica": (
+        "De un lado, el dinero del banco que todavía no está apuntado a ningún papel. Del otro, las "
+        "facturas y los cobros a los que les falta dinero."
+    ),
+    "dinero_sin_papel": "Dinero del banco sin papel",
+    "sin_conciliar_cuantos": "Movimientos sin cuadrar",
+    "papeles_sin_dinero": "Papeles sin dinero",
+    "de_quien": "Quién",
+    "le_falta": "Le falta",
+    "sin_pendientes": "No queda nada por cuadrar: todo el dinero apuntado está en su papel.",
+    "como_se_cuadra": "Para cuadrar algo, abre el movimiento del banco y dile contra qué papel va.",
+    # --- la ficha de un movimiento ---
+    "ficha_titulo": "Este movimiento del banco",
+    "propuestas_titulo": "Contra qué papel va",
+    "propuestas_explica": (
+        "Estas son las cuentas que cuadran con este movimiento, y por qué. Elige una y el dinero queda "
+        "apuntado a ese papel."
+    ),
+    "propuestas_vacio": (
+        "Con este movimiento no cuadra ninguna factura ni ningún cobro. Puedes apuntarlo a mano."
+    ),
+    "porque_titulo": "Por qué te lo propongo",
+    "a_que_papeles": "A estos papeles",
+    "se_apuntaria": "Se apuntarían",
+    "quedaria_sin_apuntar": "Quedaría sin apuntar",
+    "apuntar_esta": "APUNTAR ESTA",
+    "papel_desconocido": "De este papel no se sabe cómo se llama. Míralo antes de apuntar nada aquí.",
+    "a_mano_titulo": "Apuntarlo a mano",
+    "a_mano_explica": (
+        "Elige el papel y, si solo le vas a apuntar una parte, escribe cuánto. Si lo dejas en blanco, se "
+        "apunta lo que quepa, del papel más antiguo al más nuevo."
+    ),
+    "papel": "A qué papel",
+    "elige_el_papel": "Elige el papel",
+    "cantidad": "Cuánto de este movimiento",
+    "cantidad_pista": "Déjalo en blanco para apuntar todo lo que quepa.",
+    "apuntar": "APUNTAR ESTE DINERO",
+    "sin_papeles": (
+        "No tienes ninguna factura ni ningún cobro al que apuntar este dinero. Apúntalo antes."
+    ),
+    "lo_conciliado_titulo": "Lo que ha quedado apuntado",
+    "lo_devuelto_titulo": "Lo que ha vuelto a quedar pendiente",
+    "deshacer_titulo": "Deshacer lo apuntado",
+    "deshacer_explica": (
+        "Deshacer no borra el movimiento del banco: el banco ya movió ese dinero. Lo que se deshace es a "
+        "qué papeles estaba apuntado, y queda dicho quién lo deshizo y cuándo."
+    ),
+    "deshacer": "DESHACERLO",
+    "nada_que_deshacer": "De este movimiento no hay nada apuntado a ningún papel.",
+    "traspaso_titulo": "Es un traspaso entre cuentas tuyas",
+    "traspaso_explica": (
+        "Si este dinero solo ha cambiado de cuenta, dilo: así no cuenta como ingreso ni como gasto."
+    ),
+    "traspaso_ya_esta": "Este movimiento está atado a otro: ese dinero solo ha cambiado de cuenta.",
+    "traspaso_el_otro": "La otra parte del traspaso",
+    "traspaso_pista": "Tiene que ser de otra cuenta tuya, del mismo importe y al revés.",
+    "traspaso_elige": "Elige el otro movimiento",
+    "traspaso_atar": "ATAR EL TRASPASO",
+    "traspaso_quitar": "QUITAR EL TRASPASO",
+    "sin_parejas": "No hay ningún movimiento de otra cuenta tuya al que atarlo.",
+    "corregir": "CORREGIR EL IMPORTE A MANO",
+    # --- los botones de los formularios (los lee `app.js`, no la pantalla) ---
+    "guardar": "GUARDAR",
+    "cancelar": "DEJARLO",
+    "guardando": "Guardando…",
+    # --- el alta de una cuenta (sin ningún dato de banca) ---
+    "form_cuenta_titulo": "Añadir una cuenta",
+    "form_cuenta_pista": (
+        "Aquí no se pide ninguna clave ni el número entero de la cuenta: el programa no se conecta a tu "
+        "banco, solo lee el fichero que le des."
+    ),
+    "cuenta_nombre": "Cómo llamas a esta cuenta",
+    "cuenta_nombre_pista": "Un nombre que reconozcas: «La del día a día», «La del gasóleo».",
+    "cuenta_banco": "Qué banco es",
+    "cuenta_banco_pista": "Si no quieres apuntarlo, déjalo en blanco.",
+    "cuenta_ultimos": "Los cuatro últimos números",
+    "cuenta_ultimos_pista": (
+        "Solo los cuatro últimos. El número entero no hace falta para nada y no se guarda."
+    ),
+    "cuenta_propia": "Es una cuenta tuya",
+    "cuenta_propia_pista": "Lo que se mueve entre tus cuentas no es un ingreso ni un gasto.",
+    # --- cómo escribe el banco (el perfil de formato) ---
+    "form_perfil_titulo": "Cómo escribe tu banco",
+    "form_perfil_pista": (
+        "Si tu banco escribe las fechas o los importes de una manera que el programa no puede adivinar, "
+        "díselo aquí una vez y se acuerda la próxima vez."
+    ),
+    "perfil_nombre": "Cómo llamas a esta forma de escribir",
+    "perfil_nombre_pista": "Por ejemplo: «El extracto de la cuenta del gasóleo».",
+    "perfil_cuenta": "De qué cuenta es",
+    "perfil_cuenta_pista": "Si vale para todas tus cuentas, déjalo sin decir.",
+    "perfil_decimal": "Cómo escribe los decimales",
+    "perfil_fecha": "Cómo escribe las fechas",
+    "perfil_sin_signo": "Cuando un importe no trae signo, ¿qué quiere decir?",
+    "decimal_coma": "Con coma (1.234,56)",
+    "decimal_punto": "Con punto (1,234.56)",
+    "fecha_dmy": "Día/mes/año (31/12/2026)",
+    "fecha_mdy": "Mes/día/año (12/31/2026)",
+    "sin_signo_entra": "Que el dinero entra",
+    "sin_signo_sale": "Que el dinero sale",
+    # --- la corrección del importe que no consta ---
+    "form_correccion_titulo": "Corregir este movimiento",
+    "form_correccion_pista": (
+        "Sirve para escribir el importe que no consta en el fichero del banco. Si ya has apuntado este "
+        "dinero a un papel, deshaz primero la conciliación."
+    ),
+    "correccion_importe": "El importe",
+    "correccion_importe_pista": "Como lo escribe tu banco: 1.234,56",
+    "correccion_signo": "Si el dinero entra o sale",
+    "signo_entra": "Entra",
+    "signo_sale": "Sale",
+    "correccion_concepto": "Qué fue",
+    "correccion_motivo": "Por qué lo corriges",
+    "correccion_motivo_pista": "Escríbelo pensando en que lo vas a leer dentro de dos años.",
+    # --- cómo está un movimiento (el servidor manda la clave, no la frase) ---
+    "estado_sin_conciliar": "Sin cuadrar",
+    "estado_conciliado_en_parte": "A medias",
+    "estado_conciliado": "Cuadrado",
+    "estado_no_se_puede_conciliar": "No consta el importe",
+    # --- lo que no consta de una línea ---
+    "falta_importe_no_consta": "No consta el importe",
+    "falta_saldo_no_consta": "No consta el saldo",
+    "falta_referencia_no_consta": "No trae referencia",
+    "falta_concepto_no_consta": "No trae concepto",
+    "falta_importe_ilegible_en_la_fila": "El importe no se ha podido leer",
+    "falta_saldo_ilegible": "El saldo no se ha podido leer",
+    # --- por qué no se puede cuadrar ---
+    "por_que_no_no_consta_el_importe": (
+        "En este movimiento no consta el importe, así que no se sabe cuánto se puede apuntar a un papel. "
+        "Escríbelo y vuelve a intentarlo."
+    ),
+    "por_que_no_es_un_traspaso_entre_cuentas_tuyas": (
+        "Este movimiento es un traspaso entre cuentas tuyas: ese dinero solo ha cambiado de sitio y no "
+        "salda ninguna factura."
+    ),
+    # --- cómo cuadra una propuesta ---
+    "propuesta_exacta": "Cuadra exacto con este papel",
+    "propuesta_agrupada": "Cuadra con varios papeles a la vez",
+    "propuesta_parcial": "Es una parte de lo que le falta",
+}

@@ -16,7 +16,7 @@
 
 ## 1. Qué hay hecho
 
-### 1.1. `backend/web/react/pantallas/bancos.js` (nuevo, 1.090 líneas)
+### 1.1. `backend/web/react/pantallas/bancos.js` (nuevo, 1.146 líneas)
 
 Es **un fichero con las dos pantallas** del recorrido, como la maquinaria (T14) y los trabajos (T15):
 
@@ -41,7 +41,7 @@ El recorrido del encargo, paso a paso y dónde está cada uno:
 Y las cinco reglas del negocio, cada una atada a un sitio concreto de la pantalla:
 
 1. **Un pago conciliado no crea un segundo gasto.** La pantalla **no pinta ninguna acción que cree nada**:
-   no hay «crear gasto», ni «crear factura», ni «crear cobro» (la lista de acciones del apartado 3.3 lo
+   no hay «crear gasto», ni «crear factura», ni «crear cobro» (la lista de acciones del apartado 3.4.2 lo
    enseña entero). Conciliar solo enseña papeles que ya existen.
 2. **Un traspaso entre cuentas propias no es un ingreso ni un gasto.** El bloque «Es un traspaso entre
    cuentas tuyas» ata y desata el vínculo (`banco-traspaso-atar` / `banco-traspaso-quitar`), y cuando está
@@ -81,7 +81,7 @@ Con `node --test`, sin navegador y sin `jsdom` (el arnés de siempre: React y `h
 | deshacer **no** borra el movimiento | `deshacer dice que no borra nada, y el movimiento sigue entero después` |
 | un importe que no consta se enseña **como hueco y no como cero** | `un movimiento sin importe se enseña como hueco: ni un cero, ni un total inventado` |
 | la pantalla **no lleva ni una frase escrita a mano** | `la pantalla no lee ninguna frase que no esté en los textos, y no le sobra ninguna` + las dos de «ni una frase escrita a mano» |
-| **ninguna acción que pinta se queda sin decir qué hace** | `las acciones que pinta la pantalla son las del informe, y ninguna más` (+ la lista del apartado 3.3) |
+| **ninguna acción que pinta se queda sin decir qué hace** | `las acciones que pinta la pantalla son las del informe, y ninguna más` (+ la lista del apartado 3.4.2) |
 
 ### 1.3. Lo que **no** he tocado
 
@@ -102,6 +102,13 @@ node --test "tests_js/bancos.test.js"
 ```
 
 **42 pruebas: 42 en verde, 0 rojos.** 0,33 segundos.
+
+Y **la suite de JavaScript entera** (la de todo el proyecto, con este fichero nuevo dentro) también está en
+verde, que es lo que dice que la pantalla nueva no ha roto nada de nadie:
+
+```bash
+node --test "tests_js/*.test.js"     # 1000 pruebas: 1000 en verde, 0 rojos
+```
 
 ### 2.2. Las pruebas **muerden**: cinco roturas a propósito
 
@@ -133,37 +140,39 @@ cd F:\EspacioCodigo\CueDigital\backend
 ..\.venv\Scripts\python.exe -m pytest tests/test_la_migracion_a_react.py tests/test_los_botones_hacen_algo.py -q
 ```
 
-**6 pruebas, 5 en rojo y 1 en verde**, y **los cinco rojos son de integración pendiente**, no defectos de
-la pantalla. Se dice uno por uno porque el coordinador tiene que saber qué va a encontrarse:
+**18 pruebas: 4 en rojo y 14 en verde**, y **los cuatro rojos son de integración pendiente**, no defectos de
+la pantalla. Se dicen uno por uno porque el coordinador tiene que saber qué va a encontrarse:
 
 | Prueba | Qué dice | Se arregla con |
 |---|---|---|
-| `test_la_migracion_a_react.py::test_el_codigo_y_los_ficheros_cuadran` | «hay ficheros de pantalla que no están en `PANTALLAS_EN_REACT`: `['bancos']`» | el bloque 3.5 |
-| `test_la_migracion_a_react.py::test_todo_el_javascript_de_react_se_guarda_para_el_campo` | «estos ficheros de React NO se guardan para abrir sin cobertura: `['/react/pantallas/bancos.js']`» | el bloque 3.7 |
-| `test_la_migracion_a_react.py::test_el_informe_de_la_migracion_se_puede_contar` | «las cuentas no cuadran: `{"migradas": 51, "con_fichero": 52, "en_la_guia": 51, "en_la_cache": 51}`» | los bloques 3.5, 3.6 y 3.7 (los tres, a la vez) |
-| `test_los_botones_hacen_algo.py::test_cada_accion_que_se_pinta_la_atiende_alguien` | las **19** acciones `banco-…` que pinta `bancos.js` no las atiende nadie en `app.js` todavía | el bloque 3.4 |
-| `test_los_botones_hacen_algo.py::test_las_acciones_por_variable_estan_donde_se_espera` | «hay acciones puestas por variable en ficheros nuevos: `['bancos.js']`» | **ya está arreglado** (ver abajo) |
+| `test_la_migracion_a_react.py::test_el_codigo_y_los_ficheros_cuadran` | «hay ficheros de pantalla que no están en `PANTALLAS_EN_REACT`: `['bancos']`» | el bloque 3.4.1 (apartado 1) |
+| `test_la_migracion_a_react.py::test_todo_el_javascript_de_react_se_guarda_para_el_campo` | «estos ficheros de React NO se guardan para abrir sin cobertura: `['/react/pantallas/bancos.js']`» | el bloque 3.5 |
+| `test_la_migracion_a_react.py::test_el_informe_de_la_migracion_se_puede_contar` | «las cuentas no cuadran: `{"migradas": 51, "con_fichero": 52, "en_la_guia": 51, "en_la_cache": 51}`» (los números, medidos hoy) | los bloques 3.4.1, 3.5 y 3.6, los tres a la vez |
+| `test_los_botones_hacen_algo.py::test_cada_accion_que_se_pinta_la_atiende_alguien` | las **19** acciones `banco-…` que pinta `bancos.js` no las atiende nadie en `app.js` todavía | el bloque 3.4.3 |
 
 > **Y una cosa que aprendí aquí, y que conviene que sepa el siguiente que escriba una pantalla.** El
-> guardián de las acciones por variable **no quita los comentarios** antes de mirar. La primera versión de
-> mi cabecera explicaba la regla escribiendo el ejemplo prohibido (con su dólar y su llave), y eso **hizo
-> que el guardián contara `bancos.js` como un fichero de acciones por variable**… sin tener ninguna. La
-> salida fácil habría sido añadirlo a `FICHEROS_CON_ACCION_POR_VARIABLE`, y habría sido una mentira
-> escrita en un fichero de pruebas. Lo que hice fue reescribir el párrafo sin el ejemplo y **dejar dicho
-> el motivo dentro de `bancos.js`** para que nadie lo vuelva a escribir. Comprobado después:
+> guardián de las acciones por variable (`test_las_acciones_por_variable_estan_donde_se_espera`, que **hoy
+> está en verde**) **no quita los comentarios** antes de mirar. La primera versión de mi cabecera explicaba
+> la regla escribiendo el ejemplo prohibido (con su dólar y su llave), y eso **hizo que el guardián contara
+> `bancos.js` como un fichero de acciones por variable**… sin tener ninguna. La salida fácil habría sido
+> añadirlo a `FICHEROS_CON_ACCION_POR_VARIABLE`, y habría sido **una mentira escrita en un fichero de
+> pruebas**. Lo que hice fue reescribir el párrafo sin el ejemplo y **dejar dicho el motivo dentro de
+> `bancos.js`** para que nadie lo vuelva a escribir. Comprobado después:
 > `dinamicas: []` para `bancos.js` (el propio guardián, leído con su extractor, lo confirma).
 
 También comprobé, con el extractor del propio guardián, que **las acciones que se leen de `bancos.js` son
-las 20 del apartado 3.3** (19 huérfanas hoy + `ir-inicio`, que ya está atendida) y que **no hay ninguna
+las 20 del apartado 3.4.2** (19 huérfanas hoy + `ir-inicio`, que ya está atendida) y que **no hay ninguna
 puesta por variable**.
 
 ### 2.4. Lo que he mirado a mano, además
 
 - **Que la copia de los textos de la prueba diga lo mismo que el bloque que propongo**: el diccionario
-  `BANCOS` de `tests_js/bancos.test.js` y el bloque de `textos.py` del apartado 3.1 se han comparado clave
-  por clave y valor por valor (el mismo texto, letra a letra). Las claves que solo las lee `app.js` (los
-  rótulos de los formularios y las columnas de la tabla) están **solo** en el bloque de `textos.py`, y por
-  eso no salen en el recuento de «frases que no lee nadie» de la prueba de JavaScript: se dice en el
+  `BANCOS` de `tests_js/bancos.test.js` y el bloque de `textos.py` del apartado 3.1 se han comparado con un
+  guion (leyendo el bloque del informe con `ast.literal_eval` y el de la prueba con la misma expresión que
+  usa `test_revision_t14.py`), y el resultado es: **181 claves propuestas, 143 leídas por la pantalla, las
+  143 con el texto idéntico letra a letra y ninguna de la copia que falte en el informe**. Las **38** que
+  están solo en el informe son las que lee `app.js` (los rótulos de los tres formularios y los de la tabla),
+  y por eso no salen en el recuento de «frases que no lee nadie» de la prueba de JavaScript: se dice en el
   comentario de la prueba para que no parezca un olvido.
 - **Que las cuatro familias de claves compuestas estén enteras** (`estado_…`, `falta_…`, `por_que_no_…` y
   `propuesta_…`): están sacadas de `app/extractos.py` (los cuatro estados de `ESTADOS_DE_CONCILIACION`, los
@@ -176,6 +185,17 @@ puesta por variable**.
   (`assert corregido.json()["importe"] == "18.50"` en `tests/test_extractos.py`). Por eso **todos los
   importes que la pantalla enseña llegan ya escritos** (`texto_*`) y el formateo del dinero sigue viviendo
   en un solo sitio (`enEuros`, en `app.js`).
+- **Que los bloques de código del informe no tengan una errata de sintaxis.** Un guion (en el temporal de
+  la máquina, **no en el repositorio**: este encargo prohíbe escribir cualquier fichero que no sea los tres
+  de la entrega) saca los 14 bloques `js` del informe y los pasa por `node --check`, envolviendo los que
+  son trozos (una entrada de un objeto, una rama de un `if`). Resultado: **13 de 14 parsean**, y el que no
+  es una línea de plantilla `html` en `gastos.js` (`<${Boton} … />`), que **no es JavaScript suelto** y se
+  ha mirado a ojo contra los botones que tiene al lado en esa pantalla. **Esto no comprueba que el bloque
+  funcione** —no se puede ejecutar sin `app.js` entero—, solo que se puede pegar sin que reviente al leerlo.
+- **Que todas las funciones y constantes que usa mi bloque de `app.js` existan de verdad**: `api`,
+  `apiJson`, `valorDeLaCasilla`, `enEuros`, `formateaFecha`, `claveDeReenvio`, `conCuenta`, `avisarDelError`,
+  `mensaje`, `aviso`, `montar`, `navigator.onLine`, `estado.token`, `URLSearchParams`, `DIRECCION_PROPIA`,
+  `MODULO_DE_LA_PANTALLA` y `abrirLaPantalla`. Están todos comprobados uno por uno en el fichero de hoy.
 
 ---
 
@@ -600,7 +620,8 @@ la ficha de nada, y `apuntarLaDireccion` no escribiría nada (que es lo correcto
 ```
 
 Y **no** hay que tocar `PANTALLAS_SIN_DIRECCION` (los formularios de esta pantalla no son pantallas: viven
-dentro de las dos de arriba) ni `TABLA_DE_LA_PANTALLA` (esta lista no recuerda su vista; ver el apartado 3.3).
+dentro de las dos de arriba) ni `TABLA_DE_LA_PANTALLA` (esta lista no recuerda su vista; ver el apartado 3.3,
+que es donde está la tabla de direcciones de `rutas.js`).
 
 #### 3.4.2. Las 20 acciones, una por una
 
@@ -1393,7 +1414,72 @@ Y en el manejador de clics (donde están las ramas de las cuentas), **una línea
 > del código y exige que todas tengan quien las atienda (hoy las 19 nuevas están sin atender, y por eso esa
 > prueba está roja).
 
-#### 3.4.4. `backend/app/textos.py` — la tabla y la entrada desde las cuentas
+#### 3.4.4. Las propiedades de cada pantalla, campo por campo
+
+Esto es **lo que el coordinador tiene que alimentar**, y está escrito campo por campo para que no haya que
+leer el componente. La pantalla es **pura**: no llama a `fetch`, no lee `localStorage` y no toca el DOM;
+todo lo que necesita le llega por aquí.
+
+**`PantallaDeLosBancos`** (la lista, `#/cuentas/bancos`):
+
+| Propiedad | Tipo | De dónde sale |
+|---|---|---|
+| `textos` | `{bancos, acciones}` | `t("bancos", {})` y `accion("volver")` del servidor |
+| `cuentas` | `[{valor, texto}]` | `GET /api/bancos/cuentas` → `{valor: id, texto: "nombre ·1234"}` |
+| `perfiles` | `[{valor, texto}]` | `GET /api/bancos/perfiles` → `{valor: id, texto: nombre}` |
+| `cuentaElegida` | id o `""` | el `estado.bancos.cuentaElegida` (el `defaultValue` de `#banco-cuenta`) |
+| `perfilElegido` | id o `""` | el `estado.bancos.perfilElegido` (`#banco-perfil`) |
+| `ficheroElegido` | texto | el `name` del `File` **guardado al leerlo** (no de la casilla, que ya no existe) |
+| `leyendo` | booleano | se está leyendo el extracto («Leyendo el extracto…») |
+| `importando` | booleano | se está apuntando («Apuntando…») |
+| `guardando` | booleano | se está guardando un formulario |
+| `vistaPrevia` | objeto o `null` | `POST /api/bancos/extractos/vista-previa` **entero** (con sus `texto_*`) |
+| `resultado` | objeto o `null` | `POST /api/bancos/extractos/importar` |
+| `movimientos` | lista | `GET /api/bancos/movimientos` → `items` (con sus `texto_*`) |
+| `agregados` | objeto | la misma respuesta → `agregados` (con `texto_entradas` y `texto_salidas`) |
+| `resumen` | texto | `conCuenta(t("tabla", {}), "bancos_resumen", total)`, o `""` |
+| `tabla` | objeto o `null` | `tablaDeLosMovimientos(movimientos)` del bloque 3.4.3 |
+| `filtro` | texto | lo escrito en `#banco-buscar` |
+| `estado` | texto | lo elegido en `#banco-estado` (`""` es «todos») |
+| `pendientes` | lista | `GET /api/bancos/pendientes` (con sus `texto_*`) |
+| `formulario` | objeto o `null` | `elFormularioDeLosBancos(clase, borrador)` del bloque 3.4.3 |
+| `error`, `aviso` | texto | el motivo del fallo del servidor, y lo que ha ido bien |
+
+**`PantallaDeUnMovimiento`** (la ficha, `#/cuentas/bancos/<id>`):
+
+| Propiedad | Tipo | De dónde sale |
+|---|---|---|
+| `textos` | `{bancos, acciones}` | el mismo que la lista |
+| `movimiento` | objeto | `GET …/movimientos/<id>/propuestas` → `movimiento` (con sus `texto_*`) |
+| `propuestas` | lista | la misma respuesta → `propuestas`, **en el orden del servidor** (el índice del botón es su posición) |
+| `pendientes` | lista | la misma respuesta → `pendientes` (es de donde la pantalla saca **cómo se llama cada papel**) |
+| `papeles` | `[{valor, texto}]` | `losPapelesParaElegir(pendientes)`: `valor` es `clase:documento_id` |
+| `parejas` | `[{valor, texto}]` | `lasParejasDelTraspaso(movimiento)`: los movimientos de **otras cuentas** |
+| `formulario` | objeto o `null` | `elFormularioDeLosBancos({clase: "correccion", id}, borrador)` |
+| `resultado` | objeto o `null` | `POST …/conciliar` o `POST …/desconciliar` |
+| `deshecho` | booleano | si el último resultado fue un deshacer (cambia el título de lo que se enseña) |
+| `guardando`, `cargando` | booleanos | |
+| `error`, `aviso` | texto | |
+
+**Y los `texto_*` que tiene que llevar cada dato**: son los importes y las fechas **ya escritos**, y los
+produce `conLosImportesEscritos` (bloque 3.4.3) sin que nadie tenga que acordarse de cada campo:
+
+| Dato | Lo que la pantalla lee |
+|---|---|
+| un movimiento (de la lista o de la ficha) | `texto_fecha`, `texto_importe`, `texto_saldo`, `texto_imputado`, `texto_por_conciliar` |
+| un movimiento de la vista previa | `texto_fecha`, `texto_importe`, `texto_saldo` |
+| el resumen de la lectura | `texto_entradas`, `texto_salidas`, `texto_saldo_final` |
+| un traspaso propuesto | `texto_importe` |
+| una propuesta | `texto_total`, `texto_sobrante`, y `texto_importe` en cada imputación |
+| un papel pendiente | `texto_fecha`, `texto_importe`, `texto_pendiente` |
+| una conciliación hecha | `texto_importe` |
+
+> **La regla, dicha una vez**: la pantalla mira **el dato crudo** (`importe === null`) para decidir si
+> enseña su palabra, y usa el `texto_*` solo para lo que sí consta. Por eso `enEuros` devolver **vacío**
+> cuando el dato no consta no deja ningún hueco raro… y por eso **un `texto_importe` de «0,00 €» con el
+> importe a nulo no se enseña nunca** (hay una prueba que lo muerde).
+
+#### 3.4.5. `backend/app/textos.py` — la tabla y la entrada desde las cuentas
 
 Las columnas de la tabla del ordenador, que las lee `app.js` (`t("tabla.bancos_…")`). Van dentro del
 diccionario `TABLA` que ya existe, junto a las de las cuentas (`cuentas_concepto`, …):
@@ -1535,6 +1621,29 @@ class ConciliacionEntrada(EntradaBase):
 
 **No lo he dado por hecho**: sin ese cambio, la pantalla no pide el motivo (y hay una prueba que comprueba
 que no hay ningún campo `banco-motivo-deshacer`, para que nadie lo añada sin cambiar antes el servidor).
+
+### 4.2. Algo que he visto de paso, y que **no** es de este encargo
+
+Copiando la forma del `POST` para el bloque 3.4.3 me encontré con esto en `backend/web/app.js`
+(bloque de las cuentas, T13, **línea 19436**, dentro de `guardarLasCuentas`):
+
+```js
+    const respuesta = await api(ruta, { metodo, cuerpo });
+```
+
+**Eso no manda nada.** `api(ruta, opciones)` (línea 494) hace `fetch(ruta, { ...opciones, headers })`, y
+`fetch` solo entiende `method` y `body`: con `metodo` y `cuerpo` **no hay método ni cuerpo**, así que sale
+un `GET` sin datos. La consecuencia es la peor de esta clase de fallo —**el botón de guardar de las
+cuentas se pulsa, no salta ningún error y no se guarda nada**— y encaja con la familia que este proyecto ya
+tiene documentada en `AGENTS.md`.
+
+**No lo he tocado**, porque `app.js` es un fichero compartido y de otro encargo. Lo que sí he hecho es
+**no copiar esa forma**: mi bloque usa `{ method: "POST", body: JSON.stringify(…) }`, que es lo que usan
+las otras 30 llamadas del fichero (por ejemplo la línea 542). Si el coordinador lo arregla, es una palabra
+en esa línea: `{ method: metodo, body: JSON.stringify(cuerpo) }`.
+
+Lo apunto aquí porque me lo he encontrado, no porque sea del T20, y porque **una pantalla nueva que copie
+ese patrón heredaría el fallo en silencio**.
 
 ---
 

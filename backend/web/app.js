@@ -145,6 +145,12 @@ import { pantallaDeLaMaquinaria, pantallaDeUnaMaquina } from "./react/pantallas/
 // porque las dos comparten las mismas piezas —la tarjeta de cifras, el cuadre del reparto y los
 // formularios— y separarlas obligaría a copiarlas.
 import { pantallaDeLasCuentas, pantallaDeUnGasto } from "./react/pantallas/gastos.js";
+// **El extracto del banco y la conciliación (T20, E11, 06/10/2026).** Un fichero con las dos pantallas
+// del contrato: los movimientos (`#/cuentas/bancos`) y la ficha de un movimiento
+// (`#/cuentas/bancos/<id>`), que es donde se dice contra qué papel va el dinero. Es un solo fichero
+// porque las dos comparten las mismas piezas (el renglón de dato, el formulario y el bloque de las
+// propuestas) y separarlas obligaría a copiarlas.
+import { pantallaDeLosBancos, pantallaDeUnMovimiento } from "./react/pantallas/bancos.js";
 // **Los trabajos por tierra (T15, E9, 05/10/2026).** Un fichero con las tres pantallas del contrato: la
 // agenda (`#/trabajos`), la ficha de un trabajo (que es un formulario y **no** tiene dirección) y la
 // historia de una tierra (`#/tierras/<id>/historial`). Es un solo fichero porque las tres comparten lo
@@ -252,6 +258,11 @@ const PANTALLAS_EN_REACT = new Set([
   // los cultivos y las máquinas. Va aquí, y en la caché del campo, por lo de siempre: las cuentas se
   // miran en el despacho y también de pie en la nave.
   "gastos",
+  // El extracto del banco y la conciliación (T20, E11, 06/10/2026). Un solo fichero (`bancos.js`) con las
+  // dos pantallas: los movimientos con su estado y lo que les queda, y la ficha de uno, que es donde se
+  // dice contra qué papel va. Va aquí y en la caché del campo por lo de siempre: sin cobertura, una
+  // pantalla que no está guardada es un hueco.
+  "bancos",
   // T15 (05/10/2026): los trabajos por tierra. La clave de esta lista es **el nombre del fichero**
   // (`trabajos.js`), que trae las tres pantallas: la agenda, la ficha de un trabajo y la historia de
   // una tierra. Va aquí por el mismo motivo que las demás: lo que está pensado y lo que se ha hecho se
@@ -807,6 +818,13 @@ const DIRECCION_PROPIA = {
   // **la ficha de un gasto tiene la suya** (`#/cuentas/12`), porque se puede enlazar y recargar: sus
   // repartos y sus pagos se piden al servidor al abrirla.
   PantallaDeUnGasto: "gasto",
+  // El extracto del banco y la conciliación (T20, 06/10/2026). La lista vive dentro de la familia de las
+  // cuentas (`#/cuentas/bancos`) —de ahí sale, y por eso **hay que escribirla aquí**: sin esta línea,
+  // `apuntarLaDireccion` le pondría la dirección del renglón del menú (`#/cuentas`) y las dos pantallas
+  // escribirían la misma—, y **la ficha de un movimiento tiene la suya** (`#/cuentas/bancos/12`), porque
+  // se puede enlazar y recargar: sus propuestas se piden al servidor al abrirla.
+  PantallaDeLosBancos: "bancos",
+  PantallaDeUnMovimiento: "banco_movimiento",
   // Los trabajos (T15, 05/10/2026): la agenda coge la dirección de su renglón del menú (`#/trabajos`) y
   // la historia de una tierra tiene la suya (`#/tierras/<id>/historial`), porque se puede enlazar y
   // recargar. **La ficha de un trabajo NO está aquí a propósito**: es un formulario, y uno que al
@@ -979,6 +997,14 @@ function apuntarLaDireccion(listo) {
     const recepcion = (estadoDelLibro() || {}).recepcion;
     if (!recepcion || !recepcion.id) return;
     parametros.id = recepcion.id;
+  }
+  // **La ficha de un movimiento del banco (T20)**: su identificador en el camino (`#/cuentas/bancos/12`),
+  // como la de un gasto o una máquina. Sale del estado, que es donde está el movimiento que se está
+  // mirando.
+  if (clave === "banco_movimiento") {
+    const movimiento = (estado.bancos || {}).movimiento;
+    if (!movimiento || !movimiento.id) return;
+    parametros.id = movimiento.id;
   }
   // **El dinero de lo que se vende** (T12): la factura que se está mirando y la entrega a la que se le
   // está poniendo el importe o el ajuste. Sin identificador no hay dirección que escribir: `#/ventas//importe`
@@ -1185,6 +1211,10 @@ function abrirLaPantalla(clave, parametros = {}) {
   // se piden al servidor al abrirlas, así que se pueden enlazar y recargar.
   if (clave === "gastos") return abrirLasCuentas();
   if (clave === "gasto") return abrirUnGasto(parametros.id);
+  // **El extracto del banco y la conciliación (T20, E11, 06/10/2026)**: los movimientos y la ficha de
+  // uno. Las dos se piden al servidor al abrirlas, así que se pueden enlazar y recargar.
+  if (clave === "bancos") return abrirLosBancos();
+  if (clave === "banco_movimiento") return abrirUnMovimientoDelBanco(parametros.id);
   // **La historia de una tierra (T15, E9, 05/10/2026)**: se pide a su puerta, que contesta 404 si esa
   // tierra no es de esta finca. Los tres finales de siempre: se abre, «eso no está en tu cuaderno» o,
   // sin cobertura, «no lo he podido comprobar».
@@ -1466,6 +1496,9 @@ const MODULO_DE_LA_PANTALLA = {
   // y donde el agricultor tiene que verse marcado.
   PantallaDeLasCuentas: "cuentas",
   PantallaDeUnGasto: "cuentas",
+  // El banco y los papeles (T20): cuelgan del renglón de las cuentas, igual que un gasto.
+  PantallaDeLosBancos: "cuentas",
+  PantallaDeUnMovimiento: "cuentas",
   // Los trabajos (T15, 05/10/2026): las tres pantallas cuelgan del renglón de los trabajos. La de la
   // historia de una tierra tiene dirección propia (`DIRECCION_PROPIA`), pero el menú tiene que marcar el
   // renglón: no saber dónde estás es la mitad de para qué sirve un menú.
@@ -4872,7 +4905,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-05-69";
+const VERSION_DE_LA_APLICACION = "2026-10-05-70";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -18988,6 +19021,7 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   // Los trabajos por tierra (T15, E9, 05/10/2026)
   const enLosTrabajos = await atenderLosTrabajos(nombre, elemento);
   if (enLosTrabajos !== false) return enLosTrabajos;
+  if (nombre.startsWith("banco-")) return atenderLosBancos(nombre, elemento);
 });
 
 window.addEventListener("online", () => {
@@ -19433,7 +19467,13 @@ async function guardarLasCuentas(datos) {
     };
   }
   try {
-    const respuesta = await api(ruta, { metodo, cuerpo });
+    // **`method` y `body`, no `metodo` y `cuerpo`** (05/10/2026). Aquí ponía `api(ruta, { method: metodo, body: JSON.stringify(cuerpo) })`,
+    // y `api` pasa sus opciones tal cual a `fetch`, que solo entiende `method` y `body`: el resultado era
+    // **una petición GET sin datos**, así que **el botón de guardar de las cuentas no guardaba nada y no
+    // saltaba ningún error**. Lo encontró el subagente de la pantalla de los extractos mientras leía este
+    // fichero para escribir su bloque, y es el mismo tipo de fallo que el `campanaActual` que faltaba:
+    // código escrito copiando formas, que nadie había ejecutado.
+    const respuesta = await api(ruta, { method: metodo, body: JSON.stringify(cuerpo) });
     if (!respuesta.ok) {
       suyo.error = mensaje("no_se_pudo");
     } else {
@@ -19461,6 +19501,7 @@ async function atenderLasCuentas(nombre, elemento) {
   const id = Number(elemento.dataset.id || 0);
   if (nombre === "gastos-ver") return abrirLasCuentas();
   if (nombre === "gasto-abrir") return abrirUnGasto(id);
+  if (nombre === "bancos-ver") return abrirLosBancos();
   if (nombre === "gastos-ver-todas") {
     suyo.filtro = "";
     return pantallaLasCuentas();
@@ -19614,6 +19655,748 @@ async function atenderLasCuentas(nombre, elemento) {
     return suyo.gasto ? pantallaUnGasto() : pantallaLasCuentas();
   }
   return false;
+}
+
+// ---------------------------------------------------------------------------
+// El extracto del banco y la conciliación (T20, E11, 06/10/2026)
+// ---------------------------------------------------------------------------
+//
+// LO QUE ESTE BLOQUE HACE, Y LO QUE NO. Hace tres cosas y ninguna más:
+//
+//   1. **Pide los datos** —las cuentas, los movimientos, los papeles pendientes y las propuestas de un
+//      movimiento— y se los pasa a la pantalla, que no calcula nada.
+//   2. **Sube el fichero** que el agricultor ha elegido: primero a la vista previa (que **no guarda**) y,
+//      cuando él lo dice, a la puerta que apunta los movimientos.
+//   3. **Lee lo que el agricultor escribe** por los `id` de los campos y lo manda a su puerta.
+//
+// Lo que **no** hace: ni una cuenta de dinero. Los importes, los cuadres y lo que le queda por cuadrar
+// llegan calculados del servidor (son `Decimal` y viajan como texto), y aquí lo único que se hace con
+// ellos es **escribirlos** con `enEuros` (que devuelve vacío cuando el dato no consta, y nunca «0,00 €»).
+//
+// **Y no se conecta ningún banco.** Lo único que entra es el fichero que el agricultor ha subido: no hay
+// claves, ni direcciones de banco, ni un sitio donde poner una credencial.
+
+/** El estado de los bancos, creado la primera vez que hace falta (como el de las cuentas). */
+function estadoDeLosBancos() {
+  if (!estado.bancos) {
+    estado.bancos = {
+      cuentas: [],
+      perfiles: [],
+      movimientos: null,
+      pendientes: [],
+      cuentaElegida: "",
+      perfilElegido: "",
+      // **El fichero vive aquí y no en la casilla del formulario.** Repintar la pantalla borra el
+      // `<input type="file">`, y lo que solo viviera ahí desaparece: es la trampa que ya costó una ronda
+      // con el cuaderno de la Junta (ver AGENTS.md). Por eso se guarda al leerlo, que es lo que permite
+      // apuntarlo después sin volver a pedírselo al agricultor.
+      fichero: null,
+      nombreDelFichero: "",
+      vistaPrevia: null,
+      resultado: null,
+      leyendo: false,
+      importando: false,
+      filtro: "",
+      estado: "",
+      formulario: null,
+      borrador: null,
+      guardando: false,
+      error: "",
+      aviso: "",
+      movimiento: null,
+      propuestas: null,
+      conciliado: null,
+      deshecho: false,
+      deshacer: false,
+      correccion: null,
+    };
+  }
+  return estado.bancos;
+}
+
+/** El vocabulario de esta pantalla: el del banco y el botón de VOLVER que ya está en los textos. */
+function textosDeLosBancos() {
+  return {
+    bancos: t("bancos", {}),
+    acciones: accion("volver") ? { volver: accion("volver") } : {},
+  };
+}
+
+/**
+ * Los importes de una respuesta, **escritos**, para que la pantalla no tenga que calcular nada.
+ *
+ * La API del banco manda los importes como texto decimal exacto («500.00»), que es lo correcto para
+ * guardarlos y **no** es lo que se lee: el agricultor lee «500,00 €». Escribirlos aquí, con `enEuros` y
+ * `formateaFecha`, deja el formateo del dinero en **un solo sitio** —el que ya usa toda la aplicación— y
+ * hace que la pantalla sea tonta a propósito: no puede sumar, ni redondear, ni enseñar un `0,00 €` donde
+ * el dato no consta (`enEuros` devuelve vacío).
+ *
+ * Se recorre **entero** y por eso no hay que acordarse de ningún campo: el día que la API devuelva un
+ * importe nuevo, ya viene escrito.
+ */
+const CAMPOS_DE_DINERO_DEL_BANCO = [
+  "importe",
+  "saldo",
+  "saldo_final",
+  "imputado",
+  "por_conciliar",
+  "pendiente",
+  "total",
+  "sobrante",
+  "entradas",
+  "salidas",
+];
+
+function conLosImportesEscritos(valor) {
+  if (Array.isArray(valor)) return valor.map(conLosImportesEscritos);
+  if (valor && typeof valor === "object") {
+    const copia = {};
+    for (const [clave, dato] of Object.entries(valor)) copia[clave] = conLosImportesEscritos(dato);
+    for (const clave of CAMPOS_DE_DINERO_DEL_BANCO) {
+      // `texto_<campo>` es lo que enseña la pantalla. Cuando el dato no consta, `enEuros` devuelve
+      // **vacío**, y la pantalla escribe su palabra («No consta», «No lo sé»): nunca un cero.
+      if (clave in valor) copia[`texto_${clave}`] = enEuros(valor[clave]);
+    }
+    if ("fecha" in valor) copia.texto_fecha = valor.fecha ? formateaFecha(valor.fecha) : "";
+    if ("vencimiento" in valor) {
+      copia.texto_vencimiento = valor.vencimiento ? formateaFecha(valor.vencimiento) : "";
+    }
+    return copia;
+  }
+  return valor;
+}
+
+/** Abre «el banco y los papeles»: se pinta enseguida y se vuelve a pintar con lo que contesta el servidor. */
+async function abrirLosBancos() {
+  const suyo = estadoDeLosBancos();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.borrador = null;
+  suyo.vistaPrevia = null;
+  suyo.resultado = null;
+  pantallaLosBancos();
+  await recargarLosBancos();
+  pantallaLosBancos();
+}
+
+/** Vuelve a pedir las cuentas, los movimientos y los papeles pendientes. */
+async function recargarLosBancos() {
+  const suyo = estadoDeLosBancos();
+  try {
+    const cuentas = await apiJson("/api/bancos/cuentas");
+    suyo.cuentas = (cuentas || []).map((cuenta) => ({
+      valor: cuenta.id,
+      texto: [cuenta.nombre, cuenta.ultimos_digitos ? `·${cuenta.ultimos_digitos}` : ""]
+        .filter(Boolean)
+        .join(" "),
+    }));
+    if (!suyo.cuentaElegida && suyo.cuentas.length) suyo.cuentaElegida = suyo.cuentas[0].valor;
+    const perfiles = await apiJson("/api/bancos/perfiles");
+    suyo.perfiles = (perfiles || []).map((perfil) => ({ valor: perfil.id, texto: perfil.nombre }));
+    const consulta = new URLSearchParams();
+    if (suyo.cuentaElegida) consulta.set("cuenta_id", suyo.cuentaElegida);
+    if (suyo.filtro) consulta.set("texto", suyo.filtro);
+    if (suyo.estado) consulta.set("estado", suyo.estado);
+    const suyos = consulta.toString();
+    suyo.movimientos = conLosImportesEscritos(
+      await apiJson(`/api/bancos/movimientos${suyos ? `?${suyos}` : ""}`),
+    );
+    suyo.pendientes = conLosImportesEscritos(await apiJson("/api/bancos/pendientes"));
+    suyo.error = "";
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return suyo;
+}
+
+/** La lista del banco, ya en React. */
+function pantallaLosBancos() {
+  const suyo = estadoDeLosBancos();
+  const movimientos = (suyo.movimientos && suyo.movimientos.items) || [];
+  const cuantos = (suyo.movimientos && suyo.movimientos.total) || 0;
+  return montar(() =>
+    pantallaDeLosBancos({
+      textos: textosDeLosBancos(),
+      cuentas: suyo.cuentas,
+      perfiles: suyo.perfiles,
+      cuentaElegida: suyo.cuentaElegida,
+      perfilElegido: suyo.perfilElegido,
+      ficheroElegido: suyo.nombreDelFichero,
+      leyendo: suyo.leyendo,
+      importando: suyo.importando,
+      guardando: suyo.guardando,
+      vistaPrevia: suyo.vistaPrevia,
+      resultado: suyo.resultado,
+      movimientos,
+      agregados: (suyo.movimientos && suyo.movimientos.agregados) || {},
+      // El singular y el plural con las dos formas del servidor (`conCuenta` elige `<base>_uno` cuando es
+      // uno): «Tienes 1 movimientos» es lo primero que hace desconfiar de un programa.
+      resumen: cuantos ? conCuenta(t("tabla", {}), "bancos_resumen", cuantos) : "",
+      tabla: tablaDeLosMovimientos(movimientos),
+      filtro: suyo.filtro,
+      estado: suyo.estado,
+      pendientes: suyo.pendientes,
+      formulario: elFormularioDeLosBancos(suyo.formulario, suyo.borrador),
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/** La tabla del ordenador: una celda menos que columnas (la última, «Acciones», la pone la pieza). */
+function tablaDeLosMovimientos(movimientos) {
+  const b = t("bancos", {});
+  const col = (clave) => t(`tabla.bancos_${clave}`, "");
+  const columnas = [
+    { texto: col("fecha"), campo: "fecha" },
+    { texto: col("concepto") },
+    { texto: col("cuenta") },
+    { texto: col("importe") },
+    { texto: col("estado") },
+    { texto: col("por_conciliar") },
+    { texto: t("tabla.acciones", "") },
+  ];
+  const filas = (movimientos || []).map((movimiento) => ({
+    celdas: [
+      { texto: movimiento.texto_fecha },
+      { texto: movimiento.concepto, accion: "banco-abrir", datos: { id: movimiento.id } },
+      { texto: movimiento.cuenta || b.no_consta },
+      // **Un importe que no consta se enseña con su palabra, no con un cero.**
+      {
+        texto:
+          movimiento.importe === null || movimiento.importe === undefined
+            ? b.no_consta
+            : movimiento.texto_importe,
+      },
+      { texto: b[`estado_${movimiento.estado}`] },
+      {
+        texto:
+          movimiento.por_conciliar === null || movimiento.por_conciliar === undefined
+            ? b.no_se_sabe
+            : movimiento.texto_por_conciliar,
+      },
+    ],
+    acciones: [
+      {
+        etiqueta: col("abrir"),
+        accion: "banco-abrir",
+        datos: { id: movimiento.id },
+        clase: "boton-claro",
+      },
+    ],
+  }));
+  if (!filas.length) return null;
+  return {
+    clave: "bancos",
+    etiqueta: t("tabla.bancos_etiqueta", ""),
+    columnas,
+    filas,
+    resumen: "",
+  };
+}
+
+/**
+ * Abre la ficha de un movimiento: **pide sus propuestas al servidor**.
+ *
+ * Es lo que hace que esta pantalla se pueda enlazar y recargar: no vive de la lista que había antes, pide
+ * sus datos a su puerta. Si esa puerta no contesta (sin cobertura), se dice **que no se ha podido
+ * comprobar**, que no es lo mismo que decir que ese movimiento no está.
+ */
+async function abrirUnMovimientoDelBanco(id) {
+  const suyo = estadoDeLosBancos();
+  if (!id) return abrirLosBancos();
+  suyo.movimiento = null;
+  suyo.propuestas = null;
+  suyo.conciliado = null;
+  suyo.deshacer = false;
+  suyo.correccion = null;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaUnMovimientoDelBanco();
+  try {
+    const datos = conLosImportesEscritos(await apiJson(`/api/bancos/movimientos/${id}/propuestas`));
+    suyo.propuestas = datos;
+    suyo.movimiento = datos.movimiento;
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  pantallaUnMovimientoDelBanco();
+}
+
+/** La ficha de un movimiento, ya en React. */
+function pantallaUnMovimientoDelBanco() {
+  const suyo = estadoDeLosBancos();
+  const suyo2 = suyo.propuestas || {};
+  const movimiento = suyo.movimiento || {};
+  const pendientes = suyo2.pendientes || [];
+  return montar(() =>
+    pantallaDeUnMovimiento({
+      textos: textosDeLosBancos(),
+      movimiento,
+      propuestas: suyo2.propuestas || [],
+      pendientes,
+      papeles: losPapelesParaElegir(pendientes),
+      parejas: lasParejasDelTraspaso(movimiento),
+      formulario: elFormularioDeLosBancos(suyo.correccion, suyo.borrador),
+      resultado: suyo.conciliado,
+      deshecho: suyo.deshacer,
+      guardando: suyo.guardando,
+      cargando: !suyo.movimiento && !suyo.error,
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/** Los papeles a los que se puede apuntar dinero, para el desplegable de «apuntarlo a mano». */
+function losPapelesParaElegir(pendientes) {
+  const b = t("bancos", {});
+  return (pendientes || []).map((papel) => ({
+    valor: `${papel.clase}:${papel.documento_id}`,
+    texto: [papel.que_es, papel.contraparte, papel.referencia, `${b.le_falta} ${papel.texto_pendiente}`]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+}
+
+/**
+ * Los movimientos de **otras cuentas tuyas**, para atar un traspaso (A07).
+ *
+ * Lo que se filtra aquí es solo «de otra cuenta»: **el resto lo comprueba el servidor** y lo dice con su
+ * frase («tienen que ser del mismo importe y uno tiene que entrar y el otro salir»). Filtrar el importe en
+ * el navegador sería comparar dinero donde no toca; que decida quien tiene el dato.
+ */
+function lasParejasDelTraspaso(movimiento) {
+  const suyo = estadoDeLosBancos();
+  const items = (suyo.movimientos && suyo.movimientos.items) || [];
+  return items
+    .filter((otro) => otro.id !== movimiento.id && otro.cuenta_id !== movimiento.cuenta_id)
+    .map((otro) => ({
+      valor: otro.id,
+      texto: [otro.texto_fecha, otro.concepto, otro.texto_importe].filter(Boolean).join(" · "),
+    }));
+}
+
+/** El formulario que esté abierto, con sus bloques: el alta de una cuenta, el perfil o la corrección. */
+function elFormularioDeLosBancos(cual, borrador) {
+  if (!cual) return null;
+  const b = t("bancos", {});
+  const br = borrador || {};
+  const opcionesDe = (lista, elegido) =>
+    (lista || []).map((uno) => ({ valor: uno.valor, texto: uno.texto, elegido: uno.valor === elegido }));
+  const base = {
+    guardar: b.guardar,
+    cancelar: b.cancelar,
+    guardando: b.guardando,
+    datos: { clase: cual.clase, id: cual.id || "" },
+    bloques: [],
+  };
+  if (cual.clase === "cuenta") {
+    return {
+      ...base,
+      titulo: b.form_cuenta_titulo,
+      pista: b.form_cuenta_pista,
+      bloques: [
+        { tipo: "texto", id: "banco-cuenta-nombre", etiqueta: b.cuenta_nombre, pista: b.cuenta_nombre_pista, valor: "" },
+        { tipo: "texto", id: "banco-cuenta-banco", etiqueta: b.cuenta_banco, pista: b.cuenta_banco_pista, valor: "" },
+        { tipo: "texto", id: "banco-cuenta-ultimos", etiqueta: b.cuenta_ultimos, pista: b.cuenta_ultimos_pista, valor: "" },
+      ],
+    };
+  }
+  if (cual.clase === "perfil") {
+    return {
+      ...base,
+      titulo: b.form_perfil_titulo,
+      pista: b.form_perfil_pista,
+      bloques: [
+        { tipo: "texto", id: "banco-perfil-nombre", etiqueta: b.perfil_nombre, pista: b.perfil_nombre_pista, valor: "" },
+        {
+          tipo: "opciones",
+          campo: "formato_de_fecha",
+          etiqueta: b.perfil_fecha,
+          elegido: br.formato_de_fecha || "",
+          opciones: opcionesDe([
+            { valor: "d/m/Y", texto: b.fecha_dmy },
+            { valor: "m/d/Y", texto: b.fecha_mdy },
+          ], br.formato_de_fecha),
+        },
+        {
+          tipo: "opciones",
+          campo: "decimal",
+          etiqueta: b.perfil_decimal,
+          elegido: br.decimal || "",
+          opciones: opcionesDe([
+            { valor: ",", texto: b.decimal_coma },
+            { valor: ".", texto: b.decimal_punto },
+          ], br.decimal),
+        },
+        {
+          tipo: "opciones",
+          campo: "sin_signo_quiere_decir",
+          etiqueta: b.perfil_sin_signo,
+          elegido: br.sin_signo_quiere_decir || "",
+          opciones: opcionesDe([
+            { valor: "entra", texto: b.sin_signo_entra },
+            { valor: "sale", texto: b.sin_signo_sale },
+          ], br.sin_signo_quiere_decir),
+        },
+      ],
+    };
+  }
+  if (cual.clase === "correccion") {
+    return {
+      ...base,
+      titulo: b.form_correccion_titulo,
+      pista: b.form_correccion_pista,
+      bloques: [
+        { tipo: "numero", id: "banco-importe", etiqueta: b.correccion_importe, pista: b.correccion_importe_pista, valor: "" },
+        {
+          tipo: "opciones",
+          campo: "signo",
+          etiqueta: b.correccion_signo,
+          elegido: br.signo || "",
+          opciones: opcionesDe([
+            { valor: "entra", texto: b.signo_entra },
+            { valor: "sale", texto: b.signo_sale },
+          ], br.signo),
+        },
+        { tipo: "texto", id: "banco-concepto", etiqueta: b.correccion_concepto, valor: "" },
+        { tipo: "texto", id: "banco-motivo", etiqueta: b.correccion_motivo, pista: b.correccion_motivo_pista, valor: "" },
+      ],
+    };
+  }
+  return null;
+}
+
+/** Lee el extracto **sin guardar nada**: el fichero, la cuenta y (si la hay) la forma de escribir. */
+async function leerElExtracto() {
+  const suyo = estadoDeLosBancos();
+  const casilla = document.getElementById("banco-fichero");
+  const cuenta = valorDeLaCasilla("banco-cuenta");
+  suyo.error = "";
+  suyo.aviso = "";
+  if (!casilla || !casilla.files || !casilla.files.length) {
+    suyo.error = t("bancos.fichero", "");
+    return pantallaLosBancos();
+  }
+  if (!cuenta) {
+    suyo.error = t("bancos.elige_la_cuenta", "");
+    return pantallaLosBancos();
+  }
+  // Sin cobertura no se puede subir un fichero de un tirón: se dice claro en vez de dejar al agricultor
+  // esperando una barra que no avanza.
+  if (!navigator.onLine) {
+    suyo.error = aviso("no_se_pudo");
+    return pantallaLosBancos();
+  }
+  // **El fichero se guarda antes de pintar**: repintar borra la casilla, y este objeto es lo único que
+  // queda del fichero que el agricultor ha elegido.
+  suyo.fichero = casilla.files[0];
+  suyo.nombreDelFichero = casilla.files[0].name || "";
+  suyo.cuentaElegida = cuenta;
+  suyo.leyendo = true;
+  pantallaLosBancos();
+  const cuerpo = new FormData();
+  cuerpo.append("fichero", suyo.fichero);
+  cuerpo.append("cuenta_id", cuenta);
+  if (suyo.perfilElegido) cuerpo.append("perfil_id", suyo.perfilElegido);
+  try {
+    const respuesta = await fetch("/api/bancos/extractos/vista-previa", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${estado.token}` },
+      body: cuerpo,
+    });
+    if (!respuesta.ok) {
+      const detalle = await respuesta.json().catch(() => null);
+      throw new Error((detalle && detalle.detail) || mensaje("no_se_pudo"));
+    }
+    suyo.vistaPrevia = conLosImportesEscritos(await respuesta.json());
+    suyo.resultado = null;
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.leyendo = false;
+  pantallaLosBancos();
+}
+
+/**
+ * Apunta los movimientos del extracto. **Solo se llega aquí pulsando APUNTAR ESTOS MOVIMIENTOS**: leer no
+ * ha guardado nada, y el fichero que se manda es **el que se guardó al leerlo** (la casilla ya no existe).
+ */
+async function importarElExtracto() {
+  const suyo = estadoDeLosBancos();
+  if (!suyo.fichero || !suyo.cuentaElegida) return leerElExtracto();
+  suyo.importando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaLosBancos();
+  const cuerpo = new FormData();
+  cuerpo.append("fichero", suyo.fichero);
+  cuerpo.append("cuenta_id", suyo.cuentaElegida);
+  if (suyo.perfilElegido) cuerpo.append("perfil_id", suyo.perfilElegido);
+  // **La clave de reenvío**: reenviar la misma subida (el móvil sin cobertura) devuelve lo que pasó la
+  // primera vez y **no apunta nada dos veces**.
+  if (!suyo.claveDeLaSubida) suyo.claveDeLaSubida = claveDeReenvio("extracto");
+  cuerpo.append("clave_de_reenvio", suyo.claveDeLaSubida);
+  try {
+    const respuesta = await fetch("/api/bancos/extractos/importar", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${estado.token}` },
+      body: cuerpo,
+    });
+    if (!respuesta.ok) {
+      const detalle = await respuesta.json().catch(() => null);
+      throw new Error((detalle && detalle.detail) || mensaje("no_se_pudo"));
+    }
+    suyo.resultado = conLosImportesEscritos(await respuesta.json());
+    suyo.vistaPrevia = null;
+    suyo.fichero = null;
+    suyo.nombreDelFichero = "";
+    suyo.claveDeLaSubida = null;
+    await recargarLosBancos();
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.importando = false;
+  pantallaLosBancos();
+}
+
+/** Baja el extracto en un fichero, como `sacarDatos()`: con el token y por un enlace de descarga. */
+async function exportarElExtracto() {
+  const suyo = estadoDeLosBancos();
+  try {
+    const consulta = suyo.cuentaElegida ? `?cuenta_id=${suyo.cuentaElegida}` : "";
+    const respuesta = await api(`/api/bancos/movimientos.csv${consulta}`);
+    if (!respuesta.ok) throw new Error(mensaje("no_se_pudo"));
+    const blob = await respuesta.blob();
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(blob);
+    enlace.download = "extracto.csv";
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+  } catch (fallo) {
+    avisarDelError(fallo.message);
+  }
+}
+
+/** Guarda lo que haya abierto: la cuenta, la forma de escribir del banco o la corrección de un importe. */
+async function guardarLosBancos(datos) {
+  const suyo = estadoDeLosBancos();
+  const clase = (datos && datos.clase) || "";
+  const id = datos && datos.id ? Number(datos.id) : null;
+  const br = suyo.borrador || {};
+  suyo.guardando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaLosBancos();
+  try {
+    if (clase === "cuenta") {
+      await apiJson("/api/bancos/cuentas", {
+        method: "POST",
+        body: JSON.stringify({
+          nombre: valorDeLaCasilla("banco-cuenta-nombre"),
+          banco: valorDeLaCasilla("banco-cuenta-banco") || null,
+          // Solo los cuatro últimos: el servidor los recorta otra vez, y aquí se dice para que se vea
+          // que el número entero no viaja.
+          ultimos_digitos: valorDeLaCasilla("banco-cuenta-ultimos") || null,
+          clave_de_reenvio: claveDeReenvio("cuenta"),
+        }),
+      });
+    } else if (clase === "perfil") {
+      await apiJson("/api/bancos/perfiles", {
+        method: "POST",
+        body: JSON.stringify({
+          nombre: valorDeLaCasilla("banco-perfil-nombre"),
+          cuenta_id: suyo.cuentaElegida || null,
+          formato_de_fecha: br.formato_de_fecha || null,
+          decimal: br.decimal || null,
+          sin_signo_quiere_decir: br.sin_signo_quiere_decir || null,
+        }),
+      });
+    } else if (clase === "correccion") {
+      const importe = valorDeLaCasilla("banco-importe");
+      await apiJson(`/api/bancos/movimientos/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          // **Un importe vacío viaja como `null`** («déjalo en no lo sé»), nunca como 0.
+          importe: importe || null,
+          signo: br.signo || null,
+          concepto: valorDeLaCasilla("banco-concepto") || null,
+          motivo: valorDeLaCasilla("banco-motivo") || null,
+        }),
+      });
+    }
+    suyo.formulario = null;
+    suyo.correccion = null;
+    suyo.borrador = null;
+    await recargarLosBancos();
+    if (suyo.movimiento) await abrirUnMovimientoDelBanco(suyo.movimiento.id);
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  if (suyo.movimiento) {
+    pantallaUnMovimientoDelBanco();
+  } else {
+    pantallaLosBancos();
+  }
+}
+
+/**
+ * Cuadra un movimiento contra los papeles que el agricultor ha elegido.
+ *
+ * **Las imputaciones son las suyas, no las nuestras**: cuando pulsa APUNTAR ESTA se mandan **las de esa
+ * propuesta, tal cual y en el orden del servidor** (el botón lleva su índice, y aquí se busca en la misma
+ * lista que se le enseñó); y cuando apunta a mano se manda **un** papel, con la cantidad que haya escrito
+ * o con `importe: null`, que es «reparte tú lo que quepa, del papel más antiguo al más nuevo».
+ */
+async function conciliarUnMovimiento(imputaciones) {
+  const suyo = estadoDeLosBancos();
+  if (!suyo.movimiento || !imputaciones.length) return;
+  suyo.guardando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaUnMovimientoDelBanco();
+  try {
+    const contestado = conLosImportesEscritos(
+      await apiJson(`/api/bancos/movimientos/${suyo.movimiento.id}/conciliar`, {
+        method: "POST",
+        body: JSON.stringify({ imputaciones }),
+      }),
+    );
+    suyo.conciliado = contestado;
+    suyo.deshacer = false;
+    suyo.movimiento = contestado.movimiento;
+    await abrirUnMovimientoDelBanco(suyo.movimiento.id);
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  pantallaUnMovimientoDelBanco();
+}
+
+/** Las 20 acciones de los botones de estas dos pantallas. */
+async function atenderLosBancos(nombre, elemento) {
+  const suyo = estadoDeLosBancos();
+  const id = Number(elemento.dataset.id || 0);
+  if (nombre === "banco-ver") return pantallaLosBancos();
+  if (nombre === "banco-leer") return leerElExtracto();
+  if (nombre === "banco-importar") return importarElExtracto();
+  if (nombre === "banco-exportar") return exportarElExtracto();
+  if (nombre === "banco-abrir") return abrirUnMovimientoDelBanco(id);
+  if (nombre === "banco-cuenta-nueva") {
+    suyo.formulario = { clase: "cuenta" };
+    suyo.borrador = {};
+    return pantallaLosBancos();
+  }
+  if (nombre === "banco-perfil-nuevo") {
+    suyo.formulario = { clase: "perfil" };
+    suyo.borrador = {};
+    return pantallaLosBancos();
+  }
+  if (nombre === "banco-guardar") return guardarLosBancos(elemento.dataset);
+  if (nombre === "banco-cancelar") {
+    suyo.formulario = null;
+    suyo.correccion = null;
+    suyo.borrador = null;
+    return suyo.movimiento ? pantallaUnMovimientoDelBanco() : pantallaLosBancos();
+  }
+  if (nombre === "banco-elegir") {
+    suyo.borrador = { ...(suyo.borrador || {}), [elemento.dataset.campo]: elemento.dataset.valor };
+    return suyo.movimiento && suyo.correccion
+      ? pantallaUnMovimientoDelBanco()
+      : pantallaLosBancos();
+  }
+  if (nombre === "banco-descartar") {
+    suyo.vistaPrevia = null;
+    suyo.fichero = null;
+    suyo.nombreDelFichero = "";
+    suyo.claveDeLaSubida = null;
+    return pantallaLosBancos();
+  }
+  if (nombre === "banco-buscar") {
+    suyo.filtro = valorDeLaCasilla("banco-buscar");
+    suyo.estado = valorDeLaCasilla("banco-estado");
+    await recargarLosBancos();
+    return pantallaLosBancos();
+  }
+  if (nombre === "banco-ver-todos") {
+    suyo.filtro = "";
+    suyo.estado = "";
+    await recargarLosBancos();
+    return pantallaLosBancos();
+  }
+  if (nombre === "banco-conciliar-propuesta") {
+    const indice = Number(elemento.dataset.indice || 0);
+    const propuesta = ((suyo.propuestas || {}).propuestas || [])[indice];
+    if (!propuesta) return pantallaUnMovimientoDelBanco();
+    return conciliarUnMovimiento(propuesta.imputaciones);
+  }
+  if (nombre === "banco-conciliar-a-mano") {
+    const elegido = valorDeLaCasilla("banco-papel");
+    if (!elegido) return pantallaUnMovimientoDelBanco();
+    const corte = elegido.indexOf(":");
+    const cantidad = valorDeLaCasilla("banco-cantidad");
+    return conciliarUnMovimiento([
+      {
+        clase: elegido.slice(0, corte),
+        documento_id: Number(elegido.slice(corte + 1)),
+        // Vacío es «reparte tú lo que quepa», que es lo que hace el servidor por orden.
+        importe: cantidad || null,
+      },
+    ]);
+  }
+  if (nombre === "banco-deshacer") {
+    suyo.guardando = true;
+    suyo.error = "";
+    suyo.aviso = "";
+    pantallaUnMovimientoDelBanco();
+    try {
+      const contestado = conLosImportesEscritos(
+        await apiJson(`/api/bancos/movimientos/${id}/desconciliar`, {
+          method: "POST",
+          body: JSON.stringify({ imputaciones: [] }),
+        }),
+      );
+      suyo.conciliado = contestado;
+      suyo.deshacer = true;
+      suyo.movimiento = contestado.movimiento;
+      await abrirUnMovimientoDelBanco(id);
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    suyo.guardando = false;
+    return pantallaUnMovimientoDelBanco();
+  }
+  if (nombre === "banco-traspaso-atar" || nombre === "banco-traspaso-quitar") {
+    const otro = nombre === "banco-traspaso-quitar" ? null : Number(valorDeLaCasilla("banco-pareja"));
+    if (nombre === "banco-traspaso-atar" && !otro) return pantallaUnMovimientoDelBanco();
+    suyo.guardando = true;
+    suyo.error = "";
+    pantallaUnMovimientoDelBanco();
+    try {
+      const contestado = conLosImportesEscritos(
+        await apiJson(`/api/bancos/movimientos/${id}/traspaso`, {
+          method: "POST",
+          body: JSON.stringify({ otro_movimiento_id: otro }),
+        }),
+      );
+      suyo.aviso = (contestado.avisos || []).join(" ");
+      suyo.movimiento = contestado.movimiento;
+      await abrirUnMovimientoDelBanco(id);
+    } catch (fallo) {
+      suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    }
+    suyo.guardando = false;
+    return pantallaUnMovimientoDelBanco();
+  }
+  if (nombre === "banco-corregir") {
+    suyo.correccion = { clase: "correccion", id };
+    suyo.borrador = {};
+    return pantallaUnMovimientoDelBanco();
+  }
 }
 
 // ---------------------------------------------------------------------------

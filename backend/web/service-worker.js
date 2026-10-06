@@ -268,7 +268,13 @@
 // corregirlo o anularlo) y la historia de una tierra, con todo lo que ha pasado—. Se sube el número
 // porque esto es, literalmente, el campo: lo que se piensa hacer se mira antes de salir y lo que se ha
 // hecho se apunta allí mismo, donde peor va la cobertura.
-const CACHE = "cuedigital-2026-10-05-69";
+// Y vigésimo sexta, el 05/10/2026: **el extracto del banco y la conciliación** (T20, la pantalla S14).
+// Entra **un fichero con dos pantallas** —`bancos.js`: los movimientos con su estado y lo que les
+// queda por cuadrar, y la ficha de uno, que es donde se dice contra qué papel va el dinero—, y cambian
+// `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
+// número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
+// caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
+const CACHE = "cuedigital-2026-10-05-70";
 
 const FICHEROS = [
   "/",
@@ -346,6 +352,10 @@ const FICHEROS = [
   // Los trabajos por tierra (T15, 05/10/2026): la agenda, la ficha de un trabajo y la historia de una
   // tierra, las tres en un fichero.
   "/react/pantallas/trabajos.js",
+  // El banco y los papeles (T20, 05/10/2026): los movimientos y la ficha de uno. Se guarda para el
+  // campo por el mismo motivo que las cuentas: el extracto se mira en el despacho y la conciliación
+  // se piensa con calma, muchas veces sin cobertura.
+  "/react/pantallas/bancos.js",
   // 30/09/2026: el armazón del ordenador (el menú lateral y la barra de arriba). Es lo primero que se pinta
   // al abrir la aplicación en un ordenador: sin este fichero en la caché, la pantalla sale sin menú.
   "/react/piezas/marco.js",

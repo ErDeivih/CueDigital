@@ -115,12 +115,12 @@ function Datos({ filas = [] }) {
  * `vacio` es la opción sin elegir («Elige la cuenta»). Si no se pasa, no se pinta: cuando ya hay un valor
  * elegido de antes, una primera opción en blanco deja al agricultor sin saber si eligió algo.
  */
-function Elegir({ id, etiqueta, pista, opciones = [], elegido = "", vacio = "", soloLectura = false }) {
+function Elegir({ id, etiqueta, pista, opciones = [], elegido = "", vacio = "" }) {
   return html`
     <div className="campo">
       <label htmlFor=${id}>${frase(etiqueta)}</label>
       ${pista ? html`<p className="pista-campo">${frase(pista)}</p>` : null}
-      <select id=${id} defaultValue=${frase(elegido)} disabled=${soloLectura}>
+      <select id=${id} defaultValue=${frase(elegido)}>
         ${vacio ? html`<option value="">${frase(vacio)}</option>` : null}
         ${(opciones || []).map(
           (opcion) => html`

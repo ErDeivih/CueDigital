@@ -649,6 +649,7 @@ export function PantallaDeLasCuentas({
       <${Boton} etiqueta=${g.nuevo_pago} accion="gasto-pago-nuevo" clase="boton-claro" />
       <${Boton} etiqueta=${g.nueva_inversion} accion="gasto-inversion-nueva" clase="boton-claro" />
       <${Boton} etiqueta=${g.nueva_ayuda} accion="gasto-ayuda-nueva" clase="boton-claro" />
+      <${Boton} etiqueta=${g.los_bancos} accion="bancos-ver" clase="boton-claro" />
       <${Boton} etiqueta=${acciones.volver} accion="ir-inicio" clase="boton-claro" />
     </div>
   `;

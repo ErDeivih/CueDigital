@@ -13267,7 +13267,90 @@ test("leer la etiqueta sin haber elegido la foto no manda nada al servidor", asy
 });
 
 // ---------------------------------------------------------------------------
-// Los trabajos por tierra (T15, E9, 05/10/2026) y las cuentas (T13, E7)
+// El banco y los papeles (T20, E11, 05/10/2026)
+//
+// **Lo que se comprueba aquí, y por qué aquí.** La pantalla tiene sus 42 pruebas
+// (`tests_js/bancos.test.js`) y el servidor las suyas, pero **el cableado no lo probaba nadie** —y en
+// este proyecto eso ya ha costado dos pantallas muertas: la de las cuentas llamaba a un ayudante que no
+// existía (`campanaActual`) y su botón de guardar mandaba un GET sin datos—. Así que aquí se pulsa la
+// puerta de entrada: abrir la dirección de los movimientos tiene que montar la pantalla **con los datos
+// del servidor**, y abrir la de un movimiento tiene que montar su ficha **con su identificador**.
+// ---------------------------------------------------------------------------
+
+/** Un extracto con una cuenta, un movimiento y un papel pendiente. */
+function conElBanco(cambios = {}) {
+  return cargarAplicacion({
+    "/api/bancos/cuentas": [{ id: 1, nombre: "Cuenta de la casa", ultimos_digitos: "4321" }],
+    "/api/bancos/perfiles": [{ id: 2, nombre: "El de mi banco" }],
+    // **La ruta con su cuenta, tal y como la pide la pantalla**: los movimientos son de una cuenta (la
+    // primera que trae el servidor), y `recargarLosBancos` la pone en la consulta. Si la ruta no casara,
+    // el servidor de mentira contestaría vacío y la prueba daría por bueno un hueco.
+    "/api/bancos/movimientos?cuenta_id=1": {
+      items: [
+        {
+          id: 5,
+          fecha: "2026-06-15",
+          concepto: "TRANSFERENCIA RECIBIDA COOPERATIVA",
+          importe: "1205.40",
+          texto_importe: "1.205,40 €",
+          estado: "sin_conciliar",
+          cuenta_id: 1,
+        },
+      ],
+      agregados: { entradas: "1205.40", texto_entradas: "1.205,40 €", salidas: "0.00", texto_salidas: "0,00 €" },
+      total: 1,
+    },
+    "/api/bancos/pendientes": [],
+    "/api/bancos/movimientos/5/propuestas": {
+      movimiento: {
+        id: 5,
+        fecha: "2026-06-15",
+        concepto: "TRANSFERENCIA RECIBIDA COOPERATIVA",
+        importe: "1205.40",
+        texto_importe: "1.205,40 €",
+        estado: "sin_conciliar",
+      },
+      pendientes: [],
+      propuestas: [],
+    },
+    ...cambios,
+  });
+}
+
+test("la dirección de los movimientos del banco abre la pantalla con sus datos", async () => {
+  const { entorno, servidor } = await conElBanco();
+  entorno.window.location.hash = "#/cuentas/bancos";
+  await entorno.manejadores.popstate();
+  await new Promise((resolver) => setTimeout(resolver, 80));
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeLosBancos");
+  assert.ok(
+    servidor.llamadas.some((ruta) => ruta.includes("/api/bancos/movimientos")),
+    "no se han pedido los movimientos al abrir la pantalla",
+  );
+  assert.equal(elemento.props.cuentas.length, 1, "no le llegan las cuentas del servidor");
+  assert.equal(elemento.props.cuentas[0].texto, "Cuenta de la casa ·4321");
+  assert.equal(elemento.props.movimientos.length, 1, "no le llega el movimiento apuntado");
+  assert.ok(elemento.props.textos.bancos, "no le llegan las palabras de la pantalla");
+});
+
+test("la dirección de un movimiento abre su ficha con su identificador", async () => {
+  const { entorno, servidor } = await conElBanco();
+  entorno.window.location.hash = "#/cuentas/bancos/5";
+  await entorno.manejadores.popstate();
+  await new Promise((resolver) => setTimeout(resolver, 80));
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeUnMovimiento");
+  assert.ok(
+    servidor.llamadas.some((ruta) => ruta.includes("/api/bancos/movimientos/5/propuestas")),
+    "no se han pedido las propuestas de ese movimiento",
+  );
+  assert.equal(elemento.props.movimiento.id, 5, "no le llega el movimiento que se está mirando");
+});
+
+
 //
 // **Lo que se comprueba aquí, y por qué aquí.** Las dos pantallas tienen sus propias pruebas
 // (`tests_js/trabajos.test.js` con 24 y `tests_js/gastos.test.js` con 26) y sus servidores tienen las
@@ -13331,6 +13414,28 @@ test("las cuentas se abren desde su renglón del menú y les llegan los gastos d
   // Y la tabla del ordenador se prepara aquí, con sus columnas del servidor.
   assert.ok(elemento.props.tabla, "no le llega la tabla del ordenador");
   assert.equal(elemento.props.tabla.columnas.length, 7);
+
+  // **Y guardar un gasto manda de verdad lo que se ha escrito.** Esta comprobación existe porque el
+  // botón de guardar **no guardaba nada**: la llamada al servidor decía `{ metodo, cuerpo }` y `api`
+  // pasa sus opciones tal cual a `fetch`, que solo entiende `method` y `body`, así que salía un GET sin
+  // datos y **no saltaba ningún error**. Lo encontró el subagente de los extractos leyendo el fichero,
+  // y esta prueba es la que impide que vuelva: si el cuerpo no viaja, aquí se ve.
+  await pulsar(entorno, "gasto-nuevo");
+  escribir(entorno, "gasto-concepto", "Gasóleo de la sembradora");
+  escribir(entorno, "gasto-importe", "121.00");
+  // **El botón de guardar lleva su clase en el `data-*`** (`datos: {clase, id}`), y la prueba se lo pasa
+  // igual que lo hace la pantalla: sin él, `guardarLasCuentas` no sabría qué formulario está guardando.
+  await pulsar(entorno, "gasto-guardar", { clase: "gasto" });
+  const guardado = servidor.enviados.find(
+    (envio) => envio.metodo === "POST" && envio.ruta === "/api/gastos",
+  );
+  assert.ok(guardado, "el botón de guardar de las cuentas no ha mandado nada al servidor");
+  assert.equal(
+    guardado.cuerpo.concepto,
+    "Gasóleo de la sembradora",
+    `no viaja lo que se ha escrito: ${JSON.stringify(guardado.cuerpo)}`,
+  );
+  assert.equal(guardado.cuerpo.importe, "121.00");
 });
 
 /** Una explotación con dos tierras, un plan, un trabajo hecho y una máquina. */

@@ -168,6 +168,7 @@ Las tres últimas, por orden:
 | **Mi maquinaria, y la ficha de una máquina** (`backend/web/react/pantallas/maquinaria.js`) | ✅ En React (T14) |
 | **Mis cuentas, y la ficha de un gasto** (`backend/web/react/pantallas/gastos.js`) | ✅ En React (T13) |
 | **Los trabajos, la ficha de un trabajo y la historia de una tierra** (`backend/web/react/pantallas/trabajos.js`) | ✅ En React (T15) |
+| **El banco y los papeles, y la ficha de un movimiento** (`backend/web/react/pantallas/bancos.js`) | ✅ En React (T20) |
 
 **Y desde el T06 (03/10/2026) son treinta y siete**: las treinta y cinco de antes más las dos de las
 tierras en el mapa y en la tabla (`tierras_mapa`, `#/tierras/mapa`) y lo que ha sido una tierra
@@ -234,6 +235,19 @@ seis del libro del almacén (`libro_del_almacen`, `nuevo_albaran`, `recepcion`, 
 `sacar_de_un_lote` y `enganchar_la_factura`) y la ficha de un albarán, que se cuenta aparte porque
 `libro_del_almacen` es su lista. **Y desde el T13 (05/10/2026) son treinta y seis**: las cuentas de la
 explotación (`gastos.js`, con la lista y la ficha de un gasto en un solo fichero, como la maquinaria).
+**Y desde el T20 (06/10/2026) son cincuenta y dos**: entra **un fichero con dos pantallas** —
+
+`bancos.js`: la lista de los movimientos del extracto, con lo que se ha leído **sin apuntar nada**, las
+líneas que no se han entendido con su motivo y su número de línea, y lo que queda por cuadrar de los dos
+lados; y la ficha de un movimiento, que es donde se dice **contra qué papel va**— con sus propuestas y su
+porqué, el apunte a mano, el deshacer y el traspaso entre cuentas propias. Va a la caché del campo, que
+sube a la **versión 70**, y la versión del pie se puso al día en el mismo cambio.
+**Lo que esta pantalla NO hace, y conviene que quede escrito aquí**: **no se conecta a ningún banco** (no
+hay claves, ni direcciones, ni un sitio donde poner una credencial: solo se lee el fichero que el
+agricultor ha subido, y hay una prueba del servidor que lo comprueba), y **no crea ningún documento al
+conciliar** (conciliar escribe un vínculo con un papel que ya existe: no hay ninguna acción que cree un
+gasto, una factura o un cobro).
+
 La cuenta que la prueba de la migración exige («veintiocho») sigue
 escrita, con la fecha en la que dejó de ser el número: **una lista escrita a mano se queda vieja y nadie
 se entera**, y este párrafo es justo eso.

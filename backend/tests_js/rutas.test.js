@@ -250,6 +250,8 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     // T15 (05/10/2026): la historia de una tierra. Como las demás fichas, su identificador va en el
     // camino; sin él no tiene dirección (lo comprueba la prueba de abajo, con `trabajo_tierra`).
     trabajo_tierra: { id: 12 },
+    // T20 (05/10/2026): la ficha de un movimiento del banco, dentro de la familia de las cuentas.
+    banco_movimiento: { id: 5 },
   };
   for (const pantalla of pantallas()) {
     const parametros = {
@@ -346,6 +348,15 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     // el identificador, como en todas las familias de esta tabla, y las dos van **detrás de las ventas y
     // delante de las medidas**, que es donde el informe del ticket las pone.
     "gastos",
+    // **El banco y los papeles (T20, 05/10/2026)**: los movimientos del extracto (`#/cuentas/bancos`) y la
+    // ficha de uno (`#/cuentas/bancos/12`), donde se dice contra qué papel va el dinero. Las dos piden sus
+    // datos al servidor al abrir su dirección, así que se pueden enlazar y recargar. Van **con las cuentas**
+    // y no en un renglón propio del menú porque S14 es una sección de las cuentas (el contrato la dibuja
+    // dentro de `/cuentas`), y **sus formularios no tienen dirección a propósito**: al recargar saldrían
+    // vacíos. El tramo de texto fijo (`bancos`) va antes que el identificador, como en todas las familias
+    // —y por eso van **antes** de `gasto` (`:id`)—.
+    "bancos",
+    "banco_movimiento",
     "gasto",
     "medidas",
     // T14 (03/10/2026): la maquinaria y la ficha de una máquina. Las dos piden sus datos al servidor al

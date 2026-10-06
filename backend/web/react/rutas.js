@@ -170,6 +170,18 @@ export const PANTALLAS = [
   // **antes** que el identificador, como en todas las familias de esta tabla: el día que exista
   // `#/cuentas/nuevo`, tiene que ir por encima de `#/cuentas/:id`.
   { clave: "gastos", patron: ["cuentas"] },
+  // **El extracto del banco y la conciliación (T20, E11, 05/10/2026).** La lista vive **dentro de la
+  // familia de las cuentas** (`#/cuentas/bancos`), que es el renglón del menú del que sale, por los mismos
+  // motivos que las demás listas de esta tabla: se reconstruye entera al abrir su dirección —pide sus
+  // datos al servidor—, así que se puede enlazar, recargar y mandar a quien ayuda. Y **el tramo de texto
+  // fijo va antes que el identificador**, como en todas las familias: si no, `#/cuentas/bancos` se leería
+  // como la ficha del gasto número «bancos», que no existe.
+  { clave: "bancos", patron: ["cuentas", "bancos"] },
+  // Y **la ficha de un movimiento tiene su dirección** (`#/cuentas/bancos/12`): al recargarla se vuelven a
+  // pedir sus propuestas al servidor, así que no sale vacía. Lo que **no** tiene dirección son sus
+  // formularios (subir el fichero, el alta de una cuenta, la forma de escribir del banco, la corrección
+  // del importe): al recargar saldrían vacíos, y eso es peor que no tener dirección.
+  { clave: "banco_movimiento", patron: ["cuentas", "bancos", ":id"] },
   { clave: "gasto", patron: ["cuentas", ":id"] },
   { clave: "medidas", patron: ["medidas"] },
   // **La maquinaria y una máquina** (T14, 03/10/2026). La lista se reconstruye entera al abrir su
