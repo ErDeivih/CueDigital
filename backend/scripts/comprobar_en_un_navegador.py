@@ -1181,6 +1181,51 @@ PANTALLAS = [
             "VER EL ORIGINAL",
         ],
     ),
+    # **Y enlazarlo con un gasto y con una máquina**, que son las otras dos clases que el contrato pide
+    # («vincular a compra, gasto, venta, máquina o trabajo»). La ruta de arriba elige **la primera clase de
+    # la lista** (la factura de lo que ha comprado); estas dos eligen la clase **por su valor**, que es
+    # como se elige en la pantalla, y comprueban que lo enlazado se lee **con su nombre** (el concepto del
+    # gasto, el nombre y la matrícula de la máquina) y que el original sigue donde estaba. Se recorren dos
+    # clases y no las cinco porque lo que cambia entre ellas es de qué tabla sale el nombre —y eso tienen
+    # sus pruebas en el servidor, una por clase—, no el camino: el camino es el mismo y ya está aquí.
+    (
+        "el recorrido 1: enlazar un papel con un gasto",
+        [
+            '[data-accion="papel-ver-todos"]',
+            '[data-accion="bandeja-ver"]',
+            '[data-accion="bandeja-abrir"]',
+            "escribir:#bandeja-clase=gasto",
+            '[data-accion="bandeja-buscar-candidatos"]',
+            "elegir-ejemplo:#bandeja-candidato",
+            '[data-accion="bandeja-enlazar"]',
+        ],
+        [
+            "Con esto va",
+            # El nombre de lo enlazado empieza por la clase y sigue con el gasto: se busca el principio,
+            # que es lo que no cambia según cuál sea el gasto más nuevo de la finca.
+            "Un gasto ·",
+            "El papel, tal y como llegó",
+            "VER EL ORIGINAL",
+        ],
+    ),
+    (
+        "el recorrido 1: enlazar un papel con una máquina",
+        [
+            '[data-accion="papel-ver-todos"]',
+            '[data-accion="bandeja-ver"]',
+            '[data-accion="bandeja-abrir"]',
+            "escribir:#bandeja-clase=maquina",
+            '[data-accion="bandeja-buscar-candidatos"]',
+            "elegir-ejemplo:#bandeja-candidato",
+            '[data-accion="bandeja-enlazar"]',
+        ],
+        [
+            "Con esto va",
+            "Una máquina · El tractor",
+            "El papel, tal y como llegó",
+            "VER EL ORIGINAL",
+        ],
+    ),
     # **Las cuentas de la explotación** (T13, 05/10/2026). Se entra por el renglón del menú, que es como
     # entra el agricultor. Se buscan tres cosas distintas: el título, **el botón que lleva a los bancos**
     # (que es el primer paso del recorrido 3) y el resumen con su número. Ese número —«Tienes 1 gasto

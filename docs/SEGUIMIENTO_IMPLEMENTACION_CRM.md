@@ -5849,3 +5849,29 @@ pagar) y repartirlo **entre tierras, entre cultivos y entre máquinas**.
 **Y siguen los tres límites de fuera**, dichos otra vez para que no se pierdan: el T08 sin probar con las
 64 tierras y los papeles reales, la precisión del OCR sin poder medirse (no hay corpus: T07 está bloqueado)
 y PostgreSQL bloqueado por Docker.
+
+### 50.18 El recorrido 1, con sus clases de verdad: **enlazar un papel con un gasto y con una máquina**
+
+**Lo que se ha hecho.** El recorrido 1 del encargo dice «subir documento → revisar → **vincular a compra,
+gasto, venta, máquina o trabajo** conservando el original», y el guion solo tenía una ruta de enlace: la
+que elige **la primera clase de la lista** (la factura de lo que ha comprado). Las otras cuatro clases no
+se habían pulsado nunca desde un navegador. Se han añadido dos rutas más —**con un gasto** y **con una
+máquina**— que eligen la clase **por su valor** (como se elige en la pantalla) y comprueban lo que el
+ticket pide: que lo enlazado se lea **con su nombre** —el gasto con su concepto, la máquina con su nombre y
+su matrícula, y ninguna con un número de la base— y que **el original siga donde estaba** («El papel, tal y
+como llegó» y su botón de verlo).
+
+**Por qué dos clases y no las cinco.** Lo que cambia entre clases es **de qué tabla sale el nombre** (una
+factura, un gasto, una venta, una máquina, un trabajo o una inspección), y eso ya tiene su prueba en el
+servidor, una por clase. El camino —elegir la clase, buscar los candidatos, elegir uno, enlazar y leerlo—
+es **el mismo** para todas, y es el que ahora está recorrido pulsando. Queda escrito así a propósito: una
+comprobación que se repite cinco veces por un camino idéntico cuesta tiempo sin comprobar nada nuevo, y lo
+que sí importa —que cada clase se nombre bien— está cubierto donde corresponde.
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.442 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.046 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **559 comprobaciones · 0 fallos** (al empezar la ronda: 523) |
+| Los cinco recorridos del encargo | **los cinco, pulsando**, y el 1 con **tres** clases de enlace |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
