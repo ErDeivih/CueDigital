@@ -19326,6 +19326,45 @@ function pantallaUnGasto() {
  * tiene para leer lo que el agricultor ha escrito. Y **ninguna pregunta nace contestada**: lo que no
  * haya elegido él va con `elegido: ""`, y la pantalla no marca ninguna opción.
  */
+/**
+ * Las tierras de la finca, para poder marcar entre cuáles se reparte un gasto.
+ *
+ * Las que ya están descargadas; si no hay ninguna (sin cobertura y sin datos), la lista sale vacía y la
+ * pantalla lo dice en vez de ofrecer un reparto que no se puede hacer.
+ */
+function lasTierrasParaUnReparto() {
+  return (estado.parcelas || []).map((parcela) => ({
+    clave: String(parcela.id),
+    nombre: parcela.alias || parcela.ref_sigpac || "",
+    hectareas: parcela.superficie_ha === undefined ? null : parcela.superficie_ha,
+  }));
+}
+
+/**
+ * El borrador del reparto con esas tierras marcadas, **conservando lo que ya estaba escrito**.
+ *
+ * POR QUÉ SE CONSERVA: marcar una tierra repinta el formulario —como elegir una categoría—, así que
+ * las horas o los importes que el agricultor ya había escrito en las otras tierras se perderían. Se
+ * leen **antes** de repintar (pintar la pantalla vacía las casillas) y se devuelven en el borrador.
+ */
+function conLasTierrasMarcadas(borrador, marcadas) {
+  const suyo = borrador || {};
+  const antes = {};
+  for (const peso of suyo.pesos || []) {
+    const escrito = valorDeLaCasilla(`gasto-peso-${peso.clave}`);
+    if (escrito !== "") antes[peso.clave] = escrito;
+  }
+  const tierras = suyo.tierras || [];
+  return {
+    ...suyo,
+    parcela_ids: marcadas,
+    pesos: marcadas.map((clave) => {
+      const tierra = tierras.find((una) => String(una.clave) === String(clave)) || {};
+      return { clave: String(clave), nombre: tierra.nombre || "", valor: antes[clave] || "" };
+    }),
+  };
+}
+
 function elFormularioDeLasCuentas(cual, borrador) {
   if (!cual) return null;
   const g = t("gastos", {});
@@ -19398,12 +19437,37 @@ function elFormularioDeLasCuentas(cual, borrador) {
             { valor: "maquina", texto: t("maquinaria.titulo", ""), elegido: b.destino_tipo === "maquina" },
           ],
         },
-        // Las horas o los litros de cada sitio: un campo por tierra elegida (los monta el borrador).
+        // **Entre qué tierras** (06/10/2026): las de la finca, para marcarlas. Sin esto los cuatro
+        // métodos se quedaban sin saber a qué tierras repartir.
+        {
+          tipo: "marcas",
+          campo: "parcela_ids",
+          etiqueta: g.campo_tierras,
+          pista: g.campo_tierras_pista,
+          todas: g.marcar_todas,
+          marcadas: b.parcela_ids || [],
+          opciones: (b.tierras || []).map((tierra) => ({
+            clave: String(tierra.clave),
+            texto: tierra.nombre,
+            marcada: (b.parcela_ids || []).map(String).includes(String(tierra.clave)),
+          })),
+        },
+        // Las horas, los litros o lo que le toca a cada sitio: un campo por tierra marcada.
+        //
+        // **`pista` y no `sufijo`** (06/10/2026): el formulario pinta la línea de debajo del campo con
+        // `bloque.pista` —es el nombre que usan todos los campos de esta pantalla—, así que con `sufijo`
+        // la unidad **no salía nunca**: el agricultor veía «El Prado» y una casilla, sin saber si le
+        // están pidiendo horas, litros o euros.
         ...(b.pesos || []).map((uno) => ({
           tipo: "numero",
           id: `gasto-peso-${uno.clave}`,
           etiqueta: uno.nombre,
-          sufijo: b.metodo === "horas" ? g.campo_horas : g.campo_litros,
+          pista:
+            b.metodo === "horas"
+              ? g.campo_horas
+              : b.metodo === "consumo"
+                ? g.campo_litros
+                : g.campo_euros_del_trozo,
           valor: uno.valor || "",
         })),
       ],
@@ -19511,12 +19575,27 @@ async function guardarLasCuentas(datos) {
   } else if (clase === "reparto") {
     metodo = "POST";
     ruta = `/api/gastos/${id}/repartos`;
+    // **Lo que se ha escrito en cada tierra** (06/10/2026): las horas, los litros o lo que le toca a
+    // cada una. Se lee de los campos que hay en la pantalla —uno por tierra marcada—, y de ahí salen
+    // los pesos (para «por horas» y «por lo que se gastó») y los trozos (para «a mano»).
+    const marcadas = (b.parcela_ids || []).map(String);
+    const escritos = {};
+    for (const clave of marcadas) {
+      const escrito = valorDeLaCasilla(`gasto-peso-${clave}`);
+      if (escrito !== "") escritos[clave] = escrito;
+    }
+    const destino = b.destino_tipo || "tierra";
+    const aMano = (b.metodo || "") === "manual";
     cuerpo = {
       metodo: b.metodo || "manual",
-      destino_tipo: b.destino_tipo || "tierra",
-      parcela_ids: b.parcela_ids || [],
-      pesos: b.pesosRecogidos || {},
-      trozos: b.trozos || [],
+      destino_tipo: destino,
+      parcela_ids: marcadas,
+      pesos: aMano ? {} : escritos,
+      trozos: aMano
+        ? marcadas
+            .filter((clave) => escritos[clave] !== undefined)
+            .map((clave) => ({ destino_tipo: destino, destino: clave, importe: escritos[clave] }))
+        : [],
       confirmado: true,
     };
   } else if (clase === "pago") {
@@ -19613,9 +19692,32 @@ async function atenderLasCuentas(nombre, elemento) {
   }
   if (nombre === "gasto-repartir") {
     suyo.formulario = { clase: "reparto", id };
-    // Las tierras que se pueden elegir, con sus hectáreas: el servidor las leerá al repartir, y aquí
-    // solo se ofrecen para que el agricultor diga a cuáles.
-    suyo.borrador = { metodo: "", destino_tipo: "tierra", parcela_ids: [], pesos: [] };
+    // **Las tierras entre las que se puede repartir** (06/10/2026), con sus hectáreas: son las que ya
+    // están descargadas (`estado.parcelas`), así que no hace falta pedir nada al servidor para
+    // ofrecerlas. El agricultor marca las que sean y el servidor reparte entre ellas.
+    suyo.borrador = {
+      metodo: "",
+      destino_tipo: "tierra",
+      parcela_ids: [],
+      tierras: lasTierrasParaUnReparto(),
+      pesos: [],
+    };
+    return pantallaUnGasto();
+  }
+  if (nombre === "gasto-marcar" || nombre === "gasto-marcar-todas") {
+    // **Marcar una tierra para el reparto.** Se marcan las que se quieran (y con TODAS, las de la
+    // finca). Cada vez que se marca o se desmarca, se rehace la lista de pesos: un campo por tierra
+    // marcada, que es donde se escriben las horas, los litros o lo que le toca a cada una.
+    const claves = new Set((suyo.borrador || {}).parcela_ids || []);
+    if (nombre === "gasto-marcar-todas") {
+      for (const tierra of (suyo.borrador || {}).tierras || []) claves.add(String(tierra.clave));
+    } else {
+      const clave = String(elemento.dataset.clave || "");
+      if (!clave) return pantallaUnGasto();
+      if (claves.has(clave)) claves.delete(clave);
+      else claves.add(clave);
+    }
+    suyo.borrador = conLasTierrasMarcadas(suyo.borrador, [...claves]);
     return pantallaUnGasto();
   }
   if (nombre === "gasto-sin-asignar") {
@@ -20026,6 +20128,7 @@ function pantallaUnMovimientoDelBanco() {
       formulario: elFormularioDeLosBancos(suyo.correccion, suyo.borrador),
       resultado: suyo.conciliado,
       deshecho: suyo.deshacer,
+      yaApuntado: suyo2.texto_ya_apuntado || "",
       guardando: suyo.guardando,
       cargando: !suyo.movimiento && !suyo.error,
       error: suyo.error || "",
@@ -20351,10 +20454,15 @@ async function conciliarUnMovimiento(imputaciones) {
         body: JSON.stringify({ imputaciones }),
       }),
     );
-    suyo.conciliado = contestado;
-    suyo.deshacer = false;
     suyo.movimiento = contestado.movimiento;
     await abrirUnMovimientoDelBanco(suyo.movimiento.id);
+    // **El resultado se guarda DESPUÉS de recargar la ficha, y no antes.** `abrirUnMovimientoDelBanco`
+    // limpia `conciliado` a propósito —al abrir un movimiento de cero no hay nada que contar—, así que
+    // guardarlo antes lo borraba: el agricultor apuntaba el dinero y no veía **a qué papel** había ido,
+    // que es justo lo que hay que poder comprobar para no apuntarlo dos veces. Hay una prueba que lo
+    // comprueba en `tests_js/interfaz.test.js`.
+    suyo.conciliado = contestado;
+    suyo.deshacer = false;
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
   }
@@ -20445,10 +20553,11 @@ async function atenderLosBancos(nombre, elemento) {
           body: JSON.stringify({ imputaciones: [] }),
         }),
       );
-      suyo.conciliado = contestado;
-      suyo.deshacer = true;
       suyo.movimiento = contestado.movimiento;
       await abrirUnMovimientoDelBanco(id);
+      // Igual que al conciliar: el resultado va **después** de recargar, porque la recarga lo limpia.
+      suyo.conciliado = contestado;
+      suyo.deshacer = true;
     } catch (fallo) {
       suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
     }

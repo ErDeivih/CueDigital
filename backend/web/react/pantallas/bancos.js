@@ -888,6 +888,8 @@ function LoConciliado({ resultado = null, deshecho = false, pendientes = [], tex
  *  - `parejas`: `[{valor, texto}]` — los movimientos de **otras cuentas tuyas**, para atar el traspaso.
  *  - `formulario`: la corrección del importe abierta, o `null`.
  *  - `resultado`: lo que contestó la última conciliación o el último deshacer; `deshecho` dice cuál.
+ *  - `yaApuntado`: la frase que se enseña **cuando el movimiento ya está apuntado entero** y por eso no
+ *    hay nada que proponer (la manda el servidor, con lo que hay que hacer para deshacerlo).
  *  - `guardando`, `cargando`, `error`, `aviso`.
  */
 export function PantallaDeUnMovimiento({
@@ -900,6 +902,7 @@ export function PantallaDeUnMovimiento({
   formulario = null,
   resultado = null,
   deshecho = false,
+  yaApuntado = "",
   guardando = false,
   cargando = false,
   error = "",
@@ -980,28 +983,34 @@ export function PantallaDeUnMovimiento({
         : html`<div className="aviso"><p>${frase(b[`por_que_no_${movimiento.por_que_no}`])}</p></div>`
     }
     ${
-      propuestas.length
-        ? html`<ul className="lista">
-            ${propuestas.map(
-              (propuesta, indice) => html`
-                <${UnaPropuesta}
-                  key=${indice}
-                  propuesta=${propuesta}
-                  indice=${indice}
-                  pendientes=${pendientes}
-                  textos=${textos}
-                />
-              `,
-            )}
-          </ul>`
-        : html`<div className="aviso">${frase(b.propuestas_vacio)}</div>`
+      // **Si ya está apuntado entero, se dice y no se ofrece nada más.** El servidor no propone nada en
+      // ese caso (calcular las propuestas con el importe entero sería ofrecer apuntar dos veces el mismo
+      // dinero) y manda la frase con la instrucción; aquí solo se enseña.
+      yaApuntado
+        ? html`<div className="aviso">${frase(yaApuntado)}</div>`
+        : propuestas.length
+          ? html`<ul className="lista">
+              ${propuestas.map(
+                (propuesta, indice) => html`
+                  <${UnaPropuesta}
+                    key=${indice}
+                    propuesta=${propuesta}
+                    indice=${indice}
+                    pendientes=${pendientes}
+                    textos=${textos}
+                  />
+                `,
+              )}
+            </ul>`
+          : html`<div className="aviso">${frase(b.propuestas_vacio)}</div>`
     }
 
     ${
       // Apuntarlo a mano: el papel lo elige el agricultor de la lista y, si solo le va a apuntar una parte,
       // escribe cuánto. Si lo deja en blanco, el servidor reparte lo que quepa **por orden, del papel más
       // antiguo al más nuevo** —y eso se dice, porque es lo que hace que no haya céntimos perdidos—.
-      movimiento.se_puede_conciliar && papeles.length
+      // Con el movimiento ya apuntado entero no se ofrece: no queda dinero que repartir.
+      movimiento.se_puede_conciliar && papeles.length && !yaApuntado
         ? html`
             <h3>${frase(b.a_mano_titulo)}</h3>
             <p className="pista-campo">${frase(b.a_mano_explica)}</p>
@@ -1137,6 +1146,7 @@ export function pantallaDeUnMovimiento(propiedades) {
       formulario=${propiedades.formulario}
       resultado=${propiedades.resultado}
       deshecho=${propiedades.deshecho}
+      yaApuntado=${propiedades.yaApuntado}
       guardando=${propiedades.guardando}
       cargando=${propiedades.cargando}
       error=${propiedades.error}

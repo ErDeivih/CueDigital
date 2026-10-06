@@ -7333,6 +7333,17 @@ GASTOS: dict = {
     "campo_pesos": "¿Cuánto en cada sitio?",
     "campo_horas": "Horas",
     "campo_litros": "Litros o kilos",
+    # **Entre qué tierras se reparte** (06/10/2026). Los cuatro métodos necesitan saber a qué tierras
+    # va el gasto —por hectáreas se reparte entre las que se marquen, y por horas, por consumo o a mano
+    # hay que decir cuánto en cada una—, y la pantalla no lo preguntaba: el reparto entero se quedaba en
+    # «sin asignar» por no poder decir las tierras. Estas cuatro frases son esa pregunta.
+    "campo_tierras": "¿Entre qué tierras?",
+    "campo_tierras_pista": (
+        "Marca las tierras a las que va este gasto. Se reparte entre las que marques, y de cada una se "
+        "dice lo que le toca."
+    ),
+    "marcar_todas": "TODAS MIS TIERRAS",
+    "campo_euros_del_trozo": "Lo que le toca (€)",
     "campo_motivo": "¿Por qué lo anulas?",
     "categorias_de_gasto": {
         "abono": "Abono",
@@ -7853,6 +7864,7 @@ MENSAJES_DE_LOS_EXTRACTOS: dict[str, str] = {
     "T20_eso_no_esta_en_tu_cuaderno": "Eso no está en tu cuaderno. Elige un papel de tu finca.",
     "T20_no_se_ha_podido_apuntar_eso": "No se ha podido apuntar eso a ningún papel. Míralo y vuelve a intentarlo.",
     "T20_no_hay_nada_que_apuntar": "No hay ningún papel al que apuntar este dinero. Apunta antes la factura o el cobro.",
+    "T20_este_movimiento_ya_esta_apuntado": "Este movimiento ya está apuntado entero a sus papeles, así que no queda nada que repartir. Si te has equivocado, deshaz lo apuntado y vuelve a repartirlo.",
     "T20_no_hay_nada_que_deshacer": "Este movimiento no tiene nada apuntado que deshacer.",
     "T20_no_se_puede_corregir_conciliado": "Este movimiento ya tiene dinero apuntado a un papel, así que no se puede cambiar. Deshaz primero la conciliación y vuelve a intentarlo.",
     "T20_dinos_si_entra_o_sale": "Dinos también si ese dinero entró o salió, porque un importe sin eso no se puede sumar.",

@@ -1512,6 +1512,76 @@ class TestElRecorridoPorLaApi:
         # Y el vínculo deshecho no se borra: se queda con lo que se deshizo.
         assert la_conciliacion.importe == Decimal("500.00")
 
+    def test_lo_que_se_propone_nunca_es_dinero_ya_apuntado(self, cliente, cuenta):
+        """Un botón propuesto tiene que poder pulsarse, y nunca dos veces sobre el mismo dinero.
+
+        Es el recorrido 3 tal y como lo hace un agricultor: revisa lo que el programa propone, lo apunta,
+        vuelve a mirar y **no puede encontrarse la misma propuesta otra vez**. Si se encontrara, el botón
+        «Apuntar esta» llevaría a un error del servidor —porque el dinero de ese movimiento ya está
+        apuntado— y ese es el fallo que este test fija: se propone **con lo que le queda al movimiento**,
+        y cuando no le queda nada se dice, en vez de ofrecer lo imposible.
+        """
+        cuenta_bancaria = self._crear_cuenta(cliente, cuenta)
+        self._importar(cliente, cuenta, cuenta_bancaria["id"])
+        self._una_factura_nuestra(cliente, cuenta, "1205.40")
+        movimiento = self._el_movimiento(cliente, cuenta, "COOPERATIVA")
+        pendientes = cliente.get("/api/bancos/pendientes", headers=cuenta["cabeceras"]).json()
+        papel = next(p for p in pendientes if p["clase"] == extractos.FACTURA_EMITIDA)
+
+        # Se apunta medio pago, a mano.
+        medio = cliente.post(
+            f"/api/bancos/movimientos/{movimiento['id']}/conciliar",
+            headers=cuenta["cabeceras"],
+            json={
+                "imputaciones": [
+                    {"clase": papel["clase"], "documento_id": papel["documento_id"], "importe": "500.00"}
+                ]
+            },
+        )
+        assert medio.status_code == 200, medio.text
+
+        # Lo que queda del movimiento: 705,40. Y eso —ni más— es lo que se puede proponer.
+        quedan = cliente.get(
+            f"/api/bancos/movimientos/{movimiento['id']}/propuestas", headers=cuenta["cabeceras"]
+        ).json()
+        assert quedan["por_conciliar"] == "705.40"
+        assert quedan["ya_apuntado"] is False
+        assert quedan["texto_ya_apuntado"] is None
+        totales = {propuesta["total"] for propuesta in quedan["propuestas"]}
+        assert totales <= {"705.40"}, f"propone apuntar más de lo que queda: {sorted(totales)}"
+
+        # Y la propuesta que queda **se puede pulsar**: es exactamente lo que manda la pantalla. Aquí
+        # cuadra exacta, porque a la factura le faltan justo los 705,40 que le quedan al movimiento.
+        la_que_queda = quedan["propuestas"][0]
+        assert la_que_queda["tipo"] == extractos.PROPUESTA_EXACTA
+        assert la_que_queda["total"] == "705.40"
+        segundo = cliente.post(
+            f"/api/bancos/movimientos/{movimiento['id']}/conciliar",
+            headers=cuenta["cabeceras"],
+            json={"imputaciones": la_que_queda["imputaciones"]},
+        )
+        assert segundo.status_code == 200, (
+            "la propuesta que enseña la pantalla no se puede apuntar: " + segundo.text
+        )
+        assert segundo.json()["movimiento"]["estado"] == extractos.CONCILIADO
+        assert str(segundo.json()["movimiento"]["imputado"]) == "1205.40"
+
+        # Ya está apuntado entero: ni propuestas, ni un botón que no pueda funcionar.
+        entero = cliente.get(
+            f"/api/bancos/movimientos/{movimiento['id']}/propuestas", headers=cuenta["cabeceras"]
+        ).json()
+        assert entero["ya_apuntado"] is True
+        assert entero["propuestas"] == [], "con el movimiento apuntado entero no se propone nada"
+        assert entero["texto_ya_apuntado"], "y se dice por qué no hay nada que proponer"
+        assert "deshaz" in entero["texto_ya_apuntado"].lower(), "la frase tiene que decir qué hacer"
+        assert entero["por_conciliar"] == "0.00"
+
+        # Y el papel sigue esperando lo suyo: 1205,40 - 1205,40 = 0, pero la factura no se ha tocado.
+        pendiente = cliente.get("/api/bancos/pendientes", headers=cuenta["cabeceras"]).json()
+        assert all(p["documento_id"] != papel["documento_id"] for p in pendiente), (
+            "una factura ya saldada no es un pendiente"
+        )
+
     def test_un_movimiento_puede_saldar_dos_papeles_a_la_vez(self, cliente, cuenta):
         """Muchos a muchos: el contrato lo pide para «pagos parciales o agrupados»."""
         cuenta_bancaria = self._crear_cuenta(cliente, cuenta)

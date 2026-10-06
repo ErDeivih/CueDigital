@@ -990,7 +990,12 @@ export function PantallaDeUnPapelDeLaBandeja({
                   vacio=${b.elige_uno}
                 />
                 <div className="barra-acciones">
-                  <${Boton} etiqueta=${b.enlazar} accion="bandeja-enlazar" clase="" />
+                  <${Boton}
+                    etiqueta=${b.enlazar}
+                    accion="bandeja-enlazar"
+                    datos=${{ id: papel.id }}
+                    clase=""
+                  />
                 </div>
               `
             : html`<p className="pista-campo">${

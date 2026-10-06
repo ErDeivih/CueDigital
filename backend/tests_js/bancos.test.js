@@ -1593,6 +1593,42 @@ test("la ficha no lleva ni una frase escrita a mano", async () => {
   }
 });
 
+test("un movimiento ya apuntado entero lo dice, y no ofrece apuntar nada más", async () => {
+  // **El fallo que esto fija.** El servidor proponía con el importe entero del movimiento aunque ya
+  // estuviera apuntado: la pantalla enseñaba «APUNTAR ESTA», se pulsaba y salía un error, porque ese
+  // dinero ya estaba apuntado. Ahora el servidor no propone nada en ese caso y manda la frase; la
+  // pantalla tiene que enseñarla **y no dejar ninguna puerta abierta** que no pueda funcionar.
+  const frase = "Este movimiento ya está apuntado entero a sus papeles. Deshaz lo apuntado y vuelve a repartirlo.";
+  const props = {
+    yaApuntado: frase,
+    movimiento: unMovimiento({ estado: "conciliado", imputado: "500.00", texto_imputado: "500,00 €", por_conciliar: "0.00" }),
+    propuestas: [unaPropuesta()],
+    pendientes: [unPendiente()],
+    papeles: [{ valor: "factura_emitida:3", texto: "Una factura tuya" }],
+  };
+  const html = await htmlDeUnMovimiento(props);
+
+  assert.match(html, /ya está apuntado entero/, "no se dice que ya está apuntado");
+  assert.ok(!accionesDe(html).includes("banco-conciliar-propuesta"), "se ofrece apuntar otra vez lo ya apuntado");
+  assert.ok(!accionesDe(html).includes("banco-conciliar-a-mano"), "se ofrece apuntarlo a mano cuando no queda nada");
+  assert.ok(!idsDe(html).includes("banco-papel"), "el desplegable de papeles sigue ahí sin nada que repartir");
+  // Y la frase del servidor no se ha inventado aquí dentro: llega como propiedad.
+  assert.ok(props.yaApuntado.includes("Deshaz"), "la frase tiene que decir qué hacer para arreglarlo");
+
+  // El contraste, que es lo que impide que esta prueba pase por haber escondido todo: con dinero que
+  // queda, la propuesta **sí** se ofrece.
+  const conDinero = await htmlDeUnMovimiento({
+    movimiento: unMovimiento({ estado: "sin_conciliar", por_conciliar: "500.00" }),
+    propuestas: [unaPropuesta()],
+    pendientes: [unPendiente()],
+    papeles: [{ valor: "factura_emitida:3", texto: "Una factura tuya" }],
+  });
+  assert.ok(
+    accionesDe(conDinero).includes("banco-conciliar-propuesta"),
+    "con propuestas delante tiene que estar el botón de apuntarlas",
+  );
+});
+
 test("ninguna frase de la copia lleva jerga", async () => {
   // La regla de la casa, comprobada en la copia que usan estas pruebas: si una frase lleva una palabra
   // prohibida, el test de jerga de Python la cazaría al entrar en `textos.py`… si alguien se acuerda de

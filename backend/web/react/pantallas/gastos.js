@@ -226,10 +226,14 @@ function FichaDeUnGasto({ gasto = {}, textos = {} }) {
 /**
  * Los campos de un formulario, tal y como los prepara `app.js`.
  *
- * Un bloque es de escribir (`{tipo, id, etiqueta, valor, pista}`) o de elegir
- * (`{tipo: "opciones", campo, etiqueta, opciones, elegido}`). Un bloque con un `tipo` que no se
- * conoce se pinta como texto: entre un campo de más y un campo que desaparece sin decir nada, el de
- * más.
+ * Un bloque es de escribir (`{tipo, id, etiqueta, valor, pista}`), de elegir
+ * (`{tipo: "opciones", campo, etiqueta, opciones, elegido}`) o de **marcar** (`{tipo: "marcas", campo,
+ * etiqueta, opciones: [{clave, texto, marcada}], todas}`). Un bloque con un `tipo` que no se conoce se
+ * pinta como texto: entre un campo de más y un campo que desaparece sin decir nada, el de más.
+ *
+ * **Las marcas son las tierras del reparto** (06/10/2026): marcar y desmarcar es lo que dice entre qué
+ * tierras se reparte un gasto, y lleva su botón de «TODAS» porque repartir el gasóleo entre todas las
+ * tierras de la finca es lo que se hace casi siempre.
  */
 function Formulario({ formulario, guardando }) {
   if (!formulario) return null;
@@ -263,7 +267,44 @@ function Formulario({ formulario, guardando }) {
               </div>
             </div>
           `
-        : html`
+        : bloque.tipo === "marcas"
+          ? html`
+              <div className="campo" key=${indice}>
+                <p className="etiqueta-campo">${frase(bloque.etiqueta)}</p>
+                ${bloque.pista ? html`<p className="pista-campo">${frase(bloque.pista)}</p>` : null}
+                <div className="barra-acciones">
+                  ${(bloque.opciones || []).map(
+                    (opcion) => html`
+                      <button
+                        key=${String(opcion.clave)}
+                        type="button"
+                        className=${`boton ${opcion.marcada ? "boton-elegido" : "boton-claro"}`}
+                        data-accion="gasto-marcar"
+                        data-clave=${String(opcion.clave)}
+                        data-marcada=${opcion.marcada ? "1" : "0"}
+                        aria-pressed=${opcion.marcada ? "true" : "false"}
+                      >
+                        ${frase(opcion.texto)}
+                      </button>
+                    `,
+                  )}
+                  ${
+                    // **TODAS**, porque es lo que se hace casi siempre: el gasóleo del tractor va a
+                    // todas las tierras. Ahorra marcar una por una en una finca de 64 tierras.
+                    bloque.todas
+                      ? html`<button
+                          type="button"
+                          className="boton boton-claro"
+                          data-accion="gasto-marcar-todas"
+                        >
+                          ${frase(bloque.todas)}
+                        </button>`
+                      : null
+                  }
+                </div>
+              </div>
+            `
+          : html`
             <${Campo}
               key=${indice}
               id=${bloque.id}

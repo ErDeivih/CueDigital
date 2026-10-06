@@ -800,15 +800,22 @@ PANTALLAS = [
             # quedar en la categoría del gasóleo, y esa lista la sirve el servidor.
             '[data-accion="gasto-elegir"][data-campo="categoria"][data-valor="gasoleo"]',
             "escribir:#gasto-importe=254,10",
-            "escribir:#gasto-fecha=2026-05-20",
+            # **La fecha no es un adorno: es la que hace que este gasto sea el primero de la lista.** La
+            # lista va del más nuevo al más viejo, y las dos rutas de abajo abren «el primer gasto», que
+            # tiene que ser este. Cuando el guion empezó a dejar un gasto de junio (el que cuadra con el
+            # banco), la fecha de mayo dejó de ser la más nueva y las dos rutas abrieron **otro** gasto:
+            # se vio enseguida porque lo que se busca en su ficha dejó de salir. Si alguien cambia esta
+            # fecha, tiene que cambiar también las dos rutas de abajo.
+            "escribir:#gasto-fecha=2026-07-01",
             '[data-accion="gasto-guardar"]',
         ],
         # **El recuento, y no solo el texto que se escribió**: mientras el formulario sigue abierto, lo
         # que se tecleó está en su `<input>`, así que buscar «El gasóleo de la siega» pasaría **aunque
         # el gasto no se hubiera guardado** (falso positivo que se vio al arreglar la lectura de los
         # campos, con el grabador delante). El recuento de la lista solo puede venir del servidor: el
-        # guion deja un gasto y esta ruta apunta otro.
-        ["Mis cuentas", "Tienes 2 gastos apuntados.", "El gasóleo de la siega", "254,10"],
+        # guion deja **dos** gastos (uno de ellos el que cuadra con el banco, para que el recorrido 3
+        # tenga con qué) y esta ruta apunta el tercero.
+        ["Mis cuentas", "Tienes 3 gastos apuntados.", "El gasóleo de la siega", "254,10"],
     ),
     # Y **su ficha**, que es donde se contesta la pregunta del recorrido: qué importe consta, qué se
     # ha pagado y **qué queda pendiente**. Va después de la ruta de arriba a propósito: se apoya en
@@ -824,6 +831,34 @@ PANTALLAS = [
             "Falta por pagar",
             "REPARTIRLO",
             "ANULAR",
+        ],
+    ),
+    # **Y repartirlo entre las tierras**, que es la mitad que le faltaba al recorrido: «registrar un
+    # gasto → **asignarlo a tierras** → consultar sus repartos». Se entra por la ficha del gasto (el que
+    # acaba de apuntar la ruta de arriba), se elige el método y se marcan las tierras con su botón de
+    # TODAS —lo que se hace casi siempre—, y lo que se comprueba después es que **el reparto existe**:
+    # cada tierra con lo que le toca y su botón de quitarla. Sin esto, la pantalla ofrecía cuatro
+    # métodos que no podían repartir nada.
+    (
+        "el recorrido 2: repartir el gasto entre las tierras",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="gasto-abrir"]',
+            '[data-accion="gasto-repartir"]',
+            '[data-accion="gasto-elegir"][data-campo="metodo"][data-valor="area"]',
+            '[data-accion="gasto-marcar-todas"]',
+            '[data-accion="gasto-guardar"]',
+        ],
+        [
+            "El gasóleo de la siega",
+            # El cuadre de la ficha: lo que costó está **en tierras** y no queda nada sin asignar. Es lo
+            # que demuestra que el reparto se hizo y que las cuentas cuadran.
+            "En tierras, cultivos o máquinas",
+            "Sin asignar",
+            # Y cada tierra con lo que le toca y su botón de quitarla.
+            "El Prado",
+            "por hectáreas",
+            "QUITARLO DE AQUÍ",
         ],
     ),
     # **El recorrido 3 (T20): de un movimiento del banco a contra qué papel va.** El extracto ya está
@@ -870,6 +905,33 @@ PANTALLAS = [
             "Contra qué papel va",
             "Elige una y el dinero queda apuntado a ese papel",
             "APUNTAR ESTE DINERO",
+        ],
+    ),
+    # **Y conciliarlo**, que es donde termina el recorrido: se elige la propuesta que da el servidor
+    # —la factura que cuadra por el importe— y el dinero queda apuntado a ese papel. Se busca el
+    # movimiento **por su posición** (la tercera línea del extracto es la de la reparación: la lista va
+    # de la más nueva a la más vieja), y lo que se comprueba es lo que el agricultor tiene que poder leer
+    # después de pulsar: **a qué papel ha ido el dinero** (con su nombre, no con su número), que queda
+    # conciliado, que se puede deshacer —sin el deshacer, un enlace equivocado se quedaría para
+    # siempre— y que **ya no se le ofrece apuntar más**, porque no le queda dinero: eso era un botón que
+    # solo podía llevar a un error. Las tres cosas se comprobaron primero a mano y estaban mal: la
+    # respuesta de la conciliación se perdía al recargar la ficha y el servidor seguía proponiendo el
+    # importe entero.
+    (
+        "el recorrido 3: conciliar un movimiento con su papel",
+        [
+            '[data-accion="gastos-ver"]',
+            '[data-accion="bancos-ver"]',
+            'li:nth-child(3) [data-accion="banco-abrir"]',
+            '[data-accion="banco-conciliar-propuesta"][data-indice="0"]',
+        ],
+        [
+            "Este movimiento del banco",
+            "DESHACERLO",
+            "Lo que ha quedado apuntado",
+            "Una factura de lo que has comprado",
+            "Apuntados 210,00 € de este movimiento a 1 papel(es).",
+            "ya está apuntado entero a sus papeles",
         ],
     ),
     # **El recorrido 4 (T15): planificar un trabajo y marcarlo hecho.** Las dos mitades del ticket, y
@@ -962,6 +1024,31 @@ PANTALLAS = [
             "LEER EL PAPEL",
         ],
     ),
+    # **Y enlazarlo con un papel que ya existe** (el resto del recorrido 1): se elige la clase (la primera
+    # de la lista, que es la factura de lo que ha comprado), se buscan los candidatos y se elige el
+    # primero. Lo que se comprueba es lo que el ticket pide: que quede dicho **con qué va** (con su
+    # nombre, no con su número de la base) y que **el original siga ahí**, que es la regla del ticket
+    # («el original no se toca»). Enlazar no crea nada: el candidato es algo que ya estaba en el cuaderno.
+    (
+        "el recorrido 1: enlazar un papel con lo que ya existe",
+        [
+            '[data-accion="papel-ver-todos"]',
+            '[data-accion="bandeja-ver"]',
+            '[data-accion="bandeja-abrir"]',
+            "elegir-ejemplo:#bandeja-clase",
+            '[data-accion="bandeja-buscar-candidatos"]',
+            "elegir-ejemplo:#bandeja-candidato",
+            '[data-accion="bandeja-enlazar"]',
+        ],
+        [
+            "El ticket del gasóleo",
+            "Con esto va",
+            "Una factura de lo que has comprado",
+            "Cooperativa Agrícola de Peñaranda",
+            "El papel, tal y como llegó",
+            "VER EL ORIGINAL",
+        ],
+    ),
     # **Las cuentas de la explotación** (T13, 05/10/2026). Se entra por el renglón del menú, que es como
     # entra el agricultor. Se buscan tres cosas distintas: el título, **el botón que lleva a los bancos**
     # (que es el primer paso del recorrido 3) y el resumen con su número. Ese número —«Tienes 1 gasto
@@ -970,10 +1057,10 @@ PANTALLAS = [
     (
         "las cuentas",
         ['[data-accion="gastos-ver"]'],
-        # **Dos y no uno**: el recorrido 2 —que va antes— apunta un gasto de verdad, así que al llegar
-        # aquí la finca tiene el del guion y el suyo. Se dice el número de verdad y se explica por qué,
-        # en vez de dejar una comprobación que un día diga que no cuadra sin decir de qué.
-        ["Mis cuentas", "EL BANCO Y LOS PAPELES", "Tienes 2 gastos apuntados."],
+        # **Tres**: el guion deja uno, el que cuadra con el extracto (para la conciliación) y el que
+        # apunta el recorrido 2 —que va antes—. Se dice el número de verdad y se explica por qué, en vez
+        # de dejar una comprobación que un día diga que no cuadra sin decir de qué.
+        ["Mis cuentas", "EL BANCO Y LOS PAPELES", "Tienes 3 gastos apuntados."],
     ),
     # **Los trabajos** (T15, 05/10/2026): la agenda. Se comprueban **las dos listas a la vez** —lo
     # pensado y lo hecho—, porque el guion deja una cosa de cada: con una sola lista comprobada, la otra
@@ -1233,6 +1320,15 @@ NO_PUEDE_SALIR = {
     "el buscador de tierras": ["El Prado", "Calvarrasa de Arriba"],
     # El mismo buscador en «mis cosas» (ronda 87), con su propio campo y su propio filtro.
     "el buscador de tierras de mis cosas": ["El Prado", "Calvarrasa de Arriba"],
+    # **El gasto no se ofrece como papel al que apuntar un movimiento del banco, y eso se comprueba.**
+    # El guion deja un gasto de la reparación del remolque con **el mismo importe y el mismo día** que la
+    # línea del extracto: es el caso en el que un programa descuidado contaría el mismo dinero dos veces
+    # (una como gasto y otra como pago del banco). Aquí no puede salir porque **conciliar solo apunta a
+    # papeles de tres clases** —factura nuestra, cobro sin factura y factura de compra— y un gasto no es
+    # ninguna de las tres: las demás clases están declaradas como pendientes en
+    # `extractos.CLASES_QUE_FALTAN`. Es un límite de esta versión, y por eso se dice aquí, en vez de
+    # dejar que se descubra contando dinero.
+    "el recorrido 3: conciliar un movimiento con su papel": ["La reparación del remolque"],
 }
 
 # Pantallas migradas a React que **no** se recorren aquí, con el motivo. Es importante decirlo: si no,
@@ -1825,6 +1921,30 @@ def siembra_datos(direccion: str, token: str) -> list[str]:
         )
         if gasto.status_code == 201:
             creado.append("un gasto")
+        # **Un gasto que cuadra con una línea del extracto** (06/10/2026). Se apunta con el importe y el
+        # día de la línea «REPARACION DEL REMOLQUE TALLER EJEMPLO» del fichero de ejemplo que importa el
+        # propio guion.
+        #
+        # **Y no es eso lo que hace que la conciliación tenga propuesta, aunque lo parezca**: un gasto no
+        # es una de las tres clases que se pueden conciliar (`extractos.CLASES_QUE_FALTAN` dice cuáles
+        # faltan), así que la propuesta del movimiento la da **la factura de compra** que también deja el
+        # guion. Este gasto está aquí por lo contrario: para poder comprobar que **no** se ofrece, que es
+        # la mitad del «pendientes sin duplicar» del recorrido 3 (ver `NO_PUEDE_SALIR`). Si algún día se
+        # conciliaran los gastos, esa comprobación fallará, y tendrá que fallar: hay que decidir entonces
+        # si el mismo dinero cuenta dos veces.
+        reparacion = cliente.post(
+            "/api/gastos",
+            json={
+                "campana_id": campana["id"],
+                "fecha": "2026-06-20",
+                "concepto": "La reparación del remolque",
+                "categoria": "reparacion",
+                "proveedor": "Taller Ejemplo",
+                "importe": "210.00",
+            },
+        )
+        if reparacion.status_code == 201:
+            creado.append("un gasto que cuadra con el banco")
         # **Un trabajo pensado y otro hecho** (T15, 05/10/2026). Los dos, porque la pantalla de los trabajos
         # tiene **dos listas** y con una sola no se comprobaría la mitad que falta. El hecho es, además, lo
         # que hace que la historia de la tierra tenga algo que contar y que su última labor salga dicha.
@@ -2157,6 +2277,8 @@ def main() -> int:
                 # 05/10/2026): son los datos que hacen que las cuatro pantallas nuevas se comprueben **con
                 # cosas dentro**. Van aquí, en este orden, porque es el orden en el que se dan de alta.
                 "un gasto",
+                # Y el que cuadra con una línea del extracto, para poder recorrer la conciliación.
+                "un gasto que cuadra con el banco",
                 "un trabajo pensado",
                 "un trabajo hecho",
                 "una cuenta del banco",

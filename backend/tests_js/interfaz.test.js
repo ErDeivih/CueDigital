@@ -955,6 +955,16 @@ const RESPUESTAS = {
       // tienen que estar los dos, porque «Tienes 1 gastos» es lo primero que hace desconfiar.
       cuantas: "Tienes {cuantos} gastos apuntados.",
       cuantas_uno: "Tienes 1 gasto apuntado.",
+      // **Las palabras del reparto** (06/10/2026), copiadas de `textos.GASTOS`: con ellas `app.js`
+      // monta la lista de tierras que se marcan y la unidad de lo que le toca a cada una. Sin la de
+      // «TODAS» el botón ni se pinta, y una prueba que no encuentra el botón no prueba el reparto.
+      campo_tierras: "¿Entre qué tierras?",
+      campo_tierras_pista:
+        "Marca las tierras a las que va este gasto. Se reparte entre las que marques, y de cada una se dice lo que le toca.",
+      marcar_todas: "TODAS MIS TIERRAS",
+      campo_horas: "Horas",
+      campo_litros: "Litros o kilos",
+      campo_euros_del_trozo: "Lo que le toca (€)",
     },
     // **Los trabajos (T15, 05/10/2026)**: lo mismo, el título de su renglón del menú. El bloque entero
     // (`AGENDA`) está en su copia, `tests_js/trabajos.test.js`.
@@ -13348,6 +13358,144 @@ test("la dirección de los movimientos del banco abre la pantalla con sus datos"
   assert.ok(elemento.props.textos.bancos, "no le llegan las palabras de la pantalla");
 });
 
+test("conciliar enseña a qué papel ha ido el dinero, y no borra el aviso al recargar la ficha", async () => {
+  // **El fallo que esto fija, que se encontró pulsando.** Al conciliar, `app.js` guardaba la respuesta
+  // del servidor y **después** recargaba la ficha; la recarga limpia lo anterior a propósito (al abrir un
+  // movimiento de cero no hay nada que contar), así que se llevaba por delante el «lo que ha quedado
+  // apuntado». El agricultor apuntaba el dinero y no veía **a qué papel** había ido: justo lo que hay que
+  // poder comprobar para no apuntar dos veces el mismo pago. Por eso esta prueba no mira la pantalla: mira
+  // lo que se le pide a React después de pulsar, que es donde estaba el hueco.
+  const { entorno, servidor } = await conElBanco({
+    // La propuesta que se va a pulsar: con su índice y sus imputaciones, tal y como las manda el servidor.
+    "/api/bancos/movimientos/5/propuestas": {
+      movimiento: {
+        id: 5,
+        fecha: "2026-06-15",
+        concepto: "TRANSFERENCIA RECIBIDA COOPERATIVA",
+        importe: "1205.40",
+        texto_importe: "1.205,40 €",
+        estado: "sin_conciliar",
+        por_conciliar: "1205.40",
+        texto_por_conciliar: "1.205,40 €",
+      },
+      pendientes: [
+        {
+          clase: "factura_emitida",
+          documento_id: 3,
+          etiqueta: "factura_emitida:3",
+          contraparte: "Cooperativa del Sur",
+          referencia: "F-2026-12",
+          que_es: "Una factura tuya, de lo que has vendido",
+          pendiente: "1205.40",
+          texto_pendiente: "1.205,40 €",
+        },
+      ],
+      propuestas: [
+        {
+          tipo: "exacta",
+          total: "1205.40",
+          texto_total: "1.205,40 €",
+          sobrante: "0.00",
+          texto_sobrante: "0,00 €",
+          porque: ["el importe cuadra exacto"],
+          imputaciones: [
+            { clase: "factura_emitida", documento_id: 3, importe: "1205.40", texto_importe: "1.205,40 €" },
+          ],
+        },
+      ],
+    },
+    "POST /api/bancos/movimientos/5/conciliar": {
+      movimiento: {
+        id: 5,
+        fecha: "2026-06-15",
+        concepto: "TRANSFERENCIA RECIBIDA COOPERATIVA",
+        importe: "1205.40",
+        texto_importe: "1.205,40 €",
+        estado: "conciliado",
+        imputado: "1205.40",
+        texto_imputado: "1.205,40 €",
+        por_conciliar: "0.00",
+        texto_por_conciliar: "0,00 €",
+      },
+      conciliaciones: [
+        { clase: "factura_emitida", documento_id: 3, importe: "1205.40", texto_importe: "1.205,40 €" },
+      ],
+      avisos: ["Apuntados 1.205,40 € de este movimiento a 1 papel(es)."],
+    },
+  });
+  entorno.window.location.hash = "#/cuentas/bancos/5";
+  await entorno.manejadores.popstate();
+  await new Promise((resolver) => setTimeout(resolver, 80));
+
+  await pulsar(entorno, "banco-conciliar-propuesta", { indice: "0" });
+  await new Promise((resolver) => setTimeout(resolver, 80));
+
+  assert.equal(
+    cuantasVeces(servidor, "POST /api/bancos/movimientos/5/conciliar"),
+    1,
+    "no se ha ido a conciliar al servidor",
+  );
+  const montado = ultimoMontaje();
+  assert.equal(montado.type.name, "PantallaDeUnMovimiento", "la conciliación no deja la ficha del movimiento");
+  assert.ok(
+    montado.props.resultado,
+    "la respuesta de la conciliación se pierde: el agricultor no ve a qué papel ha ido el dinero",
+  );
+  assert.equal(
+    montado.props.resultado.conciliaciones.length,
+    1,
+    "el papel al que se ha apuntado no llega a la pantalla",
+  );
+  assert.equal(montado.props.resultado.conciliaciones[0].documento_id, 3);
+  assert.deepEqual(
+    montado.props.resultado.avisos,
+    ["Apuntados 1.205,40 € de este movimiento a 1 papel(es)."],
+    "el aviso del servidor no se enseña",
+  );
+  // Y la ficha se ha recargado de verdad: no se queda con lo que había antes de conciliar.
+  assert.ok(
+    cuantasVeces(servidor, "GET /api/bancos/movimientos/5/propuestas") >= 2,
+    "tras conciliar no se ha vuelto a pedir la ficha del movimiento",
+  );
+  assert.equal(montado.props.movimiento.id, 5, "la ficha recargada no es la del movimiento que se estaba viendo");
+});
+
+test("la frase del movimiento ya apuntado del todo llega a la pantalla", async () => {
+  // La otra mitad del cableado: la frase **la manda el servidor** (no se escribe en la pantalla) y tiene
+  // que llegar hasta la ficha, o la pantalla no podría decir por qué no ofrece nada que apuntar.
+  const { entorno } = await conElBanco({
+    "/api/bancos/movimientos/5/propuestas": {
+      movimiento: {
+        id: 5,
+        fecha: "2026-06-15",
+        concepto: "TRANSFERENCIA RECIBIDA COOPERATIVA",
+        importe: "1205.40",
+        texto_importe: "1.205,40 €",
+        estado: "conciliado",
+        imputado: "1205.40",
+        texto_imputado: "1.205,40 €",
+        por_conciliar: "0.00",
+        texto_por_conciliar: "0,00 €",
+      },
+      pendientes: [],
+      propuestas: [],
+      ya_apuntado: true,
+      texto_ya_apuntado: "Este movimiento ya está apuntado entero a sus papeles, así que no queda nada que repartir.",
+    },
+  });
+  entorno.window.location.hash = "#/cuentas/bancos/5";
+  await entorno.manejadores.popstate();
+  await new Promise((resolver) => setTimeout(resolver, 80));
+
+  const montado = ultimoMontaje();
+  assert.equal(montado.type.name, "PantallaDeUnMovimiento");
+  assert.match(
+    montado.props.yaApuntado || "",
+    /ya está apuntado entero/,
+    "la frase del servidor no llega a la ficha: la pantalla no puede decir por qué no hay nada que apuntar",
+  );
+});
+
 test("la dirección de un movimiento abre su ficha con su identificador", async () => {
   const { entorno, servidor } = await conElBanco();
   entorno.window.location.hash = "#/cuentas/bancos/5";
@@ -13449,6 +13597,170 @@ test("las cuentas se abren desde su renglón del menú y les llegan los gastos d
     `no viaja lo que se ha escrito: ${JSON.stringify(guardado.cuerpo)}`,
   );
   assert.equal(guardado.cuerpo.importe, "121.00");
+});
+
+test("repartir un gasto manda las tierras marcadas y lo que le toca a cada una", async () => {
+  // **Lo que faltaba para poder repartir de verdad** (06/10/2026): la pantalla ofrecía los cuatro
+  // métodos, mandaba `parcela_ids: []` y el servidor contestaba —con razón— que no se puede repartir lo
+  // que no dice entre qué. El gasto se quedaba sin asignar y el recorrido 2 no se podía completar.
+  // Aquí se comprueba el cableado entero: marcar una tierra, marcar todas, escribir lo de cada una y
+  // que **eso** sea lo que sale hacia la puerta del reparto.
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/parcelas": [
+      { id: 3, alias: "El Prado", ref_sigpac: "37-70-0-0-503-51", superficie_ha: 4.9 },
+      { id: 4, alias: "Las Suertes de Arriba", ref_sigpac: "37-70-0-0-112-4-2", superficie_ha: 3.2 },
+    ],
+    "GET /api/gastos?campana_id=1": {
+      gastos: [
+        {
+          id: 7,
+          concepto: "Gasóleo de la sembradora",
+          categoria: "gasoleo",
+          importe: "121.00",
+          texto_importe: "121,00 €",
+          pagado: "0.00",
+          texto_pagado: "0,00 €",
+          pendiente: "121.00",
+          texto_pendiente: "121,00 €",
+          estado: "sin_pagar",
+          esta_sin_repartir: true,
+          anulado: false,
+          repartos: [],
+          cuadre: { cuadra: true },
+        },
+      ],
+      pagos: [],
+      inversiones: [],
+      subvenciones: [],
+      cuenta: { gastos: 1 },
+      caja: {},
+      margenes: {},
+      coste_por_clase: {},
+      por_pagar: {},
+      que_falta: [],
+    },
+    "GET /api/gastos/7": {
+      id: 7,
+      concepto: "Gasóleo de la sembradora",
+      importe: "121.00",
+      texto_importe: "121,00 €",
+      pagado: "0.00",
+      texto_pagado: "0,00 €",
+      pendiente: "121.00",
+      texto_pendiente: "121,00 €",
+      estado: "sin_pagar",
+      anulado: false,
+      repartos: [],
+      cuadre_del_reparto: { repartido: "0.00", texto_repartido: "0,00 €", cuadra: false },
+    },
+  });
+  await pulsar(entorno, "gastos-ver");
+  await pulsar(entorno, "gasto-abrir", { id: "7" });
+  await pulsar(entorno, "gasto-repartir", { id: "7" });
+
+  // Las tierras tienen que estar ahí para poder marcarlas: son las que ya están descargadas.
+  const repartiendo = ultimoMontaje().props.repartiendo;
+  assert.ok(repartiendo, "no se ha abierto el formulario de repartir");
+  const marcas = (repartiendo.bloques || []).find((bloque) => bloque.tipo === "marcas");
+  assert.ok(marcas, `no hay tierras que marcar: ${JSON.stringify(repartiendo.bloques.map((b) => b.tipo))}`);
+  assert.deepEqual(
+    marcas.opciones.map((opcion) => opcion.texto),
+    ["El Prado", "Las Suertes de Arriba"],
+    "las tierras del reparto no son las de la finca",
+  );
+  assert.ok(marcas.todas, "no hay forma de marcar todas las tierras");
+
+  // Se elige «por hectáreas» y se marcan las dos: el servidor repartirá entre ellas por su superficie.
+  await pulsar(entorno, "gasto-elegir", { campo: "metodo", valor: "area" });
+  await pulsar(entorno, "gasto-marcar-todas");
+  const conLasDos = ultimoMontaje().props.repartiendo;
+  const pesos = (conLasDos.bloques || []).filter((bloque) =>
+    String(bloque.id || "").startsWith("gasto-peso-"),
+  );
+  assert.deepEqual(
+    pesos.map((bloque) => bloque.id),
+    ["gasto-peso-3", "gasto-peso-4"],
+    "no hay un campo por tierra marcada",
+  );
+
+  await pulsar(entorno, "gasto-guardar", { clase: "reparto", id: "7" });
+  const reparto = servidor.enviados.find(
+    (envio) => envio.metodo === "POST" && envio.ruta === "/api/gastos/7/repartos",
+  );
+  assert.ok(reparto, "el botón de repartir no ha llamado a la puerta del reparto");
+  assert.deepEqual(
+    reparto.cuerpo.parcela_ids,
+    ["3", "4"],
+    `el reparto no dice entre qué tierras: ${JSON.stringify(reparto.cuerpo)}`,
+  );
+  assert.equal(reparto.cuerpo.metodo, "area");
+  assert.equal(reparto.cuerpo.destino_tipo, "tierra");
+  assert.equal(reparto.cuerpo.confirmado, true);
+});
+
+test("el reparto por horas manda las horas de cada tierra, sin perder las que ya estaban escritas", async () => {
+  // La otra mitad: elegir «por horas» y escribir las horas de cada tierra. Y con la trampa de pintar:
+  // marcar una tierra **repinta** el formulario, así que las horas ya escritas en las otras tienen que
+  // sobrevivir (es la misma trampa que con la categoría de un gasto).
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/parcelas": [
+      { id: 3, alias: "El Prado", ref_sigpac: "37-70-0-0-503-51", superficie_ha: 4.9 },
+      { id: 4, alias: "Las Suertes de Arriba", ref_sigpac: "37-70-0-0-112-4-2", superficie_ha: 3.2 },
+    ],
+    "GET /api/gastos?campana_id=1": {
+      gastos: [],
+      pagos: [],
+      inversiones: [],
+      subvenciones: [],
+      cuenta: { gastos: 0 },
+      caja: {},
+      margenes: {},
+      coste_por_clase: {},
+      por_pagar: {},
+      que_falta: [],
+    },
+    "GET /api/gastos/7": {
+      id: 7,
+      concepto: "El gasóleo",
+      importe: "121.00",
+      texto_importe: "121,00 €",
+      pagado: "0.00",
+      texto_pagado: "0,00 €",
+      pendiente: "121.00",
+      texto_pendiente: "121,00 €",
+      estado: "sin_pagar",
+      anulado: false,
+      repartos: [],
+      cuadre_del_reparto: { repartido: "0.00", texto_repartido: "0,00 €", cuadra: false },
+    },
+  });
+  await pulsar(entorno, "gastos-ver");
+  await pulsar(entorno, "gasto-abrir", { id: "7" });
+  await pulsar(entorno, "gasto-repartir", { id: "7" });
+  await pulsar(entorno, "gasto-elegir", { campo: "metodo", valor: "horas" });
+
+  await pulsar(entorno, "gasto-marcar", { clave: "3" });
+  escribir(entorno, "gasto-peso-3", "4");
+  // Al marcar la segunda, el formulario se repinta: las horas de la primera tienen que seguir ahí.
+  await pulsar(entorno, "gasto-marcar", { clave: "4" });
+  escribir(entorno, "gasto-peso-4", "2");
+  await pulsar(entorno, "gasto-guardar", { clase: "reparto", id: "7" });
+
+  const reparto = servidor.enviados.find(
+    (envio) => envio.metodo === "POST" && envio.ruta === "/api/gastos/7/repartos",
+  );
+  assert.ok(reparto, "el botón de repartir no ha llamado a la puerta");
+  assert.deepEqual(reparto.cuerpo.parcela_ids, ["3", "4"]);
+  assert.equal(reparto.cuerpo.metodo, "horas");
+  assert.deepEqual(
+    reparto.cuerpo.pesos,
+    { 3: "4", 4: "2" },
+    `las horas de cada tierra no viajan, o se perdió una al marcar la siguiente: ${JSON.stringify(
+      reparto.cuerpo.pesos,
+    )}`,
+  );
+  // Y por horas **no** se mandan trozos: los trozos son del reparto a mano.
+  assert.deepEqual(reparto.cuerpo.trozos, []);
 });
 
 /** Una explotación con dos tierras, un plan, un trabajo hecho y una máquina. */

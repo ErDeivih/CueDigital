@@ -1511,6 +1511,16 @@ def ver_las_propuestas(
 
     Es una **propuesta**: no apunta nada. El contrato lo pide así para los duplicados y los traspasos, y
     para una conciliación vale igual: quien decide es el agricultor.
+
+    ## Se propone con **el dinero que le queda**, no con el importe entero
+
+    Un movimiento puede estar apuntado a medias (media factura ahora y la otra mitad el mes que viene) o
+    entero. Si a un movimiento de 210 € ya se le han apuntado 210 €, proponerle otra vez 210 € es ofrecer
+    **apuntar dos veces el mismo dinero**: el servidor lo rechaza al guardarlo
+    (`T20_mas_de_lo_que_dice_el_movimiento`), pero ofrecer un botón que no puede funcionar es engañar a
+    quien lo pulsa, y es justo el fallo que se veía: la pantalla enseñaba la propuesta, se pulsaba y salía
+    un error. Así que las propuestas se calculan con lo que falta por colocar, y cuando no queda nada se
+    dice con su frase (`ya_apuntado`, `texto_ya_apuntado`) en vez de enseñar una lista vacía sin motivo.
     """
     movimiento = obtener_de_la_explotacion(
         db, models.MovimientoDeExtracto, movimiento_id, explotacion.id
@@ -1523,13 +1533,21 @@ def ver_las_propuestas(
     }
     puro = _como_fila_de_extracto(movimiento, nombres.get(movimiento.cuenta_id))
     pendientes = _los_pendientes(db, explotacion)
-    propuestas = extractos.proponer_conciliaciones(puro, pendientes)
+    _por_documento, ya_imputado = _lo_que_esta_imputado(db, explotacion, movimiento.id)
+    por_conciliar = extractos.lo_que_falta_por_conciliar(puro.importe, ya_imputado)
+    # `replace` con `None` deja el movimiento como estaba, y con un importe que no consta no hay
+    # propuestas posibles: `proponer_conciliaciones` devuelve la lista vacía por su cuenta.
+    propuestas = extractos.proponer_conciliaciones(replace(puro, importe=por_conciliar), pendientes)
     por_que_no = extractos.por_que_no_se_puede_conciliar(puro)
+    ya_apuntado = puro.importe is not None and (por_conciliar or dinero.CERO) <= 0
     return {
         "movimiento": _como_se_ve_un_movimiento(db, explotacion, movimiento, nombres.get(movimiento.cuenta_id)),
         "se_puede_conciliar": puro.se_puede_conciliar,
         "por_que_no": textos.mensaje("T20_el_movimiento_no_dice_cuanto") if por_que_no else None,
         "clave_de_por_que_no": por_que_no,
+        "ya_apuntado": ya_apuntado,
+        "texto_ya_apuntado": textos.mensaje("T20_este_movimiento_ya_esta_apuntado") if ya_apuntado else None,
+        "por_conciliar": por_conciliar,
         "propuestas": [
             {
                 "tipo": propuesta.tipo,
@@ -1691,6 +1709,25 @@ def conciliar_un_movimiento(
         )
 
     for linea in revision.lineas:
+        # **Una fila por pareja (movimiento, papel)**, que es lo que dice el índice único. Si a este
+        # papel ya se le había apuntado dinero **de este mismo movimiento** (los 500 € de una factura de
+        # 1.205,40 apuntados primero y los 705,40 después), lo que se suma es **la misma fila con su
+        # importe nuevo**. Insertar otra rompería el índice (500 del servidor, sin explicación) y sería
+        # contar el mismo dinero dos veces sobre la misma pareja.
+        ya_apuntado_aqui = db.scalar(
+            select(models.ConciliacionDeMovimiento).where(
+                models.ConciliacionDeMovimiento.explotacion_id == explotacion.id,
+                models.ConciliacionDeMovimiento.movimiento_id == movimiento.id,
+                models.ConciliacionDeMovimiento.clase == linea.documento.clase,
+                models.ConciliacionDeMovimiento.documento_id == linea.documento.documento_id,
+                models.ConciliacionDeMovimiento.anulada.is_(False),
+            )
+        )
+        if ya_apuntado_aqui is not None:
+            ya_apuntado_aqui.importe = dinero.redondea(
+                (dinero.a_decimal(ya_apuntado_aqui.importe) or dinero.CERO) + linea.importe
+            )
+            continue
         db.add(
             models.ConciliacionDeMovimiento(
                 explotacion_id=explotacion.id,

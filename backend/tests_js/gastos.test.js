@@ -177,6 +177,16 @@ const GASTO = {
   campo_importe_pista: "Si no lo sabes, déjalo en blanco",
   campo_metodo: "¿Cómo lo reparto?",
   campo_destino: "¿A qué se reparte?",
+  // **Las del reparto entre tierras** (06/10/2026), que es lo que le faltaba a esta copia: sin ellas la
+  // prueba del reparto pintaba etiquetas vacías y no comprobaba las palabras del agricultor.
+  campo_pesos: "¿Cuánto en cada sitio?",
+  campo_horas: "Horas",
+  campo_litros: "Litros o kilos",
+  campo_tierras: "¿Entre qué tierras?",
+  campo_tierras_pista:
+    "Marca las tierras a las que va este gasto. Se reparte entre las que marques, y de cada una se dice lo que le toca.",
+  marcar_todas: "TODAS MIS TIERRAS",
+  campo_euros_del_trozo: "Lo que le toca (€)",
 };
 
 /**
@@ -892,6 +902,72 @@ test("el formulario de repartir pregunta el método y el destino, y se puede vol
   assert.match(html, /data-accion="gasto-elegir" data-campo="metodo" data-valor="manual"/);
   const acciones = botonesDe(html).map((boton) => boton.accion);
   assert.ok(acciones.includes("gasto-cancelar"));
+});
+
+test("el reparto deja marcar las tierras, y cada tierra marcada lleva lo que le toca", async () => {
+  // **Esto es lo que faltaba para poder repartir de verdad** (06/10/2026): el formulario ofrecía los
+  // cuatro métodos y mandaba `parcela_ids: []`, así que el servidor —con razón— contestaba que no se
+  // puede repartir lo que no dice entre qué, y el gasto se quedaba **sin asignar**. Aquí se comprueba
+  // que las tierras se pintan, que se ve cuáles están marcadas **por su nombre y no solo por el color**
+  // (`data-marcada` y `aria-pressed`), que está el botón de TODAS, y que cada tierra marcada lleva su
+  // campo con lo que le toca —horas, litros o euros, según el método—.
+  const repartiendo = {
+    titulo: GASTO.form_repartir_titulo,
+    pista: GASTO.form_repartir_pista,
+    guardar: GASTO.guardar,
+    cancelar: GASTO.cancelar,
+    guardando: GASTO.guardando,
+    datos: { id: 7, clase: "reparto" },
+    bloques: [
+      {
+        tipo: "opciones",
+        campo: "metodo",
+        etiqueta: GASTO.campo_metodo,
+        elegido: "horas",
+        opciones: [{ valor: "horas", texto: "Por horas" }],
+      },
+      {
+        tipo: "marcas",
+        campo: "parcela_ids",
+        etiqueta: "¿Entre qué tierras?",
+        pista: "Marca las tierras a las que va este gasto.",
+        todas: "TODAS MIS TIERRAS",
+        marcadas: ["3"],
+        opciones: [
+          { clave: "3", texto: "El Prado", marcada: true },
+          { clave: "4", texto: "Las Suertes de Arriba", marcada: false },
+        ],
+      },
+      {
+        // La unidad va en `pista`, que es donde el formulario la pinta (la línea de debajo del campo):
+        // con `sufijo` no salía nunca, y el agricultor veía una casilla sin saber de qué.
+        tipo: "numero",
+        id: "gasto-peso-3",
+        etiqueta: "El Prado",
+        pista: GASTO.campo_horas,
+        valor: "4",
+      },
+    ],
+  };
+  const html = await htmlDeUnGasto({ repartiendo });
+
+  // Las dos tierras, con lo que está marcado dicho de dos formas (la clase) y con palabras.
+  assert.match(html, /El Prado/);
+  assert.match(html, /Las Suertes de Arriba/);
+  assert.match(html, /data-accion="gasto-marcar" data-clave="3" data-marcada="1"/);
+  assert.match(html, /data-accion="gasto-marcar" data-clave="4" data-marcada="0"/);
+  assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /aria-pressed="false"/);
+  // Y el botón de marcarlas todas, que es lo que se hace casi siempre.
+  assert.match(html, /data-accion="gasto-marcar-todas"/);
+  assert.match(html, /TODAS MIS TIERRAS/);
+  // Y lo que le toca a la marcada, con su unidad.
+  assert.match(html, /id="gasto-peso-3"/);
+  assert.match(html, /Horas/);
+
+  // **Y la marca viaja con su acción**: sin `data-clave`, pulsar una tierra no marcaría ninguna.
+  const marcar = botonesDe(html).filter((boton) => boton.accion === "gasto-marcar");
+  assert.deepEqual(marcar.map((boton) => boton.clave), ["3", "4"]);
 });
 
 test("la pantalla de anular pide el motivo, porque sin motivo el rastro no sirve", async () => {

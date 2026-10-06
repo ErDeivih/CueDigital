@@ -860,6 +860,16 @@ test("enlazar dice que no crea nada y no ofrece crear nada", async () => {
   assert.ok(idsDe(html).includes("bandeja-candidato"), "no se puede elegir con qué enlazarlo");
   assert.ok(accionesDe(html).includes("bandeja-enlazar"), "no hay forma de enlazar");
   assert.match(html, /Gasóleo · 01\/10\/2026/, "los candidatos no llegan a la pantalla");
+  // **Y el botón tiene que decir QUÉ papel enlaza.** Se encontró pulsando: el botón se pintaba sin su
+  // `data-id`, así que `app.js` recibía un cero, se salía por su comprobación de siempre (`if (!id)`) y
+  // **no pasaba nada**: ni enlace, ni aviso, ni error. Un botón que se pulsa y no hace nada es peor que
+  // uno que no está. Los demás botones de la ficha ya llevaban su identificador; este se quedó sin él.
+  const enlazar = botonesDe(html).filter((boton) => boton.accion === "bandeja-enlazar");
+  assert.deepEqual(
+    enlazar.map((boton) => boton.id),
+    ["5"],
+    "el botón de enlazar no dice qué papel se está enlazando",
+  );
   // El valor de la opción lleva la clase y el identificador (`gasto:12`), que es lo que `app.js` parte
   // para mandar el enlace: la pantalla no lo toca, pero tiene que llegar tal cual.
   assert.match(html, /value="gasto:12"/, "el candidato no lleva su clase en el valor");
@@ -871,6 +881,43 @@ test("enlazar dice que no crea nada y no ofrece crear nada", async () => {
   // Lo que **no** puede haber: ninguna acción que prometa crear algo.
   for (const accion of accionesDe(html)) {
     assert.doesNotMatch(accion, /crear|nuevo|nueva/, `la ficha ofrece «${accion}»: enlazar no crea nada`);
+  }
+});
+
+test("todos los botones de la ficha dicen sobre qué papel actúan", async () => {
+  // **El guardián que faltaba.** El manejador de clics de `app.js` empieza por `const id =
+  // Number(elemento.dataset.id || 0)` y, si no hay identificador, se sale sin hacer nada: ni guarda, ni
+  // avisa, ni falla. Así que un botón pintado sin su `data-id` es un botón muerto que **no se nota**:
+  // pasó con el de enlazar, que se quedó sin él mientras todos los demás lo llevaban, y solo se descubrió
+  // pulsándolo en un navegador de verdad. Esta prueba recorre **todas** las acciones que necesitan el
+  // papel y comprueba que lo llevan, para que el siguiente que se olvide no llegue a producción.
+  const necesitan_el_papel = [
+    "bandeja-original",
+    "bandeja-leer",
+    "bandeja-confirmar",
+    "bandeja-clasificar",
+    "bandeja-revisar",
+    "bandeja-descartar",
+    "bandeja-enlazar",
+    "bandeja-rectificar",
+  ];
+  const html = await htmlDeUnaFicha({
+    // Con candidatos y con un papel que se puede corregir, para que **todos** esos botones se pinten: si
+    // no, la prueba pasaría por no haber mirado nada.
+    candidatos: [{ valor: "gasto:12", texto: "Un gasto · Gasóleo · 01/10/2026" }],
+    papelesParaRectificar: [{ valor: 3, texto: "La factura del abono de mayo" }],
+  });
+  const pintados = botonesDe(html).filter((boton) => necesitan_el_papel.includes(boton.accion));
+  assert.ok(
+    pintados.length >= 6,
+    `solo se han pintado ${pintados.length} de esos botones: la prueba no está mirando lo que cree`,
+  );
+  for (const boton of pintados) {
+    assert.equal(
+      boton.id,
+      "5",
+      `el botón «${boton.accion}» no dice sobre qué papel actúa: pulsarlo no haría nada`,
+    );
   }
 });
 
