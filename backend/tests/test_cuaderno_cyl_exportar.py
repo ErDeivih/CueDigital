@@ -455,6 +455,67 @@ class TestElFicheroSeDescarga:
         assert libro["1.1. INF. GRAL"]["G7"].value == "Otra finca"
         assert libro["2.1. DATOS PARCELAS"]["B14"].value in (None, "")
 
+    def test_se_saca_el_ano_que_se_esta_mirando(self, cliente, cuenta, db_sesion):
+        """**El fichero es del año que se pide, no del año en curso** (aceptación 3, 06/10/2026).
+
+        Antes de esto la ruta no aceptaba el año: sacaba siempre **el del año en curso**, así que un
+        agricultor con el cuaderno de otro año delante —y la pantalla diciéndole lo que le faltaba de
+        ese año— descargaba un fichero de otro sin que nada se lo advirtiera. Y lo que falta y el
+        fichero tienen que ser del mismo año: por eso las dos rutas aceptan lo mismo.
+        """
+        from app import models
+
+        anio_viejo = 2019
+        campana = models.Campana(
+            explotacion_id=cuenta["explotacion_id"],
+            anio=anio_viejo,
+            fecha_inicio=dt.date(anio_viejo, 1, 1),
+            fecha_fin=dt.date(anio_viejo, 12, 31),
+        )
+        db_sesion.add(campana)
+        db_sesion.commit()
+
+        del_ano = cliente.get(
+            f"/api/cuaderno-cyl/exportar?campana_id={campana.id}", headers=cuenta["cabeceras"]
+        )
+        assert del_ano.status_code == 200
+        # El año se ve en dos sitios, y los dos se comprueban: en el **nombre del fichero** (como lo pone
+        # la Junta: `CuadernoExplotacion_<NIF>_<año>.xlsx`) y en la **casilla AÑO** de la hoja de parcelas
+        # (`Q2`), que es donde el cuaderno oficial dice de qué campaña es.
+        assert str(anio_viejo) in del_ano.headers["content-disposition"], (
+            f"el nombre del fichero no dice el año: {del_ano.headers['content-disposition']}"
+        )
+        libro = load_workbook(io.BytesIO(del_ano.content))
+        assert libro["2.1. DATOS PARCELAS"]["Q2"].value == anio_viejo, (
+            "la casilla AÑO del cuaderno no es la del año que se ha pedido"
+        )
+
+        # Y lo que falta, con el mismo año, es lo del mismo año: las dos puertas piden lo mismo.
+        falta = cliente.get(
+            f"/api/cuaderno-cyl/que-falta?campana_id={campana.id}", headers=cuenta["cabeceras"]
+        )
+        assert falta.status_code == 200
+        assert falta.json()["anio"] == anio_viejo
+
+    def test_el_ano_de_otra_finca_contesta_404(self, cliente, cuenta, crear_cuenta, db_sesion):
+        """Aislamiento entre explotaciones: 404 y no 403, como en todo el programa."""
+        from app import models
+
+        otra = crear_cuenta("ajena@ejemplo.test", nombre="La finca ajena")
+        campana = models.Campana(
+            explotacion_id=otra["explotacion_id"],
+            anio=2018,
+            fecha_inicio=dt.date(2018, 1, 1),
+            fecha_fin=dt.date(2018, 12, 31),
+        )
+        db_sesion.add(campana)
+        db_sesion.commit()
+
+        respuesta = cliente.get(
+            f"/api/cuaderno-cyl/exportar?campana_id={campana.id}", headers=cuenta["cabeceras"]
+        )
+        assert respuesta.status_code == 404
+
 
 class TestElInventarioDeLasHojas:
     """Las 25 hojas del cuaderno: cada una o la escribe el programa o se dice qué le falta.

@@ -526,6 +526,23 @@ async function api(ruta, opciones = {}) {
   return respuesta;
 }
 
+/**
+ * Una ruta con el año que se está mirando puesto: `?campana_id=3`.
+ *
+ * **Para qué** (06/10/2026): hay rutas que, sin decirles el año, contestan con **el año en curso** —y
+ * algunas con el **más nuevo** de la finca—, y el agricultor puede estar mirando otro. Cuando eso pasa,
+ * la pantalla enseña lo de un año y el fichero que se descarga es de otro (aceptación 3 del encargo: el
+ * fichero tiene que ser el que se está viendo). Con esto, la ruta y la descarga piden lo mismo.
+ *
+ * Si todavía no se sabe qué año se está mirando (al arrancar, antes de pedir las campañas), no se añade
+ * nada: es lo mismo que hacía antes, y el servidor decide. Se prefiere eso a inventarse un año.
+ */
+function conLaCampana(ruta) {
+  if (!estado.campana || !estado.campana.id) return ruta;
+  const union = ruta.includes("?") ? "&" : "?";
+  return `${ruta}${union}campana_id=${estado.campana.id}`;
+}
+
 async function apiJson(ruta, opciones = {}) {
   const respuesta = await api(ruta, opciones);
   if (!respuesta.ok) {
@@ -2875,7 +2892,7 @@ async function guardarMisDatos() {
     estado.misDatosGuardados = true;
     // Y se vuelve a pedir lo que le falta al cuaderno: si con esto se ha cerrado un hueco, la lista
     // se tiene que ver más corta **en el momento**, no al día siguiente.
-    estado.cuadernoJunta = await apiJson("/api/cuaderno-cyl/que-falta").catch(() => estado.cuadernoJunta);
+    estado.cuadernoJunta = await apiJson(conLaCampana("/api/cuaderno-cyl/que-falta")).catch(() => estado.cuadernoJunta);
   } catch (error) {
     estado.errorMisDatos = error.message || d("guardar");
   }
@@ -3094,7 +3111,11 @@ async function sacarElCuadernoDeLaJunta() {
   const c = (clave) => t(`cuaderno_cyl.${clave}`, "");
   estado.errorCuadernoJunta = "";
   try {
-    const respuesta = await api("/api/cuaderno-cyl/exportar");
+    // **El año que se está mirando** (06/10/2026): sin esto, la ruta sacaba el fichero del **año en
+    // curso**, así que quien tuviera delante el cuaderno de 2025 (y la pantalla diciéndole lo que le
+    // faltaba de 2025) descargaba el de 2026 sin que nada se lo advirtiera.
+    const campana = estado.campana ? `?campana_id=${estado.campana.id}` : "";
+    const respuesta = await api(`/api/cuaderno-cyl/exportar${campana}`);
     if (!respuesta.ok) {
       const detalle = await respuesta.json().catch(() => null);
       throw new Error((detalle && detalle.detail) || c("no_se_pudo"));
@@ -4815,11 +4836,11 @@ async function cargarDatos() {  const [
     apiJson("/api/productos/cesta/situacion").catch(() => null),
     apiJson("/api/cultivos").catch(() => null),
     apiJson("/api/grupos").catch(() => []),
-    apiJson("/api/cuaderno/falta").catch(() => null),
+    apiJson(conLaCampana("/api/cuaderno/falta")).catch(() => null),
     apiJson("/api/firmas/estado").catch(() => null),
     apiJson("/api/facturas").catch(() => []),
     apiJson("/api/facturas/estado").catch(() => null),
-    apiJson("/api/cuaderno-cyl/que-falta").catch(() => null),
+    apiJson(conLaCampana("/api/cuaderno-cyl/que-falta")).catch(() => null),
     apiJson("/api/mi-finca").catch(() => null),
     // **Estos dos faltaban, y se notaba en pantalla.** `estado.tratamientos` no lo rellenaba
     // nadie: la pantalla «mi cuaderno» enseñaba «0 apuntes de producto» y una lista vacía
@@ -6349,7 +6370,11 @@ async function sacarPapel() {
  */
 async function sacarDatos() {
   try {
-    const respuesta = await api("/api/cuaderno/export.csv");
+    // **El año que se está mirando**, por el mismo motivo que el cuaderno de la Junta: sin esto, el
+    // servidor sacaba el año **más nuevo** de la finca mientras el fichero se llamaba como el año que
+    // el agricultor tenía delante. Y el fichero tiene que ser el que se está viendo.
+    const campana = estado.campana ? `?campana_id=${estado.campana.id}` : "";
+    const respuesta = await api(`/api/cuaderno/export.csv${campana}`);
     if (!respuesta.ok) throw new Error(mensaje("no_se_pudo"));
     const blob = await respuesta.blob();
     const enlace = document.createElement("a");

@@ -499,27 +499,57 @@ def las_hojas_del_cuaderno() -> dict:
 
 
 @router.get("/que-falta")
-def lo_que_le_falta_al_cuaderno(explotacion: ExplotacionActual, db: Db) -> dict:
+def lo_que_le_falta_al_cuaderno(
+    explotacion: ExplotacionActual, db: Db, campana_id: int | None = None
+) -> dict:
     """Qué datos pide el cuaderno y no están puestos, con dónde se ponen.
 
     **Esto es lo que contesta a «¿qué me falta para tener el cuaderno entero?»**, y sale de comparar
     el cuaderno oficial con lo que el agricultor tiene apuntado: no es una lista escrita a mano, es
     lo que de verdad falta. Se puede mirar sin sacar el fichero.
+
+    Acepta `campana_id` por el mismo motivo que la descarga: **lo que falta y el fichero tienen que ser
+    del mismo año**, o el agricultor rellena lo de 2025 y descarga lo de 2026.
     """
-    campana = _la_campana(db, explotacion, None)
+    campana = _la_campana(db, explotacion, None) if campana_id is None else _la_campana_pedida(
+        db, explotacion, campana_id
+    )
     escrito = exportar.escribe_el_cuaderno(db, explotacion, campana)
     return escrito.resumen()
 
 
+def _la_campana_pedida(db, explotacion, campana_id: int) -> models.Campana:
+    """La campaña que pide la pantalla, y **404 si no es de esta finca** (aislamiento entre explotaciones).
+
+    Existe desde el 06/10/2026 para que la descarga y la lista de lo que falta puedan ser **del año que
+    se está mirando** y no del año en curso: sin esto, el agricultor que mira el cuaderno de 2025
+    rellenaba lo que le decía la pantalla y descargaba el fichero de 2026.
+    """
+    campana = db.get(models.Campana, campana_id)
+    if campana is None or campana.explotacion_id != explotacion.id:
+        raise HTTPException(status_code=404, detail="Ese año no está en tu cuaderno.")
+    return campana
+
+
 @router.get("/exportar")
-def sacar_el_cuaderno(explotacion: ExplotacionActual, db: Db) -> Response:
+def sacar_el_cuaderno(
+    explotacion: ExplotacionActual, db: Db, campana_id: int | None = None
+) -> Response:
     """Saca el cuaderno de la Junta relleno con los datos del agricultor, para descargarlo.
 
     El fichero se escribe con las 25 hojas del cuaderno oficial, sus cabeceras y sus columnas, y con
     lo que el agricultor tiene apuntado. Lo que no esté puesto sale **en blanco** (no con un cero ni
     con un dato inventado), y la pantalla dice qué falta antes de descargarlo.
+
+    **Y desde el 06/10/2026 acepta el año que se está mirando** (`campana_id`), que es lo que la
+    pantalla le manda: sin él, el fichero era **el del año en curso**, así que un agricultor mirando el
+    cuaderno de 2025 pulsaba descargar y se llevaba el de 2026 —con la pantalla diciendo lo que faltaba
+    del suyo— sin que nada lo advirtiera (aceptación 3 del encargo: el fichero tiene que ser el que se
+    está viendo). Sin el parámetro se mantiene lo de siempre: el año en curso.
     """
-    campana = _la_campana(db, explotacion, None)
+    campana = _la_campana(db, explotacion, None) if campana_id is None else _la_campana_pedida(
+        db, explotacion, campana_id
+    )
     escrito = exportar.escribe_el_cuaderno(db, explotacion, campana)
     db.add(
         models.Auditoria(
