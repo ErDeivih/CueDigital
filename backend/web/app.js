@@ -160,6 +160,18 @@ import {
   pantallaDeUnTrabajo,
   pantallaDeLaTierra,
 } from "./react/pantallas/trabajos.js";
+// **La bandeja documental (T08, S10, 06/10/2026).** Un fichero con las dos pantallas del contrato: lo
+// que llega y hay que revisar (`#/papeles/bandeja`) y la ficha de un papel (`#/papeles/bandeja/<id>`),
+// que es donde se mira **el original con la propuesta al lado**. Es un solo fichero porque las dos
+// comparten las mismas piezas (el dato, la línea leída y el bloque de los enlaces).
+//
+// **Esta línea faltaba, y se encontró en un navegador de verdad**: el bloque del ticket traía el estado,
+// las pantallas y las siete líneas de cableado, pero **no el `import`**, así que abrir la bandeja
+// enseñaba «esta pantalla no se ha podido abrir… falta un fichero del programa» —el aviso de cuando un
+// componente no está— con las 13 puertas del servidor funcionando. Es justo lo que no se ve en las
+// pruebas de los componentes (que importan el fichero ellas mismas) ni en las de cableado: hace falta
+// abrir la aplicación de verdad.
+import { pantallaDeLaBandeja, pantallaDeUnPapelDeLaBandeja } from "./react/pantallas/bandeja.js";
 
 /**
  * Qué pantallas están ya en React y cuáles todavía no.
@@ -209,6 +221,7 @@ const PANTALLAS_EN_REACT = new Set([
   "asistente",
   // Ronda 93: los años del cuaderno. Entra con el rediseño de Stitch de esta pantalla y con sus pruebas.
   "campanas",
+  "bandeja",
   // El libro del almacén (T09, 03/10/2026): las seis pantallas del albarán, los envases y el libro. Van
   // aquí las seis juntas porque son la misma cosa vista desde sitios distintos: la lista y la ficha de un
   // albarán (que tienen dirección propia) y los cuatro formularios (que no la tienen a propósito).
@@ -830,6 +843,8 @@ const DIRECCION_PROPIA = {
   // recargar. **La ficha de un trabajo NO está aquí a propósito**: es un formulario, y uno que al
   // recargar saldría vacío es peor que no tener dirección.
   PantallaDeLaTierra: "trabajo_tierra",
+  PantallaDeLaBandeja: "bandeja",
+  PantallaDeUnPapelDeLaBandeja: "bandeja_papel",
 };
 
 /**
@@ -887,6 +902,12 @@ const PANTALLAS_SIN_DIRECCION = new Set([
   // pantalla de la que salieron (la lista de lo que se ha vendido).
   "PantallaFacturarEntregas",
   "PantallaCobroNuevo",
+  // Y la ficha de un trabajo (T15, 05/10/2026), que es lo que `DIRECCION_PROPIA` ya decía de ella («la
+  // ficha de un trabajo NO está aquí a propósito: es un formulario, y uno que al recargar saldría vacío
+  // es peor que no tener dirección») pero **faltaba aquí para que fuera verdad**: sin esta línea, al
+  // montarse escribía la dirección de su módulo (`#/trabajos`) y perdía la de la pantalla de la que
+  // salió —la historia de una tierra, por ejemplo, que es desde donde se corrige un trabajo—.
+  "PantallaDeUnTrabajo",
 ]);
 
 /** La campaña y la finca en las que se está: van en todas las direcciones, porque son el contexto. */
@@ -1006,6 +1027,11 @@ function apuntarLaDireccion(listo) {
     if (!movimiento || !movimiento.id) return;
     parametros.id = movimiento.id;
   }
+  if (clave === "bandeja_papel") {
+    const papel = (estado.bandeja || {}).papel;
+    if (!papel || !papel.id) return;
+    parametros.id = papel.id;
+  }
   // **El dinero de lo que se vende** (T12): la factura que se está mirando y la entrega a la que se le
   // está poniendo el importe o el ajuste. Sin identificador no hay dirección que escribir: `#/ventas//importe`
   // no es la pantalla de nada, y escribirla dejaría al agricultor en una dirección que no existe.
@@ -1025,6 +1051,20 @@ function apuntarLaDireccion(listo) {
     const maquina = (estado.maquinaria || {}).maquina;
     if (!maquina || !maquina.id) return;
     parametros.id = maquina.id;
+  }
+  // **La historia de una tierra (T15)**: su identificador en el camino (`#/tierras/12/historial`). Sale
+  // de lo que contestó su puerta, que es lo que está en pantalla. Sin él no hay dirección que escribir:
+  // `#/tierras//historial` no es la historia de nada.
+  //
+  // **Esta rama faltaba, y se notó al añadir el botón que lleva a la historia** (05/10/2026, el mismo
+  // día): la pantalla se abría por su dirección, pero **no la escribía**. El agricultor entraba desde su
+  // tierra, leía la historia y, al recargar, volvía a la lista de tierras con la historia perdida. Es la
+  // mitad que le faltaba a T15 para poder decir que su pantalla «se puede enlazar y recargar».
+  if (clave === "trabajo_tierra") {
+    const suya = (estado.trabajos || {}).tierra;
+    const tierra = suya && suya.tierra ? suya.tierra : null;
+    if (!tierra || !tierra.id) return;
+    parametros.id = tierra.id;
   }
   const direccion = escribirLaDireccion(clave, parametros);
   if (!direccion) return;
@@ -1219,6 +1259,7 @@ function abrirLaPantalla(clave, parametros = {}) {
   // tierra no es de esta finca. Los tres finales de siempre: se abre, «eso no está en tu cuaderno» o,
   // sin cobertura, «no lo he podido comprobar».
   if (clave === "trabajo_tierra") return abrirLaHistoriaDeUnaTierra(parametros.id);
+  if (clave === "bandeja_papel") return abrirUnPapelDeLaBandeja(parametros.id);
   return ABRIR_LA_PANTALLA[clave] ? ABRIR_LA_PANTALLA[clave](parametros) : pantallaInicio();
 }
 
@@ -1331,6 +1372,15 @@ const ABRIR_LA_PANTALLA = {
   // comprueba que ese identificador sea de esta finca y decide entre «se abre», «eso no está en tu
   // cuaderno» y «no lo he podido comprobar».
   maquinaria: () => abrirLaMaquinaria(),
+  // **Los trabajos (T15, 05/10/2026), y esta línea llegó tarde.** La agenda escribía su dirección
+  // (`#/trabajos`, por su renglón del menú) pero **no había quien la abriera**: al recargar la página,
+  // el agricultor volvía al panel de mando, y un enlace a los trabajos no llevaba a los trabajos. Se
+  // descubrió midiendo la pantalla a 1024 px en un navegador de verdad —el guion apuntaba en el
+  // `<title>` en qué dirección había acabado y la dirección era la del panel—, y es justo lo que la
+  // tabla de direcciones de T04 prohíbe: **una dirección que se escribe tiene que poder leerse**. Su
+  // lista se pide al servidor al abrirla, así que la reconstruye entera.
+  trabajos: () => abrirLosTrabajos(),
+  bandeja: () => abrirLaBandeja(),
 };
 
 /**
@@ -1505,6 +1555,8 @@ const MODULO_DE_LA_PANTALLA = {
   PantallaDeLosTrabajos: "trabajos",
   PantallaDeUnTrabajo: "trabajos",
   PantallaDeLaTierra: "trabajos",
+  PantallaDeLaBandeja: "papeles",
+  PantallaDeUnPapelDeLaBandeja: "papeles",
 };
 
 /**
@@ -4905,7 +4957,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-05-70";
+const VERSION_DE_LA_APLICACION = "2026-10-06-71";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -8057,7 +8109,21 @@ function tierrasParaMisCosas() {
       // Y sus dos botones (ronda 92): corregir la tierra (el nombre, las hectáreas, la referencia… lo
       // que se equivocó al darla de alta) o borrarla. La tarjeta sigue abriendo lo que hay sembrado, que
       // es lo que se mira el 99 % de las veces.
-      acciones: botonesDeCorregirYBorrar("parcela", parcela.id),
+      // **Y el primero es el que abre su historia** (T15, 05/10/2026): lo que ha pasado en esa tierra
+      // —sus trabajos hechos, lo que queda previsto y lo que consta que ha costado—. Va delante de
+      // CORREGIR y BORRAR porque es a lo que se viene al abrir una tierra. **Se encontró que no había
+      // ningún botón que llevara a esa pantalla**: existía y su dirección funcionaba, pero solo se
+      // llegaba escribiéndola a mano, que para el agricultor es no llegar. Como esta lista es la de la
+      // tarjeta del móvil **y** la del panel del ordenador, el botón sale en las dos.
+      acciones: [
+        {
+          etiqueta: t("panel.tierra_historia", ""),
+          accion: "tierra-historia",
+          datos: { id: parcela.id },
+          clase: "boton-claro",
+        },
+        ...botonesDeCorregirYBorrar("parcela", parcela.id),
+      ],
     };
   });
 }
@@ -19022,6 +19088,7 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   const enLosTrabajos = await atenderLosTrabajos(nombre, elemento);
   if (enLosTrabajos !== false) return enLosTrabajos;
   if (nombre.startsWith("banco-")) return atenderLosBancos(nombre, elemento);
+  if (nombre.startsWith("bandeja-")) return atenderLaBandeja(nombre, elemento);
 });
 
 window.addEventListener("online", () => {
@@ -20916,6 +20983,11 @@ async function atenderLosTrabajos(nombre, elemento) {
   const suyo = estadoDeLosTrabajos();
   const id = Number(elemento.dataset.id);
   if (nombre === "trabajos-ver") return abrirLosTrabajos();
+  // **El botón que lleva a la historia de una tierra** (05/10/2026). Está aquí y no en otro sitio porque
+  // lo que abre es una pantalla de este módulo; el botón se pinta en la ficha de la tierra (`app.js`,
+  // `tierra.acciones`), que es donde el agricultor abre una tierra. **Hasta hoy no había ninguno**: la
+  // pantalla existía, su dirección funcionaba, y no se llegaba a ella más que escribiéndola.
+  if (nombre === "tierra-historia") return abrirLaHistoriaDeUnaTierra(id);
   if (nombre === "trabajo-planificar") return abrirUnTrabajo("planificar", null);
   if (nombre === "trabajo-previsto-guardar") return guardarElTrabajo();
   if (nombre === "trabajo-abrir") return abrirUnTrabajo("reprogramar", id);
@@ -20936,6 +21008,528 @@ async function atenderLosTrabajos(nombre, elemento) {
   if (nombre === "trabajo-anular-confirmar") return guardarElTrabajo();
   return false;
 }
+
+// ---------------------------------------------------------------------------
+// La bandeja documental (T08, S10, 06/10/2026)
+// ---------------------------------------------------------------------------
+//
+// LO QUE ESTE BLOQUE HACE, Y LO QUE NO. Hace lo mismo que el del banco: pide los datos, recoge lo que el
+// agricultor escribe y atiende las acciones de sus botones. Y tiene **tres cosas que no hace ningún otro**,
+// las tres por el mismo motivo (el original no se toca y lo leído no es un dato):
+//
+//   1. **El fichero que se está subiendo vive en el estado**, como el del extracto del banco, y por lo
+//      mismo: repintar la pantalla borra la casilla del fichero, y hay que volver a mandarlo al subirlo
+//      después de comprobarlo. Es la trampa que ya costó una ronda con el cuaderno de la Junta.
+//   2. **Nada se sube sin comprobarlo antes.** El botón de subir solo se pinta cuando el servidor ha dicho
+//      que ese fichero no estaba (`bandeja-comprobar`), así que este bloque no tiene ninguna puerta por la
+//      que se pueda subir un papel sin pasar por ahí.
+//   3. **Aquí no se calcula ningún importe.** Los importes llegan del servidor en texto decimal y **ya
+//      escritos** (el servidor manda `campos` y `textos`), y la pantalla solo los coloca. Lo único que se
+//      escribe aquí es la fecha del papel y la de confirmarlo, con `formateaFecha`.
+
+/** El estado de la bandeja, creado la primera vez que hace falta (como el de las cuentas). */
+function estadoDeLaBandeja() {
+  if (!estado.bandeja) {
+    estado.bandeja = {
+      // Lo que devolvió `GET /api/bandeja`: los papeles, el vocabulario y el pie ya compuesto.
+      datos: null,
+      // El papel que se está mirando, con su propuesta y sus enlaces (`GET /api/bandeja/<id>`).
+      papel: null,
+      // Con qué se puede enlazar: `GET /api/bandeja/candidatos?clase=…`.
+      candidatos: [],
+      // El fichero que se está subiendo, **en el estado** (ver la cabecera de este bloque).
+      fichero: null,
+      nombreDelFichero: "",
+      // Lo que contestó `POST /api/bandeja/comprobar`: la huella y si ese papel ya estaba. **No ha
+      // guardado nada.**
+      comprobado: null,
+      comprobando: false,
+      subiendo: false,
+      // El buscador y los dos filtros de la lista.
+      filtro: "",
+      estadoElegido: "sin_revisar",
+      tipoElegido: "",
+      // Lo que está puesto en la subida ahora mismo.
+      tipoNuevoElegido: "",
+      // La clase con la que se está buscando para enlazar, y lo que se ha escrito para buscarla.
+      claseElegida: "",
+      claseBuscada: "",
+      buscandoCandidatos: false,
+      // El formulario abierto (la revisión de un papel), con lo que se ha escrito.
+      formulario: null,
+      borrador: null,
+      guardando: false,
+      error: "",
+      aviso: "",
+    };
+  }
+  return estado.bandeja;
+}
+
+/** El vocabulario de estas pantallas: el de la bandeja y el botón de VOLVER que ya está en los textos. */
+function textosDeLaBandeja() {
+  return {
+    bandeja: t("bandeja", {}),
+    acciones: accion("volver") ? { volver: accion("volver") } : {},
+  };
+}
+
+/** La fecha de un papel, escrita como se escribe aquí. Lo que no consta se queda vacío. */
+function laFechaDeUnPapel(fecha) {
+  return fecha ? formateaFecha(fecha) : "";
+}
+
+/**
+ * Un papel, con las fechas escritas.
+ *
+ * Se escribe aquí la fecha (y no en la pantalla) por la regla de siempre: el formateo de las fechas vive
+ * en un solo sitio (`formateaFecha`), y la pantalla no calcula ni formatea nada. Los importes **no se
+ * tocan**: el servidor ya manda `campos` (el dato) y `textos` (el mismo, escrito).
+ */
+function conLasFechasEscritasDeLaBandeja(papel) {
+  if (!papel) return papel;
+  return {
+    ...papel,
+    texto_fecha: laFechaDeUnPapel(papel.fecha),
+    texto_confirmado_en: papel.confirmado_en ? formateaFecha(papel.confirmado_en) : "",
+  };
+}
+
+/** La lista de la bandeja, ya en React. */
+function pantallaLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  const datos = suyo.datos || {};
+  return montar(() =>
+    pantallaDeLaBandeja({
+      textos: textosDeLaBandeja(),
+      papeles: (datos.papeles || []).map(conLasFechasEscritasDeLaBandeja),
+      tipos: datos.tipos || [],
+      estados: datos.estados || [],
+      clases: datos.clases || [],
+      resumen: datos.resumen || "",
+      cuantos: datos.cuantos || 0,
+      sinDecirDeQueEs: datos.sin_decir_de_que_es || 0,
+      estadoElegido: suyo.estadoElegido,
+      tipoElegido: suyo.tipoElegido,
+      filtro: suyo.filtro,
+      ficheroElegido: suyo.nombreDelFichero,
+      tipoNuevoElegido: suyo.tipoNuevoElegido,
+      comprobado: suyo.comprobado,
+      comprobando: suyo.comprobando,
+      subiendo: suyo.subiendo,
+      formulario: elFormularioDeLaBandeja(suyo.formulario, suyo.borrador),
+      guardando: suyo.guardando,
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/** La ficha de un papel, ya en React. */
+function pantallaUnPapelDeLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  const papel = conLasFechasEscritasDeLaBandeja(suyo.papel);
+  return montar(() =>
+    pantallaDeUnPapelDeLaBandeja({
+      textos: textosDeLaBandeja(),
+      papel: papel || {},
+      candidatos: suyo.candidatos,
+      // Los otros papeles de la finca, para decir a cuál corrige este: el propio papel no sale de la lista
+      // (un papel no se rectifica a sí mismo, y la puerta del servidor lo diría).
+      papelesParaRectificar: (suyo.papelesParaRectificar || []).filter(
+        (uno) => !papel || uno.valor !== papel.id,
+      ),
+      clases: (suyo.datos || {}).clases || [],
+      claseElegida: suyo.claseElegida,
+      claseBuscada: suyo.claseBuscada,
+      buscandoCandidatos: suyo.buscandoCandidatos,
+      formulario: elFormularioDeLaBandeja(suyo.formulario, suyo.borrador),
+      guardando: suyo.guardando,
+      cargando: !suyo.papel && !suyo.error,
+      error: suyo.error || "",
+      aviso: suyo.aviso || "",
+    }),
+  );
+}
+
+/** Abre la bandeja: se pinta enseguida y se vuelve a pintar con lo que contesta el servidor. */
+async function abrirLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.formulario = null;
+  suyo.borrador = null;
+  suyo.papel = null;
+  suyo.comprobado = null;
+  suyo.fichero = null;
+  suyo.nombreDelFichero = "";
+  pantallaLaBandeja();
+  await recargarLaBandeja();
+  pantallaLaBandeja();
+}
+
+/** Vuelve a pedir la bandeja con el filtro que esté puesto. */
+async function recargarLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  const consulta = new URLSearchParams();
+  consulta.set("estado", suyo.estadoElegido || "sin_revisar");
+  if (suyo.tipoElegido) consulta.set("tipo", suyo.tipoElegido);
+  if (suyo.filtro) consulta.set("texto", suyo.filtro);
+  try {
+    suyo.datos = await apiJson(`/api/bandeja?${consulta.toString()}`);
+    // Los otros papeles de la finca, para poder decir a cuál corrige este. Se piden con la lista y no con
+    // cada ficha: son los mismos para todas.
+    const todos = await apiJson("/api/bandeja?estado=todos");
+    suyo.papelesParaRectificar = (todos.papeles || []).map((uno) => ({
+      valor: uno.id,
+      texto: [uno.titulo, uno.etiqueta_tipo, laFechaDeUnPapel(uno.fecha)].filter(Boolean).join(" · "),
+    }));
+    suyo.error = "";
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return suyo;
+}
+
+/**
+ * Abre la ficha de un papel: **pide sus datos al servidor**.
+ *
+ * Es lo que hace que esta pantalla se pueda enlazar y recargar: no vive de la lista que había antes, pide
+ * su papel a su puerta. Si esa puerta no contesta (sin cobertura), se dice **que no se ha podido
+ * comprobar**, que no es lo mismo que decir que ese papel no está.
+ */
+async function abrirUnPapelDeLaBandeja(id) {
+  const suyo = estadoDeLaBandeja();
+  if (!id) return abrirLaBandeja();
+  suyo.papel = null;
+  suyo.formulario = null;
+  suyo.borrador = null;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaUnPapelDeLaBandeja();
+  try {
+    // **La lista se pide también aquí**, y no es un capricho: la ficha se puede abrir **directamente por
+    // su dirección** (`#/papeles/bandeja/12`, un enlace que le mandan al agricultor), y sin la lista no
+    // habría ni el vocabulario de las clases ni los otros papeles a los que este puede corregir. Son dos
+    // peticiones al servidor y la pantalla sale entera, que es lo que se espera de una dirección.
+    if (!suyo.datos) await recargarLaBandeja();
+    suyo.papel = await apiJson(`/api/bandeja/${id}`);
+    // Las clases que este papel sugiere (por su tipo) van delante; si no sugiere ninguna, se empieza por
+    // el gasto, que es lo que más se enlaza.
+    const clases = (suyo.datos && suyo.datos.clases) || [];
+    suyo.claseElegida =
+      (suyo.papel.clases_sugeridas || [])[0] || (clases[0] && clases[0].valor) || "gasto";
+    suyo.claseBuscada = "";
+    await buscarCandidatosDeLaBandeja();
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  pantallaUnPapelDeLaBandeja();
+}
+
+/** Pide los candidatos de la clase elegida: cosas que **ya están** en el cuaderno. */
+async function buscarCandidatosDeLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  suyo.buscandoCandidatos = true;
+  const consulta = new URLSearchParams();
+  consulta.set("clase", suyo.claseElegida || "gasto");
+  if (suyo.claseBuscada) consulta.set("texto", suyo.claseBuscada);
+  try {
+    const datos = await apiJson(`/api/bandeja/candidatos?${consulta.toString()}`);
+    suyo.candidatos = datos.items || [];
+  } catch (fallo) {
+    suyo.candidatos = [];
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.buscandoCandidatos = false;
+}
+
+/** La subida: leer el fichero que se ha elegido y comprobar si ese mismo papel ya estaba. */
+async function comprobarElFicheroDeLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  const entrada = document.getElementById("bandeja-fichero");
+  if (!entrada || !entrada.files || entrada.files.length === 0) {
+    suyo.error = t("bandeja.fichero", "");
+    pantallaLaBandeja();
+    return;
+  }
+  // Sin cobertura no se puede subir un fichero de un tirón, así que se dice claro en vez de dejar al
+  // agricultor esperando delante de una barra que no avanza. Es la misma decisión que en los papeles.
+  if (!navigator.onLine) {
+    suyo.error = aviso("no_se_pudo");
+    pantallaLaBandeja();
+    return;
+  }
+  // **El fichero se guarda en el estado**, porque repintar la pantalla borra la casilla y hay que volver a
+  // mandarlo al subirlo.
+  suyo.fichero = entrada.files[0];
+  suyo.nombreDelFichero = suyo.fichero.name || "";
+  suyo.tipoNuevoElegido = valorDeLaCasilla("bandeja-tipo-nuevo") || "";
+  suyo.comprobado = null;
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.comprobando = true;
+  pantallaLaBandeja();
+  try {
+    const cuerpo = new FormData();
+    cuerpo.append("fichero", suyo.fichero);
+    const respuesta = await fetch("/api/bandeja/comprobar", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${estado.token}` },
+      body: cuerpo,
+    });
+    const datos = await respuesta.json().catch(() => null);
+    if (!respuesta.ok) throw new Error((datos && datos.detail) || mensaje("no_se_pudo"));
+    suyo.comprobado = datos;
+  } catch (fallo) {
+    // Si no se ha podido comprobar, **no se puede subir**: el botón de subir no se pinta sin la
+    // comprobación, y eso es justo lo que impide que un duplicado entre sin decirlo.
+    suyo.fichero = null;
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.comprobando = false;
+  pantallaLaBandeja();
+}
+
+/** Sube el papel: el fichero que ya se comprobó, con el tipo que se haya dicho. */
+async function subirElPapelALaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  if (!suyo.fichero) return pantallaLaBandeja();
+  suyo.subiendo = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaLaBandeja();
+  try {
+    const cuerpo = new FormData();
+    cuerpo.append("fichero", suyo.fichero);
+    if (suyo.tipoNuevoElegido) cuerpo.append("tipo", suyo.tipoNuevoElegido);
+    const respuesta = await fetch("/api/bandeja/subir", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${estado.token}` },
+      body: cuerpo,
+    });
+    const datos = await respuesta.json().catch(() => null);
+    if (!respuesta.ok) throw new Error((datos && datos.detail) || mensaje("no_se_pudo"));
+    suyo.aviso = (datos.avisos || []).join(" ");
+    // El fichero y lo comprobado se olvidan: ya está guardado, y volver a subirlo sin querer crearía el
+    // aviso de duplicado otra vez (que es lo que tiene que pasar).
+    suyo.fichero = null;
+    suyo.nombreDelFichero = "";
+    suyo.comprobado = null;
+    suyo.tipoNuevoElegido = "";
+    await recargarLaBandeja();
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.subiendo = false;
+  pantallaLaBandeja();
+}
+
+/**
+ * Guarda lo que el agricultor ha aceptado de la lectura (`bandeja-revisar` → `bandeja-guardar`).
+ *
+ * Los campos salen de los `id` del formulario, que es como esta aplicación lee todo lo que se escribe, y
+ * **vacío es «no lo sé»**: se manda la cadena vacía y el servidor lo guarda como nulo, que es lo que hace
+ * que borrar un importe que el lector leyó mal sirva de algo.
+ */
+async function guardarLaRevisionDeLaBandeja() {
+  const suyo = estadoDeLaBandeja();
+  const id = (suyo.formulario || {}).id || (suyo.papel || {}).id;
+  if (!id) return pantallaUnPapelDeLaBandeja();
+  const campos = {};
+  for (const campo of [
+    "proveedor",
+    "proveedor_nif",
+    "numero_factura",
+    "fecha",
+    "base_imponible",
+    "cuota_iva",
+    "tipo_iva_pct",
+    "total",
+  ]) {
+    campos[campo] = valorDeLaCasilla(`bandeja-${campo}`) || "";
+  }
+  suyo.guardando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaUnPapelDeLaBandeja();
+  try {
+    const contestado = await apiJson(`/api/bandeja/${id}/revisar`, {
+      method: "POST",
+      body: JSON.stringify({ campos }),
+    });
+    suyo.aviso = (contestado.avisos || []).join(" ");
+    suyo.papel = contestado.papel;
+    suyo.formulario = null;
+    suyo.borrador = null;
+    await recargarLaBandeja();
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  pantallaUnPapelDeLaBandeja();
+}
+
+/** Una puerta del papel que solo cambia su estado: leerlo, confirmarlo, descartar la lectura o rectificar. */
+async function hacerAlgoConElPapelDeLaBandeja(id, puerta, cuerpo = {}) {
+  const suyo = estadoDeLaBandeja();
+  if (!id) return pantallaUnPapelDeLaBandeja();
+  suyo.guardando = true;
+  suyo.error = "";
+  suyo.aviso = "";
+  pantallaUnPapelDeLaBandeja();
+  try {
+    const contestado = await apiJson(`/api/bandeja/${id}/${puerta}`, {
+      method: "POST",
+      body: JSON.stringify(cuerpo),
+    });
+    suyo.aviso = (contestado.avisos || []).join(" ");
+    suyo.papel = contestado.papel;
+    suyo.formulario = null;
+    suyo.borrador = null;
+    await recargarLaBandeja();
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  pantallaUnPapelDeLaBandeja();
+}
+
+/**
+ * El formulario de la revisión, con sus campos puestos.
+ *
+ * Los valores que salen son **los que ya se han aceptado** si los hay, y si no **los que se han leído**: así
+ * el agricultor corrige sobre lo que el programa propuso en vez de escribirlo todo, que es lo que hace que
+ * una lectura aproveche aunque tenga una errata. Y el rótulo de cada campo es el del tipo de papel: no se
+ * pregunta «¿cuál es la base imponible?» a quien está mirando un contrato.
+ */
+function elFormularioDeLaBandeja(cual, borrador) {
+  if (!cual) return null;
+  const b = t("bandeja", {});
+  const br = borrador || {};
+  const papel = estadoDeLaBandeja().papel || {};
+  const propuesta = papel.la_propuesta || {};
+  const aceptado = papel.lo_aceptado || {};
+  const de = (campo) => {
+    if (br[campo] !== undefined) return br[campo];
+    const suyo = (aceptado.campos || {})[campo];
+    if (suyo === undefined || suyo === null) return (propuesta.campos || {})[campo] || "";
+    return suyo;
+  };
+  return {
+    titulo: b.revisar_titulo,
+    pista: b.revisar_pista,
+    guardar: b.guardar,
+    cancelar: b.cancelar,
+    guardando: b.guardando,
+    datos: { clase: "revision", id: papel.id || "" },
+    error: "",
+    bloques: [
+      { tipo: "texto", id: "bandeja-proveedor", etiqueta: b.proveedor, valor: de("proveedor") },
+      { tipo: "texto", id: "bandeja-proveedor_nif", etiqueta: b.nif_del_proveedor, valor: de("proveedor_nif") },
+      { tipo: "texto", id: "bandeja-numero_factura", etiqueta: b.numero_de_factura, valor: de("numero_factura") },
+      { tipo: "fecha", id: "bandeja-fecha", etiqueta: b.fecha, valor: de("fecha") },
+      { tipo: "numero", id: "bandeja-base_imponible", etiqueta: b.base_imponible, valor: de("base_imponible") },
+      { tipo: "numero", id: "bandeja-cuota_iva", etiqueta: b.cuota_de_iva, valor: de("cuota_iva") },
+      { tipo: "numero", id: "bandeja-tipo_iva_pct", etiqueta: b.tipo_de_iva, valor: de("tipo_iva_pct") },
+      { tipo: "numero", id: "bandeja-total", etiqueta: b.total, valor: de("total") },
+    ],
+  };
+}
+
+/**
+ * Las 19 acciones de los botones de estas dos pantallas.
+ *
+ * **La 20 y la 21 (`papel-ver-todos` y `ir-inicio`) ya existían** y las atiende el manejador de siempre: por
+ * eso no están aquí, y por eso la lista del informe las cuenta aparte.
+ */
+async function atenderLaBandeja(nombre, elemento) {
+  const suyo = estadoDeLaBandeja();
+  const id = Number(elemento.dataset.id || 0);
+  if (nombre === "bandeja-ver") return abrirLaBandeja();
+  if (nombre === "bandeja-abrir") return abrirUnPapelDeLaBandeja(id);
+  if (nombre === "bandeja-comprobar") return comprobarElFicheroDeLaBandeja();
+  if (nombre === "bandeja-subir") return subirElPapelALaBandeja();
+  if (nombre === "bandeja-olvidar-fichero") {
+    // Se olvida lo elegido y lo comprobado: es la salida de «este papel ya lo tenías», para poder elegir
+    // otro fichero sin recargar la pantalla.
+    suyo.fichero = null;
+    suyo.nombreDelFichero = "";
+    suyo.comprobado = null;
+    suyo.error = "";
+    return pantallaLaBandeja();
+  }
+  if (nombre === "bandeja-filtrar") {
+    suyo.filtro = valorDeLaCasilla("bandeja-buscar");
+    suyo.estadoElegido = valorDeLaCasilla("bandeja-estado") || "sin_revisar";
+    suyo.tipoElegido = valorDeLaCasilla("bandeja-tipo") || "";
+    await recargarLaBandeja();
+    return pantallaLaBandeja();
+  }
+  if (nombre === "bandeja-ver-todas") {
+    suyo.filtro = "";
+    suyo.estadoElegido = "sin_revisar";
+    suyo.tipoElegido = "";
+    await recargarLaBandeja();
+    return pantallaLaBandeja();
+  }
+  if (nombre === "bandeja-original") return descargarDocumento(id);
+  if (nombre === "bandeja-leer") return hacerAlgoConElPapelDeLaBandeja(id, "leer");
+  if (nombre === "bandeja-confirmar") return hacerAlgoConElPapelDeLaBandeja(id, "confirmar");
+  if (nombre === "bandeja-descartar") {
+    return hacerAlgoConElPapelDeLaBandeja(id, "descartar", {
+      motivo: valorDeLaCasilla("bandeja-motivo-descartar"),
+    });
+  }
+  if (nombre === "bandeja-clasificar") {
+    return hacerAlgoConElPapelDeLaBandeja(id, "clasificar", {
+      tipo: valorDeLaCasilla("bandeja-tipo-del-papel"),
+    });
+  }
+  if (nombre === "bandeja-revisar") {
+    // Abre el formulario con lo que ya hay puesto (lo aceptado o lo leído). No guarda nada todavía.
+    suyo.formulario = { clase: "revision", id };
+    suyo.borrador = {};
+    return pantallaUnPapelDeLaBandeja();
+  }
+  if (nombre === "bandeja-guardar") return guardarLaRevisionDeLaBandeja();
+  if (nombre === "bandeja-cancelar") {
+    suyo.formulario = null;
+    suyo.borrador = null;
+    return pantallaUnPapelDeLaBandeja();
+  }
+  if (nombre === "bandeja-buscar-candidatos") {
+    suyo.claseElegida = valorDeLaCasilla("bandeja-clase") || suyo.claseElegida;
+    suyo.claseBuscada = valorDeLaCasilla("bandeja-candidato-buscar") || "";
+    await buscarCandidatosDeLaBandeja();
+    return pantallaUnPapelDeLaBandeja();
+  }
+  if (nombre === "bandeja-enlazar") {
+    const elegido = valorDeLaCasilla("bandeja-candidato");
+    if (!elegido) return pantallaUnPapelDeLaBandeja();
+    // El candidato se manda con **su clase y su identificador**: la clase va en el dato del desplegable
+    // (`clase:entidad_id`), como en la conciliación del banco, así que no hay que adivinarla.
+    const corte = elegido.indexOf(":");
+    return hacerAlgoConElPapelDeLaBandeja(id, "vincular", {
+      clase: elegido.slice(0, corte),
+      entidad_id: Number(elegido.slice(corte + 1)),
+    });
+  }
+  if (nombre === "bandeja-desenlazar") {
+    return hacerAlgoConElPapelDeLaBandeja(id, "desvincular", {
+      clase: elemento.dataset.clase,
+      entidad_id: Number(elemento.dataset.entidad),
+    });
+  }
+  if (nombre === "bandeja-rectificar") {
+    const alQueCorrige = valorDeLaCasilla("bandeja-rectifica-a");
+    if (!alQueCorrige) return pantallaUnPapelDeLaBandeja();
+    return hacerAlgoConElPapelDeLaBandeja(id, "rectificar", {
+      rectifica_a_id: Number(alQueCorrije),
+    });
+  }
+}
+
 
 // --------------------------------------------------------------------- arranque
 

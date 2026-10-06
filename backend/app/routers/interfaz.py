@@ -255,6 +255,14 @@ def interfaz() -> dict:
         # porque esto se guarda en el móvil (`localStorage`, la clave `cuedigital.interfaz`), así que la
         # pantalla sigue teniendo sus palabras **sin cobertura**.
         "bancos": textos.BANCOS,
+        # **La bandeja documental (T08, S10, 06/10/2026).** Sin esto, la pantalla sale con todos sus
+        # botones y sus rótulos en blanco. Y va **aquí** y no solo dentro de la respuesta de
+        # `/api/bandeja` por el mismo motivo que los del banco: la ficha de un papel se abre
+        # directamente por su dirección (`#/papeles/bandeja/12`) y entonces no hay ninguna lista que
+        # traiga sus palabras; y porque esto se guarda en el móvil (`localStorage`, la clave
+        # `cuedigital.interfaz`), así que la pantalla sigue teniendo sus palabras **sin cobertura**,
+        # que es justo cuando se miran los papeles (en la nave, con el móvil en la mano).
+        "bandeja": textos.BANDEJA,
         # **Las tierras en el mapa y en la tabla, y lo que ha sido una tierra** (T06, 03/10/2026): las
         # palabras de las dos pantallas nuevas. Se sirven aquí —y no solo dentro de
         # `/api/parcelas/vista`— por un motivo que se vio al escribirlas: la ficha de una tierra con sus

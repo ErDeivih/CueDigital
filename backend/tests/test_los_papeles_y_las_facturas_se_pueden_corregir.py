@@ -1134,7 +1134,12 @@ class TestLoQueSeCuentaAntesDeBorrar:
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("documento_id")
-        ] == ["conciliaciones_de_movimiento", "inspecciones_de_maquina"]
+        # **Y desde el T08 (06/10/2026) hay una tercera: `vinculos_de_documento`.** Un papel que está
+        # enlazado con un gasto, una venta, una máquina o un trabajo no se puede borrar sin dejar el
+        # vínculo apuntando a algo que ya no está; lo que sí se puede hacer siempre es **anular** el
+        # papel (que lo deja con su motivo y con su fichero) o **desvincularlo**, que es una puerta de
+        # la propia bandeja y deja el papel donde estaba.
+        ] == ["conciliaciones_de_movimiento", "inspecciones_de_maquina", "vinculos_de_documento"]
 
     def test_lo_que_una_correccion_no_toca_es_lo_que_el_formulario_no_manda(self):
         """La regla de la corrección, escrita y con nombre, para el papel **y** para la factura.
@@ -1151,7 +1156,27 @@ class TestLoQueSeCuentaAntesDeBorrar:
 
         assert servicios.columnas_que_una_correccion_no_toca(
             models.DocumentoAnexo, DocumentoEntrada, DocumentoSalida
-        ) == ["fichero_nombre", "fichero_ruta", "fichero_tipo", "fichero_bytes"]
+        # **Desde el T08 (06/10/2026) el papel tiene nueve columnas más**, y son justo las que el
+        # formulario de corregir no manda: la huella del fichero, el estado de la revisión, lo que se
+        # leyó, lo que el agricultor aceptó y a quién rectifica. La lista cambió al integrarlas, y se
+        # cambia aquí diciendo por qué: la regla es que **solo se corrige lo que la API acepta al dar
+        # de alta y devuelve al leer**, y ninguna de estas nueve lo hace (la revisión tiene sus propias
+        # puertas, y la huella es del fichero, que no se toca).
+        ) == [
+            "fichero_nombre",
+            "fichero_ruta",
+            "fichero_tipo",
+            "fichero_bytes",
+            "huella",
+            "estado_revision",
+            "propuesta",
+            "como_se_leyo",
+            "propuesta_descartada",
+            "datos_confirmados",
+            "confirmado_en",
+            "confirmado_por_usuario_id",
+            "rectifica_a_id",
+        ]
         assert sorted(
             servicios.columnas_que_una_correccion_no_toca(
                 models.Factura, FacturaEntrada, FacturaSalida

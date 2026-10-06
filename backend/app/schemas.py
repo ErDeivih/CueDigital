@@ -2140,6 +2140,157 @@ class DocumentoSalida(SalidaBase):
     creado_en: dt.datetime
 
 
+# --------------------------------------------------------------------------
+# La bandeja documental (T08, S10, 06/10/2026)
+# --------------------------------------------------------------------------
+#
+# Lo que sale por estas puertas, con una regla que se repite y conviene leer una vez: **de cada cabecera
+# van las dos cosas**, el dato (`campos`, con los importes en texto decimal, que es como viaja el dinero
+# en este programa) y su versión escrita (`textos`, «980,10 €»). Y no es un adorno: es lo que hace que la
+# pantalla pueda **no creerse el texto**. Cuando un campo no consta, su versión escrita sale vacía y quien
+# decide qué se enseña es el dato, así que un importe que no consta se enseña como hueco y nunca como
+# `0,00 €`.
+
+
+class VinculoDeUnPapelSalida(SalidaBase):
+    """Con qué va un papel, con el nombre de lo enlazado **ya compuesto** en el servidor.
+
+    `que_es` es lo que se lee («Un gasto · Gasóleo · 01/10/2026»): el vocabulario vive en el servidor, y
+    la pantalla no compone nombres ni enseña identificadores.
+    """
+
+    id: int
+    clase: str
+    etiqueta_clase: str
+    entidad_id: int
+    que_es: str
+    creado_en: dt.datetime
+
+
+class LaPropuestaSalida(SalidaBase):
+    """Lo que el programa ha leído. **Es una propuesta, no un dato.**
+
+    Lo que **no** lleva, y es lo más importante: ninguna medida de la calidad de la lectura. Ni un
+    porcentaje, ni una confianza, ni un «leído correctamente». El corpus para medirlo (T07) no existe.
+    Lo que sí lleva son las dos cuentas que el lector puede comprobar (si cuadra la base más el IVA, y
+    si las líneas suman la base) y, en cada línea, si su cuenta cuadra.
+    """
+
+    clase: str
+    como_se_leyo: str
+    leido_en: str
+    campos: dict
+    textos: dict
+    lineas: list[dict]
+    avisos: list[str]
+    lineas_leidas: int
+    lineas_que_cuadran: int
+    cuadra_el_total: bool
+    suman_las_lineas: bool
+
+
+class LoQueSeAceptoSalida(SalidaBase):
+    """Lo que el agricultor ha aceptado de esa lectura. **Todavía no está confirmado.**"""
+
+    campos: dict
+    textos: dict
+
+
+class PapelDeLaBandejaSalida(SalidaBase):
+    """Un papel, con todo lo que hace falta para enseñarlo y para decidir qué hacer con él.
+
+    Los tres `se_puede_*` los decide **el servidor** y no la pantalla. Ese es el detalle que hace que el
+    recorrido no se pueda saltar desde el navegador: `se_puede_confirmar` es falso mientras no haya algo
+    aceptado, así que una pantalla no puede confirmar lo que el servidor no deja confirmar.
+    """
+
+    id: int
+    titulo: str
+    tipo: str
+    etiqueta_tipo: str
+    carpeta: str
+    # El estado **y su palabra ya resuelta**: la pantalla no traduce claves.
+    estado: str
+    etiqueta_estado: str
+    sin_revisar: bool
+    fecha: dt.date | None
+    quien: str | None
+    # El original: su nombre, su tipo, sus bytes (y lo que ocupa, ya escrito) y su huella.
+    tiene_fichero: bool
+    nombre_del_fichero: str | None
+    tipo_del_fichero: str | None
+    bytes: int | None
+    texto_tamano: str
+    huella: str | None
+    como_se_leyo: str | None
+    propuesta_descartada: bool
+    la_propuesta: LaPropuestaSalida | None
+    lo_aceptado: LoQueSeAceptoSalida | None
+    se_puede_leer: bool
+    se_puede_confirmar: bool
+    se_puede_descartar_la_propuesta: bool
+    confirmado_en: dt.datetime | None
+    confirmado_por: str | None
+    # A quién rectifica este papel y quiénes lo rectifican a él: las dos cosas, porque una rectificativa
+    # deja las dos versiones y hay que poder ver la cadena desde los dos lados.
+    rectifica_a: dict | None
+    rectificada_por: list[dict]
+    vinculos: list[VinculoDeUnPapelSalida]
+    clases_sugeridas: list[str]
+    cuantos_candidatos: dict
+    creado_en: dt.datetime
+
+
+class LaBandejaSalida(SalidaBase):
+    """La bandeja entera: lo que hay que revisar, y el vocabulario para preguntarlo."""
+
+    textos: dict
+    papeles: list[PapelDeLaBandejaSalida]
+    cuantos: int
+    sin_revisar: int
+    sin_decir_de_que_es: int
+    resumen: str
+    tipos: list[dict]
+    estados: list[dict]
+    clases: list[dict]
+
+
+class ElFicheroComprobadoSalida(SalidaBase):
+    """Lo que se ha visto del fichero **antes de apuntarlo**: su huella y si ese papel ya estaba.
+
+    Esta puerta **no escribe nada**, y por eso existe: es lo que permite decir el duplicado antes de que
+    nada haya cambiado.
+    """
+
+    huella: str
+    bytes: int
+    texto_tamano: str
+    nombre_del_fichero: str
+    tipo_del_fichero: str
+    ya_estaba: bool
+    donde: str | None
+    el_que_ya_estaba: dict | None
+    que_hacer: str
+
+
+class LosCandidatosSalida(SalidaBase):
+    """Con qué se puede enlazar un papel: lo que **ya existe** en el cuaderno, con su nombre compuesto."""
+
+    clase: str
+    etiqueta_clase: str
+    items: list[dict]
+    cuantos: int
+    truncado: bool
+    sin_candidatos: str
+
+
+class LoQueHaPasadoSalida(SalidaBase):
+    """Lo que devuelven las puertas que cambian algo: el papel **como ha quedado**, y lo que hay que decir."""
+
+    papel: PapelDeLaBandejaSalida
+    avisos: list[str]
+
+
 # El plan apunta al análisis en el que se basa, y `AnaliticaSalida` está declarada más
 # abajo (va con el resto de lo de analíticas). Pydantic no resuelve solo una referencia
 # que aparece después, así que se reconstruye aquí, una vez está todo el módulo leído.

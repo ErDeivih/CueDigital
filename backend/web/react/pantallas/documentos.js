@@ -140,6 +140,9 @@ export function PantallaDocumentos({
     <div className="barra-acciones">
       <${Boton} etiqueta=${d.nuevo} accion="papel-nuevo" clase="boton-principal" />
       <${Boton} etiqueta=${d.listado} accion="papel-listado" clase="boton-claro" />
+      <!-- **La puerta de la bandeja** (T08, 06/10/2026): lo que llega y hay que revisar. Va antes del
+           atajo a las tierras, que es lo que se mira de vez en cuando. -->
+      <${Boton} etiqueta=${d.bandeja} accion="bandeja-ver" clase="boton-claro" />
       <${Boton} etiqueta=${maestros.titulo} accion="mis-cosas" clase="boton-claro" />
       <${Boton} etiqueta=${acciones.volver} accion="ir-inicio" clase="boton-claro" />
     </div>

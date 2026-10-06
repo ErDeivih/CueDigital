@@ -300,7 +300,12 @@ PANTALLAS = [
             # **Ronda 91**: el título de la lista pasó de «1 apunte de producto» a «1 apunte en el
             # cuaderno», porque desde esta ronda la lista enseña los **cuatro** tipos de apunte (producto,
             # abono, trabajo y cosecha) y cada uno se puede corregir y borrar.
-            "1 apunte en el cuaderno",
+            #
+            # **Y desde el 05/10/2026 son dos** (T15): el guion deja también un trabajo hecho, y un trabajo
+            # hecho **es un apunte del cuaderno** —es lo que pide el recorrido 4: «planificar un trabajo →
+            # marcarlo hecho → que llegue al cuaderno»—. Así que el número de verdad es dos, y decirlo aquí
+            # es lo que demuestra que el trabajo ha llegado al cuaderno y no se ha quedado en su pantalla.
+            "2 apuntes en el cuaderno",
             "Glifosato 36 SL",
             "Lo que falta por completar",
             "Sacar mi cuaderno para la Junta",
@@ -769,6 +774,91 @@ PANTALLAS = [
             "Calvarrasa de Arriba",
         ],
     ),
+    # **La historia de una tierra** (T15, 05/10/2026): **el recorrido 5 entero, pulsando**, que es como lo
+    # hace el agricultor —«abrir tierra → qué cultivo tiene, qué trabajos se han hecho, qué queda previsto
+    # y qué costes conocidos tiene»—. Se entra por «mis cosas» y se pulsa el botón de la ficha de la
+    # primera tierra; el guion deja en ella un cultivo declarado, un trabajo hecho, uno pensado y un gasto,
+    # así que las cuatro partes del recorrido tienen algo que enseñar. Los cuatro textos que se buscan son
+    # los de esas cuatro partes, y **el del cultivo es el que se veía mal**: la pantalla decía «de esta
+    # tierra no consta que haya nada sembrado» en una tierra con TRIGO BLANDO declarado, porque «qué hay
+    # hoy» solo miraba las labores de siembra. Se arregló el mismo día que se añadió esta ruta.
+    (
+        "la historia de una tierra (el recorrido 5, pulsando)",
+        ['[data-accion="mis-cosas"]', '[data-accion="tierra-historia"]'],
+        [
+            "Lo que ha pasado en esta tierra",
+            "Lo que hay sembrado",
+            "TRIGO BLANDO",
+            "HE LABRADO LA TIERRA",
+            "Lo que tengo pensado hacer",
+            "Lo que ha costado esta tierra",
+            "VER EL GASTO",
+        ],
+    ),
+    # **La bandeja de los papeles** (T08, 06/10/2026): lo que llega y hay que revisar. Se entra por donde
+    # entra el agricultor —«los papeles» y su botón de la bandeja—, que es además el recorrido 1 del
+    # encargo. Se comprueba con un papel dentro (lo deja `siembra_datos` subiéndolo por las mismas puertas
+    # que el agricultor): su título, que está **sin revisar** y el botón de mirarlo. Una bandeja vacía se
+    # vería bien aunque estuviera rota, que es la lección de siempre.
+    (
+        "la bandeja de los papeles",
+        ['[data-accion="papel-ver-todos"]', '[data-accion="bandeja-ver"]'],
+        [
+            "La bandeja de los papeles",
+            "Tienes 1 papel en la bandeja.",
+            "El ticket del gasóleo",
+            "Sin revisar",
+            "MIRAR ESTE PAPEL",
+        ],
+    ),
+    # **Y la ficha de un papel**, que es la mitad que sostiene la regla del ticket: **el original a un lado
+    # y lo que se ha leído al otro**, sin que nada haya entrado en el cuaderno. Es la pantalla donde más
+    # cosas pueden salir en blanco (tiene el original, la propuesta, los enlaces y los candidatos), así que
+    # se recorren sus cuatro bloques por su nombre.
+    (
+        "la ficha de un papel de la bandeja",
+        [
+            '[data-accion="papel-ver-todos"]',
+            '[data-accion="bandeja-ver"]',
+            '[data-accion="bandeja-abrir"]',
+        ],
+        [
+            "El ticket del gasóleo",
+            "El papel, tal y como llegó",
+            "VER EL ORIGINAL",
+            "el-ticket-del-gasoleo.png",
+            "Lo que el programa ha leído",
+            "LEER EL PAPEL",
+        ],
+    ),
+    # **Las cuentas de la explotación** (T13, 05/10/2026). Se entra por el renglón del menú, que es como
+    # entra el agricultor. Se buscan tres cosas distintas: el título, **el botón que lleva a los bancos**
+    # (que es el primer paso del recorrido 3) y el resumen con su número. Ese número —«Tienes 1 gasto
+    # apuntado.»— es lo que demuestra que el gasto que deja `siembra_datos` ha llegado hasta la pantalla
+    # y no se ha quedado en el servidor.
+    (
+        "las cuentas",
+        ['[data-accion="gastos-ver"]'],
+        ["Mis cuentas", "EL BANCO Y LOS PAPELES", "Tienes 1 gasto apuntado."],
+    ),
+    # **Los trabajos** (T15, 05/10/2026): la agenda. Se comprueban **las dos listas a la vez** —lo
+    # pensado y lo hecho—, porque el guion deja una cosa de cada: con una sola lista comprobada, la otra
+    # podría quedarse sin dibujar y esto seguiría verde. Y el botón de planificar, que es la puerta del
+    # recorrido 4.
+    (
+        "los trabajos",
+        ['[data-accion="trabajos-ver"]'],
+        ["Los trabajos", "Lo que tengo pensado hacer", "PLANIFICAR UN TRABAJO", "Lo que he hecho"],
+    ),
+    # **El banco y los papeles** (T20, 05/10/2026). Se llega por donde llega el agricultor: de las
+    # cuentas, por el botón de los bancos. Con el extracto ya importado por `siembra_datos` tiene que
+    # verse **un movimiento de verdad con su concepto**, y eso es lo que demuestra que lo que se leyó del
+    # fichero ha llegado a la pantalla: una lista vacía pasaría cualquier prueba.
+    (
+        "el banco y los papeles",
+        ['[data-accion="gastos-ver"]', '[data-accion="bancos-ver"]'],
+        ["El banco y los papeles", "LEER EL EXTRACTO", "Los movimientos del banco", "ADEUDO SEGURO AGRARIO EJEMPLO"],
+    ),
 ]
 
 # Los pasos del asistente donde el formulario **tiene que estar dentro del hueco** (`#formulario`), y qué
@@ -1210,6 +1300,12 @@ def pagina_estrecha(token: str, fragmento: str = "", ancho: int = 390) -> pathli
           var cabe = marco.clientWidth;
           // El ancho se dice **siempre**: así el informe enseña que de verdad se midió en 390 px.
           avisos.push("HUECO: " + ancho + " en " + cabe);
+          // **Y en qué dirección ha acabado la aplicación** (05/10/2026). Una dirección que la propia
+          // aplicación escribe y que luego no sabe abrir deja al agricultor en **otra** pantalla, y eso no
+          // lo ve ninguna otra comprobación: la pantalla «cabe» y está «montada», pero no es la que se
+          // pidió. Pasó con `#/trabajos`, que caía al panel de mando porque su clave no estaba en la tabla
+          // de puertas de `app.js`; desde aquí se cazó y desde aquí se sigue vigilando.
+          avisos.push("DIRECCION: " + dentro.location.hash);
           if (ancho > cabe + 1) {{
             avisos.push("SE-SALE: " + ancho + " de " + cabe);
           }}
@@ -1282,6 +1378,28 @@ def la_primera_tierra(direccion: str, token: str) -> int | None:
     return int(tierras[0]["id"])
 
 
+def el_primer_papel_de_la_bandeja(direccion: str, token: str) -> int | None:
+    """El identificador del primer papel de la bandeja, para abrir su ficha por su dirección.
+
+    **Lo pide el T08** (06/10/2026) por el mismo motivo que la ficha de una tierra o de una máquina: su
+    dirección lleva el identificador (`#/papeles/bandeja/12`), así que hace falta uno de verdad. Se
+    pregunta al servidor en vez de inventarse un número: abrir `#/papeles/bandeja/1` cuando el papel 1 no
+    existe comprobaría la pantalla de «ese papel no está en tu bandeja», que se dibuja igual de bien y no
+    dice nada de la ficha que se quiere mirar.
+    """
+    try:
+        with httpx.Client(
+            base_url=direccion, timeout=30.0, headers={"Authorization": f"Bearer {token}"}
+        ) as cliente:
+            datos = cliente.get("/api/bandeja").json()
+    except (httpx.HTTPError, ValueError):
+        return None
+    papeles = datos.get("papeles") if isinstance(datos, dict) else None
+    if not papeles:
+        return None
+    return int(papeles[0]["id"])
+
+
 def la_primera_maquina(direccion: str, token: str) -> int | None:
     """El identificador de una máquina de la finca, para poder abrir su ficha por su dirección.
 
@@ -1302,6 +1420,22 @@ def la_primera_maquina(direccion: str, token: str) -> int | None:
     if not maquinas:
         return None
     return int(maquinas[0]["id"])
+
+
+# Un PNG de verdad, de un píxel: es lo que se sube a la bandeja (T08) para que la pantalla tenga un
+# papel dentro. Se escribe aquí, en bytes, porque hace falta un fichero que el servidor acepte —y que
+# sea una imagen de verdad, que es lo que sube el agricultor con la cámara— y no un texto disfrazado.
+UN_PNG_DE_UN_PIXEL = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15ca89"
+    "0000000a49444154789c6360000002000154a24f5f0000000049454e44ae426082"
+)
+
+# El extracto de ejemplo del proyecto: el mismo fichero que usan las pruebas del ticket del banco. Se
+# usa tal cual —y no se escribe aquí otro— para que lo que se comprueba en el navegador sea **lo mismo**
+# que lo que ya está probado en el servidor: si el fichero de ejemplo cambiara, esta comprobación lo nota.
+RUTA_DEL_EXTRACTO_DE_EJEMPLO = (
+    pathlib.Path(__file__).resolve().parent.parent / "tests" / "datos" / "extracto_de_ejemplo_cuenta_principal.csv"
+)
 
 
 def siembra_datos(direccion: str, token: str) -> list[str]:
@@ -1354,7 +1488,16 @@ def siembra_datos(direccion: str, token: str) -> list[str]:
             creado.append("otra tierra")
             cliente.post(
                 f"/api/parcelas/{parcela.json()['id']}/cultivos",
-                json={"campana_id": campana["id"], "especie": "TRIGO BLANDO", "sistema": "secano"},
+                # **Con su fecha de siembra** (05/10/2026): la historia de una tierra enseña «desde cuándo»
+            # con esta fecha, y sin ella la pantalla dice «Sin decir» —que es lo correcto, y por eso
+            # mismo no comprobaría nada—. Con fecha se comprueba en un navegador de verdad que el dato
+            # llega hasta la pantalla.
+            json={
+                "campana_id": campana["id"],
+                "especie": "TRIGO BLANDO",
+                "sistema": "secano",
+                "fecha_inicio": "2025-11-10",
+            },
             )
             creado.append("su cultivo")
             # Un análisis de tierra con sus números: la pantalla «los análisis» ya está en React y
@@ -1509,6 +1652,123 @@ def siembra_datos(direccion: str, token: str) -> list[str]:
                 },
             )
             creado.append("su ITV vencida")
+        # **Un gasto de verdad** (T13, 05/10/2026). Hace falta por el mismo motivo que todo lo de arriba:
+        # sin ningún gasto, la lista de cuentas se comprueba **vacía**, y una lista vacía se ve bien aunque
+        # esté rota. Se apunta **a la tierra** y con su importe —y no suelto— porque es lo que hace que la
+        # historia de esa tierra enseñe lo que consta que ha costado con un número dentro (recorrido 5) en
+        # vez de su frase de «de esta tierra no hay ningún gasto apuntado».
+        gasto = cliente.post(
+            "/api/gastos",
+            json={
+                "campana_id": campana["id"],
+                "fecha": "2026-04-12",
+                "concepto": "Gasóleo para el tractor",
+                "categoria": "gasoleo",
+                "proveedor": "Cooperativa Agrícola de Peñaranda",
+                "parcela_id": parcela.json()["id"],
+                "base_imponible": 210.0,
+                "cuota_iva": 44.1,
+                "importe": 254.1,
+            },
+        )
+        if gasto.status_code == 201:
+            creado.append("un gasto")
+        # **Un trabajo pensado y otro hecho** (T15, 05/10/2026). Los dos, porque la pantalla de los trabajos
+        # tiene **dos listas** y con una sola no se comprobaría la mitad que falta. El hecho es, además, lo
+        # que hace que la historia de la tierra tenga algo que contar y que su última labor salga dicha.
+        #
+        # **Sin insumos, y es una decisión**: lo que se gasta del almacén se apunta saliendo de un envase, y
+        # aquí no hay ninguno dado de alta (el guion deja un producto, que no es un envase); un trabajo a
+        # mano que no gastó nada del almacén es un caso de verdad y no un hueco.
+        if parcela.status_code == 201:
+            pensado = cliente.post(
+                "/api/trabajos/previstos",
+                json={
+                    "campana_id": campana["id"],
+                    "tipo": "laboreo",
+                    "subtipo": "cultivador",
+                    "fecha_prevista": "2026-09-20",
+                    "parcela_id": parcela.json()["id"],
+                    "superficie_ha": 4.9,
+                    "horas": 3.0,
+                    "observaciones": "Pensado para después de la cosecha",
+                },
+            )
+            if pensado.status_code == 201:
+                creado.append("un trabajo pensado")
+            hecho = cliente.post(
+                "/api/trabajos",
+                json={
+                    "campana_id": campana["id"],
+                    "tipo": "laboreo",
+                    "subtipo": "cultivador",
+                    # **Antes del tratamiento, y no es un detalle**: el cuaderno ordena los apuntes por su
+                    # fecha (el último arriba) y las rutas de «corregir un apunte» y «borrar un apunte» del
+                    # guion pulsan **el primero de la lista**, que llevan años comprobando un tratamiento
+                    # (sus textos y sus datos). Con el trabajo el 14 de abril, el primero pasaba a ser el
+                    # trabajo y esas dos comprobaciones dejaban de mirar lo que dicen mirar. El 18 de marzo
+                    # lo deja detrás y las dos siguen comprobando un tratamiento, que es lo que quieren.
+                    "fecha": "2026-03-18",
+                    "parcela_id": parcela.json()["id"],
+                    "superficie_ha": 4.9,
+                    "horas": 2.5,
+                    "observaciones": "Pasé el cultivador",
+                },
+            )
+            if hecho.status_code == 201:
+                creado.append("un trabajo hecho")
+        # **Una cuenta y su extracto** (T20, 05/10/2026). Primero la cuenta —un extracto sin cuenta no se
+        # puede subir, y el propio programa lo dice— y después el extracto, que es **el fichero de ejemplo
+        # del proyecto**, el mismo que usan las pruebas del ticket: seis movimientos y una anotación **sin
+        # importe**, que es justo lo que hace que la pantalla tenga que decir un hueco en vez de un cero.
+        cuenta = cliente.post(
+            "/api/bancos/cuentas",
+            json={
+                "nombre": "La cuenta del banco",
+                "banco": "Banco del Páramo",
+                "ultimos_digitos": "5555",
+            },
+        )
+        if cuenta.status_code == 201:
+            creado.append("una cuenta del banco")
+            with open(RUTA_DEL_EXTRACTO_DE_EJEMPLO, "rb") as el_fichero:
+                extracto = cliente.post(
+                    "/api/bancos/extractos/importar",
+                    data={"cuenta_id": str(cuenta.json()["id"])},
+                    files={"fichero": ("extracto.csv", el_fichero, "text/csv")},
+                )
+            # **200 y no 201, y esto costó una vuelta**: la ruta de importar devuelve `200 OK` con el
+            # resultado de la importación (no crea *un* recurso: apunta los movimientos de un fichero),
+            # así que exigir 201 hacía que la comprobación dijera que no se había dejado el extracto
+            # cuando sí estaba —y las pantallas del banco lo enseñaban con sus movimientos dentro—.
+            if extracto.status_code in (200, 201):
+                creado.append("su extracto importado")
+        # **Un papel en la bandeja** (T08, 06/10/2026). La bandeja es la pantalla nueva y, sin ningún papel
+        # dentro, se comprobaría **vacía** —y una lista vacía se ve bien aunque esté rota—. Se sube una
+        # imagen de verdad por las **dos puertas del recorrido 1**, en su orden: primero se comprueba que
+        # ese fichero no estaba (que es lo que el agricultor hace sin darse cuenta al elegirlo) y después se
+        # sube con su tipo y su título. Con un papel «recién subido» la pantalla enseña lo que tiene que
+        # enseñar: que está sin revisar y qué falta por decir.
+        el_papel = ("el-ticket-del-gasoleo.png", UN_PNG_DE_UN_PIXEL, "image/png")
+        comprobado = cliente.post("/api/bandeja/comprobar", files={"fichero": el_papel})
+        if comprobado.status_code == 200 and not comprobado.json().get("ya_estaba"):
+            subido = cliente.post(
+                "/api/bandeja/subir",
+                data={
+                    "tipo": "ticket",
+                    "titulo": "El ticket del gasóleo",
+                    # **Con fecha anterior al contrato que guarda el guion después** (01/03/2026), y no es un
+                    # detalle: la lista de papeles va de la fecha más nueva a la más vieja, y la ruta de
+                    # «corregir un papel» pulsa el CORREGIR **del primero**, que es el contrato que la ruta de
+                    # arriba acaba de guardar. Con el ticket el 8 de abril el primero pasaba a ser el ticket y
+                    # esa comprobación dejaba de mirar lo que dice mirar.
+                    "fecha": "2026-02-20",
+                    "quien": "Gasolinera de Peñaranda",
+                },
+                files={"fichero": el_papel},
+            )
+            if subido.status_code == 201:
+                creado.append("un papel en la bandeja")
         if parcela.status_code == 201:
             tratamiento = cliente.post(
                 "/api/tratamientos",
@@ -1612,6 +1872,16 @@ def ventana_para(ancho_css: int, alto: int = 900) -> str:
             f"para {ancho_css} px hay que usar un hueco (`pagina_estrecha`)"
         )
     return f"{ancho_css + MARCO_DEL_NAVEGADOR},{alto}"
+
+
+def _la_direccion_medida(html: str) -> str:
+    """En qué dirección ha acabado la aplicación dentro del hueco (`#/trabajos?campana=2026`).
+
+    El `&` de la consulta llega escapado en el volcado del navegador (`&amp;`): se desescapa aquí, que
+    si no la comparación fallaría por un motivo que no es de la pantalla.
+    """
+    trozo = re.search(r"DIRECCION: ([^§]*)", html)
+    return trozo.group(1).strip().replace("&amp;", "&") if trozo else ""
 
 
 def _la_pantalla_se_sale(html: str) -> str:
@@ -1731,6 +2001,17 @@ def main() -> int:
                 # color— no saldría nunca. Va detrás de la factura porque es donde se da de alta.
                 "una máquina",
                 "su ITV vencida",
+                # El gasto, el trabajo pensado, el trabajo hecho, la cuenta y su extracto (T13, T15 y T20,
+                # 05/10/2026): son los datos que hacen que las cuatro pantallas nuevas se comprueben **con
+                # cosas dentro**. Van aquí, en este orden, porque es el orden en el que se dan de alta.
+                "un gasto",
+                "un trabajo pensado",
+                "un trabajo hecho",
+                "una cuenta del banco",
+                "su extracto importado",
+                # Y el papel de la bandeja (T08, 06/10/2026): es lo que hace que la bandeja se compruebe
+                # con algo dentro y que su ficha tenga un original que enseñar.
+                "un papel en la bandeja",
                 "un tratamiento",
             ],
             f"se ha dejado: {', '.join(datos)}",
@@ -1929,6 +2210,24 @@ def main() -> int:
             # midió que se salía **1.621 px dentro de un hueco de 1.024** antes de meterla en el
             # contenedor que se desplaza solo. A 1024 px es donde entra la versión de ordenador.
             ("la lista de maquinaria", "#/maquinaria", (390, 1024, 1440)),
+            # **Las cuentas, los trabajos y el banco** (T13, T15 y T20, 05/10/2026), a los tres anchos del
+            # contrato. Son las tres que llevan tabla o lista larga —los gastos con sus columnas de importe
+            # y pendiente, y los movimientos del banco, que son siete columnas—, que es justo lo que se
+            # rompe de ancho. Se abren por su dirección, que es como las abre el agricultor.
+            # **Y el panel de mando**, la portada del ordenador, que es la primera que ve el agricultor
+            # en un PC y la que nadie medía a 1024 ni a 1440 px. Aquí sí se mide, y sirvió: su tabla de
+            # «los últimos apuntes» empujaba la página **2 px** fuera del hueco a 1024 px (`se sale 1026 de
+            # 1024`) y con ella toda la pantalla. Se arregló metiéndola en el contenedor que se desplaza
+            # solo (`.tabla-scroll`), como la tabla de la maquinaria de T14. A 390 px ya estaba medido
+            # arriba, en «inicio», así que aquí solo van los dos anchos de ordenador.
+            ("el panel de mando", "", (1024, 1440)),
+            # **La bandeja de los papeles (T08, 06/10/2026)**, a los tres anchos del contrato. Lleva la
+            # subida del fichero, la lista de lo que hay que revisar y lo que falta por decir de cada
+            # papel, así que es una de las que se rompen de ancho. Se abre por su dirección.
+            ("la bandeja de los papeles", "#/papeles/bandeja", (390, 1024, 1440)),
+            ("las cuentas", "#/cuentas", (390, 1024, 1440)),
+            ("los trabajos", "#/trabajos", (390, 1024, 1440)),
+            ("el banco y los papeles", "#/cuentas/bancos", (390, 1024, 1440)),
         ]
         # **Y la ficha de versiones de una tierra** (T06), que se abre por `#/tierras/<id>/versiones`
         # y necesita el identificador de una tierra de verdad: se le pregunta al servidor cuál hay. Si
@@ -1942,6 +2241,37 @@ def main() -> int:
                 (
                     "las versiones de una tierra",
                     f"#/tierras/{identificador_de_una_tierra}/versiones",
+                    (390, 1024, 1440),
+                )
+            )
+        # **Y la ficha de un papel de la bandeja** (T08), que se abre por `#/papeles/bandeja/<id>` y
+        # necesita, como las tres de arriba, un identificador de verdad. Es la pantalla con más bloques de
+        # la bandeja —el original, lo leído, los enlaces y los candidatos—, así que se mide a los tres
+        # anchos. Misma regla que las otras: si no hubiera ningún papel, esa pantalla no se comprueba.
+        identificador_de_un_papel = el_primer_papel_de_la_bandeja(direccion, token)
+        if identificador_de_un_papel is None:
+            comprobar(False, "no hay ningún papel en la bandeja con el que abrir su ficha")
+        else:
+            pantallas_estrechas.append(
+                (
+                    "la ficha de un papel de la bandeja",
+                    f"#/papeles/bandeja/{identificador_de_un_papel}",
+                    (390, 1024, 1440),
+                )
+            )
+        # **Y la historia de una tierra** (T15), que se abre por `#/tierras/<id>/historial` y necesita,
+        # como las dos de arriba, el identificador de una tierra de verdad. Es **el recorrido 5 entero**
+        # —lo que hay sembrado, lo que se ha hecho, lo que está pensado y lo que consta que ha costado—,
+        # así que se mide a los tres anchos: lleva el historial, sus tablas y la tabla de costes, que es
+        # donde una pantalla así se sale de lo ancho. Misma regla que las otras dos: si no hubiera ninguna
+        # tierra, esa pantalla no se comprueba, mejor eso que medir una dirección que no lleva a nada.
+        if identificador_de_una_tierra is None:
+            comprobar(False, "no hay ninguna tierra con la que abrir su historia")
+        else:
+            pantallas_estrechas.append(
+                (
+                    "la historia de una tierra",
+                    f"#/tierras/{identificador_de_una_tierra}/historial",
                     (390, 1024, 1440),
                 )
             )
@@ -1970,6 +2300,16 @@ def main() -> int:
                         medido is not None and medido[1] == ancho,
                         f"{ancho} px · {nombre}: se ha medido en un hueco de {ancho} px de verdad "
                         f"({medido[1] if medido else html and 'sin medir'} px)",
+                    )
+                    # **Y que sea esa pantalla.** Sin esto, una dirección que la aplicación no sabe
+                    # abrir mediría otra pantalla y la comprobación diría «cabe entera» de algo que no es
+                    # lo que se pidió: es la mitad que le faltaba a esta parte del guion.
+                    direccion_medida = _la_direccion_medida(html)
+                    esperada = fragmento.split("?")[0] or "#/"
+                    comprobar(
+                        direccion_medida.split("?")[0] == esperada,
+                        f"{ancho} px · {nombre}: se ha medido **esa** pantalla "
+                        f"(se pidió {esperada} y la aplicación acabó en {direccion_medida or 'ninguna'})",
                     )
                     se_sale = _la_pantalla_se_sale(html)
                     cuerpo = _cuerpo_del_hueco(html)

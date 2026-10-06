@@ -2242,9 +2242,107 @@ class DocumentoAnexo(Base):
     fichero_tipo: Mapped[str | None] = mapped_column(String(120))
     fichero_bytes: Mapped[int | None] = mapped_column(Integer)
 
+    # --- La bandeja documental (T08, S10, 06/10/2026) ---------------------
+    #
+    # Lo que le faltaba a un papel para poder llegar por la bandeja: su huella, en qué punto va la
+    # revisión, lo que se ha leído, lo que el agricultor ha aceptado y a quién rectifica. Las cuatro
+    # cosas van **en el papel**, y no en una tabla de la bandeja, porque son cosas del papel: un
+    # contrato es el mismo contrato se mire desde la bandeja o desde «los papeles», y tener dos filas
+    # del mismo papel acabaría con una de las dos vieja.
+
+    # **La huella del fichero tal y como llegó** (SHA-256, 64 caracteres). Es lo que permite decir
+    # «este mismo papel ya lo tienes» **antes** de apuntarlo, y **no se recalcula nunca**: si se
+    # recalculara al confirmar y el fichero hubiera cambiado, la huella diría que es otro papel y el
+    # duplicado se colaría. Vacía cuando el papel no tiene fichero (uno apuntado de palabra).
+    huella: Mapped[str | None] = mapped_column(String(64), index=True)
+
+    # En qué punto va la revisión: recien_subido | clasificado | propuesta_revisada | confirmado (ver
+    # `bandeja.ESTADOS`). Mientras no sea `confirmado`, el papel está **sin revisar** y se ve en la
+    # bandeja; al confirmarlo sale de la bandeja y se ve en «los papeles».
+    # **Sin valor por defecto, y es una decisión del 05/10/2026, al integrar el ticket.** Lo pone quien
+    # sube el papel a la bandeja (`bandeja_api.subir_a_la_bandeja`, con `bandeja.estado_al_subirlo`), y
+    # **solo esa puerta**: un papel apuntado a mano en «los papeles» o el que ya tenía el agricultor antes
+    # de que esto existiera se quedan sin estado, que es la verdad —no han pasado por la bandeja— y es lo
+    # que hace que la bandeja no se llene de papeles viejos el día de la actualización (la columna se
+    # añade con el valor por defecto de Python cuando lo hay: ver `database._valor_por_defecto`).
+    estado_revision: Mapped[str | None] = mapped_column(String(24), index=True)
+
+    # **Lo que el programa ha leído, guardado aparte de los campos del papel.** Es una propuesta: vive
+    # en su columna, en JSON, y **no se escribe** en `titulo`, `fecha` ni `quien` hasta que el
+    # agricultor confirma. Dentro van los campos de la cabecera, las líneas, los avisos del lector y
+    # las dos cuentas que sí se pueden comprobar. No hay ningún porcentaje ni ninguna medida de la
+    # calidad de la lectura, y eso es a propósito: el corpus para medirla (T07) no existe.
+    propuesta: Mapped[str | None] = mapped_column(Text)
+    # Cómo se leyó (`pdf`, `escaneo`, `foto`, `texto`), para poder decirlo sin abrir la propuesta.
+    como_se_leyo: Mapped[str | None] = mapped_column(String(20))
+    # Y si el agricultor ha dicho que la lectura no le sirve. Descartarla **no la borra**: queda lo que
+    # se leyó, que es lo que permite entender dentro de un año por qué este papel se escribió a mano.
+    propuesta_descartada: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # **Lo que el agricultor ha aceptado** de esa lectura: los mismos campos, en JSON y con los importes
+    # en texto decimal. Es lo que pasa al papel al confirmar, y es lo que deja ver la diferencia entre
+    # «lo que propuso el programa» y «lo que aceptó él».
+    datos_confirmados: Mapped[str | None] = mapped_column(Text)
+
+    # Quién y cuándo dio el visto bueno. Vacío quiere decir «todavía no lo ha confirmado nadie», que no
+    # es lo mismo que «confirmado sin decir quién».
+    confirmado_en: Mapped[dt.datetime | None] = mapped_column(DateTime)
+    confirmado_por_usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+
+    # A quién rectifica este papel (la factura corregida rectifica a la anterior). La relación se guarda
+    # **solo en la rectificativa**, que es quien sabe a quién corrige: así no hay dos columnas que
+    # puedan decir cosas distintas, y «esta está rectificada» se deduce (hay otra que la apunta).
+    rectifica_a_id: Mapped[int | None] = mapped_column(ForeignKey("documentos_anexos.id"))
+
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class VinculoDeDocumento(Base):
+    """Con qué va un papel: la compra, el gasto, la venta, la máquina, el trabajo o la inspección.
+
+    ## Por qué es una tabla y no seis columnas en el papel
+
+    Porque **un papel puede ir con varias cosas a la vez** y con un número distinto de cada una: la
+    factura del gasóleo va con el gasto y con el tractor, y el albarán de una labor va con el trabajo y
+    con la máquina que la hizo. Con columnas fijas (`gasto_id`, `maquina_id`…) el día que un papel fuera
+    con dos gastos habría que cambiar la tabla; así, lo que hay es una fila por vínculo.
+
+    Y es **una sola tabla para las seis clases** en vez de seis tablas casi iguales, por el mismo motivo
+    por el que este programa tiene un solo `adjuntos.py`: seis sitios donde equivocarse con el
+    aislamiento entre fincas son seis sitios donde equivocarse. Lo que dice de qué va cada fila es
+    `clase`, y sus valores son los de `bandeja.CLASES_DE_VINCULO`.
+
+    ## Nada se crea al enlazar
+
+    Enlazar escribe una fila aquí y **no toca ninguna otra tabla** (con una excepción, dicha en su
+    sitio: enlazar un certificado con su inspección rellena `InspeccionDeMaquina.documento_id`, que es
+    el campo que ya existía y que enseña la ficha de la máquina). Ni un gasto, ni una factura, ni una
+    venta salen de aquí: eso se apunta en su pantalla, con sus campos y sus comprobaciones.
+
+    ## Se puede quitar, y queda el rastro
+
+    Desvincular **borra esta fila** y escribe en la auditoría quién, cuándo y con qué estaba enlazado.
+    Dejarla «quitada» (`quitado_en`) parecía más prudente y es peor: esa fila seguiría contando como
+    dependencia del papel para siempre —`correcciones.en_uso` cuenta las filas, no las vivas— y el
+    agricultor no podría borrar un papel por un enlace que él mismo ya había quitado.
+    """
+
+    __tablename__ = "vinculos_de_documento"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    documento_id: Mapped[int] = mapped_column(ForeignKey("documentos_anexos.id"), index=True)
+    # compra | gasto | venta | maquina | trabajo | inspeccion. Ver `bandeja.CLASES_DE_VINCULO`.
+    clase: Mapped[str] = mapped_column(String(20), index=True)
+    # La fila de esa clase: la factura de compra, el gasto, la venta, la máquina, la labor o la
+    # inspección. No es una clave ajena a propósito: apunta a **seis tablas distintas**, así que la base
+    # no puede comprobarlo y quien comprueba que sea de esta finca es el router.
+    entidad_id: Mapped[int] = mapped_column(Integer, index=True)
+
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+    creado_por_usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
 
 
 # --------------------------------------------------------------------------

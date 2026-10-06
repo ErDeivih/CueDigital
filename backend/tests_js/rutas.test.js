@@ -252,6 +252,10 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     trabajo_tierra: { id: 12 },
     // T20 (05/10/2026): la ficha de un movimiento del banco, dentro de la familia de las cuentas.
     banco_movimiento: { id: 5 },
+    // T08 (06/10/2026): la ficha de un papel de la bandeja, dentro de la familia de los papeles. Su
+    // identificador va en el camino, igual que en las demás fichas; sin él no tiene dirección (lo
+    // comprueba la prueba de abajo, con la lista de las que no la tienen sin su identificador).
+    bandeja_papel: { id: 12 },
   };
   for (const pantalla of pantallas()) {
     const parametros = {
@@ -367,6 +371,16 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     "maquinaria",
     "maquina",
     "papeles",
+    // **La bandeja documental (T08, 06/10/2026)**: lo que llega y hay que revisar (`#/papeles/bandeja`) y
+    // la ficha de un papel (`#/papeles/bandeja/12`), donde se mira el original con la propuesta al lado y
+    // se confirma. Las dos piden sus datos al servidor al abrir su dirección, así que se pueden enlazar y
+    // recargar. Van **con los papeles** porque la bandeja es la mesa de la entrada y «los papeles» es el
+    // armario: es la misma familia, y el contrato la dibuja dentro de `/papeles`. **Sus formularios no
+    // tienen dirección a propósito** (la revisión de lo que queda y la comprobación del fichero que se
+    // está subiendo): al recargar saldrían vacíos. El tramo de texto fijo (`bandeja`) va **antes** que el
+    // identificador, como en todas las familias —y por eso van **antes** de nada más dentro de `papeles`—.
+    "bandeja",
+    "bandeja_papel",
     "junta",
     "datos",
     "quien_entra",
@@ -823,6 +837,70 @@ test("llamar dos veces a lo mismo da lo mismo: el módulo no se acuerda de nada"
   const copia = pantallas();
   copia.push("inventada");
   assert.equal(esConocida("inventada"), false, "la tabla del módulo se ha podido tocar desde fuera");
+});
+
+// ---------------------------------------------------------------------------
+// Toda dirección que se escribe tiene que poder abrirse (05/10/2026)
+// ---------------------------------------------------------------------------
+
+/**
+ * Las direcciones que **se escriben y no se abren**, con su motivo por escrito.
+ *
+ * POR QUÉ EXISTE ESTA LISTA, Y POR QUÉ ESTÁ VACÍA. Una dirección que la aplicación escribe en la barra
+ * del navegador y que luego no sabe abrir es la peor de las mentiras de un programa: el agricultor
+ * recarga —o le manda el enlace a quien le ayuda— y aterriza en otra pantalla. Pasó de verdad: la
+ * agenda de los trabajos (T15) escribía `#/trabajos`, y al abrir esa dirección la aplicación caía al
+ * panel de mando, porque su clave no estaba en `ABRIR_LA_PANTALLA`. Lo encontró el guion del navegador
+ * —que anota en el `<title>` en qué dirección ha acabado— y no lo había visto ninguna prueba. Hoy
+ * **ninguna** dirección está en esta lista: las cuarenta y ocho se abren. Si alguna vez una no se puede
+ * abrir, se escribe aquí **con su motivo**, que es lo que esta prueba exige en vez de dejarlo pasar.
+ */
+const DIRECCIONES_QUE_NO_SE_ABREN = {};
+
+test("toda dirección de la tabla tiene su puerta en app.js, o su motivo escrito aquí", () => {
+  const app = sinComentarios(readFileSync(new URL("../web/app.js", import.meta.url), "utf8"));
+  // Las que se abren directamente por su clave (`tierras`, `almacen`, `mapa`…).
+  const bloque = app.match(/const ABRIR_LA_PANTALLA = \{([\s\S]*?)\n\};/);
+  assert.ok(bloque, "no se ha podido leer la tabla `ABRIR_LA_PANTALLA` de app.js");
+  const enElMapa = new Set([...bloque[1].matchAll(/^\s*([a-z_]+):\s*\(\)/gm)].map((caza) => caza[1]));
+  // Y las que se abren con un `if` dentro de `abrirLaPantalla`: hay claves que no están en el mapa
+  // porque antes de abrir la pantalla hay que comprobar algo —si esa tierra es suya, si hay cobertura,
+  // si ese identificador está entre los descargados— y esa comprobación vive en el `if`. (`abrirLaDireccion`
+  // es la de arriba: lee la dirección y cambia de finca si hace falta; quien decide la pantalla es esta.)
+  const funcion = app.match(/function abrirLaPantalla\(clave, parametros = \{\}\) \{([\s\S]*?)\n\}/);
+  assert.ok(funcion, "no se ha podido leer `abrirLaPantalla` de app.js");
+  const enLosIfs = new Set([...funcion[1].matchAll(/clave === "([a-z_]+)"/g)].map((caza) => caza[1]));
+
+  const sinPuerta = pantallas().filter(
+    (clave) =>
+      !enElMapa.has(clave) && !enLosIfs.has(clave) && !(clave in DIRECCIONES_QUE_NO_SE_ABREN),
+  );
+  assert.deepEqual(
+    sinPuerta,
+    [],
+    `estas direcciones se escriben y no hay quien las abra: ${sinPuerta.join(", ")}. ` +
+      "Se añade su puerta en `app.js`, o se declara en `DIRECCIONES_QUE_NO_SE_ABREN` con su motivo.",
+  );
+
+  // Y la lista de excepciones no puede envejecer: una que ya se abra es una excepción que sobra, y un
+  // motivo de tres palabras no es un motivo.
+  for (const clave of Object.keys(DIRECCIONES_QUE_NO_SE_ABREN)) {
+    assert.ok(
+      !enElMapa.has(clave) && !enLosIfs.has(clave),
+      `«${clave}» figura como que no se abre, y sí se abre: quítala de la lista`,
+    );
+    assert.ok(
+      String(DIRECCIONES_QUE_NO_SE_ABREN[clave]).length > 20,
+      `«${clave}» no dice por qué no se abre`,
+    );
+  }
+
+  // Y que el lector no se haya comido el fichero: si se lo comiera, las dos listas saldrían vacías y
+  // esta prueba pasaría sin mirar nada (el fallo que ya tuvo el quitador de comentarios de este mismo
+  // fichero, y por eso tiene su propia prueba más abajo).
+  assert.ok(enElMapa.size > 20, `la tabla de puertas leída es demasiado corta: ${enElMapa.size}`);
+  assert.ok(enLosIfs.size > 10, `los «if» leídos son demasiado pocos: ${enLosIfs.size}`);
+  assert.ok(funcion[1].length > 1000, "el cuerpo de `abrirLaPantalla` leído es demasiado corto");
 });
 
 // ---------------------------------------------------------------------------

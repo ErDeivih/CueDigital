@@ -192,6 +192,18 @@ export const PANTALLAS = [
   { clave: "maquinaria", patron: ["maquinaria"] },
   { clave: "maquina", patron: ["maquinaria", ":id"] },
   { clave: "papeles", patron: ["papeles"] },
+  // **La bandeja documental (T08, S10, 06/10/2026).** La lista vive **dentro de la familia de los
+  // papeles** (`#/papeles/bandeja`), que es el renglón del menú del que sale: la bandeja es lo que llega
+  // y hay que revisar, y «los papeles» es lo que ya está archivado. Se reconstruye entera al abrir su
+  // dirección —pide sus datos al servidor—, así que se puede enlazar, recargar y mandar a quien ayuda.
+  // Y el tramo de texto fijo va **antes** que el identificador, como en todas las familias: si no,
+  // `#/papeles/bandeja` se leería como un papel llamado «bandeja», que no existe.
+  { clave: "bandeja", patron: ["papeles", "bandeja"] },
+  // Y **la ficha de un papel tiene su dirección** (`#/papeles/bandeja/12`): al recargarla se vuelven a
+  // pedir al servidor su propuesta, sus enlaces y sus candidatos, así que no sale vacía. Lo que **no**
+  // tiene dirección son sus formularios (la revisión de lo que queda y la comprobación del fichero que se
+  // está subiendo): al recargar saldrían vacíos, y eso es peor que no tener dirección.
+  { clave: "bandeja_papel", patron: ["papeles", "bandeja", ":id"] },
   { clave: "junta", patron: ["junta"] },
   { clave: "datos", patron: ["datos"] },
   // Quién entra en la finca: es un destino de «mis datos» (pide sus dos listas al servidor), no un paso

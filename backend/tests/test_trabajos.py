@@ -1123,3 +1123,130 @@ class TestElInformeYElCodigoDicenLoMismo:
             "trabajo-anular-confirmar",
         ):
             assert pieza in texto, f"al informe le falta el bloque o la línea «{pieza}»"
+
+
+# ==========================================================================
+# El cultivo que el agricultor declaró, contra la API (05/10/2026)
+# ==========================================================================
+#
+# **Estas pruebas existen por un defecto que se vio en un navegador de verdad.** La historia de una
+# tierra enseñaba «de esta tierra no consta que haya nada sembrado» en una tierra que **sí** tenía su
+# cultivo puesto en «qué hay sembrado»: «qué hay hoy» se calculaba solo con las labores de siembra y
+# plantación, y el agricultor apunta lo que tiene sembrado en la pantalla de los cultivos —la que va al
+# cuaderno de la Junta— sin que haga falta apuntar además una labor de siembra. Dos pantallas del mismo
+# programa diciendo cosas distintas de la misma tierra y el mismo año.
+#
+# Lo que se comprueba aquí, una por una, son las cuatro cosas que pueden pasar: lo declarado sale, lo que
+# dice una labor de siembra manda sobre lo declarado, sin nada no se inventa un cultivo, y el cultivo de
+# **otro año** no se cuela como el de hoy.
+
+
+class TestLoQueElAgricultorDeclaro:
+    def _declarar(self, cliente, cuenta, campana, parcela, **cambios):
+        datos = {
+            "campana_id": campana["id"],
+            "especie": "TRIGO BLANDO",
+            "variedad": "Craklin",
+            "fecha_inicio": "2026-03-01",
+        }
+        datos.update(cambios)
+        respuesta = cliente.post(
+            f"/api/parcelas/{parcela['id']}/cultivos",
+            headers=cuenta["cabeceras"],
+            json=datos,
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()
+
+    def _hecho(self, cliente, cuenta, campana, parcela, **cambios):
+        datos = {
+            "campana_id": campana["id"],
+            "tipo": "laboreo",
+            "subtipo": "cultivador",
+            "fecha": "2026-03-18",
+            "parcela_id": parcela["id"],
+        }
+        datos.update(cambios)
+        respuesta = cliente.post("/api/trabajos", headers=cuenta["cabeceras"], json=datos)
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()
+
+    def test_una_tierra_con_el_cultivo_declarado_y_sin_labores_lo_ensena(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """**El caso que se veía mal**: cultivo declarado, ninguna labor de siembra.
+
+        Si esto fallara, abrir una tierra con TRIGO BLANDO declarado diría que no consta que haya nada
+        sembrado, que es lo contrario de lo que dice la pantalla de al lado con los mismos datos.
+        """
+        parcela = crear_parcela(alias="El Prado")
+        self._declarar(cliente, cuenta, campana, parcela)
+        respuesta = cliente.get(f"/api/trabajos/tierra/{parcela['id']}", headers=cuenta["cabeceras"])
+        assert respuesta.status_code == 200, respuesta.text
+        cultivo = respuesta.json()["estado"]["cultivo_declarado"]
+        assert cultivo is not None, "la historia no ve el cultivo que el agricultor declaró"
+        assert cultivo["cultivo"] == "TRIGO BLANDO"
+        assert cultivo["variedad"] == "Craklin"
+        assert cultivo["fecha"] == "2026-03-01"
+        # Y se dice **de dónde sale**: no es lo mismo deducirlo de una labor que leerlo de lo que él dijo.
+        assert cultivo["de_donde"] == "lo_dijo_el_agricultor"
+        assert cultivo["trabajo_id"] is None, "se ha inventado una labor de siembra que nadie apuntó"
+        # **Las dos puertas dicen lo mismo**: el estado solo y el estado dentro de la historia.
+        otro = cliente.get(f"/api/trabajos/estado/{parcela['id']}", headers=cuenta["cabeceras"])
+        assert otro.status_code == 200, otro.text
+        assert otro.json()["cultivo_declarado"] == cultivo
+
+    def test_lo_que_dice_una_labor_de_siembra_manda_sobre_la_declaracion(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """Una siembra apuntada es un hecho del cuaderno y no se pisa con la declaración.
+
+        Si esto fallara, apuntar «he sembrado cebada» y luego mirar la tierra diría trigo: el historial
+        contaría una cosa y el estado de arriba, otra.
+        """
+        parcela = crear_parcela(alias="El Prado")
+        self._declarar(cliente, cuenta, campana, parcela, especie="TRIGO BLANDO")
+        self._hecho(cliente, cuenta, campana, parcela, tipo="siembra", subtipo=None, cultivo="CEBADA")
+        estado = cliente.get(
+            f"/api/trabajos/tierra/{parcela['id']}", headers=cuenta["cabeceras"]
+        ).json()["estado"]
+        assert estado["cultivo_declarado"]["cultivo"] == "CEBADA", (
+            "la declaración ha pisado lo que dice la labor de siembra"
+        )
+        assert estado["cultivo_declarado"]["trabajo_id"] is not None
+        assert estado["cultivo_declarado"].get("de_donde") != "lo_dijo_el_agricultor"
+
+    def test_sin_declaracion_y_sin_siembra_no_se_inventa_un_cultivo(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """Sin nada que lo diga, el cultivo no consta. **Un hueco no es un cero ni un «no hay».**"""
+        parcela = crear_parcela(alias="La Vega")
+        self._hecho(cliente, cuenta, campana, parcela)
+        estado = cliente.get(
+            f"/api/trabajos/tierra/{parcela['id']}", headers=cuenta["cabeceras"]
+        ).json()["estado"]
+        assert estado["cultivo_declarado"] is None
+        assert estado["se_ha_sembrado"] is False
+
+    def test_el_cultivo_declarado_de_otro_ano_no_sale_como_lo_de_hoy(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        """El cultivo es **de un año**: el de 2025 no es lo que hay sembrado hoy.
+
+        Si esto fallara, la historia de una tierra diría en 2026 lo que se sembró en 2025, que es
+        justamente lo que no se puede afirmar sin mirar el campo.
+        """
+        parcela = crear_parcela(alias="El Prado")
+        otra = cliente.post(
+            "/api/campanas",
+            headers=cuenta["cabeceras"],
+            json={"anio": 2025, "fecha_inicio": "2024-09-01", "fecha_fin": "2025-08-31"},
+        )
+        assert otra.status_code == 201, otra.text
+        self._declarar(cliente, cuenta, campana, parcela, campana_id=otra.json()["id"], especie="CEBADA")
+        estado = cliente.get(
+            f"/api/trabajos/tierra/{parcela['id']}", headers=cuenta["cabeceras"]
+        ).json()["estado"]
+        assert estado["cultivo_declarado"] is None, (
+            "el cultivo de 2025 ha salido como lo que hay sembrado en 2026"
+        )

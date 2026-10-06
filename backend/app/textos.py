@@ -3807,6 +3807,10 @@ def _recoger(valor) -> list[str]:
 # «documentación complementaria» en lo que él lee.
 DOCUMENTOS: dict[str, str] = {
     "titulo": "Los papeles",
+    # **La puerta de la bandeja** (T08, S10, 06/10/2026): el botón que entra desde «los papeles» a lo
+    # que llega y hay que revisar. Se llama como la pantalla a la que lleva, que es la regla de la
+    # casa con los botones que abren un sitio.
+    "bandeja": "LA BANDEJA: LO QUE HAY QUE REVISAR",
     "explica": (
         "Aquí guardas los papeles que acompañan al cuaderno: el contrato de la tierra, las "
         "facturas de lo que compras, los resguardos de los envases. El cuaderno dice lo que "
@@ -4960,6 +4964,12 @@ PANEL: dict[str, str] = {
     # el diseño de escritorio de esta pantalla (`docs/stitch/escritorio/estructura.png`) y es la pregunta que
     # se hace al mirar una tierra en el despacho.
     "tierra_ultimos": "Lo último que le has hecho",
+    # **El botón que abre su historia** (T15, 05/10/2026): lo que ha pasado en esa tierra —sus trabajos
+    # hechos, lo que queda previsto y lo que consta que ha costado—. Se llama **igual que el título de la
+    # pantalla a la que lleva** (`AGENDA.historia_titulo`), que es la regla de la casa con los botones que
+    # abren un sitio: el mismo nombre en el renglón y en la pantalla. Se pinta en mayúsculas porque es un
+    # botón, no una frase.
+    "tierra_historia": "LO QUE HA PASADO EN ESTA TIERRA",
 }
 
 
@@ -5554,6 +5564,11 @@ def textos_visibles() -> list[str]:
     # de claves compuestas, y `_recoger` las recorre todas. Un texto de pantalla que no pase por aquí es un
     # texto que se lee sin que el test de jerga lo mire.
     textos.extend(_recoger(BANCOS))
+    # **La bandeja de los papeles (T08, S10, 06/10/2026).** Se recoge entera, con `_recoger` y no con
+    # `.values()`, por el mismo motivo que los del T13, el T15 y el T20: dentro lleva las familias
+    # compuestas (`estado_…`, `clase_…`, `que_hacer_…`) y `_recoger` las recorre todas. Un texto de
+    # pantalla que no pase por aquí es un texto que se lee sin que el test de jerga lo mire.
+    textos.extend(_recoger(BANDEJA))
     return textos
 
 
@@ -7636,6 +7651,57 @@ MENSAJES.update({
     ),
 })
 
+# --------------------------------------------------------------------------
+# Los mensajes de la bandeja documental (T08, S10, 06/10/2026)
+# --------------------------------------------------------------------------
+#
+# Lo que el servidor dice cuando algo no se puede hacer, con el prefijo `T08_` de este ticket (los del
+# banco son `T20_`, y así se sabe de qué pantalla es cada uno). Todos dicen **qué pasa y qué hacer**, que
+# es la regla de la casa: un aviso que no dice qué hacer deja al agricultor parado delante de la pantalla.
+MENSAJES_DE_LA_BANDEJA: dict[str, str] = {
+    # --- el papel y su ficha ---
+    "T08_ese_papel_no_esta_en_tu_bandeja": "Ese papel no está en tu bandeja. Míralo en LOS PAPELES y vuelve a intentarlo.",
+    "T08_eso_no_esta_en_tu_cuaderno": "Eso no está en tu cuaderno. Elige algo que ya tengas apuntado.",
+    "T08_sin_fichero_no_se_puede_leer": "Este papel está apuntado sin su fichero, así que no hay nada que leer. Súbelo desde LOS PAPELES y vuelve a intentarlo.",
+    "T08_este_papel_no_lo_se_leer": "De este tipo de papel todavía no sé leer nada. Escribe los datos a mano: quedan guardados igual.",
+    "T08_el_fichero_ha_cambiado": "El fichero que tengo guardado no es el que subiste, así que no lo he leído. Vuelve a subir el papel bueno.",
+    # --- clasificar y revisar ---
+    "T08_ese_tipo_no_existe": "Ese tipo de papel no lo conozco. Los que hay: {tipos}.",
+    "T08_ese_estado_no_existe": "Ese estado no lo conozco. Los que hay: {estados}.",
+    "T08_no_has_aceptado_nada": "No has dicho qué queda de este papel. Escribe lo que ponga el papel y vuelve a intentarlo.",
+    "T08_ese_importe_no_se_entiende": "Ese importe no lo entiendo. Escríbelo como en el papel, por ejemplo 1.234,56.",
+    "T08_esa_fecha_no_se_entiende": "Esa fecha no la entiendo. Escríbela como 31/12/2026.",
+    "T08_esa_fecha_no_existe": "Esa fecha no existe. Mírala y vuelve a escribirla.",
+    "T08_no_hay_lectura_que_descartar": "De este papel no hay ninguna lectura que descartar. Léelo primero.",
+    "T08_dime_por_que_no_sirve": "Dime por qué no te sirve la lectura, para que quede apuntado.",
+    "T08_revisado_sin_confirmar": "Guardado lo que queda de este papel. Está sin confirmar: confírmalo cuando lo tengas claro.",
+    "T08_lectura_descartada": "Descartada esa lectura: queda guardada con tu motivo, y el papel sigue esperando.",
+    # --- confirmar ---
+    "T08_hay_que_revisar_antes": "Antes de confirmar hay que revisar el papel y decir qué queda: ábrelo, mira lo que dice (o escríbelo a mano) y guárdalo.",
+    "T08_papel_confirmado": "Papel confirmado. Ya está en LOS PAPELES, con su fichero tal y como llegó.",
+    # --- el duplicado ---
+    "T08_el_mismo_papel_ya_estaba": "Este mismo papel ya lo tienes: «{titulo}», subido el {cuando}. No se ha apuntado otra vez.",
+    "T08_el_mismo_papel_esta_en_una_factura": "Este mismo fichero ya lo subiste como la factura de compra «{quien}» (nº {numero}). No se ha apuntado otra vez.",
+    "T08_papel_en_la_bandeja": "Papel guardado tal y como llegó. Está en la bandeja, sin revisar: nada ha entrado en tu cuaderno todavía.",
+    # --- enlazar ---
+    "T08_esa_clase_no_existe": "Con eso no se puede enlazar un papel. Se puede con: {clases}.",
+    "T08_dime_con_que_lo_enlazo": "Dime con qué quieres enlazar este papel.",
+    "T08_no_hay_nada_que_enlazar": "No hay nada de eso en tu cuaderno. Apúntalo primero en su pantalla y vuelve a intentarlo.",
+    "T08_ya_estaba_enlazado": "Este papel ya está enlazado con eso.",
+    "T08_esa_inspeccion_ya_tiene_papel": "Esa inspección ya tiene su papel. Quítaselo a la otra antes de ponérselo a esta.",
+    "T08_papel_enlazado": "Enlazado. No se ha creado nada: el papel solo dice con qué va.",
+    "T08_dime_que_enlace_quito": "Dime qué enlace quieres quitar.",
+    "T08_ese_enlace_no_esta": "Este papel no está enlazado con eso, así que no hay nada que quitar.",
+    "T08_papel_desenlazado": "Quitado ese enlace. Lo que había apuntado sigue en tu cuaderno igual que estaba.",
+    # --- rectificar ---
+    "T08_dime_a_que_papel_rectifica": "Dime a qué papel corrige este. Elige uno de la lista.",
+    "T08_un_papel_no_se_rectifica_a_si_mismo": "Un papel no puede corregirse a sí mismo. Elige el papel al que corrige.",
+    "T08_esto_haria_un_circulo": "Así los papeles se corregirían unos a otros en círculo. Mira a qué corrige cada uno y elige el bueno.",
+    "T08_rectifica_a_otro": "Apuntado: este papel corrige a ese. Los dos siguen ahí, y el corregido queda marcado.",
+}
+MENSAJES.update(MENSAJES_DE_LA_BANDEJA)
+
+
 AGENDA: dict[str, str] = {
     "titulo": "Los trabajos",
     "explica": "Aquí tienes lo que tienes pensado hacer y lo que ya has hecho, en dos listas separadas. Lo que está pensado no ha gastado nada del almacén: lo que se gasta se apunta cuando el trabajo se hace.",
@@ -8090,4 +8156,238 @@ BANCOS: dict[str, str] = {
     "propuesta_exacta": "Cuadra exacto con este papel",
     "propuesta_agrupada": "Cuadra con varios papeles a la vez",
     "propuesta_parcial": "Es una parte de lo que le falta",
+}
+
+
+# --------------------------------------------------------------------------
+# La bandeja de los papeles (T08, S10, 06/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Lo que llega y hay que revisar**, que no es lo mismo que «los papeles» (lo que ya está archivado):
+# la bandeja es la mesa de la entrada y «los papeles» es el armario. Las palabras son las del agricultor,
+# y las tres que más importan se dicen aquí para que nadie las busque: **el original** (el fichero tal y
+# como llegó, que no se toca), **la propuesta** (lo que el programa ha leído, que no es un dato) y **lo
+# que has aceptado** (que es lo que queda, y todavía sin confirmar).
+#
+# Dos familias de claves se leen **compuestas**, y las dos las resuelve el servidor y llegan ya escritas:
+#
+#   · `estado_<estado>` — cómo está un papel (`recien_subido`, `clasificado`, `propuesta_revisada`,
+#     `confirmado`) más `estado_desconocido`, que es lo que se dice si el estado no es ninguno de esos.
+#     El servidor manda la palabra en `etiqueta_estado`.
+#   · `clase_<clase>` — con qué va un papel (`compra`, `gasto`, `venta`, `maquina`, `trabajo`,
+#     `inspeccion`) más `clase_desconocida`. El servidor manda la palabra en `etiqueta_clase`.
+#
+# Y `que_hacer_<estado>`: qué hacer con un papel que está así. **No hay `que_hacer_confirmado`** a
+# propósito: de un papel confirmado no hay nada que hacer, y por eso su frase no existe (la pantalla no la
+# busca).
+BANDEJA: dict = {
+    "titulo": "La bandeja de los papeles",
+    "explica": (
+        "Aquí llega lo que todavía no has mirado: la foto de una factura, el ticket del gasóleo, el "
+        "certificado de una máquina. El papel se guarda tal y como llega, y nada entra en tu cuaderno "
+        "hasta que tú lo confirmes."
+    ),
+    "cuantos": "Tienes {cuantos} papeles en la bandeja.",
+    # Con uno solo, «Tienes 1 papeles en la bandeja» (ronda 84).
+    "cuantos_uno": "Tienes 1 papel en la bandeja.",
+    "sin_papeles": (
+        "La bandeja está vacía: no tienes ningún papel esperando. Sube uno con el botón de aquí arriba "
+        "cuando te llegue."
+    ),
+    "sin_resultados": "Ningún papel coincide con lo que buscas. Prueba con otras letras o pulsa VER TODO.",
+    "faltan_por_decir_de_que_son": (
+        "Hay papeles a los que todavía no has dicho de qué son. Ábrelos y dilo: un papel que no se sabe "
+        "qué es no sirve de nada en una inspección."
+    ),
+    "no_consta": "No consta",
+    "si": "Sí",
+    "no": "No",
+    "buscando": "Buscando…",
+    # Lo que se dice de algo enlazado que ya no está en el cuaderno: se dice, en vez de enseñar su número.
+    "eso_ya_no_esta": "eso ya no está en tu cuaderno",
+    # --- subir: el original entra tal y como llega ---
+    "subir_titulo": "Subir un papel",
+    "subir_explica": (
+        "Elige el fichero (una foto o un PDF) y di de qué es. El papel se guarda tal y como llegó."
+    ),
+    "nada_se_apunta": (
+        "Subir no apunta nada al cuaderno: solo guarda el papel. Lo que se lea de él es una propuesta, "
+        "y la confirmas tú."
+    ),
+    "fichero": "El papel, en una foto o en un PDF",
+    "fichero_pista": "Hazle una foto al papel o elige el fichero que ya tienes.",
+    "fichero_elegido": "El fichero que has elegido es",
+    "de_que_es": "¿De qué es?",
+    "de_que_es_pista": "Si todavía no lo sabes, déjalo en «no lo sé» y díselo luego desde la bandeja.",
+    "no_lo_se_todavia": "Todavía no lo sé",
+    "decir_de_que_es": "DECIR DE QUÉ ES",
+    "comprobar_el_fichero": "COMPROBAR EL FICHERO",
+    "comprobando": "Comprobando…",
+    "subir_el_papel": "SUBIR EL PAPEL",
+    "subiendo": "Subiendo…",
+    "olvidar_el_fichero": "ELEGIR OTRO FICHERO",
+    "lo_que_se_ha_comprobado": "Lo que he visto del fichero",
+    "la_huella": "Su huella",
+    "la_huella_pista": (
+        "Es la huella del fichero tal y como llegó. Sirve para saber que este papel es este y no otro, y "
+        "no cambia nunca."
+    ),
+    "tamano": "Cuánto ocupa",
+    "ya_estaba": "Este mismo papel ya lo tienes",
+    "ya_estaba_explica": (
+        "No se ha guardado otra vez: el mismo papel no puede estar dos veces. Es este:"
+    ),
+    "del_que_ya_estaba_subido": "Lo subiste el",
+    "abrir_el_que_ya_estaba": "VER EL PAPEL QUE YA TENÍA",
+    "no_estaba": "Este papel no lo tenías: puedes subirlo.",
+    # --- la lista ---
+    "lista_titulo": "Lo que hay que revisar",
+    "lista_explica": (
+        "Cada papel, con cómo está y qué le falta. Los que confirmes salen de aquí y se ven en LOS PAPELES."
+    ),
+    "buscar": "Buscar en la bandeja",
+    "buscar_pista": "Escribe parte del nombre o de quién te lo dio.",
+    "buscar_boton": "BUSCAR",
+    "ver_todo": "VER TODO",
+    "cuales_ver": "Cuáles ver",
+    "todos_los_estados": "Todos",
+    "sin_revisar": "Sin revisar",
+    "todos_los_tipos": "De todo",
+    "lo_que_es": "Qué es",
+    "el_dia_del_papel": "El día del papel",
+    "de_quien": "De quién",
+    "el_fichero": "El fichero",
+    "sin_fichero": "Sin fichero",
+    "su_lectura": "Su lectura",
+    "tiene_propuesta": "Leído, sin revisar",
+    "sin_propuesta": "Todavía no se ha leído",
+    "enlazado_con": "Va con",
+    "sin_enlazar": "Sin enlazar con nada",
+    "abrir": "MIRAR ESTE PAPEL",
+    "los_papeles": "VER TODOS LOS PAPELES",
+    # --- la ficha: el original, siempre a la vista ---
+    "ficha_titulo": "Este papel",
+    "el_original": "El papel, tal y como llegó",
+    "el_original_explica": (
+        "Este es el fichero que subiste. El programa no lo cambia nunca: lo que se lee de él va aparte."
+    ),
+    "ver_el_original": "VER EL ORIGINAL",
+    "sin_fichero_aviso": (
+        "Este papel está apuntado sin su fichero. Súbelo desde LOS PAPELES para poder leerlo."
+    ),
+    # --- la propuesta: lo que se ha leído, y que no es un dato ---
+    "la_propuesta": "Lo que el programa ha leído",
+    "la_propuesta_explica": "Esto es una propuesta, no un dato: nada de esto ha entrado en tu cuaderno.",
+    # **La frase que sostiene la mitad del ticket.** No hay corpus (T07) para medir la lectura, así que no
+    # se puede decir que esté bien: se dice que no se puede medir, y se pide al agricultor que la mire.
+    "no_se_mide_la_lectura": (
+        "El programa no dice si esta lectura está bien: para eso habría que compararla con muchísimas "
+        "facturas de verdad, y esa colección todavía no existe. Mírala tú, campo por campo."
+    ),
+    "leer_el_papel": "LEER EL PAPEL",
+    "leyendo": "Leyendo el papel…",
+    "no_hay_propuesta": "De este papel no hay ninguna lectura. Puedes escribir los datos a mano.",
+    "este_papel_no_lo_se_leer": (
+        "De este tipo de papel todavía no sé leer nada. Escribe los datos a mano y quedan guardados igual."
+    ),
+    "avisos_titulo": "Lo que hay que mirar de esta lectura",
+    "las_lineas": "Las líneas que he leído",
+    "sin_lineas": "No he reconocido ninguna línea. Puede ser una factura de servicios.",
+    "lineas_leidas": "Líneas leídas",
+    "lineas_que_cuadran": "Con la cuenta bien",
+    # Lo único que se puede afirmar de una línea sin corpus: si su cuenta cuadra, que es aritmética.
+    "la_cuenta_cuadra": "La cuenta cuadra",
+    "la_cuenta_no_cuadra": "La cuenta no cuadra: mírala antes de guardar",
+    "cuadra_el_total": "La base más el IVA da el total",
+    "suman_las_lineas": "Las líneas suman la base",
+    "cantidad": "Cuánto",
+    "precio": "El precio",
+    "importe": "El importe",
+    "proveedor": "El proveedor",
+    "nif_del_proveedor": "Su NIF",
+    "numero_de_factura": "El número de factura",
+    "fecha": "La fecha",
+    "base_imponible": "La base",
+    "cuota_de_iva": "El IVA",
+    "tipo_de_iva": "El tipo de IVA",
+    "total": "El total",
+    "descartada": "Esta lectura la descartaste: no te servía.",
+    # --- revisar y confirmar: dos actos distintos ---
+    "lo_aceptado": "Lo que has aceptado",
+    "lo_aceptado_explica": "Esto es lo que queda de este papel. Todavía no está confirmado.",
+    "revisar": "REVISAR Y DECIR QUÉ QUEDA",
+    "revisar_titulo": "Decide qué queda",
+    "revisar_pista": (
+        "Corrige lo que haga falta y guarda: lo que guardes es lo que quedará. Después lo confirmas."
+    ),
+    "guardar": "GUARDAR LO QUE QUEDA",
+    "guardando": "Guardando…",
+    "cancelar": "DEJARLO",
+    "sin_aceptar_nada": "Todavía no has dicho qué queda de este papel.",
+    "hay_que_revisar_antes": (
+        "Antes de confirmar hay que decir qué queda: revisa la lectura o escribe los datos a mano."
+    ),
+    "confirmar": "CONFIRMAR ESTE PAPEL",
+    "confirmando": "Confirmando…",
+    "confirmar_explica": (
+        "Al confirmarlo, lo que has aceptado pasa al papel con tu nombre y la fecha. El fichero no se toca."
+    ),
+    "ya_esta_en_los_papeles": "Este papel ya está confirmado y se ve en LOS PAPELES.",
+    "confirmado_por": "Lo confirmaste tú",
+    "confirmado_en": "Cuándo",
+    "motivo": "¿Por qué no te sirve?",
+    "descartar_pista": "Dímelo, para que quede apuntado por qué este papel se escribió a mano.",
+    "descartar_la_propuesta": "ESTA LECTURA NO ME SIRVE",
+    # --- enlazar: con lo que ya existe, y sin crear nada ---
+    "enlazar_titulo": "Con qué va este papel",
+    "enlazar_explica": (
+        "Un papel puede ir con una compra, un gasto, una venta, una máquina, un trabajo o una inspección."
+    ),
+    "no_crea_nada": (
+        "Enlazar no crea nada: ni un gasto, ni una factura, ni una venta. Solo dice con qué va este papel."
+    ),
+    "de_que_clase": "¿Con qué quieres enlazarlo?",
+    "buscar_candidato": "Buscar lo que ya tienes",
+    "buscar_candidato_pista": "Escribe parte del nombre si no lo encuentras en la lista.",
+    "buscar_candidatos": "BUSCAR",
+    "cual_de_ellos": "¿Cuál de ellos?",
+    "elige_uno": "Elige uno",
+    "enlazar": "ENLAZARLO",
+    "enlazando": "Enlazando…",
+    "enlazado_titulo": "Con esto va",
+    "desenlazar": "QUITARLO DE AHÍ",
+    "sin_candidatos": "No hay nada de eso en tu cuaderno. Apúntalo primero en su pantalla y vuelve.",
+    # --- rectificar: las dos quedan ---
+    "rectificar_titulo": "Este papel corrige a otro",
+    "rectificar_explica": (
+        "Si es la factura corregida que sustituye a la anterior, dilo aquí. Las dos quedan: la corregida "
+        "sigue ahí, marcada, y no se borra."
+    ),
+    "a_que_papel": "¿A qué papel corrige?",
+    "elige_el_papel": "Elige el papel",
+    "rectificar": "DECIR QUE CORRIGE A ESE",
+    "rectifica_a": "Corrige a",
+    "rectificada_por": "Este papel está corregido por",
+    "nadie_lo_ha_corregido": "Este papel no corrige a ninguno ni lo ha corregido nadie.",
+    "volver_a_la_bandeja": "VOLVER A LA BANDEJA",
+    # --- cómo está un papel (`estado_<estado>`) ---
+    "estado_recien_subido": "Recién subido",
+    "estado_clasificado": "Sin leer",
+    "estado_propuesta_revisada": "Revisado, sin confirmar",
+    "estado_confirmado": "Confirmado",
+    "estado_desconocido": "No se sabe cómo está",
+    # --- y qué hacer con él, según cómo esté (`que_hacer_<estado>`) ---
+    "que_hacer_recien_subido": (
+        "Falta decir de qué es: elige su tipo y el papel sale de «recién subido»."
+    ),
+    "que_hacer_clasificado": "Falta mirarlo: léelo (o escríbelo a mano) y di qué queda.",
+    "que_hacer_propuesta_revisada": "Ya has dicho qué queda: confírmalo cuando quieras.",
+    # --- con qué se puede enlazar (`clase_<clase>`): el servidor manda la clave, la pantalla la palabra ---
+    "clase_compra": "Una factura de lo que has comprado",
+    "clase_gasto": "Un gasto",
+    "clase_venta": "Una venta de tu cosecha",
+    "clase_maquina": "Una máquina",
+    "clase_trabajo": "Un trabajo hecho",
+    "clase_inspeccion": "Una inspección de una máquina",
+    "clase_desconocida": "Algo de tu cuaderno",
 }

@@ -781,6 +781,13 @@ textarea {
 .resumen-dato dd {
   margin: 0;
   text-align: right;
+  /* **Un valor largo sin un solo espacio no puede empujar la pantalla** (05/10/2026). Medido en un
+     navegador de verdad: la huella de un papel de la bandeja —64 caracteres seguidos— medía **595 px**
+     dentro de un hueco de 390 y se llevaba por delante la ficha entera (se salía 675 px de 390). Y no es
+     un caso de una pantalla: huellas, referencias del SIGPAC, números de registro y nombres de fichero
+     son exactamente eso. Se arregla **donde se pintan todos** (la fila de dato, `resumen-dato`) y no
+     pantalla por pantalla, que es como se arregla una y se deja la siguiente rota. */
+  overflow-wrap: anywhere;
 }
 
 /*

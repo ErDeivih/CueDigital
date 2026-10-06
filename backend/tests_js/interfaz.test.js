@@ -828,6 +828,9 @@ const RESPUESTAS = {
       // año, que es lo que se pregunta al mirar una tierra en el despacho. Lo pide el diseño de escritorio de
       // esa pantalla.
       tierra_ultimos: "Lo último que le has hecho",
+      // **El botón que abre la historia de esa tierra** (T15, 05/10/2026), en la ficha de la tierra. La
+      // frase se llama igual que el título de la pantalla a la que lleva.
+      tierra_historia: "LO QUE HA PASADO EN ESTA TIERRA",
     },
     rotulos: { hectareas: "Hectáreas", hectareas_corto: "ha", kilos_corto: "kg", unidad_kilos: "Kilos", kilos_por_hectarea: "Kilos por hectárea", ya_cosechado: "Hasta aquí no puedes coger la cosecha" },
     // Los nombres de las columnas de las tablas del ordenador (30/09/2026).
@@ -10285,7 +10288,10 @@ test("elegir una tierra la enseña en el panel de al lado, sin salir de la pági
   assert.ok(etiquetas.includes("Hectáreas"), `sin las hectáreas: ${etiquetas.join(", ")}`);
   assert.deepEqual(
     conElegida.panel.acciones.map((una) => una.accion),
-    ["cultivo-decir", "cosa-corregir", "cosa-borrar"],
+    // **El primero es el de su historia** (T15, 05/10/2026): lo que ha pasado en esa tierra. Va detrás
+    // del que abre lo sembrado —que es lo que más se usa— y delante de CORREGIR y BORRAR. Esta lista
+    // cambió al añadirlo, y se cambia aquí **diciendo por qué**.
+    ["cultivo-decir", "tierra-historia", "cosa-corregir", "cosa-borrar"],
   );
 
   // Y volver a tocar la misma tierra cierra el panel: es como se quita sin buscar un botón de cerrar.
@@ -10337,17 +10343,24 @@ async function gruposPedidos(cambios = {}) {
   return { grupos: montado.props.grupos, entorno, servidor };
 }
 
-test("cada tierra de «mis cosas» lleva sus dos botones: corregir y borrar", async () => {
+test("cada tierra de «mis cosas» lleva sus tres botones: su historia, corregir y borrar", async () => {
+  // **Tres desde el 05/10/2026, y el primero es nuevo**: el que abre lo que ha pasado en esa tierra
+  // (T15). Antes de él, esa pantalla **no tenía puerta**: existía y su dirección funcionaba, pero no
+  // había ningún botón que llevara a ella. Esta prueba cambió al añadirlo, y se cambia aquí diciendo por
+  // qué: los otros dos siguen siendo los mismos y en el mismo orden, con borrar al final y en rojo.
   const { tierras } = await tierrasDeMisCosasPedidas();
   const acciones = tierras[0].acciones;
-  assert.equal(acciones.length, 2, "la tierra no lleva sus dos botones");
-  assert.equal(acciones[0].accion, "cosa-corregir", "no se puede corregir la tierra");
-  assert.equal(acciones[0].etiqueta, "CORREGIR");
-  assert.equal(acciones[0].datos.tipo, "parcela", "el botón no dice que esto es una tierra");
-  assert.equal(acciones[0].datos.id, 1, "el botón no dice de qué tierra habla");
-  assert.equal(acciones[1].accion, "cosa-borrar", "no se puede borrar la tierra");
-  assert.equal(acciones[1].etiqueta, "BORRAR");
-  assert.equal(acciones[1].clase, "boton-peligro", "el botón de borrar no va marcado como peligro");
+  assert.equal(acciones.length, 3, "la tierra no lleva sus tres botones");
+  assert.equal(acciones[0].accion, "tierra-historia", "no se puede ver lo que ha pasado en la tierra");
+  assert.equal(acciones[0].etiqueta, "LO QUE HA PASADO EN ESTA TIERRA");
+  assert.equal(acciones[0].datos.id, 1, "el botón no dice de qué tierra es la historia");
+  assert.equal(acciones[1].accion, "cosa-corregir", "no se puede corregir la tierra");
+  assert.equal(acciones[1].etiqueta, "CORREGIR");
+  assert.equal(acciones[1].datos.tipo, "parcela", "el botón no dice que esto es una tierra");
+  assert.equal(acciones[1].datos.id, 1, "el botón no dice de qué tierra habla");
+  assert.equal(acciones[2].accion, "cosa-borrar", "no se puede borrar la tierra");
+  assert.equal(acciones[2].etiqueta, "BORRAR");
+  assert.equal(acciones[2].clase, "boton-peligro", "el botón de borrar no va marcado como peligro");
   // Y la tarjeta sigue haciendo lo suyo: abre lo que hay sembrado en esa tierra.
   assert.equal(tierras[0].accion, "cultivo-decir", "la tarjeta ha dejado de abrir lo que hay sembrado");
 });
@@ -13751,6 +13764,65 @@ test("la historia de una tierra se abre por su dirección y enseña todo lo que 
   );
   assert.equal(props.costes.texto_total, "310,00 €");
   assert.equal(props.costes.sin_importe, 1, "no se dice que un gasto de esa tierra no trae importe");
+});
+
+test("la historia de una tierra se abre desde el botón de la ficha de la tierra", async () => {
+  // **Esta prueba existe por un defecto de verdad** (05/10/2026): la pantalla de la historia de una
+  // tierra existía, su dirección funcionaba y **no había ningún botón en toda la aplicación que
+  // llevara a ella**. El recorrido 5 del encargo («abrir tierra → qué cultivo tiene, qué trabajos se han
+  // hecho, qué queda previsto y qué costes conocidos») solo se podía hacer escribiendo la dirección a
+  // mano, que para el agricultor es no poder hacerlo.
+  //
+  // Se mira lo que solo se puede mirar aquí: que el botón que se pinta en la ficha de la tierra lleva
+  // **una acción con dueño** (si nadie la atiende, pulsarla no hace nada y la pantalla se ve igual).
+  const { entorno, servidor } = await conLosTrabajos({
+    "/api/parcelas": TRES_TIERRAS,
+    // La puerta de la historia de esa tierra, con lo mínimo para que conteste: es lo que hace que el
+    // botón tenga a dónde ir y que la pantalla se pinte con datos.
+    "GET /api/trabajos/tierra/1": {
+      tierra: { id: 1, alias: "El Prado", superficie_ha: 3.0 },
+      historial: { lineas: [] },
+      estado: { cultivo_declarado: null, previstos: [] },
+      trabajos_sin_hectareas: 0,
+      lo_que_no_se_sabe: {},
+      falta: {},
+      textos: {},
+    },
+  });
+  await pulsar(entorno, "mis-cosas");
+
+  // Primero, que el botón **está** en la ficha de la tierra, con la acción que después se pulsa.
+  const seccion = montajes[montajes.length - 1].elemento.props.secciones[0];
+  const acciones = seccion.elementos[0].acciones || [];
+  const elBoton = acciones.find((una) => una.accion === "tierra-historia");
+  assert.ok(
+    elBoton,
+    `la ficha de la tierra no tiene el botón de su historia: ${JSON.stringify(acciones.map((a) => a.accion))}`,
+  );
+  assert.equal(elBoton.datos.id, 1, "el botón no dice de qué tierra es la historia");
+  assert.match(elBoton.etiqueta, /LO QUE HA PASADO/, `la etiqueta del botón es «${elBoton.etiqueta}»`);
+
+  await pulsar(entorno, "tierra-historia", elBoton.datos);
+  // La pantalla se pinta **dos veces**: primero en blanco (para no hacer esperar al agricultor) y otra
+  // vez con lo que contesta el servidor. La dirección se escribe en la segunda, así que hay que dejar
+  // que llegue, como en la prueba de arriba.
+  await new Promise((resolver) => setTimeout(resolver, 60));
+  const elemento = ultimoMontaje();
+  assert.equal(
+    elemento.type.name,
+    "PantallaDeLaTierra",
+    "pulsar el botón no abre la historia de la tierra",
+  );
+  assert.ok(
+    servidor.llamadas.some((r) => r.includes("/api/trabajos/tierra/1")),
+    "no se ha pedido la historia de esa tierra",
+  );
+  // Y la dirección pasa a ser la suya: recargar deja al agricultor en la historia que estaba mirando.
+  assert.equal(
+    entorno.window.location.hash.split("?")[0],
+    "#/tierras/1/historial",
+    `la dirección no es la de la historia: ${entorno.window.location.hash}`,
+  );
 });
 
 

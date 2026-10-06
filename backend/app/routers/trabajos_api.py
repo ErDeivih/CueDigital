@@ -189,6 +189,61 @@ def _una_labor_como_trabajo(db, labor: models.Labor) -> dict:
     )
 
 
+def _la_campana_de_la_peticion(db, explotacion, campana_id):
+    """La campaña en la que se está mirando: la que pide quien llama, o **la que se está llevando**.
+
+    Hace falta para leer el cultivo declarado, que es **de una campaña** (una tierra tiene un cultivo por
+    año). Se resuelve igual que `/api/campanas/actual` —la más nueva de la explotación—, que es la misma
+    regla que usa el programa entero, y no una segunda forma de decidir cuál es el año de hoy.
+    """
+    if campana_id is not None:
+        return campana_id
+    return db.scalar(
+        select(models.Campana.id)
+        .where(models.Campana.explotacion_id == explotacion.id)
+        .order_by(models.Campana.anio.desc())
+        .limit(1)
+    )
+
+
+def _el_cultivo_del_cuaderno(db, explotacion, parcela_id: int, campana_id) -> dict | None:
+    """Lo que el agricultor **declaró** que hay en esa tierra ese año, con la forma que espera la pantalla.
+
+    **Por qué esto es un defecto arreglado y no un adorno.** «Qué hay hoy» se calculaba solo con las
+    labores de siembra y plantación. Pero el agricultor apunta lo que tiene sembrado en «qué hay
+    sembrado» (la tabla `parcelas_cultivos`, la que va al cuaderno de la Junta), y **no tiene por qué
+    llevar además una labor de siembra**: abrir entonces una tierra con TRIGO BLANDO declarado decía «de
+    esta tierra no consta que haya nada sembrado» —una contradicción con la pantalla de al lado, con las
+    dos mirando los mismos datos—. Se encontró abriendo la historia de una tierra en un navegador de
+    verdad, con el guion de `scripts/comprobar_en_un_navegador.py`.
+
+    **Solo se rellena cuando no hay nada que deducir de las labores**: lo que dice una labor de siembra
+    apuntada es un hecho del cuaderno y manda; esto es el respaldo para las tierras que solo tienen la
+    declaración. Y **no se inventa nada**: sin declaración devuelve `None`, y el estado sigue diciendo
+    que no consta, que es la verdad.
+    """
+    declarado = servicios.cultivo_declarado(
+        db,
+        explotacion_id=explotacion.id,
+        parcela_id=parcela_id,
+        campana_id=_la_campana_de_la_peticion(db, explotacion, campana_id),
+    )
+    if declarado is None:
+        return None
+    return {
+        # `tipo` y `trabajo_id` van en `None` **a propósito**: esto no sale de ninguna labor, y poner aquí
+        # el tipo de la última que hubiera sería decir que la siembra la apuntó alguien cuando no es así.
+        "tipo": None,
+        "cultivo": declarado.especie,
+        "variedad": declarado.variedad,
+        "fecha": declarado.fecha_inicio,
+        "trabajo_id": None,
+        "superficie_ha": declarado.superficie_cultivada_ha,
+        # De dónde sale, dicho: no es lo mismo deducirlo de una labor que leerlo de lo que él declaró.
+        "de_donde": "lo_dijo_el_agricultor",
+    }
+
+
 def _las_labores(db, explotacion, *, parcela_id=None, campana_id=None, desde=None, hasta=None):
     consulta = select(models.Labor).where(models.Labor.explotacion_id == explotacion.id)
     if parcela_id is not None:
@@ -377,6 +432,11 @@ def la_historia_de_una_tierra(
     estado = logica.estado_de_una_tierra(
         hechos, planes, parcela_id=parcela_id, campana_id=campana_id, hoy=hoy
     )
+    # Y si de las labores no sale ningún cultivo, se mira lo que el agricultor **declaró** para ese año:
+    # una tierra con el cultivo puesto en «qué hay sembrado» y sin ninguna labor de siembra no puede
+    # salir aquí diciendo que no consta que haya nada sembrado.
+    if estado.get("cultivo_declarado") is None:
+        estado["cultivo_declarado"] = _el_cultivo_del_cuaderno(db, explotacion, parcela_id, campana_id)
     return {
         "tierra": {"id": tierra.id, "alias": tierra.alias, "superficie_ha": tierra.superficie_ha},
         "historial": historial,
@@ -446,9 +506,13 @@ def el_estado_de_una_tierra(
         for labor in _las_labores(db, explotacion, parcela_id=parcela_id, campana_id=campana_id)
     ]
     planes = _los_previstos(db, explotacion, parcela_id=parcela_id, campana_id=campana_id)
-    return logica.estado_de_una_tierra(
+    estado = logica.estado_de_una_tierra(
         hechos, planes, parcela_id=parcela_id, campana_id=campana_id, hoy=dt.date.today()
     )
+    # Lo mismo que en la historia: sin cultivo deducido de las labores, se dice lo que él declaró.
+    if estado.get("cultivo_declarado") is None:
+        estado["cultivo_declarado"] = _el_cultivo_del_cuaderno(db, explotacion, parcela_id, campana_id)
+    return estado
 
 
 # --------------------------------------------------------------------------

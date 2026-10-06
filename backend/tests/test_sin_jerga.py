@@ -164,6 +164,10 @@ class TestSingularYPlural:
             # esta prueba existe para impedir.
             (textos.ALMACEN, "cuantos_albaranes", "lo que ha llegado al almacén"),
             (textos.ALMACEN, "cuantos_articulos", "lo que hay apuntado en el almacén"),
+            # **La bandeja documental (T08, S10, 06/10/2026)**: el pie de la lista de lo que hay que
+            # revisar. Con un solo papel se leería «Tienes 1 papeles en la bandeja», que es lo que
+            # esta prueba existe para impedir.
+            (textos.BANDEJA, "cuantos", "la bandeja de los papeles"),
         ):
             assert diccionario.get(f"{base}_uno"), f"falta el singular de {base} ({donde})"
             assert diccionario.get(base), f"falta el plural de {base} ({donde})"

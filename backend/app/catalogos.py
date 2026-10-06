@@ -374,13 +374,40 @@ UNIDADES_DOSIS = ("L/ha", "kg/ha", "mL/hL", "g/hL", "L/100 L")
 # el primer agricultor que archivara sus papeles de otra manera se encontraría sin sitio.
 # --------------------------------------------------------------------------
 
-TIPOS_DOCUMENTO = ("contrato", "factura", "albaran_sigfito", "otros")
+# ... y los cuatro de la bandeja documental (T08, S10, 06/10/2026).
+#
+# Llevan aquí desde el primer día del catálogo y se apuntaban mal, cada uno por su motivo:
+#
+#   · **`inspeccion`**: el certificado de la ITV o de la ITEAF de una máquina. Es el que el T14 dejó
+#     escrito que faltaba (`tests/test_t14_maquinaria.py`: «se apunta como "otros" porque no hay un tipo
+#     de papel para un certificado de inspección (…) el día que exista ese tipo, este certificado irá al
+#     suyo»).
+#   · **`ticket`**: el tique del gasóleo o del taller. No es una factura —casi nunca lleva NIF— y
+#     meterlo como «factura» ensucia la lista de facturas.
+#   · **`albaran`**: el albarán de entrega de grano o de compra. **No es** el de envases de Sigfito, que
+#     ya tenía su tipo: son dos papeles distintos y con el mismo nombre se confundirían.
+#   · **`analitica`**: el boletín de un laboratorio **en papel**. Sus números tienen su sección propia
+#     con su boletín; aquí está el papel, que es lo que se enseña en una inspección.
+TIPOS_DOCUMENTO = (
+    "contrato",
+    "factura",
+    "albaran_sigfito",
+    "otros",
+    "inspeccion",
+    "ticket",
+    "albaran",
+    "analitica",
+)
 
 ETIQUETA_DOCUMENTO = {
     "contrato": "Un contrato",
     "factura": "Una factura",
     "albaran_sigfito": "Un albarán de envases (Sigfito)",
     "otros": "Otro papel",
+    "inspeccion": "Un certificado de inspección",
+    "ticket": "Un ticket de compra",
+    "albaran": "Un albarán de entrega",
+    "analitica": "Un boletín de análisis",
 }
 
 # Las sugerencias de carpeta, en plural porque es donde se guardan varios. El agricultor puede

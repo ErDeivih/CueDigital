@@ -169,6 +169,7 @@ Las tres últimas, por orden:
 | **Mis cuentas, y la ficha de un gasto** (`backend/web/react/pantallas/gastos.js`) | ✅ En React (T13) |
 | **Los trabajos, la ficha de un trabajo y la historia de una tierra** (`backend/web/react/pantallas/trabajos.js`) | ✅ En React (T15) |
 | **El banco y los papeles, y la ficha de un movimiento** (`backend/web/react/pantallas/bancos.js`) | ✅ En React (T20) |
+| **La bandeja de los papeles, y la ficha de un papel** (`backend/web/react/pantallas/bandeja.js`) | ✅ En React (T08) |
 
 **Y desde el T06 (03/10/2026) son treinta y siete**: las treinta y cinco de antes más las dos de las
 tierras en el mapa y en la tabla (`tierras_mapa`, `#/tierras/mapa`) y lo que ha sido una tierra
@@ -247,6 +248,10 @@ hay claves, ni direcciones, ni un sitio donde poner una credencial: solo se lee 
 agricultor ha subido, y hay una prueba del servidor que lo comprueba), y **no crea ningún documento al
 conciliar** (conciliar escribe un vínculo con un papel que ya existe: no hay ninguna acción que cree un
 gasto, una factura o un cobro).
+
+**Y desde el T08 (06/10/2026) son cincuenta y cuatro**: entra **un fichero con dos pantallas** —
+
+`bandeja.js`: la bandeja de lo que llega y hay que revisar, con la subida del papel, la comprobación del duplicado **antes** de apuntarlo y lo que se ha leído **sin confirmar nada**; y la ficha de un papel, que es donde se mira **el original con la propuesta al lado** y se confirma— con sus vínculos (con qué gasto, venta, máquina o trabajo va) y sus rectificativas. Va a la caché del campo, que sube a la **versión 71**, y la versión del pie se puso al día en el mismo cambio.**Lo que esta pantalla NO hace, y conviene que quede escrito aquí**: **no mide lo bien que lee** —no hay ningún porcentaje, ni una confianza, ni un «leído correctamente» en la base, en la API ni en la pantalla, porque el corpus para medirlo (T07) no existe—, **no crea ningún gasto, factura ni venta al enlazar** (enlazar escribe un vínculo con algo que ya existe) y **el original no se toca nunca**: confirmar escribe los campos del papel, no el fichero.
 
 La cuenta que la prueba de la migración exige («veintiocho») sigue
 escrita, con la fecha en la que dejó de ser el número: **una lista escrita a mano se queda vieja y nadie

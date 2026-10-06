@@ -100,26 +100,39 @@ function LosUltimos({ ultimos }) {
       ${
         ultimos.filas && ultimos.filas.length
           ? html`
-              <table className="tabla mando-ultimos">
-                <thead>
-                  <tr>
-                    ${ultimos.columnas.map(
-                      (columna, indice) => html`<th key=${indice} scope="col">${frase(columna)}</th>`,
+              <!-- **Dentro del contenedor que se desplaza solo** (05/10/2026). Medido en un navegador de
+                   verdad: a 1024 px —el ancho mínimo del ordenador— esta tabla empujaba la página **2 px
+                   más allá del hueco** (se sale 1026 de 1024), y con ella toda la pantalla, porque una
+                   tabla sin contenedor que se desplace no se puede encoger por debajo de lo que miden sus
+                   columnas. Es el mismo defecto que el ticket de la maquinaria (T14) midió en su tabla:
+                   se arregla igual, metiéndola en el contenedor de las tablas que se desplazan solas
+                   (la clase tabla-scroll). Se notó al añadir al guion del navegador las pantallas
+                   nuevas, que miden a 390, 1024 y 1440 px. -->
+              <!-- (Y sin acentos graves en este comentario: va dentro de una plantilla de JavaScript y
+                   una comilla invertida cerraría la plantilla. Pasó, y dejó la aplicación entera sin
+                   arrancar —1.909 caracteres de cuerpo— en la comprobación del navegador.) -->
+              <div className="tabla-scroll">
+                <table className="tabla mando-ultimos">
+                  <thead>
+                    <tr>
+                      ${ultimos.columnas.map(
+                        (columna, indice) => html`<th key=${indice} scope="col">${frase(columna)}</th>`,
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${ultimos.filas.map(
+                      (fila, indice) => html`
+                        <tr key=${indice}>
+                          ${fila.map(
+                            (celda, posicion) => html`<td key=${posicion}>${frase(celda)}</td>`,
+                          )}
+                        </tr>
+                      `,
                     )}
-                  </tr>
-                </thead>
-                <tbody>
-                  ${ultimos.filas.map(
-                    (fila, indice) => html`
-                      <tr key=${indice}>
-                        ${fila.map(
-                          (celda, posicion) => html`<td key=${posicion}>${frase(celda)}</td>`,
-                        )}
-                      </tr>
-                    `,
-                  )}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             `
           : html`<p className="pista-campo">${frase(ultimos.vacio)}</p>`
       }

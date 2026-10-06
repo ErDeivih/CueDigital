@@ -21,6 +21,9 @@ from .database import TextoQueNoCabe, crear_tablas
 from .routers import (
     almacen_api,
     analiticas_api,
+    # **La bandeja documental (T08, S10, 06/10/2026).** Va en su sitio por orden alfabético, como las
+    # demás: lo que llega y hay que revisar.
+    bandeja_api,
     borradores_api,
     contactos_api,
     cuenta,
@@ -215,6 +218,12 @@ app.include_router(extractos_api.router)
 # el estado derivado. Va detrás de los gastos porque un trabajo puede costar dinero y detrás de la
 # maquinaria porque dice con qué máquina se hizo.
 app.include_router(trabajos_api.router)
+# **La bandeja documental (T08, S10, 06/10/2026).** Lo que llega y hay que revisar: subir el papel tal y
+# como llega, leerlo, confirmar lo que el agricultor acepta y decir con qué va. Va detrás de
+# `documentos_api` porque el papel que guarda es el mismo (`documentos_anexos`) y usa sus puertas para
+# el alta y para el fichero, y detrás de `extractos_api` porque un papel se puede enlazar con un
+# movimiento conciliado.
+app.include_router(bandeja_api.router)
 
 
 @app.get("/health", tags=["sistema"])

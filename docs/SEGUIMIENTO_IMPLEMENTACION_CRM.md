@@ -51,7 +51,7 @@ como tal en cada fila y **no cuenta como cerrado**.
 | **T05 / E2** | Identidad y versiones de recinto; importación repetible sobre copia | T02 | **cerrado, con un defecto arreglado en la ronda 6** (la pantalla es de T06) | subagente datos/servidor + coordinador | Tabla `versiones_de_recinto` (`models.VersionDeRecinto`), servicio `app/versiones_de_recinto.py`, cinco rutas en `routers/versiones_api.py` y `geo.py` ampliado con la medida del área y los solapes. **62 pruebas** (57 + 5 nuevas), 0 fallos. La migración está **ensayada sobre copia de la base real**: 26 → 32 tablas y **0 filas cambiadas** (apartado 12.2). La idempotencia y «previsualizar no escribe» están **medidas contra servidor aislado** (apartado 12.5). Documento: `docs/T05_IDENTIDAD_Y_VERSIONES_DEL_RECINTO.md`. **Defecto encontrado por el coordinador en la ronda 6 y arreglado**: con referencias completas compartidas por varias tierras (en sus datos, hasta 9) la versión se colgaba a una de ellas sin decir nada (apartado 13.5). **No hay pantalla** y la forma se compara por su texto |
 | **T06 / E2** | Mapa de explotación con selección y filtros; lista de tierras sin geometría | T04, T05 | **cerrado** (implementado y verificado) | subagente interfaz + coordinador + revisión independiente | Pantallas nuevas `#/tierras/mapa` (tabla con buscador por nombre y referencia, filtros con recuento, agrupación con el grupo **«Sin forma»**, selección múltiple y el mapa enlazado) y `#/tierras/<id>/versiones` (versiones con las tres áreas separadas, comparar dos campañas y **ensayar una importación que no escribe**). Servidor: `GET /api/parcelas/vista` y `/api/mapa/estado` ampliado. **75 pruebas nuevas** (28 de Python y 47 de JavaScript). Comprobado por el coordinador con **servidor aislado**: **426 comprobaciones** del recorrido, **261** del navegador, y las dos pantallas nuevas **a 390 px de verdad**. **La revisión independiente encontró 9 defectos y el subagente otro con los datos reales**, todos arreglados (apartado 16.1). **No hace**: medir distancia/área sobre el mapa, la capa de avisos (no existe el servicio), la fecha de la imagen (no se puede saber) ni paginar. Detalle en los apartados 14 y 16 |
 | **T07 / E3** | Corpus autorizado de documentos y evaluación por campo (sin autoescritura) | T01 | **bloqueado** | — | **Falta el corpus**: facturas y albaranes reales anonimizados y autorizados (PLAN §10). Sin ese material no se puede evaluar el OCR sin inventar métricas |
-| **T08 / E3** | Bandeja documental y revisión original/propuesta; duplicados y rectificativas | T04, T07 | **en curso** (parte ejecutable) · **la evaluación del OCR sigue bloqueada por T07** | subagente interfaz + coordinador | **Lo que SÍ se construye sin el corpus de T07**, y es lo que se entrega: subir un documento con su papel, **clasificarlo a mano**, la pantalla de **revisión original/propuesta** (el original siempre a la vista y la propuesta al lado, sin que nada se dé por bueno solo), **vincular** lo leído con el cuaderno, **detectar duplicados**, **rectificativas** y los **documentos de una inspección** (lo que T14 dejó apuntado: hoy el certificado se enlaza como «otros» porque `TiposDocumento` no tiene «inspección»). **Lo que NO se entrega, y no se va a afirmar**: la **medida de precisión del OCR** —hace falta el corpus real anonimizado y autorizado de T07—. Que el programa **proponga** una lectura no es que la lectura esté **evaluada**, y esta fila existe para que nadie confunda las dos cosas |
+| **T08 / E3** | Bandeja documental y revisión original/propuesta; duplicados y rectificativas | T04, T07 | **entregada e integrada** (la parte ejecutable, y vista en un navegador de verdad) · **la evaluación del OCR sigue bloqueada por T07** | subagente interfaz + coordinador | **Lo que SÍ se construye sin el corpus de T07**, y es lo que se entrega: subir un documento con su papel, **clasificarlo a mano**, la pantalla de **revisión original/propuesta** (el original siempre a la vista y la propuesta al lado, sin que nada se dé por bueno solo), **vincular** lo leído con el cuaderno, **detectar duplicados**, **rectificativas** y los **documentos de una inspección** (lo que T14 dejó apuntado: hoy el certificado se enlaza como «otros» porque `TiposDocumento` no tiene «inspección»). **Lo que NO se entrega, y no se va a afirmar**: la **medida de precisión del OCR** —hace falta el corpus real anonimizado y autorizado de T07—. Que el programa **proponga** una lectura no es que la lectura esté **evaluada**, y esta fila existe para que nadie confunda las dos cosas |
 | **T09 / E4** | Unidades, recepción, lotes y libro de movimientos; A01/A02/A15 | T02, T08 | **cerrado** (servidor y pantalla) | subagente de interfaz | Modelo (artículo, lote, movimiento, recepción), `routers/almacen_api.py` y **128 pruebas** en `tests/test_recepciones_lotes_y_movimientos.py` (0 fallos). Seis pantallas nuevas registradas en la caché del service worker y en el inventario de React, con dos direcciones propias. Las tres protecciones —el mismo albarán dos veces, la factura que llega después y el reenvío sin cobertura— están comprobadas **contra servidor aislado** (sección 33 de `scripts/humo.py`). Documento: `docs/T09_PANTALLA_DEL_ALMACEN.md`. **Falta**: pantalla para dar de alta un artículo y que los abonos se casen por identificador y no por nombre (apartado 12.4) |
 
 | **T10 / E4** | Semillas, fotos de etiqueta y asignación a siembra | T09 | **cerrado** (verificado por el coordinador, con 9 defectos de la revisión arreglados) | subagente datos/servidor + interfaz + revisión independiente | La semilla es **un artículo del almacén** con la etiqueta colgada (`semillas` → `articulos`, 1:1), no un segundo almacén. Tablas `semillas` y `siembras`; `app/semillas.py` y `routers/semillas_api.py`; cuatro pantallas en dos ficheros (`#/semillas` y `#/semillas/siembras`), registradas en la caché del service worker y en el inventario de React. **La foto de la etiqueta produce una propuesta que no guarda nada.** **La siembra descuenta del almacén por la puerta que ya existía** —importando la función, no copiándola— y reenviarla no descuenta dos veces. **La dosis por hectárea y la cantidad total son campos distintos, cada uno con su unidad**, y la que falta se calcula con la superficie **diciendo que se ha calculado**; sin superficie **se queda sin saber, nunca en cero** (medido en el recorrido, apartado 18.8). **La revisión independiente encontró 9 defectos** —uno de gravedad alta: anular una siembra y reenviarla desde la cola no volvía a descontar del almacén— y **los 9 están arreglados** (apartado 18.7). Verificado con **807 pruebas de JavaScript en verde**, el recorrido (**448 comprobaciones, 0 fallos**) y sus dos pantallas **a 390 px de verdad**. **Lo que NO está**: la foto real de un saco, y que nadie pulsa sus botones de guardar en las pruebas (apartado 18.9). Detalle en `docs/T10_SEMILLAS.md` y `docs/REVISION_T10.md` |
@@ -5433,3 +5433,111 @@ muerta con las dos suites en verde.
 **ninguna de las pantallas nuevas se ha visto en un navegador de verdad** (390/1024/1440, teclado, zoom), así
 que lo que se sabe es que **los botones hacen lo que dicen y que los datos viajan bien, no cómo se ve**.
 PostgreSQL sigue bloqueado por el motor de Docker.
+
+---
+
+### 50.13 Ronda 7: el T08 integrado, y las cinco cosas que solo se ven en un navegador
+
+**Lo que se ha hecho, en orden**: extender el guion del navegador a las pantallas nuevas de esta ronda
+(T13, T15 y T20 y, después, T08), recorrerlas y medirlas, arreglar lo que salió, **integrar el T08 entero**
+y volver a comprobarlo todo en un navegador de verdad. Los cinco defectos de abajo **los encontró el
+navegador**: ninguno lo había visto una suite, y cuatro de ellos eran pantallas que se podían abrir, con
+sus pruebas en verde.
+
+**1. `#/trabajos` no abría la agenda: la dirección se escribía y no se sabía leer.** La agenda escribía su
+dirección (por su renglón del menú) pero su clave no estaba en `ABRIR_LA_PANTALLA`, así que **abrir esa
+dirección caía al panel de mando**: recargar en la pantalla de los trabajos sacaba al agricultor de ella, y
+un enlace a los trabajos no llevaba a los trabajos. Se descubrió porque el guion del navegador apunta en el
+`<title>` en qué dirección ha acabado cada pantalla y la de «los trabajos» era la del panel. Arreglado con
+su línea (`trabajos: () => abrirLosTrabajos()`) y **con un guardián nuevo** (ver el punto 6).
+
+**2. La comprobación de anchos medía otra pantalla, y por eso no comprobaba nada.** El hueco de 390/1024/
+1440 px abre la aplicación con un fragmento (`#/tierras/mapa`), pero **la aplicación reescribía la
+dirección a la del panel** en cuanto arrancaba: los tres anchos de todas las pantallas que ya estaban en
+esa lista se estaban midiendo **sobre el panel de mando**, y la comprobación decía «cabe entera» de algo que
+no era lo que se había pedido. Ahora el hueco escribe también la dirección en el `<title>` y la
+comprobación exige que sea **esa** pantalla: es la mitad que le faltaba a esa parte del guion.
+
+**3. El panel de mando se salía 2 px a 1024.** Medido: su tabla de «los últimos apuntes» empujaba la página
+**1026 px dentro de un hueco de 1024**, y con ella toda la pantalla. Es el mismo defecto que el T14 midió en
+la tabla de la maquinaria y se arregla igual: **el contenedor que se desplaza solo** (`.tabla-scroll`).
+Apareció como consecuencia del punto 2 —era la pantalla que se estaba midiendo sin saberlo— y se ha dejado
+medido a 1024 y 1440 en su propio renglón, que antes no tenía.
+
+**4. La historia de una tierra no tenía ninguna puerta.** La pantalla existía, su dirección funcionaba y
+**no había ni un botón en toda la aplicación que llevara a ella**: el recorrido 5 («abrir tierra → qué
+cultivo tiene, qué trabajos se han hecho, qué queda previsto y qué costes conocidos») solo se podía hacer
+escribiendo la dirección a mano, que para el agricultor es no poder hacerlo. Se ha añadido el botón a la
+ficha de la tierra (`LO QUE HA PASADO EN ESTA TIERRA`, en la tarjeta del móvil **y** en el panel del
+ordenador), su acción en `app.js` y **una prueba de cableado** que lo pulsa de verdad. Y al añadirlo salió
+la mitad que faltaba: **la pantalla tampoco escribía su dirección** (`apuntarLaDireccion` no tenía rama para
+`trabajo_tierra`), así que el agricultor entraba a la historia y, al recargar, volvía a la lista de tierras.
+
+**5. La historia decía que no constaba lo sembrado en una tierra con su cultivo puesto.** «Qué hay hoy» se
+calculaba solo con las labores de siembra y plantación, pero el agricultor apunta lo que tiene sembrado en
+**«qué hay sembrado»** (la tabla que va al cuaderno de la Junta) **sin que haga falta apuntar además una
+labor de siembra**: abrir una tierra con TRIGO BLANDO declarado decía «de esta tierra no consta que haya
+nada sembrado», que es una contradicción con la pantalla de al lado. Arreglado en el servidor
+(`trabajos_api._el_cultivo_del_cuaderno`, con `servicios.cultivo_declarado`, la misma fuente que «qué hay
+sembrado»), **solo cuando no hay nada que deducir de las labores** —lo que dice una siembra apuntada manda—
+y **sin inventar nada**: sin declaración sigue diciendo que no consta. **Cuatro pruebas nuevas**, una por
+caso, y la primera comprobada contra el defecto.
+
+**6. Un guardián nuevo, para que una dirección escrita se pueda leer.** `tests_js/rutas.test.js` recorre
+ahora la tabla de direcciones y exige que **cada una tenga su puerta** en `app.js` (en `ABRIR_LA_PANTALLA` o
+en un `if` de `abrirLaPantalla`) o que esté declarada con su motivo en `DIRECCIONES_QUE_NO_SE_ABREN` (hoy
+vacía). Comprobado contra el defecto: quitando la línea de `trabajos` se pone rojo con
+«estas direcciones se escriben y no hay quien las abra: trabajos».
+
+**T08 (la bandeja documental), integrado entero.** El subagente entregó seis ficheros —`bandeja.py` (774
+líneas de lógica pura), `bandeja_api.py` (13 puertas), `pantallas/bandeja.js` (dos pantallas), 122 pruebas
+de Python, 30 de JavaScript y `docs/T08_BANDEJA.md` con los bloques literales—, y el coordinador los ha
+pegado: **9 columnas** en `documentos_anexos` + la tabla `vinculos_de_documento`, los esquemas, los **cuatro
+tipos de papel nuevos** (inspección, ticket, albarán y analítica, que es lo que el T14 dejó apuntado que
+faltaba), los 33 mensajes `T08_`, el vocabulario `BANDEJA` (148 claves, recogido entero para el test de
+jerga), las dos direcciones (`#/papeles/bandeja` y `#/papeles/bandeja/<id>`), el vocabulario servido en
+`/api/interfaz`, el botón que entra desde «los papeles», la caché (versión **71**) y el bloque de `app.js`.
+Con eso, **el recorrido 1 se puede hacer entero desde la aplicación**: subir la foto → comprobar que no
+estaba (el duplicado se dice **antes** de apuntar nada) → leerla (propuesta, no dato) → decir qué queda →
+confirmar → enlazarla con lo que ya hay, sin crear un gasto, una factura ni una venta.
+
+**Y dos cosas que las instrucciones del ticket no traían, y las dos importaban:**
+
+- **El `import` de la pantalla.** Los siete cables del informe no incluían el `import` de `bandeja.js`, así
+  que abrir la bandeja decía «esta pantalla no se ha podido abrir… falta un fichero del programa» **con las
+  13 puertas del servidor funcionando**. No lo ve ni la prueba del componente (que importa el fichero ella
+  misma) ni la del cableado: lo vio el navegador. Es el mismo tipo de fallo que el `campanaActual` del 50.11.
+- **El valor por defecto de `estado_revision`.** El bloque lo traía con `default="recien_subido"`, y
+  `asegurar_columnas` añade una columna nueva a una base que ya existe **con el valor por defecto de Python
+  cuando lo hay**: el día de la actualización, **los papeles que ya tenía el agricultor se habrían quedado
+  «sin revisar» y la bandeja los habría enseñado todos de golpe** pidiendo que se diga de qué son —cuando el
+  programa ya lo sabe—. Y un papel apuntado a mano en «los papeles» aparecía en la bandeja pidiendo que se
+  clasificara **lo que el agricultor acababa de decir** en el formulario. Ahora el estado lo pone **solo la
+  puerta que sube a la bandeja**, y el papel sin estado no se enseña ahí (su ficha lo trata como lo que es:
+  un papel ya clasificado). **Dos pruebas nuevas**, la primera comprobada contra el defecto: con el valor por
+  defecto puesto, el rojo dice «un papel guardado a mano ha aparecido en la bandeja pidiendo que se diga de
+  qué es».
+
+**Y una cosa más, que se vio en un navegador de verdad y no en una prueba:** la huella de un papel (64
+caracteres sin un solo espacio) medía **595 px dentro de un hueco de 390** y se llevaba por delante la ficha
+entera —se salía 675 px—. Arreglado en el sitio donde se pintan todos los datos (`resumen-dato`, con
+`overflow-wrap: anywhere`), porque huellas, referencias del SIGPAC y números de registro son todos iguales.
+
+**Lo que el guion del navegador comprueba ahora, y antes no:** las cuatro pantallas de esta ronda (las
+cuentas, los trabajos, el banco y la historia de una tierra) y las dos del T08 (la bandeja y la ficha de un
+papel), **pulsando** y **a los tres anchos** (390, 1024 y 1440), con un papel de verdad subido a la bandeja
+por las mismas puertas que usa el agricultor, y con la dirección medida en cada una para que no se pueda
+volver a comprobar la pantalla equivocada.
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.421 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.034 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **499 comprobaciones · 0 fallos** (antes: 463) |
+| Recuentos de los tres documentos | alineados (4.421 Python / 1.034 JS) |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+**Lo que queda para el objetivo, sin adornos:** el recorrido 1 se puede hacer entero **salvo la lectura de
+una foto de verdad**: el lector propone y no mide (no hay corpus, T07 sigue bloqueado por fuera, y la
+pantalla lo dice). Tampoco se ha probado el T08 con las 64 tierras y los papeles reales del agricultor, ni
+su OCR con `tesseract` (no está instalado). Y PostgreSQL sigue bloqueado por el motor de Docker.

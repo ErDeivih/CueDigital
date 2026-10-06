@@ -274,7 +274,7 @@
 // `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
 // número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
 // caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
-const CACHE = "cuedigital-2026-10-05-70";
+const CACHE = "cuedigital-2026-10-06-71";
 
 const FICHEROS = [
   "/",
@@ -356,6 +356,11 @@ const FICHEROS = [
   // campo por el mismo motivo que las cuentas: el extracto se mira en el despacho y la conciliación
   // se piensa con calma, muchas veces sin cobertura.
   "/react/pantallas/bancos.js",
+  // La bandeja documental (T08, S10, 06/10/2026): lo que llega y hay que revisar, y la ficha de un papel,
+  // las dos en un fichero. Se guarda para el campo por el mismo motivo que las cuentas: un papel se mira
+  // en la nave y en el despacho, y una pantalla que no está en la caché es un hueco justo cuando hay que
+  // decidir si un papel entra en el cuaderno.
+  "/react/pantallas/bandeja.js",
   // 30/09/2026: el armazón del ordenador (el menú lateral y la barra de arriba). Es lo primero que se pinta
   // al abrir la aplicación en un ordenador: sin este fichero en la caché, la pantalla sale sin menú.
   "/react/piezas/marco.js",
