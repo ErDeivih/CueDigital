@@ -1266,7 +1266,12 @@ PANTALLA_CUADERNO: dict = {
     # enseñarlo—, sin depender de que la Junta tenga la ventanilla abierta: mandarlo es voluntario
     # (artículo 10.2 del Real Decreto 1054/2022).
     "sacar_datos": "GUARDAR LOS DATOS EN UN FICHERO",
-    "datos_pista": "Se abre con Excel. Guárdalo: es tu cuaderno, por si te lo piden",
+    # Y aquí, lo mismo: **se dice de qué año es el fichero** (06/10/2026). Antes el servidor sacaba el año
+    # más nuevo de la finca mientras el fichero se llamaba como el año que se estaba viendo; ahora sale el
+    # que se está viendo, y la pista lo dice.
+    "datos_pista": (
+        "Se abre con Excel. Es tu cuaderno del año que estás viendo. Guárdalo: por si te lo piden"
+    ),
     # Lo que de verdad obliga la ley, dicho donde el agricultor lo va a leer: al lado del botón con
     # el que se guarda el cuaderno. Mucha gente cree que está obligada a mandar los datos a la
     # Junta por internet, y **no lo está**: lo que es obligatorio es llevar el registro y poder
@@ -4699,10 +4704,14 @@ CUADERNO_CYL: dict[str, str] = {
     # una lista escrita a mano, sino lo que sale de comparar las 25 hojas del cuaderno oficial con
     # lo que el agricultor tiene apuntado.
     "sacar_titulo": "Sacar mi cuaderno para la Junta",
+    # **Se dice de qué año es el fichero** (06/10/2026). La ruta sacaba el año en curso aunque el
+    # agricultor estuviera mirando otro; ahora saca el que se está mirando, y aquí se dice con esas
+    # palabras para que se sepa **qué se lleva** antes de pulsar (aceptación 3 del encargo: el alcance
+    # de una descarga se dice; «todos», «los filtrados» o, aquí, «el del año que estás viendo»).
     "sacar_explica": (
-        "El programa escribe tu cuaderno con las 25 hojas de la Junta y todo lo que tienes apuntado: "
-        "tus tierras, tus tratamientos, tus abonos, tus análisis y lo que has vendido. Lo que falte "
-        "sale en blanco, nunca con un dato inventado."
+        "El programa escribe tu cuaderno **del año que estás viendo** con las 25 hojas de la Junta y "
+        "todo lo que tienes apuntado: tus tierras, tus tratamientos, tus abonos, tus análisis y lo que "
+        "has vendido. Lo que falte sale en blanco, nunca con un dato inventado."
     ),
     "sacar": "SACAR MI CUADERNO",
     "hojas_datos": "{cuantas} hojas de 25 llevan datos tuyos",
@@ -7933,6 +7942,46 @@ MENSAJES_DE_LOS_EXTRACTOS: dict[str, str] = {
     "T20_esa_importacion_ya_estaba_hecha": "Esa subida ya se había hecho antes: no se ha apuntado nada nuevo.",
 }
 MENSAJES.update(MENSAJES_DE_LOS_EXTRACTOS)
+
+# --------------------------------------------------------------------------
+# Las existencias que cuadran (T21, 06/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Estas cinco frases son las del módulo `app/existencias.py`** (`existencias.MENSAJES`), y hay una
+# prueba que compara los dos sitios leyendo el informe del ticket (`docs/T21_EXISTENCIAS.md`): si una
+# cambia en un lado y no en el otro, se pone roja.
+#
+# El problema que resuelven, dicho corto: en la finca había **dos libros** —lo comprado contra lo echado
+# (la cesta, de las facturas y los tratamientos) y las existencias físicas del almacén (por envases y
+# lotes)— y cada uno decía una cosa. A partir del T21, **donde las dos vistas hablan del mismo artículo
+# usan el mismo saldo físico**, y cuando no se puede (no hay enlace, o las unidades no son las mismas) se
+# dice con una de estas frases, **nunca con un cero**.
+MENSAJES.update(
+    {
+        "A24_el_producto_no_tiene_articulo": (
+            "Este producto no está enlazado con nada del almacén, así que de lo que te queda no se "
+            "puede decir nada aquí. Enlázalo con un artículo del almacén y las dos pantallas dirán lo "
+            "mismo."
+        ),
+        "A25_los_dos_libros_dicen_lo_mismo": (
+            "Este consumo está apuntado en el cuaderno y en el almacén: es el mismo, y contarlo dos "
+            "veces diría que has echado el doble. Cuenta una vez."
+        ),
+        "A26_el_libro_viejo_no_tiene_saldo_fisico": (
+            "De este producto el cuaderno sabe lo que compraste y lo que llevas echado, pero en el "
+            "almacén no hay ninguna entrada suya: lo comprado no está dentro hasta que llegue el "
+            "albarán. Apunta la entrada cuando llegue y aquí saldrá lo que te queda de verdad."
+        ),
+        "A27_unidades_que_no_se_pueden_restar": (
+            "Esto se lleva en {unidad} y lo que hay apuntado está en {otra}. No se pueden restar: un "
+            "litro y un kilo no son lo mismo, y hace falta la densidad del producto."
+        ),
+        "A28_no_hay_articulo_del_que_sacar_el_saldo": (
+            "Ni el cuaderno ni el almacén tienen una ficha de la que sacar lo que te queda. "
+            "Apunta de qué producto se trata y volverá a salir la cuenta."
+        ),
+    }
+)
 
 # --------------------------------------------------------------------------
 # El extracto del banco y la conciliación (T20, E11, 06/10/2026)
