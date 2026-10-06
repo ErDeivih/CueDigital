@@ -44,6 +44,9 @@
  */
 
 import { AvisoDeError, Boton, Botones, BotonSencillo, frase, html } from "../componentes.js";
+// `rellena` (para la frase que dice cuántos gastos no traen el importe) vive en el núcleo, como en las
+// demás pantallas que rellenan un hueco de una frase del servidor.
+import { rellena } from "../../nucleo.js";
 
 /** Un campo de escribir con su etiqueta y su pista. */
 function Campo({ id, etiqueta, pista, tipo = "texto", valor = "", soloLectura = false }) {
@@ -558,6 +561,7 @@ export function PantallaDeLaTierra({
   tierra = {},
   historial = [],
   estado = null,
+  costes = null,
   no_consta = [],
   error = "",
 }) {
@@ -650,6 +654,72 @@ export function PantallaDeLaTierra({
         : null
     }
 
+    ${
+      // **Lo que ha costado esta tierra** (T15 + T13, 05/10/2026): la mitad que le faltaba al recorrido
+      // de abrir una tierra —«qué cultivo tiene, qué trabajos se han hecho, qué queda previsto y **qué
+      // costes conocidos tiene**»—. Las dos cifras van **separadas** y no sumadas en una: lo que pone el
+      // papel (directos) y lo que se repartió (una estimación que acordó el agricultor) son dos cosas de
+      // fiabilidad distinta. Y los gastos que **no dicen lo que costaron** se cuentan y se dicen, en vez
+      // de sumar un cero que diría que salieron gratis.
+      //
+      // **Cada línea lleva su enlace al registro**: el botón abre la ficha de ese gasto (`gasto-abrir`,
+      // que ya existe), que es donde están sus repartos, sus pagos y su cuadre. Un número del que no se
+      // puede llegar a sus apuntes no sirve para comprobarlo.
+      costes
+        ? html`
+            <h2>${frase(a.costes_titulo)}</h2>
+            <p className="pista-campo">${frase(a.costes_explica)}</p>
+            <div className="aviso">
+              <${Fila} etiqueta=${a.costes_directos} valor=${costes.texto_directos || costes.directos} />
+              <${Fila} etiqueta=${a.costes_repartidos} valor=${costes.texto_repartidos || costes.repartidos} />
+              <${Fila} etiqueta=${a.costes_total} valor=${costes.texto_total || costes.total_conocido} />
+            </div>
+            ${
+              // Un total que calla que le faltan datos miente: se dice cuántos no dicen el importe.
+              costes.sin_importe
+                ? html`<p className="pista-campo">${frase(rellena(a.costes_sin_importe, { cuantos: String(costes.sin_importe) }))}</p>`
+                : null
+            }
+            ${
+              (costes.filas || []).length === 0
+                ? html`<div className="aviso">${frase(a.costes_vacio)}</div>`
+                : html`<ul className="lista">
+                    ${costes.filas.map(
+                      (linea, indice) => html`
+                        <li key=${"c" + indice}>
+                          <strong>${frase(linea.que_es || a.sin_decir)}</strong>
+                          <p className="pista-campo">${frase(linea.fecha || a.sin_decir)}</p>
+                          <p>${frase(linea.texto_importe || a.sin_decir)}</p>
+                          ${
+                            // **Y se dice de dónde sale la cifra**: un gasto que dice la tierra y un
+                            // trozo repartido no se leen igual.
+                            html`<p className="pista-campo">${frase(linea.de_donde === "repartido" ? a.costes_repartido_es : a.costes_directo_es)}</p>`
+                          }
+                          ${
+                            linea.gasto_id
+                              ? html`<${Botones}
+                                  botones=${[
+                                    {
+                                      etiqueta: a.ver_el_gasto,
+                                      accion: "gasto-abrir",
+                                      datos: { id: linea.gasto_id },
+                                      clase: "boton-claro",
+                                      sencillo: true,
+                                    },
+                                  ]}
+                                  barra=${false}
+                                />`
+                              : null
+                          }
+                        </li>
+                      `,
+                    )}
+                  </ul>`
+            }
+          `
+        : null
+    }
+
     <${LoQueNoConsta} textos=${textos} avisos=${no_consta} />
 
     ${
@@ -725,6 +795,7 @@ export function pantallaDeLaTierra(propiedades) {
       tierra=${propiedades.tierra}
       historial=${propiedades.historial}
       estado=${propiedades.estado}
+      costes=${propiedades.costes}
       no_consta=${propiedades.no_consta}
       error=${propiedades.error}
     />

@@ -148,6 +148,20 @@ const AGENDA = {
   no_consta: "Lo que no consta",
   sin_tierras: "Para planificar un trabajo hace falta tener una tierra dada de alta.",
   anadir_tierra: "VER MIS TIERRAS",
+  // **Lo que ha costado una tierra** (T13 + T15, 05/10/2026). Son de `textos.AGENDA`, como todas las de
+  // arriba: esta copia es la que hace que la pantalla no pueda enseñar una frase inventada.
+  costes_titulo: "Lo que ha costado esta tierra",
+  costes_explica:
+    "Lo que consta de esta tierra. Está separado en dos: lo que pone el papel y lo que se repartió desde las cuentas, que es una estimación. Lo que no se sabe se dice, no se cuenta como cero.",
+  costes_directos: "Lo que pone el papel",
+  costes_repartidos: "Lo repartido desde las cuentas",
+  costes_total: "Lo que se sabe que ha costado",
+  costes_sin_importe:
+    "Hay {cuantos} gasto de esta tierra que no dice lo que costó, así que el total se queda corto.",
+  costes_vacio: "De esta tierra no hay ningún gasto apuntado.",
+  costes_directo_es: "Es un gasto que dice esta tierra.",
+  costes_repartido_es: "Es un trozo que se repartió a esta tierra desde las cuentas.",
+  ver_el_gasto: "VER EL GASTO",
 };
 
 /** El vocabulario de los tipos de trabajo: ya está en `textos.py` y se sirve en `/api/interfaz`. */
@@ -537,6 +551,65 @@ test("una tierra sin nada sembrado lo dice, y no se inventa un cultivo", async (
   assert.ok(html.includes(AGENDA.historial_vacio));
 });
 
+test("lo que ha costado la tierra sale con sus dos cifras y con el enlace a cada gasto", async () => {
+  // **La mitad que le faltaba al recorrido de abrir una tierra** (T15 + T13, 05/10/2026): los trabajos
+  // ya salían en el historial y el dinero no. Las dos cifras van separadas —lo que pone el papel y lo
+  // repartido, que es una estimación— y **cada línea lleva su botón para abrir esa ficha del gasto**,
+  // que es donde están sus repartos y sus pagos: un número del que no se puede llegar a sus apuntes no
+  // sirve para comprobarlo.
+  const html = await htmlDeLaTierra({
+    costes: {
+      directos: "250.00",
+      texto_directos: "250,00 €",
+      repartidos: "60.00",
+      texto_repartidos: "60,00 €",
+      total_conocido: "310.00",
+      texto_total: "310,00 €",
+      sin_importe: 1,
+      filas: [
+        {
+          gasto_id: 7,
+          que_es: "Gasóleo",
+          fecha: "2026-03-04",
+          importe: "250.00",
+          texto_importe: "250,00 €",
+          de_donde: "directo",
+        },
+        {
+          gasto_id: 9,
+          que_es: "Seguro de la finca",
+          fecha: null,
+          importe: "60.00",
+          texto_importe: "60,00 €",
+          de_donde: "repartido",
+        },
+      ],
+    },
+  });
+  assert.ok(html.includes(AGENDA.costes_titulo), "no sale lo que ha costado la tierra");
+  assert.ok(html.includes(AGENDA.costes_directos));
+  assert.ok(html.includes(AGENDA.costes_repartidos), "las dos cifras no van separadas");
+  assert.match(html, /250,00 €/);
+  assert.match(html, /60,00 €/);
+  // **Un total que calla que le faltan datos miente**: se dice cuántos no traen el importe.
+  assert.match(html, /1 gasto de esta tierra que no dice lo que costó/);
+  // Y cada línea lleva su enlace al registro: el botón que abre esa ficha del gasto.
+  assert.match(html, /data-accion="gasto-abrir" data-id="7"/);
+  assert.match(html, /data-accion="gasto-abrir" data-id="9"/);
+  assert.ok(html.includes(AGENDA.costes_directo_es) && html.includes(AGENDA.costes_repartido_es));
+});
+
+test("sin costes no se enseña el bloque, y sin gastos se dice que no hay", async () => {
+  // Lo primero es lo que pasa cuando las cuentas no contestan: la historia se enseña igual y el bloque
+  // **no sale** (mejor que un bloque con ceros, que diría que esa tierra no ha costado nada).
+  const sinCostes = await htmlDeLaTierra({});
+  assert.ok(!sinCostes.includes(AGENDA.costes_titulo), "enseña costes que no le han llegado");
+  const vacio = await htmlDeLaTierra({
+    costes: { directos: "0.00", texto_directos: "0,00 €", repartidos: "0.00", texto_repartidos: "0,00 €", total_conocido: "0.00", texto_total: "0,00 €", sin_importe: 0, filas: [] },
+  });
+  assert.ok(vacio.includes(AGENDA.costes_vacio), "una tierra sin gastos no lo dice");
+});
+
 test("cuando el apero va detrás de la siembra, la pantalla lo explica", async () => {
   // «Un rodillo después de sembrar no borra el estado de siembra»: al ver un rodillo justo detrás de una
   // siembra, lo primero que se pregunta es si se ha perdido el cultivo. La pantalla lo dice.
@@ -628,8 +701,38 @@ test("la pantalla no lee ninguna frase que no esté en los textos", async () => 
       },
     ],
     no_consta: [{ texto: "N", cuantos: 0 }],
+    // **Y el bloque de lo que ha costado** (T13 + T15): se recorre aquí para que sus frases cuenten como
+    // leídas. Si no, la comprobación de abajo diría que están escritas y no las lee nadie —que es
+    // exactamente lo que tiene que decir cuando alguien añade una frase y no la pinta—.
+    costes: {
+      directos: "1.00",
+      texto_directos: "1,00 €",
+      repartidos: "2.00",
+      texto_repartidos: "2,00 €",
+      total_conocido: "3.00",
+      texto_total: "3,00 €",
+      sin_importe: 1,
+      filas: [
+        { gasto_id: 7, que_es: "Gasóleo", fecha: "2026-03-04", texto_importe: "1,00 €", de_donde: "directo" },
+        { gasto_id: 9, que_es: "Seguro", fecha: null, texto_importe: "2,00 €", de_donde: "repartido" },
+      ],
+    },
   });
   await htmlDeLaTierra({ textos, estado: { cultivo_declarado: null } });
+  // Y la rama de la tierra **sin ningún gasto**, que también tiene su frase.
+  await htmlDeLaTierra({
+    textos,
+    costes: {
+      directos: "0.00",
+      texto_directos: "0,00 €",
+      repartidos: "0.00",
+      texto_repartidos: "0,00 €",
+      total_conocido: "0.00",
+      texto_total: "0,00 €",
+      sin_importe: 0,
+      filas: [],
+    },
+  });
 
   const sin_frase = [...usadas].filter((clave) => !(clave in AGENDA));
   assert.deepEqual(

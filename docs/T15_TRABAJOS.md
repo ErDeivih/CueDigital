@@ -555,6 +555,27 @@ AGENDA: dict[str, str] = {
     "no_consta": "Lo que no consta",
     "sin_tierras": "Para planificar un trabajo hace falta tener una tierra dada de alta.",
     "anadir_tierra": "VER MIS TIERRAS",
+    # ── Lo que ha costado una tierra (se añadieron al integrar, 05/10/2026) ──
+    #
+    # **Estas diez claves no venían en el bloque del ticket y se añadieron al integrarlo**, porque el
+    # recorrido que el encargo pide al abrir una tierra es «qué cultivo tiene, qué trabajos se han hecho,
+    # qué queda previsto **y qué costes conocidos tiene**»: los trabajos ya salían en el historial y el
+    # dinero no. Las cifras las calcula el servidor (`GET /api/gastos/de-una-tierra/<id>`, del T13).
+    "costes_titulo": "Lo que ha costado esta tierra",
+    "costes_explica": (
+        "Lo que consta de esta tierra. Está separado en dos: lo que pone el papel y lo que se repartió "
+        "desde las cuentas, que es una estimación. Lo que no se sabe se dice, no se cuenta como cero."
+    ),
+    "costes_directos": "Lo que pone el papel",
+    "costes_repartidos": "Lo repartido desde las cuentas",
+    "costes_total": "Lo que se sabe que ha costado",
+    "costes_sin_importe": (
+        "Hay {cuantos} gasto de esta tierra que no dice lo que costó, así que el total se queda corto."
+    ),
+    "costes_vacio": "De esta tierra no hay ningún gasto apuntado.",
+    "costes_directo_es": "Es un gasto que dice esta tierra.",
+    "costes_repartido_es": "Es un trozo que se repartió a esta tierra desde las cuentas.",
+    "ver_el_gasto": "VER EL GASTO",
 }
 ```
 

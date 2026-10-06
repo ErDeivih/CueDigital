@@ -2070,6 +2070,142 @@ def las_categorias() -> dict:
 
 
 # --------------------------------------------------------------------------
+# Lo que ha costado una tierra (T13 + T15, 05/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Va antes de la ficha de un gasto, y a propósito**: en este fichero las rutas de palabra fija van
+# delante de las de identificador (ver el comentario del final), y «de-una-tierra» es una palabra fija.
+
+
+@router.get("/gastos/de-una-tierra/{parcela_id}")
+def lo_que_ha_costado_una_tierra(
+    parcela_id: int,
+    explotacion: ExplotacionActual,
+    db: Db,
+    campana_id: int | None = None,
+) -> dict:
+    """**Cuánto ha costado una tierra: lo que consta, y lo que no.**
+
+    Es la mitad que le faltaba a la ficha de una tierra (el recorrido 5 del encargo: «qué cultivo tiene,
+    qué trabajos se han hecho, qué queda previsto y **qué costes conocidos tiene**»): los trabajos ya
+    salían en su historial (T15) y el dinero no.
+
+    **Cómo se cuenta, y por qué así.** Son **dos cifras separadas** y no una sola suma, por el mismo
+    motivo que en la pantalla de las cuentas: un coste **directo** es lo que pone el papel (un gasto que
+    dice «esta tierra»), y uno **repartido** es una estimación que acordó el agricultor (un trozo de un
+    gasto que se llevó a esta tierra desde la pantalla de las cuentas). Sumarlos en un número solo sería
+    decir que son lo mismo.
+
+      · **Directos**: los gastos no anulados que dicen esta tierra (`parcela_id`), con su importe.
+      · **Repartidos**: los trozos de reparto no anulados que se llevaron a esta tierra, vengan de un
+        gasto o de una inversión.
+      · **Sin importe**: cuántos gastos de esta tierra **no dicen lo que costaron**. Se cuentan y se
+        dicen: un total que calla que le faltan datos miente, y sumar un cero diría que salió gratis.
+
+    **Y la regla que impide contarlo dos veces**, que es la misma de `_el_coste_por_clase`: un gasto que
+    ya dice una tierra (o un cultivo) cuenta **por su importe entero** y **sus repartos no se miran**; si
+    no, un gasto directo y repartido saldría por los dos lados. Por eso los repartos que se cuentan aquí
+    son solo los de gastos que **no** dicen tierra ni cultivo.
+
+    **Lo que NO hace, y se dice:** ni descuentos, ni margen, ni la parte que le toque de las inversiones.
+    Un margen necesita los ingresos de esa tierra —que son de las ventas, y una entrega no dice de qué
+    tierra salió— y el reparto de una inversión lo decide el agricultor. Ninguna de las dos cosas está
+    resuelta en ningún ticket, así que aquí no se inventan.
+    """
+    tierra = obtener_de_la_explotacion(db, models.Parcela, parcela_id, explotacion.id)
+
+    consulta = select(models.Gasto).where(
+        models.Gasto.explotacion_id == explotacion.id,
+        models.Gasto.parcela_id == parcela_id,
+        models.Gasto.anulado.is_(False),
+    )
+    if campana_id is not None:
+        consulta = consulta.where(models.Gasto.campana_id == campana_id)
+    suyos = list(db.scalars(consulta.order_by(models.Gasto.fecha.desc(), models.Gasto.id.desc())))
+
+    directos = dinero.CERO
+    sin_importe = 0
+    filas: list[dict] = []
+    for gasto in suyos:
+        importe = dinero.a_decimal(gasto.importe)
+        if importe is None:
+            # **No se suma un cero**: se cuenta aparte y se dice.
+            sin_importe += 1
+        else:
+            directos = dinero.suma(directos, importe)
+        filas.append(
+            {
+                "gasto_id": gasto.id,
+                "que_es": gasto.concepto or "",
+                "fecha": gasto.fecha,
+                "importe": dinero.a_texto(importe),
+                "texto_importe": dinero.formatea(importe),
+                "de_donde": "directo",
+            }
+        )
+
+    # Los repartos a esta tierra, de gastos que **no** dicen tierra ni cultivo (si no, se contarían dos
+    # veces) y de inversiones (que no tienen esas columnas: una inversión se reparte o no se reparte).
+    trozos = list(
+        db.scalars(
+            select(models.RepartoDeCoste).where(
+                models.RepartoDeCoste.explotacion_id == explotacion.id,
+                models.RepartoDeCoste.destino_tipo == gastos.TIERRA,
+                models.RepartoDeCoste.parcela_id == parcela_id,
+                models.RepartoDeCoste.anulado.is_(False),
+            )
+        )
+    )
+    repartidos = dinero.CERO
+    for trozo in trozos:
+        importe = dinero.a_decimal(trozo.importe)
+        if trozo.gasto_id is not None:
+            gasto = db.get(models.Gasto, trozo.gasto_id)
+            if gasto is None or gasto.anulado or gasto.parcela_id or gasto.cultivo:
+                continue
+            que_es = gasto.concepto or ""
+            fecha = gasto.fecha
+        else:
+            inversion = db.get(models.InversionDeLaFinca, trozo.inversion_id)
+            if inversion is None or inversion.anulada:
+                continue
+            que_es = inversion.concepto or ""
+            fecha = inversion.fecha
+        if importe is not None:
+            repartidos = dinero.suma(repartidos, importe)
+        filas.append(
+            {
+                "gasto_id": trozo.gasto_id,
+                "que_es": que_es,
+                "fecha": fecha,
+                "importe": dinero.a_texto(importe),
+                "texto_importe": dinero.formatea(importe),
+                "de_donde": "repartido",
+                "porque": trozo.metodo or gastos.MANUAL,
+            }
+        )
+
+    filas.sort(key=lambda fila: (fila["fecha"] is None, fila["fecha"] or "", -(fila["gasto_id"] or 0)))
+    total = dinero.suma(directos, repartidos)
+    return {
+        "parcela_id": tierra.id,
+        "tierra": tierra.alias,
+        "campana_id": campana_id,
+        "directos": dinero.a_texto(directos),
+        "texto_directos": dinero.formatea(directos),
+        "repartidos": dinero.a_texto(repartidos),
+        "texto_repartidos": dinero.formatea(repartidos),
+        "total_conocido": dinero.a_texto(total),
+        "texto_total": dinero.formatea(total),
+        # **Cuántos gastos no dicen lo que costaron**, y cuántas líneas tiene la cuenta. Un total sin
+        # esto parece completo cuando no lo está.
+        "sin_importe": sin_importe,
+        "cuantos": len(filas),
+        "filas": filas,
+    }
+
+
+# --------------------------------------------------------------------------
 # La ficha de un gasto, **la última ruta del fichero y a propósito**
 # --------------------------------------------------------------------------
 #

@@ -20018,9 +20018,21 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
   suyo.aviso = "";
   suyo.formulario = null;
   suyo.cargando = true;
+  suyo.costes = null;
   pantallaLaHistoria();
   try {
-    suyo.tierra = await apiJson(`/api/trabajos/tierra/${Number(parcelaId)}`);
+    // **Dos puertas, porque son dos hechos de dos tickets**: los trabajos y su estado son del T15, y el
+    // dinero que ha costado esa tierra es del T13. Cada una manda lo suyo y la pantalla los junta;
+    // mezclarlos en una sola respuesta obligaría a que un ticket supiera del otro.
+    const campana = estado.campana ? `?campana_id=${estado.campana.id}` : "";
+    const [tierra, costes] = await Promise.all([
+      apiJson(`/api/trabajos/tierra/${Number(parcelaId)}`),
+      // Si las cuentas no contestan, la historia se enseña igual: lo que falta es una parte, no la
+      // pantalla. El bloque de los costes simplemente no sale.
+      apiJson(`/api/gastos/de-una-tierra/${Number(parcelaId)}${campana}`).catch(() => null),
+    ]);
+    suyo.tierra = tierra;
+    suyo.costes = costes;
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
     suyo.tierra = null;
@@ -20101,6 +20113,10 @@ function pantallaLaHistoria() {
       ]
         .filter(Boolean)
         .map((codigo) => ({ texto: mensaje(codigo) })),
+      // **Lo que ha costado esta tierra** (T13 + T15): las dos cifras separadas y la lista, cada línea
+      // con su enlace a la ficha de ese gasto (donde están sus repartos y sus pagos). Si las cuentas no
+      // han contestado, esto llega `null` y el bloque no sale: la historia se enseña igual.
+      costes: suyo.costes,
       error: suyo.error || "",
     }),
   );

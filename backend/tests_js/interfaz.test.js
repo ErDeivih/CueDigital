@@ -13567,6 +13567,40 @@ test("la historia de una tierra se abre por su dirección y enseña todo lo que 
       },
       lo_que_no_se_sabe: {},
     },
+    // **Lo que ha costado esa tierra** (T13 + T15): se pide a la puerta de las cuentas, con el año que
+    // se está llevando. La pantalla de la historia junta los dos hechos —los trabajos y el dinero— y
+    // esta prueba comprueba que el de las cuentas llega de verdad (si no llegara, el bloque no saldría
+    // y nadie se enteraría: la pantalla se enseña igual, a propósito).
+    "GET /api/gastos/de-una-tierra/1?campana_id=1": {
+      parcela_id: 1,
+      tierra: "El Prado",
+      directos: "250.00",
+      texto_directos: "250,00 €",
+      repartidos: "60.00",
+      texto_repartidos: "60,00 €",
+      total_conocido: "310.00",
+      texto_total: "310,00 €",
+      sin_importe: 1,
+      cuantos: 2,
+      filas: [
+        {
+          gasto_id: 7,
+          que_es: "Gasóleo",
+          fecha: "2026-03-04",
+          importe: "250.00",
+          texto_importe: "250,00 €",
+          de_donde: "directo",
+        },
+        {
+          gasto_id: 9,
+          que_es: "Seguro de la finca",
+          fecha: null,
+          importe: "60.00",
+          texto_importe: "60,00 €",
+          de_donde: "repartido",
+        },
+      ],
+    },
   });
   // **La dirección manda**: se abre la historia de una tierra poniendo su dirección, que es como llega
   // desde un enlace o al recargar. Se lee de la barra con `laDireccion` como en las demás pruebas de T04.
@@ -13601,6 +13635,17 @@ test("la historia de una tierra se abre por su dirección y enseña todo lo que 
   assert.ok(props.estado.apero_no_cambia, "no se dice que el rodillo no borra lo sembrado");
   assert.equal(props.estado.previstos.length, 1);
   assert.match(props.estado.previstos[0].cuando, /20\/04\/2026/);
+
+  // **Y lo que ha costado la tierra** (T13 + T15): los dos hechos juntos, que es el recorrido 5 del
+  // encargo («qué cultivo tiene, qué trabajos se han hecho, qué queda previsto y qué costes conocidos
+  // tiene»). Si esta puerta no se pidiera, el bloque no saldría y la pantalla se vería igual.
+  assert.ok(props.costes, "no se ha pedido lo que ha costado la tierra");
+  assert.ok(
+    servidor.llamadas.some((r) => r.includes("/api/gastos/de-una-tierra/1")),
+    "no se ha ido a la puerta de las cuentas a por el coste de esa tierra",
+  );
+  assert.equal(props.costes.texto_total, "310,00 €");
+  assert.equal(props.costes.sin_importe, 1, "no se dice que un gasto de esa tierra no trae importe");
 });
 
 
