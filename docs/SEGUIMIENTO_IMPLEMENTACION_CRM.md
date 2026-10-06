@@ -5706,3 +5706,66 @@ no se ha recorrido todavía; es el siguiente paso, y no es una pantalla: hace fa
 la salida del almacén y su comprobación. Y siguen los tres límites de fuera: la precisión del OCR no se
 puede medir (no hay corpus, T07 está bloqueado), el T08 no se ha probado con las 64 tierras y los papeles
 de verdad, y PostgreSQL sigue bloqueado por Docker.
+
+### 50.16 Ronda 9 (segunda mitad): **cinco defectos más**, y dos de ellos hacían imposible una mitad del recorrido 4
+
+**Lo que se ha hecho.** El recorrido 4 tenía una mitad que no se había recorrido nunca: **«insumos y
+existencias»**. El guion no daba de alta ningún envase, así que el desplegable de insumos salía vacío —que
+es correcto y no comprueba nada— y nadie había pulsado nunca «marcar un trabajo hecho diciendo de qué
+envase salió el producto». Se ha puesto el envase en el guion (40 L dentro, por las dos puertas que
+existen: el artículo, su lote y una entrada a mano con su motivo) y se han recorrido las dos mitades: **de
+qué envase salió** (con su producto y su cantidad en la historia de la tierra) y **qué queda después** (34
+L en el libro del almacén, con su salida de 6 L). Y salieron **cinco defectos**, ninguno visible sin
+pulsar:
+
+**1. El desplegable de insumos salía SIEMPRE vacío, y por eso se podía leer el campo equivocado.**
+`app.js` leía `articulo.envases` de lo que contesta `/api/almacen/existencias`, y ese campo **no existe**:
+los envases de un artículo vienen en `articulo.lotes` (es lo que pinta el libro del almacén, y su
+respuesta se ve en el navegador). Con el nombre mal, la lista salía vacía y **no se podía decir de qué
+envase se gastó nada**: la mitad del recorrido 4 era imposible desde la pantalla. Arreglado en una línea,
+con una prueba de cableado que manda existencias de verdad (las de antes mandaban `{articulos: []}`, y por
+eso ninguna la cazaba) y con esa prueba comprobada en rojo.
+
+**2. La historia de una tierra decía cuánto se gastó y no decía qué.** En el navegador se leía literalmente
+**«Qué gastaste del almacén: 6 L»**: un número sin su producto, que es justo la pregunta que se hace el día
+de una inspección con un fitosanitario delante. El nombre del artículo y el número del envase **ya estaban
+en la base** (`trabajos_api._los_consumos_de_una_labor` solo mandaba los identificadores), así que se
+resuelven ahí, que es donde se sabe de qué movimiento se habla. Ahora se lee «Glifosato 36 SL 6 L».
+
+**3. Un plan ya cumplido seguía ofreciendo «YA LO HE HECHO», y pulsarlo daba un 409.** La lista de lo
+pensado trae también los planes ya cumplidos —y tiene que traerlos: el plan sigue siendo lo que se pensó—,
+pero la pantalla les pintaba otra vez el botón de apuntarlos. El agricultor lo pulsaba, rellenaba la ficha
+(con lo que eso cuesta) y el servidor contestaba **«este trabajo ya estaba apuntado»**: un botón que no
+puede funcionar, que es el defecto que este proyecto persigue. Ahora **se dice cuándo se hizo** y el botón
+no está; el hecho sigue en la otra lista con su CORREGIRLO y su ANULARLO. El cruce de las dos listas se
+hace por el vínculo que puso el servidor (`previsto_id` de la labor), así que no hace falta ninguna puerta
+nueva. Arreglado con su frase en `AGENDA` (y su bloque del informe puestos al día, que hay un guardián que
+compara los tres sitios), una prueba del componente, otra de cableado y las dos comprobadas en rojo.
+
+**4. Y dos cosas del propio guion, que cuando engañan también son defectos.** La ruta de la historia de una
+tierra **tenía que ir antes** de las rutas del recorrido 4: esas marcan como hechos todos los planes que
+hay, y a partir de ahí la pantalla ya no tiene nada que enseñar en «lo que tengo pensado hacer» —con razón:
+no queda nada pensado—, así que la comprobación dejaba de mirar esa parte sin decirlo. El orden está
+escrito al lado con su motivo. Y la comprobación del envase **depende de la ruta de arriba** (una gasta y
+la otra mira): el número va con su cuenta al lado («40 L menos los 6 L que gastó la ruta anterior») para
+que, si alguien las reordena, falle con su frase en vez de dar por bueno un número que ya no es.
+
+| Medida (06/10/2026, con el árbol quieto) | Valor |
+|---|---|
+| `pytest tests` | **4.439 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.044 · 0 rojos** |
+| `scripts/comprobar_en_un_navegador.py` | **543 comprobaciones · 0 fallos** (antes de la ronda: 523) |
+| El recorrido 4 | **entero**: planificar, marcar lo hecho, de qué envase salió y qué queda en el almacén |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+**Una nota de método, porque cuesta tiempo y conviene tenerla escrita:** el guardián que comprueba que la
+página de la comprobación no se queda dentro de la aplicación **falla si se lanza la comprobación del
+navegador a la vez que la suite**: mientras la comprobación está en marcha, su página existe. No es un
+defecto: es que las dos cosas no se pueden hacer en paralelo (se vio, se repitió sola y pasa).
+
+**Lo que queda de este objetivo, sin adornos.** El T08 sigue sin probarse con las 64 tierras y los papeles
+reales; la precisión del OCR no se puede medir (no hay corpus: T07 está bloqueado por fuera); PostgreSQL
+sigue bloqueado por Docker. Y hay una cosa que se ha visto al recorrer esto y **no se ha tocado**: el
+producto de un tratamiento lleva su cuenta de «comprado / echado / te queda» en su ficha, y el almacén
+lleva la suya por envases. Hoy son dos libros distintos y el trabajo que gasta del envase mueve el del
+almacén; **comprobar si el otro debería enterarse es una decisión, no un arreglo**, y se deja dicha.

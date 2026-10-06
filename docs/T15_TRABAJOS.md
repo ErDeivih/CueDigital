@@ -486,6 +486,9 @@ AGENDA: dict[str, str] = {
     "planificar_explica": "Apunta lo que piensas hacer. No gasta nada del almacén: eso se apunta el día que lo hagas, con lo que de verdad gastes.",
     "guardar_previsto": "GUARDAR LO QUE PIENSO HACER",
     "ya_lo_he_hecho": "YA LO HE HECHO",
+    # (ronda 9) Un plan ya cumplido sigue en la lista de lo pensado —el plan es lo que se pensó— pero no
+    # puede ofrecer el botón de apuntarlo otra vez: el servidor contesta 409. Se dice cuándo se hizo.
+    "ya_esta_hecho": "Ya lo apuntaste como hecho:",
     "cambiarlo_de_dia": "CAMBIARLO DE DÍA",
     "cancelarlo": "CANCELARLO",
     "reprogramar_titulo": "Cambiar de día este trabajo",

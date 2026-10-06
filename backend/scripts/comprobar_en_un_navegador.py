@@ -934,6 +934,33 @@ PANTALLAS = [
             "ya está apuntado entero a sus papeles",
         ],
     ),
+    # **La historia de una tierra** (T15, 05/10/2026): **el recorrido 5 entero, pulsando**, que es como lo
+    # hace el agricultor —«abrir tierra → qué cultivo tiene, qué trabajos se han hecho, qué queda previsto
+    # y qué costes conocidos tiene»—. Se entra por «mis cosas» y se pulsa el botón de la ficha de la
+    # primera tierra; el guion deja en ella un cultivo declarado, un trabajo hecho, uno pensado y un gasto,
+    # así que las cuatro partes del recorrido tienen algo que enseñar. Los cuatro textos que se buscan son
+    # los de esas cuatro partes, y **el del cultivo es el que se veía mal**: la pantalla decía «de esta
+    # tierra no consta que haya nada sembrado» en una tierra con TRIGO BLANDO declarado, porque «qué hay
+    # hoy» solo miraba las labores de siembra. Se arregló el mismo día que se añadió esta ruta.
+    #
+    # **Va antes de las rutas del recorrido 4, y el orden importa**: esas rutas marcan como hechos **todos**
+    # los planes que hay (el guion deja uno y la ruta de planificar deja otro), así que a partir de ahí esta
+    # pantalla ya no tiene nada que enseñar en «lo que tengo pensado hacer» —con razón: no queda nada
+    # pensado— y esta comprobación dejaría de mirar esa parte. Se descubrió al añadir la ruta del insumo,
+    # que consume el último plan.
+    (
+        "la historia de una tierra (el recorrido 5, pulsando)",
+        ['[data-accion="mis-cosas"]', '[data-accion="tierra-historia"]'],
+        [
+            "Lo que ha pasado en esta tierra",
+            "Lo que hay sembrado",
+            "TRIGO BLANDO",
+            "HE LABRADO LA TIERRA",
+            "Lo que tengo pensado hacer",
+            "Lo que ha costado esta tierra",
+            "VER EL GASTO",
+        ],
+    ),
     # **El recorrido 4 (T15): planificar un trabajo y marcarlo hecho.** Las dos mitades del ticket, y
     # en su orden: primero se apunta lo que se piensa hacer (que **no gasta nada**) y después se
     # apunta lo que de verdad se hizo, con su día y sus horas. Se comprueba el día en las dos listas,
@@ -965,27 +992,75 @@ PANTALLAS = [
             "escribir:#trabajo-horas=5",
             '[data-accion="trabajo-hecho-guardar"]',
         ],
-        ["Los trabajos", "Lo que he hecho", "20/11/2026"],
+        # **Y el plan que se acaba de cumplir sigue en la lista, diciendo que ya se hizo.** Es la mitad que
+        # se arregló al recorrer esta ruta: el plan cumplido se quedaba en «lo que tengo pensado hacer» con
+        # su botón «YA LO HE HECHO» otra vez, y pulsarlo contestaba 409 («este trabajo ya estaba apuntado»).
+        # Ahora se dice cuándo se hizo y el botón no está.
+        [
+            "Los trabajos",
+            "Lo que he hecho",
+            "20/11/2026",
+            "Ya lo apuntaste como hecho:",
+        ],
     ),
-    # **La historia de una tierra** (T15, 05/10/2026): **el recorrido 5 entero, pulsando**, que es como lo
-    # hace el agricultor —«abrir tierra → qué cultivo tiene, qué trabajos se han hecho, qué queda previsto
-    # y qué costes conocidos tiene»—. Se entra por «mis cosas» y se pulsa el botón de la ficha de la
-    # primera tierra; el guion deja en ella un cultivo declarado, un trabajo hecho, uno pensado y un gasto,
-    # así que las cuatro partes del recorrido tienen algo que enseñar. Los cuatro textos que se buscan son
-    # los de esas cuatro partes, y **el del cultivo es el que se veía mal**: la pantalla decía «de esta
-    # tierra no consta que haya nada sembrado» en una tierra con TRIGO BLANDO declarado, porque «qué hay
-    # hoy» solo miraba las labores de siembra. Se arregló el mismo día que se añadió esta ruta.
+    # **Y de qué envase salió lo que se gastó** (el resto del recorrido 4: «insumos → historial y
+    # existencias»). El guion deja un envase con existencias dentro, así que el desplegable de insumos
+    # tiene algo de verdad que elegir. Se marca otro trabajo como hecho diciendo **de qué envase** salió el
+    # producto y **cuánto** se gastó, y después se abre **la historia de la tierra**, que es donde el
+    # agricultor puede leer lo que se gastó en ese trabajo: en la lista de los trabajos hechos, el insumo
+    # no se pinta (la agenda enseña el día, la tierra, las horas y lo que falta), y por eso la comprobación
+    # termina en la historia. Lo que se busca es el nombre del producto **y** la cantidad: sin el nombre,
+    # «6 L» no dice de qué, que es la mitad de la pregunta que se hace el día de una inspección.
     (
-        "la historia de una tierra (el recorrido 5, pulsando)",
-        ['[data-accion="mis-cosas"]', '[data-accion="tierra-historia"]'],
+        "el recorrido 4: de qué envase salió lo que se gastó",
+        [
+            '[data-accion="trabajos-ver"]',
+            '[data-accion="trabajo-hecho"]',
+            "escribir:#trabajo-fecha=2026-12-03",
+            "escribir:#trabajo-horas=4",
+            # El envase y la cantidad, elegidos como lo haría el agricultor: el envase del desplegable
+            # (su identificador es del servidor y no se puede escribir en la ruta) y la unidad escrita.
+            "elegir-ejemplo:#trabajo-insumo",
+            "escribir:#trabajo-cantidad=6",
+            "escribir:#trabajo-unidad=L",
+            '[data-accion="trabajo-hecho-guardar"]',
+            # Y a la historia de la tierra, que es donde se lee lo que gastó ese trabajo. Se pasa por el
+            # principio —«mis cosas»— porque al guardar la aplicación vuelve a la agenda de los trabajos,
+            # y desde ahí el botón de la historia de una tierra no existe. El paso que falta **se dice**:
+            # el guion apunta los pasos que no encuentran lo suyo y la comprobación falla por ellos.
+            '[data-accion="ir-inicio"]',
+            '[data-accion="mis-cosas"]',
+            '[data-accion="tierra-historia"]',
+        ],
         [
             "Lo que ha pasado en esta tierra",
-            "Lo que hay sembrado",
-            "TRIGO BLANDO",
-            "HE LABRADO LA TIERRA",
-            "Lo que tengo pensado hacer",
-            "Lo que ha costado esta tierra",
-            "VER EL GASTO",
+            "Glifosato 36 SL",
+            "6 L",
+        ],
+    ),
+    # **Y que el almacén lo sepa**, que es la otra mitad de «insumos → existencias»: lo que gastó el
+    # trabajo de la ruta de arriba tiene que estar **descontado** del envase. Se entra por el libro del
+    # almacén, que es donde está el envase (la otra pantalla —«lo que tengo en el almacén»— lleva la
+    # cuenta del producto por lo comprado y lo echado, y es otra cosa: ahí no hay ningún lote). El guion
+    # deja 40 L y la ruta de arriba gasta 6.
+    #
+    # **Este número depende del orden de las dos rutas** (una gasta y la otra mira), y por eso va escrito
+    # con su cuenta al lado: si alguien las reordena, la comprobación falla con su frase en vez de dar por
+    # bueno un número que ya no es.
+    (
+        "el recorrido 4: el envase tiene descontado lo que se gastó",
+        [
+            '[data-accion="mis-cosas"]',
+            '[data-accion="cesta-ver"]',
+            '[data-accion="libro-ver"]',
+        ],
+        [
+            "El libro del almacén",
+            "Glifosato 36 SL",
+            "ENV-2026-07",
+            # 40 L que había, menos los 6 L que gastó el trabajo de la ruta anterior.
+            "34,00 L",
+            "6,00 L",
         ],
     ),
     # **La bandeja de los papeles** (T08, 06/10/2026): lo que llega y hay que revisar. Se entra por donde
@@ -1825,6 +1900,45 @@ def siembra_datos(direccion: str, token: str) -> list[str]:
         )
         if producto.status_code == 201:
             creado.append("un producto")
+            # **Un envase con existencias dentro** (ronda 9, recorrido 4). Hace falta para poder
+            # recorrer la mitad del recorrido que habla de **insumos y existencias**: marcar un trabajo
+            # hecho diciendo de qué envase salió el producto no se puede ni pulsar si no hay ningún
+            # envase, y el desplegable de insumos sale vacío —que es correcto y no comprueba nada—.
+            # Se mete mercancía por las **dos puertas que existen**: el artículo, su lote y una entrada
+            # apuntada a mano con su motivo (que es como se apunta lo que ya estaba en la nave antes de
+            # empezar a llevar el cuaderno con el programa).
+            articulo = cliente.post(
+                "/api/almacen/articulos",
+                json={
+                    "nombre": "Glifosato 36 SL",
+                    "categoria": "fitosanitario",
+                    "unidad": "L",
+                    "producto_id": producto.json()["id"],
+                },
+            )
+            lote = cliente.post(
+                "/api/almacen/lotes",
+                json={
+                    "articulo_id": articulo.json()["id"],
+                    "numero_lote": "ENV-2026-07",
+                    "presentacion": "garrafa de 20 L",
+                    "contenido_por_envase": 20.0,
+                    "ubicacion": "La nave",
+                },
+            )
+            entrada = cliente.post(
+                "/api/almacen/movimientos",
+                json={
+                    "tipo": "entrada",
+                    "lote_id": lote.json()["id"],
+                    "cantidad": 40.0,
+                    "unidad": "L",
+                    "fecha": "2026-03-16",
+                    "motivo": "Lo que ya estaba en la nave cuando empecé a llevar el cuaderno aquí",
+                },
+            )
+            if articulo.status_code == 201 and lote.status_code == 201 and entrada.status_code == 201:
+                creado.append("un envase con existencias")
             # **Una factura de verdad** (ronda 93). Hace falta desde que la ficha de una factura ofrece
             # BORRAR: con la lista vacía, esa pantalla enseña «todavía no has subido ninguna» y el botón
             # que hay que pulsar **no existe**, así que la ruta no comprobaría nada (una lista vacía pasa
@@ -2265,6 +2379,9 @@ def main() -> int:
                 # **antes** del producto porque se declaran dentro del bloque de la finca.
                 "las medidas declaradas",
                 "un producto",
+                # Y su envase con existencias dentro (ronda 9): sin él, el recorrido 4 no puede decir de
+                # qué se gastó el producto, y el desplegable de insumos sale vacío.
+                "un envase con existencias",
                 # La factura se añadió en la ronda 93 para que el borrado de una factura se pueda
                 # comprobar de verdad: con la lista vacía, el botón BORRAR de una factura no existe.
                 "una factura",

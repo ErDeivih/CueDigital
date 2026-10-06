@@ -20723,14 +20723,27 @@ function pantallaLosTrabajos() {
   return montar(() =>
     pantallaDeLosTrabajos({
       textos: textosDeLosTrabajos(),
-      previstos: (datos.previstos || []).map((plan) => ({
-        id: plan.id,
-        titulo: etiquetaDeUnTrabajo(plan),
-        cuando: cuandoEsUnTrabajo(plan),
-        tierra: laTierraDeUnTrabajo(plan),
-        // **La frase que impide el malentendido del ticket**: esto no ha gastado nada.
-        no_gasta: t("agenda.lo_previsto_no_gasta", ""),
-      })),
+      previstos: (datos.previstos || []).map((plan) => {
+        // **El plan que ya se cumplió.** La agenda trae los planes cumplidos (y tiene que traerlos: el
+        // plan sigue siendo lo que se pensó), así que la pantalla tiene que saber cuáles lo están o
+        // pintaría «YA LO HE HECHO» sobre un trabajo ya apuntado, y ese botón solo puede acabar en un 409
+        // del servidor. El vínculo lo puso el servidor al marcarlo: el hecho apunta al plan con
+        // `previsto_id`.
+        const hecho = (datos.hechos || []).find(
+          (uno) => Number(uno.previsto_id) === Number(plan.id),
+        );
+        return {
+          id: plan.id,
+          titulo: etiquetaDeUnTrabajo(plan),
+          cuando: cuandoEsUnTrabajo(plan),
+          tierra: laTierraDeUnTrabajo(plan),
+          // **La frase que impide el malentendido del ticket**: esto no ha gastado nada.
+          no_gasta: t("agenda.lo_previsto_no_gasta", ""),
+          // Y el día en que se cumplió, ya escrito. Es lo único que hace falta que venga de aquí: la frase
+          // («Ya lo apuntaste como hecho:») la pide la pantalla a su vocabulario, como todas las demás.
+          cuando_lo_hice: hecho ? cuandoEsUnTrabajo(hecho) : "",
+        };
+      }),
       hechos: (datos.hechos || []).map((hecho) => ({
         id: hecho.id,
         titulo: etiquetaDeUnTrabajo(hecho),
@@ -20813,7 +20826,18 @@ async function cargarElVocabularioDeLosTrabajos() {
   }
 }
 
-/** Los envases del almacén, para decir de cuál sale lo que se gastó. */
+/**
+ * Los envases del almacén, para decir de cuál sale lo que se gastó.
+ *
+ * **El nombre del campo es `lotes`, y esto es un defecto que se encontró pulsando.** Esta función leía
+ * `articulo.envases`, que **no existe** en lo que contesta `/api/almacen/existencias`: el servidor manda
+ * los envases de un artículo en `articulo.lotes` (es lo mismo que pinta el libro del almacén, y su
+ * respuesta se ve en el navegador). Con el nombre equivocado la lista salía **siempre vacía**, así que
+ * el desplegable de insumos de la ficha de un trabajo no tenía ni una opción y **no se podía decir de
+ * qué envase salió el producto**: la mitad del recorrido 4 («insumos y existencias») era imposible desde
+ * la pantalla, y no lo decía nadie. No lo cazó ninguna prueba porque **ninguna** pasaba por aquí con
+ * existencias de verdad: las de cableado de los trabajos mandaban `{articulos: []}`.
+ */
 async function cargarLosInsumosSiHacenFalta() {
   const suyo = estadoDeLosTrabajos();
   if (suyo.insumos) return suyo.insumos;
@@ -20821,7 +20845,7 @@ async function cargarLosInsumosSiHacenFalta() {
     const libro = await apiJson("/api/almacen/existencias");
     suyo.insumos = [];
     for (const articulo of libro.articulos || []) {
-      for (const envase of articulo.envases || []) {
+      for (const envase of articulo.lotes || []) {
         suyo.insumos.push({
           valor: envase.lote_id,
           texto: [articulo.nombre, envase.numero_lote].filter(Boolean).join(" · "),

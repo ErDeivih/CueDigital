@@ -128,7 +128,9 @@ function LoQueNoConsta({ textos = {}, avisos = [] }) {
  *
  *  - `textos`: `{agenda, acciones}` del servidor. Nada escrito aquí.
  *  - `previstos`: los trabajos planificados, cada uno con su título, su «cuándo» ya escrito (con los días
- *    que faltan, o diciendo que no tiene día), su tierra y lo que gastaría, si se puede estimar.
+ *    que faltan, o diciendo que no tiene día), su tierra y lo que gastaría, si se puede estimar. Y los que
+ *    **ya se cumplieron** traen `cuando_lo_hice` (el día del hecho, ya escrito): con eso la lista sigue
+ *    enseñando lo que se pensó **sin ofrecer un botón que ya no puede funcionar**.
  *  - `hechos`: lo que se ha hecho, con su día, su tierra, su máquina, sus horas y sus insumos. **Los
  *    anulados vienen dentro**, marcados: no se esconden.
  *  - `lo_que_no_se_sabe`: los huecos, con su frase y cuántos son.
@@ -181,32 +183,44 @@ export function PantallaDeLosTrabajos({
                     // Y la frase que impide el malentendido de todo el ticket: esto **no** ha gastado nada.
                     linea.no_gasta ? html`<p className="pista-campo">${frase(linea.no_gasta)}</p>` : null
                   }
-                  <${Botones}
-                    botones=${[
-                      {
-                        etiqueta: a.ya_lo_he_hecho,
-                        accion: "trabajo-hecho",
-                        datos: { id: linea.id },
-                        clase: "boton-principal",
-                        sencillo: true,
-                      },
-                      {
-                        etiqueta: a.cambiarlo_de_dia,
-                        accion: "trabajo-abrir",
-                        datos: { id: linea.id },
-                        clase: "boton-claro",
-                        sencillo: true,
-                      },
-                      {
-                        etiqueta: a.cancelarlo,
-                        accion: "trabajo-cancelar",
-                        datos: { id: linea.id },
-                        clase: "boton-claro",
-                        sencillo: true,
-                      },
-                    ]}
-                    barra=${false}
-                  />
+                  ${
+                    // **Un plan ya cumplido lo dice, y no ofrece volver a cumplirlo.** Se encontró
+                    // pulsando: la lista de lo pensado trae también los planes que ya se hicieron (y tiene
+                    // que traerlos: el plan sigue siendo lo que se pensó), pero la pantalla les pintaba
+                    // «YA LO HE HECHO» otra vez. El agricultor lo pulsaba, rellenaba la ficha y el
+                    // servidor contestaba **409** («este trabajo ya estaba apuntado»): un botón que no
+                    // puede funcionar. El hecho ya está en la otra lista, con su CORREGIRLO y su ANULARLO,
+                    // así que aquí solo se dice cuándo se hizo. La frase la lee la pantalla de su propio
+                    // vocabulario, y el día llega ya escrito porque quien cruza las dos listas es `app.js`.
+                    linea.cuando_lo_hice
+                      ? html`<p className="pista-campo">${frase(a.ya_esta_hecho)} ${frase(linea.cuando_lo_hice)}</p>`
+                      : html`<${Botones}
+                          botones=${[
+                            {
+                              etiqueta: a.ya_lo_he_hecho,
+                              accion: "trabajo-hecho",
+                              datos: { id: linea.id },
+                              clase: "boton-principal",
+                              sencillo: true,
+                            },
+                            {
+                              etiqueta: a.cambiarlo_de_dia,
+                              accion: "trabajo-abrir",
+                              datos: { id: linea.id },
+                              clase: "boton-claro",
+                              sencillo: true,
+                            },
+                            {
+                              etiqueta: a.cancelarlo,
+                              accion: "trabajo-cancelar",
+                              datos: { id: linea.id },
+                              clase: "boton-claro",
+                              sencillo: true,
+                            },
+                          ]}
+                          barra=${false}
+                        />`
+                  }
                 </li>
               `,
             )}

@@ -973,6 +973,10 @@ const RESPUESTAS = {
       // Y la frase que impide el malentendido del ticket, que la agenda pinta en cada plan: **lo
       // pensado no ha gastado nada del almacén**. Se copia de `textos.AGENDA`, como todo lo de aquí.
       lo_previsto_no_gasta: "Lo pensado no ha gastado nada del almacén.",
+      // Y la frase de un plan **ya cumplido**: la lista de lo pensado trae también los que ya se hicieron,
+      // y a esos no se les puede ofrecer «YA LO HE HECHO» otra vez (el servidor contesta 409). Se copia de
+      // `textos.AGENDA`, como todo lo de aquí.
+      ya_esta_hecho: "Ya lo apuntaste como hecho:",
       // **«Sin decir»**, que es lo que se lee cuando un dato no consta: un plan sin día no se rellena
       // con el de hoy ni con el de mañana, y un hueco se dice como hueco.
       sin_decir: "Sin decir",
@@ -13828,6 +13832,80 @@ function conLosTrabajos(cambios = {}) {
   });
 }
 
+test("un plan que ya se cumplió llega a la pantalla con su día y sin su botón", async () => {
+  // **La costura que faltaba del defecto del 409.** La agenda trae los planes cumplidos, y el vínculo con
+  // el hecho que salió de ellos lo puso el servidor en la **labor** (`previsto_id`). Si `app.js` no cruza
+  // las dos listas, la pantalla no puede saber cuál está cumplido y le pinta «YA LO HE HECHO» otra vez:
+  // ese botón lleva a un 409 y se queda ahí. Aquí se comprueba la costura entera —el cruce y la frase— y
+  // que el botón no llega a la pantalla.
+  const { entorno } = await conLosTrabajos({
+    "GET /api/trabajos": {
+      hechos: [
+        {
+          id: 34,
+          de_donde: "hecho",
+          tipo: "laboreo",
+          subtipo: "cultivador",
+          fecha: "2026-04-25",
+          previsto_id: 12,
+          parcela_id: 2,
+          superficie_ha: 3.0,
+          horas: 5,
+          equipo_id: null,
+          anulado: false,
+          observaciones: null,
+          insumos: [],
+        },
+      ],
+      previstos: [
+        {
+          id: 12,
+          de_donde: "previsto",
+          tipo: "laboreo",
+          subtipo: "cultivador",
+          estado: "realizado",
+          fecha_prevista: "2026-04-20",
+          dias_que_faltan: 19,
+          parcela_id: 2,
+          superficie_ha: null,
+          anulado: false,
+          insumos: [],
+        },
+        {
+          id: 13,
+          de_donde: "previsto",
+          tipo: "siembra",
+          subtipo: null,
+          estado: "previsto",
+          fecha_prevista: "2026-03-10",
+          dias_que_faltan: null,
+          parcela_id: 1,
+          superficie_ha: null,
+          anulado: false,
+          insumos: [],
+        },
+      ],
+      reenviados: 0,
+      no_se_pudo_comprobar_si_ya_estaba: 0,
+      aviso_codigo: "",
+      lo_previsto_y_lo_hecho: [],
+      hoy: "2026-04-01",
+      textos: {},
+    },
+  });
+  await pulsar(entorno, "trabajos-ver");
+
+  const props = ultimoMontaje().props;
+  const cumplido = props.previstos.find((uno) => uno.id === 12);
+  const pendiente = props.previstos.find((uno) => uno.id === 13);
+  assert.match(
+    cumplido.cuando_lo_hice || "",
+    /25\/04\/2026/,
+    `el plan cumplido no dice cuándo se hizo: «${cumplido.cuando_lo_hice}»`,
+  );
+  assert.equal(pendiente.cuando_lo_hice, "", "un plan sin cumplir se ha marcado como cumplido");
+});
+
 test("la agenda monta lo previsto y lo hecho, en dos listas y con sus frases", async () => {
   const { entorno } = await conLosTrabajos();
   await pulsar(entorno, "trabajos-ver");
@@ -13879,6 +13957,32 @@ test("marcar lo hecho enseña al lado lo que se había pensado", async () => {
     elemento.props.previsto.filas.some((fila) => /cultivador/.test(fila.valor)),
     "lo que se había pensado no dice qué trabajo era",
   );
+});
+
+test("al marcar lo hecho se puede decir de qué envase salió el producto", async () => {
+  // **El defecto que esto fija, encontrado recorriendo el recorrido 4 en un navegador.** `app.js` leía
+  // `articulo.envases` de lo que contesta `/api/almacen/existencias`, y ese campo **no existe**: los
+  // envases de un artículo vienen en `articulo.lotes` (es lo que pinta el libro del almacén). Con el
+  // nombre equivocado la lista salía siempre vacía, así que el desplegable de insumos no tenía ni una
+  // opción y **no se podía decir de qué envase se gastó el producto**: esa mitad del recorrido era
+  // imposible desde la pantalla. Ninguna prueba lo cazaba porque las de aquí mandaban `articulos: []`.
+  const { entorno } = await conLosTrabajos({
+    "GET /api/almacen/existencias": unasExistencias(),
+  });
+  await pulsar(entorno, "trabajos-ver");
+  await pulsar(entorno, "trabajo-hecho", { id: "12" });
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaDeUnTrabajo", "no se ha abierto la ficha de lo hecho");
+  const insumos = elemento.props.insumos || [];
+  assert.equal(insumos.length, 1, `el desplegable de insumos sale vacío: ${JSON.stringify(insumos)}`);
+  assert.equal(insumos[0].valor, 8, "la opción no lleva el envase del que sale el producto");
+  assert.match(
+    insumos[0].texto,
+    /Glifosato 36 SL/,
+    `la opción no dice qué producto es: «${insumos[0].texto}»`,
+  );
+  assert.match(insumos[0].texto, /4471-A/, `la opción no dice de qué envase se trata: «${insumos[0].texto}»`);
 });
 
 test("guardar un trabajo llama a la puerta que le toca, según lo que se esté haciendo", async () => {

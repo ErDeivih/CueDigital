@@ -79,6 +79,7 @@ const AGENDA = {
   planificar_explica: "Apunta lo que piensas hacer. No gasta nada del almacén: eso se apunta el día que lo hagas, con lo que de verdad gastes.",
   guardar_previsto: "GUARDAR LO QUE PIENSO HACER",
   ya_lo_he_hecho: "YA LO HE HECHO",
+  ya_esta_hecho: "Ya lo apuntaste como hecho:",
   cambiarlo_de_dia: "CAMBIARLO DE DÍA",
   cancelarlo: "CANCELARLO",
   reprogramar_titulo: "Cambiar de día este trabajo",
@@ -289,6 +290,35 @@ const htmlDeLaTierra = (cambios = {}) =>
 // ---------------------------------------------------------------------------
 // 1. Lo previsto y lo hecho, en dos listas y sin mezclarse
 // ---------------------------------------------------------------------------
+
+test("un plan que ya se cumplió lo dice, y no ofrece volver a cumplirlo", async () => {
+  // **El defecto que esto fija, encontrado pulsando.** La lista de lo pensado trae también los planes ya
+  // cumplidos (y tiene que traerlos), y la pantalla les pintaba «YA LO HE HECHO» otra vez: el agricultor lo
+  // pulsaba, rellenaba la ficha y el servidor contestaba **409** —«este trabajo ya estaba apuntado»—. Aquí
+  // se comprueban las dos mitades: que se dice cuándo se hizo y que **no hay ningún botón** que no pueda
+  // funcionar. El hecho sigue en la otra lista, con su CORREGIRLO y su ANULARLO.
+  const html = await htmlDeLaAgenda({
+    previstos: [lineaPrevista({ cuando_lo_hice: "20/11/2026" })],
+    hechos: [lineaHecha()],
+  });
+
+  assert.match(html, /Ya lo apuntaste como hecho:/, "no se dice que ese plan ya se cumplió");
+  assert.match(html, /20\/11\/2026/, "no se dice cuándo se hizo");
+  const acciones = accionesDe(html);
+  assert.ok(!acciones.includes("trabajo-hecho"), "se ofrece apuntar otra vez un trabajo ya apuntado");
+  assert.ok(!acciones.includes("trabajo-cancelar"), "se ofrece cancelar un plan que ya se cumplió");
+  // Y el hecho de la otra lista sigue teniendo lo suyo: no se ha quedado sin salida.
+  assert.ok(acciones.includes("trabajo-corregir"), "el hecho se queda sin poder corregirse");
+  assert.ok(acciones.includes("trabajo-anular"), "el hecho se queda sin poder anularse");
+
+  // El contraste, para que la prueba no pase por haber escondido todo: un plan sin cumplir **sí** ofrece
+  // su botón.
+  const sinCumplir = await htmlDeLaAgenda({ previstos: [lineaPrevista()] });
+  assert.ok(
+    accionesDe(sinCumplir).includes("trabajo-hecho"),
+    "un plan sin cumplir tiene que poder marcarse como hecho",
+  );
+});
 
 test("la agenda enseña lo previsto y lo hecho en dos listas con su título", async () => {
   // Si esto fallara, un plan aparecería mezclado con lo hecho y el agricultor creería que ya lo hizo:
@@ -659,7 +689,10 @@ test("la pantalla no lee ninguna frase que no esté en los textos", async () => 
   // esas ramas y nadie la recorre, esta prueba no la vería: por eso están todas.
   await htmlDeLaAgenda({
     textos,
-    previstos: [lineaPrevista()],
+    // Los dos casos de la lista de lo pensado: el plan que sigue pendiente y **el que ya se cumplió** (que
+    // trae su día). Sin el segundo, la frase de «ya lo apuntaste como hecho» no la leería nadie y esta
+    // prueba no la vería.
+    previstos: [lineaPrevista(), lineaPrevista({ id: 10, cuando_lo_hice: "20/11/2026" })],
     hechos: [lineaHecha({ faltan: ["Falta algo"] })],
     lo_que_no_se_sabe: [{ texto: "Algo", cuantos: 1 }],
     aviso: "Un aviso",

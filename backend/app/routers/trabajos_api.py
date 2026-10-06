@@ -135,18 +135,46 @@ def _los_consumos_de_una_labor(db, labor: models.Labor) -> list[dict]:
     Las anuladas se devuelven también, y con ellas se puede explicar lo que de verdad pasó: una salida
     que se anuló al corregir el trabajo sigue en el libro, tachada, y no cuenta. Si aquí se
     devolvieran solo las vivas, la pantalla no podría decir por qué hay dos movimientos de lo mismo.
+
+    ## El nombre del producto y el del envase van aquí, y no los pone la pantalla
+
+    Se descubrió recorriendo el recorrido 4 en un navegador: la historia de una tierra decía
+    **«Qué gastaste del almacén: 6 L»**, sin decir de qué. Un número sin su producto no contesta la
+    pregunta que se hace el día de una inspección —y menos con un fitosanitario, que es justo lo que hay
+    que poder decir de qué lote salió—. El nombre del artículo y el número del envase **ya estaban en la
+    base** (los lee el libro del almacén por la misma razón), así que se resuelven aquí, que es donde se
+    sabe de qué movimiento se habla: la pantalla no tiene que cruzar listas ni puede enseñar el nombre de
+    un artículo que ya no es.
     """
-    movimientos = db.scalars(
-        select(models.MovimientoDeExistencias).where(
-            models.MovimientoDeExistencias.explotacion_id == labor.explotacion_id,
-            models.MovimientoDeExistencias.origen_tipo == "labor",
-            models.MovimientoDeExistencias.origen_id == labor.id,
+    movimientos = list(
+        db.scalars(
+            select(models.MovimientoDeExistencias).where(
+                models.MovimientoDeExistencias.explotacion_id == labor.explotacion_id,
+                models.MovimientoDeExistencias.origen_tipo == "labor",
+                models.MovimientoDeExistencias.origen_id == labor.id,
+            )
         )
     )
+    # Una consulta por cada identificador distinto, y no una por movimiento: un trabajo que gasta de tres
+    # envases del mismo artículo no pregunta tres veces por el mismo nombre.
+    nombres_de_articulo: dict[int, str] = {}
+    numeros_de_lote: dict[int, str] = {}
+    for movimiento in movimientos:
+        if movimiento.articulo_id and movimiento.articulo_id not in nombres_de_articulo:
+            articulo = db.get(models.Articulo, movimiento.articulo_id)
+            nombres_de_articulo[movimiento.articulo_id] = articulo.nombre if articulo else ""
+        if movimiento.lote_id and movimiento.lote_id not in numeros_de_lote:
+            lote = db.get(models.Lote, movimiento.lote_id)
+            numeros_de_lote[movimiento.lote_id] = lote.numero_lote if lote else ""
     return [
         logica.un_insumo(
             articulo_id=movimiento.articulo_id,
+            # El nombre y el envase, para que lo que gastó un trabajo se pueda leer entero. Si el
+            # artículo ya no está, se queda vacío: la pantalla enseña la cantidad y no un número de la
+            # base, que es la regla de siempre.
+            articulo=nombres_de_articulo.get(movimiento.articulo_id) or None,
             lote_id=movimiento.lote_id,
+            numero_lote=numeros_de_lote.get(movimiento.lote_id) or None,
             cantidad=movimiento.cantidad,
             unidad=movimiento.unidad,
             anulado=movimiento.anulado,
