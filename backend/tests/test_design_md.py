@@ -283,6 +283,35 @@ class TestContratoYCodigo:
                 problemas.append(f"{variable} es {en_css} en el CSS y {en_contrato} en el contrato")
         assert not problemas, "La escala de letra se ha separado del contrato: " + "; ".join(problemas)
 
+    def test_la_escala_de_separacion_del_contrato_es_la_del_css(self):
+        """**La escala de separación, atada al contrato** (06/10/2026).
+
+        Los colores y la letra ya estaban atados; la separación **estaba en el contrato y no existía en el
+        CSS**, así que cada pantalla tenía su propio ritmo (0.7rem, 0.8rem, 0.9rem, 1rem…) y el contrato el
+        suyo. Ahora las seis medidas viven en `:root` con el nombre del contrato y esta prueba las compara:
+        añadir una separación nueva obliga a escribirla en los dos sitios.
+        """
+        frontmatter, _ = leer_design_md()
+        variables = leer_variables_css()
+        problemas: list[str] = []
+        for nombre, token in (
+            ("--e-xs", "xs"),
+            ("--e-sm", "sm"),
+            ("--e-md", "md"),
+            ("--e-lg", "lg"),
+            ("--e-xl", "xl"),
+            ("--e-xxl", "xxl"),
+        ):
+            en_css = variables.get(nombre)
+            en_contrato = (frontmatter.get("spacing") or {}).get(token)
+            if en_css is None:
+                problemas.append(f"{nombre} no está en el CSS")
+            elif en_contrato is None:
+                problemas.append(f"spacing.{token} no está en DESIGN.md")
+            elif str(en_css) != str(en_contrato):
+                problemas.append(f"{nombre} es {en_css} en el CSS y {en_contrato} en el contrato")
+        assert not problemas, "La escala de separación se ha separado del contrato: " + "; ".join(problemas)
+
     def test_ningun_boton_baja_de_64_pixeles_de_alto(self):
         frontmatter, _ = leer_design_md()
         # Los bordes no son botones: son líneas, y miden 2 o 3 px a propósito. El

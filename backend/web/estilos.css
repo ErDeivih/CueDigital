@@ -80,6 +80,21 @@
   --t-pista: 0.95rem;
 
   /*
+   * **La escala de separación, con los nombres del contrato** (`DESIGN.md` → `spacing`).
+   *
+   * Estaba en el contrato desde el principio y **no existía en el CSS**: cada separación se escribía a mano
+   * (0.7rem, 0.8rem, 0.9rem, 1rem…), o sea que cada pantalla tenía su propio ritmo y el contrato el suyo. Se
+   * empieza por el panel de mando, que es donde el ritmo se nota de un vistazo (cuatro tarjetas, dos
+   * columnas y tres bloques), y la prueba que ata los dos sitios impide que se vuelvan a separar.
+   */
+  --e-xs: 4px;
+  --e-sm: 8px;
+  --e-md: 12px;
+  --e-lg: 16px;
+  --e-xl: 24px;
+  --e-xxl: 32px;
+
+  /*
    * El armazón del ordenador (30/09/2026).
    *
    * Estas dos medidas solo se usan a partir de la pantalla ancha (`@media`, al final del fichero). En el
@@ -1593,14 +1608,14 @@ div.tarjeta:active {
   .mando-numeros {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 0.8rem;
-    margin: 1rem 0;
+    gap: var(--e-md);
+    margin: var(--e-lg) 0;
     padding: 0;
     list-style: none;
   }
 
   .mando-numero {
-    padding: 0.7rem 0.9rem;
+    padding: var(--e-md) var(--e-lg);
     background: var(--fondo-suave);
     border: 2px solid var(--borde);
     border-radius: var(--radio);
@@ -1608,7 +1623,7 @@ div.tarjeta:active {
 
   .mando-numero-etiqueta {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: var(--t-pista);
     letter-spacing: 0.03em;
     text-transform: uppercase;
     color: var(--tinta-suave);
@@ -1618,7 +1633,7 @@ div.tarjeta:active {
      número más grande de la aplicación, y por eso tiene su propio tamaño en el contrato (`dato-mando`):
      no es un «dato grande» de ficha, es la cifra de la portada. */
   .mando-numero-valor {
-    margin: 0.1rem 0 0;
+    margin: var(--e-xs) 0 0;
     font-size: var(--t-dato-mando);
     font-weight: 700;
     line-height: 1.1;
@@ -1627,8 +1642,8 @@ div.tarjeta:active {
   }
 
   .mando-numero-detalle {
-    margin: 0.2rem 0 0;
-    font-size: 0.9rem;
+    margin: var(--e-xs) 0 0;
+    font-size: var(--t-pista);
     color: var(--tinta-suave);
   }
 
@@ -1636,13 +1651,13 @@ div.tarjeta:active {
   .mando-columnas {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    gap: 1rem;
+    gap: var(--e-lg);
     align-items: start;
   }
 
   .mando-bloque {
-    margin-bottom: 1rem;
-    padding: 0.9rem 1rem;
+    margin-bottom: var(--e-lg);
+    padding: var(--e-lg);
     background: var(--fondo);
     border: 2px solid var(--borde);
     border-radius: var(--radio);
