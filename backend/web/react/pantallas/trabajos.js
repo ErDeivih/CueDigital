@@ -584,6 +584,16 @@ export function PantallaDeLaTierra({
   return html`
     <h1>${frase(a.historia_titulo)}</h1>
     ${tierra.nombre ? html`<p className="pista">${frase(tierra.nombre)}</p>` : null}
+    ${
+      // **La superficie, que se pedía y no se pintaba** (07/10/2026). `app.js` la manda desde el primer
+      // día y el dato está documentado en las propiedades de esta pantalla, pero aquí no se enseñaba: el
+      // agricultor abría la ficha de su tierra y no veía **cuántas hectáreas tiene**, que es lo primero
+      // que se mira y con lo que se comprueban las hectáreas de cada trabajo. Lo señaló la revisión del
+      // recorrido (E7).
+      tierra.superficie
+        ? html`<p className="pista-campo">${frase(a.superficie)}: ${frase(tierra.superficie)} ${frase(a.hectareas_corto)}</p>`
+        : null
+    }
     <${AvisoDeError} texto=${error} />
 
     <h2>${frase(a.que_hay_hoy)}</h2>
@@ -709,9 +719,15 @@ export function PantallaDeLaTierra({
               <${Fila} etiqueta=${a.costes_total} valor=${costes.texto_total || costes.total_conocido} />
             </div>
             ${
-              // Un total que calla que le faltan datos miente: se dice cuántos no dicen el importe.
+              // Un total que calla que le faltan datos miente: se dice cuántos no dicen el importe. **Y en
+              // singular cuando es uno** (07/10/2026): antes decía «Hay 1 gasto» y «Hay 2 gasto» igual, y
+              // eso lo lee el agricultor.
               costes.sin_importe
-                ? html`<p className="pista-campo">${frase(rellena(a.costes_sin_importe, { cuantos: String(costes.sin_importe) }))}</p>`
+                ? html`<p className="pista-campo">${frase(
+                    Number(costes.sin_importe) === 1
+                      ? a.costes_sin_importe_uno
+                      : rellena(a.costes_sin_importe, { cuantos: String(costes.sin_importe) }),
+                  )}</p>`
                 : null
             }
             ${

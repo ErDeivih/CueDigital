@@ -72,6 +72,9 @@ const AGENDA = {
   ver_el_cuaderno: "VER MI CUADERNO",
   volver_a_los_trabajos: "VOLVER A LOS TRABAJOS",
   previstos_titulo: "Lo que tengo pensado hacer",
+  superficie: "Superficie",
+  hectareas_corto: "ha",
+  costes_sin_importe_uno: "Hay 1 gasto de esta tierra que no dice lo que costó.",
   // **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
   // recorrido): su etiqueta es el nombre de esa pantalla (`maestros.titulo`), que es lo que ya estaba
   // escrito. Se añade a la copia de textos porque la pantalla lo lee y, si no estuviera, saldría en blanco.
@@ -705,6 +708,12 @@ test("la pantalla no lee ninguna frase que no esté en los textos", async () => 
   await htmlDeLaAgenda({ textos, aviso: "Un aviso" }); // las dos listas vacías
   await htmlDeLaAgenda({ textos, cargando: true });
   await htmlDeLaAgenda({ textos, puedePlanificar: false });
+  // **Las dos formas de la frase de los gastos sin importe** (07/10/2026): la ficha la dice en singular
+  // cuando es uno y en plural cuando son más, así que hay que recorrer las dos ramas o la prueba —que
+  // exige que nadie lea una frase que no se use— se queja, con razón, de que una de las dos no la lee
+  // nadie. Es la misma regla que en el resto de la aplicación: el número con su palabra.
+  await htmlDeLaTierra({ textos, costes: { sin_importe: 1, filas: [] } });
+  await htmlDeLaTierra({ textos, costes: { sin_importe: 3, filas: [] } });
   for (const modo of ["planificar", "reprogramar", "hecho", "corregir", "anular"]) {
     await htmlDeUnTrabajo({
       textos,

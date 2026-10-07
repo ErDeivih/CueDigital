@@ -7795,6 +7795,11 @@ MENSAJES.update(MENSAJES_DE_LA_BANDEJA)
 
 AGENDA: dict[str, str] = {
     "titulo": "Los trabajos",
+    # **La superficie de la tierra, en su ficha** (07/10/2026, E7 de la revisión del recorrido): el dato se
+    # mandaba desde el primer día y la ficha no lo enseñaba. Es lo primero que se mira de una tierra y con
+    # lo que se comprueban las hectáreas de cada trabajo.
+    "superficie": "Superficie",
+    "hectareas_corto": "ha",
     "explica": "Aquí tienes lo que tienes pensado hacer y lo que ya has hecho, en dos listas separadas. Lo que está pensado no ha gastado nada del almacén: lo que se gasta se apunta cuando el trabajo se hace.",
     "buscando": "Buscando…",
     "ver_el_cuaderno": "VER MI CUADERNO",
@@ -7903,7 +7908,13 @@ AGENDA: dict[str, str] = {
     "costes_repartidos": "Lo repartido desde las cuentas",
     "costes_total": "Lo que se sabe que ha costado",
     "costes_sin_importe": (
-        "Hay {cuantos} gasto de esta tierra que no dice lo que costó, así que el total se queda corto."
+        "Hay {cuantos} gastos de esta tierra que no dicen lo que costó, así que el total se queda corto."
+    ),
+    # **Y en singular, cuando es uno** (07/10/2026): la frase decía «Hay 1 gasto» y «Hay 2 gasto» con la
+    # misma forma, y el agricultor lo lee. Es la misma regla que en el resto de la aplicación: el número
+    # con su palabra, en singular o en plural.
+    "costes_sin_importe_uno": (
+        "Hay 1 gasto de esta tierra que no dice lo que costó, así que el total se queda corto."
     ),
     "costes_vacio": "De esta tierra no hay ningún gasto apuntado.",
     "costes_directo_es": "Es un gasto que dice esta tierra.",
