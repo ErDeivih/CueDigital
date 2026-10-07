@@ -479,6 +479,7 @@ AGENDA: dict[str, str] = {
     "ver_el_cuaderno": "VER MI CUADERNO",
     "volver_a_los_trabajos": "VOLVER A LOS TRABAJOS",
     "previstos_titulo": "Lo que tengo pensado hacer",
+    "mis_tierras": "Mis parcelas, productos y máquinas",
     "previstos_explica": "Lo que está pensado no es un trabajo hecho y no ha gastado nada.",
     "previstos_vacio": "No tienes nada planificado. Cuando sepas lo que vas a hacer, apúntalo aquí.",
     "planificar": "PLANIFICAR UN TRABAJO",

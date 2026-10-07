@@ -17,6 +17,8 @@ import json
 import pathlib
 import sys
 
+import httpx
+
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from datos_representativos import preparar  # noqa: E402
@@ -109,6 +111,48 @@ def pulsar_si_hay(nav: NavegadorDeVerdad, selector: str, esperar: str | None = N
     return llego
 
 
+def hay_visible(nav: NavegadorDeVerdad, selector: str) -> bool:
+    """¿Está y **se ve**? Es la pregunta que hay que hacer antes de pulsar: un botón oculto no se pulsa."""
+    return bool(
+        nav.evaluar(
+            f"[...document.querySelectorAll({json.dumps(selector)})]"
+            ".some((e) => e.checkVisibility({checkVisibilityCSS: true}))"
+        )
+    )
+
+
+def abrir_el_historial(nav: NavegadorDeVerdad) -> bool:
+    """Abre la ficha de una tierra **como lo hace el agricultor**, y deja la pantalla en su historial.
+
+    La cadena (medida y revisada el 07/10/2026) es de **dos pasos**, y por eso la primera versión de este
+    guion se quedaba a medias creyendo que ya estaba dentro:
+
+      1. la fila de la tierra (`elegir-fila`) abre su **panel**, que trae el botón «su historia»;
+      2. ese botón (`tierra-historia`, que **sí se ve** en el ordenador cuando el panel está abierto) lleva
+         a `#/tierras/<id>/historial`, que es donde están lo hecho, lo previsto, los costes y los botones.
+
+    **Y hay un detalle que costó dos vueltas**: al volver a las tierras, la aplicación **reabre el panel de
+    la última tierra** (es lo que quiere el agricultor: volver por donde iba), así que volver a pulsar su
+    fila lo **cierra**. Por eso aquí se mira primero si el botón de la historia ya se ve: si se ve, el panel
+    ya está abierto y se pulsa directamente.
+    """
+    if hay_visible(nav, "[data-accion='tierra-historia']"):
+        return pulsar_si_hay(
+            nav, "[data-accion='tierra-historia']", "location.hash.includes('/historial')"
+        )
+    if not pulsar_si_hay(
+        nav,
+        "[data-accion='elegir-fila']",
+        "Boolean(document.querySelector(\"[data-accion='tierra-historia']\"))",
+    ):
+        return False
+    return pulsar_si_hay(
+        nav,
+        "[data-accion='tierra-historia']",
+        "location.hash.includes('/historial')",
+    )
+
+
 def main() -> int:
     print(f"Escenario: la explotación de 64 tierras, contra {DIRECCION}")
     escenario = preparar(DIRECCION)
@@ -162,20 +206,9 @@ def main() -> int:
         comprobar(la_tierra.alias[:18].lower() in listado.lower(), "la tierra buscada sale en la lista")
         captura(nav, "2-tierras")
 
-        # ── 3. La ficha de la tierra ────────────────────────────────────────────────────────────
+        # ── 3. La ficha de la tierra (su historial) ─────────────────────────────────────────────
         paso(nav, 3, "Ficha de la tierra")
-        # **A este ancho se abre con `elegir-fila`** (07/10/2026): `tierra-historia` existe en el documento
-        # pero no se ve en ninguno de sus 64 botones —es el del móvil—, y `elegir-fila`, que sí se ve en
-        # las 64 filas, lleva a la dirección de la tierra (`#/tierras/<id>`). Eso lo dijo el buscador de
-        # clics al negarse a pulsar lo que no está.
-        comprobar(
-            pulsar_si_hay(
-                nav,
-                "[data-accion='elegir-fila']",
-                "location.hash.includes('/tierras/')",
-            ),
-            "la fila de la tierra lleva a su ficha (dirección propia)",
-        )
+        comprobar(abrir_el_historial(nav), "la fila de la tierra lleva a su historial (dos pasos)")
         nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=12)
         captura(nav, "3-ficha")
         ficha = texto_de(nav)
@@ -183,6 +216,10 @@ def main() -> int:
         print(f"  (la ficha dice: {' '.join(ficha.split())[:240]}…)")
         acciones_ficha = acciones(nav)
         print(f"  acciones de la ficha: {acciones_ficha}")
+        comprobar(
+            "trabajo-planificar" in acciones_ficha,
+            "la ficha ofrece planificar un trabajo para esa tierra",
+        )
 
         # ── 4. Registrar un trabajo ─────────────────────────────────────────────────────────────
         paso(nav, 4, "Registrar un trabajo")
@@ -235,31 +272,61 @@ def main() -> int:
             + ")",
             segundos=10,
         )
-        # **Y se vuelve a abrir su historial**, que es donde tiene que estar lo que se ha hecho con ella: se
-        # abre igual que antes (`elegir-fila`, la fila de la tierra), y se exige que el historial diga algo
-        # de los trabajos de esa tierra —no una pantalla en blanco—.
-        # **Volver a tierras reabre la última ficha** (07/10/2026, y es lo que quiere el agricultor: volver
-        # por donde iba). Medido: tras pulsar el menú, la dirección ya era `#/tierras/<id>` con el panel de
-        # esa tierra abierto, y volver a pulsar su fila lo **cierra**. Así que aquí no se pulsa a ciegas: si
-        # la ficha ya está abierta, se comprueba eso; si no, se abre.
-        ya_abierta = bool(nav.evaluar("location.hash.includes('/tierras/')"))
-        print(f"  (la ficha ya estaba abierta al volver: {ya_abierta})")
-        comprobar(
-            ya_abierta
-            or pulsar_si_hay(
-                nav,
-                "[data-accion='elegir-fila']",
-                "location.hash.includes('/tierras/')",
-            ),
-            "se vuelve a abrir la ficha de la tierra",
-        )
+        # **Y se vuelve a abrir su historial**, que es donde tiene que estar lo que se ha hecho con ella.
+        # Se abre **igual que antes** (los dos pasos: la fila y luego «su historia»), porque el historial es
+        # una pantalla con dirección propia y no el panel de la fila.
+        comprobar(abrir_el_historial(nav), "se vuelve a abrir el historial de la tierra")
         nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=12)
         captura(nav, "5-historial")
         historial = texto_de(nav)
-        print(f"  (el historial dice: {' '.join(historial.split())[:240]}…)")
+        print(f"  (el historial dice: {' '.join(historial.split())[:200]}…)")
+        # **El historial de verdad**: la ficha de una tierra tiene que decir lo que se ha hecho en ella y lo
+        # que queda previsto, con sus botones. Antes esta comprobación se conformaba con que el texto
+        # contuviera «trabajo», y eso lo cumple hasta el título de la pantalla: era una comprobación floja
+        # y por eso estaba señalada en el informe de la revisión.
         comprobar(
-            "trabajo" in historial.lower() or "hecho" in historial.lower(),
-            "la ficha de la tierra habla de sus trabajos (el historial está ahí)",
+            hay(nav, "[data-accion='trabajo-planificar']"),
+            "la ficha ofrece planificar un trabajo para esa tierra",
+        )
+        # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla:
+        # esta tierra puede no tener nada planificado (la primera del escenario no tiene), y entonces lo
+        # honesto no es exigir un botón que no puede estar, sino exigirlo **solo si el servidor dice que
+        # hay algo previsto**. Así la comprobación dice la verdad en los dos casos.
+        previstos = httpx.get(
+            f"{DIRECCION}/api/trabajos/tierra/{la_tierra.id}",
+            headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+            timeout=30.0,
+        ).json().get("que_queda_previsto", [])
+        print(f"  (el servidor dice que esa tierra tiene {len(previstos)} cosa(s) prevista(s))")
+        if previstos:
+            comprobar(
+                hay_visible(nav, "[data-accion='trabajo-hecho']"),
+                "la tierra con algo previsto deja marcarlo hecho desde su ficha (E3)",
+            )
+        else:
+            comprobar(
+                "trabajo-planificar" in acciones(nav),
+                "la tierra sin nada previsto ofrece planificar (y no un botón que no puede existir)",
+            )
+        # Y si esa tierra tiene algo previsto, **se marca hecho desde aquí** (E3 de la revisión): que el
+        # botón esté y que abra el formulario de lo hecho con los datos del plan.
+        if hay(nav, "[data-accion='trabajo-hecho']"):
+            print("  (esa tierra tiene algo previsto: se marca hecho desde la ficha)")
+            comprobar(
+                pulsar_si_hay(
+                    nav,
+                    "[data-accion='trabajo-hecho']",
+                    "document.querySelectorAll('#pantalla input, #pantalla select').length > 0",
+                ),
+                "«ya lo he hecho» abre el formulario de lo hecho desde la propia ficha",
+            )
+            captura(nav, "5-marcar-hecho")
+
+        # Y **la vuelta a la lista de tierras** (E4): antes esta pantalla solo tenía «volver a los
+        # trabajos», y desde la agenda no hay camino de vuelta a la tierra.
+        comprobar(
+            hay(nav, "[data-accion='mis-cosas']"),
+            "la ficha tiene un botón para volver a la lista de tierras",
         )
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")

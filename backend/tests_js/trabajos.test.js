@@ -72,6 +72,10 @@ const AGENDA = {
   ver_el_cuaderno: "VER MI CUADERNO",
   volver_a_los_trabajos: "VOLVER A LOS TRABAJOS",
   previstos_titulo: "Lo que tengo pensado hacer",
+  // **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
+  // recorrido): su etiqueta es el nombre de esa pantalla (`maestros.titulo`), que es lo que ya estaba
+  // escrito. Se añade a la copia de textos porque la pantalla lo lee y, si no estuviera, saldría en blanco.
+  mis_tierras: "Mis parcelas, productos y máquinas",
   previstos_explica: "Lo que está pensado no es un trabajo hecho y no ha gastado nada.",
   previstos_vacio: "No tienes nada planificado. Cuando sepas lo que vas a hacer, apúntalo aquí.",
   planificar: "PLANIFICAR UN TRABAJO",

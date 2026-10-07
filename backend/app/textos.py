@@ -7800,6 +7800,10 @@ AGENDA: dict[str, str] = {
     "ver_el_cuaderno": "VER MI CUADERNO",
     "volver_a_los_trabajos": "VOLVER A LOS TRABAJOS",
     "previstos_titulo": "Lo que tengo pensado hacer",
+    # **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
+    # recorrido). Se dice con el nombre de esa pantalla —el mismo que el del menú—, que es como el
+    # agricultor la conoce; aquí no se inventa ninguna palabra nueva.
+    "mis_tierras": "Mis parcelas, productos y máquinas",
     "previstos_explica": "Lo que está pensado no es un trabajo hecho y no ha gastado nada.",
     "previstos_vacio": "No tienes nada planificado. Cuando sepas lo que vas a hacer, apúntalo aquí.",
     "planificar": "PLANIFICAR UN TRABAJO",

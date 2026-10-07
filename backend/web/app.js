@@ -21519,6 +21519,11 @@ function pantallaLaHistoria() {
               ? cuandoEsUnTrabajo({ ...estadoDeLaTierra.ultima_labor, de_donde: "hecho" })
               : "",
             previstos: (estadoDeLaTierra.que_queda_previsto || []).map((linea) => ({
+              // **Con su identificador, para poder marcarlo hecho desde aquí** (07/10/2026): sin él, la
+              // ficha podía enseñar lo previsto pero no había forma de decir «esto ya se hizo» desde la
+              // tierra que se está mirando (había que ir a la agenda y buscarlo). Lo pidió la revisión del
+              // recorrido (E3), y el identificador ya venía del servidor: solo no se estaba pasando.
+              id: (linea.previsto || {}).id,
               titulo: etiquetaDeUnTrabajo(linea.previsto || {}),
               cuando: cuandoEsUnTrabajo({ ...linea, de_donde: "previsto" }),
             })),

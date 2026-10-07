@@ -650,7 +650,11 @@ export function PantallaDeLaTierra({
     }
 
     ${
-      // Lo que queda previsto, aparte de lo hecho: nunca en la misma lista.
+      // Lo que queda previsto, aparte de lo hecho: nunca en la misma lista. **Y cada uno con su botón de
+      // «ya lo he hecho»** (07/10/2026): lo previsto se podía leer aquí pero no marcar, así que para
+      // apuntar que un trabajo previsto se hizo había que ir a la agenda, buscarlo y marcarlo allí —y la
+      // tierra que se estaba mirando se perdía por el camino—. Es el eslabón que le faltaba al recorrido
+      // (lo señaló la revisión: E3). El botón es el mismo de la agenda, con la misma acción y su id.
       estado && (estado.previstos || []).length
         ? html`
             <h2>${frase(a.previstos_titulo)}</h2>
@@ -660,6 +664,22 @@ export function PantallaDeLaTierra({
                   <li key=${"qp" + indice}>
                     <strong>${frase(linea.titulo)}</strong>
                     <p className="pista-campo">${frase(linea.cuando)}</p>
+                    ${
+                      linea.id
+                        ? html`<${Botones}
+                            botones=${[
+                              {
+                                etiqueta: a.ya_lo_he_hecho,
+                                accion: "trabajo-hecho",
+                                datos: { id: linea.id },
+                                clase: "boton-principal",
+                                sencillo: true,
+                              },
+                            ]}
+                            barra=${false}
+                          />`
+                        : null
+                    }
                   </li>
                 `,
               )}
@@ -756,6 +776,17 @@ export function PantallaDeLaTierra({
 
     <div className="barra-acciones">
       <${Boton} etiqueta=${a.planificar} accion="trabajo-planificar" clase="boton-principal" />
+      ${
+        // **Y la vuelta a la lista de tierras** (07/10/2026, E4). El único botón que tenía esta pantalla
+        // era «VOLVER A LOS TRABAJOS», y desde la agenda **no hay camino de vuelta a la tierra**: el
+        // agricultor que entraba a mirar una tierra y apuntaba algo acababa en la agenda, sin forma de
+        // volver a la lista de donde salió (lo midió la revisión del recorrido). Se dice con el nombre de
+        // la pantalla a la que lleva —«Mis parcelas, productos y máquinas»—, que es como se llama esa
+        // pantalla en el menú: aquí no se inventa ninguna palabra.
+        a.mis_tierras
+          ? html`<${BotonSencillo} etiqueta=${a.mis_tierras} accion="mis-cosas" clase="" />`
+          : null
+      }
       <${BotonSencillo} etiqueta=${a.volver_a_los_trabajos} accion="trabajos-ver" clase="" />
     </div>
   `;
