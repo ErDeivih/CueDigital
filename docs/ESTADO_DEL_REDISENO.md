@@ -61,8 +61,20 @@ contrato las pide y no existen (`versiones_api.py` no tiene variedad, siembra, c
 coste por campaña).
 
 **La decisión está tomada (07/10/2026): opción (a)** — **la historia es la ficha**. Elegir una tierra en
-la lista lleva a su ficha, y el panel lateral deja de ser una pantalla propia. Lo que sigue es el plan,
-para que se ejecute sin volver a decidir nada.
+la lista lleva a su ficha, y el panel lateral deja de ser una pantalla propia.
+
+**Estado del plan, por pasos** (para no volver a leerlo entero):
+
+| Paso | Estado |
+|---|---|
+| 2. La ficha tiene todo lo que tenía el panel (la **referencia oficial** era lo único que faltaba) | **hecho** (`8a7f18d`) |
+| 1. La lista lleva a la ficha **de un paso**: el **nombre** de la tierra abre su ficha (`tierra-historia`) | **hecho** (`8df361a`), en su forma segura: el resto de la fila sigue marcando y el panel no ha desaparecido |
+| 3. El panel: **se queda como vista previa** (enseña nombre, hectáreas, referencia y el botón a la ficha) | **decidido así**; no hay que borrar nada ni cambiar pruebas, porque no se quita |
+| 4. El recorrido: abrir la ficha es **un paso** | **hecho** en el guion (`abrir_el_historial` intenta primero el nombre y deja los dos pasos como salida) |
+| 5. El cultivo y las versiones, desde la ficha | **hecho** (los dos botones están en la ficha, medidos) |
+
+**Lo que queda, entonces, es una sola cosa de este rediseño**: la **búsqueda global** (§2.3), que es
+función nueva. Y del encargo, las **medidas del despacho** (§2.4), que siguen sin aplicarse a propósito.
 
 **Lo que hay que hacer, por orden, y con lo que hay que tener cuidado:**
 
