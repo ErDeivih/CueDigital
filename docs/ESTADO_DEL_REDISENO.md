@@ -122,7 +122,38 @@ guion** (`scripts/medir_el_cultivo_desde_la_ficha.py`). El botón está en la fi
 pulsarlo desde ahí hace que el clic caiga en la barra pegajosa: es un problema de colocación del clic del
 guion, no del producto.
 
-### 2.3 La búsqueda global — es una función nueva, no un cableado
+### 2.3 La búsqueda global: la puerta está hecha; falta la caja
+
+**Lo que ya está** (07/10/2026): `GET /api/buscar?texto=` — **los cinco grupos, probados** (14 pruebas en
+`tests/test_la_busqueda_global.py`): **tierras** (nombre y referencia oficial), **gastos** (concepto, con
+su importe), **personas** (con su teléfono o NIF), **máquinas** (nombre y matrícula) y **papeles** (título,
+con su tipo). Los resultados van **por grupos**, que es la forma pensada para crecer sin rediseñar.
+
+Tres reglas que se comprueban **en cada grupo, sin excepción**: el cotejo es **el mismo** que el del
+buscador de tierras (`_como_se_busca`: sin tildes, en minúsculas y con los espacios de dentro juntos); con
+**una letra** no se busca y se dice por qué (`muy_corto`); y —lo más importante aquí— **no sale nada de
+otra explotación**, ni tierras, ni gastos, ni personas, ni máquinas, ni papeles.
+
+**Lo que falta: la caja en la cabecera.** Es una pantalla, y por eso no se ha hecho al final de una sesión
+larga. Lo que hay que hacer, con el patrón que ya existe en la casa:
+
+1. **El cuadro y su botón, en la cabecera del armazón.** El patrón es el del buscador de tierras: un
+   `input` con su `id` y un botón con su `data-accion` (aquí `buscar`), que es lo que lee el manejador de
+   clics de siempre. En el móvil, dentro del menú (donde ya está todo).
+2. **Una pantalla de resultados**, con **dirección propia** (`#/buscar?texto=…`), por el mismo motivo que
+   la ficha de una tierra la tiene: que recargar deje al agricultor donde estaba y que el enlace se pueda
+   guardar. Se registra en `web/react/rutas.js` y en las dos tablas de `app.js` (la de direcciones y la de
+   módulos, con el módulo de «Inicio» marcado).
+3. **Las palabras, del servidor** (`textos.py`): el rótulo del cuadro, su pista («escribe al menos dos
+   letras»), el título de la pantalla, el nombre de cada grupo y las dos frases de «no hay nada» y «no se
+   ha buscado». Nada escrito a mano en el componente.
+4. **Y comprobarlo donde se ve**: un paso nuevo en el recorrido automático
+   (`scripts/comprobar_el_recorrido.py`) que escriba en el cuadro, pulse, y exija ver un grupo con su
+   resultado y la dirección `#/buscar`.
+
+**Lo que NO hay que hacer**: una pantalla sin dirección (ya se ha arreglado eso dos veces en este
+proyecto: la historia de una tierra y sus versiones existían y no había forma de llegar), ni un cuadro que
+busque en cada pantalla por su cuenta — la puerta es una y está probada.
 
 La cabecera del encargo la pide. **No hay ninguna puerta en el servidor para eso**: comprobado, lo único
 que existe es la búsqueda del SIGPAC (`parcelas.py:933`). Hace falta un endpoint que busque en tierras,
