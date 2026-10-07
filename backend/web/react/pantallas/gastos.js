@@ -68,11 +68,18 @@ function Tarjeta({ rotulo, filas = [], pista = "" }) {
           (fila, indice) => html`
             <div className="resumen-dato" key=${indice}>
               <dt>${frase(fila.etiqueta)}</dt>
-              <dd>
-                ${frase(fila.valor)}
-                ${fila.aviso ? html`<span className="pista-campo"> ${frase(fila.aviso)}</span>` : null}
-              </dd>
+              <dd>${frase(fila.valor)}</dd>
             </div>
+            ${
+              // **La explicación va en su propia línea, debajo de la fila** (07/10/2026). Estaba **dentro
+              // del valor**, y como la etiqueta de la izquierda no encoge, al valor le quedaba lo que
+              // sobraba: medido con una explotación vacía, este aviso salía en **13 px de ancho y 43
+              // líneas** a 390 px. Aquí ocupa el ancho entero de la tarjeta, que es lo que una frase
+              // necesita para leerse.
+              fila.aviso
+                ? html`<p className="pista-campo aviso-dato" key=${"a" + indice}>${frase(fila.aviso)}</p>`
+                : null
+            }
           `,
         )}
       </dl>

@@ -2636,7 +2636,18 @@ function datosDelCuaderno() {
     faltantes: {
       titulo: c("falta_titulo"),
       pendientes,
-      vacio: c("falta_vacio"),
+      // **La frase de la sección vacía, con la misma regla que el resumen de arriba** (07/10/2026).
+      //
+      // Aquí ponía siempre `c("falta_vacio")` («Lo tienes todo apuntado»), y con el cuaderno **sin empezar**
+      // eso contradecía a la frase de arriba —«todavía no has apuntado nada este año»—: la sección afirmaba
+      // que estaba todo cuando el servidor no había podido mirar nada. Se corrigió el resumen el 01/10 y
+      // **este texto se quedó fijo**; lo vio David en la pantalla. Ahora las dos frases salen del mismo
+      // sitio: si el servidor no ha mirado (`esta_completo: null`), esto lo dice.
+      vacio: !estado.faltantes
+        ? ""
+        : estado.faltantes.esta_completo === null
+          ? c("falta_sin_empezar")
+          : c("falta_vacio"),
       // La frase de un vistazo: lo primero que se lee en la pantalla que más se mira. **Solo se dice si
       // el servidor ha contestado** (`estado.faltantes`): con la lista sin llegar, «no te falta nada»
       // sería afirmar lo que no se sabe.

@@ -841,6 +841,19 @@ textarea {
   gap: 1rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--borde);
+  /*
+   * **Que la fila se parta antes que el valor** (07/10/2026).
+   *
+   * Medido en un navegador con una explotación vacía: a 390 px, el valor de una fila se quedaba en **10 px**
+   * de ancho (y un aviso de la tarjeta, en 13 px y **43 líneas**), porque la etiqueta de la izquierda no
+   * encoge y al valor le quedaba lo que sobraba. Una cifra en 10 px o se parte o se sale: «0,00 €» en dos
+   * líneas es lo que vio David en las capturas.
+   *
+   * Con `flex-wrap` y un mínimo de `7ch`, si la etiqueta y el valor no caben juntos **el valor baja a su
+   * propia línea, con el ancho entero de la tarjeta**. Siete caracteres es lo que mide «0,00 €», que es el
+   * valor más corto que tiene que caber sin partirse.
+   */
+  flex-wrap: wrap;
 }
 
 .resumen-dato dt {
@@ -850,6 +863,8 @@ textarea {
 .resumen-dato dd {
   margin: 0;
   text-align: right;
+  flex: 0 1 auto;
+  min-width: 7ch;
   /* **Un valor largo sin un solo espacio no puede empujar la pantalla** (05/10/2026). Medido en un
      navegador de verdad: la huella de un papel de la bandeja —64 caracteres seguidos— medía **595 px**
      dentro de un hueco de 390 y se llevaba por delante la ficha entera (se salía 675 px de 390). Y no es
@@ -857,6 +872,12 @@ textarea {
      son exactamente eso. Se arregla **donde se pintan todos** (la fila de dato, `resumen-dato`) y no
      pantalla por pantalla, que es como se arregla una y se deja la siguiente rota. */
   overflow-wrap: anywhere;
+}
+
+/* La explicación de un dato va **debajo de su fila y con el ancho entero**, no dentro del valor: dentro,
+   el valor se queda con lo que sobra y el aviso se parte en cuarenta líneas (medido: 13 px de ancho). */
+.aviso-dato {
+  text-align: right;
 }
 
 /*

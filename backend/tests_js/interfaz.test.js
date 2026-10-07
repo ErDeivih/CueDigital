@@ -531,7 +531,7 @@ const RESPUESTAS = {
       pista_anadir: "Un año en tu cuaderno no tiene por qué empezar en enero.",
     },
     unidades_producto: ["L", "kg", "mL", "g", "cc"],
-    cuaderno: { titulo: "Mi cuaderno", sin_nada: "Nada", ver_papel: "SACAR EN PAPEL", sacar_datos: "GUARDAR LOS DATOS EN UN FICHERO", datos_pista: "Se abre con Excel", ley_pista: "Llevar el cuaderno es obligatorio; mandarlo a la Junta, no: es voluntario (artículo 10.2 del Real Decreto 1054/2022).", falta_titulo: "Lo que falta", falta_vacio: "Todo apuntado.", apunte_numero: "Apunte {numero}", apuntes_titulo_uno: "1 apunte en el cuaderno", apuntes_titulo_varios: "{cuantas} apuntes en el cuaderno", tierra_y_parcela: "Tierra y parcela", hectareas_tratadas: "Hectáreas tratadas", cuanto_por_hectarea: "Cuánto por hectárea", el_cultivo: "Cultivo", apuntar_otro: "APUNTAR OTRO TRATAMIENTO", apuntar_uno: "APUNTAR UN TRATAMIENTO", pendiente_uno: "Te falta 1 cosa por apuntar", pendientes_varios: "Te faltan {cuantas} cosas por apuntar", pendientes_ninguno: "No te falta nada por apuntar" },
+    cuaderno: { titulo: "Mi cuaderno", sin_nada: "Nada", ver_papel: "SACAR EN PAPEL", sacar_datos: "GUARDAR LOS DATOS EN UN FICHERO", datos_pista: "Se abre con Excel", ley_pista: "Llevar el cuaderno es obligatorio; mandarlo a la Junta, no: es voluntario (artículo 10.2 del Real Decreto 1054/2022).", falta_titulo: "Lo que falta", falta_vacio: "Todo apuntado.", falta_sin_empezar: "Aqui saldra lo que te falte cuando apuntes algo.", apunte_numero: "Apunte {numero}", apuntes_titulo_uno: "1 apunte en el cuaderno", apuntes_titulo_varios: "{cuantas} apuntes en el cuaderno", tierra_y_parcela: "Tierra y parcela", hectareas_tratadas: "Hectáreas tratadas", cuanto_por_hectarea: "Cuánto por hectárea", el_cultivo: "Cultivo", apuntar_otro: "APUNTAR OTRO TRATAMIENTO", apuntar_uno: "APUNTAR UN TRATAMIENTO", pendiente_uno: "Te falta 1 cosa por apuntar", pendientes_varios: "Te faltan {cuantas} cosas por apuntar", pendientes_ninguno: "No te falta nada por apuntar" },
     // Corregir y borrar lo que uno ha introducido (ronda 91): los dos botones de cada apunte, el
     // título y la pista de cuando se está corrigiendo y la pantalla que pregunta si de verdad se
     // quiere borrar. Sin estos textos, los botones saldrían en blanco.
@@ -2736,6 +2736,23 @@ test("con el año sin empezar, el cuaderno dice que no hay nada que revisar (y n
   });
   await pulsar(entorno, "inicio", { ir: "mi_cuaderno" });
   assert.equal(ultimoCuadernoPedido().faltantes.resumen, mensaje);
+
+  // **Y la sección de abajo tampoco puede decir que está todo** (07/10/2026). Se corrigió la frase de
+  // arriba el 01/10 y **el texto de la sección se quedó fijo**: la pantalla decía «Todavía no has apuntado
+  // nada este año» y, justo debajo, «Lo tienes todo apuntado». Lo encontró David mirando la pantalla, no
+  // una suite, y esta comprobación es para que no vuelva: con el año sin empezar, la sección vacía **no**
+  // puede ser la de «lo tienes todo».
+  const cuaderno = ultimoCuadernoPedido();
+  assert.equal(
+    cuaderno.faltantes.vacio,
+    "Aqui saldra lo que te falte cuando apuntes algo.",
+    "la sección vacía no dice que el cuaderno no ha empezado",
+  );
+  assert.notEqual(
+    cuaderno.faltantes.vacio,
+    "Todo apuntado.",
+    "la sección vacía afirma que está todo mientras el servidor no ha mirado nada",
+  );
 
   // Y el panel de mando del ordenador, con el mismo caso: su frase de «no falta nada» es la del servidor.
   await pulsar(entorno, "ir-inicio");

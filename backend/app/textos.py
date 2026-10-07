@@ -1283,6 +1283,14 @@ PANTALLA_CUADERNO: dict = {
     ),
     "falta_titulo": "Lo que falta por completar",
     "falta_vacio": "Lo tienes todo apuntado.",
+    # **Y con el cuaderno sin empezar, esta sección no puede decir que está todo** (07/10/2026).
+    #
+    # Lo encontró David mirando la pantalla, no una suite: con el año recién creado, arriba se leía
+    # «Todavía no has apuntado nada este año» (la frase del servidor, que ya se corrigió el 01/10) y **justo
+    # debajo, en esta sección, «Lo tienes todo apuntado»**. Las dos frases se contradecían, y la de abajo
+    # decía lo mismo que el silencio que la de arriba venía a evitar: un cuaderno sin empezar **no está al
+    # día**. Cuando el servidor no ha podido mirar nada (`esta_completo: null`) esta sección dice esto.
+    "falta_sin_empezar": "Aquí saldrá lo que te falte cuando apuntes algo.",
     # ── La frase de un vistazo, debajo del título (rediseño de la ronda 80)
     #
     # Es lo primero que se lee al abrir el cuaderno y contesta a la única pregunta que el agricultor se
