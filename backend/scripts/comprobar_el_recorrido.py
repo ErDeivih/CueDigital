@@ -338,6 +338,21 @@ def main() -> int:
             "la ficha tiene un botón para volver a la lista de tierras",
         )
 
+        # ── 6. Lo que ha sido esta tierra ───────────────────────────────────────────────────────
+        paso(nav, 6, "Las versiones de la tierra, desde su ficha")
+        # **La pantalla existía y su dirección funcionaba, pero no había ningún botón que llevara a ella**
+        # (07/10/2026): solo se llegaba escribiéndola a mano. Es el mismo defecto que tenía la historia
+        # antes del T15, y por eso se comprueba igual: que el botón está **y que lleva**.
+        comprobar(
+            pulsar_si_hay(
+                nav,
+                "[data-accion='tierra-versiones']",
+                "location.hash.includes('/versiones')",
+            ),
+            "desde la ficha se llega a las versiones de esa tierra",
+        )
+        captura(nav, "6-versiones")
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     for fallo in FALLOS:
         print(f"  · {fallo}")

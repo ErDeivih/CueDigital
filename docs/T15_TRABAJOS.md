@@ -481,6 +481,7 @@ AGENDA: dict[str, str] = {
     "ver_el_cuaderno": "VER MI CUADERNO",
     "volver_a_los_trabajos": "VOLVER A LOS TRABAJOS",
     "previstos_titulo": "Lo que tengo pensado hacer",
+    "lo_que_ha_sido": "Lo que ha sido esta tierra",
     "superficie": "Superficie",
     "hectareas_corto": "ha",
     "costes_sin_importe_uno": "Hay 1 gasto de esta tierra que no dice lo que costó.",

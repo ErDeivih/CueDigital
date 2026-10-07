@@ -7814,6 +7814,11 @@ AGENDA: dict[str, str] = {
     "ver_el_cuaderno": "VER MI CUADERNO",
     "volver_a_los_trabajos": "VOLVER A LOS TRABAJOS",
     "previstos_titulo": "Lo que tengo pensado hacer",
+    # **El botón de las versiones de una tierra, en su ficha** (07/10/2026). Se llama como esa pantalla
+    # (`VERSIONES_EN_PANTALLA.titulo`): un botón que lleva a una pantalla se llama como esa pantalla. Está
+    # aquí, y no solo allí, porque el armazón de la ficha lee **este** bloque, y las dos copias tienen que
+    # tener las mismas claves (lo comprueban dos pruebas).
+    "lo_que_ha_sido": "Lo que ha sido esta tierra",
     # **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
     # recorrido). Se dice con el nombre de esa pantalla —el mismo que el del menú—, que es como el
     # agricultor la conoce; aquí no se inventa ninguna palabra nueva.

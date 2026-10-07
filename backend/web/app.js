@@ -21514,6 +21514,10 @@ function pantallaLaHistoria() {
     pantallaDeLaTierra({
       textos: textosDeLosTrabajos(),
       tierra: {
+        // **Con su identificador** (07/10/2026): la ficha no lo tenía, y sin él no puede ofrecer sus
+        // propios botones —el de «lo que ha sido esta tierra», que lleva a sus versiones—, porque no sabría
+        // de qué tierra son. El dato venía del servidor y se estaba tirando.
+        id: tierra.id,
         nombre: tierra.alias || "",
         superficie: valor(tierra.superficie_ha),
       },
@@ -21598,6 +21602,9 @@ async function atenderLosTrabajos(nombre, elemento) {
   // `tierra.acciones`), que es donde el agricultor abre una tierra. **Hasta hoy no había ninguno**: la
   // pantalla existía, su dirección funcionaba, y no se llegaba a ella más que escribiéndola.
   if (nombre === "tierra-historia") return abrirLaHistoriaDeUnaTierra(id);
+  // **Y sus versiones, desde la ficha** (07/10/2026): la pantalla existía y su dirección funcionaba, pero
+  // no había ningún botón que llevara a ella. Es el mismo defecto que tenía la historia antes del T15.
+  if (nombre === "tierra-versiones") return abrirLasVersionesDeUnaTierra(id);
   if (nombre === "trabajo-planificar") {
     // **La tierra que se está mirando viaja al formulario** (07/10/2026). Desde la ficha de una tierra, el
     // botón de planificar abría el formulario **sin la tierra**, así que salía «Elige la tierra» teniendo

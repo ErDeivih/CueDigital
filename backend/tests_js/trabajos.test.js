@@ -72,6 +72,9 @@ const AGENDA = {
   ver_el_cuaderno: "VER MI CUADERNO",
   volver_a_los_trabajos: "VOLVER A LOS TRABAJOS",
   previstos_titulo: "Lo que tengo pensado hacer",
+  // El botón que lleva a las versiones de la tierra (07/10/2026): se llama como esa pantalla, y la
+  // pantalla lo lee, así que tiene que estar en la copia o el rótulo saldría en blanco.
+  lo_que_ha_sido: "Lo que ha sido esta tierra",
   superficie: "Superficie",
   hectareas_corto: "ha",
   costes_sin_importe_uno: "Hay 1 gasto de esta tierra que no dice lo que costó.",

@@ -793,6 +793,27 @@ export function PantallaDeLaTierra({
     <div className="barra-acciones">
       <${Boton} etiqueta=${a.planificar} accion="trabajo-planificar" clase="boton-principal" />
       ${
+        // **Lo que ha sido esta tierra** (07/10/2026). La pantalla de las versiones de una tierra existía,
+        // su dirección (`#/tierras/<id>/versiones`) funcionaba… y **no había ningún botón en toda la
+        // aplicación que llevara a ella**: solo se llegaba escribiéndola a mano, que para el agricultor es
+        // no llegar. Es el mismo defecto que tenía la historia antes del T15, y se arregla igual: con su
+        // botón en la ficha, que es donde el agricultor está mirando esa tierra.
+        a.lo_que_ha_sido && tierra.id
+          ? html`<${Botones}
+              botones=${[
+                {
+                  etiqueta: a.lo_que_ha_sido,
+                  accion: "tierra-versiones",
+                  datos: { id: tierra.id },
+                  clase: "boton-claro",
+                  sencillo: true,
+                },
+              ]}
+              barra=${false}
+            />`
+          : null
+      }
+      ${
         // **Y la vuelta a la lista de tierras** (07/10/2026, E4). El único botón que tenía esta pantalla
         // era «VOLVER A LOS TRABAJOS», y desde la agenda **no hay camino de vuelta a la tierra**: el
         // agricultor que entraba a mirar una tierra y apuntaba algo acababa en la agenda, sin forma de
