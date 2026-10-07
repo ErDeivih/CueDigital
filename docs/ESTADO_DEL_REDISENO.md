@@ -67,7 +67,7 @@ cultivo»** a la ficha (07/10/2026). El botón se pintaba y la acción está ate
 desde la ficha la pregunta del cultivo no se abría** (medido en el navegador, dentro del recorrido
 automático), así que se quitó en vez de dejar un botón que no hace lo que dice.
 
-**Dónde está el problema** (`app.js`, `pantallaDecirCultivo`):
+**El primer sitio donde mirar** (`app.js`, `pantallaDecirCultivo`):
 
 ```js
 const parcela = (datos.parcelas || []).find((p) => String(p.parcela_id) === String(parcelaId));
@@ -77,16 +77,17 @@ if (!parcela) {
 }
 ```
 
-La pantalla espera que **`estado.cultivos.parcelas`** ya esté cargado. Desde la lista de tierras lo está
-(la lista pide los cultivos para enseñar qué tiene cada una), pero **desde la ficha no está garantizado**:
-si se entra a la ficha por su dirección (`#/tierras/<id>/historial`, que es una dirección propia) o se
-llega por un camino que no pasó por la lista, `datos.parcelas` está vacío y la pantalla **se va a la
-lista de cultivos sin decir por qué**.
+Esa pantalla necesita **`estado.cultivos.parcelas`**. **Ojo: esto es una sospecha, no un diagnóstico
+cerrado.** Ese dato lo rellena la carga grande de la sesión (`app.js:4972`, `apiJson("/api/cultivos")`),
+así que es posible que sí esté cargado y que el problema sea otro. Lo que está **medido** es lo de arriba:
+el botón se pinta, la acción está atendida, y al pulsarlo desde la ficha **no aparece ningún campo**.
 
-**Lo que hay que hacer** (la próxima vuelta): cargar los cultivos antes de pintar la pregunta —o pasarle
-la tierra a `pantallaDecirCultivo` en vez de que la busque— y **comprobarlo en el navegador** entrando a
-la ficha por su dirección, no por la lista. Es el mismo patrón que el 422 de corregir un trabajo: **una
-acción que funciona desde un sitio y no desde otro**, y que solo se ve pulsándola.
+**Lo primero que hay que hacer la próxima vuelta, antes de tocar nada**: pulsar `cultivo-decir` desde la
+ficha **imprimiendo en qué pantalla se queda y qué acciones ofrece** (el guion ya sabe hacerlo: cuando un
+paso no llega, imprime `la pantalla ofrece: [...]`). Eso dice en un minuto si se ha ido a la lista de
+cultivos —y entonces el sospechoso es el que está arriba— o si se ha quedado donde estaba, que sería otro
+defecto distinto. Y se comprueba **entrando a la ficha por su dirección** (`#/tierras/<id>/historial`),
+no por la lista: por la lista el defecto se esconde.
 
 ### 2.3 La búsqueda global — es una función nueva, no un cableado
 
