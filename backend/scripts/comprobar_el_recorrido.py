@@ -131,15 +131,18 @@ def abrir_el_historial(nav: NavegadorDeVerdad) -> bool:
       2. ese botón (`tierra-historia`, que **sí se ve** en el ordenador cuando el panel está abierto) lleva
          a `#/tierras/<id>/historial`, que es donde están lo hecho, lo previsto, los costes y los botones.
 
-    **Y hay un detalle que costó dos vueltas**: al volver a las tierras, la aplicación **reabre el panel de
-    la última tierra** (es lo que quiere el agricultor: volver por donde iba), así que volver a pulsar su
-    fila lo **cierra**. Por eso aquí se mira primero si el botón de la historia ya se ve: si se ve, el panel
-    ya está abierto y se pulsa directamente.
+    **Y desde el 07/10/2026 es de UN paso en el ordenador**: el nombre de la tierra en la lista lleva
+    directo a su ficha (opción (a) del encargo: «la historia es la ficha»). Los dos pasos de abajo se
+    quedan como salida por si el nombre dejara de llevar: la fila abre el panel, y el panel tiene su botón.
     """
-    if hay_visible(nav, "[data-accion='tierra-historia']"):
-        return pulsar_si_hay(
-            nav, "[data-accion='tierra-historia']", "location.hash.includes('/historial')"
-        )
+    # Lo primero, **un paso**: el nombre de la tierra.
+    if pulsar_si_hay(
+        nav,
+        "#pantalla [data-accion='tierra-historia']",
+        "location.hash.includes('/historial')",
+    ):
+        return True
+    # Y si no, los dos de siempre.
     if not pulsar_si_hay(
         nav,
         "[data-accion='elegir-fila']",
@@ -148,7 +151,7 @@ def abrir_el_historial(nav: NavegadorDeVerdad) -> bool:
         return False
     return pulsar_si_hay(
         nav,
-        "[data-accion='tierra-historia']",
+        "#pantalla [data-accion='tierra-historia']",
         "location.hash.includes('/historial')",
     )
 

@@ -8511,13 +8511,18 @@ function tablaDeTierras(tierras, buscando) {
     celdas: [
       { texto: String(tierra.numero), clase: "tabla-numero" },
       {
-        // **El nombre es un botón**: se toca y la tierra se ve en el panel de al lado, sin salir de la
-        // página (30/09/2026, fase 3). Es como se hace en cualquier programa de gestión —se toca el nombre,
-        // no la fila entera— y así funciona también con el teclado. El botón lo atiende el mismo manejador
-        // de clics de siempre.
+        // **El nombre abre la FICHA de la tierra** (07/10/2026, opción (a) del encargo del rediseño: «la
+        // historia es la ficha»).
+        //
+        // Antes el nombre solo marcaba la fila y la tierra se veía en el panel de al lado; desde el
+        // 07/10 la ficha tiene **todo** lo que tenía el panel (nombre, hectáreas y la referencia oficial),
+        // así que tocar el nombre lleva directo a ella. Es como se hace en cualquier programa: se toca el
+        // nombre. **Y el resto de la fila sigue marcando**, así que el panel no ha desaparecido: la decisión
+        // de quitarlo (o dejarlo como vista previa) es el paso siguiente del plan, y para eso este cambio
+        // no estorba — al revés, es la mitad del camino.
         texto: tierra.alias,
-        accion: "elegir-fila",
-        datos: { tabla: "tierras", id: tierra.datos.id },
+        accion: "tierra-historia",
+        datos: { id: tierra.datos.id },
       },
       { texto: formateaNumero(tierra.superficie_ha, 2), clase: "tabla-numero" },
       tierra.cultivo
