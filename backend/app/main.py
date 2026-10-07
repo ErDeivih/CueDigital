@@ -25,6 +25,8 @@ from .routers import (
     # demás: lo que llega y hay que revisar.
     bandeja_api,
     borradores_api,
+    # **La búsqueda global (07/10/2026).** Una caja en la cabecera que busca en lo del agricultor.
+    buscar_api,
     contactos_api,
     cuenta,
     cuaderno,
@@ -224,6 +226,11 @@ app.include_router(trabajos_api.router)
 # el alta y para el fichero, y detrás de `extractos_api` porque un papel se puede enlazar con un
 # movimiento conciliado.
 app.include_router(bandeja_api.router)
+# **La búsqueda global (07/10/2026, del encargo del rediseño).** Una caja en la cabecera para preguntar
+# «¿dónde está esto?» sin saber antes en qué pantalla está. Va la última porque no depende de nadie: busca
+# en lo que ya está guardado. Hoy busca en las tierras (por nombre y por referencia oficial); los gastos,
+# los papeles, las personas y las máquinas son la vuelta siguiente (está dicho en su fichero).
+app.include_router(buscar_api.router)
 
 
 @app.get("/health", tags=["sistema"])
