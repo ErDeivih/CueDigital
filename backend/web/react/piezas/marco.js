@@ -212,6 +212,7 @@ export function Marco({
   grupos = null,
   contexto = null,
   menuAbierto = false,
+  pendientes = "",
 }) {
   // El armazón no tiene palabras propias: las que ya había vienen de `menu` y las del contexto, del
   // bloque que les toque. Se juntan en un solo sitio para que el resto de la función pida `m.loquesea`.
@@ -301,6 +302,23 @@ export function Marco({
         </p>
       </div>
       <div className="barra-acciones">
+        ${
+          // **Lo que falta por apuntar, a la vista desde cualquier pantalla** (07/10/2026, del encargo del
+          // rediseño: el contexto lleva «lo pendiente»). Solo sale cuando el servidor ha dicho de verdad
+          // que falta algo: sin dato, un aviso sería inventado, y con cero cosas no hay nada que enseñar.
+          // Lleva a la pantalla donde están (`mi_cuaderno`), con la acción que ya existe.
+          pendientes
+            ? html`<button
+                type="button"
+                className="boton-letra"
+                data-accion="inicio"
+                data-ir="mi_cuaderno"
+                aria-label=${frase(m.pendientes_etiqueta)}
+              >
+                ${frase(pendientes)}
+              </button>`
+            : null
+        }
         <button type="button" className="boton boton-principal" data-accion="ir-inicio">
           ${frase(m.apuntar)}
         </button>
@@ -335,5 +353,6 @@ export function marcoDeLaAplicacion(propiedades) {
     grupos=${propiedades.grupos}
     contexto=${propiedades.contexto}
     menuAbierto=${propiedades.menuAbierto}
+    pendientes=${propiedades.pendientes}
   />`;
 }

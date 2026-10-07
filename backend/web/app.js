@@ -1624,6 +1624,23 @@ const MODULO_DE_LA_PANTALLA = {
  * Si algo falla al prepararlo (un texto que no ha llegado, un contenedor que no está), **no pasa nada**: el
  * armazón no se pinta y la pantalla sí. El armazón ayuda a moverse; la pantalla es lo que se viene a hacer.
  */
+/**
+ * La frase de lo que falta por apuntar, para la barra del armazón (07/10/2026, del encargo del rediseño).
+ *
+ * Se monta en un solo sitio y la usan dos: la pantalla del cuaderno y la barra. **Solo se dice si el
+ * servidor ha mirado** (`esta_completo` no es `null`): con la lista sin llegar, «no te falta nada» sería
+ * afirmar lo que no se sabe; y con cero cosas no hay nada que enseñar, así que no se pinta nada.
+ */
+function laFraseDeLoQueFalta() {
+  const suyo = estado.faltantes;
+  if (!suyo || suyo.esta_completo === null) return "";
+  const cuantas = (suyo.pendientes || []).length;
+  if (!cuantas) return "";
+  return cuantas === 1
+    ? t("marco.pendiente_uno", "")
+    : rellena(t("marco.pendientes", ""), { cuantas });
+}
+
 function pintarMarco(listo) {
   // **Sin sesión no hay armazón** (06/10/2026). El menú de módulos se quedaba pintado de la sesión
   // anterior —y de la pantalla de entrar, que no es de ningún módulo, así que se pintaba con el menú
@@ -1646,7 +1663,7 @@ function pintarMarco(listo) {
   // «cambiar» a la que ya se está usando es un botón que no lleva a nada (y además haría repintar la barra
   // sin que cambie nada de lo que se ve).
   const fincasParaCambiar = (estado.fincas || []).length > 1 ? estado.fincas : [];
-  const firma = `${modulo}|${finca}|${fincasParaCambiar.length}|${estado.menuAbierto ? "menu" : ""}`;
+  const firma = `${modulo}|${finca}|${fincasParaCambiar.length}|${estado.menuAbierto ? "menu" : ""}|${laFraseDeLoQueFalta()}`;
   if (estado.marcoPintado === firma && modulo !== "") return;
   let contenedor = null;
   try {
@@ -1689,6 +1706,11 @@ function pintarMarco(listo) {
         modulos: losModulos.filter((uno) => uno.grupo === grupo.clave),
       })).filter((grupo) => grupo.modulos.length),
       menuAbierto: Boolean(estado.menuAbierto),
+      // **Lo que falta por apuntar, en la barra** (07/10/2026, del encargo del rediseño). La frase se
+      // monta aquí, que es donde está la cuenta y donde ya se monta para la pantalla del cuaderno: **solo
+      // se dice si el servidor ha mirado** (`esta_completo` no es `null`) y si de verdad falta algo.
+      // Un aviso sin dato sería inventado, y con cero cosas no hay nada que enseñar.
+      pendientes: laFraseDeLoQueFalta(),
       // El contexto de la barra (T04): en qué finca se está y a cuáles puede cambiar esta cuenta.
       //
       // **Y no se le pasan las campañas, a propósito**: cambiar de campaña no existe (el servidor no tiene

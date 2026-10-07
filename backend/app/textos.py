@@ -5075,6 +5075,15 @@ MARCO: dict[str, str] = {
     "sin_finca": "Sin finca",
     "cambiar_campana": "Cambiar de campaña",
     "cambiar_finca": "Cambiar de finca",
+    # ── Lo que falta por apuntar, en la barra (07/10/2026) ──
+    #
+    # El encargo del rediseño pide que el contexto lleve «lo pendiente» a la vista: el agricultor tiene que
+    # poder saber **desde cualquier pantalla** si le falta algo por apuntar, y llegar a ello de un toque.
+    # La frase va entera (singular o plural) porque quien la monta es `app.js`, que es quien tiene la
+    # cuenta; aquí solo están las dos formas, como en el resto de la aplicación.
+    "pendiente_uno": "Te falta 1 cosa por apuntar",
+    "pendientes": "Te faltan {cuantas} cosas por apuntar",
+    "pendientes_etiqueta": "Ver lo que falta por apuntar",
 }
 
 

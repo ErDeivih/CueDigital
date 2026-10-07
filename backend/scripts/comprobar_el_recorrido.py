@@ -178,6 +178,15 @@ def main() -> int:
         comprobar(not hay(nav, "#correo"), "y es la pantalla de dentro, no la de entrar")
         captura(nav, "1-inicio")
         print(f"  acciones de Inicio: {acciones(nav)}")
+        # **Lo que falta por apuntar, en la barra del armazón** (07/10/2026, del encargo del rediseño: el
+        # contexto lleva «lo pendiente»). La explotación de la prueba tiene cosas pendientes, así que la
+        # frase tiene que estar; y si no estuviera el dato, lo que se exige es que **no** se invente nada.
+        barra = nav.evaluar("(document.querySelector('#marco .barra') || {}).innerText || ''")
+        print(f"  (la barra dice: {' '.join(barra.split())[:150]})")
+        comprobar(
+            "te falta" in barra.lower(),
+            "la barra dice lo que falta por apuntar (y sale desde cualquier pantalla)",
+        )
         # **Al ancho del ordenador, a las tierras se va por el menú** (`#menu-tierras`, que está en el
         # armazón). El botón «mis-cosas» de la pantalla es el del móvil: existe en el documento pero no se
         # ve a este ancho —y eso lo dijo el propio buscador de clics al no dejarse pulsar lo que no está—.
