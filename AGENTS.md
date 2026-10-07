@@ -42,7 +42,7 @@ que pase. Si no hay test para lo que estás tocando, **escríbelo**.
 ```bash
 cd backend
 
-# Python (4569 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
+# Python (4578 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
 # certificado, firma, instalaciones, plan de abono, análisis, medidas preventivas, dictado,
 # documentación anexa, el cliente del interfaz de la Junta, la comprobación de la firma,
 # varias cuentas dentro de una misma finca, las tierras en el mapa y en la tabla (T06),
@@ -622,8 +622,22 @@ backend/
 ├── tests_js/                Tests de JavaScript
 ├── scripts/humo.py        Recorrido completo contra un servidor de verdad
 ├── scripts/cambiar_la_clave.py  Cambiar la clave desde este ordenador (si se olvida)
-└── scripts/comprobar_en_un_navegador.py  Abre Chrome sin ventana y comprueba que la
-                                     pantalla la dibuja React de verdad (y guarda una captura)
+├── scripts/comprobar_en_un_navegador.py  Abre Chrome sin ventana y comprueba que la
+│                                    pantalla la dibuja React de verdad (y guarda una captura)
+├── scripts/comprobar_el_recorrido.py  **El recorrido del encargo, pulsando de verdad**:
+│                                    Inicio → Tierras → buscar una tierra entre 64 → su ficha →
+│                                    planificar un trabajo → su historial → volver a la lista. Se
+│                                    hace con la explotación de 64 tierras que crea
+│                                    `datos_representativos.py` y guarda una captura por paso.
+│                                    Necesita un servidor: `python scripts/comprobar_el_recorrido.py
+│                                    http://127.0.0.1:8029`
+├── scripts/comprobar_el_armazon.py    El menú agrupado y la navegación por teclado a 390, 712,
+│                                    1024 y 1440 px, con sesión de verdad
+├── scripts/comprobar_escape_en_la_ficha.py  Que Escape, en la ficha de una tierra, vuelva a la
+│                                    lista de tierras y no a la agenda de trabajos
+└── scripts/mirar_pantallas.py     Identifica cada pantalla (ruta, elemento propio, sin formulario
+                                     de entrar y con sus datos) y guarda las capturas de las cuatro
+                                     pantallas × cuatro anchos, con la explotación de 64 tierras
 data/zv_cyl.csv              387 municipios derivados del Excel oficial de IDECyL
 data/municipios_cyl.csv      Los 2.248 municipios de Castilla y León, del diccionario del INE:
                              nombre, provincia, código INE (5 cifras) y código de municipio
