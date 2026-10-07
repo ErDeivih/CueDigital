@@ -10,6 +10,13 @@ Esta prueba lo corre **entero**: levanta el servidor en una base temporal, prepa
 tierras y anda el recorrido con Chrome sin ventana. Si el recorrido se rompe, esto se pone rojo.
 
 **Se salta diciendo por qué** si no hay navegador instalado, que es lo único que puede faltar aquí.
+
+**Y puede fallar de vez en cuando si hay otro navegador trabajando a la vez** (07/10/2026): el guion
+levanta su servidor en un puerto libre y abre su propio Chrome, así que con otra sesión de navegador en
+marcha (otro guion de comprobación, por ejemplo) puede quedarse sin respuesta. Pasó una vez, corriendo
+esto junto a otro servidor de pruebas. Si vuelve a pasar: córrelo **solo**, y si aun así falla, mira la
+salida del guion — la prueba la imprime entera cuando se rompe, con las comprobaciones que sí habían
+pasado. No es el producto: es que dos navegadores a la vez se estorban.
 """
 
 from __future__ import annotations
