@@ -60,7 +60,35 @@ Y antes de tocar nada: **hay que decidir si las «versiones» (la comparación a
 contrato las pide y no existen (`versiones_api.py` no tiene variedad, siembra, cosecha, rendimiento ni
 coste por campaña).
 
-### 2.2 La búsqueda global — es una función nueva, no un cableado
+### 2.2 El eslabón que falta, ya localizado en el código
+
+Para que la ficha sea el sitio donde se **hace** todo lo de una tierra, se intentó llevar **«decir el
+cultivo»** a la ficha (07/10/2026). El botón se pintaba y la acción está atendida, **pero al pulsarlo
+desde la ficha la pregunta del cultivo no se abría** (medido en el navegador, dentro del recorrido
+automático), así que se quitó en vez de dejar un botón que no hace lo que dice.
+
+**Dónde está el problema** (`app.js`, `pantallaDecirCultivo`):
+
+```js
+const parcela = (datos.parcelas || []).find((p) => String(p.parcela_id) === String(parcelaId));
+if (!parcela) {
+  pantallaCultivos();   // ← si no encuentra la tierra, se va a la LISTA y no pregunta nada
+  return;
+}
+```
+
+La pantalla espera que **`estado.cultivos.parcelas`** ya esté cargado. Desde la lista de tierras lo está
+(la lista pide los cultivos para enseñar qué tiene cada una), pero **desde la ficha no está garantizado**:
+si se entra a la ficha por su dirección (`#/tierras/<id>/historial`, que es una dirección propia) o se
+llega por un camino que no pasó por la lista, `datos.parcelas` está vacío y la pantalla **se va a la
+lista de cultivos sin decir por qué**.
+
+**Lo que hay que hacer** (la próxima vuelta): cargar los cultivos antes de pintar la pregunta —o pasarle
+la tierra a `pantallaDecirCultivo` en vez de que la busque— y **comprobarlo en el navegador** entrando a
+la ficha por su dirección, no por la lista. Es el mismo patrón que el 422 de corregir un trabajo: **una
+acción que funciona desde un sitio y no desde otro**, y que solo se ve pulsándola.
+
+### 2.3 La búsqueda global — es una función nueva, no un cableado
 
 La cabecera del encargo la pide. **No hay ninguna puerta en el servidor para eso**: comprobado, lo único
 que existe es la búsqueda del SIGPAC (`parcelas.py:933`). Hace falta un endpoint que busque en tierras,
