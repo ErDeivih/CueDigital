@@ -157,6 +157,23 @@ def buscar(
     cortado_maquinas = len(maquinas) > TOPE_POR_GRUPO
     maquinas = maquinas[:TOPE_POR_GRUPO]
 
+    # **Y los papeles** (07/10/2026): los contratos, las facturas y los albaranes. Es lo que se busca
+    # cuando en una inspección se pregunta «¿dónde está el contrato de esa tierra?». Por su título, que es
+    # como el agricultor los nombra, y al lado se enseña su tipo (contrato, factura…), que es lo que
+    # distingue un papel de otro que se llama parecido.
+    candidatos_papeles = db.scalars(
+        select(models.DocumentoAnexo)
+        .where(models.DocumentoAnexo.explotacion_id == explotacion.id)
+        .order_by(models.DocumentoAnexo.titulo)
+    ).all()
+    papeles = [
+        papel
+        for papel in candidatos_papeles
+        if cotejado and cotejado in _como_se_busca(papel.titulo or "")
+    ]
+    cortado_papeles = len(papeles) > TOPE_POR_GRUPO
+    papeles = papeles[:TOPE_POR_GRUPO]
+
     grupos = []
     if suyas:
         grupos.append(
@@ -209,6 +226,24 @@ def buscar(
             }
         )
     # (El grupo de las máquinas va aquí, cuando tenga su prueba: ver la nota de arriba.)
+    if papeles:
+        grupos.append(
+            {
+                "clave": "papeles",
+                "cuantos": len(papeles),
+                "cortado": cortado_papeles,
+                "resultados": [
+                    {
+                        "id": papel.id,
+                        "etiqueta": papel.titulo or "",
+                        # El tipo, que es lo que distingue dos papeles que se llaman parecido. Si no consta,
+                        # no se enseña un hueco.
+                        "detalle": papel.tipo or "",
+                    }
+                    for papel in papeles
+                ],
+            }
+        )
     if maquinas:
         grupos.append(
             {

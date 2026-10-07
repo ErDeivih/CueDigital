@@ -16,6 +16,21 @@ de cómo estén hechas las tablas por dentro.
 
 from __future__ import annotations
 
+import pytest
+
+
+@pytest.fixture
+def carpeta_de_adjuntos(tmp_path, monkeypatch):
+    """Una carpeta de adjuntos de mentira, para no escribir en la del proyecto.
+
+    Es la misma que usa `test_documentos.py`, y por el mismo motivo: los tests no escriben fuera de una
+    carpeta temporal. Aquí hace falta porque dar de alta un papel pasa por la carpeta de adjuntos.
+    """
+    carpeta = tmp_path / "adjuntos"
+    carpeta.mkdir()
+    monkeypatch.setenv("CUEDIGITAL_ADJUNTOS", str(carpeta))
+    return carpeta
+
 
 def _una_tierra(cliente, cuenta, alias: str, ref: str = "") -> int:
     respuesta = cliente.post(
@@ -194,4 +209,32 @@ class TestLaBusqueda:
 
         assert _buscar(cliente, cuenta, "tractor")["grupos"] == [], (
             "sale una máquina que no es de esta explotación"
+        )
+
+    def test_encuentra_un_papel_por_su_titulo_y_dice_de_qué_es(self, cliente, cuenta, carpeta_de_adjuntos):
+        """Los papeles se buscan por su título —«¿dónde está el contrato de esa tierra?»— y al lado se
+        enseña su tipo, que es lo que distingue dos que se llaman parecido."""
+        respuesta = cliente.post(
+            "/api/documentos",
+            json={"titulo": "Contrato de la finca del río", "tipo": "contrato"},
+            headers=cuenta["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        salida = _buscar(cliente, cuenta, "contrato")
+        papeles = [g for g in salida["grupos"] if g["clave"] == "papeles"][0]
+        assert [r["etiqueta"] for r in papeles["resultados"]] == ["Contrato de la finca del río"]
+        assert papeles["resultados"][0]["detalle"] == "contrato"
+
+    def test_tampoco_ensena_los_papeles_de_otra_explotacion(self, cliente, cuenta, crear_cuenta, carpeta_de_adjuntos):
+        la_ajena = crear_cuenta("ajena-papeles@ejemplo.test", nombre="El vecino")
+        respuesta = cliente.post(
+            "/api/documentos",
+            json={"titulo": "Contrato del vecino", "tipo": "contrato"},
+            headers=la_ajena["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        assert _buscar(cliente, cuenta, "contrato")["grupos"] == [], (
+            "sale un papel que no es de esta explotación"
         )
