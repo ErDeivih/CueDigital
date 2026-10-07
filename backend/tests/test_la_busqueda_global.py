@@ -79,3 +79,50 @@ class TestLaBusqueda:
         salida = _buscar(cliente, cuenta, "helicoptero")
         assert salida["buscado"] is True
         assert salida["grupos"] == []
+
+    def test_encuentra_un_gasto_por_su_concepto_y_dice_lo_que_costo(self, cliente, cuenta):
+        """Y lo que se busca con un nombre en la cabeza («el gasóleo») sale con **su importe**, que es lo
+        que se quiere saber al encontrarlo. Los dos grupos conviven: una búsqueda puede encontrar una
+        tierra y un gasto a la vez."""
+        respuesta = cliente.post(
+            "/api/gastos",
+            json={"concepto": "Gasóleo de la siega", "importe": "300.50", "fecha": "2026-06-15"},
+            headers=cuenta["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+        _una_tierra(cliente, cuenta, "El Prado del gasóleo")
+
+        salida = _buscar(cliente, cuenta, "gasoleo")
+        por_clave = {grupo["clave"]: grupo for grupo in salida["grupos"]}
+        assert set(por_clave) == {"tierras", "gastos"}
+        assert [r["etiqueta"] for r in por_clave["gastos"]["resultados"]] == ["Gasóleo de la siega"]
+        assert "300,50" in por_clave["gastos"]["resultados"][0]["detalle"]
+
+    def test_un_gasto_sin_importe_sale_sin_cifra_ni_cero(self, cliente, cuenta):
+        """Un gasto del que no se sabe lo que costó **existe** y hay que poder encontrarlo; lo que no se
+        hace es enseñar un cero, que diría que costó cero."""
+        respuesta = cliente.post(
+            "/api/gastos",
+            json={"concepto": "Reparación del tractor", "fecha": "2026-06-16"},
+            headers=cuenta["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        salida = _buscar(cliente, cuenta, "reparacion")
+        gastos = [g for g in salida["grupos"] if g["clave"] == "gastos"][0]
+        assert [r["etiqueta"] for r in gastos["resultados"]] == ["Reparación del tractor"]
+        assert "0" not in gastos["resultados"][0]["detalle"], (
+            f"un gasto sin importe no puede enseñar un cero: {gastos['resultados'][0]['detalle']!r}"
+        )
+
+    def test_tampoco_ensena_los_gastos_de_otra_explotacion(self, cliente, cuenta, crear_cuenta):
+        la_ajena = crear_cuenta("ajena-gastos@ejemplo.test", nombre="El vecino")
+        respuesta = cliente.post(
+            "/api/gastos",
+            json={"concepto": "Gasóleo del vecino", "importe": "10.00", "fecha": "2026-06-15"},
+            headers=la_ajena["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        salida = _buscar(cliente, cuenta, "gasoleo")
+        assert salida["grupos"] == [], "sale un gasto que no es de esta explotación"
