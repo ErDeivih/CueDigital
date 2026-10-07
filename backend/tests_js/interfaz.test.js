@@ -14576,6 +14576,67 @@ test("la historia de una tierra se abre desde el botón de la ficha de la tierra
   );
 });
 
+test("la misma tierra se dice igual en el panel y en su ficha", async () => {
+  // **Una tierra, una ficha** (07/10/2026, del encargo del rediseño). Hoy la tierra se puede mirar en
+  // cuatro sitios —el panel de la fila, su historia, sus versiones y su cultivo—, y **nadie comprobaba
+  // que dijeran lo mismo**: la revisión del recorrido avisó de que el panel usa su propia fuente de datos
+  // y de que ninguna prueba exigía que coincidieran. Esta es la primera: **el nombre y la superficie de
+  // la tierra son los mismos** se mire por donde se mire. Si un día se separan, se verá aquí antes que en
+  // la pantalla del agricultor.
+  const { entorno } = await conLosTrabajos({
+    "/api/parcelas": TRES_TIERRAS,
+    // **Las dos puertas tienen que decir las mismas hectáreas** porque en el servidor salen de la misma
+    // columna (`parcela.superficie_ha`): el panel las lee de `/api/parcelas` y la ficha, de
+    // `/api/trabajos/tierra/<id>`. Aquí se copia el valor de `TRES_TIERRAS` a propósito: si se pusiera
+    // otro, la prueba estaría comprobando una diferencia que el servidor no puede producir.
+    "GET /api/trabajos/tierra/1": {
+      tierra: { id: 1, alias: "El Prado", superficie_ha: 4.9 },
+      historial: { lineas: [] },
+      estado: { cultivo_declarado: null, previstos: [] },
+      trabajos_sin_hectareas: 0,
+      lo_que_no_se_sabe: {},
+      falta: {},
+      textos: {},
+    },
+  });
+  await pulsar(entorno, "mis-cosas");
+
+  // Lo que dice la lista de la tierra (es lo que el agricultor acaba de leer al tocarla).
+  const seccion = montajes[montajes.length - 1].elemento.props.secciones[0];
+  const enLaLista = seccion.elementos[0];
+
+  // Lo que dice el **panel** de esa tierra, al elegirla. (El panel viaja dentro de la sección de la
+  // lista: `seccion.tabla.panel`, que es lo que usa la prueba de «elegir una tierra…».)
+  await pulsar(entorno, "elegir-fila", { tabla: "tierras", id: "1" });
+  const panel = tablaDeTierrasPedida().panel;
+  const superficieEnElPanel = (panel.filas || []).find((fila) => /hect[áa]reas/i.test(fila.etiqueta));
+
+  // Y lo que dice su **ficha**.
+  await pulsar(entorno, "tierra-historia", { id: 1 });
+  await new Promise((resolver) => setTimeout(resolver, 60));
+  const ficha = ultimoMontaje();
+  assert.equal(ficha.type.name, "PantallaDeLaTierra", "la ficha no se ha abierto");
+
+  const nombreEnLaFicha = ficha.props.tierra.nombre;
+  const superficieEnLaFicha = ficha.props.tierra.superficie;
+  assert.ok(nombreEnLaFicha, "la ficha no dice el nombre de la tierra");
+  assert.equal(
+    nombreEnLaFicha,
+    enLaLista.etiqueta,
+    `la lista y la ficha dicen cosas distintas de la misma tierra: «${enLaLista.etiqueta}» y «${nombreEnLaFicha}»`,
+  );
+  assert.ok(superficieEnElPanel, "el panel no dice las hectáreas de la tierra");
+  // Se comparan los dígitos y no el texto entero: el panel puede escribir «3 ha» y la ficha «3 ha» o
+  // «3,00», y lo que importa —que es el mismo número— es lo que se está comprobando.
+  const digitos = (texto) => String(texto).replace(/[^0-9]/g, "");
+  assert.equal(
+    digitos(superficieEnLaFicha),
+    digitos(superficieEnElPanel.valor),
+    "el panel y la ficha dicen superficies distintas de la misma tierra: "
+      + `«${superficieEnElPanel.valor}» y «${superficieEnLaFicha}»`,
+  );
+});
+
 
 
 
