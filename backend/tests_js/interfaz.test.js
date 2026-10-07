@@ -2877,49 +2877,46 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
   assert.equal(props.campana, "2026", "el armazón no dice en qué año se está apuntando");
   // Todos los módulos, cada uno con su acción: si uno se quedara sin acción, su renglón no haría nada.
   const claves = props.modulos.map((uno) => uno.clave);
+  // **El orden cambió el 07/10/2026, y es el encargo del rediseño**: los mismos 21 renglones, agrupados por
+  // donde el agricultor los busca (Inicio · El campo · La gestión · El cuaderno · Ajustes). La agrupación es
+  // **visual**: no hay pantallas nuevas ni pasos de más. Esta lista es la que vigila que el menú lleve
+  // **todos** los módulos: el que falte no lo ve el agricultor.
   assert.deepEqual(claves, [
     "panel",
-    "cuaderno",
     "tierras",
-    // **Los trabajos (T15, 05/10/2026)**: el contrato lo pide **el tercero**, justo detrás de «Tierras y
-    // mapa», porque lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
-    // campo. Se apunta aquí por el mismo motivo que los demás: esta lista es la que vigila que el menú
-    // del ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
     "trabajos",
     "cultivos",
     "grupos",
     "almacen",
-    // **Las semillas (T10, 03/10/2026, del otro agente)**: un insumo del almacén, por eso va justo
-    // detrás. Se apunta aquí porque este fichero es el que vigila que el menú del ordenador lleve
-    // **todos** los módulos: si uno se añade y no se apunta, el agricultor no lo ve en el menú.
     "semillas",
     "analisis",
-    // **Las personas y las empresas (T11, 03/10/2026)**: entre los análisis y el plan, porque es lo que
-    // se mira cuando se va a apuntar algo con nombre y apellidos (de quién es la factura, quién vende,
-    // quién compra). Se apunta aquí por el mismo motivo que las semillas: esta lista es la que vigila
-    // que el menú del ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
-    "contactos",
     "plan",
-    "ventas",
     "medidas",
-    // **La maquinaria (T14, 03/10/2026)**: detrás de las medidas y delante de los papeles, porque es lo
-    // que se mira cuando hay que decidir si se puede contar con el tractor para un trabajo. Se apunta aquí
-    // por el mismo motivo que las semillas y los contactos: esta lista es la que vigila que el menú del
-    // ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
+    "contactos",
     "maquinaria",
-    // **Las cuentas de la explotación (T13, 05/10/2026)**: detrás de la maquinaria y delante de los
-    // papeles, porque es lo que se mira cuando se quiere saber cómo va el año —lo que ha costado y lo
-    // que falta por pagar— y no al final, con lo que se toca una vez al año. Se apunta aquí por el
-    // mismo motivo que las semillas, los contactos y la maquinaria: esta lista es la que vigila que el
-    // menú del ordenador lleve **todos** los módulos, y el que falte no lo ve el agricultor.
     "cuentas",
-    "papeles",
+    "ventas",
     "facturas",
+    "papeles",
+    "cuaderno",
     "anos",
     "junta",
     "datos",
     "ayuda",
   ]);
+  // **Y cada grupo con sus renglones**, del mismo sitio del que salen los de arriba: si un grupo se queda
+  // vacío o un renglón se queda sin grupo, aquí se ve. (El grupo «Normativa» del encargo **no está**, y es
+  // a propósito: no hay ninguna pantalla que sea eso.)
+  assert.deepEqual(
+    props.grupos.map((grupo) => [grupo.clave, grupo.modulos.length]),
+    [
+      ["inicio", 1],
+      ["campo", 9],
+      ["gestion", 6],
+      ["cuaderno", 3],
+      ["ajustes", 2],
+    ],
+  );
   for (const modulo of props.modulos) {
     assert.ok(modulo.accion, `el módulo ${modulo.clave} no lleva acción`);
     assert.ok(modulo.etiqueta, `el módulo ${modulo.clave} no lleva su nombre`);

@@ -5035,6 +5035,25 @@ MENU: dict[str, str] = {
     "letra_etiqueta": "Poner la letra más grande",
     "salir": "Salir",
     "salir_etiqueta": "Salir de la cuenta",
+    # ── Los grupos del menú (07/10/2026, del encargo del rediseño) ──
+    #
+    # El menú tiene 21 renglones: seguidos, no se encuentra nada. Se agrupan por donde el agricultor los
+    # busca, **sin pantallas de por medio** (el encargo lo dice así: «la agrupación es visual, no introduce
+    # pantallas intermedias obligatorias»).
+    #
+    # **Y no hay grupo «Normativa»**, que el encargo nombra: no existe esa pantalla (la biblioteca de
+    # obligaciones con su fuente y su vigencia está por hacer). Un renglón que no lleva a ninguna parte es
+    # peor que no tenerlo.
+    "grupo_inicio": "Inicio",
+    "grupo_campo": "El campo",
+    "grupo_gestion": "La gestión",
+    "grupo_cuaderno": "El cuaderno",
+    "grupo_ajustes": "Ajustes",
+    # El botón que abre el menú cuando no cabe a la izquierda (el móvil y las ventanas estrechas).
+    "abrir": "Menú",
+    "abrir_etiqueta": "Abrir el menú de la aplicación",
+    "cerrar": "Cerrar el menú",
+    "cerrar_etiqueta": "Cerrar el menú",
 }
 
 

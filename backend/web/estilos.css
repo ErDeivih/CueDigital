@@ -134,6 +134,26 @@ body {
 
 /* ---------------------------------------------------------------- cabecera */
 
+/*
+ * **El botón del menú, solo cuando el menú no cabe a la izquierda** (07/10/2026).
+ *
+ * Por debajo de 64 rem el armazón se esconde (es de ordenador) y con él se iban los 21 renglones: medido, a
+ * 712 px los renglones seguían en el documento pero medían 0×0, así que **con el teclado no se llegaba a
+ * las cuentas**. Este botón abre el mismo armazón encima de la pantalla. A partir de 64 rem no se ve: allí
+ * el menú está siempre a la izquierda.
+ */
+.cabecera-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (min-width: 64rem) {
+  .cabecera-menu {
+    display: none;
+  }
+}
+
 .cabecera {
   display: flex;
   align-items: center;
@@ -1300,6 +1320,99 @@ div.tarjeta:active {
  *      sigue siendo el mismo, aquí solo cambia de ratón.
  *   5. **Sin transparencias, sin sombras y sin animaciones**, como en el móvil: el diseño es el mismo, solo
  *      que ancho.
+ */
+/*
+ * ── El menú cuando no cabe a la izquierda (07/10/2026) ──────────────────────
+ *
+ * Por debajo de 64 rem el armazón se esconde —es de ordenador— y con él se iban los 21 renglones: medido, a
+ * 712 px seguían en el documento pero medían **0×0**, así que **con el teclado no se llegaba a las
+ * cuentas** y había que escribir la dirección. Ahora el mismo armazón se abre **encima de la pantalla** con
+ * el botón del menú, y se cierra con su botón o con Escape.
+ *
+ * **Sin trampas**: los renglones son los mismos (con sus grupos), el ancho es el que cabe en la pantalla, y
+ * el menú abierto **no se lleva por delante la pantalla**: se pone encima y se cierra. Y las palabras siguen
+ * viniendo del servidor.
+ */
+.marco .menu {
+  /* Cerrado, el menú no está: ni se ve ni se tabula. Sin esto, los renglones existirían en el documento y
+     el tabulador los recorrería sin que el agricultor viera nada. */
+  display: none;
+}
+
+.marco.marco-abierto {
+  /* **`display: block` explícito**: por debajo de 64 rem hay una regla que esconde el armazón entero
+     (`.marco { display: none }`), y sin esta línea el armazón abierto seguía escondido: el menú se abría
+     «por dentro» pero su contenedor medía 0×0 y no se veía ni un renglón (medido). */
+  display: block;
+  position: fixed;
+  inset: 0;
+  /* **Por encima de la cabecera** (`z-index: 10`), y esto costó una vuelta: con un `z-index` menor, la
+     cabecera pegajosa se quedaba **encima** del menú abierto y se comía los toques de su parte de arriba
+     —el botón de cerrar incluido—: el botón estaba, se veía, y al pulsarlo pasaba lo que había debajo. */
+  z-index: 20;
+  overflow-y: auto;
+  background: var(--verde-oscuro);
+}
+
+.marco.marco-abierto .menu {
+  display: flex;
+  flex-direction: column;
+  padding: var(--e-lg) var(--e-lg) var(--e-xl);
+  color: var(--sobre-verde);
+  background: var(--verde-oscuro);
+}
+
+.marco .menu-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-md);
+}
+
+/* El botón de cerrar el menú solo tiene sentido cuando el menú se abre encima; a la izquierda, no. */
+.marco .menu-cerrar {
+  min-height: var(--toque);
+  padding: 0 var(--e-md);
+  font-size: var(--t-boton);
+  font-weight: 700;
+  color: var(--sobre-verde);
+  background: var(--sobre-verde-tenue);
+  border: 2px solid var(--sobre-verde-borde);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+/* El nombre de cada grupo, dentro del menú. */
+.marco .menu-grupos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.marco .menu-grupo-nombre {
+  margin: var(--e-lg) 0 var(--e-xs) 0.7rem;
+  font-size: var(--t-pista);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sobre-verde-tenue);
+}
+
+@media (min-width: 64rem) {
+  /* En el ordenador el menú está siempre a la izquierda: el botón de cerrar no pinta nada (y el armazón
+     abierto tampoco: allí ya se ve). */
+  .marco .menu-cerrar {
+    display: none;
+  }
+
+  .marco .menu-grupo-nombre {
+    margin-top: var(--e-md);
+  }
+}
+
+/*
+ * Y a partir de 64 rem, el armazón de siempre: el menú a la izquierda y la barra arriba. Lo que sigue es el
+ * bloque de siempre, sin tocar.
  */
 @media (min-width: 64rem) {
   /* El armazón ocupa la izquierda y la barra cruza por arriba. Va fijo: el menú no se va con el scroll,

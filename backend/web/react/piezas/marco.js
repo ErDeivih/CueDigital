@@ -98,6 +98,26 @@ function Modulo({ modulo }) {
 }
 
 /**
+ * **Un grupo del menú** (07/10/2026): su nombre y sus renglones.
+ *
+ * Con 21 renglones seguidos no se encuentra nada: agruparlos es lo que hace que «el campo» y «la gestión»
+ * se lean de un vistazo. El nombre del grupo va en un `<p>` con su `id`, y la lista lleva
+ * `aria-labelledby` apuntando a él: quien use un lector de pantalla oye «El campo, lista» antes de sus
+ * renglones, que es lo que hace que la agrupación signifique algo también ahí.
+ */
+function Grupo({ grupo }) {
+  const identificación = `menu-grupo-${grupo.clave}`;
+  return html`
+    <li className="menu-grupo">
+      <p className="menu-grupo-nombre" id=${identificación}>${frase(grupo.etiqueta)}</p>
+      <ul className="menu-lista" aria-labelledby=${identificación}>
+        ${lista(grupo.modulos).map((modulo) => html`<${Modulo} key=${modulo.clave} modulo=${modulo} />`)}
+      </ul>
+    </li>
+  `;
+}
+
+/**
  * Los botones para elegir, dentro de un dato de la barra: uno por finca y uno por año.
  *
  * POR QUÉ BOTONES Y NO UN DESPLEGABLE. Porque un desplegable, en un móvil, abre la rueda del sistema y
@@ -189,25 +209,55 @@ export function Marco({
   cuenta = "",
   campana = "",
   modulos = [],
+  grupos = null,
   contexto = null,
+  menuAbierto = false,
 }) {
   // El armazón no tiene palabras propias: las que ya había vienen de `menu` y las del contexto, del
   // bloque que les toque. Se juntan en un solo sitio para que el resto de la función pida `m.loquesea`.
   const m = { ...(textos.menu || {}), ...(textos.marco || {}) };
   const suyo = preparaElContexto(contexto, campana);
   const hayContexto = Boolean(contexto) && typeof contexto === "object";
+  // **Con grupos, el menú va agrupado; sin ellos, la lista plana de siempre.** Las dos formas salen del
+  // mismo sitio (los renglones), así que una no puede decir algo distinto de la otra.
+  const conGrupos = lista(grupos).filter((grupo) => grupo && lista(grupo.modulos).length);
 
   return html`
-    <nav className="menu" aria-label=${frase(m.etiqueta)}>
-      <p className="menu-marca">${frase(m.titulo)}</p>
+    <nav
+      className=${`menu${menuAbierto ? " menu-abierto" : ""}`}
+      aria-label=${frase(m.etiqueta)}
+      id="menu-de-la-aplicacion"
+    >
+      <div className="menu-cabecera">
+        <p className="menu-marca">${frase(m.titulo)}</p>
+        ${
+          // El botón de cerrar: en el móvil el menú tapa la pantalla, así que tiene que poder cerrarse con
+          // un botón (y con Escape, que está en la lista de `app.js`). En el ordenador no se ve: allí el
+          // menú no tapa nada y un botón de cerrar sería un botón de más.
+          html`<button
+            type="button"
+            className="menu-cerrar"
+            data-accion="menu-cerrar"
+            aria-label=${frase(m.cerrar_etiqueta)}
+          >
+            ${frase(m.cerrar)}
+          </button>`
+        }
+      </div>
       ${
         // Quién está apuntando, arriba del menú: una cuenta puede entrar en varias fincas y esto es lo que
         // deja claro en cuál se está (es el mismo dato que el de la barra, dicho una vez en cada sitio).
         html`<p className="menu-cuenta">${frase(cuenta || m.sin_cuenta)}</p>`
       }
-      <ul className="menu-lista">
-        ${modulos.map((modulo) => html`<${Modulo} key=${modulo.clave} modulo=${modulo} />`)}
-      </ul>
+      ${
+        conGrupos.length
+          ? html`<ul className="menu-grupos">
+              ${conGrupos.map((grupo) => html`<${Grupo} key=${grupo.clave} grupo=${grupo} />`)}
+            </ul>`
+          : html`<ul className="menu-lista">
+              ${modulos.map((modulo) => html`<${Modulo} key=${modulo.clave} modulo=${modulo} />`)}
+            </ul>`
+      }
     </nav>
     <div className="barra">
       <div className="barra-datos">
@@ -282,6 +332,8 @@ export function marcoDeLaAplicacion(propiedades) {
     cuenta=${propiedades.cuenta}
     campana=${propiedades.campana}
     modulos=${propiedades.modulos}
+    grupos=${propiedades.grupos}
     contexto=${propiedades.contexto}
+    menuAbierto=${propiedades.menuAbierto}
   />`;
 }

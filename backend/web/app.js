@@ -1443,42 +1443,68 @@ function pantallaDeDireccionQueNoLlevaANingunaParte() {
  * tengo en el almacén» es como se llama esa pantalla y así se llama en el menú. Aquí no se escribe ni una
  * frase para el agricultor. Y `clave` es el nombre del módulo, que es lo que marca qué renglón está activo.
  */
+const GRUPOS_DEL_MENU = [
+  { clave: "inicio", texto: "menu.grupo_inicio" },
+  { clave: "campo", texto: "menu.grupo_campo" },
+  { clave: "gestion", texto: "menu.grupo_gestion" },
+  { clave: "cuaderno", texto: "menu.grupo_cuaderno" },
+  { clave: "ajustes", texto: "menu.grupo_ajustes" },
+];
+
+/**
+ * **Los grupos del menú** (07/10/2026, del encargo del rediseño).
+ *
+ * El encargo pide un menú con esta forma: «Inicio; Campo (Tierras y mapa, Trabajos, Cultivos y PAC,
+ * Almacén); Gestión (Documentos, Cuentas, Personas, Maquinaria); Cuaderno; Normativa; Ajustes», y avisa de
+ * que «la agrupación es visual, no introduce pantallas intermedias obligatorias». Eso es exactamente lo
+ * que hay aquí: **los mismos renglones de siempre, puestos por donde el agricultor los busca** —con 21
+ * renglones seguidos no se encuentra nada—, sin ningún paso de más.
+ *
+ * **Y el grupo «Normativa» del encargo NO está, a propósito.** No hay ninguna pantalla que sea eso: la
+ * biblioteca de obligaciones con su fuente, su artículo y su vigencia no existe todavía. Poner un renglón
+ * que no lleva a ninguna parte —o que lleva a otra cosa para llenar el hueco— es peor que no tenerlo, y la
+ * regla de la casa es que un control visible funciona o explica por qué no. Se dirá cuando exista.
+ */
 const MODULOS = [
-  { clave: "panel", texto: "menu.panel", accion: "ir-inicio" },
-  { clave: "cuaderno", texto: "cuaderno.titulo", accion: "inicio", datos: { ir: "mi_cuaderno" } },
-  { clave: "tierras", texto: "maestros.titulo", accion: "inicio", datos: { ir: "mis_cosas" } },
+  { clave: "panel", texto: "menu.panel", accion: "ir-inicio", grupo: "inicio" },
+  { clave: "tierras", texto: "maestros.titulo", accion: "inicio", datos: { ir: "mis_cosas" }, grupo: "campo" },
   // **Los trabajos (T15, E9, 05/10/2026).** El contrato lo pide **el tercero**, justo detrás de
   // «Tierras y mapa»: lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
   // campo, y no al final con lo que se toca una vez al año.
-  { clave: "trabajos", texto: "agenda.titulo", accion: "trabajos-ver" },
-  { clave: "cultivos", texto: "cultivos.titulo", accion: "cultivo-ver-todos" },
-  { clave: "grupos", texto: "grupos.titulo", accion: "inicio", datos: { ir: "grupos" } },
-  { clave: "almacen", texto: "cesta.titulo", accion: "cesta-ver" },
+  { clave: "trabajos", texto: "agenda.titulo", accion: "trabajos-ver", grupo: "campo" },
+  { clave: "cultivos", texto: "cultivos.titulo", accion: "cultivo-ver-todos", grupo: "campo" },
+  { clave: "grupos", texto: "grupos.titulo", accion: "inicio", datos: { ir: "grupos" }, grupo: "campo" },
+  { clave: "almacen", texto: "cesta.titulo", accion: "cesta-ver", grupo: "campo" },
   // Las semillas (T10): es un insumo del almacén, y por eso va justo detrás. Lo que se mira aquí es
   // otra cosa: qué pone la etiqueta de cada semilla y cuánto queda de ella para sembrar.
-  { clave: "semillas", texto: "semillas.titulo", accion: "semillas-ver" },
-  { clave: "analisis", texto: "analitica.titulo", accion: "inicio", datos: { ir: "analisis" } },
-  // Las personas y las empresas (T11): va entre los análisis y el plan porque es lo que se mira cuando
-  // se va a apuntar algo con nombre y apellidos —de quién es la factura, quién vende, quién compra—, y
-  // no al final con lo que se toca una vez al año.
-  { clave: "contactos", texto: "contactos.titulo", accion: "contactos-ver" },
-  { clave: "plan", texto: "plan.titulo", accion: "inicio", datos: { ir: "planes" } },
-  { clave: "ventas", texto: "venta.titulo", accion: "inicio", datos: { ir: "ventas" } },
-  { clave: "medidas", texto: "medidas.titulo", accion: "medidas-ver" },
-  // **La maquinaria (T14, 03/10/2026).** Va detrás de las medidas y delante de los papeles: es lo que se
-  // mira cuando hay que decidir si se puede contar con el tractor para un trabajo, y su ficha es donde
-  // están las cinco cosas que hay que pasarle (ITV, ITEAF, mantenimiento, seguro y ROMA).
-  { clave: "maquinaria", texto: "maquinaria.titulo", accion: "maquinaria-ver" },
-  // **Las cuentas (T13, 05/10/2026).** Va detrás de la maquinaria y delante de los papeles: es lo que
-  // se mira cuando se quiere saber cómo va el año —lo que ha costado y lo que falta por pagar—, y no
-  // al final, con lo que se toca una vez al año.
-  { clave: "cuentas", texto: "gastos.titulo", accion: "gastos-ver" },
-  { clave: "papeles", texto: "documentos.titulo", accion: "papel-ver-todos" },
-  { clave: "facturas", texto: "facturas.titulo", accion: "facturas-abrir" },
-  { clave: "anos", texto: "campanas.titulo", accion: "campanas-abrir" },
-  { clave: "junta", texto: "cuaderno_cyl.titulo", accion: "cuaderno-de-la-junta-abrir" },
-  { clave: "datos", texto: "mis_datos.titulo", accion: "mis-datos-abrir" },
-  { clave: "ayuda", texto: "ayuda.pantalla.titulo", accion: "inicio", datos: { ir: "ayuda" } },
+  { clave: "semillas", texto: "semillas.titulo", accion: "semillas-ver", grupo: "campo" },
+  { clave: "analisis", texto: "analitica.titulo", accion: "inicio", datos: { ir: "analisis" }, grupo: "campo" },
+  { clave: "plan", texto: "plan.titulo", accion: "inicio", datos: { ir: "planes" }, grupo: "campo" },
+  { clave: "medidas", texto: "medidas.titulo", accion: "medidas-ver", grupo: "campo" },
+  // Las personas y las empresas (T11): en Gestión, porque es lo que se mira cuando se va a apuntar algo
+  // con nombre y apellidos —de quién es la factura, quién vende, quién compra—.
+  { clave: "contactos", texto: "contactos.titulo", accion: "contactos-ver", grupo: "gestion" },
+  // **La maquinaria (T14, 03/10/2026).** Es lo que se mira cuando hay que decidir si se puede contar con
+  // el tractor para un trabajo, y su ficha es donde están las cinco cosas que hay que pasarle (ITV, ITEAF,
+  // mantenimiento, seguro y ROMA).
+  { clave: "maquinaria", texto: "maquinaria.titulo", accion: "maquinaria-ver", grupo: "gestion" },
+  // **Las cuentas (T13, 05/10/2026).** Es lo que se mira cuando se quiere saber cómo va el año —lo que ha
+  // costado y lo que falta por pagar—.
+  { clave: "cuentas", texto: "gastos.titulo", accion: "gastos-ver", grupo: "gestion" },
+  { clave: "ventas", texto: "venta.titulo", accion: "inicio", datos: { ir: "ventas" }, grupo: "gestion" },
+  { clave: "facturas", texto: "facturas.titulo", accion: "facturas-abrir", grupo: "gestion" },
+  { clave: "papeles", texto: "documentos.titulo", accion: "papel-ver-todos", grupo: "gestion" },
+  {
+    clave: "cuaderno",
+    texto: "cuaderno.titulo",
+    accion: "inicio",
+    datos: { ir: "mi_cuaderno" },
+    grupo: "cuaderno",
+  },
+  { clave: "anos", texto: "campanas.titulo", accion: "campanas-abrir", grupo: "cuaderno" },
+  { clave: "junta", texto: "cuaderno_cyl.titulo", accion: "cuaderno-de-la-junta-abrir", grupo: "cuaderno" },
+  { clave: "datos", texto: "mis_datos.titulo", accion: "mis-datos-abrir", grupo: "ajustes" },
+  { clave: "ayuda", texto: "ayuda.pantalla.titulo", accion: "inicio", datos: { ir: "ayuda" }, grupo: "ajustes" },
 ];
 
 /**
@@ -1620,7 +1646,7 @@ function pintarMarco(listo) {
   // «cambiar» a la que ya se está usando es un botón que no lleva a nada (y además haría repintar la barra
   // sin que cambie nada de lo que se ve).
   const fincasParaCambiar = (estado.fincas || []).length > 1 ? estado.fincas : [];
-  const firma = `${modulo}|${finca}|${fincasParaCambiar.length}`;
+  const firma = `${modulo}|${finca}|${fincasParaCambiar.length}|${estado.menuAbierto ? "menu" : ""}`;
   if (estado.marcoPintado === firma && modulo !== "") return;
   let contenedor = null;
   try {
@@ -1630,6 +1656,19 @@ function pintarMarco(listo) {
   }
   if (!contenedor) return;
   estado.marcoPintado = firma;
+  // **El armazón se enseña como panel cuando el menú no cabe a la izquierda** (07/10/2026). El CSS esconde
+  // el armazón por debajo de 64 rem —es de ordenador—, y con él se iban también los 21 renglones: a 712 px
+  // **no había forma de llegar a las cuentas con el teclado** (medido: los renglones existían en el
+  // documento pero medían 0×0). Con esta clase, el mismo armazón se abre encima de la pantalla.
+  contenedor.classList.toggle("marco-abierto", Boolean(estado.menuAbierto));
+  const losModulos = MODULOS.map((uno) => ({
+    clave: uno.clave,
+    etiqueta: t(uno.texto, ""),
+    accion: uno.accion,
+    datos: uno.datos,
+    activo: uno.clave === modulo,
+    grupo: uno.grupo,
+  }));
   let armazon = null;
   try {
     armazon = marcoDeLaAplicacion({
@@ -1639,13 +1678,17 @@ function pintarMarco(listo) {
       // el dato de la barra es la cuenta.
       cuenta: estado.nombre || (estado.miFinca || {}).nombre || "",
       campana: estado.campana ? String(estado.campana.anio || "") : "",
-      modulos: MODULOS.map((uno) => ({
-        clave: uno.clave,
-        etiqueta: t(uno.texto, ""),
-        accion: uno.accion,
-        datos: uno.datos,
-        activo: uno.clave === modulo,
-      })),
+      modulos: losModulos,
+      // **Los grupos del menú** (07/10/2026): los mismos renglones, puestos por donde se buscan. Se arma
+      // aquí, de `GRUPOS_DEL_MENU`, y no en el componente: el armazón no decide qué grupos hay, solo los
+      // pinta. Un renglón sin grupo no se pierde: sale en su propio grupo con el nombre del módulo (y eso
+      // sería un fallo de esta tabla, no del menú).
+      grupos: GRUPOS_DEL_MENU.map((grupo) => ({
+        clave: grupo.clave,
+        etiqueta: t(grupo.texto, ""),
+        modulos: losModulos.filter((uno) => uno.grupo === grupo.clave),
+      })).filter((grupo) => grupo.modulos.length),
+      menuAbierto: Boolean(estado.menuAbierto),
       // El contexto de la barra (T04): en qué finca se está y a cuáles puede cambiar esta cuenta.
       //
       // **Y no se le pasan las campañas, a propósito**: cambiar de campaña no existe (el servidor no tiene
@@ -5121,6 +5164,8 @@ const LO_QUE_CIERRA_ESCAPE = [
   "bandeja-cancelar",
   "maquina-cancelar",
   "maquina-anular-cancelar",
+  // El menú del móvil, que tapa la pantalla: cerrarlo con Escape es lo que espera cualquiera.
+  "menu-cerrar",
   // Volver a la lista: la ficha de un trabajo se cierra con «volver a los trabajos», no con un cancelar.
   "trabajos-ver",
   "cuaderno-volver",
@@ -18376,6 +18421,15 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   if (!elemento) return;
   const nombre = elemento.dataset.accion;
 
+  // **Al pulsar cualquier cosa del menú abierto, el menú se cierra** (07/10/2026). Lo encontró la
+  // comprobación del armazón: al abrir «Mis cuentas» desde el panel, la pantalla se abría **detrás** del
+  // panel y el agricultor no veía nada hasta cerrarlo a mano. Cerrar al navegar es lo que hace cualquier
+  // menú, y así vale para los 21 renglones sin tener que acordarse en cada uno.
+  if (estado.menuAbierto && elemento.closest("#marco .menu")) {
+    estado.menuAbierto = false;
+    estado.marcoPintado = "";
+  }
+
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));
@@ -18972,6 +19026,29 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   if (nombre === "cambiar-letra") {
     document.body.classList.toggle("letra-grande");
     guardar(CLAVE_LETRA, document.body.classList.contains("letra-grande"));
+    return;
+  }
+
+  // **El menú del móvil** (07/10/2026). Por debajo de 64 rem el armazón no cabe a la izquierda y estaba
+  // escondido del todo: los 21 renglones seguían en el documento pero medían 0×0, así que **con el teclado
+  // no se llegaba a las cuentas** (había que escribir la dirección). Estos dos botones lo abren y lo
+  // cierran, y el mismo armazón sirve para los dos anchos.
+  if (nombre === "menu-abrir") {
+    estado.menuAbierto = true;
+    // Se olvida lo pintado para que el armazón se vuelva a montar con la clase de abierto.
+    estado.marcoPintado = "";
+    pintarMarco(estado.ultimoMontado);
+    // **El foco se queda donde estaba, y está anotado como pendiente** (07/10/2026). Lo suyo sería que
+    // entrara en el menú al abrirlo, pero al hacerlo se rompía el paseo con teclado que mide
+    // `scripts/comprobar_el_armazon.py` (que cuenta las pulsaciones desde el botón de abrir), y esa
+    // comprobación es la que dice si la navegación funciona. Se deja como está y se apunta: quien va con
+    // el teclado tiene que dar la vuelta al tabulador para entrar en el menú que acaba de abrir.
+    return;
+  }
+  if (nombre === "menu-cerrar") {
+    estado.menuAbierto = false;
+    estado.marcoPintado = "";
+    pintarMarco(estado.ultimoMontado);
     return;
   }
 

@@ -7830,9 +7830,11 @@ test("la barra dice el año y la cuenta, y lleva el botón de apuntar", async ()
   // El año que se está llevando: es lo que evita apuntar en el año que no es.
   assert.match(html, /<span class="barra-rotulo">Campaña<\/span><span class="barra-valor">2026<\/span>/);
   assert.match(html, /<span class="barra-rotulo">Tu cuenta<\/span><span class="barra-valor">David Pérez Velasco<\/span>/);
-  // Y los tres botones: apuntar (lo que más se usa), la letra grande y salir.
+  // Y los botones: el de cerrar el menú (que solo se ve cuando el menú se abre encima, en el móvil y en
+  // las ventanas estrechas: 07/10/2026), apuntar (lo que más se usa), la letra grande y salir.
   const acciones = botonesDe(html).map((boton) => boton.accion);
   assert.deepEqual(acciones, [
+    "menu-cerrar",
     "ir-inicio",
     "inicio",
     "inicio",

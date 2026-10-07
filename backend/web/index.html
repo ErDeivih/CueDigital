@@ -23,6 +23,15 @@
   <div id="marco" class="marco"></div>
 
   <header class="cabecera">
+    <!-- **El menú cuando no cabe a la izquierda** (07/10/2026). Por debajo de 64 rem el armazón se esconde
+         —es de ordenador— y con él se iban los 21 renglones: medido, a 712 px no había forma de llegar a
+         las cuentas con el teclado. Este botón lo abre encima de la pantalla. En el ordenador no se ve: allí
+         el menú está siempre a la izquierda y un botón para abrirlo sería un botón de más. -->
+    <button type="button" class="cabecera-menu boton-letra" data-accion="menu-abrir"
+            aria-label="Abrir el menú de la aplicación" aria-controls="marco" aria-expanded="false">
+      <span aria-hidden="true">☰</span>
+      <span id="cabecera-menu-texto">Menú</span>
+    </button>
     <button type="button" class="cabecera-titulo" data-accion="ir-inicio">
       <span aria-hidden="true">🌾</span>
       <span id="cabecera-texto">Mi cuaderno</span>
