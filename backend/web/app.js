@@ -1125,16 +1125,20 @@ function volverAdondeIba() {
  */
 async function abrirLaDireccion() {
   const leida = leerLaDireccion(window.location.hash);
-  if (leida.desconocida) {
-    pantallaDeDireccionQueNoLlevaANingunaParte();
-    return;
-  }
   // **Sin sesión no se abre ninguna pantalla de dentro** (06/10/2026). Esto solo lo miraba `arrancar()`:
   // escribiendo una dirección de dentro —o volviendo con «atrás»— después de salir, la aplicación
-  // pintaba la pantalla igual (vacía y con un error de permiso detrás) en vez de pedir que se entre. La
-  // puerta de entrada es su propia dirección (`#/entrar`), así que se puede volver a ella.
+  // pintaba la pantalla igual (vacía y con un error de permiso detrás) en vez de pedir que se entre.
+  //
+  // Va **antes** de mirar si la dirección es conocida, y eso importa: una dirección que no lleva a ninguna
+  // parte, sin sesión, decía «ese enlace no es de tu cuaderno» —y dejaba el menú de la sesión anterior en
+  // el tabulador— cuando lo que pasa es que no se ha entrado. La puerta de entrada es su propia dirección
+  // (`#/entrar`), así que se puede volver a ella.
   if (!estado.token && leida.pantalla !== "entrar") {
     pantallaEntrar("entrar");
+    return;
+  }
+  if (leida.desconocida) {
+    pantallaDeDireccionQueNoLlevaANingunaParte();
     return;
   }
   const finca = leida.parametros.finca;
@@ -1595,6 +1599,16 @@ const MODULO_DE_LA_PANTALLA = {
  * armazón no se pinta y la pantalla sí. El armazón ayuda a moverse; la pantalla es lo que se viene a hacer.
  */
 function pintarMarco(listo) {
+  // **Sin sesión no hay armazón** (06/10/2026). El menú de módulos se quedaba pintado de la sesión
+  // anterior —y de la pantalla de entrar, que no es de ningún módulo, así que se pintaba con el menú
+  // entero y sin ningún renglón marcado—, y como va antes que la pantalla en el HTML era **lo primero que
+  // recorría el tabulador**: medido, **25 pulsaciones de Tab** para llegar al campo del correo, en un menú
+  // que el agricultor no puede usar porque no ha entrado. Vaciar el marco en `pantallaEntrar` no bastaba:
+  // por el camino de `/` se volvía a pintar después. Aquí no se puede escapar ninguno.
+  if (!estado.token) {
+    vaciarElMarco();
+    return;
+  }
   const nombre = listo && listo.type ? listo.type.name : "";
   const modulo = MODULO_DE_LA_PANTALLA[nombre] || "";
   // **La clave de «ya está pintado» lleva el contexto dentro** (T04, 02/10/2026): antes solo llevaba el
@@ -1901,6 +1915,12 @@ function pantallaEntrar(modo = "entrar") {
   const rotulos = t("ayuda.rotulos_de_un_campo", {});
   const datosDelNif = camposDeAyuda.find((campo) => campo.campo === "explotacion.nif");
 
+  // **Sin sesión no hay armazón** (06/10/2026). El menú de módulos se quedaba pintado de la sesión
+  // anterior, y como va antes que la pantalla en el HTML era **lo primero que recorría el tabulador**:
+  // medido, hacían falta **24 pulsaciones de Tab** para llegar al campo del correo, y encima era un menú
+  // que el agricultor no puede usar (no ha entrado). Se vacía y se olvida lo pintado, para que al entrar
+  // se vuelva a montar con su módulo marcado.
+  vaciarElMarco();
   // `montar()` pide el elemento dentro de un `try`: si los ficheros de React de `vendor/` no han
   // llegado, enseña el aviso de emergencia en vez de dejar la pantalla en blanco.
   montar(() =>
@@ -1918,6 +1938,26 @@ function pantallaEntrar(modo = "entrar") {
       errorCertificado: estado.errorCertificado || "",
     }),
   );
+}
+
+/**
+ * Deja el armazón del ordenador vacío (el menú y la barra de arriba).
+ *
+ * Se usa al enseñar la pantalla de entrar: sin sesión, ese menú no lleva a ningún sitio y estorba en el
+ * teclado. Deja `estado.marcoPintado` en blanco para que la próxima pantalla lo vuelva a montar.
+ */
+function vaciarElMarco() {
+  try {
+    const contenedor = document.getElementById("marco");
+    // **`replaceChildren()` y no `innerHTML = ""`**: este fichero no monta HTML a mano desde que las
+    // pantallas son de React, y hay una prueba que lo vigila (`test_la_migracion_a_react.py`). Vaciar un
+    // contenedor no es montar HTML, pero se hace con la API del DOM igualmente, que además no interpreta
+    // nada: quitar hijos no puede inventarse una etiqueta.
+    if (contenedor) contenedor.replaceChildren();
+  } catch (fallo) {
+    // Sin `#marco` (por ejemplo, en una prueba que monta la aplicación a medias) no hay nada que vaciar.
+  }
+  estado.marcoPintado = "";
 }
 
 /** Mira si esta instalación sabe leer el certificado digital. */
@@ -5049,6 +5089,56 @@ window.addEventListener("popstate", () => {
     .then(() => {
       estado.completando = false;
     });
+});
+
+/**
+ * Lo que cierra la tecla **Escape** (06/10/2026).
+ *
+ * **Por qué es una lista escrita a mano y corta.** En esta aplicación «cancelar» significa dos cosas
+ * distintas: cerrar un formulario **sin guardar** (`gasto-cancelar`) y **anular un plan de trabajo**
+ * (`trabajo-cancelar`), que sí apunta algo. Un Escape que buscara «cualquier botón que se llame
+ * cancelar» **anularía un plan de trabajo de un toque de tecla**, y eso no se arregla con un aviso: se
+ * arregla no poniéndolo en la lista. Tampoco está el asistente de apuntar: dejarlo a medias con una tecla
+ * es perder lo que el agricultor llevaba escrito.
+ *
+ * Se pulsan **como si se tocaran** (`click()`), así que hacen exactamente lo mismo que el dedo: cerrar el
+ * panel, volver a la lista o dejar la pantalla como estaba.
+ */
+const LO_QUE_CIERRA_ESCAPE = [
+  "gasto-cancelar",
+  "banco-cancelar",
+  "bandeja-cancelar",
+  "maquina-cancelar",
+  "maquina-anular-cancelar",
+  // Volver a la lista: la ficha de un trabajo se cierra con «volver a los trabajos», no con un cancelar.
+  "trabajos-ver",
+  "cuaderno-volver",
+  "mapa-volver",
+  "t06-volver",
+];
+
+/** ¿Se ve este elemento? (Un botón escondido no puede ser lo que cierre el Escape.) */
+function seVeElElemento(elemento) {
+  if (typeof elemento.checkVisibility === "function") return elemento.checkVisibility();
+  return elemento.offsetParent !== null;
+}
+
+/**
+ * Escape cierra lo que esté abierto.
+ *
+ * Antes **no había ni un manejador de teclado en toda la aplicación**: quien va con el teclado tenía que
+ * tabular hasta el botón de cancelar (medido). Se busca el primer botón de la lista que esté **visible**
+ * —el de la pantalla que se está mirando, no el de otra que quedó montada— y se pulsa.
+ */
+window.addEventListener("keydown", (suceso) => {
+  if (suceso.key !== "Escape" || suceso.defaultPrevented) return;
+  for (const accion of LO_QUE_CIERRA_ESCAPE) {
+    const boton = document.querySelector(`[data-accion="${accion}"]`);
+    if (boton && seVeElElemento(boton) && !boton.disabled) {
+      boton.click();
+      return;
+    }
+  }
 });
 
 function salir(confirmar = true) {

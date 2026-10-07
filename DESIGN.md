@@ -33,6 +33,21 @@ typography:
     fontSize: 1.5rem
     fontWeight: 700
     lineHeight: 1.45
+  subtitulo:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: 1.25rem
+    fontWeight: 700
+    lineHeight: 1.45
+  bloque:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: 1.05rem
+    fontWeight: 700
+    lineHeight: 1.45
+  dato-mando:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: 1.9rem
+    fontWeight: 700
+    lineHeight: 1.1
   boton:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: 1.1rem
@@ -135,6 +150,7 @@ components:
     padding: 12px
   foco:
     backgroundColor: "{colors.focus}"
+    textColor: "{colors.primary-dark}"
     size: 4px
   aviso:
     backgroundColor: "{colors.secondary-container}"
@@ -290,6 +306,13 @@ colores de aviso que no se usan para nada más. Un color, un significado.
 - **Focus (#ffd24a):** el amarillo del foco. Es lo único que marca "estás aquí", y
   funciona igual para quien ve bien y para quien no distingue colores, porque es un
   contorno grueso y no un cambio de tono.
+  **Y no va solo (06/10/2026).** Medido en el navegador, el amarillo sobre el fondo blanco
+  da **1,44:1** de contraste, que al sol no se ve. El anillo va **en dos tonos**: por fuera
+  el **primary dark** —que sobre blanco da casi 10:1 y separa del fondo— y por dentro el
+  amarillo pegado al control, que es la señal del sistema. Se hace **con contornos y bordes,
+  nunca con sombras**: es la regla de este contrato. Y el anillo va en **todos** los
+  controles (botones y enlaces, no solo los campos): hasta esa fecha un botón se quedaba con
+  el contorno del navegador, y el mismo botón se veía distinto según el ancho de la pantalla.
 
 ## Typography
 
@@ -308,6 +331,17 @@ sistema ya la tiene optimizada para su pantalla.
   asistente. Va en negrita fuerte para que se entienda de un vistazo qué se está
   pidiendo, sin leer nada más.
 - **Título (1,5 rem, peso 700):** los títulos de pantalla.
+- **Subtítulo (1,25 rem, peso 700):** los títulos de los bloques dentro de una pantalla (lo
+  que en el HTML es un `h2`). Se añadió al contrato el 06/10/2026: el CSS ya lo usaba y el
+  contrato no lo tenía, así que la escala se podía separar del contrato sin que nadie se
+  enterara.
+- **Bloque (1,05 rem, peso 700):** el título de un bloque **dentro** de un panel (los `h3` del
+  panel de mando: «lo que falta», «los últimos apuntes»). Es un escalón por debajo del
+  subtítulo a propósito: primero se lee de qué va la pantalla y después qué bloque es.
+- **Dato de mando (1,9 rem, peso 700):** **el número más grande de la aplicación**, el de las
+  cuatro tarjetas del panel de mando. Tiene su propio tamaño porque no es un dato de ficha:
+  es la cifra que se lee **desde la puerta del despacho**, y ahí no vale con que sea «un poco
+  más grande».
 - **Botón (1,1 rem, peso 700)** y **botón principal (1,35 rem, peso 700):** el texto de
   los botones. En negrita siempre: sobre verde y con prisa, la letra fina se pierde.
 - **Campo (1,15 rem, peso 400):** lo que el agricultor escribe. Más grande que el

@@ -47,12 +47,37 @@
   /*
    * El amarillo del foco. Es lo único que marca "estás aquí" sin depender del color,
    * y tiene que seguir siendo el mismo en toda la aplicación (ver DESIGN.md).
+   *
+   * **Y desde el 06/10/2026 no va solo**: medido, el amarillo sobre el fondo blanco da **1,44:1** de
+   * contraste, que al sol no se ve. El anillo va **en dos tonos** —el borde oscuro por fuera, que separa
+   * del fondo, y el amarillo pegado al control—, y así el conjunto pasa de 3:1 contra el fondo sin dejar
+   * de ser el amarillo del diseño. Se hace **con bordes y contornos, no con sombras**, que es como este
+   * sistema separa las cosas (ver `DESIGN.md`).
    */
   --foco: #ffd24a;
 
   --toque: 64px;
   --radio: 14px;
   --letra: 18px;
+
+  /*
+   * **La escala de letra, con los nombres del contrato** (`DESIGN.md` → `typography`).
+   *
+   * Antes estos números estaban escritos a mano en cada regla (`h1 { 1.5rem }`, `.pista { 0.95rem }`…),
+   * así que la escala del contrato y la del CSS podían separarse sin que nadie se enterara —y `h2` no
+   * estaba en el contrato siquiera—. Ahora hay un sitio donde cambiarla y una prueba que comprueba que
+   * los tres números duros (cuerpo, botón y radio) coinciden con `DESIGN.md`.
+   */
+  --t-pregunta: 1.45rem;
+  --t-titulo: 1.5rem;
+  --t-subtitulo: 1.25rem;
+  --t-bloque: 1.05rem;
+  --t-dato-grande: 1.6rem;
+  --t-dato-mando: 1.9rem;
+  --t-boton-principal: 1.35rem;
+  --t-boton: 1.1rem;
+  --t-campo: 1.15rem;
+  --t-pista: 0.95rem;
 
   /*
    * El armazón del ordenador (30/09/2026).
@@ -170,17 +195,17 @@ body {
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: var(--t-titulo);
   margin: 0.6rem 0 0.2rem;
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: var(--t-subtitulo);
   margin: 1rem 0 0.4rem;
 }
 
 .pregunta {
-  font-size: 1.45rem;
+  font-size: var(--t-pregunta);
   font-weight: 800;
   margin: 0.4rem 0 0.2rem;
 }
@@ -192,8 +217,35 @@ h2 {
 
 .pista-campo {
   color: var(--tinta-suave);
-  font-size: 0.95rem;
+  font-size: var(--t-pista);
   margin: 0.2rem 0 0.6rem;
+}
+
+/*
+ * El anillo de foco de **todos** los controles (06/10/2026).
+ *
+ * **Lo que había, medido**: el foco solo estaba declarado para los campos, el renglón del menú y dos
+ * enlaces de tabla. Un botón cualquiera se quedaba con el contorno que pinta el navegador (`auto 1px`), y
+ * el mismo botón se veía distinto según el ancho de la pantalla (enlace de tabla con el anillo de la
+ * aplicación, botón suelto con el del navegador). Para quien va con el teclado, eso es no saber dónde
+ * está.
+ *
+ * **Y por qué son dos tonos**: el amarillo del diseño sobre el fondo blanco da 1,44:1, que al sol no se
+ * ve. Por fuera va el verde oscuro (que sobre blanco da casi 10:1 y separa del fondo) y por dentro el
+ * amarillo pegado al control, que es la señal del sistema. **Con bordes y contornos, nunca con sombras**:
+ * es la regla del contrato.
+ *
+ * `:focus-visible` y no `:focus` en botones y enlaces **a propósito**: con el dedo o con el ratón, un
+ * anillo alrededor de lo que acabas de tocar es ruido; con el teclado es lo único que te dice dónde
+ * estás. En los campos se queda `:focus`, porque ahí el foco es el cursor y se tiene que ver siempre.
+ */
+:where(button, a, summary, [tabindex]):focus-visible,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid var(--verde-oscuro);
+  outline-offset: 2px;
+  border-color: var(--foco);
 }
 
 /*
@@ -227,7 +279,7 @@ h2 {
   min-height: var(--toque);
   padding: 0.7rem 0.9rem;
   margin: 0 0 0.7rem;
-  font-size: 1.1rem;
+  font-size: var(--t-boton);
   font-weight: 700;
   text-align: left;
   color: var(--verde-oscuro);
@@ -326,7 +378,7 @@ h2 {
  */
 .boton-principal {
   min-height: 104px;
-  font-size: 1.35rem;
+  font-size: var(--t-boton-principal);
   color: var(--sobre-verde);
   background: var(--verde-medio);
   border-color: var(--verde-oscuro);
@@ -577,7 +629,7 @@ textarea {
   width: 100%;
   min-height: var(--toque);
   padding: 0.6rem 0.8rem;
-  font-size: 1.15rem;
+  font-size: var(--t-campo);
   font-family: inherit;
   color: var(--tinta);
   background: var(--fondo);
@@ -585,11 +637,13 @@ textarea {
   border-radius: var(--radio);
 }
 
+/* El foco de los campos sale de la regla de arriba, que es la misma para botones y enlaces: **un solo
+   anillo en toda la aplicación**. Aquí solo queda lo que es propio del campo: el borde se pone verde
+   cuando está elegido, como siempre. */
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 4px solid var(--foco);
-  border-color: var(--verde);
+  border-color: var(--foco);
 }
 
 textarea {
@@ -762,7 +816,7 @@ textarea {
 
 .dato-grande {
   display: block;
-  font-size: 1.6rem;
+  font-size: var(--t-dato-grande);
   font-weight: 800;
 }
 
@@ -1560,10 +1614,12 @@ div.tarjeta:active {
     color: var(--tinta-suave);
   }
 
-  /* El número, en grande: es lo que se viene a ver de un vistazo desde la puerta del despacho. */
+  /* El número, en grande: es lo que se viene a ver de un vistazo desde la puerta del despacho. Es el
+     número más grande de la aplicación, y por eso tiene su propio tamaño en el contrato (`dato-mando`):
+     no es un «dato grande» de ficha, es la cifra de la portada. */
   .mando-numero-valor {
     margin: 0.1rem 0 0;
-    font-size: 1.9rem;
+    font-size: var(--t-dato-mando);
     font-weight: 700;
     line-height: 1.1;
     color: var(--verde-oscuro);
@@ -1594,7 +1650,7 @@ div.tarjeta:active {
 
   .mando-bloque h3 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: var(--t-bloque);
   }
 
   .mando-bloque-cabecera {

@@ -1029,17 +1029,35 @@ def el_recorrido(
         "la pregunta se abre (con su motivo, su botón de confirmar y su cancelar)",
     )
     nav.tecla("Escape")
-    sigue_abierta = bool(nav.evaluar("Boolean(document.querySelector('[data-accion=\"gasto-cancelar\"]'))"))
-    comprobar(
-        sigue_abierta,
-        "Escape **no** cierra la pregunta: la aplicación no escucha el teclado (no hay ni un `keydown` en "
-        "`web/`), así que la única salida es su botón",
+    cerrada_con_escape = nav.esperar(
+        "document.querySelector('[data-accion=\"gasto-cancelar\"]') === null", segundos=5
     )
-    if sigue_abierta:
+    # **Esto se comprobaba al revés hasta el 06/10/2026, y se ha dado la vuelta a propósito.** Antes se
+    # afirmaba «Escape **no** cierra la pregunta» y se apuntaba como hallazgo, porque la aplicación no tenía
+    # ni un manejador de teclado. Ahora sí lo tiene (`app.js`, con una lista corta de lo que puede cerrar) y
+    # lo que hay que exigir es lo contrario: que Escape **cierre**. Si alguien lo quita, esta comprobación se
+    # pone roja y lo dice.
+    comprobar(
+        cerrada_con_escape,
+        "Escape cierra la pregunta de anular (y no anula nada: eso lo comprueba la línea de abajo)",
+    )
+    if not cerrada_con_escape:
         hallazgo(
-            "cerrar la pregunta de anular con Escape no funciona: la aplicación no tiene ningún manejador de "
-            "teclado, así que quien va con el teclado tiene que tabular hasta CANCELAR"
+            "cerrar la pregunta de anular con Escape no funciona: quien va con el teclado tiene que tabular "
+            "hasta CANCELAR"
         )
+        cuantas = hasta_accion(nav, "gasto-cancelar")
+        comprobar(cuantas is not None, f"se llega a CANCELAR tabulando ({cuantas} pulsaciones)")
+        pulsar_enter(nav)
+    comprobar(
+        nav.esperar("document.querySelector('[data-accion=\"gasto-cancelar\"]') === null", segundos=10),
+        "la pregunta se ha cerrado",
+    )
+    # Y el botón de cancelar sigue cerrando también, que es la otra salida (se vuelve a abrir para probarlo).
+    cuantas = hasta_accion(nav, "gasto-anular")
+    comprobar(cuantas is not None, f"se vuelve a llegar a ANULAR tabulando ({cuantas} pulsaciones)")
+    pulsar_enter(nav)
+    nav.esperar("document.querySelector('[data-accion=\"gasto-cancelar\"]') !== null", segundos=10)
     cuantas = hasta_accion(nav, "gasto-cancelar")
     comprobar(cuantas is not None, f"se llega a CANCELAR tabulando ({cuantas} pulsaciones)")
     pulsar_enter(nav)
@@ -1097,14 +1115,20 @@ def la_escala_del_dispositivo_al_200(direccion: str, datos: dict, romper: str | 
             f"y el ancho lógico **no** cambia: la ventana sigue viendo {medidas['innerWidth']} px de CSS "
             f"(el armazón de ordenador sigue saliendo)",
         )
+        # **Esto se comprobaba al revés hasta el 06/10/2026.** Antes se exigía que el menú de módulos
+        # estuviera dibujado aquí, y estaba: se pintaba **sin sesión**, con el menú entero y sin ningún
+        # renglón marcado, y era lo primero que recorría el tabulador (medido: 25 pulsaciones de Tab para
+        # llegar al campo del correo). Ahora, sin sesión, no hay armazón: lo que tiene que verse es la
+        # pantalla de entrar. Que el menú **sí** sale con sesión, y a esta escala, lo comprueba
+        # `el_recorrido(..., con_menu=True)` unas líneas más abajo.
         comprobar(
             bool(
                 nav.evaluar(
-                    "Boolean(document.getElementById('menu-cuentas')) && "
-                    "document.getElementById('menu-cuentas').checkVisibility({checkVisibilityCSS: true})"
+                    "document.querySelector('#correo') !== null && "
+                    "!document.getElementById('menu-cuentas')"
                 )
             ),
-            "el menú de módulos del ordenador sigue dibujado (y por tanto tabulable) a esta escala",
+            "sin sesión no hay menú de módulos (lo que se ve es la pantalla de entrar), ni a esta escala",
         )
         el_recorrido(nav, {**datos, "direccion": direccion}, "escala del dispositivo 2 (1440 px lógicos)", romper=romper, ancho=True, con_menu=True)
 

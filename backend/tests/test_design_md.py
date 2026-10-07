@@ -245,6 +245,44 @@ class TestContratoYCodigo:
         frontmatter, _ = leer_design_md()
         assert int(str(frontmatter["typography"]["cuerpo"]["fontSize"]).replace("px", "")) >= 18
 
+    def test_la_escala_de_letra_del_contrato_es_la_del_css(self):
+        """**La escala de letra, atada al contrato** (06/10/2026).
+
+        Los colores ya estaban atados (`test_cada_color_del_contrato_es_el_que_usa_el_css`), pero los
+        **tamaños de letra no**: cada uno vivía escrito a mano en su regla, así que el contrato podía decir
+        1,25 rem y el CSS usar otra cosa durante meses sin que nadie se enterara (y `h2` ni estaba en el
+        contrato). Ahora los dos sitios están atados por esta tabla, y añadir un tamaño a la escala obliga a
+        escribirlo en los dos.
+
+        Se incluye `--letra` (el cuerpo) porque es el número del que cuelga todo lo demás.
+        """
+        frontmatter, _ = leer_design_md()
+        variables = leer_variables_css()
+        parejas = {
+            "--letra": "cuerpo",
+            "--t-pregunta": "pregunta",
+            "--t-titulo": "titulo",
+            "--t-subtitulo": "subtitulo",
+            "--t-bloque": "bloque",
+            "--t-dato-grande": "dato-grande",
+            "--t-dato-mando": "dato-mando",
+            "--t-boton": "boton",
+            "--t-boton-principal": "boton-principal",
+            "--t-campo": "campo",
+            "--t-pista": "pista",
+        }
+        problemas: list[str] = []
+        for variable, token in parejas.items():
+            en_css = variables.get(variable)
+            en_contrato = (frontmatter["typography"].get(token) or {}).get("fontSize")
+            if en_css is None:
+                problemas.append(f"{variable} no está en el CSS")
+            elif en_contrato is None:
+                problemas.append(f"typography.{token} no está en DESIGN.md")
+            elif str(en_css) != str(en_contrato):
+                problemas.append(f"{variable} es {en_css} en el CSS y {en_contrato} en el contrato")
+        assert not problemas, "La escala de letra se ha separado del contrato: " + "; ".join(problemas)
+
     def test_ningun_boton_baja_de_64_pixeles_de_alto(self):
         frontmatter, _ = leer_design_md()
         # Los bordes no son botones: son líneas, y miden 2 o 3 px a propósito. El
