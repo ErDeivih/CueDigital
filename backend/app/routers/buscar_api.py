@@ -133,13 +133,29 @@ def buscar(
     cortado_contactos = len(contactos) > TOPE_POR_GRUPO
     contactos = contactos[:TOPE_POR_GRUPO]
 
-    # **Las máquinas se quedan fuera de esta vuelta, y se dice por qué** (07/10/2026): el grupo estaba
-    # escrito y **no se podía probar**. Para probarlo hay que dar de alta una máquina por la API, y su
-    # puerta pide un cuerpo que no he sabido completar en lo que quedaba de sesión (`POST /api/maquinaria`
-    # contesta ««» no es una de las respuestas que se pueden elegir»: falta un valor de una lista, y no se
-    # cuál). **Sin prueba, no se queda**: código que «funciona» y nadie comprueba es justo lo que este
-    # proyecto no admite. La vuelta siguiente lo añade con su prueba, mirando el esquema de `POST
-    # /api/maquinaria` para saber qué valores admite.
+    # **Y las máquinas** (07/10/2026): el tractor, el remolque, el apero. Se buscan por su nombre y **por su
+    # matrícula**, que es como se las nombra cuando se habla de ellas en el taller. Al lado se enseña la
+    # matrícula (o el número de serie, para lo que no la tiene): es lo que distingue dos tractores.
+    #
+    # (Estuvo fuera una vuelta por no poder probarlo: dar de alta una máquina por la API exige `clase`,
+    # `propiedad` y `disponibilidad` —las tres sin valor de partida, y con razón— y no supe qué valores
+    # admite hasta que los leí en `maquinaria.py`. Ahora tiene su prueba.)
+    candidatas_maquinas = db.scalars(
+        select(models.Maquina)
+        .where(models.Maquina.explotacion_id == explotacion.id)
+        .order_by(models.Maquina.nombre)
+    ).all()
+    maquinas = [
+        maquina
+        for maquina in candidatas_maquinas
+        if cotejado
+        and (
+            cotejado in _como_se_busca(maquina.nombre or "")
+            or cotejado in _como_se_busca(maquina.matricula or "")
+        )
+    ]
+    cortado_maquinas = len(maquinas) > TOPE_POR_GRUPO
+    maquinas = maquinas[:TOPE_POR_GRUPO]
 
     grupos = []
     if suyas:
@@ -193,7 +209,24 @@ def buscar(
             }
         )
     # (El grupo de las máquinas va aquí, cuando tenga su prueba: ver la nota de arriba.)
-
+    if maquinas:
+        grupos.append(
+            {
+                "clave": "maquinas",
+                "cuantos": len(maquinas),
+                "cortado": cortado_maquinas,
+                "resultados": [
+                    {
+                        "id": maquina.id,
+                        "etiqueta": maquina.nombre or "",
+                        # La matrícula, o el número de serie de lo que no la tiene. Si no consta ninguna de
+                        # las dos, no se enseña un hueco.
+                        "detalle": maquina.matricula or maquina.numero_serie or "",
+                    }
+                    for maquina in maquinas
+                ],
+            }
+        )
     return {"texto": buscado, "buscado": True, "motivo": "", "grupos": grupos}
 
 

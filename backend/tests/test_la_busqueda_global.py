@@ -154,3 +154,44 @@ class TestLaBusqueda:
         assert _buscar(cliente, cuenta, "talleres")["grupos"] == [], (
             "sale una persona que no es de esta explotación"
         )
+
+    def _una_maquina(self, cliente, cuenta, nombre: str, matricula: str = "") -> None:
+        """Dar de alta una máquina por la API.
+
+        **`clase`, `propiedad` y `disponibilidad` son obligatorias y no tienen valor de partida** (a
+        propósito: un valor por defecto sería afirmar «es tuya» o «está disponible» sin que nadie lo haya
+        dicho). Los valores que admite cada una están en `app/maquinaria.py`.
+        """
+        respuesta = cliente.post(
+            "/api/maquinaria",
+            json={
+                "nombre": nombre,
+                "matricula": matricula or None,
+                "clase": "tractor",
+                "propiedad": "no_se",
+                "disponibilidad": "no_se",
+            },
+            headers=cuenta["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+    def test_encuentra_una_maquina_por_su_nombre_y_por_su_matricula(self, cliente, cuenta):
+        """Las máquinas se buscan por su nombre y **por su matrícula**, que es como se las nombra cuando se
+        habla de ellas en el taller. Al lado se enseña la matrícula, que es lo que distingue dos tractores."""
+        self._una_maquina(cliente, cuenta, "Tractor de la casa", "1234 ABC")
+
+        por_nombre = _buscar(cliente, cuenta, "tractor")
+        maquinas = [g for g in por_nombre["grupos"] if g["clave"] == "maquinas"][0]
+        assert [r["etiqueta"] for r in maquinas["resultados"]] == ["Tractor de la casa"]
+        assert maquinas["resultados"][0]["detalle"] == "1234 ABC"
+
+        por_matricula = _buscar(cliente, cuenta, "1234")
+        assert [g["clave"] for g in por_matricula["grupos"]] == ["maquinas"]
+
+    def test_tampoco_ensena_las_maquinas_de_otra_explotacion(self, cliente, cuenta, crear_cuenta):
+        la_ajena = crear_cuenta("ajena-maquinas@ejemplo.test", nombre="El vecino")
+        self._una_maquina(cliente, la_ajena, "Tractor del vecino", "9999 ZZZ")
+
+        assert _buscar(cliente, cuenta, "tractor")["grupos"] == [], (
+            "sale una máquina que no es de esta explotación"
+        )
