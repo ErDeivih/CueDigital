@@ -6237,9 +6237,60 @@ anillo). **Quedan dos**:
     establecer** si a ese ancho hay otro camino a «Mis cuentas»: el intento de medirlo acabó en la pantalla de
     entrar y **no se da por bueno**. Queda abierto, con esa duda escrita.
 
-**Lo que NO está comprobado, y se dice**: **cómo se ve**. Las capturas se han guardado
-(`scripts/mirar_pantallas.py`, en la carpeta temporal, a 390, 1024 y 1440 px) y **este modelo no puede leer
-imágenes**, así que la comprobación visual —tipografía, colores, jerarquía— está **pendiente de ojos
-humanos**. Lo que sí está medido es lo que se puede medir: los tamaños de letra que salen en pantalla (cuerpo
-18 px, `h1` 24 px), que ninguna pantalla se sale de su ancho a los tres tamaños, y el anillo de foco en el
-control que tiene el foco.
+**Lo que NO está comprobado, y se dice**: **cómo se ve**. Este modelo no puede leer imágenes, así que la
+comprobación visual —tipografía, colores, jerarquía— está **pendiente de ojos humanos**. Lo que sí está
+medido es lo que se puede medir: los tamaños de letra que salen en pantalla (cuerpo 18 px, `h1` 24 px), que
+ninguna pantalla se sale de su ancho, y el anillo de foco en el control que tiene el foco.
+
+### 53.6 Y las capturas estaban mal, y lo dijo David (07/10/2026)
+
+**El §53.5 decía que había capturas «a 390, 1024 y 1440 px de cuatro pantallas». No era verdad, y el fallo se
+descubrió comparando huellas SHA-256: las cuatro rutas de cada ancho salían idénticas** —las cuatro eran **la
+pantalla de entrar**—. El guion que las hacía (`backend/scripts/mirar_pantallas.py`) tenía los **dos fallos
+clásicos** de este proyecto, los mismos que ya están documentados en los otros guiones:
+
+  1. **El token se ponía después de cargar la página**, así que la primera carga era sin sesión. Y navegar de
+     `/` a `/#/cuaderno` **solo cambia la almohadilla**: el documento **no se recarga**, así que la aplicación
+     seguía con lo que tenía en memoria. Es la trampa que `comprobar_teclado_y_zoom.py` documenta con su
+     `abrir_de_verdad` (pasar por `about:blank`).
+  2. **No se comprobaba nada de lo capturado**: guardaba un PNG y seguía, así que una captura de la pantalla de
+     entrar pasaba por buena como captura de «tierras».
+
+**Lo que hay ahora**: el token entra en **cada documento nuevo**
+(`Page.addScriptToEvaluateOnNewDocument`, como en `comprobar_en_un_navegador.py`), cada ruta se abre pasando
+por `about:blank`, y **cada captura tiene que llevar un texto que solo esté en esa pantalla** —en la pantalla,
+no en el menú: el armazón va antes en el DOM y con el texto entero del cuerpo la comprobación no veía nada—.
+Si alguna no lo lleva, el guion **falla y lo dice**.
+
+**Comprobado**: **16 capturas** (4 pantallas × 390, 712, 1024 y 1440 px) con **16 huellas distintas**, las 16
+en «OK», y el anillo de foco medido otra vez tabulando (`rgb(13, 43, 24) solid 3px`, 2 px de separación). Las
+capturas están en `%TEMP%\cd-ui\` para que las mire una persona.
+
+**Y una cosa que se comprobó por si acaso**: los textos inventados que David señaló en el material de diseño
+—conexiones SIEX/REGEPA, «trazabilidad garantizada», «78 % de certeza», «AgroCUE Enterprise»— **no están en el
+código**. Las cinco menciones a SIEX que hay en `textos.py` son legítimas y con fuente: el campo
+`explotacion.codigo_siex`, el Anexo VI del documento técnico, la frase que dice que **poner un número
+inventado sería peor que dejarlo vacío**, y la dirección real de la documentación de FEGA.
+
+### 07/10/2026 · Referencia de v0, diseños Stitch y encargo de rediseño
+
+David ha encargado gastar poco en v0 para decidir la dirección y continuar con Stitch.
+Resultado y goal para DeepSeek en [REDISENO_V0_STITCH_20261007.md](REDISENO_V0_STITCH_20261007.md).
+Una generación v0-mini: 0,3593494 créditos declarados. Código de referencia archivado;
+vista local revisada y menú abierto a 712 px. No se ha cambiado la interfaz instalada.
+
+Stitch sí es accesible mediante POST. Se creó proyecto privado y se obtuvieron Tierras,
+Revisar factura, Campo y una corrección de Tierras. Inicio y Ficha de tierra devolvieron
+indisponibilidad. Los borradores introdujeron afirmaciones oficiales inventadas y no
+se aceptan como contrato. Tierras corregida es la dirección preferida de composición;
+sus ajustes restantes y los textos a rechazar están enumerados. El sistema automático
+también queda rechazado; actualizarlo devolvió argumento inválido. No reutilizarlo sin
+revisar ni tratar las imágenes como funcionalidad terminada.
+
+Las cuatro capturas de escritorio en la carpeta temporal cd-ui son idénticas y muestran
+entrada: no acreditan la inspección visual de cuatro páginas. No se deduce de ello que
+la versión actual mantenga un defecto; falta sesión aislada autenticada por ruta.
+
+Verificación de esta entrega documental: 4537 casos Python, 4536 pasan y 1 omitido;
+1048 JavaScript pasan. El documento nuevo suma dos comprobaciones de integridad.
+Sin cambios de código, CSS, contrato de diseño ni base real; no se repitió humo de servidor.
