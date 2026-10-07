@@ -5166,6 +5166,12 @@ const LO_QUE_CIERRA_ESCAPE = [
   "maquina-anular-cancelar",
   // El menú del móvil, que tapa la pantalla: cerrarlo con Escape es lo que espera cualquiera.
   "menu-cerrar",
+  // **«Volver a mis tierras» antes que «volver a los trabajos»** (07/10/2026, E4 de la revisión del
+  // recorrido). La ficha de una tierra tiene los dos botones, y Escape pulsaba el primero de la lista:
+  // salía a la agenda de trabajos, y desde ahí **no hay camino de vuelta a la tierra** de la que se
+  // salió. Escape tiene que hacer lo mismo que el botón que cierra esa pantalla, y la ficha se cierra
+  // volviendo a la lista de tierras, que es de donde se entra.
+  "mis-cosas",
   // Volver a la lista: la ficha de un trabajo se cierra con «volver a los trabajos», no con un cancelar.
   "trabajos-ver",
   "cuaderno-volver",

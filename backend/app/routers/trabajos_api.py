@@ -36,29 +36,16 @@ Este router añade tres cosas:
     se anula: el movimiento se queda en el libro y deja de contar, porque `models.Labor` está en
     `servicios.estado_de_los_origenes`.
 
-## LO QUE FALTA PARA PODER EJECUTAR ESTE FICHERO
+## LO QUE FALTABA, Y YA ESTÁ (07/10/2026)
 
-**Está escrito entero y todavía no se puede importar**, porque necesita piezas de ficheros que son del
-coordinador (el mapa de ficheros del T15 está en `docs/SEGUIMIENTO_IMPLEMENTACION_CRM.md`, apartado
-47.5). La lista, con el porqué de cada una y su bloque literal, está en `docs/T15_TRABAJOS.md`. En
-resumen:
-
-  1. `models.TrabajoPrevisto y models.LineaDeTrabajoPrevisto` — las dos tablas de lo previsto. **Lo
-     hecho sigue en `models.Labor`**, que ya existe: un plan no es un hecho y no se mezclan.
-  2. `las columnas nuevas de models.Labor` — `clave_de_reenvio` (para que el móvil que reintenta no
-     apunte dos veces, A12), `horas` (el contrato las pide en los medios de un trabajo) y `previsto_id`
-     (qué plan cumplió este hecho).
-  3. `los esquemas de schemas.py` — `TrabajoEntrada`, `TrabajoPrevistoEntrada`, `TrabajoSalida`,
-     `TrabajoPrevistoSalida`, `MarcarHechoEntrada`, `ReprogramarEntrada` y `EstadoDeLaTierraSalida`.
-  4. `las frases de textos.py` — los códigos `TJ1`–`TJ28` (están enteros en `trabajos.CODIGOS_QUE_SE_DICEN`)
-     y el bloque `AGENDA`.
-  5. `servicios.APUNTES_QUE_GASTAN` con «labor», `lo_que_gasta_un_apunte` y `estado_de_los_origenes`:
-     **tres líneas**, y son las que hacen que anular un trabajo devuelva al almacén lo que gastó.
-  6. `el include_router de main.py`.
-
-Hay una prueba en `tests/test_trabajos.py` que salta con esta lista mientras falte, y que se ejecuta
-sola en cuanto esté: el recorrido entero (planificar → marcar lo hecho → historial y existencias →
-anular).
+**Este fichero decía que estaba escrito entero y que no se podía importar**, esperando seis piezas de
+ficheros del coordinador (las tablas de lo previsto, las columnas nuevas de `models.Labor`, los esquemas,
+las frases `TJ1`–`TJ28` y el bloque `AGENDA`, tres líneas de `servicios` y el `include_router` de
+`main.py`). **Todo eso está puesto y el router está integrado**: la revisión del recorrido lo comprobó
+ejecutando `pytest tests/test_trabajos.py -q -rs` → **77 pruebas pasan y 0 saltan**, así que ya no hay
+ninguna prueba esperando. El texto de arriba se queda escrito, con su fecha, porque explica por qué este
+fichero se escribió antes que sus piezas y en qué orden se integró; lo que **no** se puede dejar es la
+frase «no se puede importar», que era verdad el 05/10 y dejó de serlo.
 """
 
 from __future__ import annotations

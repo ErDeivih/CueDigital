@@ -13,10 +13,14 @@ servidor y no hay navegador. Es a propósito: las reglas del cuaderno se comprue
 que estén las tablas nuevas, y una prueba que necesita medio programa montado para comprobar una resta
 es una prueba que se deja de ejecutar.
 
-Al final del fichero hay un bloque de las puertas del router (`/api/trabajos`). Esas **se saltan** con
-el motivo escrito mientras el coordinador no integre las tablas y los esquemas que el ticket propone
-(están en `docs/T15_TRABAJOS.md`, apartado «Cambios que hay que integrar»): en cuanto estén, esas
-pruebas se ejecutan solas y cubren el recorrido entero.
+Al final del fichero hay un bloque de las puertas del router (`/api/trabajos`). **Ya no se saltan**: el
+coordinador integró las tablas, los esquemas y las frases, así que esas pruebas **se ejecutan** y cubren
+el recorrido entero (planificar → marcar lo hecho → historial y existencias → anular). Comprobado el
+07/10/2026 por la revisión del recorrido: `pytest tests/test_trabajos.py -q -rs` → **77 pasan, 0 saltan**.
+
+**Lo que decía antes este párrafo** («se saltan con el motivo escrito mientras el coordinador no integre
+las tablas y los esquemas») era verdad el 05/10 y dejó de serlo. Se deja dicho aquí porque un documento
+que miente sobre el estado del proyecto es peor que uno viejo.
 """
 
 from __future__ import annotations
@@ -953,11 +957,12 @@ class TestLasPuertasDelRouter:
 
 
 def test_las_puertas_del_router_se_ejecutan_cuando_este_integrado():
-    """El recorrido entero contra la API, **saltado** mientras falte lo de arriba.
+    """El recorrido entero contra la API.**
 
-    No se salta por comodidad: se salta porque el router importa tablas y esquemas que el coordinador
-    tiene que integrar (el mapa de ficheros del ticket dice que `models.py`, `schemas.py`, `main.py` y
-    `textos.py` son suyos). En cuanto estén, esta prueba se ejecuta sola y comprueba el recorrido:
+    **Ya se ejecuta**, y no se salta: el router importa las tablas y los esquemas que el coordinador tenía
+    que integrar, y están puestos (comprobado el 07/10/2026: 77 pruebas de este fichero pasan y 0 saltan).
+    El `skip` que hay abajo se queda como red de seguridad —si algún día esa integración se rompe, la
+    prueba lo dice en vez de fallar por un import—, pero **no se dispara**: el recorrido que comprueba es
     planificar → marcar lo hecho → historial y existencias → anular.
     """
     try:
@@ -1027,11 +1032,11 @@ class TestLaCopiaDeLosTextosDelMovil:
         assert sobran == [], f"estas frases están en la copia y no las lee la pantalla: {sobran}"
 
     def test_la_copia_dice_lo_mismo_que_el_servidor_cuando_el_bloque_este_integrado(self):
-        """Cuando `textos.AGENDA` exista (lo integra el coordinador), esta prueba compara clave por clave.
+        """La copia del móvil y el bloque `AGENDA` del servidor, clave por clave.
 
-        Mientras no exista, **se salta diciéndolo**: el bloque literal que hay que añadir está en
-        `docs/T15_TRABAJOS.md`, apartado «Cambios que hay que integrar». Un test que se saltara sin decir
-        por qué sería un test que da por bueno lo que no ha mirado.
+        **`textos.AGENDA` existe desde el 05/10/2026**, así que esto compara de verdad (no se salta). El
+        `skip` de abajo es la red de seguridad por si esa integración se rompiera: un test que se saltara
+        sin decir por qué sería un test que da por bueno lo que no ha mirado.
         """
         if not hasattr(textos, "AGENDA"):
             pytest.skip(

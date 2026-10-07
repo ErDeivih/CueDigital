@@ -3,14 +3,16 @@
 > **Ticket:** T15 / E9 (dependencias T05, T09 y T14, cerradas). **Fecha:** 05/10/2026.
 > **Qué entrega, en una frase:** la lógica de los trabajos por tierra —**previsto frente a realizado**, el
 > historial de una tierra y su estado derivado— con las reglas del encargo escritas y probadas; la pantalla
-> de la agenda, la ficha de un trabajo y la historia de una tierra en React; y el router `/api/trabajos`
-> **escrito y todavía no ejecutable**, porque necesita las tablas, los esquemas y los textos que integra el
-> coordinador (§3 de este informe, con los bloques literales).
+> de la agenda, la ficha de un trabajo y la historia de una tierra en React; y el router `/api/trabajos`.
 >
-> **Aviso, para que no se descubra al final:** el corazón del ticket —las reglas— **está hecho, probado y
-> verde hoy**; lo que no se puede ejecutar todavía es el router (y por eso va con su prueba saltada, que se
-> ejecutará sola en cuanto se integre) ni verse en un navegador, porque `app.js` y el menú son del
-> coordinador. Todo lo que no he podido comprobar está en §4, dicho por mí.
+> **Puesto al día el 07/10/2026.** Aquí decía que el router estaba «escrito y todavía no ejecutable»,
+> esperando las tablas, los esquemas y los textos del coordinador. **Eso ya está integrado y el router se
+> ejecuta**: la revisión del recorrido lo comprobó (`pytest tests/test_trabajos.py -q -rs` → **77 pasan,
+> 0 saltan**), y el recorrido entero —planificar, marcar lo hecho, historial, existencias y anular— está
+> probado contra la API **y andado en un navegador de verdad** (`scripts/comprobar_el_recorrido.py`,
+> 14 comprobaciones). Los apartados §3 y §4 se dejan como están, con su fecha: son el registro de lo que se
+> integró y de lo que entonces no se pudo comprobar; lo que no se podía dejar era la frase de arriba, que
+> dejó de ser verdad.
 
 ---
 
@@ -81,10 +83,10 @@ node --test "tests_js/trabajos.test.js"
 
 | | Medido (05/10/2026) |
 |---|---|
-| `tests/test_trabajos.py` | **68 en verde, 2 saltadas** (las dos con su motivo escrito: §4) |
+| `tests/test_trabajos.py` | **68 en verde, 2 saltadas** (las dos con su motivo escrito: §4) **→ el 07/10/2026, 77 en verde y 0 saltadas**, porque lo que faltaba está integrado |
 | `tests_js/trabajos.test.js` | **24 en verde, 0 en rojo** |
 | Los tres ficheros compilan | `python -m py_compile app/trabajos.py app/routers/trabajos_api.py tests/test_trabajos.py` → sin error |
-| El router dice lo que le falta | la prueba `test_las_puertas_del_router_se_ejecutan_cuando_este_integrado` se salta y **cuenta el motivo exacto**: `ImportError: cannot import name 'MarcarHechoEntrada' from 'app.schemas'` |
+| El router dice lo que le falta | la prueba `test_las_puertas_del_router_se_ejecutan_cuando_este_integrado` se salta y **cuenta el motivo exacto**: `ImportError: cannot import name 'MarcarHechoEntrada' from 'app.schemas'` **→ ya no se salta: el router se ejecuta y el recorrido entero está probado contra la API y andado en el navegador** |
 | Los guardianes del proyecto que leen mis ficheros | **996 pruebas en verde**; las únicas rojas son las cinco de §2.2, y todas son de la integración pendiente, no del código del ticket |
 
 ### 2.1 Pruebas que muerden (hechas, vistas y deshechas)
@@ -733,6 +735,13 @@ node --test "tests_js/*.test.js"                          # 24 son de tests_js/t
 ---
 
 ## 4. Lo que NO he podido comprobar (dicho por mí, antes de que se pregunte)
+
+> **Puesto al día el 07/10/2026.** Este apartado es el registro honesto de lo que su autor no pudo
+> comprobar cuando escribió el ticket. **Los tres puntos ya no están así**: el router se ejecuta (77
+> pruebas de `test_trabajos.py` pasan y 0 saltan), las pantallas están montadas en `app.js` con dirección y
+> menú, y el recorrido se ha andado **en un navegador de verdad** con la explotación de 64 tierras
+> (`scripts/comprobar_el_recorrido.py`, 14 comprobaciones, 0 fallos). Se deja el texto original debajo, con
+> su fecha, porque cuenta por qué se escribió así; lo que no vale es leerlo hoy como el estado del ticket.
 
 1. **El router no se puede ejecutar.** Está escrito entero y **no se puede ni importar** hasta que el
    coordinador integre las tablas, los esquemas, los textos y las tres líneas de `servicios.py` (§3).
