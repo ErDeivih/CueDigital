@@ -289,7 +289,11 @@ const htmlDeUnTrabajo = (cambios = {}) =>
 const htmlDeLaTierra = (cambios = {}) =>
   htmlDe("PantallaDeLaTierra", {
     textos: TEXTOS,
-    tierra: { nombre: "El Prado", superficie: "3,00 ha" },
+    // **Con su identificador**, como se lo manda `app.js` desde el 07/10/2026: la ficha lo necesita para
+    // ofrecer sus propios botones (el de «lo que ha sido esta tierra» y el de decir el cultivo), y sin él
+    // el bloque de botones no se pinta y las frases de esos dos botones no las lee nadie — que es lo que
+    // esta copia comprueba.
+    tierra: { id: 1, nombre: "El Prado", superficie: "3,00 ha" },
     historial: [],
     estado: null,
     no_consta: [],
