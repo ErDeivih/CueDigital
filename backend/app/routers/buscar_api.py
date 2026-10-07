@@ -116,6 +116,23 @@ def buscar(
     cortado_gastos = len(gastos) > TOPE_POR_GRUPO
     gastos = gastos[:TOPE_POR_GRUPO]
 
+    # **Y las personas y las empresas** (07/10/2026): con quién se trata —de quién es la factura, quién
+    # vende, quién compra—. Es lo que se busca con un nombre propio en la cabeza, que es justo lo que un
+    # buscador tiene que resolver. Se enseña el teléfono o el NIF, que es lo que distingue a dos personas
+    # que se llaman igual.
+    candidatos_contactos = db.scalars(
+        select(models.Contacto)
+        .where(models.Contacto.explotacion_id == explotacion.id)
+        .order_by(models.Contacto.nombre)
+    ).all()
+    contactos = [
+        contacto
+        for contacto in candidatos_contactos
+        if cotejado and cotejado in _como_se_busca(contacto.nombre or "")
+    ]
+    cortado_contactos = len(contactos) > TOPE_POR_GRUPO
+    contactos = contactos[:TOPE_POR_GRUPO]
+
     grupos = []
     if suyas:
         grupos.append(
@@ -146,6 +163,24 @@ def buscar(
                         "detalle": _el_importe_de_un_gasto(gasto),
                     }
                     for gasto in gastos
+                ],
+            }
+        )
+    if contactos:
+        grupos.append(
+            {
+                "clave": "personas",
+                "cuantos": len(contactos),
+                "cortado": cortado_contactos,
+                "resultados": [
+                    {
+                        "id": contacto.id,
+                        "etiqueta": contacto.nombre or "",
+                        # Lo que distingue a dos personas que se llaman igual: su teléfono o su NIF. Si no
+                        # consta ninguno, no se enseña un hueco.
+                        "detalle": contacto.telefono or contacto.nif or "",
+                    }
+                    for contacto in contactos
                 ],
             }
         )

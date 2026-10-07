@@ -126,3 +126,31 @@ class TestLaBusqueda:
 
         salida = _buscar(cliente, cuenta, "gasoleo")
         assert salida["grupos"] == [], "sale un gasto que no es de esta explotación"
+
+    def test_encuentra_a_una_persona_y_dice_lo_que_la_distingue(self, cliente, cuenta):
+        """Las personas se buscan por su nombre, y lo que se enseña al lado es **lo que distingue a dos
+        que se llaman igual**: su teléfono o su NIF. Si no consta ninguno, no se enseña un hueco."""
+        respuesta = cliente.post(
+            "/api/contactos",
+            json={"nombre": "Talleres Mariano", "telefono": "600 111 222", "es_empresa": True},
+            headers=cuenta["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        salida = _buscar(cliente, cuenta, "mariano")
+        personas = [g for g in salida["grupos"] if g["clave"] == "personas"][0]
+        assert [r["etiqueta"] for r in personas["resultados"]] == ["Talleres Mariano"]
+        assert personas["resultados"][0]["detalle"] == "600 111 222"
+
+    def test_tampoco_ensena_las_personas_de_otra_explotacion(self, cliente, cuenta, crear_cuenta):
+        la_ajena = crear_cuenta("ajena-personas@ejemplo.test", nombre="El vecino")
+        respuesta = cliente.post(
+            "/api/contactos",
+            json={"nombre": "Talleres del vecino"},
+            headers=la_ajena["cabeceras"],
+        )
+        assert respuesta.status_code in (200, 201), respuesta.text
+
+        assert _buscar(cliente, cuenta, "talleres")["grupos"] == [], (
+            "sale una persona que no es de esta explotación"
+        )
