@@ -70,6 +70,22 @@ para que se ejecute sin volver a decidir nada.
    pintar el panel, abre `#/tierras/<id>/historial` (que ya existe y funciona: `abrirLaHistoriaDeUnaTierra`).
    **Cuidado**: la lista de tierras es la pantalla más usada y **la que conserva el filtro y el «por dónde
    iba»**; el recorrido automático comprueba las dos cosas, así que se verá en rojo si se rompen.
+
+   **Lo que hay que tocar, ya localizado** (para que la vuelta siguiente no lo busque):
+
+   - `app.js`, en el manejador de clics: hoy hay una rama para `elegir-fila` que marca la fila y pinta el
+     panel; tiene que acabar llamando a `abrirLaHistoriaDeUnaTierra(id)` —la misma función que usa el botón
+     «su historia» del panel—. **Si el panel se queda como vista previa, hay que decidir si la fila abre la
+     ficha o solo marca**: las dos cosas a la vez no pueden ser.
+   - **Las pruebas que afirman lo de ahora** y hay que cambiar **diciendo por qué** (no borrar):
+     `tests_js/interfaz.test.js` → «elegir una tierra la enseña en el panel de al lado, sin salir de la
+     página» y todo lo que lee `tablaDeTierrasPedida().panel`; y `tests_js/react.test.js` si compara las
+     acciones del panel.
+   - **El recorrido automático** (`scripts/comprobar_el_recorrido.py`): la función `abrir_el_historial`
+     da **dos pasos** (la fila y el botón del panel). Con (a) será **uno**: la fila. Y su comentario
+     explica por qué son dos, así que hay que cambiarlo también.
+   - **Y el filtro al volver**: `recordarPorDondeIba` / `volverAdondeIba` ya lo conservan por la dirección;
+     el recorrido lo comprueba, así que si la ficha se abre de otra forma se verá.
 2. **Lo que el panel enseñaba de más, a la ficha**: nombre, referencia SIGPAC y hectáreas. Hoy la ficha
    enseña nombre y superficie (la superficie se arregló el 07/10); **falta la referencia oficial**.
 3. **El panel se queda como vista previa o se quita**: si se quita, hay que borrar sus pruebas y las que
