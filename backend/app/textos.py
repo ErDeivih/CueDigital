@@ -5070,8 +5070,39 @@ MENU: dict[str, str] = {
 # no inventa un camino nuevo, usa el que ya existe. **Y el de campaña no cambia nada**: el servidor no tiene
 # forma de decir «trabaja en el año 2023» (`/api/campanas/actual` devuelve siempre la más nueva), así que la
 # barra ofrece la campaña como dato y no ofrece elegirla (ver `pintarMarco` en `app.js`).
-MARCO: dict[str, str] = {
-    "finca": "Finca",
+# ── La búsqueda global (07/10/2026, del encargo del rediseño) ──
+#
+# La caja de la cabecera y la pantalla que enseña lo que encuentra. **La puerta del servidor ya está**
+# (`GET /api/buscar`: tierras, gastos, personas, máquinas y papeles, cada grupo con su prueba), así que
+# estas son las palabras que le faltan a la pantalla.
+#
+# Dos cosas que se dicen aquí y no en la pantalla, porque son decisiones: **cuánto hay que escribir para
+# que busque** (dos letras: con una saldría casi todo, y una lista con casi todo no ayuda a encontrar) y
+# **cómo se llama cada grupo**, que es el nombre que el agricultor le da a esas cosas.
+BUSCAR: dict[str, str] = {
+    "titulo": "Buscar",
+    "caja": "Buscar en tu cuaderno",
+    "pista": "Escribe al menos dos letras. Busca en tus tierras, tus gastos, tus papeles, tus personas y tus máquinas.",
+    "boton": "BUSCAR",
+    # Lo que se dice cuando no se ha buscado nada todavía: no es un error, es que no se ha pedido nada.
+    "sin_buscar": "Escribe lo que buscas y pulsa BUSCAR.",
+    # Y cuando se ha buscado y no hay nada. **En positivo y sin culpar a nadie**: no hay nada, y ya está.
+    "sin_resultados": "No hay nada que se llame así.",
+    # Los nombres de los grupos, que son los que el agricultor usa para esas cosas.
+    "grupo_tierras": "Tierras",
+    "grupo_gastos": "Gastos",
+    "grupo_personas": "Personas y empresas",
+    "grupo_maquinas": "Máquinas",
+    "grupo_papeles": "Papeles",
+    # Y lo que se dice cuando un grupo se ha cortado: un buscador que enseña diez de cuarenta y no avisa
+    # hace creer que solo hay diez.
+    "cortado": "Hay más de los que caben aquí: afina lo que buscas.",
+    "cuantos_uno": "1 resultado",
+    "cuantos": "{cuantos} resultados",
+}
+
+
+MARCO: dict[str, str] = {    "finca": "Finca",
     "sin_finca": "Sin finca",
     "cambiar_campana": "Cambiar de campaña",
     "cambiar_finca": "Cambiar de finca",

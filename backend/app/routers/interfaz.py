@@ -46,6 +46,10 @@ def interfaz() -> dict:
         # sin esto, esa pantalla se quedaría en blanco, y el aviso de emergencia no tiene
         # ni una palabra escrita en el JavaScript.
         "react": textos.REACT,
+        # **La búsqueda global** (07/10/2026): las palabras de la caja de la cabecera y de su pantalla de
+        # resultados. La puerta ya está hecha y probada (`GET /api/buscar`, con sus cinco grupos); esto es
+        # lo que le falta a la pantalla para no tener ni una frase escrita a mano.
+        "buscar": textos.BUSCAR,
         "certificado": textos.CERTIFICADO,
         "firma": textos.FIRMA,
         "plan": textos.PLAN,
