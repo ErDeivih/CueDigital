@@ -75,6 +75,7 @@ const AGENDA = {
   // El botón que lleva a las versiones de la tierra (07/10/2026): se llama como esa pantalla, y la
   // pantalla lo lee, así que tiene que estar en la copia o el rótulo saldría en blanco.
   lo_que_ha_sido: "Lo que ha sido esta tierra",
+  decir_el_cultivo: "Qué hay sembrado",
   superficie: "Superficie",
   hectareas_corto: "ha",
   costes_sin_importe_uno: "Hay 1 gasto de esta tierra que no dice lo que costó.",

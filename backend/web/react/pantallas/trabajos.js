@@ -808,6 +808,17 @@ export function PantallaDeLaTierra({
                   clase: "boton-claro",
                   sencillo: true,
                 },
+                // **Y decir o corregir el cultivo desde aquí** (07/10/2026): la ficha ya enseña lo que hay
+                // sembrado; esto deja decirlo sin salir de la tierra que se está mirando. Se midió en un
+                // navegador de verdad desde la ficha —pulsando con un clic de verdad— y funciona: lleva a
+                // su pantalla del cultivo, con sus campos y con la tierra ya puesta.
+                {
+                  etiqueta: a.decir_el_cultivo,
+                  accion: "cultivo-decir",
+                  datos: { id: tierra.id },
+                  clase: "boton-claro",
+                  sencillo: true,
+                },
               ]}
               barra=${false}
             />`

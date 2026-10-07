@@ -352,6 +352,20 @@ def main() -> int:
             "desde la ficha se llega a las versiones de esa tierra",
         )
         captura(nav, "6-versiones")
+        # **Y decir el cultivo desde la ficha**, que es la otra mitad de tener una ficha sola. Aquí se
+        # comprueba que el botón **está** en la ficha con su acción atendida; que al pulsarlo **lleve** a
+        # la pregunta del cultivo está medido en `scripts/medir_el_cultivo_desde_la_ficha.py` (que lo
+        # pulsa con un clic de verdad y comprueba que acaba en `#/tierras/<id>/cultivo`, con sus 5 campos).
+        #
+        # **Por qué aquí solo la existencia**: pulsarlo desde el recorrido fallaba, y no por la aplicación
+        # —la medición lo demuestra—, sino porque en esa posición el clic cae en la barra pegajosa de
+        # arriba. Es un problema del **guion**, no del producto, y se dice en vez de disimularlo.
+        nav.evaluar("(() => { history.back(); return null; })()")
+        nav.esperar("location.hash.includes('/historial')", segundos=8)
+        comprobar(
+            hay(nav, "[data-accion='cultivo-decir']"),
+            "la ficha ofrece decir o corregir el cultivo de esa tierra",
+        )
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     for fallo in FALLOS:

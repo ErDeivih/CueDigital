@@ -7819,6 +7819,10 @@ AGENDA: dict[str, str] = {
     # aquí, y no solo allí, porque el armazón de la ficha lee **este** bloque, y las dos copias tienen que
     # tener las mismas claves (lo comprueban dos pruebas).
     "lo_que_ha_sido": "Lo que ha sido esta tierra",
+    # **Y el de decir o cambiar el cultivo, desde la ficha** (07/10/2026): la ficha ya enseña lo que hay
+    # sembrado; con esto puede además decirlo o corregirlo **sin salir de la tierra** que se está mirando,
+    # que es lo que pide la ficha única. Se dice con el nombre de esa pantalla (`CULTIVOS.titulo`).
+    "decir_el_cultivo": "Qué hay sembrado",
     # **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
     # recorrido). Se dice con el nombre de esa pantalla —el mismo que el del menú—, que es como el
     # agricultor la conoce; aquí no se inventa ninguna palabra nueva.
