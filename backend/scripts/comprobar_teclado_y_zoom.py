@@ -899,8 +899,12 @@ def el_recorrido(
     # --- a la lista de cuentas ------------------------------------------------
     #
     # **En el ordenador se llega por el menú, tabulando** (que es lo que hace un agricultor con teclado).
-    # A 712 px (el zoom del 200 %) el menú de módulos del armazón no se dibuja, así que se llega **por la
-    # dirección de la pantalla**, que es la única puerta que queda a ese ancho; se mide y se dice.
+    #
+    # **Y a 712 px (el zoom del 200 %) también desde el 07/10/2026**: aquí decía que el menú de módulos «no
+    # se dibuja» a ese ancho y que la única puerta era escribir la dirección. Ya no es verdad: hay un botón
+    # de menú en la cabecera (`menu-abrir`) que abre el armazón encima de la pantalla, y el renglón de
+    # «Mis cuentas» está dentro. Se comprueba **como lo haría el agricultor**: tabular hasta ese botón,
+    # pulsarlo con Enter, y seguir tabulando hasta el renglón.
     if con_menu:
         abrir_de_verdad(nav, f"{direccion}/#/")
         nav.esperar("document.querySelector('#pantalla h1') !== null")
@@ -916,7 +920,34 @@ def el_recorrido(
             pulsar_enter(nav)
             esperar_la_pantalla(nav)
     else:
-        abrir_de_verdad(nav, f"{direccion}/#/cuentas")
+        abrir_de_verdad(nav, f"{direccion}/#/")
+        nav.esperar("document.querySelector('#pantalla h1') !== null")
+        esperar_la_pantalla(nav)
+        # ¿Se ve el menú a este ancho? A 712 px no: está detrás del botón de abrirlo.
+        ya_se_ve = bool(nav.evaluar("Boolean(document.querySelector('#menu-cuentas')) && document.querySelector('#menu-cuentas').checkVisibility({checkVisibilityCSS: true})"))
+        if not ya_se_ve:
+            cuantas_hasta_abrir = hasta_accion(nav, "menu-abrir", en_la_pantalla=False)
+            comprobar(
+                cuantas_hasta_abrir is not None,
+                f"a este ancho se llega al botón que abre el menú tabulando ({cuantas_hasta_abrir} pulsaciones)",
+            )
+            if cuantas_hasta_abrir is not None:
+                pulsar_enter(nav)
+                nav.esperar(
+                    "Boolean(document.querySelector('#menu-cuentas')) &&"
+                    " document.querySelector('#menu-cuentas').checkVisibility({checkVisibilityCSS: true})",
+                    segundos=8,
+                )
+        # Y ahora, al renglón de «Mis cuentas», con el teclado.
+        cuantas = hasta_accion(nav, "gastos-ver", en_la_pantalla=False)
+        comprobar(
+            cuantas is not None,
+            f"y «Mis cuentas» se alcanza con el teclado **sin abrir una dirección a mano** "
+            f"({cuantas} pulsaciones de Tab desde el principio)",
+        )
+        if cuantas is not None:
+            pulsar_enter(nav)
+            esperar_la_pantalla(nav)
 
     comprobar(
         nav.esperar("document.querySelector('[data-accion=\"gasto-abrir\"]') !== null", segundos=10),
@@ -1199,17 +1230,32 @@ def el_zoom_de_pagina_al_200(direccion: str, datos: dict, romper: str | None) ->
         )
         comprobar(
             not visible_el_menu,
-            "a 712 px el menú de módulos del ordenador **no** se dibuja (ni se tabula): `#menu-cuentas` está "
-            "en el documento pero no se ve",
+            "a 712 px el menú de módulos del ordenador **no** se dibuja solo (ni se tabula hasta que se "
+            "abre): `#menu-cuentas` está en el documento pero no se ve",
         )
-        if not visible_el_menu:
-            hallazgo(
-                "con el zoom de página al 200 % (712 px) el menú de módulos no está: `#menu-cuentas` existe en "
-                "el documento pero `checkVisibility()` es falso, así que con el teclado no se llega a «Mis "
-                "cuentas» desde el inicio (la pantalla de inicio de ese ancho no lleva a las cuentas). En esta "
-                "comprobación se llega por la dirección de la pantalla (`#/cuentas`), que es la única puerta "
-                "que queda a ese ancho"
+        # **Y ahora la mitad que faltaba** (07/10/2026): el menú no se dibuja solo, pero **se abre**. Aquí se
+        # decía que a este ancho «no se llega a Mis cuentas desde el inicio» y que la única puerta era
+        # escribir la dirección: eso dejó de ser verdad cuando el armazón pasó a tener su botón de abrirlo.
+        # Se comprueba como lo haría el agricultor: tabular hasta el botón, pulsarlo con Enter y llegar al
+        # renglón. Si esto se rompiera, H4 volvería a ser un hallazgo de verdad.
+        cuantas_hasta_el_boton = hasta_accion(nav, "menu-abrir", en_la_pantalla=False)
+        comprobar(
+            cuantas_hasta_el_boton is not None,
+            f"a 712 px se llega al botón que abre el menú tabulando ({cuantas_hasta_el_boton} pulsaciones)",
+        )
+        if cuantas_hasta_el_boton is not None:
+            pulsar_enter(nav)
+            se_abre = nav.esperar(
+                "Boolean(document.getElementById('menu-cuentas')) && "
+                "document.getElementById('menu-cuentas').checkVisibility({checkVisibilityCSS: true})",
+                segundos=8,
             )
+            comprobar(se_abre, "y al pulsarlo se abre el menú, con el renglón de «Mis cuentas» dentro")
+            if se_abre:
+                print(
+                    "  [OK   ] así que a 712 px **sí** se llega a «Mis cuentas» con el teclado, abriendo el "
+                    "menú: no hace falta escribir la dirección"
+                )
 
 
 # ---------------------------------------------------------------------------
