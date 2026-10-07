@@ -18432,13 +18432,6 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
 
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
-  // **«Mis cosas», que estaba muerto** (07/10/2026). Las dos pantallas de «se ha guardado» un maestro
-  // pintan un botón con `accion: "mis-cosas"` para ir a ver lo que se acaba de dar de alta, y **aquí no
-  // había nada que lo atendiera**: se pulsaba y no pasaba nada. Lo encontró el recorrido
-  // (`scripts/comprobar_el_recorrido.py`) al intentar ir de Inicio a las tierras: la pantalla no se movía.
-  // El destino es el mismo que el del menú (`irAInicio("mis_cosas")`), dicho con el nombre que usan esas
-  // confirmaciones.
-  if (nombre === "mis-cosas") return irAInicio("mis_cosas");
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));
   if (nombre === "anadir-maestro") {
     const tipo = elemento.dataset.tipo;
@@ -21283,7 +21276,7 @@ async function cargarLosInsumosSiHacenFalta() {
  * está cargado** —el plan o el hecho— porque la agenda los trae todos: pedirlo otra vez sería pedir dos
  * veces lo mismo.
  */
-async function abrirUnTrabajo(modo, id) {
+async function abrirUnTrabajo(modo, id, tierra = null) {
   const suyo = estadoDeLosTrabajos();
   suyo.error = "";
   suyo.aviso = "";
@@ -21299,7 +21292,7 @@ async function abrirUnTrabajo(modo, id) {
   const borrador = {
     tipo: trabajo ? trabajo.tipo : "",
     subtipo: trabajo ? trabajo.subtipo || "" : "",
-    parcela_id: trabajo && trabajo.parcela_id ? trabajo.parcela_id : "",
+    parcela_id: trabajo && trabajo.parcela_id ? trabajo.parcela_id : tierra || "",
     fecha_prevista: trabajo && trabajo.fecha_prevista ? trabajo.fecha_prevista : "",
     fecha: trabajo && trabajo.fecha ? trabajo.fecha : "",
     superficie_ha: trabajo && trabajo.superficie_ha !== null ? trabajo.superficie_ha : "",
@@ -21406,7 +21399,12 @@ async function guardarElTrabajo() {
     planificar: ["POST", "/api/trabajos/previstos", { ...cuerpo, campana_id }],
     reprogramar: ["POST", `/api/trabajos/previstos/${id}/reprogramar`, cuerpo],
     hecho: ["POST", `/api/trabajos/previstos/${id}/hecho`, { ...cuerpo, campana_id }],
-    corregir: ["PUT", `/api/trabajos/${id}`, cuerpo],
+    // **Y la campaña también al corregir** (07/10/2026). Aquí iba `cuerpo` a secas, y el esquema del
+    // servidor (`TrabajoEntrada`) exige `campana_id`: corregir un trabajo hecho contestaba **422 siempre**
+    // —«No se ha podido guardar»— y no lo cazaba ninguna prueba, porque las de Python mandan la campaña a
+    // mano y la de JavaScript solo mira que el método y la ruta sean los que son. Lo encontró la revisión
+    // del recorrido comparando el cuerpo que manda esta pantalla con el esquema.
+    corregir: ["PUT", `/api/trabajos/${id}`, { ...cuerpo, campana_id }],
     // **Un plan se cancela y un hecho se anula**: son dos puertas distintas con la misma pantalla (la
     // que pide el motivo), y por eso la puerta se elige con `esPlan` y no solo con el modo.
     anular: formulario.esPlan
@@ -21560,7 +21558,14 @@ async function atenderLosTrabajos(nombre, elemento) {
   // `tierra.acciones`), que es donde el agricultor abre una tierra. **Hasta hoy no había ninguno**: la
   // pantalla existía, su dirección funcionaba, y no se llegaba a ella más que escribiéndola.
   if (nombre === "tierra-historia") return abrirLaHistoriaDeUnaTierra(id);
-  if (nombre === "trabajo-planificar") return abrirUnTrabajo("planificar", null);
+  if (nombre === "trabajo-planificar") {
+    // **La tierra que se está mirando viaja al formulario** (07/10/2026). Desde la ficha de una tierra, el
+    // botón de planificar abría el formulario **sin la tierra**, así que salía «Elige la tierra» teniendo
+    // el agricultor la tierra delante: el dato estaba cargado (`suyo.tierra.tierra.id`) y no se usaba. Lo
+    // encontró la revisión del recorrido.
+    const laQueSeEstaMirando = ((estadoDeLosTrabajos().tierra || {}).tierra || {}).id;
+    return abrirUnTrabajo("planificar", null, laQueSeEstaMirando || null);
+  }
   if (nombre === "trabajo-previsto-guardar") return guardarElTrabajo();
   if (nombre === "trabajo-abrir") return abrirUnTrabajo("reprogramar", id);
   if (nombre === "trabajo-reprogramar") return guardarElTrabajo();

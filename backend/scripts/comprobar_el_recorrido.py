@@ -162,56 +162,104 @@ def main() -> int:
         comprobar(la_tierra.alias[:18].lower() in listado.lower(), "la tierra buscada sale en la lista")
         captura(nav, "2-tierras")
 
-        # ── 3. La ficha de la tierra (su historial) ─────────────────────────────────────────────
+        # ── 3. La ficha de la tierra ────────────────────────────────────────────────────────────
         paso(nav, 3, "Ficha de la tierra")
+        # **A este ancho se abre con `elegir-fila`** (07/10/2026): `tierra-historia` existe en el documento
+        # pero no se ve en ninguno de sus 64 botones —es el del móvil—, y `elegir-fila`, que sí se ve en
+        # las 64 filas, lleva a la dirección de la tierra (`#/tierras/<id>`). Eso lo dijo el buscador de
+        # clics al negarse a pulsar lo que no está.
         comprobar(
-            hay(nav, "[data-accion='tierra-historia']"),
-            "la lista lleva a la ficha de una tierra («tierra-historia»)",
+            pulsar_si_hay(
+                nav,
+                "[data-accion='elegir-fila']",
+                "location.hash.includes('/tierras/')",
+            ),
+            "la fila de la tierra lleva a su ficha (dirección propia)",
         )
-        nav.pulsar("[data-accion='tierra-historia']")
-        nav.esperar("location.hash.includes('tierra')", segundos=10)
-        esperar_la_pantalla(nav)
+        nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=12)
         captura(nav, "3-ficha")
         ficha = texto_de(nav)
         comprobar(la_tierra.alias[:14].lower() in ficha.lower(), "la ficha es la de la tierra buscada")
-        print(f"  (la ficha dice, en resumen: {' '.join(ficha.split())[:220]}…)")
-        tiene_historial = bool(nav.evaluar("Boolean(document.querySelector('[data-accion=\"trabajos-ver\"]'))"))
-        print(f"  ¿hay un botón para ver los trabajos desde la ficha? {tiene_historial}")
-        acciones_ficha = nav.evaluar(
-            "[...new Set([...document.querySelectorAll('#pantalla [data-accion]')]"
-            ".map((e) => e.dataset.accion))]"
-        )
+        print(f"  (la ficha dice: {' '.join(ficha.split())[:240]}…)")
+        acciones_ficha = acciones(nav)
         print(f"  acciones de la ficha: {acciones_ficha}")
 
         # ── 4. Registrar un trabajo ─────────────────────────────────────────────────────────────
         paso(nav, 4, "Registrar un trabajo")
         # La lista de trabajos es la puerta que el menú ofrece («trabajos-ver»).
-        pulsar_si_hay(nav, '[data-accion="trabajos-ver"]', "Boolean(document.querySelector('#pantalla'))")
+        pulsar_si_hay(nav, '[data-accion="trabajos-ver"]', "location.hash.includes('trabajos')")
         acciones_trabajos = acciones(nav)
         print(f"  acciones de la pantalla de trabajos: {acciones_trabajos}")
         comprobar(
-            any(a.startswith("trabajo") or a.startswith("plan") for a in acciones_trabajos),
-            "la pantalla de trabajos ofrece planificar o apuntar un trabajo",
+            "trabajo-planificar" in acciones_trabajos,
+            "la pantalla de trabajos ofrece planificar un trabajo",
         )
         captura(nav, "4-trabajos")
+        # **Y se abre el formulario de verdad**, que es lo que hace el agricultor para apuntar el trabajo:
+        # si el botón estuviera muerto, esto no abriría nada.
+        comprobar(
+            pulsar_si_hay(
+                nav,
+                "[data-accion='trabajo-planificar']",
+                "document.querySelectorAll('#pantalla input, #pantalla select, #pantalla textarea').length > 0",
+            ),
+            "«planificar» abre el formulario del trabajo (con sus campos)",
+        )
+        captura(nav, "4-planificar")
+        campos = nav.evaluar(
+            "[...document.querySelectorAll('#pantalla input, #pantalla select, #pantalla textarea')]"
+            ".map((e) => e.id || e.name || e.type).slice(0, 12)"
+        )
+        print(f"  campos del formulario: {campos}")
+        # Se vuelve a la lista de trabajos sin guardar nada: el recorrido no inventa datos.
+        nav.pulsar("[data-accion='trabajo-cancelar']") if hay(
+            nav, "[data-accion='trabajo-cancelar']"
+        ) else nav.abrir(f"{DIRECCION}/#/trabajos", esperar=1.2)
 
-        # ── 5. El historial de la tierra ────────────────────────────────────────────────────────
+        # ── 5. El historial de la tierra, después ───────────────────────────────────────────────
         paso(nav, 5, "El historial de la tierra, después")
-        nav.abrir(f"{DIRECCION}/#/", esperar=1.0)
+        # **Se vuelve por donde se vino**, con el botón de volver al inicio: cambiar solo la almohadilla de
+        # la dirección no basta —la aplicación se queda donde estaba, que es lo que quiere el agricultor—,
+        # y eso hizo fallar este paso la primera vez (seguía en `#/trabajos` y pulsaba una fila de trabajo).
+        pulsar_si_hay(nav, '[data-accion="ir-inicio"]', "location.hash.split('?')[0] === '#/'")
+        print(f"  (tras volver al inicio: dirección {nav.evaluar('location.hash')})")
         pulsar_si_hay(nav, "#menu-tierras", "Boolean(document.querySelector('#buscar_tierra_mis_cosas'))")
-        nav.escribir("#buscar_tierra_mis_cosas", la_tierra.alias[:24])
+        print(
+            f"  (en tierras: dirección {nav.evaluar('location.hash')} ·"
+            f" h1 «{nav.evaluar('(document.querySelector(\"#pantalla h1\") || {}).innerText || \"\"')}»)"
+        )
+        escribir_en(nav, "#buscar_tierra_mis_cosas", la_tierra.alias[:24])
         nav.esperar(
             "document.querySelector('#pantalla').innerText.includes("
             + json.dumps(la_tierra.alias[:18].lower())
             + ")",
             segundos=10,
         )
-        nav.pulsar("[data-accion='tierra-historia']")
-        esperar_la_pantalla(nav)
-        captura(nav, "5-historial")
+        # **Y se vuelve a abrir su historial**, que es donde tiene que estar lo que se ha hecho con ella: se
+        # abre igual que antes (`elegir-fila`, la fila de la tierra), y se exige que el historial diga algo
+        # de los trabajos de esa tierra —no una pantalla en blanco—.
+        # **Volver a tierras reabre la última ficha** (07/10/2026, y es lo que quiere el agricultor: volver
+        # por donde iba). Medido: tras pulsar el menú, la dirección ya era `#/tierras/<id>` con el panel de
+        # esa tierra abierto, y volver a pulsar su fila lo **cierra**. Así que aquí no se pulsa a ciegas: si
+        # la ficha ya está abierta, se comprueba eso; si no, se abre.
+        ya_abierta = bool(nav.evaluar("location.hash.includes('/tierras/')"))
+        print(f"  (la ficha ya estaba abierta al volver: {ya_abierta})")
         comprobar(
-            len(texto_de(nav)) > 40,
-            "el historial de la tierra se puede volver a abrir después de pasar por los trabajos",
+            ya_abierta
+            or pulsar_si_hay(
+                nav,
+                "[data-accion='elegir-fila']",
+                "location.hash.includes('/tierras/')",
+            ),
+            "se vuelve a abrir la ficha de la tierra",
+        )
+        nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=12)
+        captura(nav, "5-historial")
+        historial = texto_de(nav)
+        print(f"  (el historial dice: {' '.join(historial.split())[:240]}…)")
+        comprobar(
+            "trabajo" in historial.lower() or "hecho" in historial.lower(),
+            "la ficha de la tierra habla de sus trabajos (el historial está ahí)",
         )
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
