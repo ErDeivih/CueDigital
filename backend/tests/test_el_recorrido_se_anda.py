@@ -77,7 +77,15 @@ def test_el_recorrido_se_anda_entero():
     """El recorrido del encargo, con la explotación de 64 tierras, contra un servidor de verdad."""
     puerto = _un_puerto_libre()
     direccion = f"http://127.0.0.1:{puerto}"
-    with tempfile.TemporaryDirectory(prefix="cuedigital-recorrido-") as temporal:
+    with tempfile.TemporaryDirectory(
+        prefix="cuedigital-recorrido-",
+        # **`ignore_cleanup_errors` porque Windows tarda en soltar la base** (07/10/2026): al terminar el
+        # servidor, el fichero de SQLite sigue abierto un instante y borrar la carpeta temporal fallaba con
+        # `PermissionError: [WinError 32]` — **después** de que el recorrido hubiera pasado entero, así que
+        # la prueba se ponía roja por la limpieza y no por lo que comprueba. Lo que importa es lo que pasó
+        # dentro; la carpeta temporal la limpia el sistema.
+        ignore_cleanup_errors=True,
+    ) as temporal:
         base = pathlib.Path(temporal) / "prueba.db"
         entorno = dict(os.environ)
         entorno["CUEDIGITAL_DATABASE_URL"] = f"sqlite:///{base}"
