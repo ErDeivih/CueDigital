@@ -78,6 +78,7 @@ const AGENDA = {
   decir_el_cultivo: "Qué hay sembrado",
   superficie: "Superficie",
   hectareas_corto: "ha",
+  referencia: "Referencia oficial SIGPAC",
   costes_sin_importe_uno: "Hay 1 gasto de esta tierra que no dice lo que costó.",
   // **El botón de volver a la lista de tierras desde la ficha de una** (07/10/2026, E4 de la revisión del
   // recorrido): su etiqueta es el nombre de esa pantalla (`maestros.titulo`), que es lo que ya estaba
@@ -290,11 +291,11 @@ const htmlDeUnTrabajo = (cambios = {}) =>
 const htmlDeLaTierra = (cambios = {}) =>
   htmlDe("PantallaDeLaTierra", {
     textos: TEXTOS,
-    // **Con su identificador**, como se lo manda `app.js` desde el 07/10/2026: la ficha lo necesita para
-    // ofrecer sus propios botones (el de «lo que ha sido esta tierra» y el de decir el cultivo), y sin él
-    // el bloque de botones no se pinta y las frases de esos dos botones no las lee nadie — que es lo que
-    // esta copia comprueba.
-    tierra: { id: 1, nombre: "El Prado", superficie: "3,00 ha" },
+    // **Con su identificador y su referencia**, como se lo manda `app.js` desde el 07/10/2026: la ficha
+    // los necesita para ofrecer sus propios botones (el de «lo que ha sido esta tierra», el de decir el
+    // cultivo) y para enseñar la referencia oficial del SIGPAC. Sin ellos, esos trozos no se pintan y las
+    // frases de sus rótulos no las lee nadie — que es lo que esta copia comprueba.
+    tierra: { id: 1, nombre: "El Prado", superficie: "3,00 ha", referencia: "ES-P-00000-0001" },
     historial: [],
     estado: null,
     no_consta: [],

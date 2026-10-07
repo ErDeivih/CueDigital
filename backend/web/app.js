@@ -21520,6 +21520,10 @@ function pantallaLaHistoria() {
         id: tierra.id,
         nombre: tierra.alias || "",
         superficie: valor(tierra.superficie_ha),
+        // **Y la referencia oficial** (07/10/2026): es **lo único** que el panel de la fila enseñaba y la
+        // ficha no. Va primero el día que la ficha sea la única pantalla de una tierra (opción (a) del
+        // encargo): antes de quitar el panel, la ficha tiene que tener todo lo que el panel daba.
+        referencia: tierra.ref_sigpac || "",
       },
       historial: ((datos.historial || {}).lineas || []).map((linea) => {
         const trabajo = linea.trabajo || {};

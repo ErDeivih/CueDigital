@@ -7809,6 +7809,10 @@ AGENDA: dict[str, str] = {
     # lo que se comprueban las hectáreas de cada trabajo.
     "superficie": "Superficie",
     "hectareas_corto": "ha",
+    # **La referencia oficial del SIGPAC, en la ficha** (07/10/2026): es lo único que el panel de la fila
+    # enseñaba y la ficha no. Se dice con el mismo nombre que en el panel (`MAESTROS.tierra_sigpac`), para
+    # que el agricultor lea lo mismo en los dos sitios mientras los dos existan.
+    "referencia": "Referencia oficial SIGPAC",
     "explica": "Aquí tienes lo que tienes pensado hacer y lo que ya has hecho, en dos listas separadas. Lo que está pensado no ha gastado nada del almacén: lo que se gasta se apunta cuando el trabajo se hace.",
     "buscando": "Buscando…",
     "ver_el_cuaderno": "VER MI CUADERNO",

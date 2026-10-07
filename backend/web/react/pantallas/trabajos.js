@@ -594,6 +594,14 @@ export function PantallaDeLaTierra({
         ? html`<p className="pista-campo">${frase(a.superficie)}: ${frase(tierra.superficie)} ${frase(a.hectareas_corto)}</p>`
         : null
     }
+    ${
+      // **La referencia oficial del SIGPAC** (07/10/2026): es lo único que el panel de la fila enseñaba y
+      // la ficha no, y va primero ahora que la ficha va a ser la única pantalla de una tierra. Si la tierra
+      // no la tiene, **no se enseña un hueco**: no se pinta nada (un guion ahí diría que hay un dato).
+      tierra.referencia
+        ? html`<p className="pista-campo">${frase(a.referencia)}: ${frase(tierra.referencia)}</p>`
+        : null
+    }
     <${AvisoDeError} texto=${error} />
 
     <h2>${frase(a.que_hay_hoy)}</h2>

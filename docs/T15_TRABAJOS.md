@@ -485,6 +485,7 @@ AGENDA: dict[str, str] = {
     "decir_el_cultivo": "Qué hay sembrado",
     "superficie": "Superficie",
     "hectareas_corto": "ha",
+    "referencia": "Referencia oficial SIGPAC",
     "costes_sin_importe_uno": "Hay 1 gasto de esta tierra que no dice lo que costó.",
     "mis_tierras": "Mis parcelas, productos y máquinas",
     "previstos_explica": "Lo que está pensado no es un trabajo hecho y no ha gastado nada.",
