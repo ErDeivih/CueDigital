@@ -95,6 +95,29 @@ class TestLaBusqueda:
         assert salida["buscado"] is True
         assert salida["grupos"] == []
 
+    def test_cuando_hay_muchisimos_lo_dice_en_vez_de_callarse_lo_que_falta(self, cliente, cuenta):
+        """**El tope y su aviso** (07/10/2026). Un grupo devuelve como mucho lo que dice `TOPE_POR_GRUPO`, y
+        cuando se corta **lo dice** (`cortado: true`): un buscador que enseña diez resultados de cuarenta y
+        no avisa hace creer que solo hay diez. Es la regla de la casa —un número que calla lo que falta
+        miente— aplicada a la búsqueda."""
+        for numero in range(12):
+            _una_tierra(cliente, cuenta, f"Parcela de la cuesta {numero}")
+
+        salida = _buscar(cliente, cuenta, "cuesta")
+        tierras = [g for g in salida["grupos"] if g["clave"] == "tierras"][0]
+        assert tierras["cuantos"] == 10, f"el grupo no se ha cortado donde dice: {tierras['cuantos']}"
+        assert tierras["cortado"] is True, "se han cortado resultados y no se avisa"
+        assert len(tierras["resultados"]) == 10
+
+    def test_con_pocos_no_se_dice_que_se_ha_cortado(self, cliente, cuenta):
+        """Y al revés: con dos resultados, `cortado` es falso. Un aviso que sale siempre no avisa de nada."""
+        _una_tierra(cliente, cuenta, "Parcela de la cuesta")
+        _una_tierra(cliente, cuenta, "Parcela de la cuesta de arriba")
+
+        tierras = [g for g in _buscar(cliente, cuenta, "cuesta")["grupos"] if g["clave"] == "tierras"][0]
+        assert tierras["cuantos"] == 2
+        assert tierras["cortado"] is False
+
     def test_encuentra_un_gasto_por_su_concepto_y_dice_lo_que_costo(self, cliente, cuenta):
         """Y lo que se busca con un nombre en la cabeza («el gasóleo») sale con **su importe**, que es lo
         que se quiere saber al encontrarlo. Los dos grupos conviven: una búsqueda puede encontrar una
