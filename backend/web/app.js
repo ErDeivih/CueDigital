@@ -8297,23 +8297,30 @@ function tierrasParaMisCosas() {
       superficie_ha: parcela.superficie_ha === undefined ? null : parcela.superficie_ha,
       cultivo: actual ? actual.especie || "" : "",
       falta_decirlo: Boolean(suya.falta_decirlo),
-      accionTexto: suya.falta_decirlo
-        ? t("cultivos.decir", "")
-        : t("maestros.tierra_ver_cultivo", ""),
+      // **La tarjeta abre la FICHA de la tierra, la misma que abre la fila en el ordenador** (07/10/2026).
+      //
+      // Antes abría «lo que hay sembrado» (`cultivo-decir`), así que **la misma tierra llevaba a dos
+      // pantallas distintas según el aparato**: en el móvil al cultivo y en el ordenador al panel con su
+      // historia. Eso es justo lo contrario de la ficha única que pide el encargo, y además el cultivo
+      // **ya se ve dentro de la ficha** («Qué hay hoy», con la especie, la variedad y desde cuándo), así
+      // que abrir la ficha no quita nada de lo que se miraba antes. Lo señaló la revisión del recorrido:
+      // la misma tierra tenía cuatro pantallas.
+      //
+      // El rótulo de la tarjeta va con la acción: una tarjeta que diga «VER EL CULTIVO» y abra otra cosa
+      // sería peor que el problema que se arregla.
+      accionTexto: t("panel.tierra_historia", ""),
       marca: false,
       elegida: false,
-      accion: "cultivo-decir",
+      accion: "tierra-historia",
       datos: { id: parcela.id },
       textos: {},
-      // Y sus dos botones (ronda 92): corregir la tierra (el nombre, las hectáreas, la referencia… lo
-      // que se equivocó al darla de alta) o borrarla. La tarjeta sigue abriendo lo que hay sembrado, que
-      // es lo que se mira el 99 % de las veces.
-      // **Y el primero es el que abre su historia** (T15, 05/10/2026): lo que ha pasado en esa tierra
-      // —sus trabajos hechos, lo que queda previsto y lo que consta que ha costado—. Va delante de
-      // CORREGIR y BORRAR porque es a lo que se viene al abrir una tierra. **Se encontró que no había
-      // ningún botón que llevara a esa pantalla**: existía y su dirección funcionaba, pero solo se
-      // llegaba escribiéndola a mano, que para el agricultor es no llegar. Como esta lista es la de la
-      // tarjeta del móvil **y** la del panel del ordenador, el botón sale en las dos.
+      // Y sus dos botones (ronda 92): corregir la tierra (el nombre, las hectáreas, la referencia… lo que
+      // se equivocó al darla de alta) o borrarla. **Y el de «su historia»** (T15, 05/10/2026), que en el
+      // **panel del ordenador** es la única forma de entrar (allí la fila abre el panel, no la ficha).
+      //
+      // **En la tarjeta del móvil ese botón ya no sale**: desde el 07/10/2026 la propia tarjeta abre la
+      // ficha, así que repetirlo debajo sobra — y es la pantalla del móvil la que lo quita, no esta lista,
+      // porque el panel del ordenador sí lo necesita.
       acciones: [
         {
           etiqueta: t("panel.tierra_historia", ""),

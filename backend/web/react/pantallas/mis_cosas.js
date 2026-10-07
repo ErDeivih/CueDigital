@@ -96,10 +96,19 @@ function Seccion({ seccion }) {
                         ${
                           // **CORREGIR y BORRAR la tierra** (ronda 92), debajo de su tarjeta y con la
                           // misma pieza que en todas las listas. Van fuera de la tarjeta porque la
-                          // tarjeta **hace otra cosa** (abre lo que hay sembrado en esa tierra) y
-                          // meterle dos botones dentro convertiría el conjunto en una caja que se toca
-                          // pero no hace nada: el agricultor tocaría la tarjeta esperando otra cosa.
-                          html`<${AccionesDeUnaFicha} acciones=${tierra.acciones} />`
+                          // tarjeta **hace otra cosa** (desde el 07/10/2026, abrir la ficha de esa tierra:
+                          // lo mismo que hace la fila en el ordenador).
+                          //
+                          // **Y aquí no sale el botón de «su historia»**: en el móvil la tarjeta entera
+                          // abre ya esa ficha, así que un botón que hace lo mismo justo debajo sobra. En
+                          // el panel del ordenador sí sigue estando, porque allí la fila abre el panel y
+                          // el botón es la forma de entrar. Por eso se quita **aquí** y no en la lista de
+                          // acciones.
+                          html`<${AccionesDeUnaFicha}
+                            acciones=${(tierra.acciones || []).filter(
+                              (una) => una.accion !== "tierra-historia",
+                            )}
+                          />`
                         }
                       </div>
                     `,

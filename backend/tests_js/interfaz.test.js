@@ -4739,15 +4739,18 @@ test("las tierras de «mis cosas» llegan como tarjetas, con lo que le falta a c
   );
 
   // A esta tierra le falta decir qué tiene sembrado este año (`falta_decirlo` lo calcula el servidor).
-  // Se dice **en ámbar, dentro de la tarjeta** y con el botón que lo arregla: es donde el agricultor
-  // está mirando, y mandarlo a otra pantalla a buscar la tierra por su nombre es lo que se quiere evitar.
+  // **La tarjeta ya no abre «lo que hay sembrado»: abre la ficha de la tierra** (07/10/2026). Antes la
+  // misma tierra llevaba a dos pantallas distintas según el aparato —en el móvil al cultivo y en el
+  // ordenador al panel con su historia—, que es lo contrario de la ficha única que pide el encargo; y el
+  // cultivo ya se ve dentro de la ficha («Qué hay hoy»), así que no se pierde nada de lo que se miraba.
+  // El aviso de lo que le falta sigue saliendo **en ámbar, dentro de la tarjeta**.
   assert.equal(tierra.pendiente, "Le falta decir qué tiene sembrado este año");
-  assert.equal(tierra.accionTexto, "DECIR QUÉ HAY SEMBRADO");
+  assert.equal(tierra.accionTexto, "LO QUE HA PASADO EN ESTA TIERRA");
 
-  // Y la tarjeta **no elige: abre** lo que hay sembrado en esa tierra. Por eso no lleva el círculo de
-  // elegir (una lista que no se elige no puede prometer un círculo) y sí la acción con su tierra.
+  // Y la tarjeta **no elige: abre** la ficha de esa tierra. Por eso no lleva el círculo de elegir (una
+  // lista que no se elige no puede prometer un círculo) y sí la acción con su tierra.
   assert.equal(tierra.marca, false, "la tarjeta promete una elección que en esta pantalla no existe");
-  assert.equal(tierra.accion, "cultivo-decir");
+  assert.equal(tierra.accion, "tierra-historia");
   assert.equal(tierra.datos.id, 1, "la tarjeta no dice de qué tierra habla");
 });
 
@@ -10418,7 +10421,9 @@ test("elegir una tierra la enseña en el panel de al lado, sin salir de la pági
     conElegida.panel.acciones.map((una) => una.accion),
     // **El primero es el de su historia** (T15, 05/10/2026): lo que ha pasado en esa tierra. Va detrás
     // del que abre lo sembrado —que es lo que más se usa— y delante de CORREGIR y BORRAR. Esta lista
-    // cambió al añadirlo, y se cambia aquí **diciendo por qué**.
+    // cambió al añadirlo, y se cambia aquí **diciendo por qué**. (En el móvil ese botón no se pinta: allí
+    // la tarjeta entera abre ya la ficha —07/10/2026—, y el que lo quita es la pantalla de la tarjeta,
+    // no esta lista, porque el panel del ordenador lo necesita.)
     ["cultivo-decir", "tierra-historia", "cosa-corregir", "cosa-borrar"],
   );
 
@@ -10476,6 +10481,11 @@ test("cada tierra de «mis cosas» lleva sus tres botones: su historia, corregir
   // (T15). Antes de él, esa pantalla **no tenía puerta**: existía y su dirección funcionaba, pero no
   // había ningún botón que llevara a ella. Esta prueba cambió al añadirlo, y se cambia aquí diciendo por
   // qué: los otros dos siguen siendo los mismos y en el mismo orden, con borrar al final y en rojo.
+  //
+  // **Y el 07/10/2026 la tarjeta pasó a abrir la ficha** (la misma pantalla que abre la fila en el
+  // ordenador: una tierra, una ficha), así que cambia la acción de la tarjeta y no la lista de botones:
+  // el de «su historia» sigue en la lista del panel, y es **la pantalla de la tarjeta** la que no lo
+  // pinta, porque allí lo hace la tarjeta entera.
   const { tierras } = await tierrasDeMisCosasPedidas();
   const acciones = tierras[0].acciones;
   assert.equal(acciones.length, 3, "la tierra no lleva sus tres botones");
@@ -10489,8 +10499,9 @@ test("cada tierra de «mis cosas» lleva sus tres botones: su historia, corregir
   assert.equal(acciones[2].accion, "cosa-borrar", "no se puede borrar la tierra");
   assert.equal(acciones[2].etiqueta, "BORRAR");
   assert.equal(acciones[2].clase, "boton-peligro", "el botón de borrar no va marcado como peligro");
-  // Y la tarjeta sigue haciendo lo suyo: abre lo que hay sembrado en esa tierra.
-  assert.equal(tierras[0].accion, "cultivo-decir", "la tarjeta ha dejado de abrir lo que hay sembrado");
+  // Y la tarjeta hace lo suyo: **abre la ficha de esa tierra**, igual que la fila en el ordenador (antes
+  // abría lo que hay sembrado, y la misma tierra llevaba a dos pantallas distintas según el aparato).
+  assert.equal(tierras[0].accion, "tierra-historia", "la tarjeta no abre la ficha de la tierra");
 });
 
 test("corregir una tierra abre el formulario con lo que ya estaba, y guarda con PUT", async () => {
