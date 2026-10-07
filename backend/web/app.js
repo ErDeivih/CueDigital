@@ -18432,6 +18432,13 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
 
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
+  // **«Mis cosas», que estaba muerto** (07/10/2026). Las dos pantallas de «se ha guardado» un maestro
+  // pintan un botón con `accion: "mis-cosas"` para ir a ver lo que se acaba de dar de alta, y **aquí no
+  // había nada que lo atendiera**: se pulsaba y no pasaba nada. Lo encontró el recorrido
+  // (`scripts/comprobar_el_recorrido.py`) al intentar ir de Inicio a las tierras: la pantalla no se movía.
+  // El destino es el mismo que el del menú (`irAInicio("mis_cosas")`), dicho con el nombre que usan esas
+  // confirmaciones.
+  if (nombre === "mis-cosas") return irAInicio("mis_cosas");
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));
   if (nombre === "anadir-maestro") {
     const tipo = elemento.dataset.tipo;

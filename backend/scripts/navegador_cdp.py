@@ -295,11 +295,19 @@ class NavegadorDeVerdad:
 
         Se busca el elemento, se mira dónde está en pantalla y se manda el clic ahí: eso dispara lo mismo
         que el dedo del agricultor, incluido el `click` que el navegador genera solo.
+
+        **Se elige el primer elemento que se VE, y si ninguno se ve, se falla** (07/10/2026). Antes se
+        cogía el primero que casara con el selector, y eso hizo perder dos vueltas: hay acciones que se
+        pintan en sitios que no se ven (el botón de una confirmación anterior, por ejemplo), y pulsar uno
+        de esos es mandar el clic a la esquina (0,0) —donde no hay nada— **sin que el guion se enterara**.
+        Un clic que no llega a ninguna parte tiene que doler, no pasar en silencio.
         """
         centro = self.evaluar(
             f"""(() => {{
-                const el = document.querySelector({json.dumps(selector)});
-                if (!el) return null;
+                const todos = [...document.querySelectorAll({json.dumps(selector)})];
+                if (!todos.length) return null;
+                const el = todos.find((uno) => uno.checkVisibility({{checkVisibilityCSS: true}}));
+                if (!el) return {{oculto: true, cuantos: todos.length}};
                 el.scrollIntoView({{block: "center"}});
                 const caja = el.getBoundingClientRect();
                 return {{x: caja.left + caja.width / 2, y: caja.top + caja.height / 2}};
@@ -307,6 +315,11 @@ class NavegadorDeVerdad:
         )
         if not centro:
             raise RuntimeError(f"no hay ningún elemento que case con {selector!r}")
+        if centro.get("oculto"):
+            raise RuntimeError(
+                f"{selector!r} casa con {centro['cuantos']} elemento(s) y ninguno se ve: "
+                "no se puede pulsar lo que no está"
+            )
         for tipo in ("mousePressed", "mouseReleased"):
             self.orden(
                 "Input.dispatchMouseEvent",
