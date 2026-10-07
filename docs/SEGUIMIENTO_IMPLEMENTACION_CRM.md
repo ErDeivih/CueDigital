@@ -6132,3 +6132,114 @@ ellos está hecho y medido.
 | `tests/test_las_existencias_cuadran.py` (T21) | **61 · 0 rojos** (incluye 40 L → 6 L → 34) |
 | Base de datos del agricultor | **intacta** (`F0512F06…8227A5`, 696.320 bytes), no se ha abierto |
 | Recuentos de los tres documentos | alineados (4.529 Python / 1.048 JavaScript) |
+
+*(Estos números son los del cierre del §52. Los de después del §53 están al final, en el §53.5.)*
+
+---
+
+## 53. La interfaz: el sistema de diseño, atado y medido (06/10/2026)
+
+El punto de partida era una petición del dueño del proyecto: **mejorar el panel, los componentes y la
+tipografía**, usando v0 y Stitch como referencia de layout, componentes, colores y tipografía. Lo primero que
+hay que decir es **qué se pudo hacer de eso y qué no**:
+
+  · **El MCP de Stitch no se puede consultar desde aquí.** Sus herramientas son de este agente, y no hay
+    ninguna que hable MCP: `web_fetch` solo hace `GET` y el punto de servicio de Stitch contesta **405** a un
+    `GET` (comprobado el 06/10/2026), porque espera `POST` con la clave. El material de v0 tampoco: es una
+    sesión de otra herramienta. **Los tokens que llegaron por el chat no se han escrito en ningún fichero**
+    (la regla del proyecto es que no hay secretos en el repositorio), y no se han usado desde aquí.
+  · **Lo que sí se ha hecho, y es lo que hace falta para que el material de v0/Stitch sirva de algo**: dejar
+    el **sistema de diseño del proyecto atado y comprobado** —escala de letra, colores, piezas, foco— de forma
+    que cualquier diseño que llegue de fuera se pueda aplicar **contra el contrato**, y no a ojo. Ese contrato
+    ya existe y viene de Stitch (`DESIGN.md`, con los diseños en `docs/stitch/`).
+
+**Para aplicar material de v0/Stitch hace falta una cosa sola**: que llegue **como captura o como código**
+(pegado en el chat o en un fichero del repositorio). Con eso se traduce a las piezas de la casa
+(`componentes.js`, `piezas/`) y a los tokens de `DESIGN.md`, y se comprueba con los guiones del navegador.
+
+### 53.1 La tipografía, atada al contrato
+
+**Lo que había**: los tamaños de letra estaban **escritos a mano en cada regla** (`h1 { 1.5rem }`,
+`.pista { 0.95rem }`…), así que la escala del contrato y la del CSS podían separarse sin que nadie se
+enterara —y `h2` **no estaba en el contrato**—. Los colores sí estaban atados desde el principio (una prueba
+compara cada color del CSS con `DESIGN.md`).
+
+**Lo que hay**:
+
+  · La escala vive en `:root` con los nombres del contrato: `--t-pregunta`, `--t-titulo`, `--t-subtitulo`,
+    `--t-bloque`, `--t-dato-grande`, `--t-dato-mando`, `--t-boton`, `--t-boton-principal`, `--t-campo`,
+    `--t-pista`. Las reglas la usan en vez de repetir el número.
+  · **Tres tokens nuevos en `DESIGN.md`**, con su porqué: `subtitulo` (los `h2`, que no estaban), `bloque`
+    (los títulos dentro de un panel) y `dato-mando` (**el número más grande de la aplicación**, el de las
+    cuatro tarjetas del panel de mando).
+  · **Y una prueba que ata los dos sitios**: `test_la_escala_de_letra_del_contrato_es_la_del_css` compara las
+    once parejas (token del contrato ↔ variable del CSS). Comprobado que muerde: cambiando `--t-titulo` a
+    1,6 rem, la prueba se pone roja con su frase.
+
+### 53.2 El foco: en todos los controles, y con contraste
+
+**Lo que había, medido**: el anillo de foco estaba declarado **solo** para los campos, el renglón del menú y
+dos enlaces de tabla. Un botón cualquiera se quedaba con el contorno del navegador (`auto 1px`) y **el mismo
+botón se veía distinto según el ancho** de la pantalla. Y el amarillo del diseño, solo, sobre el fondo blanco
+da **1,44:1** de contraste: al sol no se ve.
+
+**Lo que hay**: una regla para **todos** los controles (`button`, `a`, `summary`, `[tabindex]`, y los campos),
+con el anillo **en dos tonos**: por fuera el verde oscuro (que sobre blanco da casi 10:1 y separa del fondo)
+y por dentro el amarillo del diseño pegado al control. Se hace **con contornos y bordes, nunca con sombras**,
+que es la regla del contrato. `:focus-visible` en botones y enlaces (con el dedo un anillo es ruido) y
+`:focus` en los campos (ahí el foco es el cursor y se ve siempre). Está escrito en `DESIGN.md`, con la
+medición que lo motivó.
+
+### 53.3 Sin sesión no hay armazón (y el teclado lo nota)
+
+**Lo que había, medido**: el menú de módulos se quedaba pintado **sin sesión** —con la sesión anterior, o con
+la pantalla de entrar, que no es de ningún módulo y salía con el menú entero y sin ningún renglón marcado—, y
+como va antes que la pantalla en el HTML era **lo primero que recorría el tabulador**: **25 pulsaciones de
+Tab** para llegar al campo del correo. Y una dirección de dentro, sin sesión, **pintaba la pantalla** (vacía y
+con un error de permiso detrás) en vez de pedir que se entre.
+
+**Lo que hay**: sin sesión **no se pinta armazón** (`pantallaEntrar` y `pintarMarco`, que era el que se
+escapaba por el camino de `/`), y una dirección de dentro **pide entrar**. Medido con
+`scripts/contar_tabulaciones.py`: **1 pulsación** por las tres entradas (`/`, `/#/entrar`, `/#/cuentas`), y el
+menú de módulos ya no está ni en el documento.
+
+### 53.4 Escape cierra (y no anula nada)
+
+**Lo que había**: la aplicación **no tenía ni un manejador de teclado**, así que quien iba con el teclado
+tenía que tabular hasta el botón de cancelar.
+
+**Lo que hay**: `Escape` cierra el panel abierto, con una **lista corta y escrita a mano** de lo que puede
+cerrar. **No está `trabajo-cancelar`**, y es lo importante de esta pieza: en esta aplicación «cancelar»
+significa dos cosas —cerrar un formulario sin guardar y **anular un plan de trabajo**—, y un Escape que
+buscara «cualquier botón que se llame cancelar» anularía un plan de trabajo de un toque de tecla. Tampoco
+está el asistente de apuntar: dejarlo a medias con una tecla es perder lo que el agricultor llevaba escrito.
+
+### 53.5 Lo medido, y lo que queda
+
+| Medida (06/10/2026, después de estos cambios) | Valor |
+|---|---|
+| `pytest tests` | **4.534 recogidas · 0 rojos · 1 saltada** |
+| `node --test "tests_js/*.test.js"` | **1.048 · 0 rojos** |
+| `scripts/comprobar_teclado_y_zoom.py` | **199 comprobaciones · 0 fallos** · **2 hallazgos** (antes: 193/0 con **7**) |
+| `scripts/comprobar_en_un_navegador.py` | **661 comprobaciones · 0 fallos** |
+| `scripts/contar_tabulaciones.py` | **1 pulsación** hasta el correo sin sesión (antes 25) |
+| Base de datos del agricultor | **intacta** (`F0512F06…8227A5`), no se ha abierto |
+
+De los siete hallazgos del §52.4, **cinco están cerrados y comprobados**: H2 (las 24–25 pulsaciones), H3
+(Escape), H5 (sin sesión se pintaba la pantalla), H6/H7 (el foco de botones y enlaces) y H8 (el contraste del
+anillo). **Quedan dos**:
+
+  · **H1 — `#/entrar` no lleva a ninguna pantalla**, y **es una decisión**: la pantalla de entrar es un paso y
+    una dirección que al recargar deja a medias es peor que no tenerla (`tests_js/rutas.test.js` la defiende).
+    Lo que sí se corrigió fue el guion del proyecto que entraba por ahí.
+  · **H4 — a 712 px (lo que ve una ventana de 1440 con el zoom al 200 %) el menú de módulos no se dibuja**
+    (es de escritorio, y por debajo de 64 rem manda la disposición de móvil). La comprobación **no ha podido
+    establecer** si a ese ancho hay otro camino a «Mis cuentas»: el intento de medirlo acabó en la pantalla de
+    entrar y **no se da por bueno**. Queda abierto, con esa duda escrita.
+
+**Lo que NO está comprobado, y se dice**: **cómo se ve**. Las capturas se han guardado
+(`scripts/mirar_pantallas.py`, en la carpeta temporal, a 390, 1024 y 1440 px) y **este modelo no puede leer
+imágenes**, así que la comprobación visual —tipografía, colores, jerarquía— está **pendiente de ojos
+humanos**. Lo que sí está medido es lo que se puede medir: los tamaños de letra que salen en pantalla (cuerpo
+18 px, `h1` 24 px), que ninguna pantalla se sale de su ancho a los tres tamaños, y el anillo de foco en el
+control que tiene el foco.
