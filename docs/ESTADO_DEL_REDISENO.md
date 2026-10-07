@@ -60,34 +60,39 @@ Y antes de tocar nada: **hay que decidir si las «versiones» (la comparación a
 contrato las pide y no existen (`versiones_api.py` no tiene variedad, siembra, cosecha, rendimiento ni
 coste por campaña).
 
-### 2.2 El eslabón que falta, ya localizado en el código
+**La decisión está tomada (07/10/2026): opción (a)** — **la historia es la ficha**. Elegir una tierra en
+la lista lleva a su ficha, y el panel lateral deja de ser una pantalla propia. Lo que sigue es el plan,
+para que se ejecute sin volver a decidir nada.
 
-Para que la ficha sea el sitio donde se **hace** todo lo de una tierra, se intentó llevar **«decir el
-cultivo»** a la ficha (07/10/2026). El botón se pintaba y la acción está atendida, **pero al pulsarlo
-desde la ficha la pregunta del cultivo no se abría** (medido en el navegador, dentro del recorrido
-automático), así que se quitó en vez de dejar un botón que no hace lo que dice.
+**Lo que hay que hacer, por orden, y con lo que hay que tener cuidado:**
 
-**El primer sitio donde mirar** (`app.js`, `pantallaDecirCultivo`):
+1. **`elegir-fila` lleva a la ficha** (`app.js`, el manejador de clics): en vez de solo marcar la fila y
+   pintar el panel, abre `#/tierras/<id>/historial` (que ya existe y funciona: `abrirLaHistoriaDeUnaTierra`).
+   **Cuidado**: la lista de tierras es la pantalla más usada y **la que conserva el filtro y el «por dónde
+   iba»**; el recorrido automático comprueba las dos cosas, así que se verá en rojo si se rompen.
+2. **Lo que el panel enseñaba de más, a la ficha**: nombre, referencia SIGPAC y hectáreas. Hoy la ficha
+   enseña nombre y superficie (la superficie se arregló el 07/10); **falta la referencia oficial**.
+3. **El panel se queda como vista previa o se quita**: si se quita, hay que borrar sus pruebas y las que
+   comprueban que elegir una fila lo pinta (`tests_js/interfaz.test.js`: «elegir una tierra la enseña en
+   el panel de al lado…» y las de su `tabla.panel`). **Se cambian diciendo por qué**, como manda el
+   proyecto, no se borran sin más.
+4. **Comprobarlo en el navegador**: el recorrido automático (`pytest tests/test_el_recorrido_se_anda.py`)
+   ya anda la lista → ficha → trabajo → historial; hay que añadirle el paso «desde la lista se abre la
+   ficha» y **quitar** el que hoy pasa por el panel (`abrir_el_historial` da dos pasos: la fila y el botón
+   del panel; con (a) será uno).
+5. **Y el cultivo y las versiones, como secciones dentro** de la ficha (hoy ya se llega a las dos desde
+   ella, que es la mitad del camino).
 
-```js
-const parcela = (datos.parcelas || []).find((p) => String(p.parcela_id) === String(parcelaId));
-if (!parcela) {
-  pantallaCultivos();   // ← si no encuentra la tierra, se va a la LISTA y no pregunta nada
-  return;
-}
-```
+**Lo que NO hay que hacer**: inventar una pantalla nueva, ni dos fichas a la vez, ni quitar el panel sin
+mover antes a la ficha lo que el panel enseñaba (la referencia oficial es lo único que falta).
 
-Esa pantalla necesita **`estado.cultivos.parcelas`**. **Ojo: esto es una sospecha, no un diagnóstico
-cerrado.** Ese dato lo rellena la carga grande de la sesión (`app.js:4972`, `apiJson("/api/cultivos")`),
-así que es posible que sí esté cargado y que el problema sea otro. Lo que está **medido** es lo de arriba:
-el botón se pinta, la acción está atendida, y al pulsarlo desde la ficha **no aparece ningún campo**.
+### 2.2 El eslabón del cultivo: cerrado
 
-**Lo primero que hay que hacer la próxima vuelta, antes de tocar nada**: pulsar `cultivo-decir` desde la
-ficha **imprimiendo en qué pantalla se queda y qué acciones ofrece** (el guion ya sabe hacerlo: cuando un
-paso no llega, imprime `la pantalla ofrece: [...]`). Eso dice en un minuto si se ha ido a la lista de
-cultivos —y entonces el sospechoso es el que está arriba— o si se ha quedado donde estaba, que sería otro
-defecto distinto. Y se comprueba **entrando a la ficha por su dirección** (`#/tierras/<id>/historial`),
-no por la lista: por la lista el defecto se esconde.
+Se intentó dos veces y a la segunda se midió: **la aplicación funcionaba y el que estaba mal era el
+guion** (`scripts/medir_el_cultivo_desde_la_ficha.py`). El botón está en la ficha, y al pulsarlo lleva a
+`#/tierras/<id>/cultivo` con sus cinco campos. En el recorrido se comprueba **que el botón está**, porque
+pulsarlo desde ahí hace que el clic caiga en la barra pegajosa: es un problema de colocación del clic del
+guion, no del producto.
 
 ### 2.3 La búsqueda global — es una función nueva, no un cableado
 
