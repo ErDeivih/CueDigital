@@ -133,6 +133,14 @@ def buscar(
     cortado_contactos = len(contactos) > TOPE_POR_GRUPO
     contactos = contactos[:TOPE_POR_GRUPO]
 
+    # **Las máquinas se quedan fuera de esta vuelta, y se dice por qué** (07/10/2026): el grupo estaba
+    # escrito y **no se podía probar**. Para probarlo hay que dar de alta una máquina por la API, y su
+    # puerta pide un cuerpo que no he sabido completar en lo que quedaba de sesión (`POST /api/maquinaria`
+    # contesta ««» no es una de las respuestas que se pueden elegir»: falta un valor de una lista, y no se
+    # cuál). **Sin prueba, no se queda**: código que «funciona» y nadie comprueba es justo lo que este
+    # proyecto no admite. La vuelta siguiente lo añade con su prueba, mirando el esquema de `POST
+    # /api/maquinaria` para saber qué valores admite.
+
     grupos = []
     if suyas:
         grupos.append(
@@ -184,6 +192,7 @@ def buscar(
                 ],
             }
         )
+    # (El grupo de las máquinas va aquí, cuando tenga su prueba: ver la nota de arriba.)
 
     return {"texto": buscado, "buscado": True, "motivo": "", "grupos": grupos}
 
