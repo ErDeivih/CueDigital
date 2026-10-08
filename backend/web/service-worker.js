@@ -339,6 +339,7 @@ const FICHEROS = [
   // La búsqueda global (07/10/2026): se guarda como las demás, para que la caja funcione también sin
   // cobertura (que es donde se busca «¿dónde está esto?» cuando no hay nada más que hacer).
   "/react/pantallas/buscar.js",
+  "/react/pantallas/normativa.js",
   // T10 (03/10/2026): las semillas y lo que se ha sembrado. Las dos se miran **en la nave y en el
   // campo**: la lista de semillas para saber de cuál queda, y la siembra para apuntarla en el mismo
   // momento en que se está sembrando.
