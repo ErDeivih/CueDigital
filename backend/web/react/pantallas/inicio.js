@@ -137,9 +137,31 @@ export function PantallaInicio({
   const anio = campana && campana.anio !== null && campana.anio !== undefined ? campana.anio : "";
   const titulo =
     frase(inicio.saludo) + (nombre ? `, ${nombre}` : "") + (anio === "" ? "" : ` · ${anio}`);
+  // **Apuntar un trabajo, arriba** (decisión de David, 07/10/2026). Medido con
+  // `scripts/medir_las_acciones.py`: Inicio ofrecía 41 acciones y solo 3 se veían al entrar —el resto son
+  // enlaces de lista, uno por tierra—, así que lo que había que decidir era **qué se viene a hacer al abrir
+  // el cuaderno**, y la respuesta es **apuntar un trabajo**. Se sube el botón que ya existe en los botones de
+  // Inicio —con **su** texto y **su** acción, sin inventar etiquetas ni acciones nuevas—, y en el ordenador
+  // se ve además del panel de mando.
+  const elTrabajo = (botones || []).find((uno) => uno.id === "trabajo") || null;
 
   return html`
     <h1>${titulo}</h1>
+    ${
+      // La acción que se viene a hacer, **nada más entrar** (ver arriba el porqué).
+      elTrabajo
+        ? html`<div className="barra-acciones">
+            <${BotonDeInicio}
+              etiqueta=${elTrabajo.texto}
+              pista=${elTrabajo.pista}
+              icono=${elTrabajo.icono}
+              accion=${elTrabajo.accion}
+              ir=${elTrabajo.ir}
+              tipo=${elTrabajo.tipo}
+            />
+          </div>`
+        : null
+    }
     ${hayParcelas ? null : html`<${BloqueAntesDeEmpezar} maestros=${maestros} />`}
     ${
       // **El panel de mando, solo en el ordenador** (fase 4, 30/09/2026): el estado del año de un vistazo.
