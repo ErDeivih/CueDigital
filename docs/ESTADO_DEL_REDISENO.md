@@ -145,8 +145,20 @@ aterrizaba el clic del guion** — la misma casa que el botón de «decir el cul
 el culpable era el guion y no el programa. Tercera vez en esta sesión.
 
 **Lo que queda, entonces, es solo la puerta**: el renglón del menú y la dirección. Nada del producto está
-roto, y cuando la puerta esté, el paso del recorrido tiene que **pulsar de forma que el clic llegue** (o
-comprobar la existencia del cuadro y medir el camino aparte, como se hizo con el cultivo).
+roto.
+
+**Y ya está comprobado en el recorrido automático** (07/10/2026), con su salida leída a mano:
+
+```
+── Paso 7: La búsqueda global   (dirección: #/tierras/18/historial?…)
+  [OK  ] escribir en el cuadro y pulsar BUSCAR enseña los grupos con sus resultados
+Comprobaciones: 18   Fallos: 0
+Hallazgos: 1  · la búsqueda global funciona de punta a punta … pero todavía no tiene puerta
+```
+
+El paso **inyecta** el cuadro y el botón (como se hizo con el cultivo en la ronda 18) porque la pantalla no
+tiene puerta a la que agarrarse; **el día que la tenga, el paso usará la suya en vez de inyectar nada**, y
+ese hallazgo desaparecerá solo.
 
 **Lo que hay que mirar, por orden** (no se ha podido investigar todavía, y el motivo es el de abajo):
 
