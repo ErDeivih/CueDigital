@@ -298,6 +298,11 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     "tierras_mapa",
     "tierra",
     "tierra_versiones",
+    // **La búsqueda global** (07/10/2026, del encargo del rediseño): tiene dirección propia
+    // (`#/buscar?texto=…`) porque **se puede enlazar y recargar** — lo que se busca viaja en la dirección,
+    // que es lo que hace que volver a ella deje al agricultor donde estaba. Se apunta aquí por el mismo
+    // motivo que las demás: esta lista es la que vigila que una pantalla nueva no se quede sin dirección.
+    "buscar",
     "decir_cultivo",
     "cuaderno",
     "firmar",

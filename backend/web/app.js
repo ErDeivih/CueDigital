@@ -21569,6 +21569,11 @@ async function pantallaBuscar(textoDeLaDireccion = null) {
   }
   return montar(() =>
     pantallaDeLaBusqueda({
+      // **La clave de la pantalla** (07/10/2026): `montar` la necesita para lo que hace por todas las
+      // pantallas —la dirección, el módulo marcado en el menú y la barra de contexto—. Sin ella, la
+      // pantalla se pintaba pero no se apuntaba a dónde se había ido: la dirección no cambiaba y recargar
+      // dejaba al agricultor fuera de su búsqueda. Es el camino central, y se usa **entero**.
+      pantalla: "buscar",
       textos: { buscar: t("buscar", {}) },
       resultado,
       puedeBuscar: Boolean(estado.token),

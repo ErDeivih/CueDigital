@@ -81,6 +81,7 @@ export function PantallaBuscar({ textos = {}, resultado = null, puedeBuscar = tr
 /** El elemento de React de esta pantalla, ya con sus propiedades puestas. */
 export function pantallaDeLaBusqueda(propiedades) {
   return html`<${PantallaBuscar}
+    pantalla=${propiedades.pantalla}
     textos=${propiedades.textos}
     resultado=${propiedades.resultado}
     puedeBuscar=${propiedades.puedeBuscar}
