@@ -240,6 +240,8 @@ const PANTALLAS_EN_REACT = new Set([
   // vez de sustituirla: `#/tierras` sigue siendo la lista de siempre, con su buscador y su tabla.
   "tierras_mapa",
   "tierra_versiones",
+  // La búsqueda global (07/10/2026): su pantalla es de React como las demás, y esta lista es la que lo dice.
+  "buscar",
   // T10 (03/10/2026): las semillas con lo que pone su etiqueta y las siembras. Son dos ficheros
   // (`semillas.js` y `siembras.js`) y cuatro pantallas, y los dos van aquí y en la caché del campo:
   // la lista de semillas y la siembra se miran **en la nave y en la parcela**, muchas veces sin
@@ -1523,9 +1525,10 @@ const MODULOS = [
  */
 const MODULO_DE_LA_PANTALLA = {
   PantallaInicio: "panel",
-  // La búsqueda global: sin esto, al abrirla el menú no marcaría ningún renglón, y no saber dónde estás es
-  // la mitad de para qué sirve un menú.
-  PantallaBuscar: "buscar",
+  // **La búsqueda global todavía NO está aquí, y es a propósito**: su renglón del menú está pendiente (con
+  // sus cuatro números escritos en `docs/ESTADO_DEL_REDISENO.md`), y una pantalla que marca un módulo que no
+  // está en el menú deja el menú sin marcar nada. Lo cazó el guardián: «estas pantallas marcan un módulo que
+  // no está en el menú: ['buscar']». Se pone el día que se ponga el renglón.
   PantallaMiCuaderno: "cuaderno",
   PantallaHecho: "cuaderno",
   PantallaAsistente: "cuaderno",
