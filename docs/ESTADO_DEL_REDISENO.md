@@ -688,3 +688,26 @@ agricultor.
 de la matriz, **sin inventar ni una**-, con su prueba (que esten las diez y que ninguna se quede sin enlace
 oficial). Despues, el endpoint que las sirve, la pantalla que las agrupa por lo que son, el renglon del menu
 -con sus cuatro numeros, como se hizo con la busqueda- y el paso del recorrido.
+
+### Y la matriz decide mas de lo que parecia: LOS TIPOS y EL ESTADO (07/10/2026)
+
+Leida la seccion **1. Registro obligatorio de cada regla**, hay dos cosas que **no se pueden inventar en la
+pantalla** porque la matriz ya las dice, y cambian el diseno:
+
+1. **Cinco tipos distintos, y el usuario ve la diferencia**: *obligacion general, condicion de ayuda
+   solicitada, compromiso concedido, recomendacion tecnica y dato informativo*. O sea que **no basta con
+   agrupar en norma y fuente tecnica** -mi aproximacion-: cada regla lleva **su tipo** y la pantalla lo
+   ensena. Presentar una recomendacion con la cara de una obligacion es exactamente lo que no se puede hacer.
+2. **Solo la regla ctiva participa en comprobaciones concluyentes**, y hay mas estados: *localizada,
+   transcripcion, revisada, activa, sustituida*. **Y una regla sustituida sigue disponible** para reproducir un
+   informe historico: si la pantalla solo ensenara las activas, se perderia eso.
+
+Ademas, cada regla tiene mas campos de los seis que saque de N01 (**autoridad, territorio, articulo/anexo,
+fecha de publicacion, vigencia desde/hasta, campanas, version, documento y huella, fecha de revision,
+responsable, condiciones de aplicacion, datos requeridos, formula, excepciones, resultado cuando faltan datos y
+casos de prueba**). No todos tienen que ir a la pantalla -seria un formulario, no una pantalla-, pero **si
+tienen que estar en los datos**: la pantalla elige que ensena, y lo que no ensena **no puede inventarlo**.
+
+**Lo que esto cambia del plan**: la lista de las diez reglas no es «titulo, fuente, enlace, requisito y
+avisos», sino que cada una lleva **su tipo y su estado** -y las dos cosas se ven-. El resto de los campos se
+guardan aunque no se ensenen.
