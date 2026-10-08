@@ -140,6 +140,28 @@ para el que las lee de prisa — y la he pisado yo.
    >
    >    La 1 es la buena: **una prueba que se fabrica su propio caso no depende de la suerte del escenario**.
    >
+   >    ### La causa, encontrada: la ficha pide su tierra a la puerta equivocada (07/10/2026)
+   >
+   >    `abrirLaHistoriaDeUnaTierra` (`app.js` ≈L21563) pide su tierra a **`/api/trabajos/tierra/{id}`** —la
+   >    puerta del **estado**, que habla de trabajos: lo previsto, lo hecho, las cifras— y **esa respuesta no
+   >    lleva `dibujo`**. Por eso `tierra.dibujo` es `undefined` y **no se pinta nada**, ni con una tierra que
+   >    tiene forma: *el arreglo estaba puesto, pero le llegaba un dato que no viaja por esa puerta*.
+   >
+   >    Y el dibujo **sí existe y sí se sirve**: está en el esquema de la tierra (`schemas.py`, `dibujo`, ≈L379)
+   >    y lo devuelve la **lista** de tierras (de ahí lo leen sus 18 pruebas). **Lo primero: confirmar en qué
+   >    clase está ese campo** —si es `ParcelaSalida`, la puerta de una tierra sola ya lo lleva—.
+   >
+   >    **Los dos arreglos, y el que recomiendo:**
+   >
+   >    1. **Que la ficha pida el dibujo a la puerta de la tierra** (`/api/parcelas/{id}`, una petición más y
+   >       pequeña) y lo pase a la ficha. **Recomendado**: cada dato por la puerta que lo tiene, y la de la
+   >       tierra es la suya.
+   >    2. Añadir `dibujo` a la respuesta del **estado** (`/api/trabajos/tierra/{id}`): una edición de backend
+   >       y su prueba, pero mezcla en una respuesta de trabajos un dato de la tierra.
+   >
+   >    Y cuando salga el dibujo de verdad, **la comprobación del recorrido ya está armada** para ponerse
+   >    verde: la que crea una tierra con forma —eso ya está escrito— y mira `.panel-dibujo` en su ficha.
+   >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
    >    haga: el campo `dibujo` es la puerta.
