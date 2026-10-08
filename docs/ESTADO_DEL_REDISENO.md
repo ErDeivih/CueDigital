@@ -861,3 +861,32 @@ Es la opcion que **no inventa nada**, y su consecuencia queda escrita para que n
 
 **Lo mismo vale para el estado** (localizada, transcripcion, revisada, activa, sustituida): va en los datos, y
 mientras no se sepa, la pantalla **no da a entender que la regla es concluyente** -solo ctiva lo es-.
+
+## La matriz NO es uniforme, y eso cambia el modelo (07/10/2026)
+
+Al intentar **extraer** las diez reglas para escribirlas en pp/ sin teclear a mano, el intento **se paro tres
+veces** -y pararse era lo correcto: nada se ha escrito-. Lo que ha aparecido es que **las diez secciones no
+tienen la misma forma**:
+
+| Regla | Como empieza |
+|---|---|
+| N01 | Fuente: (singular) y **Requisito de producto:** -la unica que usa esa etiqueta- |
+| N02 · N04 | Fuente: (singular) |
+| N03 · N05 · N06 · N07 · N09 · N10 | **Fuentes: (plural)**, con **varias** normas y varios enlaces |
+| N08 | **Fuente de localizacion:** |
+
+Y solo **N06** trae Pruebas:. Peor todavia para un modelo rigido: **N09 dice «Dos obligaciones diferentes.
+Crear reglas por...»** -o sea que **una seccion puede contener mas de una obligacion**-.
+
+**Lo que esto cambia, y es para bien**: el modelo de «codigo, titulo, fuente, enlace, requisito» **aplastaria**
+lo que la matriz escribe con cuidado -una seccion con dos obligaciones, una con un aviso sobre una convocatoria
+concreta, otra que distingue un informe historico de una autorizacion-. El modelo honesto es:
+
+- codigo y 	itulo (que si son uniformes: los diez son ### Nxx — Titulo),
+- **uentes**: una **lista** de enlaces oficiales con su nombre -porque hay reglas con dos y tres-,
+- **	exto**: lo que la matriz dice de esa regla, **entero y sin tocar**,
+- 	ipo y estado: vacios, como se decidio.
+
+Asi no se pierde ni un aviso por el camino, y la pantalla ensena la regla **como esta escrita** y **enlaza sus
+fuentes oficiales**, que es lo unico que la hace comprobable. **Y el «una seccion = una regla» hay que
+confirmarlo con David** cuando se vea en pantalla (N09 avisa de que son dos).
