@@ -35,6 +35,8 @@ from .routers import (
     explotacion,
     extractos_api,
     facturas_api,
+    # **La normativa** (T-normativa, 07/10/2026): las reglas de la matriz, tal cual.
+    normativa_api,
     fincas_api,
     firmas_api,
     gastos_api,
@@ -162,6 +164,8 @@ app.add_middleware(
 )
 
 app.include_router(cuenta.router)
+# **La normativa**, con las demas puertas de consulta (07/10/2026).
+app.include_router(normativa_api.router)
 # Las fincas de una cuenta y quién entra en ellas (varias cuentas en la misma finca): va justo detrás de
 # la cuenta, porque es lo primero que hace falta después de entrar.
 app.include_router(fincas_api.router)
