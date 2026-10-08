@@ -376,67 +376,45 @@ def main() -> int:
 
         # ── 7. La búsqueda global ───────────────────────────────────────────────────────────────
         paso(nav, 7, "La búsqueda global")
-        # **Esta pantalla todavía no está registrada** (07/10/2026): la puerta del servidor, sus palabras y
-        # su pantalla están hechas y probadas, pero falta el cable que la une a la aplicación (seis sitios,
-        # escritos en `docs/ESTADO_DEL_REDISENO.md`). Así que aquí **se mide y se apunta**, en vez de darlo
-        # por bueno o de poner esta comprobación en rojo por algo que se sabe.
+        # **Por su puerta de verdad** (07/10/2026). Este paso nació inyectando el cuadro y el botón en otra
+        # pantalla, porque la búsqueda no tenía puerta a la que agarrarse; se apuntaba como hallazgo y se
+        # dijo que el día que la tuviera, la usaría. **La tiene** (renglón en el menú y dirección propia),
+        # así que ahora se entra por su dirección y se pulsa **su** botón.
         #
-        # El día que el cable esté, esta misma comprobación se pone en verde sola: escribe en el cuadro,
-        # pulsa y exige un grupo con su resultado.
-        # **Sin puerta todavía, pero con el camino comprobado** (07/10/2026). La pantalla no se puede abrir
-        # desde ningún sitio (le faltan el renglón del menú y la dirección), y quedarse ahí sería dejar sin
-        # comprobar lo que **sí** está hecho. Así que se comprueba como se comprobó el cultivo (ronda 18):
-        # **inyectando** en una pantalla el cuadro y el botón igual que los pinta la búsqueda. Eso prueba el
-        # manejador, la petición y la pantalla **de punta a punta**, que es lo que decide si la función
-        # existe. Cuando tenga puerta, este mismo paso la usará en vez de inyectar nada.
-        nav.abrir(f"{DIRECCION}/#/tierras", esperar=1.8)
-        nav.esperar("Boolean(document.querySelector('#buscar_tierra_mis_cosas'))", segundos=12)
-        nav.evaluar(
-            "(() => {"
-            " const caja = document.createElement('input');"
-            " caja.id = 'buscar_global';"
-            " caja.type = 'search';"
-            f" caja.value = {json.dumps(la_tierra.alias[:24])};"
-            " const boton = document.createElement('button');"
-            " boton.dataset.accion = 'buscar';"
-            " boton.textContent = 'BUSCAR';"
-            " const donde = document.querySelector('#pantalla');"
-            " donde.appendChild(caja); donde.appendChild(boton);"
-            " return null; })()"
-        )
-        if not hay(nav, "#buscar_global"):
-            HALLAZGOS.append(
-                "la búsqueda global todavía no tiene puerta: `#/buscar` existe como dirección pero la "
-                "pantalla no está registrada (falta el cable: `rutas.js`, los tres bloques de `app.js`, su "
-                "renglón en el menú y su manejador). La puerta del servidor, sus palabras y su pantalla ya "
-                "están hechas y probadas"
-            )
-            print("  [HALLAZGO] la pantalla de la búsqueda no está registrada todavía (el cable, pendiente)")
+        # **Se pulsa con un clic de verdad, pero no por coordenadas**: el manejador de la aplicación es un
+        # `click` delegado en `document`, así que un clic sobre el botón es el mismo suceso que el del
+        # agricultor — y las coordenadas son la parte poco fiable de este instrumento (rondas 8, 18 y 58:
+        # el clic aterrizó en la barra pegajosa y el que estaba mal era el guion, no el programa).
+        nav.abrir(f"{DIRECCION}/#/buscar", esperar=1.8)
+        if not nav.esperar("Boolean(document.querySelector('#buscar_global'))", segundos=12):
+            comprobar(False, "la dirección `#/buscar` abre la pantalla de la búsqueda (tiene puerta)")
         else:
-            # **Se busca algo que existe de verdad** en el escenario (no una palabra inventada): la tierra
-            # de la prueba. Si se buscara «prado» y la explotación no tuviera ningún «prado», la
-            # comprobación fallaría por el texto elegido y no por la pantalla — que es exactamente el error
-            # que cometí la primera vez que escribí esto.
+            comprobar(True, "la dirección `#/buscar` abre la pantalla de la búsqueda (tiene puerta)")
+            # **Se busca algo que existe de verdad**: la tierra de la prueba. Si se buscara «prado» y la
+            # explotación no tuviera ningún «prado», la comprobación fallaría por el texto elegido y no por
+            # la pantalla — que es el error que cometí la primera vez que escribí esto.
             escribir_en(nav, "#buscar_global", la_tierra.alias[:24])
+            nav.evaluar(
+                "(() => { const boton = document.querySelector('#pantalla [data-accion=\\'buscar\\']');"
+                " if (!boton) return false; boton.click(); return true; })()"
+            )
             comprobar(
-                pulsar_si_hay(
-                    nav,
-                    "[data-accion='buscar']",
-                    "document.querySelectorAll('#pantalla .tarjeta').length > 0",
+                nav.esperar(
+                    "document.querySelectorAll('#pantalla .tarjeta').length > 0", segundos=12
                 ),
                 "escribir en el cuadro y pulsar BUSCAR enseña los grupos con sus resultados",
             )
-            captura(nav, "7-busqueda")
-            # **Y lo que sigue faltando se apunta, no se calla**: la pantalla tiene el camino comprobado
-            # —se busca, se pide y se pintan los grupos— pero **no tiene puerta**: no se llega a ella ni por
-            # el menú ni por una dirección, así que aquí no se ha podido pulsar *su* botón, sino uno igual
-            # inyectado. Un hallazgo declarado se ve; darlo por bueno, no.
-            HALLAZGOS.append(
-                "la búsqueda global funciona de punta a punta (se busca, se pide al servidor y se pintan "
-                "los grupos, comprobado aquí inyectando su cuadro y su botón), pero **todavía no tiene "
-                "puerta**: le faltan el renglón del menú y su dirección propia (`#/buscar?texto=…`), con lo "
-                "que recargar la página deja al agricultor fuera de su búsqueda"
+            # **Y la dirección lleva lo buscado**: es lo que hace que recargar deje al agricultor en su
+            # búsqueda y que el enlace se pueda mandar.
+            comprobar(
+                "texto=" in str(nav.evaluar("location.hash")),
+                "y lo que se ha buscado viaja en la dirección, para poder volver a ella",
             )
+            comprobar(
+                hay(nav, "#menu-buscar"),
+                "y su renglón del menú está, que es la puerta del ratón",
+            )
+            captura(nav, "7-busqueda")
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     if HALLAZGOS:

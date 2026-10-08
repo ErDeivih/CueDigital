@@ -21597,6 +21597,10 @@ async function pantallaBuscar(textoDeLaDireccion = null) {
       textos: { buscar: t("buscar", {}) },
       resultado,
       puedeBuscar: Boolean(estado.token),
+      // **Y el texto, para que el cuadro lo enseñe**: al llegar por una dirección (`#/buscar?texto=…`) el
+      // campo tiene que salir con lo que se buscó, y no vacío. Es la mitad de «recargar deja al agricultor
+      // donde estaba»: la otra es que la dirección lo lleve.
+      texto,
     }),
   );
 }

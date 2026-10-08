@@ -19,7 +19,7 @@
 import { frase, html } from "../componentes.js";
 import { losGruposDeLaBusqueda } from "../../nucleo.js";
 
-export function PantallaBuscar({ textos = {}, resultado = null, puedeBuscar = true }) {
+export function PantallaBuscar({ textos = {}, resultado = null, puedeBuscar = true, texto = null }) {
   const t = textos.buscar || {};
   const suyo = losGruposDeLaBusqueda(resultado, t);
 
@@ -32,7 +32,7 @@ export function PantallaBuscar({ textos = {}, resultado = null, puedeBuscar = tr
       <input
         id="buscar_global"
         type="search"
-        value=${suyo.texto}
+        defaultValue=${texto || suyo.texto}
         placeholder=${frase(t.caja)}
         disabled=${!puedeBuscar}
       />
@@ -85,5 +85,6 @@ export function pantallaDeLaBusqueda(propiedades) {
     textos=${propiedades.textos}
     resultado=${propiedades.resultado}
     puedeBuscar=${propiedades.puedeBuscar}
+    texto=${propiedades.texto || null}
   />`;
 }
