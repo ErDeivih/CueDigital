@@ -643,7 +643,7 @@ Lo que cuentan las secciones de arriba termina aqui, y esto es **como quedo**:
 - **Lo que quede escrito arriba como pendiente sobre el dibujo, ya no lo esta.** Se deja dicho aqui porque el
   traspaso tiene que describir el estado actual.
 
-**Y lo unico que queda del encargo es la pantalla de normativa** (su fuente unica:
+**Y lo unico que **ya no queda nada del encargo**: la pantalla de normativa está hecha y medida** (su fuente unica:
 docs/MATRIZ_NORMATIVA_CRM.md; su regla: no inventar ninguna obligacion legal).
 
 ## La fuente de la pantalla de normativa, mirada (07/10/2026)
@@ -919,3 +919,40 @@ reglas, que cada una ensena **su fuente oficial con su enlace** y que las que no
 
 **Lo que no hay que tocar**: el estado (los textos ya se sirven) y la puerta (ya responde, con sus cinco
 pruebas).
+
+---
+
+## CIERRE del encargo (07/10/2026)
+
+Las cuatro prioridades, **hechas y medidas**, y cada una con el comando que lo vuelve a comprobar:
+
+| Prioridad | Estado | Cómo se comprueba |
+|---|---|---|
+| **1. Registrar un trabajo**: planificar → guardar → marcar realizado → corregir → anular → **existencias** | hecha | `scripts/comprobar_el_recorrido.py` (pasos 3 a 5) |
+| **2. Las fichas desde la búsqueda**: consulta, recarga, Atrás/Adelante y contexto conservado | hecha | el mismo recorrido (paso 7) |
+| **3. El rediseño**: cuerpo de 18 px, títulos de 24/20, márgenes de 24 px, cabecera compacta, fichas por secciones, formularios de escritorio y acciones claras | hecha | `medir_la_cabecera.py` · `medir_los_formularios.py` · `medir_las_acciones.py` |
+| **3 bis. La forma real de la parcela en su ficha** (era una regresión de este rediseño) | hecha | `medir_el_dibujo_en_la_ficha.py` (2 trazos, 104 px) |
+| **4. Normativa accesible**: las diez reglas de la matriz, con su fuente oficial y su aviso de que no están clasificadas | hecha | `medir_la_pantalla_de_normativa.py` **y** el paso 8 del recorrido |
+| **4 bis. El traspaso al día** | hecha | este documento |
+
+**Los números, todos medidos** el 07/10/2026:
+
+- **4.646 pruebas de Python**, 0 fallos, 1 omitida.
+- **1.077 pruebas de JavaScript**, 0 rojos.
+- **53 comprobaciones** del recorrido, 0 fallos, 1 hallazgo (el escenario no tiene ninguna tierra con forma
+  para comprobar el dibujo: se dice, no se esconde).
+- **203 comprobaciones** de teclado y zoom al 200 %, 0 fallos.
+- **10 reglas** de normativa, con **18 enlaces oficiales** (el primero, el del BOE) y **10 avisos** de
+  «sin clasificar».
+
+**Y tres decisiones que se tomaron mirando, no suponiendo**, y que quedan escritas donde se tomaron:
+
+1. **El tipo y el estado de las reglas van vacíos** y la pantalla dice «sin clasificar»: la matriz define los
+   cinco tipos y los cinco estados, pero no dice cuál es cada regla, y rellenarlos habría sido inventar una
+   clasificación legal. Lo decidió David.
+2. **El guardián del renglón del menú se cambió con su motivo y midiendo antes**: prohibía la palabra
+   «normativ» para que nadie llenara el hueco del encargo con una puerta a ninguna parte, y con razón; ahora
+   exige que **cada renglón lleve a su pantalla**, comprobado contra la tabla que de verdad lo decide (22
+   renglones con su pantalla y 22 pantallas con su renglón).
+3. **El comentario del grupo «Normativa»** sigue diciendo que ese grupo no existe, y sigue siendo verdad:
+   lo que se añadió es **un renglón** en el grupo de Inicio, no un grupo nuevo.

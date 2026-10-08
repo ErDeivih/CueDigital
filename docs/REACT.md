@@ -155,6 +155,7 @@ Las tres últimas, por orden:
 | **Mis tierras, en el mapa y en la tabla** (`backend/web/react/pantallas/tierras_mapa.js`) | ✅ En React (T06) |
 | **Lo que ha sido esta tierra** (`backend/web/react/pantallas/tierra_versiones.js`) | ✅ En React (T06) |
 | **La búsqueda global** (`backend/web/react/pantallas/buscar.js`) | ✅ En React (rediseño, 07/10/2026) |
+| **La búsqueda global** (`backend/web/react/pantallas/normativa.js`) | ✅ En React (rediseño, 07/10/2026) |
 | **Las semillas** (`backend/web/react/pantallas/semillas.js`) | ✅ En React (T10) |
 | **Sembrar una semilla y corregir la siembra** (`backend/web/react/pantallas/siembras.js`) | ✅ En React (T10) |
 | **Las personas y las empresas** (`backend/web/react/pantallas/contactos.js`) | ✅ En React (T11) |
