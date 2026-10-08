@@ -41,6 +41,7 @@ const TEXTOS_PANTALLA = {
     caja: "Buscar en tu cuaderno",
     pista: "Escribe al menos dos letras.",
     boton: "BUSCAR",
+    ver: "VER",
     sin_buscar: "Escribe lo que buscas y pulsa BUSCAR.",
     sin_resultados: "No hay nada que se llame así.",
     cortado: "Hay más de los que caben aquí: afina lo que buscas.",
@@ -78,7 +79,14 @@ test("cada grupo sale con su nombre del servidor y con sus resultados", () => {
   assert.equal(salida.grupos.length, 1);
   assert.equal(salida.grupos[0].titulo, "Tierras");
   assert.deepEqual(salida.grupos[0].lineas, [
-    { etiqueta: "El Prado de arriba", detalle: "ES-P-00001-0001" },
+    {
+      etiqueta: "El Prado de arriba",
+      detalle: "ES-P-00001-0001",
+      // **Y a dónde lleva** (07/10/2026): cada línea trae su acción y su identificador, que es lo que hace
+      // que un resultado se pueda abrir en vez de solo leerse.
+      accion: "tierra-historia",
+      id: 7,
+    },
   ]);
 });
 
@@ -147,6 +155,50 @@ test("la pantalla dibuja el cuadro, el botón y los grupos con sus resultados", 
   assert.match(html, /Tierras/, "no sale el nombre del grupo, que viene del servidor");
   assert.match(html, /El Prado de arriba/, "no sale el resultado");
   assert.match(html, /ES-P-00001-0001/, "no sale el detalle del resultado");
+});
+
+test("y cada resultado **lleva a su ficha**", async () => {
+  // **Un resultado que no lleva a ninguna parte no es un resultado, es un cartel** (encargo del rediseño,
+  // 07/10/2026): cada línea trae su botón con la acción de su grupo y el identificador de ese resultado, que
+  // es lo que el manejador de la aplicación necesita para abrir su ficha.
+  const html = await htmlDeLaBusqueda({ textos: TEXTOS_PANTALLA, resultado: UNA_RESPUESTA });
+  assert.match(html, /data-accion="tierra-historia"/, "un resultado de tierras no abre la ficha de su tierra");
+  assert.match(html, /data-id="7"/, "el botón del resultado no lleva su identificador");
+  assert.match(html, /VER/, "el botón no dice lo que hace");
+});
+
+test("cada grupo lleva a lo que tiene que llevar, y los papeles a su lista", async () => {
+  // La decisión de a dónde lleva cada grupo está en `nucleo.js`, y se prueba aquí sin navegador.
+  const salida = losGruposDeLaBusqueda(
+    {
+      texto: "x",
+      buscado: true,
+      grupos: [
+        { clave: "tierras", cuantos: 1, resultados: [{ id: 1, etiqueta: "Una tierra" }] },
+        { clave: "gastos", cuantos: 1, resultados: [{ id: 2, etiqueta: "Un gasto" }] },
+        { clave: "personas", cuantos: 1, resultados: [{ id: 3, etiqueta: "Una persona" }] },
+        { clave: "maquinas", cuantos: 1, resultados: [{ id: 4, etiqueta: "Una máquina" }] },
+        { clave: "papeles", cuantos: 1, resultados: [{ id: 5, etiqueta: "Un papel" }] },
+      ],
+    },
+    TEXTOS,
+  );
+  const acciones = salida.grupos.map((grupo) => grupo.lineas[0].accion);
+  assert.deepEqual(
+    acciones,
+    ["tierra-historia", "gasto-abrir", "contacto-abrir", "maquina-ver", "papel-ver-todos"],
+    "algún grupo no lleva a donde tiene que llevar",
+  );
+  // **Y los papeles, a su lista y no al fichero**: abrir el fichero es descargarlo, y una descarga no se
+  // dispara sola al mirar unos resultados.
+  assert.equal(salida.grupos[4].lineas[0].accion, "papel-ver-todos");
+  // Y un grupo que el servidor añada mañana sin acción conocida: se enseña, pero **sin botón que no lleva a
+  // ningún sitio**.
+  const conGrupoNuevo = losGruposDeLaBusqueda(
+    { buscado: true, grupos: [{ clave: "aperos", cuantos: 1, resultados: [{ id: 9, etiqueta: "Rodillo" }] }] },
+    TEXTOS,
+  );
+  assert.equal(conGrupoNuevo.grupos[0].lineas[0].accion, "", "un grupo nuevo no puede inventarse una acción");
 });
 
 test("la pantalla dice que un grupo se ha cortado, y no lo calla", async () => {

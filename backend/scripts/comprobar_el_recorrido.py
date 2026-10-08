@@ -901,6 +901,70 @@ def main() -> int:
             )
             captura(nav, "7-busqueda")
 
+            # ── Y los resultados **abren sus fichas** (encargo, 07/10/2026) ──────────────────────
+            # Un resultado que no lleva a ninguna parte no es un resultado, es un cartel. Se pulsa el de una
+            # tierra y se comprueba que **se abre la ficha de esa tierra** —la suya, no una cualquiera—.
+            enlace = nav.evaluar(
+                "(() => { const b = document.querySelector(\"#pantalla [data-accion='tierra-historia']\");"
+                " return b ? { id: b.dataset.id, hay: true } : { hay: false }; })()"
+            ) or {}
+            comprobar(
+                bool(enlace.get("hay")),
+                "los resultados de tierras traen su botón para abrir la ficha",
+            )
+            if enlace.get("hay"):
+                la_tierra_del_resultado = str(enlace.get("id"))
+                nav.evaluar(
+                    "(() => { const b = document.querySelector(\"#pantalla [data-accion='tierra-historia']\");"
+                    " if (b) b.click(); return null; })()"
+                )
+                nav.esperar(
+                    f"location.hash.includes('/tierras/{la_tierra_del_resultado}')", segundos=15
+                )
+                abierta = str(nav.evaluar("location.hash"))
+                print(f"  (al pulsar el resultado, la dirección es: {abierta})")
+                comprobar(
+                    f"/tierras/{la_tierra_del_resultado}" in abierta,
+                    f"pulsar un resultado abre **la ficha de esa tierra** ({la_tierra_del_resultado})",
+                )
+                comprobar(
+                    hay(nav, "[data-accion='trabajo-planificar']"),
+                    "y lo que se abre es su ficha (con lo que se puede hacer en ella)",
+                )
+                captura(nav, "7-resultado-abierto")
+
+                # **Atrás**: se vuelve a la búsqueda, con sus resultados.
+                nav.evaluar("(() => { history.back(); return null; })()")
+                nav.esperar("location.hash.includes('/buscar')", segundos=15)
+                nav.esperar("document.querySelectorAll('#pantalla .tarjeta').length > 0", segundos=15)
+                comprobar(
+                    hay(nav, "#buscar_global"),
+                    "**Atrás** devuelve a la búsqueda, con su cuadro y sus resultados",
+                )
+                # **Adelante**: y otra vez a la ficha, que es lo que hace el navegador con el historial.
+                nav.evaluar("(() => { history.forward(); return null; })()")
+                nav.esperar(
+                    f"location.hash.includes('/tierras/{la_tierra_del_resultado}')", segundos=15
+                )
+                comprobar(
+                    f"/tierras/{la_tierra_del_resultado}" in str(nav.evaluar("location.hash")),
+                    "**Adelante** vuelve a la ficha que se había abierto",
+                )
+                # **Y recargar la búsqueda la deja como estaba**: es lo que hace que el enlace valga para
+                # mandarlo a quien ayuda.
+                nav.abrir(
+                    f"{DIRECCION}/#/buscar?texto={la_tierra.alias[:24].replace(' ', '%20')}", esperar=2.0
+                )
+                nav.esperar("document.querySelectorAll('#pantalla .tarjeta').length > 0", segundos=15)
+                con_lo_buscado = nav.evaluar(
+                    "(document.querySelector('#buscar_global') || {}).value || ''"
+                )
+                comprobar(
+                    la_tierra.alias[:24] in str(con_lo_buscado),
+                    f"**recargar** la búsqueda la deja con lo que se buscaba («{con_lo_buscado}»)",
+                )
+                captura(nav, "7-recargada")
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     if HALLAZGOS:
         print(f"Hallazgos: {len(HALLAZGOS)} (lo que se sabe que falta, medido)")

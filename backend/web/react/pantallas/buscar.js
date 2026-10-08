@@ -68,6 +68,21 @@ export function PantallaBuscar({ textos = {}, resultado = null, puedeBuscar = tr
                     // se enseña nada (ni un guion ni un cero, que dirían que hay un dato).
                     linea.detalle ? html`<span className="pista-campo"> ${frase(linea.detalle)}</span>` : null
                   }
+                  ${
+                    // **Y a dónde lleva** (07/10/2026): cada resultado abre su ficha, que es lo que hace útil
+                    // una búsqueda. La acción la trae `nucleo.losGruposDeLaBusqueda` —ahí está la decisión de
+                    // qué abre cada grupo, y allí se prueba sin navegador—; aquí solo se pinta.
+                    linea.accion
+                      ? html`<button
+                          type="button"
+                          className="boton"
+                          data-accion=${linea.accion}
+                          data-id=${linea.id}
+                        >
+                          ${frase(t.ver)}
+                        </button>`
+                      : null
+                  }
                 </li>
               `,
             )}

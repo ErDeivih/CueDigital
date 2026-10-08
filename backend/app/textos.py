@@ -5097,6 +5097,9 @@ BUSCAR: dict[str, str] = {
     # Y lo que se dice cuando un grupo se ha cortado: un buscador que enseña diez de cuarenta y no avisa
     # hace creer que solo hay diez.
     "cortado": "Hay más de los que caben aquí: afina lo que buscas.",
+    # Lo que hace el botón de cada resultado: un resultado que no lleva a ninguna parte no es un
+    # resultado, es un cartel.
+    "ver": "VER",
     "cuantos_uno": "1 resultado",
     "cuantos": "{cuantos} resultados",
 }

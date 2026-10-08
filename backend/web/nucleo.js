@@ -517,6 +517,28 @@ export function sinTildes(texto) {
 }
 
 /**
+ * **A qué lleva cada grupo** (07/10/2026, encargo: «convertir los resultados en accesos»).
+ *
+ * Un resultado que no lleva a ninguna parte no es un resultado: es un cartel. Esto es la decisión de **qué
+ * abre cada cosa**, y va aquí —y no en la pantalla— porque así se prueba sin navegador:
+ *
+ *  · `tierras` → **la ficha de esa tierra**, con su historia (es la pantalla que el agricultor lee).
+ *  · `gastos` → la ficha de ese gasto, con sus repartos y sus pagos.
+ *  · `personas` → la ficha de esa persona o empresa.
+ *  · `maquinas` → la ficha de esa máquina.
+ *  · `papeles` → **su lista**, y no el fichero: abrir el fichero es **descargarlo**, y una descarga no se
+ *    dispara sola al mirar unos resultados. Quien quiera el papel, lo abre desde su lista, que es donde
+ *    están los botones de descargar.
+ */
+const ACCION_DE_CADA_GRUPO = {
+  tierras: "tierra-historia",
+  gastos: "gasto-abrir",
+  personas: "contacto-abrir",
+  maquinas: "maquina-ver",
+  papeles: "papel-ver-todos",
+};
+
+/**
  * Lo que la pantalla de la búsqueda global tiene que enseñar, ya traducido.
  *
  * **Por qué está esto aquí y no en `app.js`.** Por el mismo motivo que el buscador de tierras: es la parte
@@ -552,6 +574,9 @@ export function losGruposDeLaBusqueda(respuesta, textos = {}) {
       // El detalle (el importe, la matrícula, el teléfono) puede no constar: entonces no se enseña nada,
       // ni un guion ni un cero.
       detalle: resultado.detalle || "",
+      // **Y a dónde lleva**: su acción y su identificador, para que la pantalla solo tenga que pintarlos.
+      accion: ACCION_DE_CADA_GRUPO[grupo.clave] || "",
+      id: resultado.id,
     })),
   }));
   return {
