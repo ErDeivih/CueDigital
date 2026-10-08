@@ -21573,12 +21573,20 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
     // dinero que ha costado esa tierra es del T13. Cada una manda lo suyo y la pantalla los junta;
     // mezclarlos en una sola respuesta obligaría a que un ticket supiera del otro.
     const campana = estado.campana ? `?campana_id=${estado.campana.id}` : "";
-    const [tierra, costes] = await Promise.all([
+    const [tierra, costes, laTierra] = await Promise.all([
       apiJson(`/api/trabajos/tierra/${Number(parcelaId)}`),
       // Si las cuentas no contestan, la historia se enseña igual: lo que falta es una parte, no la
       // pantalla. El bloque de los costes simplemente no sale.
       apiJson(`/api/gastos/de-una-tierra/${Number(parcelaId)}${campana}`).catch(() => null),
+      // **Y la tierra, por su propia puerta** (07/10/2026): la respuesta del **estado** —la de arriba— habla
+      // de trabajos y **no lleva el `dibujo`**, que es la forma de la parcela; por eso la ficha salía **sin
+      // la forma de la tierra**, que es una regresión de este rediseño (se enseñaba en el panel, y el panel
+      // se retiró). El dibujo **sí** viaja en la puerta de una tierra (`/api/parcelas/{id}`), así que se pide
+      // ahí: una petición más, pequeña, y **cada dato por la puerta que lo tiene**. Si esa puerta falla, la
+      // ficha se enseña igual, sin la forma.
+      apiJson(`/api/parcelas/${Number(parcelaId)}`).catch(() => null),
     ]);
+    if (laTierra && laTierra.dibujo) tierra.dibujo = laTierra.dibujo;
     suyo.tierra = tierra;
     suyo.costes = costes;
   } catch (fallo) {
