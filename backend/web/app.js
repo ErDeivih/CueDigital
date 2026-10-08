@@ -21674,6 +21674,12 @@ function pantallaLaHistoria() {
         // ficha no. Va primero el día que la ficha sea la única pantalla de una tierra (opción (a) del
         // encargo): antes de quitar el panel, la ficha tiene que tener todo lo que el panel daba.
         referencia: tierra.ref_sigpac || "",
+        // **Y la forma de su recinto** (07/10/2026): se pintaba en el panel de la tierra, y al dejar la
+        // ficha como pantalla única y retirar el panel, **el agricultor dejó de ver la forma de su tierra**
+        // —una regresión de este rediseño, medida con el recorrido, que la mira—. Es lo mismo que dice el
+        // comentario de arriba con la referencia: *antes de quitar el panel, la ficha tiene que tener todo lo
+        // que el panel daba*. El dato viene ya en la tierra (`dibujo`, de `/api/parcelas`).
+        dibujo: tierra.dibujo || "",
       },
       historial: ((datos.historial || {}).lineas || []).map((linea) => {
         const trabajo = linea.trabajo || {};

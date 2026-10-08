@@ -808,22 +808,32 @@ def main() -> int:
                     str(lo_sembrado).lower() in str(la_seccion.get("texto", "")).lower(),
                     f"y dentro está lo que se sembró ({lo_sembrado}), no un hueco",
                 )
-            captura(nav, "5-cultivos")
-            # **¿Enseña la ficha la forma de su tierra?** (07/10/2026). El dibujo de la parcela se enseñaba
-            # en **el panel de la tierra** —y al dejar la ficha como pantalla única y retirar el panel, puede
-            # haberse perdido—. Se busca **el dibujo** (`.panel-dibujo`, que es como lo pinta la casa), no
-            # «algún svg»: la pantalla tiene iconos, y un icono no es una forma. Si no está, **se apunta**: es
-            # una sospecha de regresión de este mismo rediseño, y una sospecha se declara, no se pone en rojo.
-            if hay(nav, "#pantalla .panel-dibujo"):
+            # **¿Enseña la ficha la forma de su tierra?** (07/10/2026). **Primero hay que preguntar si la
+            # tierra TIENE forma**: si no la tiene, no se pinta nada —esa es la regla de la casa— y exigir un
+            # dibujo sería pedirle a la pantalla que invente lo que no hay. Y las tierras de este escenario
+            # se crean **sin geometría**, así que lo más probable es que no la tengan: eso no es un defecto de
+            # la ficha, es un hueco **del escenario** para poder comprobar esto.
+            su_dibujo = ""
+            for una in httpx.get(
+                f"{DIRECCION}/api/parcelas",
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            ).json():
+                if str(una.get("id")) == str(mirando):
+                    su_dibujo = una.get("dibujo") or ""
+            if not su_dibujo:
+                HALLAZGOS.append(
+                    "**la forma de la tierra no se puede comprobar en el recorrido**: la tierra de la prueba "
+                    "**no tiene forma** —el escenario crea las tierras sin geometría—, así que la ficha no "
+                    "pinta nada y eso es lo correcto. Para comprobarlo de verdad, el escenario tiene que dar "
+                    "forma a una tierra (el servidor ya sirve su `dibujo`, con 18 pruebas)"
+                )
+                print("  [HALLAZGO] la tierra de la prueba no tiene forma: nada que dibujar")
+            elif hay(nav, "#pantalla .panel-dibujo"):
                 comprobar(True, "y la ficha enseña la forma de su tierra (su dibujo)")
             else:
-                HALLAZGOS.append(
-                    "la ficha de una tierra **no enseña la forma de su parcela**: el dibujo se pintaba en el "
-                    "panel de la tierra (`.panel-dibujo`, `DibujoDeLaParcela`) y al dejar la ficha como "
-                    "pantalla única y **retirar el panel** puede haberse perdido. El dato existe y se sirve "
-                    "(`dibujo` en `/api/parcelas`, con 18 pruebas): es pasarlo a la ficha y pintarlo"
-                )
-                print("  [HALLAZGO] la ficha no enseña la forma de la tierra")
+                comprobar(False, "la ficha **no** enseña la forma de su tierra, teniéndola")
+            captura(nav, "5-cultivos")
         # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla.
         # **Y contra el endpoint que sí lo devuelve** (07/10/2026): esto preguntaba por
         # `que_queda_previsto` a `/api/trabajos/tierra/<id>`, que devuelve el **historial** (sus `lineas`,

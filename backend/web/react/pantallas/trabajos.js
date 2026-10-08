@@ -43,7 +43,17 @@
  * que tiene que hacer cada una.
  */
 
-import { AvisoDeError, Boton, Botones, BotonSencillo, frase, html } from "../componentes.js";
+import {
+  AvisoDeError,
+  Boton,
+  Botones,
+  BotonSencillo,
+  // **La forma de la parcela** (07/10/2026): la misma pieza que usa la tabla de tierras, para que la ficha
+  // la enseñe **igual** que se ve en la lista —el agricultor reconoce su tierra por su forma—.
+  DibujoDeLaParcela,
+  frase,
+  html,
+} from "../componentes.js";
 // `rellena` (para la frase que dice cuántos gastos no traen el importe) vive en el núcleo, como en las
 // demás pantallas que rellenan un hueco de una frase del servidor.
 import { rellena } from "../../nucleo.js";
@@ -605,6 +615,17 @@ export function PantallaDeLaTierra({
   }
   return html`
     <h1>${frase(a.historia_titulo)}</h1>
+    ${
+      // **La forma de su tierra**, con la pieza que ya existe (07/10/2026). Se enseñaba en el panel de la
+      // tierra y se perdió al retirarlo: **es una regresión de este rediseño**, y la encontró el recorrido
+      // automático, que la mira (`.panel-dibujo`). Y con la regla de la casa: **si la tierra no tiene forma,
+      // no se pinta un hueco** —ni un guion, ni un rectángulo vacío—.
+      tierra.dibujo
+        ? html`<p className="panel-dibujo">
+            <${DibujoDeLaParcela} dibujo=${tierra.dibujo} etiqueta=${tierra.nombre || ""} />
+          </p>`
+        : null
+    }
     ${tierra.nombre ? html`<p className="pista">${frase(tierra.nombre)}</p>` : null}
     ${
       // **La superficie, que se pedía y no se pintaba** (07/10/2026). `app.js` la manda desde el primer
