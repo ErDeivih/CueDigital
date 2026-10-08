@@ -664,6 +664,15 @@ export function PantallaDeLasCuentas({
     </div>
     <div className="barra-acciones">
       <${BotonSencillo} etiqueta=${g.ver_todas} accion="gastos-ver-todas" />
+      ${/* **Lo que se viene a hacer aquí, arriba** (07/10/2026). Medido con `scripts/medir_las_acciones.py`:
+            esta pantalla ofrecía **siete acciones y solo se veía una** al abrirla —las de apuntar un gasto,
+            un pago, una inversión y una ayuda estaban **al final**, después de ocho bloques de datos—. Lo
+            que se viene a hacer a Cuentas es apuntar algo, así que se apunta desde arriba. Al pie quedan
+            las dos secundarias (los bancos y volver). */ null}
+      <${Boton} etiqueta=${g.nuevo} accion="gasto-nuevo" />
+      <${Boton} etiqueta=${g.nuevo_pago} accion="gasto-pago-nuevo" clase="boton-claro" />
+      <${Boton} etiqueta=${g.nueva_inversion} accion="gasto-inversion-nueva" clase="boton-claro" />
+      <${Boton} etiqueta=${g.nueva_ayuda} accion="gasto-ayuda-nueva" clase="boton-claro" />
     </div>
 
     ${resumen ? html`<p className="cuantas">${frase(resumen)}</p>` : null}
@@ -697,10 +706,6 @@ export function PantallaDeLasCuentas({
     <${LoQueFalta} queFalta=${cuentas.que_falta || []} textos=${textos} />
 
     <div className="barra-acciones">
-      <${Boton} etiqueta=${g.nuevo} accion="gasto-nuevo" />
-      <${Boton} etiqueta=${g.nuevo_pago} accion="gasto-pago-nuevo" clase="boton-claro" />
-      <${Boton} etiqueta=${g.nueva_inversion} accion="gasto-inversion-nueva" clase="boton-claro" />
-      <${Boton} etiqueta=${g.nueva_ayuda} accion="gasto-ayuda-nueva" clase="boton-claro" />
       <${Boton} etiqueta=${g.los_bancos} accion="bancos-ver" clase="boton-claro" />
       <${Boton} etiqueta=${acciones.volver} accion="ir-inicio" clase="boton-claro" />
     </div>
