@@ -987,6 +987,18 @@ function parametrosDeLaPantalla(clave) {
   // **el manejador de la búsqueda escriba su dirección** (con el escritor de direcciones de la casa) al
   // buscar. Queda medido y apuntado en `docs/ESTADO_DEL_REDISENO.md`, y no se deja un bloque que no hace
   // nada aunque parezca que sí.
+  // **La búsqueda global** (07/10/2026): lo que se ha buscado viaja en la dirección, para que recargar
+  // deje al agricultor **en su búsqueda** y no en una búsqueda vacía, y para que el enlace se pueda mandar.
+  // El texto se lee del estado, donde lo apunta `pantallaBuscar()` al buscar.
+  //
+  // **Este bloque se probó el 07/10 y entonces no funcionaba** —la dirección se quedaba en la de tierras—,
+  // y el motivo era el mismo que el de todo lo demás: sin renglón en el menú no había módulo, y sin módulo
+  // esta función no se ejecutaba para esta pantalla. **Con el renglón puesto, el bloque hace lo que dice**,
+  // y está medido: `#/buscar?campana=2026&finca=2` es lo que escribía la pantalla antes de esto.
+  if (clave === "buscar") {
+    const suyo = estado.busqueda || {};
+    if (suyo.texto) parametros.texto = suyo.texto;
+  }
   if (clave === "tierra_versiones") {
     const suya = (estado.t06 || {}).versionParcela;
     if (!suya) return parametros;
