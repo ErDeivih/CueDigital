@@ -517,6 +517,53 @@ export function sinTildes(texto) {
 }
 
 /**
+ * Lo que la pantalla de la búsqueda global tiene que enseñar, ya traducido.
+ *
+ * **Por qué está esto aquí y no en `app.js`.** Por el mismo motivo que el buscador de tierras: es la parte
+ * con decisiones —cómo se llama cada grupo, qué se dice cuando no se ha buscado nada, qué se dice cuando
+ * se ha cortado un grupo— y aquí se puede probar **sin navegador**. La pantalla que venga después solo
+ * tiene que pintar lo que esto devuelve.
+ *
+ * Tres decisiones que van dentro, y ninguna es un adorno:
+ *
+ *  1. **Los grupos que el servidor no ha mandado no se pintan**, y si no ha mandado ninguno se dice que no
+ *     hay nada. Un grupo vacío con su título haría creer que esa búsqueda se ha mirado y no hay nada de
+ *     ese tipo, cuando puede que ni se haya mirado.
+ *  2. **`cortado` se dice**: un grupo de diez resultados que en realidad son cuarenta, sin avisar, hace
+ *     creer que solo hay diez.
+ *  3. **«No se ha buscado» no es «no hay nada»**: son dos cosas distintas y se dicen distinto. Con menos de
+ *     dos letras el servidor no busca (`buscado: false`) y eso no es un fracaso de la búsqueda.
+ *
+ * El nombre de cada grupo sale de los textos del servidor (`textos.buscar`), no de aquí: si un grupo nuevo
+ * llega sin su nombre, se enseña su clave tal cual antes que dejar el hueco en blanco.
+ */
+export function losGruposDeLaBusqueda(respuesta, textos = {}) {
+  const suyo = respuesta && typeof respuesta === "object" ? respuesta : {};
+  const t = textos || {};
+  const nombre = (clave) => t[`grupo_${clave}`] || clave;
+  const grupos = (suyo.grupos || []).map((grupo) => ({
+    clave: grupo.clave,
+    titulo: nombre(grupo.clave),
+    cuantos: grupo.cuantos,
+    cortado: Boolean(grupo.cortado),
+    aviso_cortado: grupo.cortado ? t.cortado || "" : "",
+    lineas: (grupo.resultados || []).map((resultado) => ({
+      etiqueta: resultado.etiqueta || "",
+      // El detalle (el importe, la matrícula, el teléfono) puede no constar: entonces no se enseña nada,
+      // ni un guion ni un cero.
+      detalle: resultado.detalle || "",
+    })),
+  }));
+  return {
+    texto: suyo.texto || "",
+    // **Tres estados, y son distintos**: no se ha buscado, se ha buscado y no hay nada, y hay resultados.
+    se_busco: Boolean(suyo.buscado),
+    grupos,
+    mensaje: !suyo.buscado ? t.sin_buscar || "" : grupos.length ? "" : t.sin_resultados || "",
+  };
+}
+
+/**
  * Las tierras que casan con lo que el agricultor ha escrito en el buscador.
  *
  * **Por qué está esto aquí y no en `app.js`.** Es la única forma de poder probarlo sin navegador: con
