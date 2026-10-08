@@ -21586,7 +21586,12 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
       // ficha se enseña igual, sin la forma.
       apiJson(`/api/parcelas/${Number(parcelaId)}`).catch(() => null),
     ]);
-    if (laTierra && laTierra.dibujo) tierra.dibujo = laTierra.dibujo;
+    // **La tierra viene envuelta** (07/10/2026): el objeto que devuelve el estado lleva la tierra **dentro**,
+    // en `tierra.tierra` —lo lee así `pantallaLaHistoria`, que hace `const tierra = datos.tierra`—, y aquí se
+    // estaba escribiendo **en el nivel de fuera**, así que el `dibujo` se quedaba en un sitio que nadie lee y
+    // la ficha seguía sin la forma de la parcela. Es la **misma trampa del envoltorio** que ya apareció con
+    // los trabajos (`{"previsto": {…}}`, `{"labor": {…}}`): se escribe donde se lee, no donde parece.
+    if (laTierra && laTierra.dibujo && tierra.tierra) tierra.tierra.dibujo = laTierra.dibujo;
     suyo.tierra = tierra;
     suyo.costes = costes;
   } catch (fallo) {
