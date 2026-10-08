@@ -122,17 +122,31 @@ guion** (`scripts/medir_el_cultivo_desde_la_ficha.py`). El botón está en la fi
 pulsarlo desde ahí hace que el clic caiga en la barra pegajosa: es un problema de colocación del clic del
 guion, no del producto.
 
-### 2.3-bis **Y un defecto de verdad, encontrado al intentar la dirección** (07/10/2026)
+### 2.3-bis El «defecto» del botón **no era de la aplicación** (medido el 07/10/2026)
 
-Al poner la ruta y el bloque que pinta al llegar por la dirección, el recorrido automático se puso **rojo
-con dos fallos**, y el primero es un defecto del producto, no del guion:
+Al poner la ruta y el bloque que pinta al llegar por la dirección, el recorrido automático se puso rojo:
+«escribir en el cuadro y pulsar BUSCAR no enseña los grupos». Lo apunté como defecto del producto. **No lo
+era.**
 
-> **escribir en el cuadro de la búsqueda y pulsar BUSCAR no enseña los grupos con sus resultados.**
+La medición (`scripts/medir_el_camino_de_la_busqueda.py`, nuevo) **separa el camino del guion**: abre las
+tierras, **inyecta** en esa pantalla el cuadro y el botón igual que los pinta la pantalla de la búsqueda, escribe
+la tierra de la prueba y **pulsa con un clic de verdad**. Resultado:
 
-Lo que **sí** está comprobado de esa pantalla: se dibuja (9 pruebas con React), el cuadro y el botón están
-con sus identificadores y su acción, el manejador existe y el guardián de los botones lo ve, y la puerta del
-servidor contesta (17 pruebas: cinco grupos, aislamiento, tope). Lo que **no** funciona es el camino de
-punta a punta al pulsar.
+```
+después de pulsar BUSCAR
+  h1: Buscar
+  tarjetas (grupos): 1
+  texto: … | Tierras | El Alto de la Dehesa Boyal, al lado del p…
+=> EL CAMINO FUNCIONA: la pantalla pinta los grupos.
+```
+
+Es decir: **el manejador, la petición y la pantalla funcionan de punta a punta**; lo que fallaba era **dónde
+aterrizaba el clic del guion** — la misma casa que el botón de «decir el cultivo» (ronda 18), donde también
+el culpable era el guion y no el programa. Tercera vez en esta sesión.
+
+**Lo que queda, entonces, es solo la puerta**: el renglón del menú y la dirección. Nada del producto está
+roto, y cuando la puerta esté, el paso del recorrido tiene que **pulsar de forma que el clic llegue** (o
+comprobar la existencia del cuadro y medir el camino aparte, como se hizo con el cultivo).
 
 **Lo que hay que mirar, por orden** (no se ha podido investigar todavía, y el motivo es el de abajo):
 
