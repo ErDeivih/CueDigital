@@ -980,6 +980,13 @@ function parametrosDeLaPantalla(clave) {
   }
   // Y la ficha de una tierra con sus versiones: su identificador es lo único que necesita, como la
   // ficha de la tierra. Sin él no hay dirección que escribir (sería la ficha de nada).
+  // **La búsqueda global** (07/10/2026): **este bloque no basta, y por eso no está**. Se probó el bloque que
+  // escribe el texto en la dirección leyéndolo del estado, y la medición dice que **la dirección no cambia**
+  // al buscar desde la pantalla: `montar()` no rehace la dirección — la dirección la escribe el camino de
+  // navegación entre pantallas, no el que pinta una pantalla. O sea que el arreglo no es aquí: es que
+  // **el manejador de la búsqueda escriba su dirección** (con el escritor de direcciones de la casa) al
+  // buscar. Queda medido y apuntado en `docs/ESTADO_DEL_REDISENO.md`, y no se deja un bloque que no hace
+  // nada aunque parezca que sí.
   if (clave === "tierra_versiones") {
     const suya = (estado.t06 || {}).versionParcela;
     if (!suya) return parametros;
