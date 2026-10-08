@@ -1523,6 +1523,9 @@ const MODULOS = [
  */
 const MODULO_DE_LA_PANTALLA = {
   PantallaInicio: "panel",
+  // La búsqueda global: sin esto, al abrirla el menú no marcaría ningún renglón, y no saber dónde estás es
+  // la mitad de para qué sirve un menú.
+  PantallaBuscar: "buscar",
   PantallaMiCuaderno: "cuaderno",
   PantallaHecho: "cuaderno",
   PantallaAsistente: "cuaderno",
