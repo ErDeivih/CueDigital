@@ -67,10 +67,22 @@ para el que las lee de prisa — y la he pisado yo.
    >    importan aquí: **sin geometría no se dibuja nada** (no un hueco, ni un cero) y **algo que no es una
    >    geometría no revienta**. También comprueba que el dibujo **cambia** cuando cambia la forma.
    >
-   >    Así que **el trabajo que queda es de la ficha, no del servidor**: conseguir que **el dibujo de esa
-   >    tierra** llegue a su ficha y se pinte. Y lo primero es mirar **de dónde lo coge la pantalla que ya lo
-   >    enseña** (la lista de tierras) para no inventar una segunda forma de pedirlo — y si el armazón ya
-   >    tiene ese dato cargado, usarlo.
+   >    **Y ya está localizado dónde viajaba** (07/10/2026): `app.js`, `panelDeLaTierra(tierras)` (≈L8688),
+   >    arma el panel de una tierra **con su `dibujo`** (`dibujo: tierra.dibujo || ""`), y su propio
+   >    comentario dice: *«La forma de su recinto, que es como el agricultor reconoce una tierra… el diseño de
+   >    escritorio de esta pantalla la pide y **el dato ya venía en la ficha**»*. O sea: **el dibujo se
+   >    enseñaba en el panel de la tierra**, y las props de la ficha **ya reciben la tierra**.
+   >
+   >    **Lo que hay que hacer, entonces, es pequeño y concreto**: pasar ese `dibujo` a la ficha y pintarlo
+   >    (una edición en `app.js` al montar la ficha, una en `pantallas/trabajos.js` para pintarlo, su frase en
+   >    los textos y su prueba), **con la regla de la casa**: si la tierra **no tiene forma**, **no se pinta un
+   >    hueco** — igual que ya hace la lista de tierras.
+   >
+   >    **Y hay que comprobar una cosa primero, que puede ser una regresión de este mismo rediseño**: al
+   >    dejar la ficha como pantalla única y **retirar el panel** (el trabajo de «fichas únicas»), puede que
+   >    el agricultor **haya dejado de ver la forma de su tierra** —porque se enseñaba justo ahí—. Eso hay
+   >    que mirarlo con el navegador y con una tierra con forma antes de dar el dibujo por perdido o por
+   >    puesto.
    >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
