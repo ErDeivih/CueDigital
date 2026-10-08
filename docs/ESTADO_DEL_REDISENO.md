@@ -645,3 +645,23 @@ Lo que cuentan las secciones de arriba termina aqui, y esto es **como quedo**:
 
 **Y lo unico que queda del encargo es la pantalla de normativa** (su fuente unica:
 docs/MATRIZ_NORMATIVA_CRM.md; su regla: no inventar ninguna obligacion legal).
+
+## La fuente de la pantalla de normativa, mirada (07/10/2026)
+
+docs/MATRIZ_NORMATIVA_CRM.md tiene **138 lineas** y una estructura clara, que es lo que hace que la pantalla
+sea un trabajo de **escribir** y no de **decidir**:
+
+- ## 1. Registro obligatorio de cada regla.
+- ## 2. Fuentes y traduccion a requisitos: **N01...N10**, una seccion por regla -N01 condicionalidad (BCAM),
+  N02 ecorregimen, N03 solicitud y compromisos de Castilla y Leon, N04 excepciones locales y avisos, N05
+  productos y registro de tratamientos, N06 fertilizacion y nitratos, N07 semillas, N08 material ecologico, N09
+  inspecciones de maquinaria, N10 cuaderno propio e intercambio-.
+- ## 3. Fuentes tecnicas que **no** son normas.
+
+**Y esa tercera seccion es la decision mas importante que la matriz ya trae hecha**: distingue lo que es
+**norma** de lo que es **fuente tecnica**, asi que la pantalla **no puede presentarlas igual** -una obligacion
+y una recomendacion no se leen igual, y mezclarlas seria inventar obligaciones sin decirlo-.
+
+El trabajo, entonces, es concreto: el endpoint sirve **las diez reglas** con lo que pide cada una, la pantalla
+las ensena **agrupadas por lo que son**, y la tercera seccion va **aparte y dicha como lo que es**. Los enlaces
+oficiales ya estan en los textos del registro electronico.
