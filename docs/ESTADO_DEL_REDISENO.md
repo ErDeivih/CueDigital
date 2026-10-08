@@ -35,6 +35,33 @@ para el que las lee de prisa — y la he pisado yo.
 **Sin hacer, además** (lo que queda del encargo): la **forma real** de la parcela en la ficha, los
 **formularios de escritorio**, las **acciones claras** y el **acceso a normativa**.
 
+## Las acciones, medidas (07/10/2026): dónde están escondidas
+
+«Las acciones no están claras» no es una medida; esto sí —`scripts/medir_las_acciones.py`, una pantalla por
+renglón del menú, contando **cuántas acciones ofrece cada una y cuántas se ven sin desplazarse**—:
+
+| Pantalla | Acciones | **Se ven sin desplazar** | En barra |
+|---|---|---|---|
+| **Inicio** | 41 | **3** | 6 |
+| Buscar | 1 | 1 | 1 |
+| **Tierras** | 361 | **13** | 216 |
+| Trabajos | 3 | **3** | 3 |
+| **Cuentas** | 7 | **1** | 7 |
+
+Lo que dicen los números:
+
+- **Cuentas es el problema**: ofrece siete acciones —apuntar un gasto, un pago, una inversión…— y **seis no
+  se ven al abrir la pantalla**. Las acciones principales están **debajo del pliegue**, que es justo lo que
+  el encargo llama «no claras».
+- **Inicio**: 41 acciones y **3 visibles**. Ahí el problema es otro —la pantalla de entrada enseña mucho y
+  deja lo demás para desplazarse—, y hay que decidir **cuáles son las tres o cuatro que importan** y subirlas.
+- **Tierras** tiene 361 porque es una tabla de 64 tierras con sus acciones por fila: eso **no es un defecto**,
+  es una lista; lo que hay que mirar es que sus cabeceras y su buscador estén arriba (lo están).
+- **Trabajos** está bien: 3 acciones, las 3 visibles.
+
+**Por dónde empezar, entonces**: por **Cuentas** (seis acciones escondidas) y por decidir **las de Inicio**.
+Que es un trabajo de organización, no de CSS — la mitad que el encargo llama «la mejora principal».
+
 ## Las fichas, comparadas con lo que pide el rediseño (07/10/2026)
 
 Antes de tocar nada, esto es lo que dice `docs/REDISENO_V0_STITCH_20261007.md` (L81) y lo que hay **hoy**:
