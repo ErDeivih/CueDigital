@@ -53,8 +53,12 @@ Lo que dicen los números:
 - **Cuentas es el problema**: ofrece siete acciones —apuntar un gasto, un pago, una inversión…— y **seis no
   se ven al abrir la pantalla**. Las acciones principales están **debajo del pliegue**, que es justo lo que
   el encargo llama «no claras».
-- **Inicio**: 41 acciones y **3 visibles**. Ahí el problema es otro —la pantalla de entrada enseña mucho y
-  deja lo demás para desplazarse—, y hay que decidir **cuáles son las tres o cuatro que importan** y subirlas.
+- **Inicio**: 41 acciones y **3 visibles**, pero **no es el mismo caso que Cuentas** —comprobado mirando
+  cuáles son—: casi todas son **una por elemento de lista** (doce «Qué hay sembrado», una por tierra), igual
+  que las 361 de Tierras. Eso **no es un defecto**, es un panel con listas. Lo que sí hay que mirar son **las
+  6 que van en barras** —las acciones de verdad de la pantalla— y decidir si **las que importan** están
+  entre las 3 visibles. Eso es una decisión de producto (qué se viene a hacer al abrir el cuaderno), no un
+  cambio de CSS.
 - **Tierras** tiene 361 porque es una tabla de 64 tierras con sus acciones por fila: eso **no es un defecto**,
   es una lista; lo que hay que mirar es que sus cabeceras y su buscador estén arriba (lo están).
 - **Trabajos** está bien: 3 acciones, las 3 visibles.
