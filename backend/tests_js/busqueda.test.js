@@ -7,9 +7,47 @@
  */
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import vm from "node:vm";
 
 import { losGruposDeLaBusqueda } from "../web/nucleo.js";
+
+// ---------------------------------------------------------------------------
+// La pantalla, dibujada de verdad con React (sin navegador: `renderToStaticMarkup`)
+// ---------------------------------------------------------------------------
+
+globalThis.self = globalThis;
+
+function cargarDeVendor(nombre) {
+  const codigo = readFileSync(new URL(`../web/vendor/${nombre}`, import.meta.url), "utf8");
+  vm.runInThisContext(codigo, { filename: nombre });
+}
+
+cargarDeVendor("react.production.min.js");
+cargarDeVendor("react-dom-server-legacy.browser.production.min.js");
+cargarDeVendor("htm.umd.js");
+
+async function htmlDeLaBusqueda(propiedades) {
+  const modulo = await import(`../web/react/pantallas/buscar.js?prueba=${Math.random()}`);
+  return globalThis.ReactDOMServer.renderToStaticMarkup(
+    globalThis.React.createElement(modulo.PantallaBuscar, propiedades),
+  );
+}
+
+const TEXTOS_PANTALLA = {
+  buscar: {
+    titulo: "Buscar",
+    caja: "Buscar en tu cuaderno",
+    pista: "Escribe al menos dos letras.",
+    boton: "BUSCAR",
+    sin_buscar: "Escribe lo que buscas y pulsa BUSCAR.",
+    sin_resultados: "No hay nada que se llame así.",
+    cortado: "Hay más de los que caben aquí: afina lo que buscas.",
+    grupo_tierras: "Tierras",
+    grupo_gastos: "Gastos",
+  },
+};
 
 const TEXTOS = {
   sin_buscar: "Escribe lo que buscas y pulsa BUSCAR.",
@@ -95,4 +133,36 @@ test("sin respuesta del servidor no se inventa nada", () => {
   assert.deepEqual(salida.grupos, []);
   assert.equal(salida.se_busco, false);
   assert.equal(salida.mensaje, TEXTOS.sin_buscar);
+});
+
+test("la pantalla dibuja el cuadro, el botón y los grupos con sus resultados", async () => {
+  const html = await htmlDeLaBusqueda({
+    textos: TEXTOS_PANTALLA,
+    resultado: UNA_RESPUESTA,
+  });
+  assert.match(html, /Buscar en tu cuaderno/, "no sale el cuadro de buscar");
+  assert.match(html, /id="buscar_global"/, "el cuadro no tiene su identificador");
+  assert.match(html, /data-accion="buscar"/, "el botón no lleva la acción que lee el manejador de clics");
+  assert.match(html, /BUSCAR/, "no sale el botón");
+  assert.match(html, /Tierras/, "no sale el nombre del grupo, que viene del servidor");
+  assert.match(html, /El Prado de arriba/, "no sale el resultado");
+  assert.match(html, /ES-P-00001-0001/, "no sale el detalle del resultado");
+});
+
+test("la pantalla dice que un grupo se ha cortado, y no lo calla", async () => {
+  const html = await htmlDeLaBusqueda({
+    textos: TEXTOS_PANTALLA,
+    resultado: {
+      texto: "cuesta",
+      buscado: true,
+      grupos: [{ clave: "tierras", cuantos: 10, cortado: true, resultados: [] }],
+    },
+  });
+  assert.match(html, /afina lo que buscas/, "un grupo cortado sin avisar hace creer que solo hay diez");
+});
+
+test("con el cuadro vacío la pantalla no dice que no hay nada: dice que no se ha buscado", async () => {
+  const html = await htmlDeLaBusqueda({ textos: TEXTOS_PANTALLA, resultado: null });
+  assert.match(html, /Escribe lo que buscas/, "no se dice que hay que buscar");
+  assert.doesNotMatch(html, /No hay nada que se llame/, "no se ha buscado, así que no se puede decir que no haya nada");
 });
