@@ -180,10 +180,14 @@ para no tener que descubrirlo otra vez:
 
 | Prueba | Qué cambia |
 |---|---|
-| `tests_js/armazon.test.js` → «los renglones del menú son 21, sin repeticiones…» | 21 → **22** |
-| `tests_js/armazon.test.js` → «con los 21 renglones de verdad, agrupados salen los mismos…» | 21 → **22** |
-| `tests_js/armazon.test.js` → «el lector de las tablas de `app.js` lee lo que dice leer» | el recuento que lee de la tabla: 21 → **22** |
+| `tests_js/armazon.test.js` → «los renglones del menú son 21, sin repeticiones…» | 21 → **22** (el título de la prueba, L255, y la comprobación, **L256**) |
+| `tests_js/armazon.test.js` → «con los 21 renglones de verdad, agrupados salen los mismos…» | 21 → **22** (el título, L426, y la comprobación, **L447**) |
+| `tests_js/armazon.test.js` → «el lector de las tablas de `app.js` lee lo que dice leer» | **L562**: `MODULOS.length` 21 → **22** (y su mensaje) |
 | `tests_js/interfaz.test.js` → «el armazón se monta con la finca, el año, la cuenta y todos los módulos» | la lista de claves gana `"buscar"` **detrás de `"panel"`**, y el grupo `inicio` pasa de **1 a 2** |
+
+**Y una más que hay que devolver al ponerlo**: `MODULO_DE_LA_PANTALLA` en `app.js` tiene que volver a llevar
+`PantallaBuscar: "buscar"` — se quitó el 07/10/2026 **a propósito**, porque sin renglón en el menú el guardián
+dice «estas pantallas marcan un módulo que no está en el menú: ['buscar']». Con el renglón puesto, vuelve.
 
 **Y lo que NO hay que hacer** (ya está escrito arriba, pero se repite porque es el error fácil): registrar la
 pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
