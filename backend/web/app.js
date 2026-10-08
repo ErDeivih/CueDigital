@@ -21516,7 +21516,7 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
 }
 
 /** La historia de una tierra, con sus líneas ya montadas. */
-async function pantallaBuscar() {
+async function pantallaBuscar(textoDeLaDireccion = null) {
   /** La búsqueda global: se lee el cuadro, se pregunta al servidor y se pinta lo que conteste.
    *
    * Es la mitad del cable (la otra es su renglón en el menú y su dirección). **Lo que se enseña no se
@@ -21533,7 +21533,16 @@ async function pantallaBuscar() {
       return null;
     }
   })();
-  const texto = cuadro ? String(cuadro.value || "") : "";
+  const texto =
+    textoDeLaDireccion !== null && textoDeLaDireccion !== undefined
+      ? String(textoDeLaDireccion)
+      : cuadro
+        ? String(cuadro.value || "")
+        : "";
+  // **Y se apunta lo que se ha buscado** (07/10/2026): es de donde sale el texto que viaja en la
+  // dirección (`#/buscar?texto=…`), que es lo que hace que recargar deje al agricultor donde estaba. Sin
+  // esto, la pantalla se pinta pero se pierde lo que había escrito, que es una dirección a medias.
+  estado.busqueda = { texto };
   let resultado = null;
   try {
     resultado = await apiJson(`/api/buscar?texto=${encodeURIComponent(texto)}`);
