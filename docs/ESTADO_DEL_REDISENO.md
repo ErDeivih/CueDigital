@@ -260,6 +260,28 @@ dice «estas pantallas marcan un módulo que no está en el menú: ['buscar']».
 pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
 versiones— o hacerlo **sin** el paso del recorrido, que es lo único que demuestra que funciona al pulsar.
 
+**Y una cosa más, medida el 07/10/2026: el renglón del menú y la dirección son EL MISMO ARREGLO.** No se
+pueden hacer por separado, y ya se probó:
+
+- La pantalla **no escribe su dirección** al buscar (medido con el guion: la dirección se queda en
+  `#/tierras?…` aunque los grupos salen).
+- El motivo: para traducir de pantalla a dirección, `apuntarLaDireccion` usa las tablas de traducción de
+  `app.js`, y la entrada `PantallaBuscar: "buscar"` **se quitó a propósito** el 07/10/2026 porque marcaba un
+  módulo que no estaba en el menú — lo cazó el guardián: «estas pantallas marcan un módulo que no está en el
+  menú: `['buscar']`».
+- Así que **mientras no haya renglón, no hay módulo; y sin módulo, la pantalla no puede escribir su
+  dirección**. Poner el renglón (y devolver esa entrada a la tabla) arregla **las dos puertas de una vez**.
+
+**Ya está comprobado y en verde** (para no repetirlo): la búsqueda funciona de punta a punta —se busca, se
+pide al servidor y se pintan los grupos— comprobado en el recorrido automático **inyectando su cuadro y su
+botón**, porque todavía no tiene puerta. Su salida, leída a mano:
+
+```
+── Paso 7: La búsqueda global
+  [OK  ] escribir en el cuadro y pulsar BUSCAR enseña los grupos con sus resultados
+Comprobaciones: 18   Fallos: 0
+```
+
 **2. Su dirección propia** (`#/buscar?texto=…`), y son **cinco** ediciones, no tres (mirado el 07/10/2026
 en el código, con `tierra_versiones` como modelo):
 
