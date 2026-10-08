@@ -612,16 +612,11 @@ def main() -> int:
             dicho_por_el_estado = _el_de_dentro(
                 {"hecho": despues.get("ultima_labor") or {}}
             )
-            if not lineas and dicho_por_el_estado.get("trabajo_id"):
-                HALLAZGOS.append(
-                    "el historial de una tierra y su estado **no dicen lo mismo**: después de marcar un "
-                    f"trabajo hecho, el estado ve el trabajo {dicho_por_el_estado.get('trabajo_id')} "
-                    f"({dicho_por_el_estado.get('tipo')} · {dicho_por_el_estado.get('fecha')}) y "
-                    "`/api/trabajos/tierra/<id>` devuelve **cero líneas**. Los dos deberían salir de la "
-                    "misma función (lo dice su propio comentario), así que una de las dos puertas no cuenta "
-                    "lo que cree"
-                )
-                print("  [HALLAZGO] el historial no ve el trabajo que el estado sí ve")
+            # **Y aquí hubo un hallazgo que resultó falso** (07/10/2026): decía que el historial «no ve el
+            # trabajo que el estado sí ve». Era mentira del instrumento —se le pedían las `lineas` a
+            # `/api/trabajos/tierra/<id>`, que devuelve **el estado** y no tiene esa clave—, y se retiró: la
+            # historia se pide ahora a `/api/trabajos/historial/<id>` y su comprobación exige una sola línea.
+            # Se deja dicho aquí para que nadie lo vuelva a «arreglar»: **el servidor estaba bien**.
             if lineas:
                 print(
                     f"  (la línea del historial: tipo «{_el_de_dentro(lineas[0]).get('tipo')}»,"
