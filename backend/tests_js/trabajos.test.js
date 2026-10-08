@@ -155,6 +155,11 @@ const AGENDA = {
   historial_titulo: "Todo lo que ha pasado",
   historial_explica: "Sale todo, también lo anulado, con el motivo por el que se anuló. Nada se borra.",
   historial_vacio: "En esta tierra no hay ningún trabajo apuntado.",
+  // Las dos frases de la sección de **Cultivos** de la ficha (07/10/2026): van aquí porque este fichero es
+  // el espejo de lo que sirve el servidor, y hay una prueba que exige que la pantalla **no lea ninguna
+  // frase que no esté en los textos**.
+  cultivos: "Cultivos",
+  sin_cultivos: "No hay ninguna siembra ni plantación apuntada en esta tierra.",
   revisado: "Corregido después",
   firmado: "Está firmado: no se puede borrar, solo anular",
   observaciones_de_campo: "Lo que he visto en el campo",
@@ -693,6 +698,53 @@ function vocabularioQueApuntaLasClaves(usadas) {
     },
   );
 }
+
+test("la ficha tiene su sección de Cultivos, con lo que cambió el cultivo de verdad", async () => {
+  // **Encargo del rediseño** (07/10/2026): «secciones Historia / Cultivos» en la ficha de una tierra. Lo que
+  // se comprueba es lo que decide el servidor con `que_cambio`: **sembrar y plantar** son cultivo; pasar el
+  // rodillo no; y lo **anulado no cuenta** —está en la historia, pero no es un cultivo de la tierra—.
+  const conSiembra = await htmlDe("PantallaDeLaTierra", {
+    textos: TEXTOS,
+    tierra: { nombre: "El Prado", superficie: "3,30 ha" },
+    estado: null,
+    costes: null,
+    no_consta: [],
+    error: "",
+    historial: [
+      {
+        id: 1,
+        fecha: "2026-03-10",
+        que_cambio: "se_sembro",
+        anulado: false,
+        trabajo: { tipo: "siembra", cultivo: "CEBADA", variedad: "Pewter" },
+      },
+      { id: 2, fecha: "2026-03-12", que_cambio: "", anulado: false, trabajo: { tipo: "laboreo" } },
+      {
+        id: 3,
+        fecha: "2026-03-14",
+        que_cambio: "se_sembro",
+        anulado: true,
+        trabajo: { tipo: "siembra", cultivo: "TRIGO" },
+      },
+    ],
+  });
+  assert.match(conSiembra, /Cultivos/, "la ficha no tiene su sección de Cultivos");
+  assert.match(conSiembra, /CEBADA/, "la siembra no sale en la sección de Cultivos");
+  assert.match(conSiembra, /Pewter/, "no sale la variedad");
+  assert.match(conSiembra, /2026-03-10/, "no sale la fecha de la siembra");
+  assert.doesNotMatch(conSiembra, /TRIGO/, "lo anulado no es un cultivo de la tierra");
+
+  const sinNada = await htmlDe("PantallaDeLaTierra", {
+    textos: TEXTOS,
+    tierra: { nombre: "El Prado" },
+    estado: null,
+    costes: null,
+    no_consta: [],
+    error: "",
+    historial: [],
+  });
+  assert.match(sinNada, /No hay ninguna siembra ni plantación/, "sin cultivos no se dice nada");
+});
 
 test("la pantalla no lee ninguna frase que no esté en los textos", async () => {
   const usadas = new Set();

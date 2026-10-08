@@ -7938,6 +7938,11 @@ AGENDA: dict[str, str] = {
     "sin_cultivo_declarado": "De esta tierra no consta que haya nada sembrado.",
     "ultima_labor": "La última labor",
     "historial_titulo": "Todo lo que ha pasado",
+    # **La sección de Cultivos de la ficha de una tierra** (encargo del rediseño, 07/10/2026): lo sembrado y
+    # lo plantado, sacado de la historia a su propia sección —lo que cambió el cultivo de verdad, sin contar
+    # lo anulado—, porque dentro de la historia había que leerla línea a línea para saber qué se sembró.
+    "cultivos": "Cultivos",
+    "sin_cultivos": "No hay ninguna siembra ni plantación apuntada en esta tierra.",
     "historial_explica": "Sale todo, también lo anulado, con el motivo por el que se anuló. Nada se borra.",
     "historial_vacio": "En esta tierra no hay ningún trabajo apuntado.",
     "revisado": "Corregido después",

@@ -581,6 +581,17 @@ export function PantallaDeLaTierra({
 }) {
   const a = textos.agenda || {};
   const cultivo = (estado && estado.cultivo_declarado) || null;
+  // **La sección de Cultivos** (encargo del rediseño, 07/10/2026): el rediseño pide, en la ficha de una
+  // tierra, «secciones Historia / Cultivos», y hasta hoy lo sembrado vivía **dentro** de la historia —donde
+  // hay que leerla línea a línea para saber qué se ha sembrado y cuándo—. Aquí se saca aparte, con lo que
+  // cambió el cultivo de verdad: **sembrar y plantar**, y solo eso (el servidor lo marca con
+  // `que_cambio === "se_sembro"`; pasar el rodillo o cosechar no cambia lo sembrado).
+  //
+  // Lo **anulado** no cuenta como cultivo —está apuntado, pero no pasó—, así que no entra aquí: para eso
+  // está la historia, que no tira nada.
+  const cultivos = (historial || []).filter(
+    (linea) => linea && linea.que_cambio === "se_sembro" && !linea.anulado,
+  );
   return html`
     <h1>${frase(a.historia_titulo)}</h1>
     ${tierra.nombre ? html`<p className="pista">${frase(tierra.nombre)}</p>` : null}
@@ -634,7 +645,30 @@ export function PantallaDeLaTierra({
         : null
     }
 
-    <h2>${frase(a.historial_titulo)}</h2>
+    <h2>${frase(a.cultivos)}</h2>
+        ${
+          cultivos.length === 0
+            ? html`<div className="aviso">${frase(a.sin_cultivos)}</div>`
+            : html`
+                <ul className="lista">
+                  ${cultivos.map(
+                    (linea, indice) => html`
+                      <li key=${`cultivo-${indice}`}>
+                        <strong>${frase((linea.trabajo || {}).cultivo || a.sin_decir)}</strong>
+                        ${
+                          (linea.trabajo || {}).variedad
+                            ? html`<span className="pista-campo"> ${frase(linea.trabajo.variedad)}</span>`
+                            : null
+                        }
+                        <span className="pista-campo"> · ${frase(linea.fecha || a.sin_decir)}</span>
+                      </li>
+                    `,
+                  )}
+                </ul>
+              `
+        }
+
+        <h2>${frase(a.historial_titulo)}</h2>
     <p className="pista-campo">${frase(a.historial_explica)}</p>
     ${
       historial.length === 0
