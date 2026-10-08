@@ -437,15 +437,19 @@ def main() -> int:
             return respuesta.json() if respuesta.status_code == 200 else {}
 
         def historial_de_la_tierra(campana_id: int | None = None) -> dict:
-            """La historia de esa tierra, **diciendo la campaña**.
+            """La historia de esa tierra, **por su puerta y diciendo la campaña**.
 
-            El historial filtra por campaña, así que sin decirla se pide «la de la campaña que el servidor
-            tenga por actual» — que puede no ser la de esta prueba. Eso hizo parecer que el trabajo no se
-            había guardado cuando sí estaba (el estado lo decía): una consulta a medias parece un fallo del
-            programa.
+            **Por su puerta**: en este servidor hay dos que se llaman casi igual y devuelven cosas distintas
+            —`/trabajos/tierra/<id>` da **el estado** (hechos, previstos, cifras) y `/trabajos/historial/<id>`
+            da **la historia** (sus `lineas`)—. Aquí se pedía `lineas` a la primera, que no tiene esa clave,
+            así que llegaba `[]` siempre y eso pareció un defecto del servidor durante dos rondas. Era del
+            guion.
+
+            Y el historial filtra por campaña, así que sin decirla se pide «la que el servidor tenga por
+            actual», que puede no ser la de esta prueba.
             """
             respuesta = httpx.get(
-                f"{DIRECCION}/api/trabajos/tierra/{mirando}",
+                f"{DIRECCION}/api/trabajos/historial/{mirando}",
                 params={"campana_id": campana_id} if campana_id else None,
                 headers={"Authorization": f"Bearer {escenario.volumen.token}"},
                 timeout=30.0,
@@ -597,8 +601,8 @@ def main() -> int:
                 f"al marcarlo hecho **ya no queda previsto** ({len(quedan)} pendientes con ese tipo)",
             )
             comprobar(
-                len(lineas) <= 1,
-                f"el historial no trae **dos** líneas del mismo trabajo ({len(lineas)})",
+                len(lineas) == 1,
+                f"y queda **una sola** línea en el historial de la tierra ({len(lineas)}), sin duplicados",
             )
             # **Y si el historial y el estado no dicen lo mismo, se apunta** (07/10/2026). El estado ve el
             # trabajo —`ultima_labor` con su identificador y `cuantas_siembras` a 1— y el historial de esa
