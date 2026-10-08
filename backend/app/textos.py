@@ -8612,3 +8612,21 @@ BANDEJA: dict = {
     "clase_inspeccion": "Una inspección de una máquina",
     "clase_desconocida": "Algo de tu cuaderno",
 }
+
+# ── La normativa (07/10/2026) ────────────────────────────────────────────────────────────────
+# Las frases de la pantalla que ensena las reglas de la normativa. **Nada de jerga**: lo que se ve habla de
+# obligaciones, de fuentes oficiales y de lo que no se sabe, no de ficheros ni de programas.
+NORMATIVA: dict[str, str] = {
+    "titulo": "La normativa",
+    "pista": "Lo que hay que cumplir en el cuaderno, con su fuente oficial para poder comprobarlo.",
+    "fuente": "Fuente oficial",
+    "fuentes": "Fuentes oficiales",
+    "sin_clasificar": "Sin clasificar",
+    # **Por que se dice «sin clasificar» en vez de callarse** (07/10/2026): una obligacion y una recomendacion no
+    # se leen igual, y decir cual es cada una sin saberlo seria enganar al agricultor. Se dice lo que se sabe y
+    # se calla lo que no, pero **diciendo que no se sabe**.
+    "sin_tipo": "Todavia no se ha clasificado esta regla: puede ser una obligacion o una recomendacion.",
+    "sin_estado": "Todavia no se ha revisado si esta regla esta en vigor.",
+    "como_se_lee": "Se lee tal y como esta escrito en la fuente, sin resumir.",
+    "sin_normativa": "No hay ninguna regla cargada.",
+}

@@ -50,6 +50,8 @@ def interfaz() -> dict:
         # resultados. La puerta ya está hecha y probada (`GET /api/buscar`, con sus cinco grupos); esto es
         # lo que le falta a la pantalla para no tener ni una frase escrita a mano.
         "buscar": textos.BUSCAR,
+        # La normativa: las reglas de la matriz, con su fuente oficial (07/10/2026).
+        "normativa": textos.NORMATIVA,
         "certificado": textos.CERTIFICADO,
         "firma": textos.FIRMA,
         "plan": textos.PLAN,
