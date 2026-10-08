@@ -191,6 +191,18 @@ existe.
 
 ### 2.3 La búsqueda global: la puerta está hecha; falta la caja
 
+> **Cerrado el 07/10/2026**: la búsqueda global está **entera** —puerta del servidor (19 pruebas), palabras
+> servidas y atadas, pantalla (9 pruebas), camino comprobado de punta a punta, **renglón en el menú** y
+> **dirección propia** con el texto buscado viajando en ella—. Y el paso 7 del recorrido **ya usa su puerta
+> de verdad**: la dirección, su botón y su renglón del menú. **21 comprobaciones, 0 fallos, sin hallazgos.**
+>
+> **Lo que encontró al hacerlo** (y merece quedar escrito): el cuadro estaba pintado con `value=` y sin
+> `onChange`, que en React es un campo **controlado** —React revierte lo que se teclea—, así que **en la
+> pantalla de la búsqueda no se podía escribir**. Los tests verdes no lo veían porque `value` y
+> `defaultValue` pintan lo mismo en el HTML: hay que **pulsar** para verlo. Arreglado como se escriben los
+> campos en esta casa (`defaultValue`), y con guardián nuevo que mira **todas** las pantallas:
+> `tests/test_los_campos_se_pueden_escribir.py`, probado en rojo volviendo a meter el defecto.
+
 **Lo que ya está** (07/10/2026): `GET /api/buscar?texto=` — **los cinco grupos, probados** (14 pruebas en
 `tests/test_la_busqueda_global.py`): **tierras** (nombre y referencia oficial), **gastos** (concepto, con
 su importe), **personas** (con su teléfono o NIF), **máquinas** (nombre y matrícula) y **papeles** (título,
