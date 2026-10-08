@@ -162,6 +162,22 @@ para el que las lee de prisa — y la he pisado yo.
    >    Y cuando salga el dibujo de verdad, **la comprobación del recorrido ya está armada** para ponerse
    >    verde: la que crea una tierra con forma —eso ya está escrito— y mira `.panel-dibujo` en su ficha.
    >
+   >    ### Confirmado: la puerta de una tierra **sí** lleva el dibujo, y el arreglo es del navegador
+   >    (07/10/2026)
+   >
+   >    El campo `dibujo` está en **`ParcelaSalida`** (`schemas.py` ≈L379, junto a `centro`,
+   >    `numero_recinto` y `referencia_catastral`), que es la respuesta de **`GET /api/parcelas/{id}`** —la
+   >    puerta de una tierra sola—. Así que **no hay que tocar el servidor**.
+   >
+   >    El arreglo, exacto: en `abrirLaHistoriaDeUnaTierra` (`app.js` ≈L21563), que hoy pide dos cosas en un
+   >    `Promise.all` —la tierra al **estado** y los costes a las cuentas—, **añadir la tercera**: la tierra a
+   >    **su propia puerta** (`/api/parcelas/${Number(parcelaId)}`), y pasar **su `dibujo`** a la ficha (donde
+   >    ya está el `dibujo: tierra.dibujo || ""` esperándolo). Una petición más, pequeña —unos cientos de
+   >    caracteres— y **por la puerta que lo tiene**.
+   >
+   >    Y **lo primero después**: correr el recorrido, que ya tiene la comprobación armada —crea una tierra
+   >    con forma y mira `.panel-dibujo` en su ficha—: si sale verde, el dibujo está de vuelta.
+   >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
    >    haga: el campo `dibujo` es la puerta.
