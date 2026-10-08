@@ -168,9 +168,24 @@ Faltan los **seis sitios** donde se registra una pantalla, y están localizados 
 
 **Y la comprobación, que no se puede saltar**: un paso nuevo en `scripts/comprobar_el_recorrido.py` que
 escriba en el cuadro, pulse BUSCAR y exija ver un grupo con su resultado y la dirección `#/buscar` — y
-correrlo con `pytest tests/test_el_recorrido_se_anda.py`, que es donde vive.
+correrlo con `pytest tests/test_el_recorrido_se_anda.py`, que es donde vive. (Ese paso **ya está**: se
+apunta como hallazgo mientras falte el cable, y se pone verde solo cuando esté.)
 
-**Lo que NO hay que hacer** (ya está escrito arriba, pero se repite porque es el error fácil): registrar la
+### Lo que falta, medido y con los números exactos
+
+**El renglón del menú** (`MODULOS`, grupo `inicio`, con `accion: "buscar"` y `texto: "buscar.titulo"`) y
+las **cuatro pruebas que fijan el menú en 21 renglones**, que hay que cambiar **con su motivo escrito**.
+Se intentó el 07/10/2026 y se revirtió para no dejar el árbol en rojo; esto es exactamente lo que salió,
+para no tener que descubrirlo otra vez:
+
+| Prueba | Qué cambia |
+|---|---|
+| `tests_js/armazon.test.js` → «los renglones del menú son 21, sin repeticiones…» | 21 → **22** |
+| `tests_js/armazon.test.js` → «con los 21 renglones de verdad, agrupados salen los mismos…» | 21 → **22** |
+| `tests_js/armazon.test.js` → «el lector de las tablas de `app.js` lee lo que dice leer» | el recuento que lee de la tabla: 21 → **22** |
+| `tests_js/interfaz.test.js` → «el armazón se monta con la finca, el año, la cuenta y todos los módulos» | la lista de claves gana `"buscar"` **detrás de `"panel"`**, y el grupo `inicio` pasa de **1 a 2** |
+
+**Y lo que NO hay que hacer** (ya está escrito arriba, pero se repite porque es el error fácil): registrar la
 pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
 versiones— o hacerlo **sin** el paso del recorrido, que es lo único que demuestra que funciona al pulsar.
 
