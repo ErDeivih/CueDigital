@@ -155,7 +155,7 @@ Las tres últimas, por orden:
 | **Mis tierras, en el mapa y en la tabla** (`backend/web/react/pantallas/tierras_mapa.js`) | ✅ En React (T06) |
 | **Lo que ha sido esta tierra** (`backend/web/react/pantallas/tierra_versiones.js`) | ✅ En React (T06) |
 | **La búsqueda global** (`backend/web/react/pantallas/buscar.js`) | ✅ En React (rediseño, 07/10/2026) |
-| **La búsqueda global** (`backend/web/react/pantallas/normativa.js`) | ✅ En React (rediseño, 07/10/2026) |
+| **La normativa** (`backend/web/react/pantallas/normativa.js`) | ✅ En React (rediseño, 07/10/2026) |
 | **Las semillas** (`backend/web/react/pantallas/semillas.js`) | ✅ En React (T10) |
 | **Sembrar una semilla y corregir la siembra** (`backend/web/react/pantallas/siembras.js`) | ✅ En React (T10) |
 | **Las personas y las empresas** (`backend/web/react/pantallas/contactos.js`) | ✅ En React (T11) |
@@ -227,7 +227,7 @@ falta el dato y pide lo que hace falta para saberlo.
 | Las descargas (el cuaderno en papel, los datos en CSV y el fichero de la firma) | ❌ No son pantallas: las pide `app.js`, que es quien tiene el token, y el botón lo pinta React |
 
 La lista de lo que está en React vive también en el propio código, para que el siguiente que
-llegue no tenga que buscarla: `const PANTALLAS_EN_REACT = new Set([...])` con veintinueve nombres: `inicio`,
+llegue no tenga que buscarla: `const PANTALLAS_EN_REACT = new Set([...])` con treinta nombres: `inicio`,
 `hecho`, `mis_cosas`, `documentos`, `cesta`, `cultivos`, `ayuda`, `mis_datos`, `quien_entra`, `medidas`,
 `ventas`, `grupos`, `analiticas`, `dictado`, `borrador`, `nuevo_documento`, `firmar`, `planes`, `entrar`,
 `facturas`, `nueva_factura`, `interpretacion_factura`, `mapa`, `decir_cultivo`,
