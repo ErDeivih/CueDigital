@@ -381,7 +381,11 @@ def _las_64_tierras(cliente: httpx.Client, campana: Campana) -> list[Tierra]:
         cola = COLAS[(indice // len(PARAJES)) % len(COLAS)]
         alias = f"{paraje}, {cola}"
         tiene_superficie = indice % 7 != 3
-        tiene_forma = indice % 11 == 0
+        # **La primera tierra también tiene forma** (07/10/2026): es la que usa el recorrido automático para
+        # andar el camino completo (ficha → trabajo → historial), y sin forma **no se puede comprobar que su
+        # ficha enseñe la forma de la parcela** —una regresión que tuvo este rediseño y ya está arreglada—.
+        # Una tierra más con forma no cambia nada de lo demás: las demás siguen como estaban.
+        tiene_forma = indice % 11 == 0 or indice == 1
         tiene_pueblo = indice % 6 != 5
         modulo = indice % 5
         cultivo = CULTIVOS[modulo] if modulo < 3 else None
