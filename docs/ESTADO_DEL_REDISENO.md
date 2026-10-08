@@ -51,8 +51,20 @@ para el que las lee de prisa — y la he pisado yo.
    >
    > Así que la ficha tiene **dos caminos**, y hay que elegir uno: **dibujar el anillo** de esa tierra (un
    > polígono pequeño, con lo que ya se calcula la caja) o **traer la foto** de su zona con el anillo encima.
-   > Y lo que hay que mirar primero es **por qué puerta se le pasan los anillos a una pantalla** —el mapa los
-   > tiene— para dárselos a la ficha sin inventar una segunda forma de pedirlos.
+   >
+   > **La puerta ya está localizada** (07/10/2026): `GET /api/parcelas/vista` devuelve las tierras **con sus
+   > anillos** —cada uno en `[longitud, latitud]`, y separados por trozos y agujeros, no como una lista
+   > plana—, y la pide **la pantalla del mapa al abrirse** (`app.js` ≈L15119), **no al arrancar**: son 64
+   > tierras con sus formas y en el campo es cuando peor va la conexión. Está escrito en el propio código.
+   >
+   > Y eso deja la decisión de verdad para la ficha, con tres opciones y sus costes:
+   >
+   > 1. **Pedir la vista entera** desde la ficha: funciona, pero es traerse las 64 tierras con sus formas
+   >    para dibujar **una**. Es lo contrario de lo que hace el mapa.
+   > 2. **Pedir los anillos de esa tierra sola**: es lo suyo, y hay que comprobar **si existe esa puerta**
+   >    (la vista las da todas) o si hay que añadirla. **Es lo primero que hay que mirar.**
+   > 3. **Un botón «verla en el mapa»** desde la ficha: lo más barato y honesto —el mapa ya sabe hacerlo— y
+   >    lo que menos pesa en el campo. Puede que sea bastante, y hay que decidirlo antes de dibujar nada.
 3. **La pantalla de normativa** (ronda entera: endpoint, textos, renglón en el menú y paso del recorrido),
    con la regla de **no inventar ninguna obligación**: lo que no esté en `docs/MATRIZ_NORMATIVA_CRM.md`, no
    se escribe.
