@@ -61,8 +61,12 @@ para el que las lee de prisa — y la he pisado yo.
    >
    > 1. **Pedir la vista entera** desde la ficha: funciona, pero es traerse las 64 tierras con sus formas
    >    para dibujar **una**. Es lo contrario de lo que hace el mapa.
-   > 2. **Pedir los anillos de esa tierra sola**: es lo suyo, y hay que comprobar **si existe esa puerta**
-   >    (la vista las da todas) o si hay que añadirla. **Es lo primero que hay que mirar.**
+   > 2. **Pedir los anillos de esa tierra sola**: es lo suyo, y **ya está comprobado** (07/10/2026): la
+   >    puerta **existe** —`GET /api/parcelas/{parcela_id}` → `ParcelaSalida`— pero **hoy no lleva los
+   >    anillos**: los tiene solo la vista del mapa (`TierraEnLaVista.anillos`, en `schemas.py`). Así que
+   >    esto es un cambio **pequeño y concreto**: **añadir `anillos` a la respuesta de una tierra sola**,
+   >    calculándolos como los calcula la vista (`parcelas.py`, los `anillos` de la tierra), **con su
+   >    prueba**. Y con eso la ficha puede dibujar su polígono **sin traerse las 64 tierras**.
    > 3. **Un botón «verla en el mapa»** desde la ficha: lo más barato y honesto —el mapa ya sabe hacerlo— y
    >    lo que menos pesa en el campo. Puede que sea bastante, y hay que decidirlo antes de dibujar nada.
 3. **La pantalla de normativa** (ronda entera: endpoint, textos, renglón en el menú y paso del recorrido),
