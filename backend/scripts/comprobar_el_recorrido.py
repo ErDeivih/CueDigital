@@ -1052,6 +1052,56 @@ def main() -> int:
                 )
                 captura(nav, "7-recargada")
 
+                # ── 8. La normativa, desde su renglón del menú ───────────────────────────────────────
+                # **Lo que la ley pide, con su fuente oficial para poder comprobarlo** (07/10/2026). Se
+                # comprueba lo que la pantalla promete: las diez reglas de la matriz, cada una con sus fuentes
+                # oficiales, y **las diez diciendo que no están clasificadas** —que es la decisión de David:
+                # antes decir que no se sabe que rellenarlo a ojo, porque una obligación y una recomendación
+                # no se leen igual—.
+                paso(nav, 8, "La normativa, desde su renglón del menú")
+                comprobar(
+                    hay(nav, "#menu-normativa"),
+                    "su renglón del menú está, que es la puerta del ratón",
+                )
+                nav.abrir(f"{DIRECCION}/#/normativa", esperar=2.5)
+                nav.esperar(
+                    "Boolean(document.querySelector('#pantalla .lista-de-normativa'))", segundos=25
+                )
+                comprobar(
+                    hay(nav, "#pantalla .lista-de-normativa"),
+                    "y su dirección abre la pantalla de la normativa",
+                )
+                cuantas_reglas = nav.evaluar(
+                    "document.querySelectorAll('#pantalla .regla-de-normativa').length"
+                )
+                comprobar(
+                    cuantas_reglas == 10,
+                    f"se pintan las diez reglas de la matriz (se han pintado {cuantas_reglas})",
+                )
+                cuantos_enlaces = nav.evaluar(
+                    "document.querySelectorAll('#pantalla .fuentes-de-la-regla a').length"
+                )
+                comprobar(
+                    cuantos_enlaces >= 10,
+                    f"y cada regla lleva sus fuentes oficiales ({cuantos_enlaces} enlaces)",
+                )
+                el_del_boe = nav.evaluar(
+                    "(document.querySelector('#pantalla .fuentes-de-la-regla a') || {}).href || ''"
+                )
+                comprobar(
+                    "boe.es" in str(el_del_boe),
+                    f"la primera fuente es la oficial, para poder comprobarla («{str(el_del_boe)[:52]}»)",
+                )
+                cuantos_avisos = nav.evaluar(
+                    "[...document.querySelectorAll('#pantalla .regla-de-normativa p')]"
+                    ".filter((uno) => /no se ha clasificado/i.test(uno.textContent || '')).length"
+                )
+                comprobar(
+                    cuantos_avisos == 10,
+                    f"y las diez avisan de que no están clasificadas ({cuantos_avisos})",
+                )
+                captura(nav, "8-normativa")
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     if HALLAZGOS:
         print(f"Hallazgos: {len(HALLAZGOS)} (lo que se sabe que falta, medido)")
