@@ -61,38 +61,20 @@ para el que las lee de prisa — y la he pisado yo.
    >
    > 1. **Pedir la vista entera** desde la ficha: funciona, pero es traerse las 64 tierras con sus formas
    >    para dibujar **una**. Es lo contrario de lo que hace el mapa.
-   > 2. **Pedir los anillos de esa tierra sola**: es lo suyo, y **ya está comprobado** (07/10/2026): la
-   >    puerta **existe** —`GET /api/parcelas/{parcela_id}` → `ParcelaSalida`— pero **hoy no lleva los
-   >    anillos**: los tiene solo la vista del mapa (`TierraEnLaVista.anillos`, en `schemas.py`). Así que
-   >    esto es un cambio **pequeño y concreto**, y está **copiado del sitio donde ya se hace**:
+   > 2. ~~Pedir los anillos de esa tierra sola y dibujarlos~~ → **NO HACE FALTA: el dibujo ya existe**
+   >    (07/10/2026). Lo que hay es **`dibujo`**: `GET /api/parcelas` devuelve cada tierra **con su dibujo
+   >    hecho**, y tiene sus propias pruebas —`tests/test_dibujo_de_la_parcela.py`—, incluidas las dos que
+   >    importan aquí: **sin geometría no se dibuja nada** (no un hueco, ni un cero) y **algo que no es una
+   >    geometría no revienta**. También comprueba que el dibujo **cambia** cuando cambia la forma.
    >
-   >    · En `schemas.py`: añadir a `ParcelaSalida` el mismo campo que ya tiene `TierraEnLaVista`:
-   >      `anillos: list[list[list[float]]] = []`
-   >    · En `app/routers/parcelas.py` (≈L373-376), el cálculo que usa la vista, **tal cual**:
-   >      ```python
-   >      anillos = [
-   >          [[lon, lat] for lon, lat in anillo]
-   >          for anillo in geo.anillos_de_un_wkt(parcela.geometria)
-   >      ]
-   >      ```
-   >      y pasarlo en la respuesta (`anillos=anillos`), en el endpoint `GET /parcelas/{parcela_id}`.
-   >    · **Con su prueba**, y esto ya está a medias: se sabe **cómo se crea una tierra** en las pruebas
-   >      (copiado de `tests/test_la_busqueda_global.py`):
-   >      ```python
-   >      respuesta = cliente.post(
-   >          "/api/parcelas",
-   >          json={"alias": "La de la forma", "ref_sigpac": None},
-   >          headers=cuenta["cabeceras"],
-   >      )
-   >      ```
-   >      y la prueba tiene que exigir **dos cosas**: una tierra **con forma** devuelve sus anillos
-   >      (`GET /api/parcelas/{id}`), y una **sin forma** devuelve la lista vacía —que en esta casa es «no se
-   >      sabe», no un cero—.
+   >    Así que **el trabajo que queda es de la ficha, no del servidor**: conseguir que **el dibujo de esa
+   >    tierra** llegue a su ficha y se pinte. Y lo primero es mirar **de dónde lo coge la pantalla que ya lo
+   >    enseña** (la lista de tierras) para no inventar una segunda forma de pedirlo — y si el armazón ya
+   >    tiene ese dato cargado, usarlo.
    >
-   >      **Lo único que falta por mirar**: si `POST /api/parcelas` acepta la **geometría** al crear (el
-   >      campo del modelo existe: la vista la lee). Si no la acepta, hay que buscar en las pruebas **cómo se
-   >      crea una tierra con forma** —alguna habrá, porque la vista del mapa las dibuja— y copiarlo de ahí.
-   >      Es un `grep` de un minuto, y es lo primero que hay que hacer.
+   >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
+   >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
+   >    haga: el campo `dibujo` es la puerta.
    >
    >    Con eso, la ficha puede dibujar su polígono **sin traerse las 64 tierras**.
    > 3. **Un botón «verla en el mapa»** desde la ficha: lo más barato y honesto —el mapa ya sabe hacerlo— y
