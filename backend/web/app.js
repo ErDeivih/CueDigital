@@ -18723,6 +18723,7 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   // cuadro y pinta los grupos. El manejador existe **a la vez que el botón**, y no antes: un botón que se
   // pinta y no hace nada es justo lo que el guardián de los botones persigue, y lo cazó.
   if (nombre === "buscar") return pantallaBuscar();
+  if (nombre === "normativa") return pantallaNormativa();
   if (nombre === "papel-nuevo") {
     // Guardar un papel **nuevo**: se olvida el que se estuviera corrigiendo (ronda 93). Sin esto, después
     // de corregir un papel y volver a la lista, el botón de guardar otro papel habría estado corrigiendo
