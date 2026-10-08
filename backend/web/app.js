@@ -108,6 +108,10 @@ import {
   pantallaDeLasVersionesDeUnaTierra,
 } from "./react/pantallas/tierra_versiones.js";
 import { pantallaDeDecirCultivo } from "./react/pantallas/decir_cultivo.js";
+// **La búsqueda global** (07/10/2026, del encargo del rediseño): la caja de la cabecera y la pantalla de
+// resultados. La puerta del servidor (`GET /api/buscar`, con sus cinco grupos) y la pantalla están hechas
+// y probadas; esto es el cable que las une.
+import { pantallaDeLaBusqueda } from "./react/pantallas/buscar.js";
 // Las semillas, sus etiquetas y las siembras (T10, 03/10/2026): la lista de semillas con lo que queda
 // de cada una, la ficha donde se apunta lo que pone la etiqueta —y donde se confirma lo que se ha
 // leído de una foto— y la siembra, que es «en esta tierra sembré esta semilla».
@@ -18664,6 +18668,10 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   if (nombre === "parcela-traida-seguir") return irAInicio("mis_cosas");
   if (nombre === "mis-cosas") return pantallaMisCosas();
   if (nombre === "papel-ver-todos") return pantallaDocumentos();
+  // **La búsqueda global** (07/10/2026): el botón pregunta al servidor por lo que se ha escrito en el
+  // cuadro y pinta los grupos. El manejador existe **a la vez que el botón**, y no antes: un botón que se
+  // pinta y no hace nada es justo lo que el guardián de los botones persigue, y lo cazó.
+  if (nombre === "buscar") return pantallaBuscar();
   if (nombre === "papel-nuevo") {
     // Guardar un papel **nuevo**: se olvida el que se estuviera corrigiendo (ronda 93). Sin esto, después
     // de corregir un papel y volver a la lista, el botón de guardar otro papel habría estado corrigiendo
@@ -21502,6 +21510,38 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
 }
 
 /** La historia de una tierra, con sus líneas ya montadas. */
+async function pantallaBuscar() {
+  /** La búsqueda global: se lee el cuadro, se pregunta al servidor y se pinta lo que conteste.
+   *
+   * Es la mitad del cable (la otra es su renglón en el menú y su dirección). **Lo que se enseña no se
+   * decide aquí**: `nucleo.losGruposDeLaBusqueda` lo traduce y la pantalla lo pinta; esto solo pide.
+   *
+   * Si el servidor no contesta, **no se dice que no hay nada**: se dice que no se ha podido buscar. Son
+   * dos cosas distintas, y confundirlas es lo que hace que un agricultor crea que no tiene algo que sí
+   * tiene.
+   */
+  const cuadro = (() => {
+    try {
+      return document.getElementById("buscar_global");
+    } catch (fallo) {
+      return null;
+    }
+  })();
+  const texto = cuadro ? String(cuadro.value || "") : "";
+  let resultado = null;
+  try {
+    resultado = await apiJson(`/api/buscar?texto=${encodeURIComponent(texto)}`);
+  } catch (fallo) {
+    resultado = null;
+  }
+  return montar(() =>
+    pantallaDeLaBusqueda({
+      textos: { buscar: t("buscar", {}) },
+      resultado,
+      puedeBuscar: Boolean(estado.token),
+    }),
+  );
+}
 function pantallaLaHistoria() {
   const suyo = estadoDeLosTrabajos();
   const datos = suyo.tierra || {};
