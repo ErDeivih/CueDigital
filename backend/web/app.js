@@ -1238,6 +1238,13 @@ function abrirLaPantalla(clave, parametros = {}) {
   // recorrido se puso rojo con dos fallos (escribir en el cuadro y pulsar BUSCAR no enseñaba los grupos, y
   // la dirección no acababa donde debía). No se deja a medias: se investiga con el guion en la mano y se
   // vuelve a poner. Mientras tanto, la pantalla sigue medida como **hallazgo** en el recorrido.
+  // **La búsqueda global** (07/10/2026): su dirección lleva el texto buscado, así que recargar deja al
+  // agricultor donde estaba. **Aquí no hay nada que comprobar contra la finca**, y es distinto de las
+  // demás: lo que se busca puede no existir y eso **no** es «una dirección que no lleva a ninguna parte»
+  // — la pantalla contesta con su frase de «no hay nada que se llame así», que es la verdad.
+  if (clave === "buscar") {
+    return pantallaBuscar(parametros.texto || null);
+  }
   // **Lo que ha sido una tierra** (T06): se comprueba que la tierra sea suya **antes** de pedir sus
   // versiones, con los mismos tres finales que la ficha de una tierra —se abre, «esa dirección no
   // lleva a ninguna parte» o «no lo he podido comprobar» sin cobertura—: sin cobertura la lista de

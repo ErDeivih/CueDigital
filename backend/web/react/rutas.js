@@ -101,6 +101,10 @@ export const PANTALLAS = [
   // y el ensayo de una importación. Se llega desde el mapa de las tierras y desde la ficha, y volver a
   // su dirección la reconstruye entera (pide las versiones al servidor), así que tiene dirección.
   { clave: "tierra_versiones", patron: ["tierras", ":id", "versiones"] },
+  // **La búsqueda global** (07/10/2026, del encargo del rediseño): su dirección propia, para que recargar
+  // deje al agricultor donde estaba y el enlace se pueda guardar. Es la puerta de la pantalla mientras el
+  // renglón del menú llega (está especificado, con sus cuatro números, en `docs/ESTADO_DEL_REDISENO.md`).
+  { clave: "buscar", patron: ["buscar"] },
   // Decir qué hay sembrado **en una tierra**: es de una tierra, así que su identificador va en el camino.
   // Sin él, recargar dejaría al agricultor en la lista de lo sembrado y tendría que volver a buscar
   // cuál de sus 51 tierras era (que es el mismo motivo por el que la ficha de una tierra tiene dirección).
