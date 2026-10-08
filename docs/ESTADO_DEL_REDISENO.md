@@ -193,12 +193,20 @@ dice «estas pantallas marcan un módulo que no está en el menú: ['buscar']».
 pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
 versiones— o hacerlo **sin** el paso del recorrido, que es lo único que demuestra que funciona al pulsar.
 
-**2. Su dirección propia** (`#/buscar?texto=…`), que es la otra mitad de la receta del principio: la tabla
-de `web/react/rutas.js` y los dos bloques de `app.js` (el que prepara los datos y el que pinta cuando se
-llega por la dirección). **No es un adorno**: sin ella, recargar la página deja al agricultor fuera de su
-búsqueda, y el enlace no se puede guardar ni mandar — que es exactamente el defecto que este proyecto ya ha
-tenido dos veces (la historia de una tierra y sus versiones, inalcanzables por botón) y una tercera por
-dirección (la búsqueda, hoy).
+**2. Su dirección propia** (`#/buscar?texto=…`), y son **cinco** ediciones, no tres (mirado el 07/10/2026
+en el código, con `tierra_versiones` como modelo):
+
+| Dónde | Qué |
+|---|---|
+| `web/react/rutas.js` | `{ clave: "buscar", patron: ["buscar"] }` |
+| `app.js`, el bloque que arma **los parámetros de la dirección** (≈L977, junto a `tierra_versiones`) | que el texto buscado viaje en la dirección, leyéndolo del estado |
+| `app.js`, el bloque que pinta **cuando se llega por la dirección** (≈L1235) | `if (clave === "buscar") return …` con el texto de la dirección |
+| `app.js`, `pantallaBuscar()` | que **acepte el texto como parámetro**: hoy lo lee del cuadro (`#buscar_global`), y al llegar por una dirección **el cuadro todavía no existe** |
+| `app.js`, `pantallaBuscar()` | y que **guarde en el estado** lo que se ha buscado, que es de donde el primer bloque lo saca al escribir la dirección |
+
+**No es un adorno**: sin ella, recargar la página deja al agricultor fuera de su búsqueda, y el enlace no se
+puede guardar ni mandar — que es exactamente el defecto que este proyecto ya ha tenido dos veces por botón
+(la historia de una tierra y sus versiones) y una tercera por dirección (la búsqueda, hoy).
 
 **Lo que ya está hecho y no hay que repetir**: la puerta del servidor (`GET /api/buscar`, cinco grupos, 17
 pruebas), sus palabras (`textos.py` + `/api/interfaz`, atadas por una prueba), la pantalla
