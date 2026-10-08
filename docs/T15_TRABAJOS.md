@@ -588,6 +588,8 @@ AGENDA: dict[str, str] = {
     "costes_directo_es": "Es un gasto que dice esta tierra.",
     "costes_repartido_es": "Es un trozo que se repartió a esta tierra desde las cuentas.",
     "ver_el_gasto": "VER EL GASTO",
+    "cultivos": "Cultivos",
+    "sin_cultivos": "No hay ninguna siembra ni plantación apuntada en esta tierra.",
 }
 ```
 
