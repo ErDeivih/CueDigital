@@ -590,8 +590,19 @@ export function PantallaDeLaTierra({
   // Lo **anulado** no cuenta como cultivo —está apuntado, pero no pasó—, así que no entra aquí: para eso
   // está la historia, que no tira nada.
   const cultivos = (historial || []).filter(
-    (linea) => linea && linea.que_cambio === "se_sembro" && !linea.anulado,
+    (linea) => linea && !linea.anulado && ((linea.trabajo || {}).cultivo || "").trim(),
   );
+  // **Y si la historia no lo trae pero la tierra tiene cultivo declarado, se enseña igual** (07/10/2026): el
+  // recorrido automático encontró la sección diciendo «no hay ninguna siembra ni plantación» en una tierra
+  // que **tenía CEBADA declarada** — la historia de la campaña en curso no traía esa siembra, y la ficha
+  // decía dos cosas contrarias a la vez. Lo que se enseña es **lo que la tierra tiene**, venga de donde
+  // venga: de la historia o del cultivo declarado.
+  if (cultivos.length === 0 && cultivo) {
+    cultivos.push({
+      fecha: cultivo.fecha,
+      trabajo: { cultivo: cultivo.cultivo, variedad: cultivo.variedad },
+    });
+  }
   return html`
     <h1>${frase(a.historia_titulo)}</h1>
     ${tierra.nombre ? html`<p className="pista">${frase(tierra.nombre)}</p>` : null}

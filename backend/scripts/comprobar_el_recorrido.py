@@ -784,6 +784,32 @@ def main() -> int:
             hay(nav, "[data-accion='trabajo-planificar']"),
             "la ficha ofrece planificar un trabajo para esa tierra",
         )
+        # **La sección de Cultivos** (encargo del rediseño, 07/10/2026): la ficha la trae **con lo que cambió
+        # el cultivo de verdad** —sembrar y plantar—, sacado de la historia a su propia sección. Se lee **la
+        # sección**, no la pantalla entera: que la palabra «Cultivos» salga en algún sitio no demuestra que
+        # la sección esté, ni que tenga dentro lo que se sembró.
+        la_seccion = nav.evaluar(
+            "(() => {"
+            " const titulos = [...document.querySelectorAll('#pantalla h2')];"
+            " const suyo = titulos.find((uno) => (uno.innerText || '').trim().toLowerCase().includes('cultivo'));"
+            " if (!suyo) return null;"
+            " let n = suyo.nextElementSibling, texto = '';"
+            " while (n && n.tagName !== 'H2') { texto += ' ' + (n.innerText || ''); n = n.nextElementSibling; }"
+            " return { titulo: (suyo.innerText || '').trim(), texto: texto.trim() }; })()"
+        )
+        comprobar(bool(la_seccion), "la ficha tiene su sección de Cultivos")
+        if la_seccion:
+            print(
+                f"  (la sección «{la_seccion.get('titulo')}» dice:"
+                f" {' '.join(str(la_seccion.get('texto')).split())[:130]}…)"
+            )
+            lo_sembrado = (estado_de_la_tierra().get("cultivo_declarado") or {}).get("cultivo") or ""
+            if lo_sembrado:
+                comprobar(
+                    str(lo_sembrado).lower() in str(la_seccion.get("texto", "")).lower(),
+                    f"y dentro está lo que se sembró ({lo_sembrado}), no un hueco",
+                )
+            captura(nav, "5-cultivos")
         # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla.
         # **Y contra el endpoint que sí lo devuelve** (07/10/2026): esto preguntaba por
         # `que_queda_previsto` a `/api/trabajos/tierra/<id>`, que devuelve el **historial** (sus `lineas`,
