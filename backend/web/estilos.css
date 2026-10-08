@@ -161,7 +161,12 @@ body {
   gap: 0.5rem;
   background: var(--verde);
   color: var(--sobre-verde);
-  padding: 0.6rem 0.8rem;
+  /* **Compacta, y con el número de su propio diseño** (07/10/2026): `DESIGN.md` declara la cabecera en
+     **64 px** de alto y la implementación medía **83** en un móvil — un sexto de la pantalla antes de ver
+     nada. Estos 0,5rem de aire arriba y abajo la dejan en **64 px clavados** (48 del botón de la letra +
+     16 del aire), que es lo que dice el diseño; lo que se recorta es el aire, no los botones: siguen con su
+     área de toque de 44-48 px, que es lo que no se puede tocar sin romper el modo de campo. */
+  padding: 0.5rem 0.8rem;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -174,11 +179,11 @@ body {
   background: none;
   border: 0;
   color: var(--sobre-verde);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 0.5rem;
+  padding: 0.2rem 0.4rem;
   cursor: pointer;
-  min-height: var(--toque);
+  min-height: 2.75rem;
 }
 
 .cabecera-botones {
@@ -224,9 +229,22 @@ body {
 /* -------------------------------------------------------------- pantallas */
 
 .pantalla {
-  padding: 0.8rem;
+  /* **El aire de los lados** (07/10/2026). Medido en el navegador, aquí había 0,8rem = **12,8 px** en un
+     móvil y 2rem = **32 px** en el ordenador: ni el mismo número ni el de la referencia del encargo
+     (**24 px**). Se queda así, y a propósito:
+       · móvil (hasta 48rem): **1rem = 16 px** — en 390 px de ancho, 24 px a cada lado se comen el 12 % de
+         la pantalla, y el modo de campo se usa con una mano y con guantes;
+       · de 48rem en adelante: **1,5rem = 24 px**, que es la referencia.
+     Si se prefiere 24 px también en el móvil, es cambiar este número: está aquí, solo, y con su motivo. */
+  padding: 1rem;
   max-width: 44rem;
   margin: 0 auto;
+}
+
+@media (min-width: 48rem) {
+  .pantalla {
+    padding: 1.5rem;
+  }
 }
 
 h1 {
@@ -1557,16 +1575,18 @@ div.tarjeta:active {
     display: none;
   }
 
-  /* La pantalla, con todo el ancho que sobra y con aire a los lados. */
+  /* La pantalla, con todo el ancho que sobra y con aire a los lados.
+     **El aire es de 1,5rem = 24 px, que es la referencia del encargo** (07/10/2026): aquí había 2rem = 32 px,
+     medido en el navegador — más de lo que dice el diseño, y sin que nadie lo hubiera decidido. */
   main.pantalla {
     max-width: none;
     margin: 0 0 0 var(--ancho-menu);
-    padding: calc(var(--alto-barra) + 1.2rem) 2rem 2rem;
+    padding: calc(var(--alto-barra) + 1.2rem) 1.5rem 2rem;
   }
 
   .pie {
     margin-left: var(--ancho-menu);
-    padding-left: 2rem;
+    padding-left: 1.5rem;
     text-align: left;
   }
 

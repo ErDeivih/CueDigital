@@ -139,6 +139,10 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.titulo}"
+    # **Medido el 07/10/2026** (`backend/scripts/medir_la_cabecera.py`): esto decía 64 px y la
+    # implementación medía **83** en un móvil — no coincidía ni con su propio diseño, y son un sexto de la
+    # pantalla antes de ver nada. Se ha dejado en **64 px clavados** (48 del botón de la letra + 16 de aire).
+    # En el ordenador esta cabecera **no se enseña**: su trabajo lo hace la barra.
     height: 64px
     padding: 12px
   campo:
