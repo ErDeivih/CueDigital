@@ -118,6 +118,27 @@ class TestLaBusqueda:
         assert tierras["cuantos"] == 2
         assert tierras["cortado"] is False
 
+    def test_las_palabras_de_la_pantalla_las_sirve_el_servidor(self, cliente):
+        """**Lo que le falta a la caja es la pantalla, no las palabras** (07/10/2026): el bloque `BUSCAR`
+        ya está en `textos.py` y `/api/interfaz` lo sirve. Esta prueba lo ata, para que no se quede a medias
+        sin que nadie se entere: el día que la pantalla se escriba, sus frases estarán ahí.
+
+        Se comprueban las dos decisiones que van dentro y que no se pueden dejar a la pantalla: **cuánto hay
+        que escribir** (su pista lo dice) y **cómo se llama cada grupo**, que es el nombre que el agricultor
+        les da. Y la frase del grupo cortado, que es la mitad visible de la regla del tope.
+        """
+        salida = cliente.get("/api/interfaz").json()
+        assert "buscar" in salida, "el servidor no sirve las palabras de la búsqueda"
+        buscar = salida["buscar"]
+        assert buscar["titulo"], "la pantalla de la búsqueda no tiene título"
+        assert "dos letras" in buscar["pista"], f"la pista no dice cuánto hay que escribir: {buscar['pista']!r}"
+        for grupo in ("grupo_tierras", "grupo_gastos", "grupo_personas", "grupo_maquinas", "grupo_papeles"):
+            assert buscar.get(grupo), f"falta el nombre del grupo {grupo}"
+        assert buscar["cortado"], "falta la frase que avisa de que un grupo se ha cortado"
+        assert buscar["sin_resultados"] and buscar["sin_buscar"], (
+            "faltan las dos frases que no son un error: no se ha buscado, y no hay nada"
+        )
+
     def test_encuentra_un_gasto_por_su_concepto_y_dice_lo_que_costo(self, cliente, cuenta):
         """Y lo que se busca con un nombre en la cabeza («el gasóleo») sale con **su importe**, que es lo
         que se quiere saber al encontrarlo. Los dos grupos conviven: una búsqueda puede encontrar una
