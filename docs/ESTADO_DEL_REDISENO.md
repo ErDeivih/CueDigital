@@ -1,4 +1,21 @@
-# Estado del rediseño, y lo que queda por decidir
+# Estado del rediseño
+
+> **Estado actual, medido (07/10/2026).** Esto es lo que hay hoy, no lo que hubo:
+>
+> | Qué | Medida / resultado | Cómo se comprueba |
+> |---|---|---|
+> | Cuerpo de letra | **18 px** en todos los anchos | `scripts/medir_la_cabecera.py` |
+> | Títulos | **24 px / 20 px** (h1 / h2) | el mismo guion |
+> | Márgenes | **24 px** de 48 rem en adelante · **16 px** en móvil (a propósito: el modo de campo se usa con una mano) | el mismo guion |
+> | Cabecera | **64 px** en móvil (medía 83) · en el ordenador **no se enseña**: su trabajo lo hace la barra | el mismo guion |
+> | Recorrido real | **44 comprobaciones · 0 fallos · 1 hallazgo** | `pytest tests/test_el_recorrido_se_anda.py` |
+> | Teclado y zoom 200 % | **203 · 0 fallos · 1 hallazgo** (el de `#/entrar`, decisión defendida) | `scripts/comprobar_teclado_y_zoom.py` |
+> | Registrar un trabajo | planificar · guardar · hecho · corregir · anular · **consumo de existencias**, comprobado en el servidor | recorrido, paso 4 |
+> | Búsqueda global | puerta del servidor (19 pruebas), palabras, pantalla, **resultados que abren sus fichas**, dirección con el texto | recorrido, paso 7 |
+>
+> **Lo que sigue abierto y declarado**: el **historial de una tierra no ve el trabajo que su estado sí ve**
+> (dos puertas que enseñan menos de lo que hay) — está en los hallazgos del recorrido, no tapado.
+> **Sin hacer**: fichas por secciones, formularios de escritorio, acciones claras, y el acceso a normativa., y lo que queda por decidir
 
 > **Para qué es este fichero.** El encargo del rediseño está en
 > [`REDISENO_V0_STITCH_20261007.md`](REDISENO_V0_STITCH_20261007.md) y su material en
