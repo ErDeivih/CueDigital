@@ -118,6 +118,24 @@ class TestLaBusqueda:
         assert tierras["cuantos"] == 2
         assert tierras["cortado"] is False
 
+    def test_encuentra_por_un_trozo_del_principio_de_un_nombre_largo(self, cliente, cuenta):
+        """**La prueba del defecto que se vio en el navegador** (07/10/2026): en el recorrido, escribir los
+        primeros 24 caracteres de un nombre largo y pulsar BUSCAR no enseñaba nada. Esta prueba comprueba el
+        servidor con **exactamente eso**: un nombre largo y las primeras 24 letras.
+
+        Si esto pasa —y pasa— el servidor no es el culpable, y el defecto está en el camino de la pantalla
+        (la petición, lo que se le pasa o lo que pinta). Es la mitad de la investigación, hecha sin
+        navegador.
+        """
+        largo = "El Alto de la Dehesa Boyal, junto al camino de los molinos harineros"
+        _una_tierra(cliente, cuenta, largo)
+
+        salida = _buscar(cliente, cuenta, largo[:24])
+        assert salida["buscado"] is True
+        assert _etiquetas(salida) == [largo], (
+            f"el servidor no encuentra un nombre largo por su principio: buscó {largo[:24]!r}"
+        )
+
     def test_las_palabras_de_la_pantalla_las_sirve_el_servidor(self, cliente):
         """**Lo que le falta a la caja es la pantalla, no las palabras** (07/10/2026): el bloque `BUSCAR`
         ya está en `textos.py` y `/api/interfaz` lo sirve. Esta prueba lo ata, para que no se quede a medias
