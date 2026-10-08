@@ -116,6 +116,30 @@ para el que las lee de prisa — y la he pisado yo.
    >    entonces `su_dibujo` se queda vacío por eso) o que el servidor **no manda el dibujo**. Es el mismo
    >    error que ya ha pasado cuatro veces en este encargo: **el instrumento, no el programa**.
    >
+   >    ### El `print`, hecho, y esta vez el hallazgo es verdad (07/10/2026)
+   >
+   >    ```
+   >    (la tierra 18 en la lista del servidor: está; su dibujo: 0 caracteres; y en la ficha: no)
+   >    ```
+   >
+   >    Así que: **la comprobación encuentra la tierra** ✓ y **el servidor dice que esa tierra no tiene
+   >    dibujo** (0 caracteres) ✓ → **el hallazgo es verdad**: esa tierra, de verdad, no tiene forma. Lo que
+   >    estaba mal era **mi suposición** de las rondas 37 y 38: creí que la tierra del recorrido era la que el
+   >    escenario crea **primero** (`indice == 0`, que sí tiene forma), y **no lo es** — la lista de tierras
+   >    del escenario no viene en el orden en que se crean, así que la forma acabó en **otra** tierra. Las dos
+   >    ediciones del escenario apuntaban a la tierra equivocada.
+   >
+   >    **Las dos salidas limpias, para elegir una:**
+   >
+   >    1. **Que el recorrido cree su propia tierra con forma** (con `POST /api/parcelas` y su `geometria`, que
+   >       ya se sabe que la acepta) y **abra su ficha** — que es el camino que el recorrido ya sabe andar: la
+   >       busca por su nombre y abre su fila. Así se comprueba el dibujo **con una tierra que se sabe que lo
+   >       tiene**, y no depende de cómo venga ordenado el escenario.
+   >    2. **Que el recorrido elija una tierra de las que el servidor dice que tienen `dibujo`** (se pregunta
+   >       a `/api/parcelas` y se coge la primera con dibujo). Más barato, pero ata la prueba al escenario.
+   >
+   >    La 1 es la buena: **una prueba que se fabrica su propio caso no depende de la suerte del escenario**.
+   >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
    >    haga: el campo `dibujo` es la puerta.

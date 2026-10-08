@@ -814,13 +814,24 @@ def main() -> int:
             # se crean **sin geometría**, así que lo más probable es que no la tengan: eso no es un defecto de
             # la ficha, es un hueco **del escenario** para poder comprobar esto.
             su_dibujo = ""
+            la_del_servidor = None
             for una in httpx.get(
                 f"{DIRECCION}/api/parcelas",
                 headers={"Authorization": f"Bearer {escenario.volumen.token}"},
                 timeout=30.0,
             ).json():
                 if str(una.get("id")) == str(mirando):
+                    la_del_servidor = una
                     su_dibujo = una.get("dibujo") or ""
+            # **Lo que se ha encontrado, dicho en la salida** (07/10/2026): sin esto, cuando la comprobación
+            # dice «no tiene forma» no se sabe si es que **no encuentra la tierra** o que **el servidor no
+            # manda su dibujo** — y son dos cosas muy distintas, una de la comprobación y otra del programa.
+            print(
+                f"  (la tierra {mirando} en la lista del servidor:"
+                f" {'está' if la_del_servidor is not None else 'NO está'};"
+                f" su dibujo: {len(su_dibujo)} caracteres;"
+                f" y en la ficha: {'sí' if hay(nav, '#pantalla .panel-dibujo') else 'no'})"
+            )
             if not su_dibujo:
                 HALLAZGOS.append(
                     "**la forma de la tierra no se puede comprobar en el recorrido**: la tierra de la prueba "
