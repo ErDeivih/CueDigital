@@ -32,8 +32,21 @@ dejó en «como mucho una» para no tumbarse por el falso hallazgo).
 
 **Y queda como lección escrita**: dos puertas con nombres casi iguales y claves distintas es una trampa
 para el que las lee de prisa — y la he pisado yo.
-**Sin hacer, además** (lo que queda del encargo): la **forma real** de la parcela en la ficha, los
-**formularios de escritorio**, las **acciones claras** y el **acceso a normativa**.
+**Sin hacer, y es lo que queda de verdad** (07/10/2026, al día):
+
+1. **Inicio, qué acciones se quedan arriba** — es una **decisión de producto**, no un cambio de CSS: la
+   pantalla tiene 6 acciones en barras y el resto son enlaces de lista (una por tierra, doce «Qué hay
+   sembrado»). *Qué se viene a hacer al abrir el cuaderno* es lo que decide cuáles suben.
+2. **La forma real de la parcela** en la ficha de una tierra (su dibujo): el dato ya está en el mapa de
+   tierras; es traerlo a la ficha.
+3. **La pantalla de normativa** (ronda entera: endpoint, textos, renglón en el menú y paso del recorrido),
+   con la regla de **no inventar ninguna obligación**: lo que no esté en `docs/MATRIZ_NORMATIVA_CRM.md`, no
+   se escribe.
+
+**Y ya no falta** (hecho y medido en estas rondas): los **formularios de escritorio** (campos de 1.105 px a
+544, medido antes y después), la **sección de Cultivos** de la ficha (vista en el navegador), **Cuentas** con
+sus acciones de apuntar arriba (**1 → 5 visibles**, medido), la **cabecera** (83 → 64 px), los **márgenes**
+(24 px de 48 rem en adelante) y la **letra** (18 / 24 / 20), con teclado y zoom re-verificados.
 
 ## Las acciones, medidas (07/10/2026): dónde están escondidas
 
