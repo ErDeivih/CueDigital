@@ -15,7 +15,26 @@
 >
 > **Lo que sigue abierto y declarado**: el **historial de una tierra no ve el trabajo que su estado sí ve**
 > (dos puertas que enseñan menos de lo que hay) — está en los hallazgos del recorrido, no tapado.
-> **Sin hacer**: fichas por secciones, formularios de escritorio, acciones claras, y el acceso a normativa., y lo que queda por decidir
+> **Sin hacer**: fichas por secciones, formularios de escritorio, acciones claras, y el acceso a normativa.
+
+## Las fichas, comparadas con lo que pide el rediseño (07/10/2026)
+
+Antes de tocar nada, esto es lo que dice `docs/REDISENO_V0_STITCH_20261007.md` (L81) y lo que hay **hoy**:
+
+| Lo que pide el rediseño | Lo que hay | Falta |
+|---|---|---|
+| **Identidad** | `h1` + el nombre de la tierra + **superficie** y **referencia SIGPAC** | — |
+| **Cultivo de campaña** | la sección **«Qué hay hoy»**, con lo sembrado, su variedad y desde cuándo (y «no lo sé» cuando no consta) | — |
+| **Siguiente trabajo** | desde la ficha se **planifica** (`trabajo-planificar`), y lo previsto se lista en ella | — |
+| **Secciones Historia / Cultivos** | hay **«Última labor»** y **«El historial»**, con su explicación y sin tirar lo anulado | una sección propia de **Cultivos**, separada de la historia |
+| **Forma real** | — | **la forma de la parcela** (su dibujo), que hoy solo se ve en el mapa de tierras |
+
+Es decir: la ficha **ya está por secciones** (`Qué hay hoy`, `Última labor`, `El historial`), con sus títulos
+y sus explicaciones; lo que le falta respecto al diseño son **dos cosas concretas**: la sección de
+**Cultivos** y la **forma real** de la parcela. Y las «acciones claras» de la ficha son hoy
+`trabajo-planificar`, `tierra-versiones` y `cultivo-decir`, todas en su barra.
+
+**Eso es lo que hay que hacer**: no rehacer la ficha, sino **añadirle esas dos cosas**., y lo que queda por decidir
 
 > **Para qué es este fichero.** El encargo del rediseño está en
 > [`REDISENO_V0_STITCH_20261007.md`](REDISENO_V0_STITCH_20261007.md) y su material en
