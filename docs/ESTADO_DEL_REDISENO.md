@@ -665,3 +665,26 @@ y una recomendacion no se leen igual, y mezclarlas seria inventar obligaciones s
 El trabajo, entonces, es concreto: el endpoint sirve **las diez reglas** con lo que pide cada una, la pantalla
 las ensena **agrupadas por lo que son**, y la tercera seccion va **aparte y dicha como lo que es**. Los enlaces
 oficiales ya estan en los textos del registro electronico.
+
+## El molde de la pantalla de normativa (07/10/2026)
+
+Mirada **N01** entera en la matriz, cada regla trae **cuatro cosas**, y de ahi sale el molde del endpoint sin
+tener que decidir nada:
+
+| Campo | De donde sale |
+|---|---|
+| codigo | el titulo: N01, N02... |
+| 	itulo | el titulo: Condicionalidad: BCAM y requisitos legales |
+| uente | la linea Fuente: -la norma, con su nombre |
+| enlace | **el enlace oficial** de esa linea (el BOE). Es lo que convierte la pantalla en algo que se puede **comprobar**, en vez de en una opinion del programa |
+| 
+equisito | el parrafo Requisito de producto: -que tiene que tener el cuaderno |
+| visos | los cuidados que la matriz avisa -en N01, **no copiar porcentajes del ecorregimen a BCAM**-. Valen tanto como el requisito |
+
+Las **pruebas** que la matriz apunta en cada regla **no van al endpoint**: son de quien programa, no del
+agricultor.
+
+**El primer paso, concreto**: escribir en pp/ la lista de las diez reglas con esos seis campos -transcritas
+de la matriz, **sin inventar ni una**-, con su prueba (que esten las diez y que ninguna se quede sin enlace
+oficial). Despues, el endpoint que las sirve, la pantalla que las agrupa por lo que son, el renglon del menu
+-con sus cuatro numeros, como se hizo con la busqueda- y el paso del recorrido.
