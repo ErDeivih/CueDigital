@@ -143,6 +143,18 @@ punta a punta al pulsar.
 3. **Si la pantalla pinta lo que le llega**: `losGruposDeLaBusqueda` está probado por separado (6 pruebas),
    así que si el dato entra, la pintura está cubierta.
 
+**La mitad del servidor ya está descartada** (07/10/2026): una prueba busca exactamente lo que el recorrido
+buscaba —los primeros 24 caracteres de un nombre largo— y **el servidor lo encuentra**. Así que el defecto
+está en el camino de la pantalla.
+
+**Y hay una sospecha concreta, que ya ha pasado dos veces en esta casa**: que **el clic no llegue al botón**
+y caiga en otra cosa. En la ronda 18 pasó con el botón de «decir el cultivo» (el clic caía en la barra
+pegajosa de arriba) y en la ronda 8 con el de «mis cosas» (caía en un elemento oculto en la esquina). Aquí
+encaja con lo medido: al pulsar BUSCAR **no aparecía ningún resultado y la dirección dejaba de contener
+`buscar`** — que es justo lo que pasaría si el clic hubiera acabado en el botón APUNTAR de la barra
+(`ir-inicio`), que lleva al inicio. **Lo primero que hay que hacer, entonces, no es tocar la aplicación:
+es mirar dónde aterriza el clic** (con el guion de medición, como se hizo con el cultivo).
+
 **Y para investigarlo hace falta la puerta primero**: hoy no hay forma de llegar a esa pantalla (ni por
 menú ni por dirección), y sin llegar no se puede pulsar. Así que **el orden es: puerta (renglón e
 dirección) → y después este defecto**, que se reproduce solo con el paso del recorrido que ya está escrito.
