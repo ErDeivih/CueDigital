@@ -52,3 +52,6 @@ export function PantallaNormativa({ textos = {}, reglas = [], error = "" }) {
     </ul>
   `;
 }
+
+// Y con el nombre que usa el armazon, como las demas pantallas.
+export { PantallaNormativa as pantallaDeLaNormativa };
