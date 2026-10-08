@@ -1234,6 +1234,10 @@ function abrirLaPantalla(clave, parametros = {}) {
     aplicarLaDireccionAT06(parametros);
     return abrirLasTierrasDelMapa();
   }
+  // **La búsqueda global**: su dirección está probada el 07/10/2026 y **se quitó el mismo día** porque el
+  // recorrido se puso rojo con dos fallos (escribir en el cuadro y pulsar BUSCAR no enseñaba los grupos, y
+  // la dirección no acababa donde debía). No se deja a medias: se investiga con el guion en la mano y se
+  // vuelve a poner. Mientras tanto, la pantalla sigue medida como **hallazgo** en el recorrido.
   // **Lo que ha sido una tierra** (T06): se comprueba que la tierra sea suya **antes** de pedir sus
   // versiones, con los mismos tres finales que la ficha de una tierra —se abre, «esa dirección no
   // lleva a ninguna parte» o «no lo he podido comprobar» sin cobertura—: sin cobertura la lista de

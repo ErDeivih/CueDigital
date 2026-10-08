@@ -394,7 +394,11 @@ def main() -> int:
             )
             print("  [HALLAZGO] la pantalla de la búsqueda no está registrada todavía (el cable, pendiente)")
         else:
-            escribir_en(nav, "#buscar_global", "prado")
+            # **Se busca algo que existe de verdad** en el escenario (no una palabra inventada): la tierra
+            # de la prueba. Si se buscara «prado» y la explotación no tuviera ningún «prado», la
+            # comprobación fallaría por el texto elegido y no por la pantalla — que es exactamente el error
+            # que cometí la primera vez que escribí esto.
+            escribir_en(nav, "#buscar_global", la_tierra.alias[:24])
             comprobar(
                 pulsar_si_hay(
                     nav,
