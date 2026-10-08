@@ -809,6 +809,21 @@ def main() -> int:
                     f"y dentro está lo que se sembró ({lo_sembrado}), no un hueco",
                 )
             captura(nav, "5-cultivos")
+            # **¿Enseña la ficha la forma de su tierra?** (07/10/2026). El dibujo de la parcela se enseñaba
+            # en **el panel de la tierra** —y al dejar la ficha como pantalla única y retirar el panel, puede
+            # haberse perdido—. Se busca **el dibujo** (`.panel-dibujo`, que es como lo pinta la casa), no
+            # «algún svg»: la pantalla tiene iconos, y un icono no es una forma. Si no está, **se apunta**: es
+            # una sospecha de regresión de este mismo rediseño, y una sospecha se declara, no se pone en rojo.
+            if hay(nav, "#pantalla .panel-dibujo"):
+                comprobar(True, "y la ficha enseña la forma de su tierra (su dibujo)")
+            else:
+                HALLAZGOS.append(
+                    "la ficha de una tierra **no enseña la forma de su parcela**: el dibujo se pintaba en el "
+                    "panel de la tierra (`.panel-dibujo`, `DibujoDeLaParcela`) y al dejar la ficha como "
+                    "pantalla única y **retirar el panel** puede haberse perdido. El dato existe y se sirve "
+                    "(`dibujo` en `/api/parcelas`, con 18 pruebas): es pasarlo a la ficha y pintarlo"
+                )
+                print("  [HALLAZGO] la ficha no enseña la forma de la tierra")
         # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla.
         # **Y contra el endpoint que sí lo devuelve** (07/10/2026): esto preguntaba por
         # `que_queda_previsto` a `/api/trabajos/tierra/<id>`, que devuelve el **historial** (sus `lineas`,
