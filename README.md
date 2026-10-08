@@ -1378,7 +1378,7 @@ cd backend
 ../.venv/Scripts/python.exe -m pytest          # 4628 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
-node --test "tests_js/*.test.js"               # 1076 tests
+node --test "tests_js/*.test.js"               # 1077 tests
 
 # Recorrido completo contra un servidor de verdad (hace falta tenerlo levantado)
 ../.venv/Scripts/python.exe scripts/humo.py http://127.0.0.1:8000
