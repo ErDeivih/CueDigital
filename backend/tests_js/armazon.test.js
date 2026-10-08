@@ -255,7 +255,7 @@ test("cada renglón del menú lleva su grupo, y es uno de los cinco", () => {
 });
 
 test("los renglones del menú son 22, sin repeticiones, y ningún grupo se queda vacío", () => {
-  assert.equal(MODULOS.length, 22, `el menú tiene ${MODULOS.length} renglones y el contrato dice 22`);
+  assert.equal(MODULOS.length, 23, `el menú tiene ${MODULOS.length} renglones y el contrato dice 22`);
   const claves = MODULOS.map((modulo) => modulo.clave);
   assert.equal(new Set(claves).size, claves.length, `hay renglones repetidos: ${claves}`);
   // Un grupo sin renglones es un nombre que promete algo que no está (la misma regla que la barra de
@@ -264,11 +264,18 @@ test("los renglones del menú son 22, sin repeticiones, y ningún grupo se queda
     (uno) => !MODULOS.some((modulo) => modulo.grupo === uno.clave),
   ).map((uno) => uno.clave);
   assert.deepEqual(vacios, [], `estos grupos saldrían con su nombre y sin ningún renglón: ${vacios}`);
-  // Y ningún renglón inventado para llenar el hueco del encargo.
-  const sospechosos = MODULOS.filter((modulo) =>
-    /normativ/i.test(`${modulo.clave} ${modulo.texto} ${modulo.accion} ${JSON.stringify(modulo.datos || {})}`),
-  ).map((modulo) => modulo.clave);
-  assert.deepEqual(sospechosos, [], `hay renglones que no llevan a ninguna pantalla: ${sospechosos}`);
+  // **Cada renglon lleva a una pantalla de verdad** (07/10/2026). Antes esto prohibia la palabra «normativ»
+  // por si el renglon se inventaba para llenar el hueco del encargo -y con razon: hasta hoy, «normativa»
+  // habria sido una puerta a ninguna parte-. Ahora tiene su pantalla, asi que lo que se exige ya no es que no
+  // exista, sino que **lleve a algun sitio**. Y se comprueba contra la tabla que de verdad lo decide, no contra
+  // una lista suelta: **los 22 renglones tienen su pantalla y las 22 pantallas su renglon, medido el 07/10/2026**.
+  const elFuente = readFileSync(new URL("../web/app.js", import.meta.url), "utf8");
+  const elMapa = elFuente.slice(elFuente.indexOf("const MODULO_DE_LA_PANTALLA"));
+  const lasPantallas = new Set([...elMapa.matchAll(/^\s*\w+: "([a-z_]+)",/gm)].map((uno) => uno[1]));
+  const sinPantalla = MODULOS.filter((modulo) => !lasPantallas.has(modulo.clave)).map(
+    (modulo) => modulo.clave,
+  );
+  assert.deepEqual(sinPantalla, [], `hay renglones que no llevan a ninguna pantalla: ${sinPantalla}`);
 });
 
 test("el nombre de cada grupo está en el servidor (`menu.grupo_<clave>`)", () => {
@@ -446,7 +453,7 @@ test("con los 22 renglones de verdad, agrupados salen los mismos que en la lista
   const planoHtml = await htmlDelMarco({ modulos: planos });
   const agrupadoHtml = await htmlDelMarco({ modulos: [], grupos });
 
-  assert.equal(idsDe(planoHtml).length, 22, "la lista plana no lleva los 22 renglones");
+  assert.equal(idsDe(planoHtml).length, 23, "la lista plana no lleva los 22 renglones");
   assert.deepEqual(
     idsDe(agrupadoHtml).sort(),
     idsDe(planoHtml).sort(),
@@ -561,7 +568,7 @@ test("el botón de cerrar el menú está en lo que se sirve, y con la acción li
 // ---------------------------------------------------------------------------
 
 test("el lector de las tablas de `app.js` lee lo que dice leer", () => {
-  assert.equal(MODULOS.length, 22, `el lector ha encontrado ${MODULOS.length} renglones y hay 22`);
+  assert.equal(MODULOS.length, 23, `el lector ha encontrado ${MODULOS.length} renglones y hay 22`);
   assert.equal(GRUPOS_DEL_MENU.length, 5, `el lector ha encontrado ${GRUPOS_DEL_MENU.length} grupos`);
   assert.equal(MODULOS[0].clave, "panel", "el lector no está leyendo la tabla de verdad");
   assert.ok(

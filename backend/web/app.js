@@ -112,6 +112,7 @@ import { pantallaDeDecirCultivo } from "./react/pantallas/decir_cultivo.js";
 // resultados. La puerta del servidor (`GET /api/buscar`, con sus cinco grupos) y la pantalla están hechas
 // y probadas; esto es el cable que las une.
 import { pantallaDeLaBusqueda } from "./react/pantallas/buscar.js";
+import { pantallaDeLaNormativa } from "./react/pantallas/normativa.js";
 // Las semillas, sus etiquetas y las siembras (T10, 03/10/2026): la lista de semillas con lo que queda
 // de cada una, la ficha donde se apunta lo que pone la etiqueta —y donde se confirma lo que se ha
 // leído de una foto— y la siembra, que es «en esta tierra sembré esta semilla».
@@ -242,6 +243,7 @@ const PANTALLAS_EN_REACT = new Set([
   "tierra_versiones",
   // La búsqueda global (07/10/2026): su pantalla es de React como las demás, y esta lista es la que lo dice.
   "buscar",
+  "normativa",
   // T10 (03/10/2026): las semillas con lo que pone su etiqueta y las siembras. Son dos ficheros
   // (`semillas.js` y `siembras.js`) y cuatro pantallas, y los dos van aquí y en la caché del campo:
   // la lista de semillas y la siembra se miran **en la nave y en la parcela**, muchas veces sin
@@ -1264,6 +1266,9 @@ function abrirLaPantalla(clave, parametros = {}) {
   if (clave === "buscar") {
     return pantallaBuscar(parametros.texto || null);
   }
+  if (clave === "normativa") {
+    return pantallaNormativa();
+  }
   // **Lo que ha sido una tierra** (T06): se comprueba que la tierra sea suya **antes** de pedir sus
   // versiones, con los mismos tres finales que la ficha de una tierra —se abre, «esa dirección no
   // lleva a ninguna parte» o «no lo he podido comprobar» sin cobertura—: sin cobertura la lista de
@@ -1508,6 +1513,7 @@ const MODULOS = [
   // **la puerta que faltaba**: con su renglón, además, la pantalla puede escribir su dirección (sin
   // módulo no hay traducción de pantalla a dirección, que es lo que se midió el 07/10).
   { clave: "buscar", texto: "buscar.titulo", accion: "buscar", grupo: "inicio" },
+  { clave: "normativa", texto: "normativa.titulo", accion: "normativa", grupo: "inicio" },
   { clave: "tierras", texto: "maestros.titulo", accion: "inicio", datos: { ir: "mis_cosas" }, grupo: "campo" },
   // **Los trabajos (T15, E9, 05/10/2026).** El contrato lo pide **el tercero**, justo detrás de
   // «Tierras y mapa»: lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
@@ -1563,6 +1569,7 @@ const MODULO_DE_LA_PANTALLA = {
   // La búsqueda global: sin esto, al abrirla el menú no marcaría ningún renglón —y no saber dónde
   // estás es la mitad de para qué sirve un menú— y la pantalla no podría escribir su dirección.
   PantallaBuscar: "buscar",
+  PantallaNormativa: "normativa",
   // **La búsqueda global todavía NO está aquí, y es a propósito**: su renglón del menú está pendiente (con
   // sus cuatro números escritos en `docs/ESTADO_DEL_REDISENO.md`), y una pantalla que marca un módulo que no
   // está en el menú deja el menú sin marcar nada. Lo cazó el guardián: «estas pantallas marcan un módulo que
@@ -21660,6 +21667,32 @@ async function pantallaBuscar(textoDeLaDireccion = null) {
     }),
   );
 }
+/**
+ * La normativa: se pregunta al servidor y se pinta lo que conteste.
+ *
+ * **Lo que se ensena no se decide aqui**: las diez reglas salen de `/api/normativa`, que sale de la matriz.
+ * Esto solo pide y monta, con el camino central, para que la direccion cambie y el menu marque donde se esta.
+ *
+ * **Y si el servidor no contesta, no se dice que no hay reglas**: se dice que no se ha podido.
+ */
+async function pantallaNormativa() {
+  let reglas = [];
+  let error = "";
+  try {
+    reglas = await apiJson("/api/normativa");
+  } catch (fallo) {
+    error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return montar(() =>
+    pantallaDeLaNormativa({
+      pantalla: "normativa",
+      textos: { normativa: t("normativa", {}) },
+      reglas,
+      error,
+    }),
+  );
+}
+
 function pantallaLaHistoria() {
   const suyo = estadoDeLosTrabajos();
   const datos = suyo.tierra || {};

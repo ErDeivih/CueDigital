@@ -303,6 +303,7 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     // que es lo que hace que volver a ella deje al agricultor donde estaba. Se apunta aquí por el mismo
     // motivo que las demás: esta lista es la que vigila que una pantalla nueva no se quede sin dirección.
     "buscar",
+    "normativa",
     "decir_cultivo",
     "cuaderno",
     "firmar",

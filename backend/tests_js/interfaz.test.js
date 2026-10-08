@@ -1044,6 +1044,18 @@ const RESPUESTAS = {
       salir: "Salir",
       salir_etiqueta: "Salir de la cuenta",
     },
+  // **La normativa** (07/10/2026): las mismas frases que sirve el servidor.
+  normativa: {
+    titulo: "La normativa",
+    pista: "Lo que hay que cumplir en el cuaderno, con su fuente oficial para poder comprobarlo.",
+    fuente: "Fuente oficial",
+    fuentes: "Fuentes oficiales",
+    sin_clasificar: "Sin clasificar",
+    sin_tipo: "Todavia no se ha clasificado esta regla: puede ser una obligacion o una recomendacion.",
+    sin_estado: "Todavia no se ha revisado si esta regla esta en vigor.",
+    como_se_lee: "Se lee tal y como esta escrito en la fuente, sin resumir.",
+    sin_normativa: "No hay ninguna regla cargada.",
+  },
     ayuda: {
       pantalla: {
         titulo: "Ayuda",
@@ -2889,6 +2901,9 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
     // Inicio, porque sirve para todo. Se apunta aquí por el mismo motivo que los demás: esta lista
     // es la que vigila que el menú lleve **todos** los módulos.
     "buscar",
+    // **La normativa** (07/10/2026): con su pantalla, su ruta y su puerta ya hechas. Se apunta aquí
+    // por el mismo motivo que la búsqueda: esta lista vigila que el menú lleve **todos** los módulos.
+    "normativa",
     "tierras",
     "trabajos",
     "cultivos",
@@ -2912,11 +2927,12 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
   ]);
   // **Y cada grupo con sus renglones**, del mismo sitio del que salen los de arriba: si un grupo se queda
   // vacío o un renglón se queda sin grupo, aquí se ve. (El grupo «Normativa» del encargo **no está**, y es
-  // a propósito: no hay ninguna pantalla que sea eso.)
+  // a propósito: **la normativa es un renglón del grupo de Inicio, no un grupo**, y su pantalla existe
+  // desde el 07/10/2026 -con su ruta, su puerta y sus pruebas-, así que ya no es un renglón sin sitio.)
   assert.deepEqual(
     props.grupos.map((grupo) => [grupo.clave, grupo.modulos.length]),
     [
-      ["inicio", 2],
+      ["inicio", 3],
       ["campo", 9],
       ["gestion", 6],
       ["cuaderno", 3],
