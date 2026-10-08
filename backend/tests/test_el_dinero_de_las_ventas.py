@@ -1,4 +1,3 @@
-import re
 """El dinero de lo que se vende (T12, E6, 03/10/2026).
 
 Lo que este fichero comprueba, y por qué es lo más importante de la entrega:
@@ -27,6 +26,7 @@ también: son las que hacen que el resto sea verdad.
 """
 
 from __future__ import annotations
+import re
 
 import datetime as dt
 from decimal import Decimal
