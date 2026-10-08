@@ -34,7 +34,27 @@ y sus explicaciones; lo que le falta respecto al diseño son **dos cosas concret
 **Cultivos** y la **forma real** de la parcela. Y las «acciones claras» de la ficha son hoy
 `trabajo-planificar`, `tierra-versiones` y `cultivo-decir`, todas en su barra.
 
-**Eso es lo que hay que hacer**: no rehacer la ficha, sino **añadirle esas dos cosas**., y lo que queda por decidir
+**Eso es lo que hay que hacer**: no rehacer la ficha, sino **añadirle esas dos cosas**.
+
+## El acceso a normativa: es una pantalla que no existe, y esto es lo que hay (07/10/2026)
+
+El encargo pide «acceso útil a normativa», y el rediseño (L71) dice que el menú debe ofrecer **todas** las
+secciones, «incluidas Cuentas y **Normativa**». Hoy **no hay ninguna pantalla de normativa**, y el grupo
+«Normativa» **no está en el menú a propósito** (está escrito en `app.js`, L1499): un renglón que no lleva a
+ninguna parte es peor que no tenerlo, y eso ya se ha pagado dos veces en esta casa.
+
+Lo que **sí** hay para construirla encima, y por eso es una pantalla y no un enlace:
+
+| Qué hay | Dónde |
+|---|---|
+| La **matriz normativa** del proyecto (los trabajos legales: L07, N09…) | `docs/MATRIZ_NORMATIVA_CRM.md` |
+| El código **la cita en sus decisiones** (por qué no se supone la clasificación ITV/ITEAF, por qué no se ofrece una lista cerrada de clases…) | `app/models.py`, `app/maquinaria.py` |
+| Los **enlaces oficiales** y qué es el registro electrónico | `textos.REGISTRO_ELECTRONICO`, `textos.CUADERNO_CYL` |
+
+Así que «acceso útil a normativa» es: **una pantalla con lo que la ley pide** —qué obligación es, cuándo
+aplica y **dónde lo publica la Junta**—, con su puerta en el menú, y **sin inventarse ninguna obligación**:
+lo que no esté en la matriz, no se escribe. Es una pantalla con su endpoint, sus textos, su renglón y su paso
+en el recorrido: **una ronda entera**, no un enlace añadido al menú., y lo que queda por decidir
 
 > **Para qué es este fichero.** El encargo del rediseño está en
 > [`REDISENO_V0_STITCH_20261007.md`](REDISENO_V0_STITCH_20261007.md) y su material en
