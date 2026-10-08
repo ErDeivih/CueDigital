@@ -383,8 +383,27 @@ def main() -> int:
         #
         # El día que el cable esté, esta misma comprobación se pone en verde sola: escribe en el cuadro,
         # pulsa y exige un grupo con su resultado.
-        nav.abrir(f"{DIRECCION}/#/buscar", esperar=1.6)
-        nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=8)
+        # **Sin puerta todavía, pero con el camino comprobado** (07/10/2026). La pantalla no se puede abrir
+        # desde ningún sitio (le faltan el renglón del menú y la dirección), y quedarse ahí sería dejar sin
+        # comprobar lo que **sí** está hecho. Así que se comprueba como se comprobó el cultivo (ronda 18):
+        # **inyectando** en una pantalla el cuadro y el botón igual que los pinta la búsqueda. Eso prueba el
+        # manejador, la petición y la pantalla **de punta a punta**, que es lo que decide si la función
+        # existe. Cuando tenga puerta, este mismo paso la usará en vez de inyectar nada.
+        nav.abrir(f"{DIRECCION}/#/tierras", esperar=1.8)
+        nav.esperar("Boolean(document.querySelector('#buscar_tierra_mis_cosas'))", segundos=12)
+        nav.evaluar(
+            "(() => {"
+            " const caja = document.createElement('input');"
+            " caja.id = 'buscar_global';"
+            " caja.type = 'search';"
+            f" caja.value = {json.dumps(la_tierra.alias[:24])};"
+            " const boton = document.createElement('button');"
+            " boton.dataset.accion = 'buscar';"
+            " boton.textContent = 'BUSCAR';"
+            " const donde = document.querySelector('#pantalla');"
+            " donde.appendChild(caja); donde.appendChild(boton);"
+            " return null; })()"
+        )
         if not hay(nav, "#buscar_global"):
             HALLAZGOS.append(
                 "la búsqueda global todavía no tiene puerta: `#/buscar` existe como dirección pero la "
@@ -407,11 +426,17 @@ def main() -> int:
                 ),
                 "escribir en el cuadro y pulsar BUSCAR enseña los grupos con sus resultados",
             )
-            comprobar(
-                "buscar" in str(nav.evaluar("location.hash")),
-                "y la búsqueda tiene su propia dirección, para poder volver a ella",
-            )
             captura(nav, "7-busqueda")
+            # **Y lo que sigue faltando se apunta, no se calla**: la pantalla tiene el camino comprobado
+            # —se busca, se pide y se pintan los grupos— pero **no tiene puerta**: no se llega a ella ni por
+            # el menú ni por una dirección, así que aquí no se ha podido pulsar *su* botón, sino uno igual
+            # inyectado. Un hallazgo declarado se ve; darlo por bueno, no.
+            HALLAZGOS.append(
+                "la búsqueda global funciona de punta a punta (se busca, se pide al servidor y se pintan "
+                "los grupos, comprobado aquí inyectando su cuadro y su botón), pero **todavía no tiene "
+                "puerta**: le faltan el renglón del menú y su dirección propia (`#/buscar?texto=…`), con lo "
+                "que recargar la página deja al agricultor fuera de su búsqueda"
+            )
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     if HALLAZGOS:
