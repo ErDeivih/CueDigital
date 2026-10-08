@@ -844,3 +844,20 @@ No convertir la voluntariedad general del CUE en exención de cualquier obligaci
 sectorial. Mantener requisitos de formato/plazo como reglas independientes con
 destinatarios y excepciones. IUWS no condiciona la navegación del CRM.
 ```
+
+## Decision de David sobre el tipo de las reglas (07/10/2026)
+
+Preguntado porque **la matriz no lo dice** -define los cinco tipos, pero no cual es cada regla-, y elegido:
+**el tipo va en los datos, vacio, y la pantalla dice «sin clasificar»**.
+
+Es la opcion que **no inventa nada**, y su consecuencia queda escrita para que nadie la «arregle»:
+
+- La regla ensena **su fuente, su enlace oficial y su requisito**, que es lo que la matriz si dice.
+- El tipo se rellena **el dia que se sepa**, y hasta entonces se lee **«sin clasificar»** -no se calla ni se
+  adivina-.
+- **Y la pantalla nunca presenta una recomendacion tecnica como si fuera una obligacion**: eso es lo que la
+  propia matriz pide cuando dice que *el usuario ve la diferencia*, y es la razon de no rellenar el campo a
+  ojo.
+
+**Lo mismo vale para el estado** (localizada, transcripcion, revisada, activa, sustituida): va en los datos, y
+mientras no se sepa, la pantalla **no da a entender que la regla es concluyente** -solo ctiva lo es-.
