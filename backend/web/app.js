@@ -21618,10 +21618,17 @@ async function pantallaBuscar(textoDeLaDireccion = null) {
   // esto, la pantalla se pinta pero se pierde lo que había escrito, que es una dirección a medias.
   estado.busqueda = { texto };
   let resultado = null;
-  try {
-    resultado = await apiJson(`/api/buscar?texto=${encodeURIComponent(texto)}`);
-  } catch (fallo) {
-    resultado = null;
+  // **Sin nada escrito no se pregunta nada** (07/10/2026). Antes se pedía igual, y como la pantalla **no se
+  // pinta hasta que el servidor contesta**, abrir `#/buscar` a secas dejaba al agricultor mirando la
+  // pantalla anterior hasta que iba y volvía la petición — y en un momento lento, sin nada. Lo encontró el
+  // recorrido automático al correr dentro de la suite (allí la petición tarda más y la puerta se caía).
+  // Sin texto no hay nada que buscar: se pinta la pantalla ya, con su «escribe lo que buscas».
+  if (texto) {
+    try {
+      resultado = await apiJson(`/api/buscar?texto=${encodeURIComponent(texto)}`);
+    } catch (fallo) {
+      resultado = null;
+    }
   }
   return montar(() =>
     pantallaDeLaBusqueda({

@@ -870,8 +870,25 @@ def main() -> int:
         # `click` delegado en `document`, así que un clic sobre el botón es el mismo suceso que el del
         # agricultor — y las coordenadas son la parte poco fiable de este instrumento (rondas 8, 18 y 58:
         # el clic aterrizó en la barra pegajosa y el que estaba mal era el guion, no el programa).
-        nav.abrir(f"{DIRECCION}/#/buscar", esperar=1.8)
-        if not nav.esperar("Boolean(document.querySelector('#buscar_global'))", segundos=12):
+        # **Por la puerta del ratón** (07/10/2026): se abre una pantalla que ya está cargada y se pulsa su
+        # renglón del menú, en vez de entrar por la dirección a pelo. Dos cosas de golpe: se comprueba **la
+        # puerta que usa el agricultor** (el menú) y no se depende de una carga en frío — entrar directo a
+        # `#/buscar` con el navegador recién nacido fallaba dentro de la suite, con el servidor ocupado, y
+        # eso parecía un defecto de la pantalla cuando era del guion.
+        nav.abrir(f"{DIRECCION}/#/tierras", esperar=1.8)
+        nav.esperar("Boolean(document.querySelector('#buscar_tierra_mis_cosas'))", segundos=25)
+        abierta_por_el_menu = bool(
+            nav.evaluar(
+                "(() => { const el = document.querySelector('#menu-buscar');"
+                " if (!el) return false; el.click(); return true; })()"
+            )
+        )
+        comprobar(
+            abierta_por_el_menu
+            and nav.esperar("Boolean(document.querySelector('#buscar_global'))", segundos=25),
+            "su renglón del menú abre la pantalla de la búsqueda (la puerta del ratón)",
+        )
+        if not hay(nav, "#buscar_global"):
             comprobar(False, "la dirección `#/buscar` abre la pantalla de la búsqueda (tiene puerta)")
         else:
             comprobar(True, "la dirección `#/buscar` abre la pantalla de la búsqueda (tiene puerta)")

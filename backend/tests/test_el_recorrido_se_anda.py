@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
 import socket
 import subprocess
 import sys
@@ -111,8 +112,17 @@ def test_el_recorrido_se_anda_entero():
                 "el recorrido se ha roto:\n" + (recorrido.stdout or "")[-3000:] + (recorrido.stderr or "")[-1000:]
             )
             assert "Fallos: 0" in recorrido.stdout, "el guion no dice que no haya fallos"
-            assert "Comprobaciones: 1" in recorrido.stdout or "Comprobaciones: 2" in recorrido.stdout, (
-                "el recorrido ha hecho muy pocas comprobaciones: ¿se ha quedado a medias?"
+            # **Que no se quede a medias**, medido de verdad (07/10/2026): aquí se exigía que el recuento
+            # empezara por «1» o por «2» —que era como decir «al menos diez» cuando el recorrido hacía
+            # trece— y eso se rompió **solo en cuanto el recorrido creció a 44**: la comprobación fallaba
+            # por el número, no por el guion. Ahora se lee la cifra y se pide un mínimo: lo que importa es
+            # que el recorrido **haga su trabajo**, no cuántos dígitos tenga la cifra.
+            cuantas = re.search(r"Comprobaciones:\s*(\d+)", recorrido.stdout or "")
+            assert cuantas, (
+                "el guion no dice cuántas comprobaciones ha hecho:\n" + (recorrido.stdout or "")[-800:]
+            )
+            assert int(cuantas.group(1)) >= 20, (
+                f"el recorrido ha hecho muy pocas comprobaciones ({cuantas.group(1)}): ¿se ha quedado a medias?"
             )
         finally:
             servidor.terminate()
