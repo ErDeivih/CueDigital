@@ -1028,7 +1028,9 @@ const RESPUESTAS = {
     },
     // El armazón del ordenador (30/09/2026): el menú lateral y la barra de arriba. Faltaban en esta copia y
     // todos los renglones del menú salían sin nombre (lo caza la prueba de cableado del armazón).
-    menu: {
+    // La búsqueda global (07/10/2026): su nombre sale del servidor, como el de los demás módulos.
+  buscar: { titulo: "Buscar" },
+  menu: {
       titulo: "Menú",
       etiqueta: "El menú de la aplicación",
       panel: "Panel",
@@ -2883,6 +2885,10 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
   // **todos** los módulos: el que falte no lo ve el agricultor.
   assert.deepEqual(claves, [
     "panel",
+    // **La búsqueda global** (07/10/2026, del encargo del rediseño): va la segunda, en el grupo de
+    // Inicio, porque sirve para todo. Se apunta aquí por el mismo motivo que los demás: esta lista
+    // es la que vigila que el menú lleve **todos** los módulos.
+    "buscar",
     "tierras",
     "trabajos",
     "cultivos",
@@ -2910,7 +2916,7 @@ test("el armazón se monta con la finca, el año, la cuenta y todos los módulos
   assert.deepEqual(
     props.grupos.map((grupo) => [grupo.clave, grupo.modulos.length]),
     [
-      ["inicio", 1],
+      ["inicio", 2],
       ["campo", 9],
       ["gestion", 6],
       ["cuaderno", 3],

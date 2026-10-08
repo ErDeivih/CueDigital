@@ -38,7 +38,7 @@
  *
  * Y una regla de la casa que aquí se cumple a rajatabla, porque este fichero **lee e interpreta** otro
  * fichero (`app.js`): *un test que lee ficheros y los interpreta necesita su propia prueba*. Está al
- * final, y comprueba que el lector encuentra los 21 renglones y los 5 grupos y que **no se cree** una
+ * final, y comprueba que el lector encuentra los 22 renglones y los 5 grupos y que **no se cree** una
  * acción puesta por variable. Si el lector se rompiera, las pruebas de arriba se pondrían rojas en vez
  * de pasar comprobando nada.
  */
@@ -149,6 +149,8 @@ const GRUPOS_DEL_MENU = listaDeAppJs("GRUPOS_DEL_MENU");
 
 /** Los textos del armazón, copiados de `textos.py` (los mismos que usa `react.test.js`). */
 const TEXTOS = {
+  // La búsqueda global (07/10/2026): su nombre sale del servidor, como el de los demás módulos.
+  buscar: { titulo: "Buscar" },
   menu: {
     titulo: "Menú",
     etiqueta: "El menú de la aplicación",
@@ -252,8 +254,8 @@ test("cada renglón del menú lleva su grupo, y es uno de los cinco", () => {
   assert.deepEqual(deOtroSitio, [], `estos renglones dicen un grupo que no existe: ${deOtroSitio}`);
 });
 
-test("los renglones del menú son 21, sin repeticiones, y ningún grupo se queda vacío", () => {
-  assert.equal(MODULOS.length, 21, `el menú tiene ${MODULOS.length} renglones y el contrato dice 21`);
+test("los renglones del menú son 22, sin repeticiones, y ningún grupo se queda vacío", () => {
+  assert.equal(MODULOS.length, 22, `el menú tiene ${MODULOS.length} renglones y el contrato dice 22`);
   const claves = MODULOS.map((modulo) => modulo.clave);
   assert.equal(new Set(claves).size, claves.length, `hay renglones repetidos: ${claves}`);
   // Un grupo sin renglones es un nombre que promete algo que no está (la misma regla que la barra de
@@ -423,7 +425,7 @@ test("cada renglón conserva su acción, sus datos, su `id` y su `aria-current` 
   );
 });
 
-test("con los 21 renglones de verdad, agrupados salen los mismos que en la lista plana", async () => {
+test("con los 22 renglones de verdad, agrupados salen los mismos que en la lista plana", async () => {
   // Esta es la prueba que ata el componente con la tabla de `app.js`: si al agrupar se perdiera un
   // renglón (o el grupo de un renglón estuviera mal escrito), aquí se ve.
   const planos = MODULOS.map((modulo) => ({
@@ -444,7 +446,7 @@ test("con los 21 renglones de verdad, agrupados salen los mismos que en la lista
   const planoHtml = await htmlDelMarco({ modulos: planos });
   const agrupadoHtml = await htmlDelMarco({ modulos: [], grupos });
 
-  assert.equal(idsDe(planoHtml).length, 21, "la lista plana no lleva los 21 renglones");
+  assert.equal(idsDe(planoHtml).length, 22, "la lista plana no lleva los 22 renglones");
   assert.deepEqual(
     idsDe(agrupadoHtml).sort(),
     idsDe(planoHtml).sort(),
@@ -559,7 +561,7 @@ test("el botón de cerrar el menú está en lo que se sirve, y con la acción li
 // ---------------------------------------------------------------------------
 
 test("el lector de las tablas de `app.js` lee lo que dice leer", () => {
-  assert.equal(MODULOS.length, 21, `el lector ha encontrado ${MODULOS.length} renglones y hay 21`);
+  assert.equal(MODULOS.length, 22, `el lector ha encontrado ${MODULOS.length} renglones y hay 22`);
   assert.equal(GRUPOS_DEL_MENU.length, 5, `el lector ha encontrado ${GRUPOS_DEL_MENU.length} grupos`);
   assert.equal(MODULOS[0].clave, "panel", "el lector no está leyendo la tabla de verdad");
   assert.ok(

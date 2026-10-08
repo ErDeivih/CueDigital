@@ -1491,6 +1491,11 @@ const GRUPOS_DEL_MENU = [
  */
 const MODULOS = [
   { clave: "panel", texto: "menu.panel", accion: "ir-inicio", grupo: "inicio" },
+  // **La búsqueda global** (07/10/2026, del encargo del rediseño). Va en el grupo de Inicio, el
+  // primero, porque sirve para todo: «¿dónde está esto?» se pregunta desde cualquier sitio. Y es
+  // **la puerta que faltaba**: con su renglón, además, la pantalla puede escribir su dirección (sin
+  // módulo no hay traducción de pantalla a dirección, que es lo que se midió el 07/10).
+  { clave: "buscar", texto: "buscar.titulo", accion: "buscar", grupo: "inicio" },
   { clave: "tierras", texto: "maestros.titulo", accion: "inicio", datos: { ir: "mis_cosas" }, grupo: "campo" },
   // **Los trabajos (T15, E9, 05/10/2026).** El contrato lo pide **el tercero**, justo detrás de
   // «Tierras y mapa»: lo que se piensa hacer y lo que se ha hecho es lo que se mira antes de salir al
@@ -1543,6 +1548,9 @@ const MODULOS = [
  */
 const MODULO_DE_LA_PANTALLA = {
   PantallaInicio: "panel",
+  // La búsqueda global: sin esto, al abrirla el menú no marcaría ningún renglón —y no saber dónde
+  // estás es la mitad de para qué sirve un menú— y la pantalla no podría escribir su dirección.
+  PantallaBuscar: "buscar",
   // **La búsqueda global todavía NO está aquí, y es a propósito**: su renglón del menú está pendiente (con
   // sus cuatro números escritos en `docs/ESTADO_DEL_REDISENO.md`), y una pantalla que marca un módulo que no
   // está en el menú deja el menú sin marcar nada. Lo cazó el guardián: «estas pantallas marcan un módulo que
