@@ -122,6 +122,35 @@ guion** (`scripts/medir_el_cultivo_desde_la_ficha.py`). El botón está en la fi
 pulsarlo desde ahí hace que el clic caiga en la barra pegajosa: es un problema de colocación del clic del
 guion, no del producto.
 
+### 2.3-bis **Y un defecto de verdad, encontrado al intentar la dirección** (07/10/2026)
+
+Al poner la ruta y el bloque que pinta al llegar por la dirección, el recorrido automático se puso **rojo
+con dos fallos**, y el primero es un defecto del producto, no del guion:
+
+> **escribir en el cuadro de la búsqueda y pulsar BUSCAR no enseña los grupos con sus resultados.**
+
+Lo que **sí** está comprobado de esa pantalla: se dibuja (9 pruebas con React), el cuadro y el botón están
+con sus identificadores y su acción, el manejador existe y el guardián de los botones lo ve, y la puerta del
+servidor contesta (17 pruebas: cinco grupos, aislamiento, tope). Lo que **no** funciona es el camino de
+punta a punta al pulsar.
+
+**Lo que hay que mirar, por orden** (no se ha podido investigar todavía, y el motivo es el de abajo):
+
+1. **Si la petición sale y con qué**. `pantallaBuscar()` llama a `/api/buscar?texto=…` con `apiJson`; hay que
+   ver si esa llamada se hace, si contesta y **qué trae**.
+2. **Si lo que trae llega a la pantalla**: `montar(() => pantallaDeLaBusqueda({ …, resultado }))` — el
+   `resultado` tiene que ser el del servidor, no `null` por un `catch` que se lo come.
+3. **Si la pantalla pinta lo que le llega**: `losGruposDeLaBusqueda` está probado por separado (6 pruebas),
+   así que si el dato entra, la pintura está cubierta.
+
+**Y para investigarlo hace falta la puerta primero**: hoy no hay forma de llegar a esa pantalla (ni por
+menú ni por dirección), y sin llegar no se puede pulsar. Así que **el orden es: puerta (renglón e
+dirección) → y después este defecto**, que se reproduce solo con el paso del recorrido que ya está escrito.
+
+**No hay que dar la búsqueda por terminada mientras esto no se arregle**, aunque las tres piezas (servidor,
+palabras, pantalla) estén cada una en verde: el camino de punta a punta es el que decide si una función
+existe.
+
 ### 2.3 La búsqueda global: la puerta está hecha; falta la caja
 
 **Lo que ya está** (07/10/2026): `GET /api/buscar?texto=` — **los cinco grupos, probados** (14 pruebas en
