@@ -561,6 +561,12 @@ textarea:focus {
 /* --------------------------------------------------------------- campos */
 
 .campo {
+  /* **Un campo de texto no se lee mejor por ser más ancho** (encargo: «formularios de escritorio»,
+     07/10/2026). Medido con `scripts/medir_los_formularios.py`: en una pantalla de 1.440 px, los campos del
+     formulario de un trabajo medían **1.105 px** — todo el ancho de la columna —, y el ojo pierde el renglón
+     al escribirlo. Con este tope se quedan en **34rem ≈ 544 px**, que es ancho de sobra para un nombre, una
+     fecha o una cantidad; en el móvil no cambia nada, porque la pantalla ya es más estrecha. */
+  max-width: 34rem;
   margin-bottom: 1.1rem;
 }
 
