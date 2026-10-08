@@ -269,7 +269,24 @@ en el código, con `tierra_versiones` como modelo):
 | `app.js`, el bloque que arma **los parámetros de la dirección** (≈L977, junto a `tierra_versiones`) | que el texto buscado viaje en la dirección, leyéndolo del estado |
 | `app.js`, el bloque que pinta **cuando se llega por la dirección** (≈L1235) | `if (clave === "buscar") return …` con el texto de la dirección |
 | `app.js`, `pantallaBuscar()` | que **acepte el texto como parámetro**: hoy lo lee del cuadro (`#buscar_global`), y al llegar por una dirección **el cuadro todavía no existe** |
-| `app.js`, `pantallaBuscar()` | y que **guarde en el estado** lo que se ha buscado, que es de donde el primer bloque lo saca al escribir la dirección |
+| `app.js`, `pantallaBuscar()` | y que **guarde en el estado** lo que se ha buscado ✅ *(hecho)* |
+
+**Y esto es lo que se ha medido, que cambia el sitio del arreglo** (07/10/2026): la dirección **no se escribe
+desde la pantalla**. `montar()` solo pinta; la dirección la escribe **`apuntarLaDireccion(...)`**
+(`app.js` ≈L1010), que arma sus parámetros con `parametrosDeLaPantalla(clave)` (≈L948) y usa
+`escribirLaDireccion` + `history.pushState` — **y a propósito con `pushState` y no `location.hash`**, porque
+escribir el fragmento a mano dispara `hashchange` y volvería a abrir la misma pantalla en un bucle (está
+comentado en el código, y es de esas cosas que no hay que «arreglar»).
+
+Por tanto, **lo que falta no es un bloque de parámetros**: es que **la búsqueda pase por ese camino**. Dos
+formas, y hay que elegir mirando cómo lo hacen las pantallas que ya se enlazan:
+
+1. que el manejador de `buscar` llame a `apuntarLaDireccion(...)` después de buscar; o
+2. que la búsqueda navegue como navega el resto (por donde entran las demás pantallas con dirección).
+
+Y **se probó y no vale** (medido, y por eso no está en el código): añadir un bloque
+`if (clave === "buscar") parametros.texto = …` en `parametrosDeLaPantalla` **no cambia nada**, porque esa
+función solo se ejecuta cuando la navegación la llama, y pintar una pantalla no la llama.
 
 **No es un adorno**: sin ella, recargar la página deja al agricultor fuera de su búsqueda, y el enlace no se
 puede guardar ni mandar — que es exactamente el defecto que este proyecto ya ha tenido dos veces por botón
