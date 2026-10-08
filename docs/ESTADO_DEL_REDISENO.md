@@ -627,3 +627,21 @@ $env:CUEDIGITAL_DATABASE_URL="sqlite:///$env:TEMP\cd-prueba.db"
 ```
 
 **Nunca** contra `backend/cuedigital.db` (la base del agricultor) ni contra el puerto 8000.
+
+---
+
+## CIERRE del dibujo de la parcela (07/10/2026)
+
+Lo que cuentan las secciones de arriba termina aqui, y esto es **como quedo**:
+
+- **El dibujo esta EN LA FICHA y esta medido**: la ficha de una tierra **con forma** pinta su dibujo
+  (.panel-dibujo, **2 trazos, 104 px de alto**). Se comprueba con scripts/medir_el_dibujo_en_la_ficha.py.
+- **La causa era el nivel del envoltorio**: la ficha lee su tierra de dentro (datos.tierra) y el dibujo se
+  escribia **fuera**, asi que se quedaba donde nadie lo lee. Corregido en pp.js
+  (	ierra.tierra.dibujo = ...), y el servidor quedo **exonerado** por el camino (la puerta de una tierra
+  devuelve el dibujo: 55 caracteres).
+- **Lo que quede escrito arriba como pendiente sobre el dibujo, ya no lo esta.** Se deja dicho aqui porque el
+  traspaso tiene que describir el estado actual.
+
+**Y lo unico que queda del encargo es la pantalla de normativa** (su fuente unica:
+docs/MATRIZ_NORMATIVA_CRM.md; su regla: no inventar ninguna obligacion legal).
