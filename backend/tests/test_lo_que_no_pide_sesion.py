@@ -82,6 +82,11 @@ RUTAS_PUBLICAS_DECLARADAS: dict[tuple[str, str], str] = {
         "Un sistema de vigilancia tiene que poder preguntar si el programa está vivo, y la "
         "respuesta no dice nada de nadie."
     ),
+    ("GET", "/api/normativa"): (
+        "**La normativa** (07/10/2026): las diez reglas de la matriz, iguales para todos los agricultores, sin "
+        "un solo dato de nadie. Es el vocabulario de esa pantalla, como `/api/interfaz` es el de las demas: la "
+        "pantalla las necesita antes de saber de quien es la finca, y no hay nada que proteger."
+    ),
     ("GET", "/api"): (
         "La portada de la API: dice qué es el programa y por dónde se empieza. No lleva datos."
     ),
@@ -530,7 +535,7 @@ class TestElEstadoDelSigpacYaNoDiceDondeEstaLaCarpeta:
 
 
 def test_las_publicas_que_quedan_son_las_que_estan_escritas():
-    """El recuento, medido: **23 rutas sin sesión**, todas declaradas.
+    """El recuento, medido: **24 rutas sin sesión**, todas declaradas.
 
     Estaba en **26** cuando se hizo el inventario de T01. Las cinco que faltan son las cuatro que
     «deberían pedir sesión» y la búsqueda del SIGPAC; más otras dos que se han cerrado por el
@@ -542,8 +547,8 @@ def test_las_publicas_que_quedan_son_las_que_estan_escritas():
     **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
     """
     _, sin_sesion = _pares_con_sesion()
-    assert len(sin_sesion) == 23, (
-        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 23: "
+    assert len(sin_sesion) == 24, (
+        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 24: "
         f"{sorted(sin_sesion)}"
     )
     assert sin_sesion == set(RUTAS_PUBLICAS_DECLARADAS)

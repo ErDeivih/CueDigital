@@ -1,3 +1,4 @@
+import re
 """El dinero de lo que se vende (T12, E6, 03/10/2026).
 
 Lo que este fichero comprueba, y por qué es lo más importante de la entrega:
@@ -1622,8 +1623,12 @@ class TestLaEmisionFiscalNoSeActiva:
         }
         for metodo, ruta in publicadas:
             bajo = ruta.lower()
+            # **Se mira el segmento entero, no una subcadena** (07/10/2026): buscando `iva` a secas,
+            # «normat**iva**» daba un falso positivo -y una ruta que no emite nada no puede fallar por como
+            # se llama-. Aqui se parte la ruta en trozos y se busca un trozo que **sea** eso.
+            trozos = set(re.split(r"[/_-]+", bajo))
             for prohibido in ("iva", "verifactu", "fiscal", "hacienda", "impuesto"):
-                assert prohibido not in bajo, f"hay una ruta de emisión fiscal: {metodo} {ruta}"
+                assert prohibido not in trozos, f"hay una ruta de emisión fiscal: {metodo} {ruta}"
         # Y las cuatro rutas del dinero de este ticket sí están, que es lo que sí se entrega.
         for esperada in (
             ("GET", "/api/ventas/tabla"),
