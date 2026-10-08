@@ -125,12 +125,20 @@ FICHEROS_CON_ACCION_POR_VARIABLE = {
     "lista_para_elegir.js",
     "campo.js",
     "confirmacion.js",
+    # **`buscar.js` entra el 07/10/2026**, y por el mismo motivo que `maquinaria.js` de arriba: la acción
+    # de cada resultado **la decide `nucleo.js`** —«tierras» abre la ficha de esa tierra, «papeles» su
+    # lista…—, donde están **literales** y con su explicación, y la pantalla solo la pinta. Comprobado a
+    # mano: las cinco acciones que pueden salir de ahí (`tierra-historia`, `gasto-abrir`, `contacto-abrir`,
+    # `maquina-ver`, `papel-ver-todos`) están **atendidas en el manejador de clics**, y un grupo nuevo que
+    # el servidor añada mañana sale **sin botón** en vez de con uno que no lleva a ningún sitio.
     "mi_cuaderno.js",
     "tarjeta.js",
     "grupos.js",
     "acciones_de_una_ficha.js",
     "interpretacion_factura.js",
     "marco.js",
+    # Y `buscar.js`: la acción de cada resultado la decide `nucleo.js` (ver arriba, con sus cinco nombres).
+    "buscar.js",
     "tabla.js",
     "panel_de_mando.js",
     "cultivos.js",
