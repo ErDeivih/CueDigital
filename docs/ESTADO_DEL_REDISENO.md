@@ -39,6 +39,17 @@ para el que las lee de prisa — y la he pisado yo.
    sembrado»). *Qué se viene a hacer al abrir el cuaderno* es lo que decide cuáles suben.
 2. **La forma real de la parcela** en la ficha de una tierra (su dibujo): el dato ya está en el mapa de
    tierras; es traerlo a la ficha.
+
+   > **Comprobado el 07/10/2026, antes de empezar**: el mapa de tierras **no dibuja polígonos**. Es una
+   > **foto aérea** (PNOA) con una **caja de coordenadas** y los puntos de las tierras encima —está escrito
+   > en `app.js` (≈L6976): *«No hay librería de mapas: hay una caja de coordenadas»*, y *«de coordenadas a
+   > píxeles de la imagen, y al revés. Es una regla de tres, y nada más»*—. Así que **no hay una forma
+   > guardada que dibujar**: lo que hay que llevar a la ficha es **la foto de esa tierra** (la misma imagen,
+   > centrada en su punto), reutilizando el código que ya convierte coordenadas en píxeles.
+   >
+   > Y lo que hace falta para eso es **el punto de la tierra** (sus coordenadas) en los datos de la ficha,
+   > que hoy no los lleva: eso es lo primero que hay que mirar —de dónde los saca el mapa y cómo se le pasan
+   > a la ficha—, antes de tocar nada.
 3. **La pantalla de normativa** (ronda entera: endpoint, textos, renglón en el menú y paso del recorrido),
    con la regla de **no inventar ninguna obligación**: lo que no esté en `docs/MATRIZ_NORMATIVA_CRM.md`, no
    se escribe.
