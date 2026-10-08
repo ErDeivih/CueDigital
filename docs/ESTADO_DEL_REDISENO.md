@@ -80,9 +80,27 @@ para el que las lee de prisa — y la he pisado yo.
    >
    >    **Y hay que comprobar una cosa primero, que puede ser una regresión de este mismo rediseño**: al
    >    dejar la ficha como pantalla única y **retirar el panel** (el trabajo de «fichas únicas»), puede que
-   >    el agricultor **haya dejado de ver la forma de su tierra** —porque se enseñaba justo ahí—. Eso hay
-   >    que mirarlo con el navegador y con una tierra con forma antes de dar el dibujo por perdido o por
-   >    puesto.
+   >    el agricultor **haya dejado de ver la forma de su tierra** —porque se enseñaba justo ahí—.
+   >
+   >    ### Confirmado, y es una regresión (07/10/2026)
+   >
+   >    Medido con el recorrido, que ya lo mira (`.panel-dibujo` en la ficha):
+   >
+   >    ```
+   >    [HALLAZGO] la ficha no enseña la forma de la tierra
+   >    Comprobaciones: 47   Fallos: 0
+   >    ```
+   >
+   >    **No es una sospecha: la ficha no enseña la forma de la tierra**, y se enseñaba en el panel que se
+   >    retiró al dejar la ficha como pantalla única. **Es una regresión de este rediseño.**
+   >
+   >    El arreglo, localizado: pasar `dibujo` a la ficha al montarla (`app.js`, donde se monta
+   >    `pantallaDeLaTierra`, el dato ya está en la tierra) y pintarlo con **la pieza que ya existe**
+   >    (`DibujoDeLaParcela`, de `componentes.js`, que usa `tabla.js` con la clase `.panel-dibujo`), **con la
+   >    regla de la casa**: si la tierra **no tiene forma**, no se pinta un hueco.
+   >
+   >    **Y no hace falta tocar el recorrido**: la comprobación ya está puesta y **se pondrá verde sola** en
+   >    cuanto la ficha enseñe el dibujo.
    >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
