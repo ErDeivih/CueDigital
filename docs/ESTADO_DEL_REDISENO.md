@@ -102,6 +102,20 @@ para el que las lee de prisa — y la he pisado yo.
    >    **Y no hace falta tocar el recorrido**: la comprobación ya está puesta y **se pondrá verde sola** en
    >    cuanto la ficha enseñe el dibujo.
    >
+   >    ### Y el «no tiene forma» era de mi comprobación, no del escenario (07/10/2026)
+   >
+   >    La comprobación decía que la tierra de la prueba no tenía forma y **eso no cuadra**: el escenario crea
+   >    las tierras con `for indice in range(64)` y da forma a las que cumplen `indice % 11 == 0`
+   >    —**`indice == 0` la cumple**—, y la tierra del recorrido es **la primera** (la 18 de la base). Así que
+   >    **esa tierra sí tiene forma** y el hallazgo hablaba del escenario cuando el problema estaba **en la
+   >    comprobación** (o en lo que el servidor devuelve para esa tierra, que es lo que hay que mirar).
+   >
+   >    **Lo que hay que hacer, entonces, es un `print` de una línea**: sacar por pantalla **lo que la
+   >    comprobación ha encontrado** para esa tierra (su identificador y su `dibujo`) en vez de solo decir que
+   >    no tiene. Con eso se ve en un segundo si el fallo es que **no encuentra la tierra** en la lista (y
+   >    entonces `su_dibujo` se queda vacío por eso) o que el servidor **no manda el dibujo**. Es el mismo
+   >    error que ya ha pasado cuatro veces en este encargo: **el instrumento, no el programa**.
+   >
    >    **Queda retirado, por tanto, el plan de «añadir `anillos` a `ParcelaSalida`»** que escribí en las
    >    rondas 26-31: era el camino largo hacia algo que **ya está hecho**. Se deja escrito para que nadie lo
    >    haga: el campo `dibujo` es la puerta.
