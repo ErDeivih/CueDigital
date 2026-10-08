@@ -76,8 +76,23 @@ para el que las lee de prisa — y la he pisado yo.
    >      ]
    >      ```
    >      y pasarlo en la respuesta (`anillos=anillos`), en el endpoint `GET /parcelas/{parcela_id}`.
-   >    · **Con su prueba**: una tierra con forma devuelve sus anillos; una sin forma, la lista vacía —que en
-   >      esta casa es «no se sabe», no un cero.
+   >    · **Con su prueba**, y esto ya está a medias: se sabe **cómo se crea una tierra** en las pruebas
+   >      (copiado de `tests/test_la_busqueda_global.py`):
+   >      ```python
+   >      respuesta = cliente.post(
+   >          "/api/parcelas",
+   >          json={"alias": "La de la forma", "ref_sigpac": None},
+   >          headers=cuenta["cabeceras"],
+   >      )
+   >      ```
+   >      y la prueba tiene que exigir **dos cosas**: una tierra **con forma** devuelve sus anillos
+   >      (`GET /api/parcelas/{id}`), y una **sin forma** devuelve la lista vacía —que en esta casa es «no se
+   >      sabe», no un cero—.
+   >
+   >      **Lo único que falta por mirar**: si `POST /api/parcelas` acepta la **geometría** al crear (el
+   >      campo del modelo existe: la vista la lee). Si no la acepta, hay que buscar en las pruebas **cómo se
+   >      crea una tierra con forma** —alguna habrá, porque la vista del mapa las dibuja— y copiarlo de ahí.
+   >      Es un `grep` de un minuto, y es lo primero que hay que hacer.
    >
    >    Con eso, la ficha puede dibujar su polígono **sin traerse las 64 tierras**.
    > 3. **Un botón «verla en el mapa»** desde la ficha: lo más barato y honesto —el mapa ya sabe hacerlo— y
