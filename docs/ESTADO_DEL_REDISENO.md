@@ -171,10 +171,10 @@ escriba en el cuadro, pulse BUSCAR y exija ver un grupo con su resultado y la di
 correrlo con `pytest tests/test_el_recorrido_se_anda.py`, que es donde vive. (Ese paso **ya está**: se
 apunta como hallazgo mientras falte el cable, y se pone verde solo cuando esté.)
 
-### Lo que falta, medido y con los números exactos
+### Lo que falta: **dos** cosas, y no una
 
-**El renglón del menú** (`MODULOS`, grupo `inicio`, con `accion: "buscar"` y `texto: "buscar.titulo"`) y
-las **cuatro pruebas que fijan el menú en 21 renglones**, que hay que cambiar **con su motivo escrito**.
+**1. El renglón del menú** (`MODULOS`, grupo `inicio`, con `accion: "buscar"` y `texto: "buscar.titulo"`)
+y las **cuatro pruebas que fijan el menú en 21 renglones**, que hay que cambiar **con su motivo escrito**.
 Se intentó el 07/10/2026 y se revirtió para no dejar el árbol en rojo; esto es exactamente lo que salió,
 para no tener que descubrirlo otra vez:
 
@@ -192,6 +192,18 @@ dice «estas pantallas marcan un módulo que no está en el menú: ['buscar']».
 **Y lo que NO hay que hacer** (ya está escrito arriba, pero se repite porque es el error fácil): registrar la
 pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
 versiones— o hacerlo **sin** el paso del recorrido, que es lo único que demuestra que funciona al pulsar.
+
+**2. Su dirección propia** (`#/buscar?texto=…`), que es la otra mitad de la receta del principio: la tabla
+de `web/react/rutas.js` y los dos bloques de `app.js` (el que prepara los datos y el que pinta cuando se
+llega por la dirección). **No es un adorno**: sin ella, recargar la página deja al agricultor fuera de su
+búsqueda, y el enlace no se puede guardar ni mandar — que es exactamente el defecto que este proyecto ya ha
+tenido dos veces (la historia de una tierra y sus versiones, inalcanzables por botón) y una tercera por
+dirección (la búsqueda, hoy).
+
+**Lo que ya está hecho y no hay que repetir**: la puerta del servidor (`GET /api/buscar`, cinco grupos, 17
+pruebas), sus palabras (`textos.py` + `/api/interfaz`, atadas por una prueba), la pantalla
+(`buscar.js`, 9 pruebas que la dibujan con React), su `pantallaBuscar()` y su manejador, y su registro
+donde el proyecto lo exige (lista de React, caché del service worker y la guía `docs/REACT.md`).
 
 La cabecera del encargo la pide. **No hay ninguna puerta en el servidor para eso**: comprobado, lo único
 que existe es la búsqueda del SIGPAC (`parcelas.py:933`). Hace falta un endpoint que busque en tierras,
