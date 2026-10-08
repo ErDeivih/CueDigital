@@ -890,3 +890,32 @@ concreta, otra que distingue un informe historico de una autorizacion-. El model
 Asi no se pierde ni un aviso por el camino, y la pantalla ensena la regla **como esta escrita** y **enlaza sus
 fuentes oficiales**, que es lo unico que la hace comprobable. **Y el «una seccion = una regla» hay que
 confirmarlo con David** cuando se vea en pantalla (N09 avisa de que son dos).
+
+## La pantalla de normativa: la lista de registros, entera (07/10/2026)
+
+Es la parte que **se ve**, y en esta casa es donde mas sitios hay que tocar: cuando se anadio la busqueda,
+saltaron **cinco fallos de registro** que solo aparecieron al correr la suite entera. Esta es la lista completa,
+sacada de aquel trabajo, para hacerlo **de una pasada**:
+
+| Que | Donde | Por que |
+|---|---|---|
+| **La pantalla** | web/react/pantallas/normativa.js | nueva: el componente que pinta las reglas |
+| **La pantalla en React** | web/app.js, en PANTALLAS_EN_REACT | sin eso, la pantalla **no existe** para el armazon |
+| **Su direccion** | web/react/rutas.js | una fila mas, junto a la de la busqueda |
+| **La cache** | web/service-worker.js, en FICHEROS | sin eso, **sin cobertura no carga** |
+| **El modulo** | web/app.js, en MODULOS | la fila del menu: clave, texto y grupo |
+| **Su pantalla** | web/app.js, en MODULO_DE_LA_PANTALLA | el nombre de la pantalla de ese modulo |
+| **Los textos** | ya estan: pp/textos.py, bloque NORMATIVA | servidos en /api/interfaz |
+
+Y **las cuatro pruebas que hay que actualizar a la vez**, o el arbol se queda rojo:
+
+- 	ests_js/rutas.test.js: la lista de rutas, una mas.
+- 	ests_js/interfaz.test.js: la lista de modulos **y los recuentos por grupo**, que cambian al anadir la fila.
+- 	ests_js/armazon.test.js: el menu pasa de **22 filas a 23**.
+- y la copia de textos de las pruebas del movil, si cambia el vocabulario.
+
+**El paso del recorrido**, como el de la busqueda: entrar por el renglon del menu, comprobar que salen las diez
+reglas, que cada una ensena **su fuente oficial con su enlace** y que las que no estan clasificadas **lo dicen**.
+
+**Lo que no hay que tocar**: el estado (los textos ya se sirven) y la puerta (ya responde, con sus cinco
+pruebas).
