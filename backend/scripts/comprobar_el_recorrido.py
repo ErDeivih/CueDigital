@@ -315,20 +315,72 @@ def main() -> int:
         UN_TIPO = (
             "(() => { const s = document.querySelector('#trabajo-tipo');"
             " const buenas = [...(s && s.options) || []].filter((o) => o.value);"
-            " const elegida = buenas.length ? buenas[0].value : (s ? s.value : '');"
+            # **Se elige un trabajo de los que GASTAN del almacén** (tratamiento, abono, fertilización…):
+            # un trabajo que no aplica producto no tiene por qué sacar nada de la nave, y elegir «siembra»
+            # haría parecer que el consumo está roto cuando lo que estaba mal era el ejemplo.
+            " const gasta = buenas.find((o) => /tratamiento|abono|fertiliz|fito|herbicid|plaguicid/i"
+            "   .test((o.textContent || '') + ' ' + o.value));"
+            " const elegida = (gasta || buenas[0] || {}).value || '';"
             " if (s) { s.value = elegida; s.dispatchEvent(new Event('change', { bubbles: true })); }"
             " const f = document.querySelector('#trabajo-fecha-prevista');"
             " if (f) { f.value = '2026-04-20';"
             " f.dispatchEvent(new Event('input', { bubbles: true }));"
             " f.dispatchEvent(new Event('change', { bubbles: true })); }"
-            " return elegida; })()"
+            " return { elegida, textos: buenas.map((o) => (o.textContent || '').trim()) }; })()"
         )
-        el_tipo = str(nav.evaluar(UN_TIPO) or "")
+        eleccion = nav.evaluar(UN_TIPO) or {}
+        el_tipo = str(eleccion.get("elegida") or "") if isinstance(eleccion, dict) else str(eleccion)
         comprobar(bool(el_tipo), f"el formulario acepta un tipo de trabajo («{el_tipo}»)")
-        opciones = nav.evaluar(
-            "[...(document.querySelector('#trabajo-tipo') || {}).options || []].map((o) => o.value)"
-        )
+        opciones = (eleccion or {}).get("textos") if isinstance(eleccion, dict) else None
         print(f"  (tipos que ofrece el formulario: {opciones})")
+        # **Y lo que gasta del almacén**: un trabajo de verdad sale de la nave, y eso es lo que hay que
+        # comprobar después —que el libro del almacén tenga su salida y que quede menos—. Se elige un lote
+        # de los que el escenario ha dejado en la nave y una cantidad.
+        LA_CANTIDAD = 2.0
+
+        def el_insumo_del_formulario() -> dict:
+            """Lo que el formulario trae puesto de almacén, **sin tocar nada**.
+
+            Se lee antes de rellenarlo porque hay que distinguir dos cosas: que el agricultor no lo haya
+            elegido, o que **la pantalla no lo traiga** del plan que ya lo tenía. La segunda sería un
+            defecto —y de los que no se ven: el trabajo se marca hecho y la nave no se entera—.
+            """
+            return nav.evaluar(
+                "(() => {"
+                " const lote = document.querySelector('#trabajo-insumo');"
+                " const cantidad = document.querySelector('#trabajo-cantidad');"
+                " const unidad = document.querySelector('#trabajo-unidad');"
+                " const dicho = (s) => (s && s.value) || '';"
+                " const etiqueta = (s) => { const o = s && s.options && s.selectedIndex >= 0"
+                "   ? s.options[s.selectedIndex] : null; return o ? (o.textContent || '').trim() : ''; };"
+                " return { lote: dicho(lote), lote_texto: etiqueta(lote),"
+                "   cantidad: dicho(cantidad), unidad: dicho(unidad) }; })()"
+            ) or {}
+
+        def poner_el_insumo(la_cantidad: float) -> dict:
+            """Pone en el formulario el lote, la cantidad y la unidad. Devuelve lo que puso."""
+            return nav.evaluar(
+                "(() => {"
+                " const elige = (id) => { const s = document.querySelector(id);"
+                "   if (!s) return null;"
+                "   const buenas = [...(s.options || [])].filter((o) => o.value);"
+                "   if (!buenas.length) return null;"
+                "   s.value = buenas[0].value;"
+                "   s.dispatchEvent(new Event('change', { bubbles: true }));"
+                "   return { id: s.value, texto: (buenas[0].textContent || '').trim() }; };"
+                " const lote = elige('#trabajo-insumo');"
+                " const cantidad = document.querySelector('#trabajo-cantidad');"
+                f" if (cantidad) {{ cantidad.value = '{la_cantidad}';"
+                "   cantidad.dispatchEvent(new Event('input', { bubbles: true }));"
+                "   cantidad.dispatchEvent(new Event('change', { bubbles: true })); }"
+                " const unidad = elige('#trabajo-unidad');"
+                " return { lote, unidad }; })()"
+            ) or {}
+
+        print(f"  (el formulario, de almacén, trae puesto: {json.dumps(el_insumo_del_formulario(), ensure_ascii=False)})")
+        puesto = poner_el_insumo(LA_CANTIDAD)
+        print(f"  (y gasta del almacén: {json.dumps(puesto, ensure_ascii=False)})")
+        el_lote = (puesto or {}).get("lote") or {}
         print(f"  (se planifica «{el_tipo}» para el 20/04/2026 en «{la_tierra.alias[:34]}»…)")
 
         def la_agenda() -> dict:
@@ -353,6 +405,26 @@ def main() -> int:
                     if dentro.get("id") == ident:
                         return {**dentro, "en": lista}
             return {}
+
+        def el_libro_del_almacen() -> list:
+            """El libro del almacén: entradas y salidas. **De aquí sale lo que queda**, que es la resta."""
+            respuesta = httpx.get(
+                f"{DIRECCION}/api/almacen/movimientos",
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            )
+            return respuesta.json() if respuesta.status_code == 200 else []
+
+        def lo_que_queda(lote_id) -> float:
+            """Lo que queda en un lote: lo que entró menos lo que salió."""
+            queda = 0.0
+            for movimiento in el_libro_del_almacen():
+                dentro = _el_de_dentro(movimiento)
+                if str(dentro.get("lote_id")) != str(lote_id):
+                    continue
+                cantidad = float(dentro.get("cantidad") or 0)
+                queda += cantidad if (dentro.get("tipo") or "") == "entrada" else -cantidad
+            return queda
 
         def estado_de_la_tierra() -> dict:
             """Lo que el servidor dice de esa tierra: lo previsto y lo hecho. **Se pregunta al servidor**,
@@ -410,6 +482,12 @@ def main() -> int:
                     return candidato
             return ""
 
+        # **Y antes de guardar, lo que había en la nave**: se apunta para poder comprobar que después hay
+        # menos, que es lo que significa «consumo de existencias».
+        quedaba_antes = lo_que_queda(el_lote.get("id")) if el_lote.get("id") else None
+        print(
+            f"  (en el lote «{el_lote.get('texto')}» ({el_lote.get('id')}) quedaban {quedaba_antes} antes)"
+        )
         boton = el_boton_de_guardar()
         antes = estado_de_la_tierra().get("que_queda_previsto", [])
         antes_ids = {_el_de_dentro(uno).get("id") for uno in antes}
@@ -457,6 +535,26 @@ def main() -> int:
                 f"el previsto trae su botón de «ya lo he hecho» (plan {ident})",
             )
             nav.esperar("Boolean(document.querySelector('#trabajo-tipo'))", segundos=15)
+            # **¿Trae el insumo del plan?** Se mira **antes** de tocar nada: si viene vacío, la pantalla de
+            # «lo he hecho» está perdiendo lo que el plan ya decía — y eso no se ve, porque el trabajo se
+            # guarda igual: solo que la nave no se entera de lo que se gastó.
+            lo_que_trae = el_insumo_del_formulario()
+            print(
+                "  (el formulario de lo hecho trae puesto, de almacén: "
+                f"{json.dumps(lo_que_trae, ensure_ascii=False)})"
+            )
+            if not lo_que_trae.get("lote") and el_lote.get("id"):
+                HALLAZGOS.append(
+                    "el formulario de «ya lo he hecho» **no trae el insumo del plan**: el plan guardado "
+                    f"tenía el lote «{el_lote.get('texto')}» y su cantidad, y al abrirlo para darlo por "
+                    "hecho los campos de almacén salen vacíos — así que el trabajo se guarda **sin gastar "
+                    "nada** y el almacén no se entera. No se puede distinguir de un trabajo en el que no se "
+                    "gastó nada"
+                )
+                print("  [HALLAZGO] «ya lo he hecho» no trae el insumo del plan")
+                # Y se pone a mano para poder comprobar que, **con el insumo puesto**, el consumo sí ocurre.
+                puesto_hecho = poner_el_insumo(LA_CANTIDAD)
+                print(f"  (puesto a mano para seguir: {json.dumps(puesto_hecho, ensure_ascii=False)})")
             # La fecha del hecho hace falta (el servidor la pide): si la pantalla no la trae puesta, se pone.
             nav.evaluar(
                 "(() => { const c = document.querySelector('#trabajo-fecha');"
@@ -533,6 +631,39 @@ def main() -> int:
                 despues.get("cuantas_siembras") == 1,
                 f"y el estado cuenta **una sola** siembra ({despues.get('cuantas_siembras')}), sin duplicados",
             )
+            # **Y EL CONSUMO DE EXISTENCIAS**, que es la otra mitad de un trabajo de verdad: lo que se gasta
+            # sale de la nave. Se mira **el libro del almacén** (de donde sale lo que queda, que es la
+            # resta) y se comprueba que hay una salida de lo que se gastó y que queda menos que antes.
+            if el_lote.get("id") and quedaba_antes is not None:
+                quedaba_despues = lo_que_queda(el_lote.get("id"))
+                print(
+                    f"  (en el lote «{el_lote.get('texto')}» quedan {quedaba_despues} "
+                    f"(antes {quedaba_antes}, se gastaron {LA_CANTIDAD}))"
+                )
+                comprobar(
+                    quedaba_despues is not None
+                    and abs((quedaba_antes - quedaba_despues) - LA_CANTIDAD) < 0.001,
+                    f"el trabajo **gasta del almacén**: quedan {quedaba_despues} y quedaban {quedaba_antes}",
+                )
+                salidas = [
+                    _el_de_dentro(uno)
+                    for uno in el_libro_del_almacen()
+                    if str(_el_de_dentro(uno).get("lote_id")) == str(el_lote.get("id"))
+                    and (_el_de_dentro(uno).get("tipo") or "") == "salida"
+                ]
+                print(
+                    "  (las salidas de ese lote en el libro: "
+                    + ", ".join(
+                        f"{uno.get('cantidad')} · {(uno.get('motivo') or '')[:40]}" for uno in salidas
+                    )
+                    + ")"
+                )
+                comprobar(
+                    any(
+                        abs(float(uno.get("cantidad") or 0) - LA_CANTIDAD) < 0.001 for uno in salidas
+                    ),
+                    f"y su salida queda apuntada en el libro del almacén ({len(salidas)} salidas)",
+                )
         print(f"  (la lista de trabajos, después: {' '.join(texto_de(nav).split())[:140]}…)")
 
         # ── 4c. Corregirlo ───────────────────────────────────────────────────────────────────────
