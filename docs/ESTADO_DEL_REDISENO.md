@@ -40,16 +40,19 @@ para el que las lee de prisa — y la he pisado yo.
 2. **La forma real de la parcela** en la ficha de una tierra (su dibujo): el dato ya está en el mapa de
    tierras; es traerlo a la ficha.
 
-   > **Comprobado el 07/10/2026, antes de empezar**: el mapa de tierras **no dibuja polígonos**. Es una
-   > **foto aérea** (PNOA) con una **caja de coordenadas** y los puntos de las tierras encima —está escrito
-   > en `app.js` (≈L6976): *«No hay librería de mapas: hay una caja de coordenadas»*, y *«de coordenadas a
-   > píxeles de la imagen, y al revés. Es una regla de tres, y nada más»*—. Así que **no hay una forma
-   > guardada que dibujar**: lo que hay que llevar a la ficha es **la foto de esa tierra** (la misma imagen,
-   > centrada en su punto), reutilizando el código que ya convierte coordenadas en píxeles.
+   > **Comprobado el 07/10/2026, y corregido al día siguiente** (la primera conclusión era a medias):
    >
-   > Y lo que hace falta para eso es **el punto de la tierra** (sus coordenadas) en los datos de la ficha,
-   > que hoy no los lleva: eso es lo primero que hay que mirar —de dónde los saca el mapa y cómo se le pasan
-   > a la ficha—, antes de tocar nada.
+   > - **La forma SÍ existe y el servidor la devuelve**: `app/routers/parcelas.py` trabaja con los **anillos**
+   >   de cada tierra (`tierra.anillos`, listas de `[lon, lat]`), y hasta calcula la caja que los envuelve
+   >   (`oeste/este/sur/norte` y el centro). El mapa de la web construye su caja **con esos puntos**
+   >   (`app.js` ≈L15010).
+   > - Lo que **no** hace el mapa es **dibujar el polígono**: enseña una **foto aérea** con los puntos encima
+   >   (*«No hay librería de mapas: hay una caja de coordenadas»*).
+   >
+   > Así que la ficha tiene **dos caminos**, y hay que elegir uno: **dibujar el anillo** de esa tierra (un
+   > polígono pequeño, con lo que ya se calcula la caja) o **traer la foto** de su zona con el anillo encima.
+   > Y lo que hay que mirar primero es **por qué puerta se le pasan los anillos a una pantalla** —el mapa los
+   > tiene— para dárselos a la ficha sin inventar una segunda forma de pedirlos.
 3. **La pantalla de normativa** (ronda entera: endpoint, textos, renglón en el menú y paso del recorrido),
    con la regla de **no inventar ninguna obligación**: lo que no esté en `docs/MATRIZ_NORMATIVA_CRM.md`, no
    se escribe.
