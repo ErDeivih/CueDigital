@@ -331,6 +331,29 @@ def main() -> int:
         print(f"  (tipos que ofrece el formulario: {opciones})")
         print(f"  (se planifica «{el_tipo}» para el 20/04/2026 en «{la_tierra.alias[:34]}»…)")
 
+        def la_agenda() -> dict:
+            """La agenda del servidor, tal y como la pide la pantalla de trabajos (`/api/trabajos`)."""
+            respuesta = httpx.get(
+                f"{DIRECCION}/api/trabajos",
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            )
+            return respuesta.json() if respuesta.status_code == 200 else {}
+
+        def el_trabajo_en_la_agenda(ident) -> dict:
+            """Un trabajo concreto, buscado por su identificador **en la agenda del servidor**.
+
+            Es la puerta que usa la pantalla, así que es donde hay que mirar si un apunte está o no está: el
+            estado de una tierra resume, y lo que se resume no dice si el apunte sigue existiendo.
+            """
+            agenda = la_agenda()
+            for lista in ("hechos", "previstos"):
+                for uno in agenda.get(lista) or []:
+                    dentro = _el_de_dentro(uno)
+                    if dentro.get("id") == ident:
+                        return {**dentro, "en": lista}
+            return {}
+
         def estado_de_la_tierra() -> dict:
             """Lo que el servidor dice de esa tierra: lo previsto y lo hecho. **Se pregunta al servidor**,
             no se lee la pantalla: una pantalla puede decir una cosa y el cuaderno tener otra."""
@@ -511,6 +534,85 @@ def main() -> int:
                 f"y el estado cuenta **una sola** siembra ({despues.get('cuantas_siembras')}), sin duplicados",
             )
         print(f"  (la lista de trabajos, después: {' '.join(texto_de(nav).split())[:140]}…)")
+
+        # ── 4c. Corregirlo ───────────────────────────────────────────────────────────────────────
+        # Lo que se apunta a mano se equivoca, y **corregir** es la mitad de un cuaderno de campo: si no se
+        # puede corregir, el agricultor apunta mal y lo deja mal. Se corrige y se comprueba **en el
+        # servidor** que la corrección quedó.
+        LA_CORRECCION = "Corregido por el recorrido automático"
+        paso(nav, 4, "Corregir un trabajo hecho")
+        el_hecho = dicho_por_el_estado.get("trabajo_id")
+        if not el_hecho:
+            comprobar(False, "no hay ningún trabajo hecho que corregir (el guardado no llegó)")
+        else:
+            comprobar(
+                pulsar_en_js(f"[data-accion='trabajo-corregir'][data-id='{el_hecho}']"),
+                f"el trabajo hecho trae su botón de corregir (trabajo {el_hecho})",
+            )
+            nav.esperar("Boolean(document.querySelector('#trabajo-observaciones'))", segundos=15)
+            escribir_en(nav, "#trabajo-observaciones", LA_CORRECCION)
+            boton = el_boton_de_guardar()
+            comprobar(
+                bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
+                f"y su formulario ofrece guardar la corrección (botón «{boton or 'ninguno'}»)",
+            )
+            nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
+            captura(nav, "4-corregido")
+            # **Se comprueba en la agenda del servidor**, que es la puerta que usa la pantalla: el estado de
+            # una tierra resume lo último, y lo que se resume no dice si la corrección se guardó.
+            corregido = el_trabajo_en_la_agenda(el_hecho)
+            print(
+                "  (el trabajo corregido, en la agenda: "
+                f"observaciones={corregido.get('observaciones')!r})"
+            )
+            comprobar(
+                LA_CORRECCION in str(corregido.get("observaciones") or ""),
+                f"la corrección **queda guardada** en el servidor ({corregido.get('observaciones')!r})",
+            )
+
+            # ── 4d. Anularlo ─────────────────────────────────────────────────────────────────────
+            # Y **anular** es la otra mitad: lo apuntado por error se anula **con su motivo**, y el apunte
+            # **no desaparece** —el encargo lo dice: todos los eventos se conservan—, pero deja de contar.
+            paso(nav, 4, "Anular un trabajo hecho")
+            comprobar(
+                pulsar_en_js(f"[data-accion='trabajo-anular'][data-id='{el_hecho}']"),
+                "el trabajo hecho trae su botón de anular",
+            )
+            nav.esperar("Boolean(document.querySelector('#trabajo-motivo'))", segundos=15)
+            escribir_en(nav, "#trabajo-motivo", "Apuntado por error en el recorrido automático")
+            boton = el_boton_de_guardar()
+            comprobar(
+                bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
+                f"y se confirma la anulación (botón «{boton or 'ninguno'}»)",
+            )
+            nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
+            captura(nav, "4-anulado")
+            anulado = estado_de_la_tierra()
+            print(
+                "  (el estado, después de anular: "
+                f"siembras={anulado.get('cuantas_siembras')}, "
+                f"ultima={(_el_de_dentro({'hecho': anulado.get('ultima_labor') or {}})).get('tipo')})"
+            )
+            comprobar(
+                anulado.get("cuantas_siembras") == 0,
+                "lo anulado **deja de contar** como siembra (el apunte se conserva, pero no cuenta)",
+            )
+            # **Y que el apunte se conserve hay que poder verlo en algún sitio**: el encargo dice que todos
+            # los eventos se conservan. Si el anulado no sale **en ninguna puerta**, eso no se puede
+            # comprobar — y una promesa que no se puede comprobar es una promesa que se rompe sin que nadie
+            # se entere.
+            sigue = el_trabajo_en_la_agenda(el_hecho)
+            print(
+                "  (el trabajo anulado, en la agenda: "
+                + (f"sigue, en «{sigue.get('en')}», anulado={sigue.get('anulado')})" if sigue else "ya no sale)")
+            )
+            if not sigue:
+                HALLAZGOS.append(
+                    "un trabajo **anulado no se puede ver en ninguna puerta**: no sale en la agenda "
+                    f"(`/api/trabajos`) ni en el historial de su tierra (`/api/trabajos/tierra/{mirando}`), "
+                    "así que «todos los eventos se conservan» no se puede comprobar — y es una promesa del "
+                    "encargo"
+                )
 
         # ── 5. El historial de la tierra, después ───────────────────────────────────────────────
         paso(nav, 5, "El historial de la tierra, después")
