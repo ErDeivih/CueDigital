@@ -844,6 +844,15 @@ def main() -> int:
                 comprobar(True, "y la ficha enseña la forma de su tierra (su dibujo)")
             else:
                 comprobar(False, "la ficha **no** enseña la forma de su tierra, teniéndola")
+
+            # **Lo que se ha probado y NO funciona, medido** (07/10/2026): se creó una tierra **con forma**
+            # (su `geometria`, id 66) y se abrió su ficha: **el dibujo NO sale** (`.panel-dibujo` no está).
+            # O sea que el arreglo —pasar `dibujo` a la ficha y pintarlo— **está incompleto**: lo más
+            # probable es que la tierra que recibe la ficha **no traiga** el `dibujo` (viene de otra puerta
+            # que la lista de tierras). Eso es lo siguiente que hay que mirar, y no se deja una comprobación
+            # que además rompe las de después: aquí queda dicho, y la prueba de verdad se pondrá cuando el
+            # dibujo salga de verdad.
+            captura(nav, "5-cultivos")
             captura(nav, "5-cultivos")
         # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla.
         # **Y contra el endpoint que sí lo devuelve** (07/10/2026): esto preguntaba por
