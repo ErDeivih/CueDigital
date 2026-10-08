@@ -28,6 +28,10 @@ DIRECCION = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8029"
 CARPETA = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else r"C:\Users\David\AppData\Local\Temp\cd-ui")
 COMPROBACIONES = 0
 FALLOS: list[str] = []
+# Lo que se mide y **todavía no está**: se apunta con su frase en vez de darlo por bueno o de poner la
+# prueba en rojo. Es el mismo convenio que el guion del teclado y el zoom: un hueco declarado se ve, y el
+# día que se cierre, esta lista se queda vacía sola.
+HALLAZGOS: list[str] = []
 
 
 def comprobar(condicion: bool, descripcion: str) -> bool:
@@ -370,7 +374,46 @@ def main() -> int:
             "la ficha ofrece decir o corregir el cultivo de esa tierra",
         )
 
+        # ── 7. La búsqueda global ───────────────────────────────────────────────────────────────
+        paso(nav, 7, "La búsqueda global")
+        # **Esta pantalla todavía no está registrada** (07/10/2026): la puerta del servidor, sus palabras y
+        # su pantalla están hechas y probadas, pero falta el cable que la une a la aplicación (seis sitios,
+        # escritos en `docs/ESTADO_DEL_REDISENO.md`). Así que aquí **se mide y se apunta**, en vez de darlo
+        # por bueno o de poner esta comprobación en rojo por algo que se sabe.
+        #
+        # El día que el cable esté, esta misma comprobación se pone en verde sola: escribe en el cuadro,
+        # pulsa y exige un grupo con su resultado.
+        nav.abrir(f"{DIRECCION}/#/buscar", esperar=1.6)
+        nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=8)
+        if not hay(nav, "#buscar_global"):
+            HALLAZGOS.append(
+                "la búsqueda global todavía no tiene puerta: `#/buscar` existe como dirección pero la "
+                "pantalla no está registrada (falta el cable: `rutas.js`, los tres bloques de `app.js`, su "
+                "renglón en el menú y su manejador). La puerta del servidor, sus palabras y su pantalla ya "
+                "están hechas y probadas"
+            )
+            print("  [HALLAZGO] la pantalla de la búsqueda no está registrada todavía (el cable, pendiente)")
+        else:
+            escribir_en(nav, "#buscar_global", "prado")
+            comprobar(
+                pulsar_si_hay(
+                    nav,
+                    "[data-accion='buscar']",
+                    "document.querySelectorAll('#pantalla .tarjeta').length > 0",
+                ),
+                "escribir en el cuadro y pulsar BUSCAR enseña los grupos con sus resultados",
+            )
+            comprobar(
+                "buscar" in str(nav.evaluar("location.hash")),
+                "y la búsqueda tiene su propia dirección, para poder volver a ella",
+            )
+            captura(nav, "7-busqueda")
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
+    if HALLAZGOS:
+        print(f"Hallazgos: {len(HALLAZGOS)} (lo que se sabe que falta, medido)")
+        for apunte in HALLAZGOS:
+            print(f"  · {apunte}")
     for fallo in FALLOS:
         print(f"  · {fallo}")
     print(f"Capturas en {CARPETA} (recorrido-*.png)")
