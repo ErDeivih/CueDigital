@@ -13,9 +13,36 @@
 > | Registrar un trabajo | planificar · guardar · hecho · corregir · anular · **consumo de existencias**, comprobado en el servidor | recorrido, paso 4 |
 > | Búsqueda global | puerta del servidor (19 pruebas), palabras, pantalla, **resultados que abren sus fichas**, dirección con el texto | recorrido, paso 7 |
 >
-> **Lo que sigue abierto y declarado**: el **historial de una tierra no ve el trabajo que su estado sí ve**
-> (dos puertas que enseñan menos de lo que hay) — está en los hallazgos del recorrido, no tapado.
-> **Sin hacer**: fichas por secciones, formularios de escritorio, acciones claras, y el acceso a normativa.
+## El hallazgo abierto, con lo que ya está medido (07/10/2026)
+
+**El historial de una tierra y su estado no dicen lo mismo**: después de marcar un trabajo como hecho, el
+**estado** lo ve (`ultima_labor` con su identificador y `cuantas_siembras: 1`) y
+**`/api/trabajos/tierra/<id>` devuelve `lineas: []`**.
+
+Lo que ya se ha descartado, midiendo (no suponiendo):
+
+| Se probó | Resultado |
+|---|---|
+| Pedirlo **con** `campana_id` (el de la campaña del trabajo) | `lineas: []` |
+| Pedirlo **sin** `campana_id` | `lineas: []` |
+| Que el trabajo no existiera | **Existe**: el estado lo enseña con su identificador (`trabajo_id`) |
+| Que fuera cosa de la pantalla | No: se pregunta **al servidor** con `httpx`, sin navegador |
+
+Así que el problema está **antes** del filtro por campaña: en el propio endpoint del historial —
+`/api/trabajos/tierra/{parcela_id}`—, que arma sus líneas con `_las_labores(db, explotacion,
+parcela_id=…, campana_id=…)` y luego `logica.historial_de_una_tierra(...)`. **Por dónde empezar**: mirar qué
+devuelve `_las_labores` para esa parcela (¿está filtrando por algo más?), porque el estado, con la misma
+parcela y la misma base, **sí** encuentra la labor.
+
+Y el arreglo se puede hacer **sin navegador**: es una prueba de Python —crear la tierra, apuntar el trabajo,
+pedir el historial y exigir una línea—, que hoy sería roja. Eso es lo primero que hay que escribir.
+
+**Lo que este hallazgo se lleva por delante mientras siga abierto**: el encargo dice que «todos los eventos
+se conservan», y el historial es la pantalla donde eso se comprueba — lo anulado **no sale** de ahí, así que
+un apunte anulado **no se puede ver en ninguna puerta** (en la agenda sigue, con su marca, y eso es lo que
+hoy sostiene la promesa).
+**Sin hacer, además** (lo que queda del encargo): la **forma real** de la parcela en la ficha, los
+**formularios de escritorio**, las **acciones claras** y el **acceso a normativa**.
 
 ## Las fichas, comparadas con lo que pide el rediseño (07/10/2026)
 
