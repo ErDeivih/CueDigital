@@ -61,6 +61,41 @@ def hay(nav: NavegadorDeVerdad, selector: str) -> bool:
     return bool(nav.evaluar(f"Boolean(document.querySelector({json.dumps(selector)}))"))
 
 
+def _el_de_dentro(uno: dict) -> dict:
+    """**Los datos de un trabajo vienen envueltos**, y hay que sacarlos de dentro.
+
+    El servidor no devuelve el trabajo a pelo: lo devuelve como `{"previsto": {...}}` o `{"labor": {...}}`
+    —con su envoltorio, que dice de dónde sale cada cosa—, y quien lo mira tiene que desenvolverlo. Esto
+    parecía un guardado fallido (`tipo` salía `None`) y era la comprobación leyendo el nivel de fuera. Se
+    saca lo de dentro por nombre, y si no hay envoltorio se devuelve lo que venga.
+    """
+    if not isinstance(uno, dict):
+        return {}
+    for clave in ("previsto", "labor", "trabajo", "hecho", "linea"):
+        if isinstance(uno.get(clave), dict):
+            return uno[clave]
+    return uno
+
+
+def _lo_previsto(estado: dict) -> str:
+    """Lo que el servidor dice que queda previsto, en una línea, para poder leerlo en la salida.
+
+    Existe porque un guardado que falla en silencio es lo que hay que poder ver: si esto sale vacío cuando
+    debería haber un plan, el problema está en el guardado, y si sale el plan de otro tipo, el problema es
+    del tipo que se eligió — dos cosas muy distintas que un «0» a secas no distingue.
+    """
+    previstos = (estado or {}).get("que_queda_previsto") or []
+    if not previstos:
+        return "nada"
+    dichos = []
+    for uno in previstos:
+        dentro = _el_de_dentro(uno)
+        dichos.append(
+            f"{dentro.get('tipo')} · {dentro.get('cuando') or dentro.get('fecha_prevista') or 'sin fecha'}"
+        )
+    return ", ".join(dichos)
+
+
 def escribir_en(nav: NavegadorDeVerdad, selector: str, texto: str) -> None:
     """Escribe en un campo: `escribir` teclea **en lo que tenga el foco**, así que primero se enfoca."""
     nav.evaluar(
@@ -237,37 +272,245 @@ def main() -> int:
             "la ficha ofrece planificar un trabajo para esa tierra",
         )
 
-        # ── 4. Registrar un trabajo ─────────────────────────────────────────────────────────────
+        # ── 4. Registrar un trabajo, **de verdad** ──────────────────────────────────────────────
         paso(nav, 4, "Registrar un trabajo")
-        # La lista de trabajos es la puerta que el menú ofrece («trabajos-ver»).
-        pulsar_si_hay(nav, '[data-accion="trabajos-ver"]', "location.hash.includes('trabajos')")
-        acciones_trabajos = acciones(nav)
-        print(f"  acciones de la pantalla de trabajos: {acciones_trabajos}")
-        comprobar(
-            "trabajo-planificar" in acciones_trabajos,
-            "la pantalla de trabajos ofrece planificar un trabajo",
-        )
-        captura(nav, "4-trabajos")
-        # **Y se abre el formulario de verdad**, que es lo que hace el agricultor para apuntar el trabajo:
-        # si el botón estuviera muerto, esto no abriría nada.
+        # **Lo que este paso hacía mal** (07/10/2026): abría el formulario, miraba sus campos y **lo
+        # cancelaba**. «El recorrido no inventa datos» decía el comentario — y era verdad a medias: el
+        # escenario es ficticio y de usar y tirar, así que lo que hacía era **no comprobar lo único que
+        # importa**: que un trabajo se pueda guardar. Aquí se planifica, se guarda, se marca hecho y se
+        # comprueba **en el servidor**.
+        #
+        # Y se hace **desde la ficha de la tierra**, que es como lo hace el agricultor que está mirando una
+        # tierra: así se comprueba de paso que **la tierra que mira ya viene puesta** en el formulario.
         comprobar(
             pulsar_si_hay(
                 nav,
                 "[data-accion='trabajo-planificar']",
-                "document.querySelectorAll('#pantalla input, #pantalla select, #pantalla textarea').length > 0",
+                "Boolean(document.querySelector('#trabajo-tipo'))",
             ),
             "«planificar» abre el formulario del trabajo (con sus campos)",
         )
         captura(nav, "4-planificar")
+        tierra_puesta = nav.evaluar(
+            "(document.querySelector('#trabajo-tierra') || {}).value || ''"
+        )
+        # **La tierra que se está mirando, sacada de la dirección** (`#/tierras/18/historial` → 18), que es
+        # el dato que no admite duda: la ficha que hay delante es esa. Se usa esta y no `la_tierra.id`
+        # porque el escenario numera sus tierras por su cuenta y el identificador de verdad es el de la
+        # base: mezclarlos hizo fallar esta comprobación la primera vez.
+        mirando = str(nav.evaluar("location.hash")).split("#/tierras/")[-1].split("/")[0]
+        comprobar(
+            str(tierra_puesta) == mirando,
+            f"y la tierra que se estaba mirando sale ya puesta (sale «{tierra_puesta}», se miraba la {mirando})",
+        )
         campos = nav.evaluar(
             "[...document.querySelectorAll('#pantalla input, #pantalla select, #pantalla textarea')]"
             ".map((e) => e.id || e.name || e.type).slice(0, 12)"
         )
         print(f"  campos del formulario: {campos}")
-        # Se vuelve a la lista de trabajos sin guardar nada: el recorrido no inventa datos.
-        nav.pulsar("[data-accion='trabajo-cancelar']") if hay(
-            nav, "[data-accion='trabajo-cancelar']"
-        ) else nav.abrir(f"{DIRECCION}/#/trabajos", esperar=1.2)
+
+        # **Se rellena lo mínimo que el servidor pide** (el tipo y la fecha prevista) y se guarda. Se
+        # escribe en el DOM y se avisa con los sucesos de siempre: los campos de esta casa son corrientes
+        # (`defaultValue`), así que lo escrito **se queda** — que es justo lo que no pasaba en la búsqueda.
+        UN_TIPO = (
+            "(() => { const s = document.querySelector('#trabajo-tipo');"
+            " const buenas = [...(s && s.options) || []].filter((o) => o.value);"
+            " const elegida = buenas.length ? buenas[0].value : (s ? s.value : '');"
+            " if (s) { s.value = elegida; s.dispatchEvent(new Event('change', { bubbles: true })); }"
+            " const f = document.querySelector('#trabajo-fecha-prevista');"
+            " if (f) { f.value = '2026-04-20';"
+            " f.dispatchEvent(new Event('input', { bubbles: true }));"
+            " f.dispatchEvent(new Event('change', { bubbles: true })); }"
+            " return elegida; })()"
+        )
+        el_tipo = str(nav.evaluar(UN_TIPO) or "")
+        comprobar(bool(el_tipo), f"el formulario acepta un tipo de trabajo («{el_tipo}»)")
+        opciones = nav.evaluar(
+            "[...(document.querySelector('#trabajo-tipo') || {}).options || []].map((o) => o.value)"
+        )
+        print(f"  (tipos que ofrece el formulario: {opciones})")
+        print(f"  (se planifica «{el_tipo}» para el 20/04/2026 en «{la_tierra.alias[:34]}»…)")
+
+        def estado_de_la_tierra() -> dict:
+            """Lo que el servidor dice de esa tierra: lo previsto y lo hecho. **Se pregunta al servidor**,
+            no se lee la pantalla: una pantalla puede decir una cosa y el cuaderno tener otra."""
+            respuesta = httpx.get(
+                f"{DIRECCION}/api/trabajos/estado/{mirando}",
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            )
+            return respuesta.json() if respuesta.status_code == 200 else {}
+
+        def historial_de_la_tierra(campana_id: int | None = None) -> dict:
+            """La historia de esa tierra, **diciendo la campaña**.
+
+            El historial filtra por campaña, así que sin decirla se pide «la de la campaña que el servidor
+            tenga por actual» — que puede no ser la de esta prueba. Eso hizo parecer que el trabajo no se
+            había guardado cuando sí estaba (el estado lo decía): una consulta a medias parece un fallo del
+            programa.
+            """
+            respuesta = httpx.get(
+                f"{DIRECCION}/api/trabajos/tierra/{mirando}",
+                params={"campana_id": campana_id} if campana_id else None,
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            )
+            return respuesta.json() if respuesta.status_code == 200 else {}
+
+        def pulsar_en_js(selector: str) -> bool:
+            """Un clic **de verdad, pero no por coordenadas**.
+
+            El manejador de esta aplicación es un `click` delegado en `document`, así que un clic sobre el
+            elemento es el mismo suceso que el del agricultor. Las coordenadas son la parte poco fiable de
+            este instrumento: en las rondas 8, 18 y 58 el clic aterrizó en la barra pegajosa y el que estaba
+            mal era el guion, no el programa.
+            """
+            return bool(
+                nav.evaluar(
+                    "(() => { const el = document.querySelector("
+                    + json.dumps(selector)
+                    + "); if (!el) return false; el.click(); return true; })()"
+                )
+            )
+
+        # GUARDAR. **Cada modo tiene su botón** (`trabajo-previsto-guardar` al planificar, `trabajo-guardar`
+        # al corregir, `trabajo-hecho-guardar` al dar por hecho), y el recorrido no tiene por qué saber cuál
+        # es: busca el que haya y dice cuál usó. Así, si mañana se añade un modo, esto no se rompe.
+        def el_boton_de_guardar() -> str:
+            for candidato in (
+                "trabajo-previsto-guardar",
+                "trabajo-hecho-guardar",
+                "trabajo-guardar",
+                "trabajo-anular-confirmar",
+            ):
+                if hay(nav, f"[data-accion='{candidato}']"):
+                    return candidato
+            return ""
+
+        boton = el_boton_de_guardar()
+        antes = estado_de_la_tierra().get("que_queda_previsto", [])
+        antes_ids = {_el_de_dentro(uno).get("id") for uno in antes}
+        print(f"  (lo previsto ANTES de guardar: {_lo_previsto({'que_queda_previsto': antes})})")
+        comprobar(
+            bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
+            f"el formulario ofrece guardar (botón «{boton or 'ninguno'}»)",
+        )
+        nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
+        captura(nav, "4-guardado")
+        # **Lo que dice la pantalla después de guardar**, que es donde sale el error del servidor si lo hay:
+        # un guardado que falla en silencio es lo que hay que poder ver.
+        print(f"  (después de guardar, la pantalla dice: {' '.join(texto_de(nav).split())[:180]}…)")
+        estado_tras_guardar = estado_de_la_tierra()
+        print(f"  (lo previsto DESPUÉS de guardar: {_lo_previsto(estado_tras_guardar)})")
+        previstos = estado_tras_guardar.get("que_queda_previsto", [])
+        # **El que se acaba de guardar es el que no estaba antes**, y así se busca: por identificador y no
+        # por el nombre de un campo. Un recorrido que se apoya en cómo se llama cada clave se rompe el día
+        # que la clave se llama de otra forma — y entonces parece que el guardado falla cuando lo que falla
+        # es la comprobación.
+        nuevos = [uno for uno in previstos if _el_de_dentro(uno).get("id") not in antes_ids]
+        mios = nuevos
+        print(f"  (el plan recién guardado, entero: {json.dumps(nuevos, ensure_ascii=False)[:400]})")
+        comprobar(
+            len(nuevos) == 1,
+            f"el trabajo **queda guardado** como previsto en el servidor ({len(nuevos)} nuevos)",
+        )
+        print(
+            "  (el servidor dice que queda previsto: "
+            + ", ".join(f"{uno.get('tipo')} · {uno.get('cuando', uno.get('fecha_prevista', ''))}" for uno in previstos)
+            + ")"
+        )
+
+        # ── 4b. Marcarlo hecho ───────────────────────────────────────────────────────────────────
+        paso(nav, 4, "Marcarlo hecho")
+        # El botón de «ya lo he hecho» está en la lista de lo previsto, con el identificador del plan.
+        # **Y si el plan no llegó a guardarse, esto no revienta**: se apunta el fallo y se sigue, porque un
+        # recorrido que se cae a la mitad deja de decir dónde estaba el problema.
+        if not mios:
+            comprobar(False, "no hay ningún previsto que marcar hecho (el guardado no llegó)")
+        else:
+            ident = _el_de_dentro(mios[0]).get("id")
+            comprobar(
+                pulsar_en_js(f"[data-accion='trabajo-hecho'][data-id='{ident}']"),
+                f"el previsto trae su botón de «ya lo he hecho» (plan {ident})",
+            )
+            nav.esperar("Boolean(document.querySelector('#trabajo-tipo'))", segundos=15)
+            # La fecha del hecho hace falta (el servidor la pide): si la pantalla no la trae puesta, se pone.
+            nav.evaluar(
+                "(() => { const c = document.querySelector('#trabajo-fecha');"
+                " if (c && !c.value) { c.value = '2026-04-20';"
+                " c.dispatchEvent(new Event('input', { bubbles: true }));"
+                " c.dispatchEvent(new Event('change', { bubbles: true })); } return null; })()"
+            )
+            hecho_o_guardar = el_boton_de_guardar()
+            comprobar(
+                bool(hecho_o_guardar) and pulsar_en_js(f"[data-accion='{hecho_o_guardar}']"),
+                f"y su formulario ofrece guardarlo como hecho (botón «{hecho_o_guardar or 'ninguno'}»)",
+            )
+            nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
+            captura(nav, "4-hecho")
+            despues = estado_de_la_tierra()
+            quedan = [
+                uno
+                for uno in despues.get("que_queda_previsto", [])
+                if (_el_de_dentro(uno).get("tipo") or "") == el_tipo
+            ]
+            todas_las_lineas = historial_de_la_tierra(
+                _el_de_dentro(mios[0]).get("campana_id")
+            ).get("lineas", [])
+            lineas = [
+                linea
+                for linea in todas_las_lineas
+                if (_el_de_dentro(linea).get("tipo") or "") == el_tipo
+            ]
+            print(f"  (el historial, entero: {json.dumps(todas_las_lineas, ensure_ascii=False)[:400]})")
+            # **Y lo que dice el estado de esa tierra**, para poder distinguir las dos cosas que un
+            # historial vacío puede significar: que el hecho no se haya guardado, o que se haya guardado
+            # **sin la tierra** (y entonces no sale en la historia de ninguna).
+            print(f"  (el estado, entero: {json.dumps(despues, ensure_ascii=False)[:500]})")
+            comprobar(
+                not quedan,
+                f"al marcarlo hecho **ya no queda previsto** ({len(quedan)} pendientes con ese tipo)",
+            )
+            comprobar(
+                len(lineas) <= 1,
+                f"el historial no trae **dos** líneas del mismo trabajo ({len(lineas)})",
+            )
+            # **Y si el historial y el estado no dicen lo mismo, se apunta** (07/10/2026). El estado ve el
+            # trabajo —`ultima_labor` con su identificador y `cuantas_siembras` a 1— y el historial de esa
+            # misma tierra devuelve **cero líneas**. El código dice que las dos cifras salen de la **misma
+            # función**, así que una de las dos puertas no está contando lo que cree. No se tapa con un
+            # `if`: se apunta, porque es justo lo que hay que mirar.
+            dicho_por_el_estado = _el_de_dentro(
+                {"hecho": despues.get("ultima_labor") or {}}
+            )
+            if not lineas and dicho_por_el_estado.get("trabajo_id"):
+                HALLAZGOS.append(
+                    "el historial de una tierra y su estado **no dicen lo mismo**: después de marcar un "
+                    f"trabajo hecho, el estado ve el trabajo {dicho_por_el_estado.get('trabajo_id')} "
+                    f"({dicho_por_el_estado.get('tipo')} · {dicho_por_el_estado.get('fecha')}) y "
+                    "`/api/trabajos/tierra/<id>` devuelve **cero líneas**. Los dos deberían salir de la "
+                    "misma función (lo dice su propio comentario), así que una de las dos puertas no cuenta "
+                    "lo que cree"
+                )
+                print("  [HALLAZGO] el historial no ve el trabajo que el estado sí ve")
+            if lineas:
+                print(
+                    f"  (la línea del historial: tipo «{_el_de_dentro(lineas[0]).get('tipo')}»,"
+                    f" fecha {_el_de_dentro(lineas[0]).get('fecha')},"
+                    f" anulado={_el_de_dentro(lineas[0]).get('anulado')})"
+                )
+            # **Y las cuentas del estado**, que son las que dicen si hay duplicados: una siembra es una
+            # siembra, y dos apuntes del mismo día serían dos.
+            print(
+                "  (el estado dice: "
+                f"siembras={despues.get('cuantas_siembras')}, "
+                f"ultima={dicho_por_el_estado.get('tipo')} · {dicho_por_el_estado.get('fecha')})"
+            )
+            comprobar(
+                despues.get("cuantas_siembras") == 1,
+                f"y el estado cuenta **una sola** siembra ({despues.get('cuantas_siembras')}), sin duplicados",
+            )
+        print(f"  (la lista de trabajos, después: {' '.join(texto_de(nav).split())[:140]}…)")
 
         # ── 5. El historial de la tierra, después ───────────────────────────────────────────────
         paso(nav, 5, "El historial de la tierra, después")
@@ -304,15 +547,20 @@ def main() -> int:
             hay(nav, "[data-accion='trabajo-planificar']"),
             "la ficha ofrece planificar un trabajo para esa tierra",
         )
-        # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla:
-        # esta tierra puede no tener nada planificado (la primera del escenario no tiene), y entonces lo
-        # honesto no es exigir un botón que no puede estar, sino exigirlo **solo si el servidor dice que
-        # hay algo previsto**. Así la comprobación dice la verdad en los dos casos.
-        previstos = httpx.get(
-            f"{DIRECCION}/api/trabajos/tierra/{la_tierra.id}",
-            headers={"Authorization": f"Bearer {escenario.volumen.token}"},
-            timeout=30.0,
-        ).json().get("que_queda_previsto", [])
+        # **Y lo que queda previsto**, comprobado contra el servidor y no contra el texto de la pantalla.
+        # **Y contra el endpoint que sí lo devuelve** (07/10/2026): esto preguntaba por
+        # `que_queda_previsto` a `/api/trabajos/tierra/<id>`, que devuelve el **historial** (sus `lineas`,
+        # sus cifras) y **no** esa clave — así que llegaba `[]`, la comprobación se saltaba sola y nadie se
+        # enteraba. Una comprobación que no puede fallar es peor que no tenerla: se pide al **estado**, que
+        # es quien lo dice.
+        previstos = estado_de_la_tierra().get("que_queda_previsto", [])
+        # Después del paso 4b, el trabajo que se planificó en esta vuelta **ya está hecho**: lo que quede
+        # previsto será otra cosa (o nada). Se comprueba lo que de verdad importa y es cierto: que el que
+        # se hizo ya no está entre lo previsto.
+        comprobar(
+            not [uno for uno in previstos if (uno.get("tipo") or "") == el_tipo],
+            "el trabajo que se hizo ya no aparece entre lo previsto (el plan se cerró)",
+        )
         print(f"  (el servidor dice que esa tierra tiene {len(previstos)} cosa(s) prevista(s))")
         if previstos:
             comprobar(
