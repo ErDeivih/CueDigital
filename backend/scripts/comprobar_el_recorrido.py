@@ -510,7 +510,11 @@ def main() -> int:
         # es la comprobación.
         nuevos = [uno for uno in previstos if _el_de_dentro(uno).get("id") not in antes_ids]
         mios = nuevos
-        print(f"  (el plan recién guardado, entero: {json.dumps(nuevos, ensure_ascii=False)[:400]})")
+        print(f"  (el plan recién guardado, entero: {json.dumps(nuevos, ensure_ascii=False)[:700]})")
+        print(
+            "  (y los insumos que el servidor guarda en ese plan: "
+            f"{json.dumps(_el_de_dentro(nuevos[0]).get('insumos') if nuevos else None, ensure_ascii=False)})"
+        )
         comprobar(
             len(nuevos) == 1,
             f"el trabajo **queda guardado** como previsto en el servidor ({len(nuevos)} nuevos)",

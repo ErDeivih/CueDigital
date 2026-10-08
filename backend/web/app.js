@@ -21381,6 +21381,15 @@ async function abrirUnTrabajo(modo, id, tierra = null) {
   // **Anular un plan es cancelarlo**, y son dos puertas distintas del servidor: se mira de dónde viene
   // el identificador y se guarda, para que el botón de guardar llame a la que toca.
   const esPlan = modo !== "anular" ? false : !(datos.hechos || []).some((uno) => Number(uno.id) === Number(id));
+  // **Lo que el plan ya decía que se iba a gastar** (07/10/2026). Aquí iba vacío a pelo —`lote_id: ""`,
+  // `cantidad: ""`— pasara lo que pasara, y el plan **sí trae sus insumos** del servidor. El resultado era
+  // un defecto que no se ve: al abrir un tratamiento planificado para darlo por hecho, los campos de
+  // almacén salían en blanco —el desplegable decía «No gasté nada»—, así que el trabajo se guardaba **sin
+  // gastar nada** y **el almacén no se enteraba**. Y eso no se distingue de un trabajo en el que de verdad
+  // no se gastó nada, que es lo que hace que nadie lo note hasta que cuadra mal la nave.
+  //
+  // Lo encontró el recorrido automático al comprobar el consumo de existencias (ronda 3 del encargo).
+  const elInsumoDelPlan = ((trabajo && trabajo.insumos) || [])[0] || null;
   const borrador = {
     tipo: trabajo ? trabajo.tipo : "",
     subtipo: trabajo ? trabajo.subtipo || "" : "",
@@ -21390,9 +21399,12 @@ async function abrirUnTrabajo(modo, id, tierra = null) {
     superficie_ha: trabajo && trabajo.superficie_ha !== null ? trabajo.superficie_ha : "",
     horas: trabajo && trabajo.horas !== null ? trabajo.horas : "",
     equipo_id: trabajo && trabajo.equipo_id ? trabajo.equipo_id : "",
-    lote_id: "",
-    cantidad: "",
-    unidad: "",
+    lote_id: elInsumoDelPlan && elInsumoDelPlan.lote_id ? elInsumoDelPlan.lote_id : "",
+    cantidad:
+      elInsumoDelPlan && elInsumoDelPlan.cantidad !== null && elInsumoDelPlan.cantidad !== undefined
+        ? elInsumoDelPlan.cantidad
+        : "",
+    unidad: elInsumoDelPlan && elInsumoDelPlan.unidad ? elInsumoDelPlan.unidad : "",
     observaciones: trabajo ? trabajo.observaciones || "" : "",
     motivo_anulacion: "",
   };
@@ -21468,12 +21480,36 @@ function loEscritoEnLaFicha(modo) {
   if (modo === "reprogramar") return { fecha_prevista: texto("trabajo-fecha-prevista") };
   if (modo === "anular") return { motivo: texto("trabajo-motivo") };
   const esPlan = modo === "planificar";
+  // La tierra del formulario, que es de la que va a salir el producto en un plan.
+  const laTierraDelFormulario = numero("trabajo-tierra");
   const comun = esPlan
     ? { ...borrador, fecha_prevista: texto("trabajo-fecha-prevista") }
     : { ...borrador, fecha: texto("trabajo-fecha") };
   const lote = numero("trabajo-insumo");
   const cantidad = numero("trabajo-cantidad");
   const unidad = texto("trabajo-unidad");
+  // **Un plan dice lo que va a gastar POR TIERRA** (07/10/2026): su puerta espera `lineas` —esta tierra,
+  // esta cantidad de este envase—, y aquí se mandaba `insumos`, que **un plan no tiene**. Como el esquema
+  // del servidor ignora lo que no conoce, no fallaba nada: el plan se guardaba **sin lo que iba a
+  // gastar**, y por eso al marcarlo hecho no había nada que traer y el almacén no se enteraba nunca.
+  //
+  // Lo encontró el recorrido automático comprobando el consumo de existencias: el plan volvía con
+  // `insumos: []` después de haber elegido el envase.
+  if (esPlan) {
+    return lote && cantidad && laTierraDelFormulario
+      ? {
+          ...comun,
+          lineas: [
+            {
+              parcela_id: laTierraDelFormulario,
+              lote_id: lote,
+              cantidad,
+              unidad: unidad || null,
+            },
+          ],
+        }
+      : comun;
+  }
   return lote && cantidad
     ? { ...comun, insumos: [{ lote_id: lote, cantidad, unidad: unidad || null }] }
     : comun;
