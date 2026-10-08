@@ -151,9 +151,28 @@ larga. Lo que hay que hacer, con el patrón que ya existe en la casa:
    (`scripts/comprobar_el_recorrido.py`) que escriba en el cuadro, pulse, y exija ver un grupo con su
    resultado y la dirección `#/buscar`.
 
-**Lo que NO hay que hacer**: una pantalla sin dirección (ya se ha arreglado eso dos veces en este
-proyecto: la historia de una tierra y sus versiones existían y no había forma de llegar), ni un cuadro que
-busque en cada pantalla por su cuenta — la puerta es una y está probada.
+**Lo que falta: el cable que une la pantalla con la aplicación.** La pantalla ya está
+(`web/react/pantallas/buscar.js`, 9 pruebas de JavaScript que la dibujan con React) y sus palabras también.
+Faltan los **seis sitios** donde se registra una pantalla, y están localizados mirando cómo está hecha
+`tierra_versiones`, que es el modelo exacto (una pantalla con dirección propia, que cuelga de un módulo):
+
+| Dónde | Qué |
+|---|---|
+| `web/react/rutas.js` (~L103, junto a `tierra_versiones`) | `{ clave: "buscar", patron: ["buscar"] }` |
+| `app.js` (~L821, con las demás) | `PantallaBuscar: "buscar"` — de qué módulo cuelga |
+| `app.js` (~L977) | el bloque que prepara sus datos (llamar a `/api/buscar` con el texto de la dirección) |
+| `app.js` (~L1235) | el bloque de su **dirección** (`#/buscar?texto=…`), que es lo que hace que recargar deje al agricultor donde estaba |
+| `app.js` (~L1565) | y la tabla del otro lado (la que dice en qué módulo marcar el menú) |
+| `app.js` (`MODULOS`, grupo `inicio` o `ajustes`) | **el renglón del menú**, con su acción, para que se llegue a ella sin escribir la dirección |
+| `app.js` (manejador de clics) | `if (nombre === "buscar") return pantallaDeLaBusqueda(…);` — y así el guardián de los botones ve su dueño |
+
+**Y la comprobación, que no se puede saltar**: un paso nuevo en `scripts/comprobar_el_recorrido.py` que
+escriba en el cuadro, pulse BUSCAR y exija ver un grupo con su resultado y la dirección `#/buscar` — y
+correrlo con `pytest tests/test_el_recorrido_se_anda.py`, que es donde vive.
+
+**Lo que NO hay que hacer** (ya está escrito arriba, pero se repite porque es el error fácil): registrar la
+pantalla **sin** el renglón del menú —queda inalcanzable, como pasó con la historia de una tierra y con sus
+versiones— o hacerlo **sin** el paso del recorrido, que es lo único que demuestra que funciona al pulsar.
 
 La cabecera del encargo la pide. **No hay ninguna puerta en el servidor para eso**: comprobado, lo único
 que existe es la búsqueda del SIGPAC (`parcelas.py:933`). Hace falta un endpoint que busque en tierras,
