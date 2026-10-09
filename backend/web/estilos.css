@@ -1549,6 +1549,23 @@ div.tarjeta:active {
     overflow: hidden;
   }
 
+  /* **Se recorta lo accesorio, nunca lo esencial** (07/10/2026). Antes se recortaba por igual todo lo que
+     sobraba, así que con un nombre de explotación largo se perdían la **campaña** y hasta el botón de
+     **salir** —el agricultor no sabía en qué año estaba apuntando—. Ahora el que cede es **el nombre de la
+     explotación**, y lo demás no encoge: */
+  .marco .barra-datos > *:first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .marco .barra-datos > *:not(:first-child) {
+    flex: 0 0 auto;
+  }
+
+  .marco .barra-acciones {
+    flex: 0 0 auto;
+  }
+
   .marco .barra-dato {
     display: flex;
     align-items: baseline;

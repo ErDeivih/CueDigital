@@ -21,6 +21,9 @@ from datos_representativos import preparar  # noqa: E402
 from navegador_cdp import NavegadorDeVerdad  # noqa: E402
 
 DIRECCION = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8095"
+# **El ancho, por parámetro** (07/10/2026): la barra hay que probarla a 1440 **y** a 1024, que es donde el
+# nombre largo de la explotación aprieta.
+ANCHO = int(sys.argv[2]) if len(sys.argv) > 2 else 1440
 
 LA_BARRA = """(() => {
   const barra = document.querySelector('#marco .barra');
@@ -57,6 +60,14 @@ LA_BARRA = """(() => {
         letras: (uno.textContent || '').trim().length,
       };
     }),
+    // **Qué se está recortando** (07/10/2026): lo accesorio puede recortarse -el nombre de la explotación-,
+    // pero la **campaña** y las **acciones** no. Aquí se dice cuáles se están cortando, en vez de mirarlo a ojo
+    // en una captura.
+    recortados: [
+      ...barra.querySelectorAll('.barra-valor, .barra-acciones .boton, .barra-acciones .boton-letra'),
+    ]
+      .filter((uno) => uno.scrollWidth > uno.clientWidth + 1)
+      .map((uno) => (uno.textContent || '').trim().slice(0, 26)),
     texto: (barra.textContent || '').trim().slice(0, 90),
   };
 })()"""
