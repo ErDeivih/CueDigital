@@ -102,7 +102,11 @@
    * siempre, que es lo que el agricultor ya tiene aprendido.
    */
   --ancho-menu: 17rem;
-  --alto-barra: 4.25rem;
+  /* **68 → 64 px, medido** (07/10/2026): la barra de escritorio medía **183 px** con un nombre largo -se partía
+     en dos filas- y **68** con los nombres normales, porque este token valía 4.25rem. Con 4rem son los 64 del
+     diseño, y el contenido cabe de sobra: los datos ocupan 42 y el relleno 6.4. Todo lo que se coloca con este
+     token -la barra pegajosa, su `top` y el hueco de debajo- se mueve con él. */
+  --alto-barra: 4rem;
 }
 
 /* Quien ve poco puede agrandar la letra desde la cabecera. */
@@ -1526,7 +1530,9 @@ div.tarjeta:active {
     flex-wrap: nowrap;
     gap: 0.4rem 1rem;
     min-height: var(--alto-barra);
-    padding: 0.3rem 1.1rem;
+    /* **0.3rem dejaba la barra en 68 px** (07/10/2026): con 0.2rem cabe en los 64 del diseño y no se recorta
+       nada, porque el contenido mide 42. */
+    padding: 0.2rem 1.1rem;
     background: var(--verde);
     border-bottom: 3px solid var(--verde-oscuro);
   }
@@ -1592,8 +1598,15 @@ div.tarjeta:active {
 
   /* La letra grande y el salir: siguen ahí, más pequeños porque se pulsan con el ratón. */
   .marco .barra-acciones .boton-letra {
-    min-height: 2.9rem;
+    min-height: 2.2rem;
     margin: 0;
+    /* **Recortar, no envolver** (07/10/2026): este boton lleva el **nombre de la finca**, y con uno de 48
+       caracteres se partia en varias lineas: medía **112 px** y era lo unico que mantenia la barra por encima
+       de 64. Y no le llegaba el `nowrap` de `.boton`, porque su clase es otra. */
+    max-width: 14rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* La cabecera de móvil, escondida: en el ordenador su trabajo lo hace la barra. */
