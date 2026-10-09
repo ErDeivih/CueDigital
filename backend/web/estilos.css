@@ -1509,6 +1509,11 @@ div.tarjeta:active {
     border-left-color: var(--foco);
   }
 
+  /* **De 183 a 113 px, y todavía no a 64** (07/10/2026). Esta barra medía **183 px** —y **214** con nombres
+     largos— porque `wrap` la partía en dos filas. Con esto **baja a 113** y con nombres largos a **168**, pero
+     **sigue sin caber en 64**: queda por ver qué la mantiene en dos filas. La medida de 83 → 64 px de antes era
+     la del **móvil**, que en el ordenador ni se enseña. El guion que lo mide es
+     `scripts/medir_la_barra_de_escritorio.py`, y lo que falta está apuntado en `docs/ESTADO_DEL_REDISENO.md`. */
   .marco .barra {
     position: fixed;
     top: 0;
@@ -1518,10 +1523,10 @@ div.tarjeta:active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.2rem;
+    flex-wrap: nowrap;
+    gap: 0.4rem 1rem;
     min-height: var(--alto-barra);
-    padding: 0.5rem 1.4rem;
+    padding: 0.3rem 1.1rem;
     background: var(--verde);
     border-bottom: 3px solid var(--verde-oscuro);
   }
@@ -1529,9 +1534,13 @@ div.tarjeta:active {
   .marco .barra-datos {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.6rem;
+    /* **Sin envolver, y recortando** (07/10/2026): con un nombre de finca largo esto se iba a dos filas —de
+       ahí los 183 px, y 214 con nombres largos—. `min-width: 0` es lo que deja que el recorte funcione. */
+    flex-wrap: nowrap;
+    gap: 0.4rem 1.1rem;
     margin: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .marco .barra-dato {
@@ -1553,18 +1562,29 @@ div.tarjeta:active {
   .marco .barra-valor {
     font-size: 1.05rem;
     font-weight: 700;
+    /* Un nombre largo se recorta con puntos suspensivos en vez de partir la barra (07/10/2026). */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .marco .barra-acciones {
     display: flex;
     align-items: center;
+    /* **Una sola fila, medido** (07/10/2026): esta caja medía **101 px** -y 155 con nombres largos- y era lo
+       que hacía que la barra no cupiera; los datos, en cambio, ocupan una fila de 42. */
+    flex-wrap: nowrap;
     gap: 0.5rem;
     margin: 0;
   }
 
   /* El botón de apuntar, en la barra: es la acción que más se usa y está siempre a la vista. */
   .marco .barra-acciones .boton {
-    min-height: 2.9rem;
+    /* 2.9rem eran ~46 px y, con el relleno, sacaban la barra de 64: **2.2rem cabe** y sigue siendo cómodo con
+       el ratón, que es como se usa esta barra (07/10/2026). */
+    min-height: 2.2rem;
+    /* El rótulo de un botón no se parte en varias líneas: eso es lo que lo hacía alto (07/10/2026). */
+    white-space: nowrap;
     margin: 0;
     padding: 0 1.1rem;
     justify-content: center;
