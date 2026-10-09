@@ -8630,3 +8630,21 @@ NORMATIVA: dict[str, str] = {
     "como_se_lee": "Es un resumen para el cuaderno. Lo que dice la norma, entero, esta en su fuente oficial.",
     "sin_normativa": "No hay ninguna regla cargada.",
 }
+
+# ── La ayuda de la normativa (07/10/2026) ─────────────────────────────────────────────────────
+# Lo que se le enseña al agricultor en la pantalla de normativa, regla por regla. **Aquí y no en el módulo de
+# datos**: son textos visibles, y en esta casa los textos visibles viven aquí, para poder revisarlos juntos y
+# para que la prueba de la jerga los mire. Cada uno dice **qué tiene que tener apuntado** y **qué no debe dar
+# por hecho**, con las palabras de la fuente y sin inventarse ninguna obligación.
+AYUDA_DE_LA_NORMATIVA: dict[str, str] = {
+    'N01': 'Ten apuntado qué práctica de condicionalidad has elegido y con qué límites: el historial de esa tierra, sus superficies y clasificaciones, la alternativa que aplicas y las excepciones, si las tienes.',
+    'N02': 'El ecorregimen que has pedido: qué parcelas entran, qué superficie cuenta, los cultivos principales y secundarios, y por qué has dejado fuera lo que hayas dejado. Un plan de un año no comprueba el año siguiente: eso es solo una simulación.',
+    'N03': 'Los compromisos que has adquirido: expediente, régimen, solicitud, resolución, fechas de inicio y fin, superficie o unidades comprometidas y sus condiciones. Si cambias, cedes o renuncias, se conserva la resolución.',
+    'N04': 'Las excepciones que se aplican en tu zona: municipio o comarca, la labor afectada y hasta cuándo vale. Una excepción de otra campaña o de otra comunidad no te desbloquea la labor.',
+    'N05': 'La ficha del producto y la autorización de uso no son lo mismo, y la marca no basta para saber qué formulación ni qué uso está permitido. Guarda la etiqueta y la consulta que hiciste. Una dosis máxima general no autoriza cualquier cultivo ni cualquier plaga.',
+    'N06': 'Lo que pide el plan de abonado: cultivo y rendimiento previsto, análisis, agua y otros aportes, la composición del abono con sus unidades, la superficie que has abonado de verdad, la fecha y la técnica. El nitrógeno total no es lo mismo que sus fracciones, ni el fósforo que el P2O5. Y el programa no sustituye al asesor que la norma exige.',
+    'N07': 'Guarda la etiqueta, la factura, la procedencia y los papeles de autorización si los hay. Una semilla comprada sin etiqueta no queda certificada por eso, y la tuya propia se puede documentar sin darla por ilegal.',
+    'N08': 'La condición ecológica de la explotación, del producto y del lote, cada una con su prueba. Si hace falta una autorización individual, guarda el período, la especie o variedad y la cantidad. Que algo no esté en un catálogo no es un permiso.',
+    'N09': 'La ITEAF y la ITV son dos obligaciones distintas, y no vencen a la vez para el tractor, el remolque y el equipo de aplicación. Manda la fecha del documento de inspección.',
+    'N10': 'Llevar los registros, el formato exigido y la comunicación a la Administración son tres cosas separadas. Que el cuaderno sea voluntario no te exime de lo que pida tu sector.',
+}
