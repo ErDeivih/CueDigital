@@ -100,7 +100,17 @@ def test_el_recorrido_se_anda_entero():
         try:
             assert _esperar_al_servidor(direccion), "el servidor de pruebas no ha arrancado"
             recorrido = subprocess.run(  # noqa: S603
-                [str(PYTHON), str(GUION), direccion, str(pathlib.Path(temporal) / "capturas")],
+                [
+                    str(PYTHON),
+                    str(GUION),
+                    direccion,
+                    str(pathlib.Path(temporal) / "capturas"),
+                    # **La base de la prueba, para la auditoría** (07/10/2026): la comprobación de la entrada de
+                    # auditoría de la anulación **la lee de la base** -la API no la expone-, así que la prueba
+                    # tiene que decirle cuál es la base que ella misma ha levantado. Va en el **tercer**
+                    # argumento, porque el segundo es la carpeta de capturas.
+                    str(base),
+                ],
                 cwd=str(BACKEND),
                 capture_output=True,
                 text=True,

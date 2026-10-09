@@ -8,7 +8,7 @@
 > | Títulos | **24 px / 20 px** (h1 / h2) | el mismo guion |
 > | Márgenes | **24 px** de 48 rem en adelante · **16 px** en móvil (a propósito: el modo de campo se usa con una mano) | el mismo guion |
 > | Cabecera | **64 px** en móvil (medía 83) · en el ordenador **no se enseña**: su trabajo lo hace la barra | el mismo guion |
-> | Recorrido real | **57 comprobaciones · 0 fallos · 1 hallazgo** | `pytest tests/test_el_recorrido_se_anda.py` |
+> | Recorrido real | **64 comprobaciones · 0 fallos · 1 hallazgo** | `pytest tests/test_el_recorrido_se_anda.py` |
 > | Normativa | **10 reglas** de la matriz, cada una con su **ayuda para el agricultor**, sus **fuentes oficiales** (18 enlaces) y el aviso de **lo que no está comprobado** | `scripts/medir_la_pantalla_de_normativa.py` · recorrido, paso 8 |
 > | Pruebas | **4.660 de Python · 0 fallos** · **1.077 de JavaScript · 0 rojos** | `pytest tests` · `node --test tests_js/*.test.js` |
 >
