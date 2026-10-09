@@ -8,7 +8,19 @@
 > | Títulos | **24 px / 20 px** (h1 / h2) | el mismo guion |
 > | Márgenes | **24 px** de 48 rem en adelante · **16 px** en móvil (a propósito: el modo de campo se usa con una mano) | el mismo guion |
 > | Cabecera | **64 px** en móvil (medía 83) · en el ordenador **no se enseña**: su trabajo lo hace la barra | el mismo guion |
-> | Recorrido real | **44 comprobaciones · 0 fallos · 1 hallazgo** | `pytest tests/test_el_recorrido_se_anda.py` |
+> | Recorrido real | **53 comprobaciones · 0 fallos · 1 hallazgo** | `pytest tests/test_el_recorrido_se_anda.py` |
+> | Normativa | **10 reglas** de la matriz, cada una con su **ayuda para el agricultor**, sus **fuentes oficiales** (18 enlaces) y el aviso de **lo que no está comprobado** | `scripts/medir_la_pantalla_de_normativa.py` · recorrido, paso 8 |
+> | Pruebas | **4.660 de Python · 0 fallos** · **1.077 de JavaScript · 0 rojos** | `pytest tests` · `node --test tests_js/*.test.js` |
+>
+> **Pendiente, y se dice aquí para que nadie lo dé por hecho:**
+>
+> | Qué | Estado | Dónde se ve |
+> |---|---|---|
+> | **Barra de ESCRITORIO** | **sin compactar**: la de escritorio **no es `.cabecera`** -esa está oculta y su trabajo lo hace la barra-, sino `#marco .barra`. Hay que medirla **con nombres largos** y compactarla | `web/estilos.css`, `#marco .barra` |
+> | **Existencias tras corregir y anular** | **sin comprobar**: está medido que un trabajo consume existencias (45 → 43 L), pero **no** que corregir una cantidad o anular el registro erróneo deje movimientos compensatorios ni auditoría | el recorrido, paso 4 |
+>
+> *(Los números que aparecen **dentro de citas de una salida de aquel día** —por ejemplo «Comprobaciones: 47»—
+> son evidencia con fecha, no el estado de hoy: no se tocan.)*
 > | Teclado y zoom 200 % | **203 · 0 fallos · 1 hallazgo** (el de `#/entrar`, decisión defendida) | `scripts/comprobar_teclado_y_zoom.py` |
 > | Registrar un trabajo | planificar · guardar · hecho · corregir · anular · **consumo de existencias**, comprobado en el servidor | recorrido, paso 4 |
 > | Búsqueda global | puerta del servidor (19 pruebas), palabras, pantalla, **resultados que abren sus fichas**, dirección con el texto | recorrido, paso 7 |
