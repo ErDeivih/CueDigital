@@ -46,6 +46,17 @@ LA_BARRA = """(() => {
     filas: new Set(hijos).size,
     cuantos: barra.children.length,
     detalle,
+    // **Y dentro de la caja de acciones** (07/10/2026): es la que mide 112 px y la unica que mantiene la barra
+    // por encima de 64. Aqui se ve que boton es alto y por que, en vez de tocar CSS a ojo.
+    botones: [...barra.querySelectorAll('.barra-acciones > *')].map((uno) => {
+      const c = uno.getBoundingClientRect();
+      return {
+        clase: (uno.className || '').toString().slice(0, 22),
+        alto: Math.round(c.height),
+        ancho: Math.round(c.width),
+        letras: (uno.textContent || '').trim().length,
+      };
+    }),
     texto: (barra.textContent || '').trim().slice(0, 90),
   };
 })()"""
