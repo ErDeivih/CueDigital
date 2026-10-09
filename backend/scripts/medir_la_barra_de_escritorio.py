@@ -89,6 +89,28 @@ ALARGAR = """(() => {
 })()"""
 
 
+LOS_ENCABEZADOS = """(() => {
+  const mirar = (sel) => {
+    const uno = document.querySelector(sel);
+    if (!uno) return { hay: false };
+    const c = uno.getBoundingClientRect();
+    const estilo = getComputedStyle(uno);
+    return {
+      hay: true,
+      alto: Math.round(c.height),
+      ancho: Math.round(c.width),
+      visible: estilo.display !== 'none' && estilo.visibility !== 'hidden' && c.height > 0,
+      // **Y qué se recorta dentro** (07/10/2026): a 1024 manda esta cabecera -la de móvil-, y sus textos
+      // esenciales tienen que leerse enteros. Se listan los que se están cortando, con su texto.
+      recortados: [...uno.querySelectorAll('*')]
+        .filter((hijo) => hijo.children.length === 0 && hijo.scrollWidth > hijo.clientWidth + 1)
+        .map((hijo) => (hijo.textContent || '').trim().slice(0, 26)),
+    };
+  };
+  return { cabecera: mirar('header.cabecera'), barra: mirar('#marco .barra'), menu: mirar('#marco .menu') };
+})()"""
+
+
 def main() -> int:
     escenario = preparar(DIRECCION)
     with NavegadorDeVerdad(ancho=ANCHO, alto=900) as nav:
@@ -103,6 +125,9 @@ def main() -> int:
         nav.abrir(f"{DIRECCION}/#/inicio", esperar=3.0)
         nav.esperar("Boolean(document.querySelector('#marco .barra'))", segundos=25)
 
+        # **Qué cabecera hay a este ancho** (07/10/2026): a 1024 la barra está oculta y el guion decía «cabe»
+        # porque medía 0. Antes de juzgar nada, se dice qué se ve: la cabecera de móvil, la barra, o ninguna.
+        print(f"ENCABEZADOS a {ANCHO}: {nav.evaluar(LOS_ENCABEZADOS)}")
         antes = nav.evaluar(LA_BARRA)
         print(f"la barra de escritorio ({ANCHO}): {antes}")
         # **0 px no es «cabe»** (07/10/2026): a 1024 el armazón no pinta esta barra y el guion decía «CABE EN
