@@ -453,27 +453,32 @@ def main() -> int:
             return respuesta.json() if respuesta.status_code == 200 else []
 
         def lo_que_queda(lote_id) -> float:
-            """Lo que queda en un lote, **contando solo los movimientos vivos**.
+            """Lo que queda en un lote, **preguntándoselo al servidor**.
 
-            **Esto estaba mal** (07/10/2026): sumaba el libro entero, incluidos los movimientos **anulados**, y
-            el router de trabajos dice justo lo contrario: *«el movimiento se queda en el libro y deja de
-            contar»*. Con la cuenta vieja, anular parecía no devolver nada al almacén -38 antes y 38 después-, y
-            el defecto era de la cuenta, no del programa. Es la misma lección de todo el encargo: **se pregunta
-            al servidor, no se cuenta por cuenta propia**.
+            **Esto ha estado mal dos veces** (07/10/2026, y las dos por lo mismo):
+
+            1. primero sumaba el libro **entero**, incluidos los anulados;
+            2. después excluía solo los que llevan `anulado` puesto… y la regla de la casa es **más ancha**: un
+               movimiento **cuyo apunte está anulado** tampoco cuenta -«anular 2 L devuelve 2»-, y eso lo sabe
+               el servidor, no esta cuenta.
+
+            Y ahí está la puerta: `GET /api/almacen/movimientos` acepta **`solo_los_que_cuentan`**, y su
+            documentación dice que cada fila dice si cuenta o no y por qué. **El servidor decide qué cuenta**;
+            aquí solo se suma lo que él manda.
             """
+            respuesta = httpx.get(
+                f"{DIRECCION}/api/almacen/movimientos",
+                params={"lote_id": lote_id, "solo_los_que_cuentan": "true"},
+                headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                timeout=30.0,
+            ).json()
+            filas = respuesta if isinstance(respuesta, list) else (respuesta.get("movimientos") or [])
             queda = 0.0
-            anulados = 0
-            for movimiento in el_libro_del_almacen():
+            for movimiento in filas:
                 dentro = _el_de_dentro(movimiento)
-                if str(dentro.get("lote_id")) != str(lote_id):
-                    continue
-                if dentro.get("anulado"):
-                    anulados += 1
-                    continue
                 cantidad = float(dentro.get("cantidad") or 0)
                 queda += cantidad if (dentro.get("tipo") or "") == "entrada" else -cantidad
-            if anulados:
-                print(f"  (movimientos anulados que NO cuentan: {anulados})")
+            print(f"  (los que cuentan, según el servidor: {len(filas)} movimientos)")
             return queda
 
         def estado_de_la_tierra() -> dict:
