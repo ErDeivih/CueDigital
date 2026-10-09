@@ -852,6 +852,33 @@ def main() -> int:
                     _con_auditoria_valida((los_movimientos_del_trabajo(el_hecho) or [{}])[-1]),
                     f"y el movimiento del trabajo {el_hecho} lleva **autor y fecha con valor**",
                 )
+                # **Y reenviarlo no puede consumir dos veces** (07/10/2026): el mismo formulario, con la misma
+                # cantidad, guardado otra vez, no puede volver a descontar del almacén. Es la comprobación de
+                # que el reenvío -un botón pulsado dos veces, una conexión que se repite- no duplica consumos.
+                comprobar(
+                    pulsar_en_js(f"[data-accion='trabajo-corregir'][data-id='{el_hecho}']"),
+                    "el trabajo se puede volver a abrir para corregir (reenvío)",
+                )
+                nav.esperar("Boolean(document.querySelector('#trabajo-cantidad'))", segundos=15)
+                nav.evaluar(
+                    "(() => { const campo = document.querySelector('#trabajo-cantidad');"
+                    " if (!campo) return false;"
+                    f" campo.value = '{LA_CANTIDAD + 3.0}';"
+                    " campo.dispatchEvent(new Event('input', { bubbles: true }));"
+                    " campo.dispatchEvent(new Event('change', { bubbles: true })); return true; })()"
+                )
+                boton = el_boton_de_guardar()
+                comprobar(
+                    bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
+                    f"y se vuelve a guardar lo mismo (botón «{boton or 'ninguno'}»)",
+                )
+                nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
+                quedaba_tras_reenviar = lo_que_queda(el_lote.get("id"))
+                comprobar(
+                    quedaba_tras_reenviar == quedaba_despues_de_corregir,
+                    "y **reenviar lo mismo no consume dos veces**: el saldo se queda igual "
+                    f"({quedaba_despues_de_corregir} → {quedaba_tras_reenviar})",
+                )
 
             # ── 4d. Anularlo ─────────────────────────────────────────────────────────────────────
             # Y **anular** es la otra mitad: lo apuntado por error se anula **con su motivo**, y el apunte
