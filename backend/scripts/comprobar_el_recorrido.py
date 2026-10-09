@@ -336,6 +336,11 @@ def main() -> int:
         # **Y lo que gasta del almacén**: un trabajo de verdad sale de la nave, y eso es lo que hay que
         # comprobar después —que el libro del almacén tenga su salida y que quede menos—. Se elige un lote
         # de los que el escenario ha dejado en la nave y una cantidad.
+        # **El autor que se espera** (07/10/2026): el de la sesión que está apuntando. Se comprueba **contra
+        # él**, porque «tiene autor» no es lo mismo que «lo apuntó quien debía».
+        USUARIO_ESPERADO = getattr(escenario.volumen, "usuario_id", None)
+        print(f"  (el autor que se espera en los movimientos: {USUARIO_ESPERADO!r})")
+
         LA_CANTIDAD = 2.0
 
         def los_movimientos_del_lote(lote_id) -> list[dict]:
@@ -403,26 +408,35 @@ def main() -> int:
             )
             return suyos
 
-        def _con_auditoria_valida(movimiento: dict, motivo_esperado: str = "") -> bool:
-            """Autor, fecha y motivo **con valores**, no solo el campo (07/10/2026).
+        def _con_auditoria_valida(
+            movimiento: dict, motivo_esperado: str = "", autor_esperado=None, fecha_esperada=None
+        ) -> bool:
+            """Autor, fecha y motivo **con valores, y los que toca** (07/10/2026).
 
-            Antes bastaba con que existiera **cualquiera** de esos campos —una fila con solo fecha pasaba como
-            «quién, cuándo y por qué»—, y eso no comprobaba nada. Ahora se exige: un autor con identificador, una
-            fecha que se pueda leer y un motivo **con texto**. Y si se dice cuál se espera —el de una anulación,
-            por ejemplo—, tiene que ser ese. Se imprime lo que lleva, para que se vea y no se suponga.
+            Se ha ido apretando por partes, y cada vuelta la pidió David: primero bastaba con que existiera
+            **cualquiera** de seis campos —y una fila con solo fecha pasaba como «quién, cuándo y por qué»—;
+            después se pidió que tuvieran valor. Ahora, además: **el autor que se espera** —el de la sesión que
+            apunta— y una **fecha que se pueda leer**, y que sea la del trabajo cuando se sabe cuál es.
             """
             autor = movimiento.get("usuario_id")
             fecha = movimiento.get("fecha") or movimiento.get("creado_en")
             motivo = str(movimiento.get("motivo") or "").strip()
             print(
                 "  (la auditoría del movimiento: "
-                f"autor={autor!r}, fecha={fecha!r}, motivo={motivo[:40]!r})"
+                f"autor={autor!r} (se espera {autor_esperado!r}), fecha={fecha!r}, motivo={motivo[:40]!r})"
             )
             if not autor or not fecha:
                 return False
-            # **El motivo se exige donde corresponde** (07/10/2026): en una anulación es lo que explica por qué,
-            # y ahí se pide; en el consumo de un trabajo, el motivo puede estar vacío y el trabajo es el
-            # contexto. Exigirlo siempre sería inventarse una obligación que el diseño no pide.
+            if autor_esperado is not None and str(autor) != str(autor_esperado):
+                return False
+            # **La fecha, legible y con forma de fecha** (sin traerse un import para esto): `AAAA-MM-DD`.
+            el_dia = str(fecha)[:10]
+            if len(el_dia) != 10 or el_dia[4] != "-" or el_dia[7] != "-":
+                return False
+            if not (el_dia[:4].isdigit() and el_dia[5:7].isdigit() and el_dia[8:10].isdigit()):
+                return False
+            if fecha_esperada is not None and el_dia != str(fecha_esperada)[:10]:
+                return False
             if motivo_esperado:
                 return motivo_esperado in motivo
             return True
@@ -871,7 +885,10 @@ def main() -> int:
                                 lote_esperado=el_lote.get("id"),
                             )
                             or [{}]
-                        )[-1]
+                        )[-1],
+                        # Y con **el autor que se espera** y la **fecha del trabajo**, no sólo «con algo».
+                        autor_esperado=USUARIO_ESPERADO,
+                        fecha_esperada=(el_trabajo_en_la_agenda(el_hecho) or {}).get("fecha"),
                     ),
                     f"y el movimiento del trabajo {el_hecho} lleva **autor y fecha con valor**",
                 )
