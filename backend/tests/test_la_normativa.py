@@ -6,7 +6,25 @@ que se decidio antes de escribirla, para que no se pierda por el camino.
 
 from __future__ import annotations
 
-from app import normativa
+from app import normativa, textos
+
+
+def test_las_ayudas_viven_en_los_textos_y_no_dentro_del_modulo_de_datos():
+    """**Dónde viven los textos visibles** (07/10/2026).
+
+    David lo señaló: estas ayudas **se leen en pantalla**, y en esta casa los textos visibles viven en
+    `app/textos.py` —para poder revisarlos juntos y para que la prueba de la jerga los mire—. Yo las había
+    puesto dentro del módulo de datos. Esta prueba sujeta que **se citan**: si alguien vuelve a escribirlas
+    dentro, o cambia una y no la otra, aquí se ve.
+    """
+    del_modulo = {una.codigo: una.ayuda for una in normativa.LAS_REGLAS}
+    del_servidor = textos.AYUDA_DE_LA_NORMATIVA
+    assert set(del_modulo) == set(del_servidor), (
+        f"en el módulo sobran {sorted(set(del_modulo) - set(del_servidor))} y faltan "
+        f"{sorted(set(del_servidor) - set(del_modulo))}"
+    )
+    for codigo, ayuda in del_servidor.items():
+        assert del_modulo[codigo] == ayuda, f"{codigo}: el módulo no cita lo que hay en los textos"
 
 
 def test_estan_las_diez_reglas():
