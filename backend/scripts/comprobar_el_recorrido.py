@@ -1369,15 +1369,29 @@ def main() -> int:
                 )
                 # **Y recargar la búsqueda la deja como estaba**: es lo que hace que el enlace valga para
                 # mandarlo a quien ayuda.
+                #
+                # **La espera, por lo que se comprueba, y sin pausas** (07/10/2026). Esto esperaba a que
+                # hubiera **resultados** y **después** leía el cuadro, con una pausa de 2 s al abrir. Medido con
+                # la sonda `scripts/comprobar_la_busqueda_al_recargar.py`: al recargar, `#buscar_global` **no
+                # existe** durante los primeros instantes y el texto lo pone a los **~0,78 s**; así que aquella
+                # espera se podía cumplir **mientras el cuadro no estaba** y la lectura daba
+                # `{}.value || ''` = **cadena vacía**. Eso fue lo que pasó la vez que falló: **no era un cuadro
+                # vacío, era un cuadro ausente**. Ahora se espera **a que el cuadro exista y lleve lo buscado**,
+                # que es una condición observable, y no se espera a otra cosa distinta.
+                lo_que_se_busca = la_tierra.alias[:24]
                 nav.abrir(
-                    f"{DIRECCION}/#/buscar?texto={la_tierra.alias[:24].replace(' ', '%20')}", esperar=2.0
+                    f"{DIRECCION}/#/buscar?texto={lo_que_se_busca.replace(' ', '%20')}", esperar=0.0
                 )
-                nav.esperar("document.querySelectorAll('#pantalla .tarjeta').length > 0", segundos=15)
+                llego = nav.esperar(
+                    "(() => { const c = document.querySelector('#buscar_global');"
+                    f" return Boolean(c) && c.value.includes({json.dumps(lo_que_se_busca)}); }})()",
+                    segundos=25,
+                )
                 con_lo_buscado = nav.evaluar(
                     "(document.querySelector('#buscar_global') || {}).value || ''"
                 )
                 comprobar(
-                    la_tierra.alias[:24] in str(con_lo_buscado),
+                    llego and lo_que_se_busca in str(con_lo_buscado),
                     f"**recargar** la búsqueda la deja con lo que se buscaba («{con_lo_buscado}»)",
                 )
                 captura(nav, "7-recargada")
