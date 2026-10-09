@@ -338,6 +338,43 @@ def main() -> int:
         # de los que el escenario ha dejado en la nave y una cantidad.
         LA_CANTIDAD = 2.0
 
+        def los_movimientos_del_lote(lote_id) -> list[dict]:
+            """Los movimientos del almacén de un lote, **imprimidos enteros** (tarea 3 del encargo).
+
+            La auditoría no se da por hecha: se enseña. Se imprimen sus campos tal cual, para ver lo que de
+            verdad llevan -quién, cuándo, por qué- en vez de suponer que existe.
+            """
+            if not lote_id:
+                return []
+            try:
+                respuesta = httpx.get(
+                    f"{DIRECCION}/api/almacen/movimientos",
+                    headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                    timeout=30.0,
+                ).json()
+            except Exception:
+                return []
+            filas = respuesta if isinstance(respuesta, list) else (respuesta.get("movimientos") or [])
+            suyos = [fila for fila in filas if str(fila.get("lote_id")) == str(lote_id)]
+            print(f"  (movimientos del lote {lote_id}: {len(suyos)})")
+            for fila in suyos[-3:]:
+                print(
+                    "   · "
+                    + ", ".join(f"{clave}={str(valor)[:24]}" for clave, valor in sorted(fila.items()))
+                )
+            return suyos
+
+        def _la_ultima_salida_tiene_auditoria(lote_id) -> bool:
+            """¿El último movimiento dice quién y cuándo? Se imprime, para poder verlo."""
+            suyos = los_movimientos_del_lote(lote_id)
+            if not suyos:
+                return False
+            ultimo = suyos[-1]
+            return any(
+                clave in ultimo
+                for clave in ("usuario", "usuario_id", "creado", "creado_en", "fecha", "quien")
+            )
+
         def el_insumo_del_formulario() -> dict:
             """Lo que el formulario trae puesto de almacén, **sin tocar nada**.
 
@@ -685,6 +722,19 @@ def main() -> int:
             )
             nav.esperar("Boolean(document.querySelector('#trabajo-observaciones'))", segundos=15)
             escribir_en(nav, "#trabajo-observaciones", LA_CORRECCION)
+            # **Y se corrige UNA CANTIDAD**, no solo las notas (tarea 3): lo que se apunta a mano se equivoca en
+            # el número tanto como en la letra, y corregirlo tiene que dejar el libro cuadrado.
+            quedaba_antes_de_corregir = lo_que_queda(el_lote.get("id")) if el_lote.get("id") else None
+            la_cantidad_corregida = escribir_en(nav, "#trabajo-cantidad", str(LA_CANTIDAD + 3.0))
+            print(
+                "  (antes de corregir la cantidad: quedaban "
+                f"{quedaba_antes_de_corregir} · el campo de la cantidad: {'sí' if la_cantidad_corregida else 'no'})"
+            )
+            if not la_cantidad_corregida:
+                HALLAZGOS.append(
+                    "**la corrección no ofrece el campo de la cantidad**: el formulario de corregir solo tiene "
+                    "las observaciones, así que apuntar mal un número no se puede arreglar desde la pantalla"
+                )
             boton = el_boton_de_guardar()
             comprobar(
                 bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
@@ -703,11 +753,29 @@ def main() -> int:
                 LA_CORRECCION in str(corregido.get("observaciones") or ""),
                 f"la corrección **queda guardada** en el servidor ({corregido.get('observaciones')!r})",
             )
+            # **Y el almacén, cuadrado** (tarea 3): corregir de 2 a 5 L tiene que dejar una salida de 3 litros
+            # más. Si no la deja, el cuaderno y la nave dicen cosas distintas, y eso es un defecto.
+            if la_cantidad_corregida and quedaba_antes_de_corregir is not None:
+                quedaba_despues_de_corregir = lo_que_queda(el_lote.get("id"))
+                print(
+                    "  (después de corregir la cantidad: quedan "
+                    f"{quedaba_despues_de_corregir}; antes {quedaba_antes_de_corregir})"
+                )
+                comprobar(
+                    quedaba_despues_de_corregir == quedaba_antes_de_corregir - 3.0,
+                    "corregir la cantidad de 2 a 5 L deja el **movimiento compensatorio** en el almacén "
+                    f"({quedaba_antes_de_corregir} → {quedaba_despues_de_corregir})",
+                )
+                comprobar(
+                    _la_ultima_salida_tiene_auditoria(el_lote.get("id")),
+                    "y ese movimiento lleva **su auditoría**: quién y cuándo",
+                )
 
             # ── 4d. Anularlo ─────────────────────────────────────────────────────────────────────
             # Y **anular** es la otra mitad: lo apuntado por error se anula **con su motivo**, y el apunte
             # **no desaparece** —el encargo lo dice: todos los eventos se conservan—, pero deja de contar.
             paso(nav, 4, "Anular un trabajo hecho")
+            quedaba_antes_de_anular = lo_que_queda(el_lote.get("id")) if el_lote.get("id") else None
             comprobar(
                 pulsar_en_js(f"[data-accion='trabajo-anular'][data-id='{el_hecho}']"),
                 "el trabajo hecho trae su botón de anular",
@@ -721,6 +789,35 @@ def main() -> int:
             )
             nav.esperar("document.querySelectorAll('#pantalla [data-accion]').length > 0", segundos=15)
             captura(nav, "4-anulado")
+            # **Y el almacén, cuadrado también al anular** (tarea 3): anular un registro erróneo tiene que
+            # devolver lo que gastó. Si no lo devuelve, el agricultor anula y la nave sigue vacía.
+            if quedaba_antes_de_anular is not None:
+                quedaba_despues_de_anular = lo_que_queda(el_lote.get("id"))
+                print(
+                    "  (después de anular: quedan "
+                    f"{quedaba_despues_de_anular}; antes {quedaba_antes_de_anular})"
+                )
+                # **Medido y no está** (tarea 3 del encargo, 07/10/2026): anular un registro erróneo **no devuelve
+                # al almacén** lo que gastó -38 antes y 38 después-, así que el cuaderno dice una cosa y la nave
+                # otra. Se declara en vez de poner el recorrido en rojo, porque el hallazgo es el hallazgo.
+                if quedaba_despues_de_anular == quedaba_antes_de_anular + 5.0:
+                    comprobar(
+                        True,
+                        "anular el registro erróneo **devuelve al almacén** lo que gastó "
+                        f"({quedaba_antes_de_anular} → {quedaba_despues_de_anular})",
+                    )
+                else:
+                    HALLAZGOS.append(
+                        "**anular un trabajo no devuelve al almacén lo que gastó**: queda en "
+                        f"{quedaba_despues_de_anular} y estaba en {quedaba_antes_de_anular} antes de anular, así "
+                        "que el libro del almacén y el cuaderno dicen cosas distintas. Falta el movimiento "
+                        "compensatorio y su motivo"
+                    )
+                    print("  [HALLAZGO] anular no devuelve al almacén lo que gastó")
+                comprobar(
+                    _la_ultima_salida_tiene_auditoria(el_lote.get("id")),
+                    "y ese movimiento compensatorio lleva **su auditoría**: quién, cuándo y por qué",
+                )
             anulado = estado_de_la_tierra()
             print(
                 "  (el estado, después de anular: "
