@@ -364,16 +364,60 @@ def main() -> int:
                 )
             return suyos
 
-        def _la_ultima_salida_tiene_auditoria(lote_id) -> bool:
-            """¿El último movimiento dice quién y cuándo? Se imprime, para poder verlo."""
-            suyos = los_movimientos_del_lote(lote_id)
-            if not suyos:
-                return False
-            ultimo = suyos[-1]
-            return any(
-                clave in ultimo
-                for clave in ("usuario", "usuario_id", "creado", "creado_en", "fecha", "quien")
+        def los_que_cuentan(lote_id) -> list[dict]:
+            """Los movimientos que **entran en la cuenta** según el servidor.
+
+            Se le pregunta a la puerta con `solo_los_que_cuentan`, que es quien sabe la regla -un movimiento
+            anulado, **o cuyo apunte está anulado**, sigue en el libro pero no cuenta-.
+            """
+            try:
+                respuesta = httpx.get(
+                    f"{DIRECCION}/api/almacen/movimientos",
+                    params={"lote_id": lote_id, "solo_los_que_cuentan": "true"},
+                    headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                    timeout=30.0,
+                ).json()
+            except Exception:
+                return []
+            filas = respuesta if isinstance(respuesta, list) else (respuesta.get("movimientos") or [])
+            return [_el_de_dentro(uno) for uno in filas]
+
+        def los_movimientos_del_trabajo(ident) -> list[dict]:
+            """Los movimientos **de ese trabajo**, por su identificador (07/10/2026).
+
+            **No «el último del libro»**: un movimiento dice de dónde sale con `origen_tipo` y `origen_id`, y
+            buscar por ahí es lo único que ata la comprobación al trabajo que se está probando. Antes se miraba
+            «el último», que podía ser de cualquier cosa.
+            """
+            return [
+                dentro
+                for dentro in (_el_de_dentro(uno) for uno in el_libro_del_almacen())
+                if str(dentro.get("origen_id")) == str(ident)
+            ]
+
+        def _con_auditoria_valida(movimiento: dict, motivo_esperado: str = "") -> bool:
+            """Autor, fecha y motivo **con valores**, no solo el campo (07/10/2026).
+
+            Antes bastaba con que existiera **cualquiera** de esos campos —una fila con solo fecha pasaba como
+            «quién, cuándo y por qué»—, y eso no comprobaba nada. Ahora se exige: un autor con identificador, una
+            fecha que se pueda leer y un motivo **con texto**. Y si se dice cuál se espera —el de una anulación,
+            por ejemplo—, tiene que ser ese. Se imprime lo que lleva, para que se vea y no se suponga.
+            """
+            autor = movimiento.get("usuario_id")
+            fecha = movimiento.get("fecha") or movimiento.get("creado_en")
+            motivo = str(movimiento.get("motivo") or "").strip()
+            print(
+                "  (la auditoría del movimiento: "
+                f"autor={autor!r}, fecha={fecha!r}, motivo={motivo[:40]!r})"
             )
+            if not autor or not fecha:
+                return False
+            # **El motivo se exige donde corresponde** (07/10/2026): en una anulación es lo que explica por qué,
+            # y ahí se pide; en el consumo de un trabajo, el motivo puede estar vacío y el trabajo es el
+            # contexto. Exigirlo siempre sería inventarse una obligación que el diseño no pide.
+            if motivo_esperado:
+                return motivo_esperado in motivo
+            return True
 
         def el_insumo_del_formulario() -> dict:
             """Lo que el formulario trae puesto de almacén, **sin tocar nada**.
@@ -797,14 +841,16 @@ def main() -> int:
                     "  (después de corregir la cantidad: quedan "
                     f"{quedaba_despues_de_corregir}; antes {quedaba_antes_de_corregir})"
                 )
+                # **Obligatoria, no hallazgo** (07/10/2026): si corregir una cantidad no deja el saldo que toca,
+                # el recorrido tiene que **fallar**.
                 comprobar(
                     quedaba_despues_de_corregir == quedaba_antes_de_corregir - 3.0,
                     "corregir la cantidad de 2 a 5 L deja el **movimiento compensatorio** en el almacén "
                     f"({quedaba_antes_de_corregir} → {quedaba_despues_de_corregir})",
                 )
                 comprobar(
-                    _la_ultima_salida_tiene_auditoria(el_lote.get("id")),
-                    "y ese movimiento lleva **su auditoría**: quién y cuándo",
+                    _con_auditoria_valida((los_movimientos_del_trabajo(el_hecho) or [{}])[-1]),
+                    f"y el movimiento del trabajo {el_hecho} lleva **autor y fecha con valor**",
                 )
 
             # ── 4d. Anularlo ─────────────────────────────────────────────────────────────────────
@@ -833,26 +879,38 @@ def main() -> int:
                     "  (después de anular: quedan "
                     f"{quedaba_despues_de_anular}; antes {quedaba_antes_de_anular})"
                 )
-                # **Medido y no está** (tarea 3 del encargo, 07/10/2026): anular un registro erróneo **no devuelve
-                # al almacén** lo que gastó -38 antes y 38 después-, así que el cuaderno dice una cosa y la nave
-                # otra. Se declara en vez de poner el recorrido en rojo, porque el hallazgo es el hallazgo.
-                if quedaba_despues_de_anular == quedaba_antes_de_anular + 5.0:
-                    comprobar(
-                        True,
-                        "anular el registro erróneo **devuelve al almacén** lo que gastó "
-                        f"({quedaba_antes_de_anular} → {quedaba_despues_de_anular})",
-                    )
-                else:
-                    HALLAZGOS.append(
-                        "**anular un trabajo no devuelve al almacén lo que gastó**: queda en "
-                        f"{quedaba_despues_de_anular} y estaba en {quedaba_antes_de_anular} antes de anular, así "
-                        "que el libro del almacén y el cuaderno dicen cosas distintas. Falta el movimiento "
-                        "compensatorio y su motivo"
-                    )
-                    print("  [HALLAZGO] anular no devuelve al almacén lo que gastó")
+                # **Esto tiene que FALLAR si no devuelve** (07/10/2026): antes se apuntaba como hallazgo, y una
+                # regresión de la anulación habría dejado el recorrido verde. Lo que ya está implementado se
+                # protege con una comprobación obligatoria, no con un aviso.
                 comprobar(
-                    _la_ultima_salida_tiene_auditoria(el_lote.get("id")),
-                    "y ese movimiento compensatorio lleva **su auditoría**: quién, cuándo y por qué",
+                    quedaba_despues_de_anular == quedaba_antes_de_anular + 5.0,
+                    "anular el registro erróneo **devuelve al almacén** lo que gastó "
+                    f"({quedaba_antes_de_anular} → {quedaba_despues_de_anular})",
+                )
+                # **Y no se exige un movimiento nuevo**: el diseño conserva el movimiento y deja de contarlo
+                # porque su origen -la labor- está anulada. Lo que se exige es que **deje de contar** y que la
+                # anulación deje su rastro.
+                los_suyos = los_movimientos_del_trabajo(el_hecho)
+                comprobar(
+                    bool(los_suyos),
+                    f"el trabajo {el_hecho} tiene sus movimientos por su identificador ({len(los_suyos)})",
+                )
+                siguen_contando = [
+                    uno
+                    for uno in los_que_cuentan(el_lote.get("id"))
+                    if str(uno.get("origen_id")) == str(el_hecho)
+                ]
+                comprobar(
+                    not siguen_contando,
+                    "y **deja de contar** al anularse su origen "
+                    f"({len(siguen_contando)} de sus {len(los_suyos)} movimientos siguen en la cuenta)",
+                )
+                anulado_en_la_agenda = el_trabajo_en_la_agenda(el_hecho)
+                comprobar(
+                    bool(anulado_en_la_agenda.get("anulado"))
+                    and len(str(anulado_en_la_agenda.get("motivo_anulacion") or "").strip()) > 3,
+                    "y la anulación queda **con su motivo** en el cuaderno "
+                    f"({(anulado_en_la_agenda.get('motivo_anulacion') or '')[:48]!r})",
                 )
             anulado = estado_de_la_tierra()
             print(
