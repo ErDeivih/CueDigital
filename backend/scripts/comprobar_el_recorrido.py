@@ -196,6 +196,16 @@ def abrir_el_historial(nav: NavegadorDeVerdad) -> bool:
 
 
 def main() -> int:
+    # **La salida, en UTF-8, pase lo que pase** (07/10/2026): este guion imprime títulos con acentos y rayas, y
+    # cuando la salida no es UTF-8 -en la suite, sin `PYTHONIOENCODING`, la consola es cp1252- **moría** con
+    # `UnicodeEncodeError` al llegar al primer `paso`. Por eso pasaba siempre suelto -que es como lo corría yo,
+    # con UTF-8- y **fallaba dentro de la suite**. No es que no se pueda imprimir en cp1252: es que el guion no
+    # debe depender de cómo le llamen.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # si no se puede, se sigue: imprimir mal es mejor que no imprimir
+        pass
+
     print(f"Escenario: la explotación de 64 tierras, contra {DIRECCION}")
     escenario = preparar(DIRECCION)
     print(f"  {escenario.volumen.nombre} · {len(escenario.tierras)} tierras")
