@@ -1562,6 +1562,20 @@ div.tarjeta:active {
     flex: 0 0 auto;
   }
 
+  /* **Y el recorte, sólo donde debe** (07/10/2026): el nombre de la explotación es lo único que cede; la
+     campaña, la cuenta y los avisos se leen enteros. Medido: antes se recortaban «Salir» y un aviso. */
+  .marco .barra-datos > *:first-child .boton-letra,
+  .marco .barra-datos > *:first-child .barra-valor {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .marco .barra-acciones .boton,
+  .marco .barra-acciones .boton-letra {
+    flex: 0 0 auto;
+  }
+
   .marco .barra-acciones {
     flex: 0 0 auto;
   }
@@ -1620,10 +1634,11 @@ div.tarjeta:active {
     /* **Recortar, no envolver** (07/10/2026): este boton lleva el **nombre de la finca**, y con uno de 48
        caracteres se partia en varias lineas: medía **112 px** y era lo unico que mantenia la barra por encima
        de 64. Y no le llegaba el `nowrap` de `.boton`, porque su clase es otra. */
-    max-width: 14rem;
+    /* **La acción no se encoge** (07/10/2026): medido, «Salir» salía como «S…» porque el botón se estrujaba
+       hasta su ancho mínimo. Y el recorte con puntos suspensivos **no va aquí**: va sólo en el nombre de la
+       explotación, que es lo único que puede ceder. */
+    flex: 0 0 auto;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   /* La cabecera de móvil, escondida: en el ordenador su trabajo lo hace la barra. */

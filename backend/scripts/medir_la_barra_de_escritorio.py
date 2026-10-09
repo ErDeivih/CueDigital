@@ -91,7 +91,7 @@ ALARGAR = """(() => {
 
 def main() -> int:
     escenario = preparar(DIRECCION)
-    with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
+    with NavegadorDeVerdad(ancho=ANCHO, alto=900) as nav:
         nav.orden(
             "Page.addScriptToEvaluateOnNewDocument",
             {
@@ -104,9 +104,11 @@ def main() -> int:
         nav.esperar("Boolean(document.querySelector('#marco .barra'))", segundos=25)
 
         antes = nav.evaluar(LA_BARRA)
-        print(f"la barra de escritorio (1440): {antes}")
-        if not antes:
-            print("=> NO HAY BARRA: mira si el armazon ha cambiado de forma")
+        print(f"la barra de escritorio ({ANCHO}): {antes}")
+        # **0 px no es «cabe»** (07/10/2026): a 1024 el armazón no pinta esta barra y el guion decía «CABE EN
+        # 64 px» porque 0 <= 64. Un falso aprobado en el propio instrumento. Si no hay barra, se dice.
+        if not antes or not antes.get("alto"):
+            print(f"=> NO HAY BARRA a {ANCHO} px: mira qué cabecera usa el armazón a este ancho")
             return 1
 
         tocados = nav.evaluar(ALARGAR)
@@ -114,6 +116,11 @@ def main() -> int:
         print(f"con nombres largos ({tocados} nombres alargados): {despues}")
         print()
         print(f"ALTO: {antes['alto']} px → {despues['alto']} px")
+        # **Qué se recorta, en su propia línea** (07/10/2026): leerlo dentro del volcado del diccionario no
+        # funcionaba -mi filtro cortaba la línea-, así que se dice aparte. Lo accesorio puede recortarse; la
+        # campaña y las acciones, no.
+        print(f"RECORTADOS con los nombres de siempre: {antes.get('recortados')}")
+        print(f"RECORTADOS con nombres largos:         {despues.get('recortados')}")
         # **Se mide el alto, no la posicion de los hijos** (07/10/2026): dos hijos de distinta altura, centrados,
         # ya dan dos posiciones distintas aunque esten en la misma fila. Lo que importa es que quepa.
         cabe = despues["alto"] <= 64
