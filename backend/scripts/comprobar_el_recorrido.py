@@ -382,18 +382,26 @@ def main() -> int:
             filas = respuesta if isinstance(respuesta, list) else (respuesta.get("movimientos") or [])
             return [_el_de_dentro(uno) for uno in filas]
 
-        def los_movimientos_del_trabajo(ident) -> list[dict]:
-            """Los movimientos **de ese trabajo**, por su identificador (07/10/2026).
+        def los_movimientos_del_trabajo(ident, tipo_esperado=None, lote_esperado=None) -> list[dict]:
+            """Los movimientos **de ese trabajo**, por **tipo y identificador** (07/10/2026).
 
-            **No «el último del libro»**: un movimiento dice de dónde sale con `origen_tipo` y `origen_id`, y
-            buscar por ahí es lo único que ata la comprobación al trabajo que se está probando. Antes se miraba
-            «el último», que podía ser de cualquier cosa.
+            **No «el último del libro»**, y tampoco por el identificador a secas: un `origen_id` puede coincidir
+            con el de otro registro de otra tabla —una factura, sin ir más lejos—, así que se pide **también el
+            `origen_tipo`** y, cuando se sabe, **el lote esperado**. Y se imprime el tipo, para fijarlo con el
+            dato delante en vez de suponerlo.
             """
-            return [
+            suyos = [
                 dentro
                 for dentro in (_el_de_dentro(uno) for uno in el_libro_del_almacen())
                 if str(dentro.get("origen_id")) == str(ident)
+                and (tipo_esperado is None or str(dentro.get("origen_tipo")) == str(tipo_esperado))
+                and (lote_esperado is None or str(dentro.get("lote_id")) == str(lote_esperado))
             ]
+            print(
+                f"  (el trabajo {ident}: {len(suyos)} movimientos, de tipo "
+                f"{sorted({str(uno.get('origen_tipo')) for uno in suyos})})"
+            )
+            return suyos
 
         def _con_auditoria_valida(movimiento: dict, motivo_esperado: str = "") -> bool:
             """Autor, fecha y motivo **con valores**, no solo el campo (07/10/2026).
@@ -810,11 +818,14 @@ def main() -> int:
                 "  (antes de corregir la cantidad: quedaban "
                 f"{quedaba_antes_de_corregir} · el campo de la cantidad: {'sí' if la_cantidad_corregida else 'no'})"
             )
-            if not la_cantidad_corregida:
-                HALLAZGOS.append(
-                    "**la corrección no ofrece el campo de la cantidad**: el formulario de corregir solo tiene "
-                    "las observaciones, así que apuntar mal un número no se puede arreglar desde la pantalla"
-                )
+            # **Si falta el campo, la prueba FALLA** (07/10/2026): antes se apuntaba como hallazgo, así que una
+            # regresión de esto -que la pantalla deje de ofrecer la cantidad al corregir- pasaba como aviso. Y
+            # las comprobaciones del saldo **no se omiten**: van fuera de este sitio, para que digan lo suyo.
+            comprobar(
+                bool(la_cantidad_corregida),
+                "el formulario de corregir **trae el campo de la cantidad** "
+                "(sin él no se puede arreglar un número desde la pantalla)",
+            )
             boton = el_boton_de_guardar()
             comprobar(
                 bool(boton) and pulsar_en_js(f"[data-accion='{boton}']"),
@@ -835,7 +846,7 @@ def main() -> int:
             )
             # **Y el almacén, cuadrado** (tarea 3): corregir de 2 a 5 L tiene que dejar una salida de 3 litros
             # más. Si no la deja, el cuaderno y la nave dicen cosas distintas, y eso es un defecto.
-            if la_cantidad_corregida and quedaba_antes_de_corregir is not None:
+            if quedaba_antes_de_corregir is not None:
                 quedaba_despues_de_corregir = lo_que_queda(el_lote.get("id"))
                 print(
                     "  (después de corregir la cantidad: quedan "
@@ -849,7 +860,19 @@ def main() -> int:
                     f"({quedaba_antes_de_corregir} → {quedaba_despues_de_corregir})",
                 )
                 comprobar(
-                    _con_auditoria_valida((los_movimientos_del_trabajo(el_hecho) or [{}])[-1]),
+                    _con_auditoria_valida(
+                        (
+                            los_movimientos_del_trabajo(
+                                # **El tipo, medido** (07/10/2026): los movimientos de un trabajo salen con
+                                # `origen_tipo='labor'`. Se pide explícito -y no solo el id, que puede coincidir
+                                # con el de otro registro- junto al lote esperado.
+                                el_hecho,
+                                tipo_esperado="labor",
+                                lote_esperado=el_lote.get("id"),
+                            )
+                            or [{}]
+                        )[-1]
+                    ),
                     f"y el movimiento del trabajo {el_hecho} lleva **autor y fecha con valor**",
                 )
                 # **Y reenviarlo no puede consumir dos veces** (07/10/2026): el mismo formulario, con la misma
@@ -917,7 +940,9 @@ def main() -> int:
                 # **Y no se exige un movimiento nuevo**: el diseño conserva el movimiento y deja de contarlo
                 # porque su origen -la labor- está anulada. Lo que se exige es que **deje de contar** y que la
                 # anulación deje su rastro.
-                los_suyos = los_movimientos_del_trabajo(el_hecho)
+                los_suyos = los_movimientos_del_trabajo(
+                    el_hecho, tipo_esperado="labor", lote_esperado=el_lote.get("id")
+                )
                 comprobar(
                     bool(los_suyos),
                     f"el trabajo {el_hecho} tiene sus movimientos por su identificador ({len(los_suyos)})",
