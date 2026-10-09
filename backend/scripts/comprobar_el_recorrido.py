@@ -453,14 +453,27 @@ def main() -> int:
             return respuesta.json() if respuesta.status_code == 200 else []
 
         def lo_que_queda(lote_id) -> float:
-            """Lo que queda en un lote: lo que entró menos lo que salió."""
+            """Lo que queda en un lote, **contando solo los movimientos vivos**.
+
+            **Esto estaba mal** (07/10/2026): sumaba el libro entero, incluidos los movimientos **anulados**, y
+            el router de trabajos dice justo lo contrario: *«el movimiento se queda en el libro y deja de
+            contar»*. Con la cuenta vieja, anular parecía no devolver nada al almacén -38 antes y 38 después-, y
+            el defecto era de la cuenta, no del programa. Es la misma lección de todo el encargo: **se pregunta
+            al servidor, no se cuenta por cuenta propia**.
+            """
             queda = 0.0
+            anulados = 0
             for movimiento in el_libro_del_almacen():
                 dentro = _el_de_dentro(movimiento)
                 if str(dentro.get("lote_id")) != str(lote_id):
                     continue
+                if dentro.get("anulado"):
+                    anulados += 1
+                    continue
                 cantidad = float(dentro.get("cantidad") or 0)
                 queda += cantidad if (dentro.get("tipo") or "") == "entrada" else -cantidad
+            if anulados:
+                print(f"  (movimientos anulados que NO cuentan: {anulados})")
             return queda
 
         def estado_de_la_tierra() -> dict:
