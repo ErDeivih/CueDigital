@@ -336,6 +336,13 @@ def main() -> int:
         # **Y lo que gasta del almacén**: un trabajo de verdad sale de la nave, y eso es lo que hay que
         # comprobar después —que el libro del almacén tenga su salida y que quede menos—. Se elige un lote
         # de los que el escenario ha dejado en la nave y una cantidad.
+        # **La base temporal, para la auditoría** (07/10/2026): el recorrido corre contra una base de prueba y
+        # yo sé dónde está, así que la comprobación de la auditoría **la lee de ahí**, en sólo lectura. La
+        # auditoría no tiene puerta en la API -se escribe en veinte sitios y no se lee en ninguno- y no se la
+        # voy a poner: eso sería ampliar el alcance. Va en el **tercer** argumento, porque el segundo es la
+        # carpeta de capturas -meter aquí la base hacía que el guion intentara crear una carpeta con su nombre-.
+        RUTA_DE_LA_BASE = sys.argv[3] if len(sys.argv) > 3 else None
+
         # **El autor que se espera** (07/10/2026): el de la sesión que está apuntando. Se comprueba **contra
         # él**, porque «tiene autor» no es lo mismo que «lo apuntó quien debía».
         USUARIO_ESPERADO = getattr(escenario.volumen, "usuario_id", None)
@@ -368,6 +375,56 @@ def main() -> int:
                     + ", ".join(f"{clave}={str(valor)[:24]}" for clave, valor in sorted(fila.items()))
                 )
             return suyos
+
+        def la_auditoria_en_la_base(el_id, el_motivo: str) -> tuple[bool, str]:
+            """La entrada de auditoría de la anulación, **leída de la base de la prueba** (07/10/2026).
+
+            La auditoría **no tiene puerta**: `models.Auditoria` se escribe en una veintena de sitios de la
+            aplicación y **no se lee en ninguno**. Y no se la voy a poner al producto —eso sería ampliar el
+            alcance—, pero el recorrido corre contra una **base temporal** que arranco yo, así que la
+            comprobación **la lee de ahí**, en modo sólo lectura: se mira **lo que el programa escribió**, sin
+            tocar el programa. La agenda diciendo «anulado» no demuestra que quedara el rastro; esto sí.
+
+            **El motivo se compara leyendo `datos` como JSON** (07/10/2026): en la base el texto va escapado
+            —`Apuntado por error en el recorrido autom\\u00e1tico`—, así que buscarlo como cadena con acento
+            fallaba y decía que no estaba **cuando sí estaba**. Se comprueba además que la entrada sea de
+            **este trabajo** (`entidad='labor'`, `entidad_id`) y de **una anulación**.
+            """
+            if not RUTA_DE_LA_BASE:
+                return (False, "sin base de datos: su ruta va en el tercer argumento")
+            import json
+            import sqlite3
+
+            conexion = sqlite3.connect(f"file:{RUTA_DE_LA_BASE}?mode=ro", uri=True)
+            try:
+                columnas = [fila[1] for fila in conexion.execute('PRAGMA table_info("auditoria")')]
+                if not columnas:
+                    return (False, "no hay tabla de auditoría en la base de la prueba")
+                for fila in conexion.execute('SELECT * FROM "auditoria" ORDER BY id'):
+                    valores = {columna: fila[i] for i, columna in enumerate(columnas)}
+                    if str(valores.get("entidad")) != "labor":
+                        continue
+                    if str(valores.get("entidad_id")) != str(el_id):
+                        continue
+                    if str(valores.get("accion")) != "anular":
+                        continue
+                    try:
+                        escrito = json.loads(valores.get("datos") or "{}")
+                    except ValueError:
+                        escrito = {}
+                    print(
+                        "  (su anulación, en la auditoría de la base: "
+                        f"motivo={str(escrito.get('motivo'))[:52]!r}, fecha={valores.get('fecha')!r})"
+                    )
+                    if escrito.get("motivo") == el_motivo:
+                        return (True, "entrada de «auditoria» con el motivo exacto y este trabajo")
+                    return (
+                        False,
+                        f"la entrada está, pero el motivo no es el que se apuntó ({escrito.get('motivo')!r})",
+                    )
+                return (False, f"no hay ninguna anulación del trabajo {el_id} en la auditoría")
+            finally:
+                conexion.close()
 
         def los_que_cuentan(lote_id) -> list[dict]:
             """Los movimientos que **entran en la cuenta** según el servidor.
@@ -808,6 +865,9 @@ def main() -> int:
             # **Que campos trae de verdad** (07/10/2026): el formulario es un solo bloque y no hay un
             # `esCorregir` que lo parta, asi que o el campo de la cantidad esta y mi escritura falla, o no esta.
             # En vez de suponer, se le pregunta al DOM.
+            # **Cómo llama la agenda al día** (07/10/2026): la comprobación del movimiento espera la fecha del
+            # trabajo, y quiero ver el nombre del campo con el dato delante en vez de suponerlo.
+            print(f"  (la agenda del trabajo: campos {sorted(el_trabajo_en_la_agenda(el_hecho))})")
             print(
                 "  (los campos del formulario de corregir: "
                 + str(nav.evaluar("[...document.querySelectorAll('#pantalla [id]')].map((uno) => uno.id)"))
@@ -980,6 +1040,16 @@ def main() -> int:
                     and len(str(anulado_en_la_agenda.get("motivo_anulacion") or "").strip()) > 3,
                     "y la anulación queda **con su motivo** en el cuaderno "
                     f"({(anulado_en_la_agenda.get('motivo_anulacion') or '')[:48]!r})",
+                )
+                # **Y su entrada de auditoría, vinculada a este trabajo** (07/10/2026): que la agenda diga
+                # «anulado» no demuestra que el programa dejara su rastro. Medido: la deja -`entidad='labor'`,
+                # `entidad_id=14`, `accion='anular'`- con el motivo exacto y con qué salidas dejan de contar.
+                la_hay, el_porque = la_auditoria_en_la_base(
+                    el_hecho, "Apuntado por error en el recorrido automático"
+                )
+                comprobar(
+                    la_hay,
+                    f"y la anulación deja **su entrada de auditoría** con el motivo exacto ({el_porque})",
                 )
             anulado = estado_de_la_tierra()
             print(
