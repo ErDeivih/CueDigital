@@ -35,7 +35,8 @@ export function PantallaNormativa({ textos = {}, reglas = [], error = "" }) {
           <li key=${una.codigo} className="regla-de-normativa">
             <h2>${una.codigo} · ${una.titulo}</h2>
             ${una.tipo ? null : html`<p className="pista">${frase(t.sin_tipo)}</p>`}
-            <p className="texto-de-la-regla">${una.texto}</p>
+            <p className="texto-de-la-regla">${una.ayuda}</p>
+            <p className="pista">${frase(t.como_se_lee)}</p>
             <p className="pista">${frase((una.fuentes || []).length > 1 ? t.fuentes : t.fuente)}</p>
             <ul className="fuentes-de-la-regla">
               ${(una.fuentes || []).map(

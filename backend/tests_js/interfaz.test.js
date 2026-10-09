@@ -1053,7 +1053,7 @@ const RESPUESTAS = {
     sin_clasificar: "Sin clasificar",
     sin_tipo: "Todavia no se ha clasificado esta regla: puede ser una obligacion o una recomendacion.",
     sin_estado: "Todavia no se ha revisado si esta regla esta en vigor.",
-    como_se_lee: "Se lee tal y como esta escrito en la fuente, sin resumir.",
+    como_se_lee: "Es un resumen para el cuaderno. Lo que dice la norma, entero, esta en su fuente oficial.",
     sin_normativa: "No hay ninguna regla cargada.",
   },
     ayuda: {

@@ -52,3 +52,17 @@ def test_una_regla_con_varias_normas_las_trae_todas():
     por_codigo = {una.codigo: una for una in normativa.LAS_REGLAS}
     for codigo in ("N03", "N05", "N06", "N07", "N09", "N10"):
         assert len(por_codigo[codigo].fuentes) >= 2, codigo
+
+def test_cada_regla_tiene_su_ayuda_y_sin_markdown():
+    """**Lo que se le enseña al agricultor** (07/10/2026): la matriz es documentacion de trabajo -«Implementar
+    tres ejes independientes», «Prueba:», «IUWS no condiciona la navegacion del CRM»- y eso no se le puede
+    poner delante. Cada regla lleva su ayuda, escrita para el, y **sin Markdown visible**: los enlaces viven en
+    `fuentes`, que es donde la pantalla los pinta.
+    """
+    for una in normativa.LAS_REGLAS:
+        assert una.ayuda.strip(), una.codigo
+        assert "**" not in una.ayuda, una.codigo
+        assert "](" not in una.ayuda, una.codigo
+        assert "Prueba:" not in una.ayuda, una.codigo
+        assert "Implementar" not in una.ayuda, una.codigo
+        assert "CRM" not in una.ayuda, una.codigo

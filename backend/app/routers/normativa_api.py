@@ -34,6 +34,9 @@ class ReglaSalida(SalidaBase):
     titulo: str
     fuentes: list[FuenteSalida]
     texto: str
+    # **La ayuda para el agricultor** (07/10/2026): `texto` es la matriz tal cual -documentacion de
+    # trabajo- y esto es lo mismo dicho para el. La pantalla enseña esto.
+    ayuda: str
     # Vacios a proposito, y **con su motivo escrito aqui**: la matriz no dice cual es el tipo ni el estado de
     # cada regla, y rellenarlos seria inventar una clasificacion legal. La pantalla los ensena como «sin
     # clasificar», y solo `activa` participa en comprobaciones concluyentes.
@@ -50,6 +53,7 @@ def las_reglas_de_la_normativa() -> list[ReglaSalida]:
             titulo=una.titulo,
             fuentes=[FuenteSalida(nombre=fuente.nombre, enlace=fuente.enlace) for fuente in una.fuentes],
             texto=una.texto,
+            ayuda=una.ayuda,
             tipo=una.tipo,
             estado=una.estado,
         )

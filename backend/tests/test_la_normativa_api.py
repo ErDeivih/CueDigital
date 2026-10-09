@@ -55,3 +55,10 @@ def test_una_regla_con_varias_normas_las_trae_todas(cliente, cuenta):
     """N07 se apoya en cuatro normas: si la puerta mandara solo la primera, la pantalla mentiria."""
     por_codigo = {una["codigo"]: una for una in _las_reglas(cliente, cuenta)}
     assert len(por_codigo["N07"]["fuentes"]) == 4
+
+def test_la_ayuda_del_agricultor_es_la_que_se_sirve(cliente, cuenta):
+    """La puerta manda **la ayuda**, no el texto de trabajo, y sin Markdown."""
+    for una in _las_reglas(cliente, cuenta):
+        assert una["ayuda"].strip(), una["codigo"]
+        assert "**" not in una["ayuda"], una["codigo"]
+        assert "](" not in una["ayuda"], una["codigo"]
