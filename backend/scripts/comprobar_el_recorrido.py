@@ -739,11 +739,29 @@ def main() -> int:
                 f"el trabajo hecho trae su botón de corregir (trabajo {el_hecho})",
             )
             nav.esperar("Boolean(document.querySelector('#trabajo-observaciones'))", segundos=15)
+            # **Que campos trae de verdad** (07/10/2026): el formulario es un solo bloque y no hay un
+            # `esCorregir` que lo parta, asi que o el campo de la cantidad esta y mi escritura falla, o no esta.
+            # En vez de suponer, se le pregunta al DOM.
+            print(
+                "  (los campos del formulario de corregir: "
+                + str(nav.evaluar("[...document.querySelectorAll('#pantalla [id]')].map((uno) => uno.id)"))
+            )
             escribir_en(nav, "#trabajo-observaciones", LA_CORRECCION)
             # **Y se corrige UNA CANTIDAD**, no solo las notas (tarea 3): lo que se apunta a mano se equivoca en
             # el número tanto como en la letra, y corregirlo tiene que dejar el libro cuadrado.
             quedaba_antes_de_corregir = lo_que_queda(el_lote.get("id")) if el_lote.get("id") else None
-            la_cantidad_corregida = escribir_en(nav, "#trabajo-cantidad", str(LA_CANTIDAD + 3.0))
+            # **Se escribe como lo escribe la pantalla, no a la fuerza** (07/10/2026): este campo es de tipo
+            # número, y `escribir_en` —que teclea con el teclado de verdad— no lo rellenaba, así que la
+            # comprobación decía que el campo **no estaba cuando sí estaba** (medido: está en el DOM). Se pone su
+            # valor y se avisan los eventos, igual que hace el recorrido al planificar.
+            la_cantidad_corregida = nav.evaluar(
+                "(() => { const campo = document.querySelector('#trabajo-cantidad');"
+                " if (!campo) return false;"
+                f" campo.value = '{LA_CANTIDAD + 3.0}';"
+                " campo.dispatchEvent(new Event('input', { bubbles: true }));"
+                " campo.dispatchEvent(new Event('change', { bubbles: true }));"
+                " return true; })()"
+            )
             print(
                 "  (antes de corregir la cantidad: quedaban "
                 f"{quedaba_antes_de_corregir} · el campo de la cantidad: {'sí' if la_cantidad_corregida else 'no'})"
