@@ -1543,16 +1543,25 @@ def main() -> int:
         )
         time.sleep(1.0)
         los_gastos_tras_recargar = los_gastos()
-        los_mios_tras = buscar_el_gasto(los_gastos_tras_recargar)
+        los_mios_tras = [
+            # **Comparación exacta** (08/10/2026). `buscar_el_gasto` compara por **substring** y el escenario
+            # tiene un gasto -id 10, 86,35 €- cuyo concepto **contiene** el mío, así que aquí salían **dos** y se
+            # acusaba al programa de duplicar. Medido antes de acusar: el 41 es el mío y el 10 es del escenario.
+            uno
+            for uno in buscar_el_gasto(los_gastos_tras_recargar)
+            if str(uno.get("concepto", "")) == EL_CONCEPTO
+        ]
         comprobar(
             len(los_mios_tras) == 1,
             f"y el **gasto sigue guardado** después de recargar ({len(los_mios_tras)} con ese concepto)",
         )
         print(
-            "  (el gasto, tras recargar: "
-            + str(los_mios_tras[0])[:220]
-            if los_mios_tras
-            else "  (el gasto no aparece tras recargar)"
+            # **Quiénes son, antes de acusar a nadie** (08/10/2026): con dos gastos con el mismo concepto hay que
+            # ver si son **idénticos** -duplicado de verdad- o **distintos** -y entonces el que está mal es esta
+            # comprobación, que es lo que ha pasado nueve veces en este encargo-. Antes se enseñaba sólo el
+            # primero y recortado, que es justo lo que no permite decidirlo.
+            "  (los gastos con ese concepto, tras recargar: "
+            + str([(uno.get("id"), uno.get("importe"), uno.get("fecha")) for uno in los_mios_tras])[:300]
         )
         captura(nav, "economico-17-tras-recargar")
         nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
