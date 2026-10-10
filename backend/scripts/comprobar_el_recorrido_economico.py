@@ -376,6 +376,38 @@ def main() -> int:
         # lista está vacía -en vez de suponerlo, que es lo que me ha costado más rondas en esta sesión-.
         if suyas:
             print(f"  (la factura guardada, como la devuelve el servidor: {str(suyas[0])[:220]})")
+        # **Los siete datos, afirmados DESDE EL SERVIDOR** (08/10/2026). El revisor señaló que los siete se
+        # afirmaban **sólo en el DOM** -lo que la pantalla enseña-, y eso no prueba que el servidor los tenga.
+        # Aquí se leen de la factura que devuelve `GET /api/facturas` y se comparan con lo que se escribió.
+        suya = suyas[0] if suyas else {}
+        print(f"  (las claves de la factura del servidor: {sorted(suya.keys()) if isinstance(suya, dict) else suya})")
+        comprobar(
+            isinstance(suya, dict) and suya,
+            "y la factura **vuelve del servidor** con sus datos",
+        )
+        for clave, esperado, como in (
+            ("proveedor", "Suministros del Páramo, S.L.", "el **proveedor**"),
+            ("proveedor_nif", "B12345678", "el **NIF** del proveedor"),
+            ("numero_factura", EL_NUMERO, "el **número** de factura"),
+            ("fecha", "2026-10-05", "la **fecha**"),
+        ):
+            comprobar(
+                str((suya or {}).get(clave, "")).strip() == esperado,
+                f"{como} es el que se escribió, **leído del servidor** ({str((suya or {}).get(clave))[:40]!r})",
+            )
+        for clave, esperado, como in (
+            ("base_imponible", 1000.0, "la **base imponible**"),
+            ("cuota_iva", 21.0, "la **cuota de IVA**"),
+            ("total", 1210.0, "el **total**"),
+        ):
+            try:
+                suyo_numero = float((suya or {}).get(clave))
+            except (TypeError, ValueError):
+                suyo_numero = None
+            comprobar(
+                suyo_numero is not None and abs(suyo_numero - esperado) < 0.01,
+                f"{como} es el que se escribió, **leído del servidor** ({str((suya or {}).get(clave))[:40]!r})",
+            )
         print(f"  (la dirección de la lista: {nav.evaluar('location.hash')})")
         print(
             "  (lo que la lista enseña: "
