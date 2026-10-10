@@ -1096,17 +1096,12 @@ def main() -> int:
             # de verdad, por coordenadas- el manejador **no se ejecutaba** -sus `console.error` no salían-, y el
             # botón de este bloque queda **debajo de la tabla**, fuera de la vista. Si con `.click()` directo sí
             # se ejecuta, entonces lo que fallaba era **mi clic**, no la aplicación.
+            # **Una sola pulsación** (08/10/2026). Se pulsaba **dos veces** -por coordenadas y al elemento-
+            # mientras se buscaba la capa que faltaba, y con las dos funcionando el reparto se hacía **dos
+            # veces**, así que la cifra no era la que tenía que ser. Ya se sabe cuál es el camino: el clic de
+            # verdad, por coordenadas, como el del agricultor.
             ya_pulsado = pulsar("gasto-pago-conciliar")
-            # **Y siempre, además, el clic directo al elemento**: así se sabe si el fallo es del clic por
-            # coordenadas -que dice «pulsado» sin que el manejador llegue a correr- o de la aplicación.
-            con_el_elemento = str(
-                nav.evaluar(
-                    "(() => { const b = document.querySelector("
-                    "'#pantalla [data-accion=\"gasto-pago-conciliar\"]');"
-                    " if (!b) return 'no está'; b.click(); return 'pulsado al elemento'; })()"
-                )
-            )
-            print(f"  (el botón de conciliar: por coordenadas {ya_pulsado} · al elemento {con_el_elemento})")
+            print(f"  (el botón de conciliar: {ya_pulsado})")
             # **Y se lee la consola DESPUÉS del clic** (08/10/2026). El vigilante de `console.error` escribe en
             # `__elErrorDeLaPantalla`, y yo lo imprimía **al abrir el formulario**, antes de pulsar: si el
             # manejador habla al conciliar, su mensaje caía en la variable y **no lo leía nadie**. Eso es un
@@ -1123,44 +1118,9 @@ def main() -> int:
                 # **Y se llama a la puerta a mano, igual que el cliente** (08/10/2026). Así se separa lo que el
                 # clic no llegue a mandar de lo que el servidor no aplique: el cuerpo es el **mismo** que arma el
                 # manejador (`{automatico: true, gastos: [...], aplicaciones: []}`).
-                # `mi_id` se definía en el camino **viejo** del reparto, que quedó muerto detrás del `return`;
-                # aquí se vuelve a sacar, del gasto que el recorrido ya leyó del servidor.
-                mi_id = los_mios[0]["id"] if los_mios else None
-                if mi_id is not None:
-                    try:
-                        los_deudos = [
-                            uno.get("id")
-                            for uno in ((los_del_servidor or {}).get("gastos") or [])
-                            if uno.get("pendiente") and float(uno.get("pendiente") or 0) > 0
-                        ]
-                        peticion_conciliar = urllib.request.Request(
-                            f"{DIRECCION}/api/gastos/pagos/1/conciliar",
-                            data=json.dumps(
-                                {"automatico": True, "gastos": los_deudos, "aplicaciones": []}
-                            ).encode("utf-8"),
-                            headers={
-                                "Authorization": f"Bearer {escenario.volumen.token}",
-                                "Content-Type": "application/json",
-                            },
-                            method="POST",
-                        )
-                        with urllib.request.urlopen(peticion_conciliar, timeout=30) as respuesta_conciliar:
-                            lo_contestado = json.loads(respuesta_conciliar.read().decode("utf-8"))
-                        print(
-                            "  (llamando a la puerta a mano, el servidor contesta: "
-                            + str(
-                                {
-                                    "aplicaciones": len(
-                                        ((lo_contestado or {}).get("pago") or {}).get("aplicaciones") or []
-                                    ),
-                                    "avisos": (lo_contestado or {}).get("avisos"),
-                                }
-                            )[:260]
-                            + f" · con {len(los_deudos)} gastos pendientes)"
-                        )
-                        print(f"  (y después, por pagar: {el_por_pagar()!r})")
-                    except Exception as exc:  # noqa: BLE001
-                        print(f"  (la puerta a mano ha fallado: {str(exc)[:200]})")
+                # La llamada **a mano** a la puerta se quitó: sirvió para separar las capas -el servidor sí
+                # aplicaba-, y ahora que la pantalla funciona, dejarla puesta **aplicaría el pago dos veces**.
+
                 print(
                     "  (y la pantalla, después de conciliar: "
                     + str(
