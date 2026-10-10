@@ -53,7 +53,19 @@ def correr_la_suite() -> tuple[int, int, int]:
 
 
 def poner_el_recuento(real: str) -> list[str]:
-    """Pone el recuento **sólo** en los documentos que lo llevan, nunca por todo el repositorio."""
+    """Pone el recuento **sólo** en los documentos que lo llevan, y **descubre** el número viejo leyéndolo.
+
+    El guardián de la casa -el del recuento- cazó que mi **lista de números viejos** se quedaba corta: decía 4679
+    y no estaba en la lista, así que el guion **no escribía nada** y la suite seguía en rojo. Ahora el número
+    viejo **se lee del README** en vez de llevarse en una lista que hay que acordarse de ampliar.
+    """
+    los_viejos = set(LOS_VIEJOS)
+    try:
+        los_viejos.update(
+            re.findall(r"(\d{4})\s+tests", (REPO / "README.md").read_text(encoding="utf-8"))
+        )
+    except OSError:
+        print("   (no he podido leer el README para descubrir el número viejo)")
     tocados = []
     for nombre in LOS_DOCUMENTOS:
         fichero = REPO / nombre
@@ -62,7 +74,7 @@ def poner_el_recuento(real: str) -> list[str]:
             continue
         texto = fichero.read_text(encoding="utf-8")
         nuevo = texto
-        for viejo in LOS_VIEJOS:
+        for viejo in los_viejos:
             if viejo != real:
                 nuevo = nuevo.replace(viejo, real)
         if nuevo != texto:
