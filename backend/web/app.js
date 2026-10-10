@@ -10249,7 +10249,11 @@ async function abrirLaRecepcion(id) {
   recargarElLibro()
     .then(() => {
       const sigue = suyo.recepcion && Number(suyo.recepcion.id) === Number(suya.id);
-      if (sigue && estado.pantalla === "recepcion") pantallaRecepcion();
+      // **Y si está abierto el enganche, no se pisa** (08/10/2026). El enganche se abre **desde esta misma
+      // ficha** y no toca `suyo.recepcion`, así que este repintado de fondo devolvía la ficha y **se comía el
+      // formulario**. Es la misma clase de defecto que el del libro del almacén -lo encontró el revisor
+      // independiente-, y se arregla igual: **respetar lo que esté abierto**.
+      if (sigue && estado.pantalla === "recepcion" && !suyo.enganche) pantallaRecepcion();
     })
     .catch(() => {});
   pantallaRecepcion();
