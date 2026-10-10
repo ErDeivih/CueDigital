@@ -953,6 +953,468 @@ def main() -> int:
             + ")"
         )
 
+        # **Y ahora el pago, de verdad** (08/10/2026). El encargo pide «pago parcial, saldo pendiente y pago
+        # final», y hasta hoy no se podía andar: la pantalla **no se abría** -la rama del pago evaluaba `hoy()`,
+        # que no existe, y `montar` se comía el `ReferenceError` sin dejar rastro, así que salía el aviso
+        # `sin_react` «falta un fichero del programa»-. Arreglado eso, se anda entero: **200 del gasto de 663**,
+        # se mira el **pendiente**, y luego **el resto**.
+        #
+        # Se afirma el **delta** del pendiente y no su absoluto: el escenario trae sus propios gastos -41 y
+        # 3.531,20 € medidos-, así que el total de la finca no es sólo mío. Y se afirma que el gasto queda entero.
+        #
+        # **Los dos `import`, aquí y antes de usarlos**: un `import urllib.*` más abajo hace que el nombre sea
+        # **local en toda la función** y esta línea revienta con `UnboundLocalError` -medido dos veces-.
+        import urllib.error
+        import urllib.request
+
+        def el_por_pagar() -> float | None:
+            try:
+                peticion = urllib.request.Request(
+                    f"{DIRECCION}/api/gastos",
+                    headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                )
+                with urllib.request.urlopen(peticion, timeout=30) as respuesta:
+                    suyas = json.loads(respuesta.read().decode("utf-8"))
+                # **`por_pagar` es un objeto, no un número** (medido): `{'importe': '3531.20', 'cuantos': 41…}`.
+                el_suyo = (suyas or {}).get("por_pagar")
+                if isinstance(el_suyo, dict):
+                    el_suyo = el_suyo.get("importe")
+                return float(el_suyo)
+            except Exception:  # noqa: BLE001
+                return None
+
+        def pagar(cuanto: str) -> float | None:
+            """El pago, **en la jerga de la aplicación** (08/10/2026), toda ella **volcada**, no supuesta:
+
+            1. se abre el gasto (`gasto-abrir`);
+            2. se pide repartir (`gasto-repartir`);
+            3. se marcan los gastos (`gasto-marcar-todas`);
+            4. aparece **un campo por gasto**, `gasto-peso-<id>`, con el id **en el nombre**;
+            5. y se confirma con `gasto-guardar`.
+
+            Se escribe el peso **en el mío**, por su concepto, y no en los 40 del escenario. Cada uno de esos
+            nombres ha salido de un volcado, no de una suposición: los cinco que yo había supuesto eran falsos.
+            """
+            def pulsar(cual: str) -> str:
+                return str(
+                    nav.evaluar(
+                        "(() => { const b = document.querySelector('#pantalla [data-accion=\"" + cual + "\"]');"
+                        " if (b) { b.click(); return 'pulsado'; } return 'no está'; })()"
+                    )
+                )
+
+            # **El pago, por su camino de verdad** (08/10/2026): en **cuentas**, con `gasto-pago-nuevo`, que es el
+            # que abre con `pago-importe`; y los gastos a los que se aplica se **buscan** con `gastos-buscar`.
+            # El **reparto** era otra cosa -distribuye un gasto entre tierras, cultivos o máquinas, con destinos
+            # **medidos**-, y por eso no pagaba nada.
+            pulsar("gastos-ver")
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"gasto-pago-nuevo\"]'))", segundos=20
+            )
+            time.sleep(0.6)
+            pulsar("gasto-pago-nuevo")
+            comprobar(
+                nav.esperar("Boolean(document.querySelector('#pago-importe'))", segundos=20),
+                "y `gasto-pago-nuevo` abre el pago **con su campo de importe**",
+            )
+            # **Y se apunta el pago** (08/10/2026): 200 en su importe y guardar. Apuntar el dinero **no** lo
+            # aplica a ningún gasto -medido durante muchas vueltas: el `pendiente` del gasto no se movía-, porque
+            # eso es **conciliar**: el servidor tiene `POST /gastos/pagos` para apuntarlo y
+            # `POST /gastos/pagos/{id}/conciliar` para aplicarlo; en la pantalla, la acción se llama
+            # `gasto-pago-conciliar`.
+            nav.pulsar("#pago-importe")
+            nav.escribir(cuanto)
+            comprobar(
+                nav.evaluar("String((document.querySelector('#pago-importe') || {}).value || '')") == cuanto,
+                f"y el importe **{cuanto}** queda escrito en el campo del pago",
+            )
+            pulsar("gasto-guardar")
+            time.sleep(1.5)
+            print(
+                "  (apuntado el pago, la pantalla ofrece: "
+                + str(
+                    nav.evaluar(
+                        "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                        ".map((u) => u.dataset.accion).slice(0, 24))()"
+                    )
+                )
+                + ")"
+            )
+            # **Y se va al banco, que es donde se concilia** (08/10/2026): «conciliar» es el verbo del extracto, y
+            # el servidor tiene `POST /gastos/pagos/{id}/conciliar`. En la lista de cuentas **no** está esa acción
+            # -medido-, así que se vuelca lo que ofrece el banco para encontrar mi pago de 200 y su conciliación.
+            pulsar("bancos-ver")
+            time.sleep(1.8)
+            # **Qué movimientos hay, y se abre el de 200** (08/10/2026): la conciliación estará en la **ficha del
+            # movimiento** (`banco-abrir`), como `gasto-repartir` estaba en la del gasto. Se ven las filas y se
+            # abre la que lleve mi importe, sin suponer dónde está la acción.
+            print(
+                "  (los movimientos del banco, tal como se ven: "
+                + str(
+                    nav.evaluar(
+                        "(() => [...document.querySelectorAll('#pantalla [data-accion=\"banco-abrir\"]')]"
+                        ".slice(0, 5).map((b) => ((b.closest('tr, li, div') || b).textContent || '')"
+                        ".replace(/\\s+/g, ' ').trim().slice(0, 70)))()"
+                    )
+                )
+                + ")"
+            )
+            abierto = str(
+                nav.evaluar(
+                    "(() => { const abre = [...document.querySelectorAll('#pantalla [data-accion=\"banco-abrir\"]')];"
+                    " const mio = abre.find((b) => /200/.test((b.closest('tr, li, div') || b).textContent || ''));"
+                    " if (!mio) return 'no encuentro el de 200 entre ' + abre.length;"
+                    " mio.click(); return 'abierto'; })()"
+                )
+            )
+            print(f"  (movimiento abierto: {abierto})")
+            # **Y aquí se deja dicho el hallazgo** (08/10/2026), que es lo que el encargo pide en sus límites.
+            #
+            # Está **medido por dos caminos independientes**: el cliente **no lee nunca** `/api/gastos/pagos`
+            # -sólo **escribe** en esa puerta: apuntar, anular, conciliar y quitar aplicaciones- y
+            # **`sin_conciliar` aparece 0 veces** en `app.js`. El CRM sabe apuntar un pago, anularlo, conciliarlo
+            # **automáticamente por antigüedad** y quitarle aplicaciones, y **no tiene ninguna pantalla que lo
+            # haga**; por eso el `pendiente` de un gasto **no baja nunca desde la interfaz**.
+            hallazgo(
+                "**el saldo pendiente no se puede bajar desde las pantallas**: apuntar un pago sí se puede -este "
+                "recorrido lo hace y el servidor contesta 201-, pero **no hay ninguna pantalla que lo concilie** "
+                "con un gasto. El servidor tiene la ruta (`POST /gastos/pagos/{id}/conciliar`), la lista del "
+                "dinero que está esperando (`sin_conciliar`, «lo que no se sabe a qué va») y hasta el reparto "
+                "automático por antigüedad «como en cualquier cuenta corriente»; el cliente, en cambio, **nunca "
+                "lee** `/api/gastos/pagos` y **no consume `sin_conciliar`**, y sus tres manejadores "
+                "(`gasto-pago-conciliar`, `anular` y `aplicaciones`) están **sin botón**. Por eso el gasto se "
+                "queda en `pendiente 663,00`."
+            )
+            time.sleep(1.8)
+            print(
+                "  (su ficha ofrece: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                        ".map((u) => u.dataset.accion).slice(0, 22),"
+                        " texto: ((document.querySelector('#pantalla') || {}).innerText || '')"
+                        ".replace(/\\s+/g, ' ').slice(0, 200) }))()"
+                    )
+                )
+                + ")"
+            )
+            time.sleep(0.8)
+            # **Paso 1: ¿está el pago abierto?** (08/10/2026). El volcado de antes se hacía **después** de
+            # escribir y ya no había formulario, así que no se sabía **en qué punto** se caía. Ahora se mide en
+            # dos pasos: aquí, y otra vez tras escribir en el buscador.
+            print(
+                "  (el pago, recién abierto: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ importe: Boolean(document.querySelector('#pago-importe')),"
+                        " buscar: Boolean(document.querySelector('#gastos-buscar')),"
+                        " texto: ((document.querySelector('#pantalla') || {}).innerText || '')"
+                        ".replace(/\\s+/g, ' ').slice(0, 90) }))()"
+                    )
+                )
+                + ")"
+            )
+            # **Y se busca mi gasto**, que es como se dice a qué se aplica el pago: se escribe en `gastos-buscar`
+            # y se vuelca lo que aparece -acciones incluidas-, sin suponer cómo se marca.
+            nav.pulsar("#gastos-buscar")
+            print(
+                "  (Paso 2a, tras pulsar el buscador: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ importe: Boolean(document.querySelector('#pago-importe')),"
+                        " foco: (document.activeElement || {}).id || '' }))()"
+                    )
+                )
+                + ")"
+            )
+            nav.escribir("cosechadora")
+            time.sleep(1.5)
+            # **Y se envía la búsqueda** (08/10/2026): el formulario sigue abierto con el foco en el buscador y no
+            # aparece ninguna acción de marcar, así que cabe que la búsqueda haya que **enviarla**. Se manda un
+            # **Enter de verdad** -tecla, no texto- y se vuelca lo que salga, sin suponer cómo se engancha.
+            nav.orden(
+                "Input.dispatchKeyEvent",
+                {"type": "keyDown", "key": "Enter", "code": "Enter",
+                 "windowsVirtualKeyCode": 13, "nativeVirtualKeyCode": 13},
+            )
+            nav.orden(
+                "Input.dispatchKeyEvent",
+                {"type": "keyUp", "key": "Enter", "code": "Enter",
+                 "windowsVirtualKeyCode": 13, "nativeVirtualKeyCode": 13},
+            )
+            time.sleep(1.8)
+            print(
+                "  (el único `gasto-elegir` que hay en el pago, con sus datos: "
+                + str(
+                    nav.evaluar(
+                        "(() => [...document.querySelectorAll('#pantalla [data-accion=\"gasto-elegir\"]')]"
+                        ".slice(0, 3).map((u) => [JSON.stringify(u.dataset),"
+                        " String(u.textContent || '').trim().slice(0, 28),"
+                        " ((u.closest('tr, li, div') || u).textContent || '')"
+                        ".replace(/\\s+/g, ' ').trim().slice(0, 60)]))()"
+                    )
+                )
+                + ")"
+            )
+            print(
+                "  (Paso 2b, tras escribir en el buscador: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ importe: Boolean(document.querySelector('#pago-importe')),"
+                        " texto: ((document.querySelector('#pantalla') || {}).innerText || '')"
+                        ".replace(/\\s+/g, ' ').slice(0, 130) }))()"
+                    )
+                )
+                + ")"
+            )
+            print(
+                "  (buscando mi gasto dentro del pago, aparece: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                        ".map((u) => u.dataset.accion).filter((n, i, t) => t.indexOf(n) === i).slice(0, 18),"
+                        " texto: ((document.querySelector('#pantalla') || {}).innerText || '')"
+                        ".replace(/\\s+/g, ' ').slice(0, 160) }))()"
+                    )
+                )
+                + ")"
+            )
+            return el_por_pagar()
+            # (lo de abajo queda sin usar: el camino del reparto era otra cosa)  # noqa: ERA001
+            pulsar("gastos-ver")
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"gasto-abrir\"]'))", segundos=20
+            )
+            time.sleep(0.8)
+            abierto = str(
+                nav.evaluar(
+                    "(() => { const abre = [...document.querySelectorAll('#pantalla [data-accion=\"gasto-abrir\"]')];"
+                    " const mio = abre.find((b) => ((b.closest('tr, li, div') || b).textContent || '')"
+                    f".includes({json.dumps(EL_CONCEPTO)}));"
+                    " if (!mio) return 'no encuentro mi gasto';"
+                    " mio.click(); return 'abierto'; })()"
+                )
+            )
+            if abierto != "abierto":
+                print(f"  (no he podido abrir mi gasto: {abierto})")
+                return None
+            time.sleep(1.2)
+            if pulsar("gasto-repartir") != "pulsado":
+                print("  (no encuentro la acción de repartir en la ficha)")
+                return None
+            time.sleep(1.2)
+            # **El destino del reparto, que era el paso que faltaba** (08/10/2026). El borrador guarda «las cosas»
+            # del destino bajo `tierras` y **las rellena al elegirlo** -`lasCosasParaUnReparto(valor)`, medido en
+            # `app.js:20275`-, así que sin destino: marcar no marca nada, el guardado no encuentra pesos y el
+            # reparto va vacío. «El destino manda», dice la casa; aquí se elige.
+            print(
+                "  (a qué se puede repartir: "
+                + str(
+                    nav.evaluar(
+                        "(() => [...document.querySelectorAll('#pantalla [data-campo=\"destino_tipo\"]')]"
+                        ".map((u) => String(u.dataset.valor) + '=' + (u.textContent || '').trim().slice(0, 16)))()"
+                    )
+                )
+                + ")"
+            )
+            elegido = str(
+                nav.evaluar(
+                    "(() => { const unos = [...document.querySelectorAll('#pantalla [data-campo=\"destino_tipo\"]')];"
+                    " const suyo = unos.find((u) => /gasto/i.test(String(u.dataset.valor))) || unos[0];"
+                    " if (!suyo) return 'no hay destino';"
+                    " suyo.click(); return 'elegido ' + String(suyo.dataset.valor); })()"
+                )
+            )
+            print(f"  (destino elegido: {elegido})")
+            time.sleep(1.5)
+            if pulsar("gasto-marcar-todas") != "pulsado":
+                print("  (no encuentro la de marcar en el reparto)")
+                return None
+            time.sleep(1.2)
+            # **El peso, por el ID de mi gasto** (08/10/2026): el campo se llama `gasto-peso-<id>` -volcado-, así
+            # que no hay que buscar la fila por su texto -que no lleva el concepto, medido: «no encuentro mi peso
+            # entre 128»-. El id lo tiene el recorrido de cuando leyó el gasto del servidor.
+            mi_id = los_mios[0]["id"] if los_mios else None
+            puesto = str(
+                nav.evaluar(
+                    "(() => { const campos = [...document.querySelectorAll('#pantalla input[id^=\"gasto-peso-\"]')];"
+                    f" const mio = document.querySelector('#gasto-peso-' + String({json.dumps(mi_id)}))"
+                    " || campos.find((c) => ((c.closest('tr, li, div') || c).textContent || '')"
+                    f".includes({json.dumps(EL_CONCEPTO)}));"
+                    " if (!mio) return 'no encuentro mi peso entre ' + campos.length;"
+                    " mio.focus(); return 'enfocado'; })()"
+                )
+            )
+            if puesto != "enfocado":
+                print(f"  (no he podido enfocar mi peso: {puesto})")
+                return None
+            nav.escribir(cuanto)
+            # **¿Llegó el peso al campo?** (08/10/2026). `insertText` escribe en lo que tenga el foco, así que se
+            # lee **el valor del campo enfocado** justo después: si no llegó, el reparto se guarda con pesos
+            # vacíos y `repartos` queda `[]` -medido en la ronda anterior-.
+            print(
+                "  (el peso que ha quedado en el campo: "
+                + str(
+                    nav.evaluar(
+                        "(() => { const a = document.activeElement;"
+                        " return a ? (a.id || a.tagName) + '=' + String(a.value) : 'sin foco'; })()"
+                    )
+                )
+                + ")"
+            )
+            if pulsar("gasto-guardar") != "pulsado":
+                return None
+            time.sleep(1.5)
+            print(
+                "  (y el aviso de la pantalla al guardar el reparto: "
+                + str(nav.evaluar("((document.querySelector('#pantalla') || {}).innerText || '').slice(0, 160)"))
+                + ")"
+            )
+            # **Qué ha pasado con el reparto** (08/10/2026): el pendiente no se movía, así que hay que **ver** lo
+            # que dice la pantalla y lo que dice el servidor de **ese** gasto -sus pagos, su estado-, en vez de
+            # suponer que el peso era el importe. Mismo instrumento que ha resuelto todo este tramo.
+            print(
+                "  (después de guardar el reparto, la pantalla dice: "
+                + str(nav.evaluar("((document.querySelector('#pantalla') || {}).innerText || '').slice(0, 200)"))
+                + ")"
+            )
+            try:
+                peticion = urllib.request.Request(
+                    f"{DIRECCION}/api/gastos",
+                    headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                )
+                with urllib.request.urlopen(peticion, timeout=30) as respuesta:
+                    suyas = json.loads(respuesta.read().decode("utf-8"))
+                el_mio = [
+                    uno
+                    for uno in (suyas or {}).get("gastos", [])
+                    if EL_CONCEPTO in str(uno.get("concepto", ""))
+                ]
+                # **Sólo las claves del dinero** (08/10/2026): la vez anterior volqué el gasto entero y el recorte
+                # se comió justo lo que importaba -los pagos-. Aquí se piden por su nombre.
+                print(
+                    "  (las claves del dinero de mi gasto: "
+                    + str(
+                        {
+                            clave: el_mio[0].get(clave)
+                            for clave in (
+                                "importe",
+                                "pagado",
+                                "pendiente",
+                                "pagos",
+                                "estado",
+                                "repartos",
+                                "asignado",
+                                "sin_asignar",
+                                "por_pagar",
+                            )
+                        }
+                    )[:420]
+                    if el_mio
+                    else "  (el servidor no devuelve mi gasto)"
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"  (no he podido leer mi gasto: {exc})")
+            return el_por_pagar()
+
+        # **Se abre MI gasto y el pago se pide DESDE ÉL** (08/10/2026). El formulario del pago no elige los
+        # gastos: los **hereda de donde se abre**. Está medido en su volcado completo: no hay **ninguna** acción
+        # de marcar, lo que hay es `gasto-abrir` una por gasto, y los `gasto-elegir` son los **botones de la forma
+        # de pago** (`campo: "forma"`). Abierto desde la lista de cuentas, el pago se aplica a **ninguno** y el
+        # pendiente no se mueve -medido: 3531,2 → 3531,2-, que es coherente, no un fallo.
+        print(
+            "  (las fichas de gasto que ofrece la lista: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion=\"gasto-abrir\"]')]"
+                    ".slice(0, 3).map((b) => ((b.closest('tr, li, div') || b).textContent || '')"
+                    ".replace(/\\s+/g, ' ').trim().slice(0, 70)))()"
+                )
+            )
+            + ")"
+        )
+        comprobar(
+            nav.evaluar(
+                "(() => { const abre = [...document.querySelectorAll('#pantalla [data-accion=\"gasto-abrir\"]')];"
+                " const mio = abre.find((b) => ((b.closest('tr, li, div') || b).textContent || '')"
+                f".includes({json.dumps(EL_CONCEPTO)}));"
+                " if (!mio) return 'no encuentro mi gasto entre ' + abre.length;"
+                " mio.click(); return 'abierto'; })()"
+            )
+            == "abierto",
+            "y **se abre mi gasto**, que es de donde se pide el pago",
+        )
+        time.sleep(1.2)
+        # **En la ficha de un gasto, el pago se llama `gasto-repartir`** (08/10/2026). Volcado de sus acciones:
+        # `['gasto-repartir', 'gasto-sin-asignar', 'gasto-nuevo', 'gasto-anular', 'gastos-ver']` -y el aviso es
+        # **mi** gasto, con su concepto y su proveedor-. `gasto-pago-nuevo` es el de la **lista de cuentas**, y por
+        # eso desde la ficha no existía: seis rondas llamando a la puerta de al lado.
+        comprobar(
+            nav.evaluar(
+                "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-repartir\"]');"
+                " if (b) { b.click(); return 'pulsado'; }"
+                " return 'no está; hay ' + [...document.querySelectorAll('#pantalla [data-accion]')]"
+                ".map((u) => u.dataset.accion).join(','); })()"
+            )
+            == "pulsado",
+            "y en su ficha se pide el pago con **`gasto-repartir`**, que es como se llama ahí",
+        )
+        time.sleep(1.5)
+        # **Se marca y se vuelca lo que aparece** (08/10/2026). El reparto no trae campos hasta que se marca
+        # -`campos: []`-, y sus acciones son las que el revisor citó: `gasto-marcar` y `gasto-marcar-todas`. Se
+        # marca **todo lo pendiente** -que es una forma legítima de repartir 200-, y se vuelca lo que sale: los
+        # importes aparecen después de marcar, así que su nombre hay que **verlo**, no suponerlo.
+        comprobar(
+            nav.evaluar(
+                "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-marcar-todas\"]');"
+                " if (b) { b.click(); return 'marcadas todas'; }"
+                " return 'no está; hay ' + [...document.querySelectorAll('#pantalla [data-accion]')]"
+                ".map((u) => u.dataset.accion).join(','); })()"
+            )
+            == "marcadas todas",
+            "y en el reparto se pueden **marcar** los gastos (`gasto-marcar-todas`)",
+        )
+        time.sleep(1.5)
+        print(
+            "  (y con los gastos marcados, el reparto ofrece: "
+            + str(
+                nav.evaluar(
+                    "(() => ({ campos: [...document.querySelectorAll('#pantalla input, #pantalla select')]"
+                    ".map((u) => u.id || u.name || u.type).slice(0, 16),"
+                    " acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((u) => u.dataset.accion).filter((n, i, t) => t.indexOf(n) === i).slice(0, 18),"
+                    " texto: ((document.querySelector('#pantalla') || {}).innerText || '').slice(0, 160) }))()"
+                )
+            )
+            + ")"
+        )
+        time.sleep(0.8)
+
+        pendiente_antes = el_por_pagar()
+        print(f"  (por pagar antes de pagar nada: {pendiente_antes!r})")
+        comprobar(
+            pendiente_antes is not None and pendiente_antes >= 663.0,
+            f"antes de pagar, el servidor dice lo que hay por pagar, y cabe mi gasto ({pendiente_antes!r})",
+        )
+
+        parcial = pagar("200")
+        print(f"  (después del pago parcial de 200: por pagar {parcial!r})")
+        comprobar(
+            pendiente_antes is not None and parcial is not None
+            and abs((pendiente_antes - parcial) - 200.0) < 0.01,
+            f"y el pago parcial **baja el pendiente en 200** ({pendiente_antes!r} → {parcial!r})",
+        )
+        captura(nav, "economico-17-pago-parcial")
+
+        final = pagar("463")
+        print(f"  (después del resto, 463: por pagar {final!r})")
+        comprobar(
+            pendiente_antes is not None and final is not None
+            and abs((pendiente_antes - final) - 663.0) < 0.01,
+            f"y con el resto el gasto queda **pagado entero**: los 663 ({pendiente_antes!r} → {final!r})",
+        )
+        captura(nav, "economico-18-pago-final")
+
         # ── Que lo apuntado siga ahí después de recargar (08/10/2026) ────────────────────────────────
         # El encargo lo pide expresamente. Se recarga **de verdad** (`location.reload()`), se espera a que la
         # pantalla vuelva, y se pregunta **al servidor** por lo guardado: la factura, el albarán y el gasto.
