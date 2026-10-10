@@ -1092,7 +1092,32 @@ def main() -> int:
                 )
                 + ")"
             )
-            if pulsar("gasto-pago-conciliar") == "pulsado":
+            # **Y si el clic por coordenadas no basta, se pulsa el elemento** (08/10/2026). Con `pulsar` -un clic
+            # de verdad, por coordenadas- el manejador **no se ejecutaba** -sus `console.error` no salían-, y el
+            # botón de este bloque queda **debajo de la tabla**, fuera de la vista. Si con `.click()` directo sí
+            # se ejecuta, entonces lo que fallaba era **mi clic**, no la aplicación.
+            ya_pulsado = pulsar("gasto-pago-conciliar")
+            # **Y siempre, además, el clic directo al elemento**: así se sabe si el fallo es del clic por
+            # coordenadas -que dice «pulsado» sin que el manejador llegue a correr- o de la aplicación.
+            con_el_elemento = str(
+                nav.evaluar(
+                    "(() => { const b = document.querySelector("
+                    "'#pantalla [data-accion=\"gasto-pago-conciliar\"]');"
+                    " if (!b) return 'no está'; b.click(); return 'pulsado al elemento'; })()"
+                )
+            )
+            print(f"  (el botón de conciliar: por coordenadas {ya_pulsado} · al elemento {con_el_elemento})")
+            # **Y se lee la consola DESPUÉS del clic** (08/10/2026). El vigilante de `console.error` escribe en
+            # `__elErrorDeLaPantalla`, y yo lo imprimía **al abrir el formulario**, antes de pulsar: si el
+            # manejador habla al conciliar, su mensaje caía en la variable y **no lo leía nadie**. Eso es un
+            # error mío de instrumento, no una prueba de que el manejador no corra.
+            time.sleep(1.0)
+            print(
+                "  (lo que dijo la consola al conciliar: "
+                + str(nav.evaluar("window.__elErrorDeLaPantalla"))[:320]
+                + ")"
+            )
+            if ya_pulsado.startswith("pulsado"):
                 time.sleep(2.2)
                 print(f"  (conciliado desde la pantalla: por pagar {el_por_pagar()!r})")
                 # **Y se llama a la puerta a mano, igual que el cliente** (08/10/2026). Así se separa lo que el

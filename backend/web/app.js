@@ -20365,8 +20365,13 @@ async function atenderLasCuentas(nombre, elemento) {
     console.error("conciliando el pago", id, "contra", deudos.length, "gastos pendientes");
     try {
       const respuesta = await api(`/api/gastos/pagos/${id}/conciliar`, {
-        metodo: "POST",
-        cuerpo: { automatico: true, gastos: deudos, aplicaciones: [] },
+        // **`fetch` no entiende `metodo` ni `cuerpo`** (08/10/2026). Aquí se mandaba `{metodo: "POST", cuerpo:
+        // …}`, que `api()` pasa tal cual a `fetch`, así que la petición salía como **GET sin cuerpo** y el
+        // servidor contestaba `{"detail":"Not Found"}` -404- **en silencio**: el botón no existía, este camino
+        // **nunca se había ejecutado** y nadie lo había visto. Lo encontró el recorrido económico poniendo al
+        // manejador a hablar por consola. Se escribe como lo entiende `fetch`.
+        method: "POST",
+        body: JSON.stringify({ automatico: true, gastos: deudos, aplicaciones: [] }),
       });
       const contestado = await respuesta.json();
       // Y lo que contesta, dicho: si el servidor no aplica nada, aquí se ve.
