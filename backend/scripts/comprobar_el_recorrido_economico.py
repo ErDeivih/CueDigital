@@ -366,16 +366,178 @@ def main() -> int:
                 + str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText || ''"))[:400]
                 + ")"
             )
+
+        # ── Y el **albarán**, que es lo único que mete existencias (08/10/2026) ───────────────────────
+        # El encargo lo pone en el centro: que las existencias suban **por la recepción** y no por registrar la
+        # factura. Aquí no se supone nada: se abre su puerta y se vuelca **lo que pide de verdad**.
+        paso(nav, 2, "El albarán: lo que llega de verdad")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#menu-almacen');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        comprobar(
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"libro-ver\"]'))", segundos=20
+            ),
+            "el almacén se abre desde su renglón del menú",
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"libro-ver\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        comprobar(
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"albaran-nuevo\"]'))", segundos=20
+            ),
+            "el libro del almacén trae la puerta de **apuntar un albarán**",
+        )
+        # **Se espera al campo del formulario, no a «que haya campos»** (08/10/2026): la espera genérica la
+        # cumplía la propia pantalla del libro, así que se seguía **antes** de que el albarán estuviera abierto y
+        # las escrituras no encontraban sus campos -medido: los cuatro sin escribir-. Y se dice si el botón
+        # estaba, que es lo que me faltó las tres veces anteriores.
+        # **¿Existe el campo ANTES de pulsar?** (08/10/2026): si ese id ya está en la pantalla del libro -un
+        # molde oculto que se rellena al abrir-, mi espera lo encuentra y **no prueba** que el formulario se haya
+        # abierto. Es la medición que distingue las dos explicaciones posibles, y va antes de pulsar nada.
+        print(
+            "  (el `#albaran-fecha` ANTES de pulsar, en la lista: "
+            + str(
+                nav.evaluar(
+                    "(() => { const todos = document.querySelectorAll('#albaran-fecha');"
+                    " const uno = todos[0] || null;"
+                    " return { cuantos: todos.length,"
+                    "  visible: uno ? Boolean(uno.offsetParent) : null,"
+                    "  alto: uno ? Math.round(uno.getBoundingClientRect().height) : null }; })()"
+                )
+            )
+            + ")"
+        )
+        pulsado = nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"albaran-nuevo\"]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        print(f"  (¿estaba la puerta del albarán?: {pulsado})")
+        comprobar(
+            bool(pulsado)
+            and nav.esperar("Boolean(document.querySelector('#albaran-fecha'))", segundos=25),
+            "al pulsar `albaran-nuevo` se abre **el formulario del albarán**",
+        )
+        print(f"  (el albarán nuevo: {nav.evaluar('location.hash')})")
+        print(
+            "  (lo que se puede pulsar: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 20))()"
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (sus campos: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input, #pantalla select,"
+                    " #pantalla textarea')]"
+                    ".map((uno) => ({ id: uno.id || null, tipo: uno.type })).slice(0, 40))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-7-albaran-nuevo")
+
+        # **Se rellena y se guarda el albarán** (08/10/2026): el mismo artículo que la factura y una cantidad. El
+        # albarán es **lo único que mete existencias**, así que aquí se mide: antes y después, preguntando al
+        # servidor. Y **se imprime la forma de su respuesta** antes de afirmar nada -la lección de la sesión-.
+        def escribir_campo(selector: str, valor: str) -> bool:
+            return bool(
+                nav.evaluar(
+                    "(() => { const c = document.querySelector(" + json.dumps(selector) + ");"
+                    " if (!c) return false;"
+                    " c.value = " + json.dumps(valor) + ";"
+                    " c.dispatchEvent(new Event('input', { bubbles: true }));"
+                    " c.dispatchEvent(new Event('change', { bubbles: true })); return true; })()"
+                )
+            )
+
+        def las_existencias():
+            """Lo que el servidor dice que hay. Se imprime su forma, no se supone."""
+            try:
+                with urllib.request.urlopen(
+                    urllib.request.Request(
+                        f"{DIRECCION}/api/almacen/existencias",
+                        headers={"Authorization": f"Bearer {volumen.token}"},
+                    ),
+                    timeout=30,
+                ) as respuesta:
+                    return json.loads(respuesta.read().decode("utf-8"))
+            except Exception as exc:  # noqa: BLE001
+                return {"error": str(exc)[:80]}
+
+        # **La traza del formulario** (08/10/2026): la espera dice que `#albaran-fecha` está y, milisegundos
+        # después, **no hay ninguno** -medido: `cuantos: 0`-. Las dos cosas no pueden ser verdad, así que se
+        # **sondea** cada 100 ms y se apunta el estado: si el formulario sigue, o si la pantalla se ha caído a
+        # otra cosa, y con qué acciones. Sin deducir: mirando.
+        vistos: list = []
+        for _ in range(50):  # cinco segundos
+            estado = nav.evaluar(
+                "(() => ({ campo: Boolean(document.querySelector('#albaran-fecha')),"
+                " acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                "  .map((uno) => uno.dataset.accion).slice(0, 6),"
+                " direccion: String(location.hash).slice(0, 46) }))()"
+            )
+            if not vistos or vistos[-1] != estado:
+                vistos.append(estado)
+                print(f"    estado {len(vistos)}: {estado}")
+            time.sleep(0.1)
+        print(f"  (estados distintos del formulario en 5 s: {len(vistos)})")
+
+        EL_ALBARAN = "ALB-2026-0001"
+        escribio = {
+            "#albaran-fecha": escribir_campo("#albaran-fecha", "2026-10-06"),
+            "#albaran-proveedor": escribir_campo("#albaran-proveedor", "Suministros del Páramo, S.L."),
+            "#albaran-numero": escribir_campo("#albaran-numero", EL_ALBARAN),
+            "#albaran-0-cantidad": escribir_campo("#albaran-0-cantidad", "500"),
+        }
+        comprobar(
+            all(escribio.values()),
+            "el albarán acepta fecha, proveedor, número y la cantidad de su línea "
+            f"(sin escribir: {[clave for clave, bien in escribio.items() if not bien] or 'ninguno'})",
+        )
+        el_articulo = nav.evaluar(
+            "(() => { const s = document.querySelector('#albaran-0-articulo');"
+            " if (!s || !s.options) return null; const buena = [...s.options].findIndex("
+            "   (o) => o.value && !/no lo tengo/i.test(o.textContent));"
+            " if (buena < 0) return null; s.selectedIndex = buena;"
+            " s.dispatchEvent(new Event('change', { bubbles: true }));"
+            " return s.options[buena].textContent; })()"
+        )
+        comprobar(bool(el_articulo), f"y su línea se ata a un **artículo** ({el_articulo!r})")
+        antes_de_recibir = las_existencias()
+        print(f"  (las existencias ANTES de recibir, tal como las da el servidor: {str(antes_de_recibir)[:300]})")
+        captura(nav, "economico-8-albaran-relleno")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"albaran-guardar\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=20)
+        time.sleep(1.0)
+        despues_de_recibir = las_existencias()
+        print(
+            "  (las existencias DESPUÉS de recibir, tal como las da el servidor: "
+            f"{str(despues_de_recibir)[:300]})"
+        )
+        captura(nav, "economico-9-albaran-guardado")
         captura(nav, "economico-6-factura-guardada")
 
         # **Y guardar dos veces no puede duplicarla**: es el punto 3 de la lista. Aún sin saber si el formulario
         # sigue abierto, se comprueba **cuántas veces** sale su número en la lista.
-        cuantas_veces = nav.evaluar(
-            "(() => (document.body.innerText.match(new RegExp(" + json.dumps(EL_NUMERO) + ", 'g')) || []).length)()"
-        )
+        # **El recuento de duplicados, contra el servidor** (08/10/2026): contarlo en la pantalla dependía de en
+        # qué pantalla estuviera -y **me falló por eso**-, así que se cuenta donde de verdad manda: **cuántas
+        # facturas tienen ese número**. Es la prueba de duplicado de verdad, y no depende de dónde esté mirando.
+        con_ese_numero = [una for una in guardadas if EL_NUMERO in str(una)]
         comprobar(
-            int(cuantas_veces or 0) >= 1,
-            f"y su número aparece en pantalla {cuantas_veces} vez/veces, para poder contar duplicados",
+            len(con_ese_numero) == 1,
+            f"y hay **una sola** factura con el número {EL_NUMERO} (el servidor cuenta {len(con_ese_numero)})",
         )
 
         # **Y la lectura del documento** (08/10/2026): qué pide y si deja **corregir antes de confirmar**. Se

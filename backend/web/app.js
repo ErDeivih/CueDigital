@@ -9918,6 +9918,14 @@ async function abrirElLibroDelAlmacen() {
   pantallaLibroDelAlmacen();
   await recargarElLibro();
   suyo.cargando = false;
+  // **No se pinta la lista si hay un formulario abierto** (08/10/2026). Medido en un navegador de verdad:
+  // pulsar `albaran-nuevo` **abre** el formulario y, milisegundos después, **ya no está** -la traza de
+  // `scripts/comprobar_el_recorrido_economico.py` lo deja escrito: un solo estado en cinco segundos, y es la
+  // lista-. La causa es esta línea: al terminar la carga repintaba la lista y **descartaba** el formulario que
+  // el agricultor acababa de abrir. Es la misma trampa que este fichero ya documenta para `albaran-linea-mas`
+  // -«pintar sobre un formulario sin leerlo»-: aquí el repintado tiene que **respetar** lo que esté abierto. Con
+  // la cobertura mala del campo la carga tarda, así que esto pasaba **siempre**.
+  if (suyo.albaran) return pantallaNuevoAlbaran();
   pantallaLibroDelAlmacen();
 }
 
