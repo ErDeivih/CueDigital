@@ -329,6 +329,10 @@ def main() -> int:
             "total": 1210,
         }
         try:
+            # **Marca del camino** (08/10/2026): el bloque no producía ninguna línea y no cuadraba con nada de lo
+            # leído -está completo, es único y la zona se alcanza-. Así que se marca: una antes del POST y otra
+            # cuando vuelve. Eso distingue si no se ejecuta, si lanza, o si se ejecuta y no imprime.
+            print("  (marca: voy a preguntar al servidor si acepta la misma factura otra vez)")
             la_repeticion = urllib.request.Request(
                 f"{DIRECCION}/api/facturas",
                 data=json.dumps(el_cuerpo).encode("utf-8"),
@@ -339,6 +343,7 @@ def main() -> int:
                 method="POST",
             )
             with urllib.request.urlopen(la_repeticion, timeout=30) as respuesta:
+                print(f"  (marca: el POST ha vuelto, status {respuesta.status})")
                 print(f"  (el servidor **ACEPTA** la misma factura otra vez: {respuesta.status})")
             hallazgo(
                 "**confirmar dos veces no está protegido en el servidor**: la factura de compra **no tiene clave "
@@ -348,6 +353,10 @@ def main() -> int:
             )
         except urllib.error.HTTPError as exc:
             print(f"  (el servidor **RECHAZA** la repetición: HTTP {exc.code})")
+        except Exception as exc:  # noqa: BLE001
+            # **Que lo diga, sea lo que sea** (08/10/2026): el bloque entraba, imprimía su marca y **salía sin
+            # nada** -ni ACEPTA, ni RECHAZA, ni traza-. Con esto se sabe **qué** excepción es, en vez de suponer.
+            print(f"  (marca: el bloque ha salido por una excepción NO esperada: {type(exc).__name__}: {exc}")
         nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
         time.sleep(1.0)
 
