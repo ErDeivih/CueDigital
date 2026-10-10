@@ -90,6 +90,25 @@ def main() -> int:
     print(f"  => el gasto de la finca propia {'SÍ' if alli else 'NO'} se ve desde la ajena")
     print(f"  => aislamiento {'ROTO' if alli else 'correcto'}")
 
+    # **La puerta del pago** (08/10/2026). La rama del pago de la pantalla -leida en `web/app.js`- construye un
+    # cuerpo **sin `concepto`** (importe, fecha, proveedor, forma, clave de reenvio y aplicaciones) y **no toca la
+    # ruta**, que viene fijada en `/api/gastos`; pero la puerta del pago es `/api/gastos/pagos`. Aqui se comprueba
+    # **contra el servidor**, que es como se comprueba todo en este encargo.
+    el_cuerpo_del_pago = {
+        "importe": "200",
+        "fecha": "2026-10-08",
+        "proveedor": "Suministros del Paramo, S.L.",
+        "forma": "transferencia",
+        "clave_de_reenvio": f"prueba-pago-{int(time.time())}",
+        "aplicaciones": [],
+    }
+    for camino in ("/api/gastos", "/api/gastos/pagos"):
+        try:
+            la_puerta(camino, volumen.token, el_cuerpo_del_pago)
+            print(f"  {camino}: **ACEPTA** el cuerpo del pago")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  {camino}: **RECHAZA** el cuerpo del pago ({str(exc)[:70]})")
+
     # **Y la auditoría, leída de la base** —en sólo lectura—, buscando la fila de **este** gasto.
     conexion = sqlite3.connect(f"file:{LA_BASE}?mode=ro", uri=True)
     try:
