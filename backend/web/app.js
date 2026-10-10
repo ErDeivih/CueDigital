@@ -20358,12 +20358,19 @@ async function atenderLasCuentas(nombre, elemento) {
     const deudos = (suyo.datos.gastos || [])
       .filter((gasto) => gasto.pendiente && Number(gasto.pendiente) > 0)
       .map((gasto) => gasto.id);
+    // **Y se dice lo que va a pasar** (08/10/2026). Este manejador **nunca se había podido pulsar** -no existía
+    // el botón- y al conectarlo resultó que la petición **no aplica nada y no avisa**: sin error visible y sin
+    // cambio en las cuentas. Un `console.error` deja rastro de con qué se llama, que es lo que faltaba para
+    // poder mirarlo. Es la misma lección que `montar`: un camino que se traga sus fallos no se puede depurar.
+    console.error("conciliando el pago", id, "contra", deudos.length, "gastos pendientes");
     try {
       const respuesta = await api(`/api/gastos/pagos/${id}/conciliar`, {
         metodo: "POST",
         cuerpo: { automatico: true, gastos: deudos, aplicaciones: [] },
       });
       const contestado = await respuesta.json();
+      // Y lo que contesta, dicho: si el servidor no aplica nada, aquí se ve.
+      console.error("la conciliación contestó:", JSON.stringify(contestado).slice(0, 300));
       suyo.aviso = (contestado.avisos || []).join(" ");
       await recargarLasCuentas();
     } catch (fallo) {
