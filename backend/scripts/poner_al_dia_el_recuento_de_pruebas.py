@@ -61,9 +61,13 @@ def poner_el_recuento(real: str) -> list[str]:
     """
     los_viejos = set(LOS_VIEJOS)
     try:
-        los_viejos.update(
-            re.findall(r"(\d{4})\s+tests", (REPO / "README.md").read_text(encoding="utf-8"))
-        )
+        # **Sólo la línea de Python** (08/10/2026). Mirando cualquier «NNNN tests» del README, este guion
+        # sustituyó también el recuento de **JavaScript** -1077- por el de Python, y el guardián de los números
+        # de la documentación **lo cazó**. Aquí se lee **sólo la línea del pytest**, que es la que lleva el
+        # recuento de Python; el de JavaScript tiene su propia línea y no se toca.
+        las_del_readme = (REPO / "README.md").read_text(encoding="utf-8").splitlines()
+        las_del_pytest = " ".join(uno for uno in las_del_readme if "pytest" in uno)
+        los_viejos.update(re.findall(r"(\d{4})\s+tests", las_del_pytest))
     except OSError:
         print("   (no he podido leer el README para descubrir el número viejo)")
     tocados = []
