@@ -1075,6 +1075,61 @@ def main() -> int:
             # **Y se va al banco, que es donde se concilia** (08/10/2026): «conciliar» es el verbo del extracto, y
             # el servidor tiene `POST /gastos/pagos/{id}/conciliar`. En la lista de cuentas **no** está esa acción
             # -medido-, así que se vuelca lo que ofrece el banco para encontrar mi pago de 200 y su conciliación.
+            # **Y se concilia desde la pantalla** (08/10/2026), que era lo que faltaba **en el producto**. La
+            # pantalla ya sabía pintarlo -`LosPagos` lee `cuentas.sin_conciliar`- y **nunca recibía el dato**,
+            # porque `cuentas` venía sólo de `GET /api/gastos`. Con el cable puesto -pedir `/api/gastos/pagos` y
+            # meterlo en `cuentas`-, se pulsa su botón aquí, **en cuentas**, y el pendiente tiene que bajar.
+            # (Se hace **antes** de irse al banco: desde el banco `gastos-ver` no existe, medido.)
+            print(
+                "  (el dinero sin conciliar, ya en cuentas: "
+                + str(
+                    nav.evaluar(
+                        "(() => ({ botones: [...document.querySelectorAll("
+                        "'#pantalla [data-accion=\"gasto-pago-conciliar\"]')].map((u) => JSON.stringify(u.dataset)),"
+                        " texto: ((document.querySelector('#pantalla') || {}).innerText || '')"
+                        ".replace(/\\s+/g, ' ').slice(0, 150) }))()"
+                    )
+                )
+                + ")"
+            )
+            if pulsar("gasto-pago-conciliar") == "pulsado":
+                time.sleep(2.2)
+                print(f"  (conciliado desde la pantalla: por pagar {el_por_pagar()!r})")
+                print(
+                    "  (y la pantalla, después de conciliar: "
+                    + str(
+                        nav.evaluar(
+                            "((document.querySelector('#pantalla') || {}).innerText || '')"
+                            ".replace(/\\s+/g, ' ').slice(0, 170)"
+                        )
+                    )
+                    + ")"
+                )
+                try:
+                    peticion_pagos = urllib.request.Request(
+                        f"{DIRECCION}/api/gastos/pagos",
+                        headers={"Authorization": f"Bearer {escenario.volumen.token}"},
+                    )
+                    with urllib.request.urlopen(peticion_pagos, timeout=30) as respuesta_pagos:
+                        los_pagos = json.loads(respuesta_pagos.read().decode("utf-8"))
+                    print(
+                        "  (los pagos según el servidor: "
+                        + str(
+                            {
+                                "cuantos": len((los_pagos or {}).get("pagos") or []),
+                                "sin_conciliar": [
+                                    (uno.get("id"), uno.get("importe"))
+                                    for uno in ((los_pagos or {}).get("sin_conciliar") or [])
+                                ],
+                            }
+                        )[:260]
+                        + ")"
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    print(f"  (no he podido leer los pagos: {exc})")
+            else:
+                print("  (no hay ningún botón de conciliar en cuentas)")
+            # Y solo después se va al banco, que es **otra** cosa -los movimientos del extracto-.
             pulsar("bancos-ver")
             time.sleep(1.8)
             # **Qué movimientos hay, y se abre el de 200** (08/10/2026): la conciliación estará en la **ficha del

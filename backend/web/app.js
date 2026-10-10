@@ -19519,6 +19519,10 @@ function estadoDeLasCuentas() {
       // Lo que devolvió `GET /api/gastos`: las cinco listas, las tres columnas del coste, la caja,
       // los márgenes y lo que falta.
       datos: null,
+      // **El dinero que está esperando** (`GET /api/gastos/pagos`): los pagos apuntados que todavía **no se sabe
+      // a qué gasto van** (`sin_conciliar`). Sin esto, el `pendiente` de un gasto **no se podía bajar desde
+      // ninguna pantalla**: el recorrido económico demostró que el cliente **no leía nunca** esa puerta.
+      pagos: null,
       // La ficha de un gasto abierta (`GET /api/gastos/<id>`), o nada.
       gasto: null,
       // El formulario que está abierto: apuntar un gasto, repartirlo, apuntar un pago, una inversión
@@ -19571,6 +19575,15 @@ async function recargarLasCuentas() {
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
   }
+  // **Y los pagos sin conciliar** (08/10/2026): la lista del dinero que salió y todavía no se sabe a qué va.
+  // El cliente **no la pedía nunca**, así que los tres manejadores de un pago -conciliar, anular y quitar
+  // aplicaciones- estaban **sin botón** y el saldo pendiente no bajaba. Lo demostró el recorrido económico por
+  // dos caminos: `sin_conciliar` aparecía **0 veces** en este fichero y no había ningún `GET` a esa puerta.
+  try {
+    suyo.pagos = await apiJson("/api/gastos/pagos");
+  } catch (fallo) {
+    suyo.pagos = null;
+  }
   return suyo;
 }
 
@@ -19592,7 +19605,13 @@ function pantallaLasCuentas() {
       textos: textosDeLasCuentas(),
       // El singular y el plural con las dos formas del servidor: «Tienes 1 gastos» es lo primero que
       // hace desconfiar de un programa.
-      cuentas: { ...datos, gastos: casan },
+      // **Y el dinero que está esperando, dentro de `cuentas`** (08/10/2026). La pantalla **ya sabía pintarlo**:
+      // `LosPagos` lee `cuentas.sin_conciliar` y `cuentas.pagos`. Pero `cuentas` venía **sólo** de
+      // `GET /api/gastos`, que **no trae** esa lista -vive en `GET /api/gastos/pagos`-, así que la pantalla
+      // estaba escrita y **nunca recibió el dato**. Lo demostró el recorrido económico por dos caminos: el
+      // cliente no leía esa puerta y `sin_conciliar` aparecía **0 veces** en este fichero. Con esto, el
+      // agricultor ya puede **decir a qué gasto va** un pago, y el saldo pendiente puede bajar.
+      cuentas: { ...datos, gastos: casan, ...(suyo.pagos || {}) },
       resumen: cuantos ? conCuenta(g, "cuantas", cuantos) : "",
       filtro: suyo.filtro,
       tabla: tablaDeLasCuentas(casan),
