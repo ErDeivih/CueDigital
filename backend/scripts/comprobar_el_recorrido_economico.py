@@ -307,56 +307,12 @@ def main() -> int:
             " b.click(); return 'pulsado'; })()"
         )
         print(f"  (el segundo intento de guardar: {segunda_vez})")
-        # **Y el servidor, de verdad** (08/10/2026). La revisión independiente demostró que mi comprobación de
-        # duplicado era **vacua** -el botón se deshabilita al guardar, así que **no hubo segundo envío**, como
-        # acaba de verse- y que el servidor **no deduplica** (la factura de compra no tiene clave de reenvío).
-        # Aquí se comprueba **lo segundo**, que es lo que de verdad importa: la MISMA factura, otra vez, por la
-        # API. Si el servidor la acepta, es un **hallazgo** -y se declara-, no una comprobación que pasa sola.
-        #
-        # **Los dos `import`, aquí y antes de usarlos**: con `import urllib.request` sólo más abajo -dentro de la
-        # misma función-, `urllib` pasa a ser un nombre **local en toda la función** y esta línea revienta con
-        # `UnboundLocalError`. Medido dos veces en la traza, no supuesto.
-        import urllib.error
-        import urllib.request
-
-        el_cuerpo = {
-            "fecha": "2026-10-05",
-            "proveedor": "Suministros del Páramo, S.L.",
-            "proveedor_nif": "B12345678",
-            "numero_factura": EL_NUMERO,
-            "base_imponible": 1000,
-            "cuota_iva": 21,
-            "total": 1210,
-        }
-        try:
-            # **Marca del camino** (08/10/2026): el bloque no producía ninguna línea y no cuadraba con nada de lo
-            # leído -está completo, es único y la zona se alcanza-. Así que se marca: una antes del POST y otra
-            # cuando vuelve. Eso distingue si no se ejecuta, si lanza, o si se ejecuta y no imprime.
-            print("  (marca: voy a preguntar al servidor si acepta la misma factura otra vez)")
-            la_repeticion = urllib.request.Request(
-                f"{DIRECCION}/api/facturas",
-                data=json.dumps(el_cuerpo).encode("utf-8"),
-                headers={
-                    "Authorization": f"Bearer {escenario.volumen.token}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(la_repeticion, timeout=30) as respuesta:
-                print(f"  (marca: el POST ha vuelto, status {respuesta.status})")
-                print(f"  (el servidor **ACEPTA** la misma factura otra vez: {respuesta.status})")
-            hallazgo(
-                "**confirmar dos veces no está protegido en el servidor**: la factura de compra **no tiene clave "
-                "de reenvío** y `POST /api/facturas` **no deduplica**, así que dos envíos **crean dos facturas**. "
-                "En la pantalla no se ve porque el botón se deshabilita al guardar -que es lo que hacía **vacua** "
-                "mi comprobación anterior, y lo demostró el revisor-"
-            )
-        except urllib.error.HTTPError as exc:
-            print(f"  (el servidor **RECHAZA** la repetición: HTTP {exc.code})")
-        except Exception as exc:  # noqa: BLE001
-            # **Que lo diga, sea lo que sea** (08/10/2026): el bloque entraba, imprimía su marca y **salía sin
-            # nada** -ni ACEPTA, ni RECHAZA, ni traza-. Con esto se sabe **qué** excepción es, en vez de suponer.
-            print(f"  (marca: el bloque ha salido por una excepción NO esperada: {type(exc).__name__}: {exc}")
+        # **La comprobación del duplicado vive donde se puede hacer bien** (08/10/2026). Aquí dentro no se
+        # puede: el botón de guardar queda **deshabilitado** -medido arriba-, así que **no hay segundo envío**, y
+        # mandar el cuerpo a mano exige **multipart** con el campo `datos`, como lo manda la pantalla. Se comprueba
+        # en su propio guion, y **está demostrado**: dos envíos de la misma factura **crean dos facturas** -es un
+        # hallazgo, no una comprobación que pasa sola-.
+        #     `scripts/comprobar_si_una_factura_repetida_se_duplica.py`
         nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
         time.sleep(1.0)
 
