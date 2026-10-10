@@ -512,8 +512,39 @@ def main() -> int:
             " return s.options[buena].textContent; })()"
         )
         comprobar(bool(el_articulo), f"y su línea se ata a un **artículo** ({el_articulo!r})")
+        # **La unidad, la del artículo** (08/10/2026): este proyecto es estricto con las unidades -«litros y kilos
+        # no se suman»-, así que poner 500 kg en un artículo de litros **no demuestra** nada del almacén. Se
+        # elige la unidad de litros, que es la del artículo de la prueba, y se dice cuál.
+        la_unidad = nav.evaluar(
+            "(() => { const s = document.querySelector('#albaran-0-unidad');"
+            " if (!s || !s.options) return null;"
+            " const buena = [...s.options].findIndex((o) => /^l$|litro/i.test((o.textContent || '').trim()));"
+            " if (buena < 0) return null; s.selectedIndex = buena;"
+            " s.dispatchEvent(new Event('change', { bubbles: true }));"
+            " return s.options[buena].textContent; })()"
+        )
+        comprobar(bool(la_unidad), f"y la unidad de la línea, la del artículo ({la_unidad!r})")
         antes_de_recibir = las_existencias()
-        print(f"  (las existencias ANTES de recibir, tal como las da el servidor: {str(antes_de_recibir)[:300]})")
+        # **Cómo se llama el saldo** (08/10/2026): se piden las **claves** del artículo y las del lote, en vez de
+        # buscarlo a ojo en un volcado largo. Así la comprobación se escribe con el nombre de verdad.
+        if isinstance(antes_de_recibir, dict) and antes_de_recibir.get("articulos"):
+            el_articulo_cero = antes_de_recibir["articulos"][0]
+            print(f"  (las claves de un artículo: {sorted(el_articulo_cero.keys())})")
+            print(
+                "  (las claves de un lote: "
+                f"{sorted((el_articulo_cero.get('lotes') or [{}])[0].keys())})"
+            )
+        # **Sin los textos de la pantalla** (08/10/2026): la respuesta entera empieza por `textos` y con eso no se
+        # compara nada. Se pide **lo de los números**, que es lo que hay que ver subir.
+        print(
+            "  (las existencias ANTES de recibir, sin los textos: "
+            + str(
+                {clave: valor for clave, valor in antes_de_recibir.items() if clave != "textos"}
+                if isinstance(antes_de_recibir, dict)
+                else antes_de_recibir
+            )[:700]
+            + ")"
+        )
         captura(nav, "economico-8-albaran-relleno")
         nav.evaluar(
             "(() => { const b = document.querySelector('#pantalla [data-accion=\"albaran-guardar\"]');"
@@ -523,8 +554,58 @@ def main() -> int:
         time.sleep(1.0)
         despues_de_recibir = las_existencias()
         print(
-            "  (las existencias DESPUÉS de recibir, tal como las da el servidor: "
-            f"{str(despues_de_recibir)[:300]})"
+            "  (las existencias DESPUÉS de recibir, sin los textos: "
+            + str(
+                {clave: valor for clave, valor in despues_de_recibir.items() if clave != "textos"}
+                if isinstance(despues_de_recibir, dict)
+                else despues_de_recibir
+            )[:700]
+            + ")"
+        )
+        # **El saldo, antes y después, y de dónde viene lo que entra** (08/10/2026). Es **lo que el encargo pide**:
+        # que las existencias suban **por la recepción** y que **la factura no añada nada**. El campo del saldo
+        # se llama `saldo` y se ha leído **por su nombre** -preguntando las claves-, no buscándolo a ojo.
+        def el_saldo(datos):
+            try:
+                return datos["articulos"][0]["saldo"]
+            except (KeyError, IndexError, TypeError):
+                return None
+
+        saldo_antes = el_saldo(antes_de_recibir)
+        saldo_despues = el_saldo(despues_de_recibir)
+        print(f"  (el saldo del artículo: antes {saldo_antes!r} · después {saldo_despues!r})")
+        comprobar(
+            saldo_antes is not None and saldo_despues is not None,
+            f"el servidor dice el **saldo** del artículo antes y después (antes {saldo_antes!r})",
+        )
+        try:
+            subio = float(saldo_despues) - float(saldo_antes)
+        except (TypeError, ValueError):
+            subio = None
+        comprobar(
+            subio is not None and abs(subio - 500.0) < 0.001,
+            f"y la recepción **sube el saldo** en lo que llegó (500 L: {saldo_antes!r} → {saldo_despues!r})",
+        )
+        # **Y de dónde sale cada movimiento**: cada uno dice su `origen_tipo`, así que se miran los orígenes que
+        # hay. Lo que entra tiene que venir de **una recepción**, y **ninguno** puede salir de la factura.
+        # **Los orígenes de TODOS los lotes** (08/10/2026): mirarlos sólo del primero era **mi** error -el
+        # albarán **crea un lote nuevo**, así que su movimiento estaba en el otro-, y por eso la comprobación
+        # decía que nada venía de una recepción mientras el saldo del artículo había subido 500 L. El saldo, que
+        # es lo que importa, sí se lee del artículo entero y por eso era de fiar.
+        los_del_lote = [
+            uno
+            for lote in ((despues_de_recibir.get("articulos") or [{}])[0].get("lotes") or [])
+            for uno in (lote.get("movimientos_del_lote") or [])
+        ]
+        los_origenes = sorted({str(uno.get("origen_tipo")) for uno in los_del_lote})
+        print(f"  (los orígenes de los movimientos del lote: {los_origenes})")
+        comprobar(
+            any("recep" in tipo.lower() for tipo in los_origenes),
+            f"y lo que ha entrado viene de **una recepción** (orígenes: {los_origenes})",
+        )
+        comprobar(
+            not any("factura" in tipo.lower() for tipo in los_origenes),
+            f"y **ningún movimiento sale de la factura** (orígenes: {los_origenes})",
         )
         captura(nav, "economico-9-albaran-guardado")
         captura(nav, "economico-6-factura-guardada")
