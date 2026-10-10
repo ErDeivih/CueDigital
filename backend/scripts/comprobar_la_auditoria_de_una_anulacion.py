@@ -89,6 +89,15 @@ def main() -> int:
                 alli.append(uno)
     print(f"  => el gasto de la finca propia {'SÍ' if alli else 'NO'} se ve desde la ajena")
     print(f"  => aislamiento {'ROTO' if alli else 'correcto'}")
+    # **Y el control positivo** (08/10/2026): sin esto, una API que devolviera **siempre vacío** imprimiría
+    # «aislamiento correcto» y el guion daría por bueno un aislamiento que no comprueba nada. Se exige que la
+    # finca ajena **vea lo suyo**: el escenario le crea sus propios gastos. Lo señaló el revisor.
+    los_de_la_ajena_enteros = la_puerta("/api/gastos", volumen_ajeno.token)
+    cuantos_de_la_ajena = len((los_de_la_ajena_enteros or {}).get("gastos") or [])
+    print(f"  (control positivo: la finca ajena ve {cuantos_de_la_ajena} gastos suyos)")
+    if not cuantos_de_la_ajena:
+        print("=> FALLA: el control positivo no da nada, así que el aislamiento no está probando nada")
+        return 1
 
     # **La puerta del pago** (08/10/2026). La rama del pago de la pantalla -leida en `web/app.js`- construye un
     # cuerpo **sin `concepto`** (importe, fecha, proveedor, forma, clave de reenvio y aplicaciones) y **no toca la
