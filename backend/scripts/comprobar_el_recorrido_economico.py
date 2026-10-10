@@ -608,6 +608,13 @@ def main() -> int:
             subio is not None and abs(subio - 500.0) < 0.001,
             f"y la recepción **sube el saldo** en lo que llegó (500 L: {saldo_antes!r} → {saldo_despues!r})",
         )
+        # **El punto de partida, también** (08/10/2026). El revisor señaló que yo afirmaba **sólo el delta**, así
+        # que empezar en 10 y acabar en 510 también habría pasado. El escenario deja el lote en 35 L -40 del ajuste
+        # menos 5 del tratamiento-, así que se afirma **el número**, no sólo la diferencia.
+        comprobar(
+            saldo_antes is not None and abs(float(saldo_antes) - 35.0) < 0.001,
+            f"y parte de **35 L**, que es lo que deja el escenario (no sólo el delta: {saldo_antes!r})",
+        )
         # **Y de dónde sale cada movimiento**: cada uno dice su `origen_tipo`, así que se miran los orígenes que
         # hay. Lo que entra tiene que venir de **una recepción**, y **ninguno** puede salir de la factura.
         # **Los orígenes de TODOS los lotes** (08/10/2026): mirarlos sólo del primero era **mi** error -el
@@ -621,6 +628,12 @@ def main() -> int:
         ]
         los_origenes = sorted({str(uno.get("origen_tipo")) for uno in los_del_lote})
         print(f"  (los orígenes de los movimientos del lote: {los_origenes})")
+        # **Y que HAYA movimientos** (08/10/2026): «ningún movimiento sale de la factura» **pasa con la lista
+        # vacía**, así que primero se exige que el libro tenga algo que mirar -lo señaló el revisor-.
+        comprobar(
+            bool(los_del_lote),
+            f"y el libro del lote tiene movimientos que mirar ({len(los_del_lote)})",
+        )
         comprobar(
             any("recep" in tipo.lower() for tipo in los_origenes),
             f"y lo que ha entrado viene de **una recepción** (orígenes: {los_origenes})",
