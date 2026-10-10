@@ -735,7 +735,14 @@ function montar(elemento) {
   try {
     listo = elemento();
   } catch (fallo) {
+    // **Y se dice, en vez de tirarlo** (08/10/2026). Aquí se recogía el fallo y se dejaba `listo = null` **sin
+    // registrar nada**, así que el aviso que veía el agricultor era `sin_react` -«esta pantalla no se ha podido
+    // abrir… falta un fichero del programa»-, que **despista**: no falta ningún fichero, lo que pasa es que el
+    // componente **falla al construirse** y su error se estaba perdiendo. Lo encontró el recorrido económico,
+    // que necesitó varias vueltas para dar con ello justo porque este `catch` no dejaba rastro. Un
+    // `console.error` **no cambia el comportamiento** y hace que el fallo de verdad se pueda leer.
     listo = null;
+    console.error("la pantalla no se ha podido montar:", fallo);
   }
   // Antes de cambiar de pantalla se apunta **por dónde iba** en la lista que se deja (T04): es lo que
   // hace que volver de una ficha no devuelva al agricultor al principio de las 64 tierras.
@@ -19956,7 +19963,18 @@ function elFormularioDeLasCuentas(cual, borrador) {
       pista: g.form_pago_pista,
       bloques: [
         { tipo: "numero", id: "pago-importe", etiqueta: g.campo_importe, valor: loQueYaEstaba("pago-importe", "") },
-        { tipo: "fecha", id: "pago-fecha", etiqueta: g.campo_fecha, valor: loQueYaEstaba("pago-fecha", hoy()) },
+        {
+          tipo: "fecha",
+          id: "pago-fecha",
+          etiqueta: g.campo_fecha,
+          // **`hoy()` no existe** (08/10/2026): esta línea la llamaba y lanzaba `ReferenceError: hoy is not
+          // defined` al construir el formulario. Lo recogía el `try` de `montar`, que lo tiraba sin dejar rastro,
+          // y el agricultor veía el aviso `sin_react` -«falta un fichero del programa»-, que despista: **no
+          // faltaba ningún fichero**, y por eso el formulario del pago **nunca** se ha podido abrir. Medido: `hoy(`
+          // aparecía **una sola vez** en todo el fichero, aquí. Se usa la misma convención que la rama del gasto,
+          // que toma la fecha del estado.
+          valor: loQueYaEstaba("pago-fecha", cual.fecha || ""),
+        },
         { tipo: "texto", id: "pago-proveedor", etiqueta: g.campo_proveedor, valor: loQueYaEstaba("pago-proveedor", "") },
         {
           tipo: "opciones",

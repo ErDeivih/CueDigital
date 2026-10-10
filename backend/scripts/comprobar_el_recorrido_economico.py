@@ -914,6 +914,11 @@ def main() -> int:
             "     + String(e.lineno) + ':' + String(e.colno); });"
             " window.addEventListener('unhandledrejection', (e) => {"
             "   window.__elErrorDeLaPantalla = 'promesa rechazada: ' + String(e.reason); });"
+            " const elErrorDeVerdad = console.error;"
+            " console.error = function (...suyos) {"
+            "   try { window.__elErrorDeLaPantalla = 'console.error: ' + suyos.map((uno) =>"
+            "     String((uno && uno.message) || uno)).join(' | ').slice(0, 600); } catch (e) {}"
+            "   return elErrorDeVerdad.apply(console, suyos); };"
             " return true; })()"
         )
         nav.evaluar(
