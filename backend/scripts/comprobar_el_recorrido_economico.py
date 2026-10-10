@@ -912,6 +912,30 @@ def main() -> int:
             + str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText || ''"))[:300]
             + ")"
         )
+
+        # ── Que lo apuntado siga ahí después de recargar (08/10/2026) ────────────────────────────────
+        # El encargo lo pide expresamente. Se recarga **de verdad** (`location.reload()`), se espera a que la
+        # pantalla vuelva, y se pregunta **al servidor** por lo guardado: la factura, el albarán y el gasto.
+        paso(nav, 4, "Que lo apuntado siga ahí después de recargar")
+        nav.evaluar("(() => { location.reload(); return null; })()")
+        comprobar(
+            nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=30),
+            "la aplicación **vuelve** después de recargar",
+        )
+        time.sleep(1.0)
+        los_gastos_tras_recargar = los_gastos()
+        los_mios_tras = buscar_el_gasto(los_gastos_tras_recargar)
+        comprobar(
+            len(los_mios_tras) == 1,
+            f"y el **gasto sigue guardado** después de recargar ({len(los_mios_tras)} con ese concepto)",
+        )
+        print(
+            "  (el gasto, tras recargar: "
+            + str(los_mios_tras[0])[:220]
+            if los_mios_tras
+            else "  (el gasto no aparece tras recargar)"
+        )
+        captura(nav, "economico-17-tras-recargar")
         nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
         print(
             "  (en la ficha del gasto, lo que se puede pulsar: "
