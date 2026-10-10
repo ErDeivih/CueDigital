@@ -74,6 +74,22 @@ def main() -> int:
     anulado = la_puerta(f"/api/gastos/{el_id}/anular", volumen.token, {"motivo": el_motivo})
     print(f"  después de anular: estado={anulado.get('estado')!r} anulado={anulado.get('anulado')!r}")
 
+    # **El aislamiento** (08/10/2026): lo de esta explotación no puede verse desde la otra. Se entra en la finca
+    # ajena -el escenario la crea con el cuarto argumento- y se pregunta por los gastos: **el mío NO tiene que
+    # estar**. Es el punto del encargo que faltaba, y se comprueba por la puerta que usa la pantalla.
+    volumen_ajeno, _ = datos._la_del_volumen(  # noqa: SLF001
+        DIRECCION, f"ajena{int(time.time())}", pathlib.Path(tempfile.mkdtemp()), True
+    )
+    print(f"  la sesión ajena: {volumen_ajeno.nombre}")
+    los_de_la_ajena = la_puerta("/api/gastos", volumen_ajeno.token)
+    alli = []
+    if isinstance(los_de_la_ajena, dict):
+        for uno in los_de_la_ajena.get("gastos") or []:
+            if el_concepto in str(uno.get("concepto") or ""):
+                alli.append(uno)
+    print(f"  => el gasto de la finca propia {'SÍ' if alli else 'NO'} se ve desde la ajena")
+    print(f"  => aislamiento {'ROTO' if alli else 'correcto'}")
+
     # **Y la auditoría, leída de la base** —en sólo lectura—, buscando la fila de **este** gasto.
     conexion = sqlite3.connect(f"file:{LA_BASE}?mode=ro", uri=True)
     try:
