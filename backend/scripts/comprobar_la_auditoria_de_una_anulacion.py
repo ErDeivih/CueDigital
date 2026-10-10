@@ -135,6 +135,19 @@ def main() -> int:
             print(f"  => el motivo exacto {'SÍ' if escrito.get('motivo') == el_motivo else 'NO'} coincide")
     finally:
         conexion.close()
+    # **Que el guion pueda FALLAR** (08/10/2026). Antes imprimía SÍ/NO y devolvía **0 siempre**, así que no servía
+    # como comprobación -lo señaló el revisor independiente, y tenía razón-. Ahora devuelve 1 si el aislamiento
+    # está roto o si la anulación no dejó su entrada de auditoría con el motivo exacto.
+    if alli:
+        print("=> FALLA: el aislamiento está roto (lo de una explotación se ve desde la otra)")
+        return 1
+    if not de_anular:
+        print("=> FALLA: la anulación no dejó entrada de auditoría")
+        return 1
+    if escrito.get("motivo") != el_motivo:
+        print(f"  => FALLA: el motivo no coincide ({escrito.get('motivo')!r} frente a {el_motivo!r})")
+        return 1
+    print("=> EN VERDE: aislamiento correcto, y la anulación con su entrada y su motivo exacto")
     return 0
 
 
