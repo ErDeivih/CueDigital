@@ -1155,8 +1155,10 @@ def main() -> int:
                     print(f"  (no he podido leer los pagos: {exc})")
             else:
                 print("  (no hay ningún botón de conciliar en cuentas)")
-            # Y solo después se va al banco, que es **otra** cosa -los movimientos del extracto-.
-            pulsar("bancos-ver")
+            # **La visita al banco se quitó** (08/10/2026): sirvió para averiguar que el banco tiene **sus**
+            # movimientos -del extracto- y que el pago no está ahí. Dejarla puesta rompía la **segunda** vuelta:
+            # desde el banco no hay `gastos-ver`, así que el segundo pago no se podía abrir.
+            return el_por_pagar()
             time.sleep(1.8)
             # **Qué movimientos hay, y se abre el de 200** (08/10/2026): la conciliación estará en la **ficha del
             # movimiento** (`banco-abrir`), como `gasto-repartir` estaba en la del gasto. Se ven las filas y se
@@ -1229,7 +1231,9 @@ def main() -> int:
             )
             # **Y se busca mi gasto**, que es como se dice a qué se aplica el pago: se escribe en `gastos-buscar`
             # y se vuelca lo que aparece -acciones incluidas-, sin suponer cómo se marca.
-            nav.pulsar("#gastos-buscar")
+            # El **buscador** del pago se quitó (08/10/2026): era de las vueltas en que se creía que los gastos
+            # se enganchaban buscándolos, y no es así -se concilia el pago, y el servidor reparte solo-. Además
+            # reventaba el guion: en la **segunda** vuelta la aplicación está en el banco y ese campo no existe.
             print(
                 "  (Paso 2a, tras pulsar el buscador: "
                 + str(
