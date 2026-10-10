@@ -1100,7 +1100,7 @@ def main() -> int:
                     + str(
                         nav.evaluar(
                             "((document.querySelector('#pantalla') || {}).innerText || '')"
-                            ".replace(/\\s+/g, ' ').slice(0, 170)"
+                            ".replace(/\\s+/g, ' ').slice(0, 700)"
                         )
                     )
                     + ")"
