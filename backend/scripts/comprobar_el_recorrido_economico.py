@@ -1543,13 +1543,15 @@ def main() -> int:
         )
         time.sleep(1.0)
         los_gastos_tras_recargar = los_gastos()
+        # **Por el `id`, que es lo único que los distingue** (08/10/2026). Ni el concepto ni el importe sirven: el
+        # escenario tiene un gasto -id 10, 86,35 €- con **exactamente el mismo texto** que el mío -medido, no
+        # supuesto-, así que buscar por concepto daba **dos** y acusaba al programa de duplicar. El programa no
+        # duplica: el 10 es **anterior** y de otro importe.
+        el_id_del_mio = los_mios[0]["id"] if los_mios else None
         los_mios_tras = [
-            # **Comparación exacta** (08/10/2026). `buscar_el_gasto` compara por **substring** y el escenario
-            # tiene un gasto -id 10, 86,35 €- cuyo concepto **contiene** el mío, así que aquí salían **dos** y se
-            # acusaba al programa de duplicar. Medido antes de acusar: el 41 es el mío y el 10 es del escenario.
             uno
             for uno in buscar_el_gasto(los_gastos_tras_recargar)
-            if str(uno.get("concepto", "")) == EL_CONCEPTO
+            if el_id_del_mio is not None and uno.get("id") == el_id_del_mio
         ]
         comprobar(
             len(los_mios_tras) == 1,
