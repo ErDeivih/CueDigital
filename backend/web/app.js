@@ -9926,6 +9926,12 @@ async function abrirElLibroDelAlmacen() {
   // -«pintar sobre un formulario sin leerlo»-: aquí el repintado tiene que **respetar** lo que esté abierto. Con
   // la cobertura mala del campo la carga tarda, así que esto pasaba **siempre**.
   if (suyo.albaran) return pantallaNuevoAlbaran();
+  // **Y el movimiento a mano, lo mismo** (08/10/2026). `movimiento-nuevo` vive en las **fichas del propio
+  // libro**, así que si el agricultor abre una merma, un ajuste o una entrada sin papel mientras la carga está
+  // en vuelo, este repintado **se lo comía** -igual que el formulario del albarán y el enganche de la recepción-.
+  // Los tres son la misma clase de defecto, y los tres los señaló el revisor independiente: el repintado tiene
+  // que **respetar lo que esté abierto**.
+  if (suyo.movimiento) return pantallaMovimientoDeAlmacen();
   pantallaLibroDelAlmacen();
 }
 
