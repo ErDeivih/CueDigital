@@ -8134,6 +8134,13 @@ function composicionDelAbono(abono) {
 
 /** Las opciones de un campo de elegir, o null si el campo se escribe. */
 function opcionesDe(spec) {
+  // **Y si no hay especificación, se devuelve vacío** (08/10/2026). Esta función lee `spec.tipo` sin mirar antes
+  // si `spec` existe, y la rama del **pago** la llama con `estado.interfaz.formas_de_pago`, un nombre que
+  // **nadie asigna nunca** -medido: es la única aparición en todo el fichero-. Resultado: `TypeError` al abrir el
+  // formulario del pago, la aplicación enseña su aviso genérico -«falta un fichero del programa», que despista- y
+  // **el agricultor no puede apuntar un pago**. Lo encontró el recorrido económico, leyendo la rama del pago y lo
+  // que la rama llama. Devuelve vacío en vez de reventar: el desplegable sale sin opciones, pero se puede pagar.
+  if (!spec || !spec.tipo) return [];
   if (spec.tipo === "si_no") {
     return [
       { valor: "bool:true", texto: accion("si") },
