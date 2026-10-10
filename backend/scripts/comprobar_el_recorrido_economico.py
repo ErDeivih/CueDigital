@@ -72,6 +72,20 @@ def captura(nav: NavegadorDeVerdad, nombre: str) -> None:
 
 
 def main() -> int:
+    # **Nunca contra la base del agricultor** (08/10/2026, a raíz de la revisión independiente). Este guion **no
+    # levanta el servidor** -contra lo que decía su cabecera, y eso lo destapó el revisor-: sólo habla por HTTP
+    # con la dirección que le den. Si alguien apunta el servidor a la base real, el escenario se crea **dentro de
+    # ella** (registro, 64 tierras, 40 gastos, factura, albarán y gasto, todo por API). Así que se exige la ruta
+    # de la base y se comprueba que **no** es la del agricultor, antes de tocar nada.
+    if not RUTA_DE_LA_BASE:
+        print("=> falta la ruta de la base (tercer argumento): sin ella no puedo comprobar que no sea la real")
+        return 1
+    la_del_agricultor = (pathlib.Path(__file__).resolve().parents[1] / "cuedigital.db").resolve()
+    if pathlib.Path(RUTA_DE_LA_BASE).resolve() == la_del_agricultor:
+        print("=> NO se toca la base del agricultor: apunta el servidor a una base temporal")
+        return 1
+    print("  (la base de la prueba no es la del agricultor: adelante)")
+
     # **La salida, en UTF-8, pase lo que pase** (07/10/2026): este guion imprime acentos y rayas, y cuando la
     # salida no es UTF-8 -en la suite, sin `PYTHONIOENCODING`, la consola es cp1252- moría con
     # `UnicodeEncodeError`. No debe depender de cómo le llamen.
