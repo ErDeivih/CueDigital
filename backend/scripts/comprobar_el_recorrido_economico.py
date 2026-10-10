@@ -771,6 +771,170 @@ def main() -> int:
             )
             + ")"
         )
+        # **Cómo se elige un gasto para pagar** (08/10/2026): la lista trae `gasto-abrir` por fila -no
+        # `gasto-elegir`, que es del formulario-, así que se miran **las casillas** y, si no las hay, se **abre el
+        # gasto**, que es lo que haría el agricultor: abrirlo y pagarlo desde su ficha.
+        print(
+            "  (casillas en la lista de gastos: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input[type=\"checkbox\"]')]"
+                    ".map((uno) => uno.id || uno.name || 'sin-nombre').slice(0, 12))()"
+                )
+            )
+            + ")"
+        )
+        abierto = nav.evaluar(
+            "(() => { const filas = [...document.querySelectorAll('#pantalla [data-accion=\"gasto-abrir\"]')];"
+            " const mia = filas.find((b) =>"
+            f"   (b.closest('tr, li, div') || b).textContent.includes({json.dumps(EL_CONCEPTO)}));"
+            " const boton = mia || filas[0];"
+            " if (!boton) return false; boton.click(); return true; })()"
+        )
+        print(f"  (¿se ha abierto el gasto?: {abierto})")
+        # **La traza** (08/10/2026): el mismo instrumento que destapó el defecto del albarán. Se sondea cada
+        # 100 ms tras pulsar: si la ficha **llega y se cae** -como el formulario del albarán-, o si **nunca
+        # llega**. Sin deducir: mirando.
+        vistos_gasto: list = []
+        for _ in range(40):
+            estado_gasto = nav.evaluar(
+                "(() => ({"
+                " ficha: Boolean(document.querySelector('#pantalla [data-accion=\"gasto-pago-conciliar\"],"
+                "  #pantalla [data-accion=\"gasto-anular\"]')),"
+                " abrir: document.querySelectorAll('#pantalla [data-accion=\"gasto-abrir\"]').length,"
+                " direccion: String(location.hash).slice(0, 40) }))()"
+            )
+            if not vistos_gasto or vistos_gasto[-1] != estado_gasto:
+                vistos_gasto.append(estado_gasto)
+                print(f"    gasto, estado {len(vistos_gasto)}: {estado_gasto}")
+            time.sleep(0.1)
+        print(f"  (estados distintos tras `gasto-abrir`: {len(vistos_gasto)})")
+
+        # **La puerta del pago, desde la ficha** (08/10/2026): el inventario del subagente sitúa
+        # `gasto-pago-conciliar` **dentro de la ficha del gasto** (`gastos.js:559`) y la traza confirma que la
+        # ficha está ahí. Se pulsa y se mira **qué pide el pago**, en vez de suponerlo.
+        pulsado_el_pago = nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-pago-conciliar\"]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        print(f"  (¿se ha pulsado la puerta del pago?: {pulsado_el_pago})")
+        nav.esperar("Boolean(document.querySelector('#pantalla input, #pantalla select'))", segundos=20)
+        print(
+            "  (lo que pide el pago: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input, #pantalla select')]"
+                    ".map((uno) => uno.id || uno.name || uno.type).slice(0, 20))()"
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (y sus acciones: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 16))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-14-pago")
+
+        # **La vista con selección** (08/10/2026): la ficha del gasto **no** tiene la puerta del pago -medido: sus
+        # acciones son repartir, sin asignar, anular y volver-, y el pago se hace sobre gastos **marcados**. Se
+        # prueba la vista que el propio nombre anuncia, `gastos-ver-todas`, y se mira si trae **casillas** o
+        # `gasto-marcar`. Otra vez: se pregunta antes de tocar.
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gastos-ver-todas\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
+        time.sleep(0.8)
+        print(
+            "  (en `gastos-ver-todas`, casillas y acciones: "
+            + str(
+                nav.evaluar(
+                    "(() => ({ casillas: [...document.querySelectorAll('#pantalla input[type=\"checkbox\"]')]"
+                    ".map((uno) => uno.id || uno.name || 'sin-nombre').slice(0, 8),"
+                    " acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 20) }))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-15-gastos-ver-todas")
+
+        # **El formulario del pago, en crudo** (08/10/2026): se vuelve a las cuentas, se pulsa `gasto-pago-nuevo` y
+        # se **vuelca lo que aparezca**, sin esperar ninguna acción concreta. Esperar `gasto-pago-conciliar` fue
+        # **mi** error: esa es la de conciliar un pago **ya hecho**, no la del pago nuevo. Se incluyen los
+        # **rótulos de los botones**, que es lo que dice qué hay que pulsar.
+        # **Se instala el vigilante de errores ANTES de pulsar** (08/10/2026): el armazón enseña un aviso
+        # genérico cuando no puede montar, así que **el error de verdad hay que cazarlo en la página**. Sin
+        # eventos del protocolo: se deja un hueco en la ventana y se lee después.
+        nav.evaluar(
+            "(() => { window.__elErrorDeLaPantalla = null;"
+            " window.addEventListener('error', (e) => {"
+            "   window.__elErrorDeLaPantalla = String(e.message) + ' @ ' + String(e.filename) + ':'"
+            "     + String(e.lineno) + ':' + String(e.colno); });"
+            " window.addEventListener('unhandledrejection', (e) => {"
+            "   window.__elErrorDeLaPantalla = 'promesa rechazada: ' + String(e.reason); });"
+            " return true; })()"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gastos-ver\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-pago-nuevo\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        nav.esperar("Boolean(document.querySelector('#pantalla input, #pantalla select'))", segundos=20)
+        time.sleep(0.8)
+        print(
+            "  (el pago nuevo, en crudo: "
+            + str(
+                nav.evaluar(
+                    "(() => ({ campos: [...document.querySelectorAll('#pantalla input, #pantalla select')]"
+                    ".map((uno) => uno.id || uno.name || uno.type).slice(0, 20),"
+                    " acciones: [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 20),"
+                    " botones: [...document.querySelectorAll('#pantalla button')]"
+                    ".map((uno) => (uno.textContent || '').trim().slice(0, 26)).slice(0, 14) }))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-16-pago-nuevo")
+        print(f"  (el error de la pantalla, si lo hubo: {nav.evaluar('window.__elErrorDeLaPantalla')})")
+        print(
+            "  (y lo que dice el aviso: "
+            + str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText || ''"))[:300]
+            + ")"
+        )
+        nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
+        print(
+            "  (en la ficha del gasto, lo que se puede pulsar: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 18))()"
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (y sus campos: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input, #pantalla select')]"
+                    ".map((uno) => uno.id || uno.name || uno.type).slice(0, 20))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-13-ficha-del-gasto")
+
         # **Primero se elige el gasto** (08/10/2026): el pago se hace **sobre gastos marcados** -la pantalla trae
         # `gasto-elegir` y `gasto-marcar`-, así que pulsar el pago sin marcar nada no abre ningún formulario.
         # Se marca **el mío**, buscándolo por su concepto, y se dice si se ha podido.
