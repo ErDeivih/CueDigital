@@ -1095,6 +1095,47 @@ def main() -> int:
             if pulsar("gasto-pago-conciliar") == "pulsado":
                 time.sleep(2.2)
                 print(f"  (conciliado desde la pantalla: por pagar {el_por_pagar()!r})")
+                # **Y se llama a la puerta a mano, igual que el cliente** (08/10/2026). Así se separa lo que el
+                # clic no llegue a mandar de lo que el servidor no aplique: el cuerpo es el **mismo** que arma el
+                # manejador (`{automatico: true, gastos: [...], aplicaciones: []}`).
+                # `mi_id` se definía en el camino **viejo** del reparto, que quedó muerto detrás del `return`;
+                # aquí se vuelve a sacar, del gasto que el recorrido ya leyó del servidor.
+                mi_id = los_mios[0]["id"] if los_mios else None
+                if mi_id is not None:
+                    try:
+                        los_deudos = [
+                            uno.get("id")
+                            for uno in ((los_del_servidor or {}).get("gastos") or [])
+                            if uno.get("pendiente") and float(uno.get("pendiente") or 0) > 0
+                        ]
+                        peticion_conciliar = urllib.request.Request(
+                            f"{DIRECCION}/api/gastos/pagos/1/conciliar",
+                            data=json.dumps(
+                                {"automatico": True, "gastos": los_deudos, "aplicaciones": []}
+                            ).encode("utf-8"),
+                            headers={
+                                "Authorization": f"Bearer {escenario.volumen.token}",
+                                "Content-Type": "application/json",
+                            },
+                            method="POST",
+                        )
+                        with urllib.request.urlopen(peticion_conciliar, timeout=30) as respuesta_conciliar:
+                            lo_contestado = json.loads(respuesta_conciliar.read().decode("utf-8"))
+                        print(
+                            "  (llamando a la puerta a mano, el servidor contesta: "
+                            + str(
+                                {
+                                    "aplicaciones": len(
+                                        ((lo_contestado or {}).get("pago") or {}).get("aplicaciones") or []
+                                    ),
+                                    "avisos": (lo_contestado or {}).get("avisos"),
+                                }
+                            )[:260]
+                            + f" · con {len(los_deudos)} gastos pendientes)"
+                        )
+                        print(f"  (y después, por pagar: {el_por_pagar()!r})")
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"  (la puerta a mano ha fallado: {str(exc)[:200]})")
                 print(
                     "  (y la pantalla, después de conciliar: "
                     + str(
