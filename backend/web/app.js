@@ -20061,6 +20061,12 @@ async function guardarLasCuentas(datos) {
       confirmado: true,
     };
   } else if (clase === "pago") {
+    // **La puerta del pago es otra** (08/10/2026). Este cuerpo -importe, fecha, proveedor, forma, clave de
+    // reenvío y aplicaciones- **no lleva `concepto`**, y `/api/gastos` lo exige. Medido contra el servidor:
+    // `/api/gastos` lo **rechaza** (HTTP 422) y `/api/gastos/pagos` lo **acepta**. La ruta nace arriba en
+    // `/api/gastos` y esta rama **no la reasignaba**, así que el agricultor no podía apuntar un pago. Lo
+    // encontró el recorrido económico desde las pantallas, y lo confirmó un revisor independiente.
+    ruta = "/api/gastos/pagos";
     cuerpo = {
       importe: valorDeLaCasilla("pago-importe"),
       fecha: valorDeLaCasilla("pago-fecha") || null,
