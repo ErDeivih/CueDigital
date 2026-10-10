@@ -608,6 +608,217 @@ def main() -> int:
             f"y **ningún movimiento sale de la factura** (orígenes: {los_origenes})",
         )
         captura(nav, "economico-9-albaran-guardado")
+
+        # ── El gasto y el dinero: pago parcial, saldo pendiente y pago final (08/10/2026) ──────────────
+        # El último tramo del encargo. Se entra por el **renglón del menú** y se espera **a la acción del
+        # formulario** (`gasto-guardar`, que el inventario del subagente deja identificada), no a «que haya
+        # campos»: esa espera genérica ya me falló con el albarán.
+        paso(nav, 3, "El gasto y el dinero")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#menu-cuentas');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        comprobar(
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"gasto-nuevo\"]'))", segundos=25
+            ),
+            "las cuentas se abren desde su renglón del menú, con su puerta de **apuntar un gasto**",
+        )
+        print(
+            "  (lo que se puede pulsar en las cuentas: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 18))()"
+                )
+            )
+            + ")"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-nuevo\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        comprobar(
+            nav.esperar(
+                "Boolean(document.querySelector('#pantalla [data-accion=\"gasto-guardar\"]'))", segundos=25
+            ),
+            "y `gasto-nuevo` abre **el formulario del gasto** (con la acción de guardar dentro)",
+        )
+        print(
+            "  (sus campos: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input, #pantalla select,"
+                    " #pantalla textarea')]"
+                    ".map((uno) => uno.id || uno.name || uno.type).slice(0, 30))()"
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (sus acciones: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 18))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-10-gasto-nuevo")
+
+        # **Se rellena y se guarda el gasto** (08/10/2026). Datos ficticios, y se comprueba **contra el
+        # servidor**, no contra la pantalla -que es lo que enseñó el tramo de la factura-. Y se imprime **la
+        # forma** de su respuesta antes de afirmar dónde está el pendiente.
+        EL_CONCEPTO = "Gasóleo de la cosechadora, recorrido económico"
+        escribio_el_gasto = {
+            "#gasto-concepto": escribir_campo("#gasto-concepto", EL_CONCEPTO),
+            "#gasto-importe": escribir_campo("#gasto-importe", "663"),
+            "#gasto-fecha": escribir_campo("#gasto-fecha", "2026-10-07"),
+            "#gasto-proveedor": escribir_campo("#gasto-proveedor", "Suministros del Páramo, S.L."),
+        }
+        comprobar(
+            all(escribio_el_gasto.values()),
+            "el gasto acepta concepto, importe, fecha y proveedor "
+            f"(sin escribir: {[c for c, b in escribio_el_gasto.items() if not b] or 'ninguno'})",
+        )
+        captura(nav, "economico-11-gasto-relleno")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-guardar\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=25)
+        time.sleep(1.0)
+
+        def los_gastos():
+            """Lo que el servidor dice de los gastos. Se imprime su forma, no se supone."""
+            try:
+                with urllib.request.urlopen(
+                    urllib.request.Request(
+                        f"{DIRECCION}/api/gastos",
+                        headers={"Authorization": f"Bearer {volumen.token}"},
+                    ),
+                    timeout=30,
+                ) as respuesta:
+                    return json.loads(respuesta.read().decode("utf-8"))
+            except Exception as exc:  # noqa: BLE001
+                return {"error": str(exc)[:80]}
+
+        los_del_servidor = los_gastos()
+        print(
+            "  (las claves de la respuesta de gastos: "
+            + str(sorted(los_del_servidor.keys()) if isinstance(los_del_servidor, dict) else type(los_del_servidor))
+            + ")"
+        )
+        # Se busca el gasto por su concepto, en cualquier lista de la respuesta.
+        def buscar_el_gasto(datos) -> list:
+            encontrados: list = []
+            if isinstance(datos, dict):
+                for valor in datos.values():
+                    encontrados += buscar_el_gasto(valor)
+            elif isinstance(datos, list):
+                for uno in datos:
+                    if isinstance(uno, dict) and EL_CONCEPTO in str(uno.get("concepto", "")):
+                        encontrados.append(uno)
+                    else:
+                        encontrados += buscar_el_gasto(uno)
+            return encontrados
+
+        los_mios = buscar_el_gasto(los_del_servidor)
+        print(f"  (el gasto, como lo devuelve el servidor: {str(los_mios[0])[:300] if los_mios else 'no aparece'})")
+        comprobar(
+            len(los_mios) == 1,
+            f"al guardar, el servidor tiene **un** gasto con ese concepto ({len(los_mios)})",
+        )
+        captura(nav, "economico-12-gasto-guardado")
+
+        # **Cómo se llama el pendiente de un gasto** (08/10/2026): se piden **sus claves**, en vez de buscarlo a
+        # ojo en un volcado largo. Y **el pago parcial**: se abre su formulario y se mira qué pide.
+        if los_mios:
+            # **Las claves del dinero, enteras** (08/10/2026): el volcado entero se cortaba antes de la `p…`, así
+            # que se piden **sólo las que hablan de dinero**, en vez de suponer que el pendiente se llama
+            # `pendiente`.
+            print(
+                "  (las claves del gasto que hablan del dinero: "
+                + str(
+                    [
+                        clave
+                        for clave in sorted(los_mios[0])
+                        if any(pista in clave for pista in ("pend", "pag", "importe", "estado", "venc"))
+                    ]
+                )
+                + ")"
+            )
+        print(f"  (lo que el servidor dice que hay por pagar: {str(los_del_servidor.get('por_pagar'))[:220]})")
+        # **Se sale del formulario** (08/10/2026): al guardar, la aplicación **se queda dentro** -medido: las
+        # acciones eran `gasto-guardar` y `gasto-cancelar`-, así que no hay lista de gastos que marcar. Se sale
+        # por su propio botón y se espera **a una condición de la lista**: que estén sus `gasto-elegir`.
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-cancelar\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        # **Se mira qué queda**, en vez de suponer por dónde se sale (08/10/2026): supuse que `gasto-cancelar`
+        # volvía a la lista y **no vuelve** -medido: no aparecían sus `gasto-elegir`-. Así que se imprimen las
+        # acciones que hay después, y con eso se sabe por dónde se sale de verdad.
+        nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=10)
+        print(
+            "  (después de `gasto-cancelar`, lo que se puede pulsar: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 16))()"
+                )
+            )
+            + ")"
+        )
+        # **Primero se elige el gasto** (08/10/2026): el pago se hace **sobre gastos marcados** -la pantalla trae
+        # `gasto-elegir` y `gasto-marcar`-, así que pulsar el pago sin marcar nada no abre ningún formulario.
+        # Se marca **el mío**, buscándolo por su concepto, y se dice si se ha podido.
+        marcado = nav.evaluar(
+            "(() => { const filas = [...document.querySelectorAll('#pantalla [data-accion=\"gasto-elegir\"]')];"
+            " const mia = filas.find((b) =>"
+            f"   (b.closest('tr, li, div') || b).textContent.includes({json.dumps(EL_CONCEPTO)}));"
+            " const boton = mia || filas[0];"
+            " if (!boton) return false; boton.click(); return true; })()"
+        )
+        print(f"  (¿se ha podido marcar el gasto?: {marcado})")
+        time.sleep(0.6)
+        nav.evaluar(
+            "(() => { const b = document.querySelector('#pantalla [data-accion=\"gasto-pago-nuevo\"]');"
+            " if (b) { b.click(); return true; } return false; })()"
+        )
+        # **El formulario del pago**: se mira si está, en vez de darlo por hecho, mientras se aprende el camino.
+        print(
+            "  (¿hay formulario de pago?: "
+            + str(
+                nav.esperar(
+                    "Boolean(document.querySelector('#pantalla [data-accion=\"gasto-pago-conciliar\"]'))",
+                    segundos=20,
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (los campos del pago: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla input, #pantalla select')]"
+                    ".map((uno) => uno.id || uno.name || uno.type).slice(0, 24))()"
+                )
+            )
+            + ")"
+        )
+        print(
+            "  (sus acciones: "
+            + str(
+                nav.evaluar(
+                    "(() => [...document.querySelectorAll('#pantalla [data-accion]')]"
+                    ".map((uno) => uno.dataset.accion).slice(0, 18))()"
+                )
+            )
+            + ")"
+        )
+        captura(nav, "economico-13-pago-nuevo")
         captura(nav, "economico-6-factura-guardada")
 
         # **Y guardar dos veces no puede duplicarla**: es el punto 3 de la lista. Aún sin saber si el formulario
