@@ -1561,7 +1561,7 @@ def main() -> int:
             # comprobación, que es lo que ha pasado nueve veces en este encargo-. Antes se enseñaba sólo el
             # primero y recortado, que es justo lo que no permite decidirlo.
             "  (los gastos con ese concepto, tras recargar: "
-            + str([(uno.get("id"), uno.get("importe"), uno.get("fecha")) for uno in los_mios_tras])[:300]
+            + str([(uno.get("id"), uno.get("importe"), uno.get("fecha"), str(uno.get("concepto"))) for uno in los_mios_tras])[:400]
         )
         captura(nav, "economico-17-tras-recargar")
         nav.esperar("Boolean(document.querySelector('#pantalla'))", segundos=15)
