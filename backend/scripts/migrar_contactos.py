@@ -203,7 +203,9 @@ def _migrar(sesion, informe: dict) -> dict:
         ConfirmacionDeLaMigracion(claves=claves),
         db=sesion,
         explotacion=informe["explotacion"],
-        _usuario=SinCuenta(),
+        # El parámetro se llamaba `_usuario` porque no se usaba; desde el 11/10/2026 la migración **sí** lo
+        # usa: deja rastro con quién la hizo. El guion no corre con una cuenta, así que pasa esa misma.
+        usuario=SinCuenta(),
     )
     print(
         f"\n    apuntadas {_cuantos(resultado['fichas'], 'ficha')} y "

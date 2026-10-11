@@ -96,6 +96,29 @@ def _apuntar_en_la_auditoria(
     )
 
 
+def apuntar(
+    db: Session,
+    *,
+    explotacion_id: int,
+    usuario_id: int | None,
+    entidad: str,
+    entidad_id: int | None,
+    accion: str,
+    datos: dict,
+) -> None:
+    """Deja constancia en la auditoría de una acción que **no** es corregir ni borrar.
+
+    POR QUÉ EXISTE ESTA PUERTA PÚBLICA (11/10/2026). El contrato pide, para toda entidad de negocio, «autor,
+    fecha, versión y estado de anulación», y el alta de un contacto y la aplicación de la migración de nombres
+    **no dejaban rastro**: `corregir` y `borrar` ya apuntan lo suyo, pero un alta no pasa por ninguno de los
+    dos. Lo tenía fichado la revisión del T11 (`docs/REVISION_T11.md:364-368`) como el requisito pendiente.
+    Se llamaba a `_apuntar_en_la_auditoria` desde fuera del módulo, que es guion bajo y no se debe hacer: ahora
+    hay un nombre público que dice lo que hace, y el de dentro se queda como está para no tocar lo que ya
+    funciona.
+    """
+    _apuntar_en_la_auditoria(db, explotacion_id, usuario_id, entidad, entidad_id, accion, datos)
+
+
 def corregir(
     db: Session,
     *,

@@ -452,6 +452,36 @@ def crear(
     db.add(contacto)
     db.flush()
     _guardar_los_papeles(db, contacto, papeles)
+    # **El alta deja rastro** (CRM-03, 11/10/2026). Es el requisito que la revisión del T11 tenía fichado
+    # (`docs/REVISION_T11.md:364-368`): el contrato pide autor para toda entidad de negocio y una ficha se
+    # podía apuntar sin que quedara quién. Se guarda con la **misma forma** que una corrección —`{campo:
+    # [antes, ahora]}`, y en un alta el «antes» es nada—, para que la auditoría se lea igual venga de donde
+    # venga. Los campos vacíos no se apuntan: un rastro lleno de `null` no dice nada.
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="crear",
+        datos={
+            campo: [None, valor]
+            for campo, valor in (
+                ("nombre", contacto.nombre),
+                ("es_empresa", contacto.es_empresa),
+                ("nif", contacto.nif),
+                ("telefono", contacto.telefono),
+                ("correo", contacto.correo),
+                ("direccion", contacto.direccion),
+                ("localidad", contacto.localidad),
+                ("notas", contacto.notas),
+                # Y **qué papeles** se le pusieron: un proveedor que también es cliente se apunta aquí, y es
+                # de las cosas que más se corrigen después.
+                ("papeles", list(papeles) or None),
+            )
+            if valor not in (None, "")
+        },
+    )
     db.commit()
     db.refresh(contacto)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
@@ -607,7 +637,10 @@ def aplicar_la_migracion(
     datos: ConfirmacionDeLaMigracion,
     db: Db,
     explotacion: ExplotacionActual,
-    _usuario: UsuarioActual,
+    # Se llamaba `_usuario` porque **no se usaba**; desde el 11/10/2026 sí: la migración deja rastro con
+    # quién la hizo, que es el requisito que faltaba. Un guion bajo delante de un parámetro que se usa sería
+    # decir que no se usa.
+    usuario: UsuarioActual,
 ) -> dict:
     """**Apunta las fichas que el agricultor confirma**, y solo esas.
 
@@ -739,6 +772,23 @@ def aplicar_la_migracion(
         nombres.append(contacto.nombre)
         enlaces += len(propuesta.escritos)
         avisos.append(textos.mensaje("C11_ya_estaba_apuntada", nombre=contacto.nombre))
+    # **Y la migración deja rastro** (CRM-03, 11/10/2026), que es la otra mitad del requisito pendiente del
+    # T11: hasta hoy se podía meter de golpe todo el cuaderno de nombres en las fichas y no quedaba quién lo
+    # hizo ni cuántas. Va **una sola fila** con el resumen —y no una por ficha, que ya la deja el alta de cada
+    # una—: lo que hay que poder contestar es «¿quién apuntó estas veinte de golpe?».
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=None,
+        accion="migrar_nombres",
+        datos={
+            "fichas": [None, len(fichas)],
+            "enlaces": [None, enlaces],
+            "textos_tocados": [None, 0],
+        },
+    )
     db.commit()
     return {
         "fichas": len(fichas),
