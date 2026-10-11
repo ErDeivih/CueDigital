@@ -9822,10 +9822,15 @@ test("una factura ofrece corregirse y borrarse, y borrar pregunta antes", async 
   await pulsar(entorno, "facturas-abrir");
   const pantalla = montajes[montajes.length - 1].elemento;
   const factura = pantalla.props.facturas[0];
+  // **Tres salidas desde el S11 (09/10/2026)**: ver la compra entera (facturado, recibido, pagado y
+  // pendiente), corregirla y borrarla. El botón nuevo va **el primero** a propósito: es lo que se quiere
+  // hacer con una factura antes de tocar nada —mirarla entera—, y hasta hoy esa ficha existía en el
+  // servidor y **no había ningún botón que llevara a ella**, que es el mismo defecto que ya apareció con
+  // la historia de una tierra.
   assert.deepEqual(
     factura.acciones.map((accion) => accion.accion),
-    ["cosa-corregir", "cosa-borrar"],
-    "la ficha de una factura no ofrece las dos salidas (corregirla y borrarla)",
+    ["compra-abrir", "cosa-corregir", "cosa-borrar"],
+    "la ficha de una factura no ofrece sus tres salidas (verla entera, corregirla y borrarla)",
   );
 
   await pulsar(entorno, "cosa-borrar", { tipo: "factura", id: "9" });

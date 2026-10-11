@@ -306,6 +306,71 @@ def test_una_factura_sin_numero_avisa_de_que_no_se_pudo_comprobar(cliente, cuent
     assert _cuantas_facturas(db_sesion) == 1
 
 
+def test_la_misma_clave_con_otras_notas_o_otro_iva_tambien_es_un_conflicto(cliente, cuenta, db_sesion):
+    """El 409 cubría solo los importes: con otras notas o otro IVA los datos nuevos **se tiraban**.
+
+    Lo encontró el revisor: la misma clave con `tipo_iva_pct` distinto o con otras notas contestaba 200
+    «ya estaba» y **lo que llegaba se perdía en silencio**, sin decir nada. Una petición identifica un
+    comando: si el cuerpo no es el mismo, no es el mismo comando.
+    """
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-12")
+    assert primera.status_code == 201, primera.text
+
+    con_otro_iva = _enviar(cliente, cuenta["cabeceras"], clave="peticion-12", tipo_iva_pct=10.0)
+    assert con_otro_iva.status_code == 409, con_otro_iva.text
+    assert textos.mensaje("AL26_la_misma_clave_con_otros_datos") in con_otro_iva.text
+
+    con_otras_notas = _enviar(
+        cliente, cuenta["cabeceras"], clave="peticion-12", notas="esto no lo había dicho"
+    )
+    assert con_otras_notas.status_code == 409, con_otras_notas.text
+    assert _cuantas_facturas(db_sesion) == 1
+
+
+def test_reintentar_despues_de_corregir_la_factura_no_es_un_conflicto(cliente, cuenta, db_sesion):
+    """El móvil que reintenta después de una corrección: **200 con la factura como está hoy**.
+
+    Lo encontró el revisor: apuntar con la clave K, corregir la factura y volver a mandar **el mismo
+    cuerpo de antes** contestaba 409 «esa petición ya se atendió, pero con otros datos». No es un
+    conflicto: el comando se atendió y su resultado cambió **porque el agricultor lo cambió él**. A un
+    móvil que reintenta sin cobertura no se le puede presentar eso como un error.
+    """
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-13")
+    assert primera.status_code == 201, primera.text
+    ident = primera.json()["id"]
+
+    correccion = cliente.put(
+        f"/api/facturas/{ident}",
+        headers=cuenta["cabeceras"],
+        json=_cuerpo(
+            numero_factura="2026/00123",
+            lineas=[
+                {
+                    "descripcion": "GLIFOSATO 36% SL 20 L (corregido)",
+                    "cantidad": 5,
+                    "unidad": "L",
+                    "precio_unitario": 34.0,
+                    "importe": 170.0,
+                }
+            ],
+        ),
+    )
+    assert correccion.status_code == 200, correccion.text
+
+    reintento = _enviar(cliente, cuenta["cabeceras"], clave="peticion-13")
+
+    assert reintento.status_code == 200, (
+        f"reintentar el mismo comando después de corregir no puede ser un {reintento.status_code}: "
+        f"{reintento.text}"
+    )
+    assert reintento.json()["id"] == ident, "se devuelve la factura de esa petición, no otra"
+    assert reintento.json()["ya_estaba"] is True
+    assert any("se corrigió después" in aviso for aviso in reintento.json()["avisos"]), (
+        "y se dice por qué no coincide: " + str(reintento.json()["avisos"])
+    )
+    assert _cuantas_facturas(db_sesion) == 1
+
+
 def test_la_base_no_deja_dos_veces_la_misma_clave(cliente, cuenta, db_sesion):
     """**La garantía de verdad del envío concurrente**: la base, no el código.
 

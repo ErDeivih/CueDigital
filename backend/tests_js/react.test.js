@@ -7866,3 +7866,153 @@ test("el armazón no lleva ni una frase escrita a mano", async () => {
     assert.ok(delServidor.has(frase), `frase escrita a mano: «${frase}»`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// La ficha de una compra (S11, 09/10/2026)
+// ---------------------------------------------------------------------------
+
+/** Los textos de la ficha, los mismos que sirve `/api/interfaz` en la clave `compra`. */
+const TEXTOS_DE_LA_COMPRA = {
+  titulo: "La compra",
+  buscando: "Buscando la compra…",
+  los_albaranes: "Los albaranes de esta compra",
+  sin_albaran: "De esta compra no ha entrado nada todavía.",
+  el_dinero: "El dinero de esta compra",
+  sin_gasto: "De esta factura todavía no hay ningún gasto apuntado, así que no se puede decir cuánto se ha pagado.",
+  los_pagos: "Los pagos",
+  sin_lineas: "Esta factura no trae líneas apuntadas.",
+  ver_el_albaran: "VER EL ALBARÁN",
+  ver_el_gasto: "VER EL GASTO",
+};
+
+/** Una compra completa: las cuatro cifras, un albarán, sus líneas, un gasto y un pago. */
+function unaCompraDePrueba(cambios = {}) {
+  return {
+    titulo: "COOPERATIVA AGRICOLA · 2026/00123",
+    cuando: "15/03/2026 · COOPERATIVA AGRICOLA",
+    cifras: [
+      { etiqueta: "Facturado", valor: "663,00 €", pista: "Lo que dice la factura del proveedor." },
+      { etiqueta: "Recibido", valor: "300,00 kg", pista: "Lo que ha entrado de verdad en el almacén. Lo mete el albarán, no la factura." },
+      { etiqueta: "Pagado", valor: "200,00 €", pista: "El dinero que ya ha salido para esta compra." },
+      { etiqueta: "Pendiente", valor: "463,00 €", pista: "Lo que queda por pagar de esta compra." },
+    ],
+    albaranes: [
+      {
+        id: 8,
+        titulo: "A-2026-0001",
+        cuando: "16/03/2026",
+        trajo: "300,00 kg",
+        anulado: "",
+      },
+    ],
+    lineas: [
+      {
+        descripcion: "Abono compuesto 15-15-15",
+        facturado: "500,00 kg",
+        recibido: "De esta línea han entrado 300,00 kg de 500,00 kg.",
+        falta: "Falta por llegar: 200,00 kg",
+      },
+    ],
+    gastos: [
+      {
+        id: 165,
+        concepto: "Compra de abono, factura 2026/00123",
+        importe: "663.00",
+        pagado: "Pagado: 200.00",
+        pendiente: "Pendiente: 463.00",
+      },
+    ],
+    pagos: [
+      {
+        cuando: "20/03/2026 · transferencia",
+        importe: "200.00",
+        aplicado: "De ese pago, a esta compra: 200.00",
+      },
+    ],
+    avisos: [],
+    las_lineas: "Lo que trae la factura",
+    acciones: [{ etiqueta: "VOLVER A MIS FACTURAS", accion: "facturas-abrir", clase: "boton-claro" }],
+    ...cambios,
+  };
+}
+
+/** El HTML de la ficha, tal y como lo dibujaría React. */
+async function htmlDeLaCompra({ textos = TEXTOS_DE_LA_COMPRA, compra = unaCompraDePrueba(), ...resto } = {}) {
+  const { PantallaCompra } = await import(
+    `../web/react/pantallas/compra.js?prueba=${Math.random()}`
+  );
+  return globalThis.ReactDOMServer.renderToStaticMarkup(
+    React.createElement(PantallaCompra, { textos, compra, cargando: false, error: "", ...resto }),
+  );
+}
+
+test("la ficha de una compra enseña las cuatro cifras: facturado, recibido, pagado y pendiente", async () => {
+  // **Es lo que el encargo pide ver de un vistazo**, y son cuatro cosas que se confunden con
+  // facilidad: la factura no mete mercancía (la mete el albarán) y el dinero puede ir por partes.
+  const html = await htmlDeLaCompra();
+  for (const [etiqueta, cifra] of [
+    ["Facturado", "663,00 €"],
+    ["Recibido", "300,00 kg"],
+    ["Pagado", "200,00 €"],
+    ["Pendiente", "463,00 €"],
+  ]) {
+    assert.ok(html.includes(etiqueta), `falta la etiqueta «${etiqueta}»`);
+    assert.ok(html.includes(cifra), `falta la cifra «${cifra}»`);
+  }
+  // Y cada una con la frase que dice de dónde sale: un número sin de dónde sale no se puede comprobar.
+  assert.ok(html.includes("Lo mete el albarán"), "falta la pista de lo recibido");
+});
+
+test("la ficha lleva a sus albaranes y a sus gastos, y no los mete en la misma lista", async () => {
+  // **Los enlaces de la ficha**: de aquí se va al albarán y al gasto, que es lo que permite comprobar
+  // cada cifra en su sitio. Y son listas distintas a propósito: la mercancía y el dinero no se mezclan.
+  const html = await htmlDeLaCompra();
+  assert.match(
+    html,
+    /data-accion="albaran-abrir"[^>]*data-id="8"/,
+    "el albarán de la compra no lleva a su ficha",
+  );
+  assert.match(
+    html,
+    /data-accion="gasto-abrir"[^>]*data-id="165"/,
+    "el gasto de la compra no lleva a su ficha",
+  );
+  assert.ok(
+    html.indexOf("Los albaranes de esta compra") < html.indexOf("El dinero de esta compra"),
+    "la mercancía va antes que el dinero: es el orden en que pasan las cosas",
+  );
+});
+
+test("la ficha dice lo que no se puede saber en vez de enseñar un cero", async () => {
+  // La regla del «no lo sé» del programa entero: una línea sin enganche con el albarán **no** ha
+  // recibido cero, es que no se puede saber. Y una compra de la que no ha entrado nada lo dice con sus
+  // palabras, en vez de callarse.
+  const html = await htmlDeLaCompra({
+    compra: unaCompraDePrueba({
+      albaranes: [],
+      cifras: [
+        { etiqueta: "Facturado", valor: "663,00 €", pista: "" },
+        { etiqueta: "Recibido", valor: "Nada todavía", pista: "" },
+        { etiqueta: "Pagado", valor: "0,00 €", pista: "" },
+        { etiqueta: "Pendiente", valor: "663,00 €", pista: "" },
+      ],
+      lineas: [
+        {
+          descripcion: "Abono compuesto 15-15-15",
+          facturado: "500,00 kg",
+          recibido: "De esta línea no se puede saber cuánto ha entrado.",
+          falta: "",
+        },
+      ],
+      avisos: ["De esta factura no ha entrado nada al almacén todavía: la mercancía la mete el albarán."],
+    }),
+  });
+  assert.ok(html.includes("Nada todavía"), "sin albaranes se dice, no se pone un cero");
+  assert.ok(html.includes("no se puede saber"), "lo que no se sabe se declara");
+  assert.ok(html.includes("la mercancía la mete el albarán"), "falta el aviso de por qué no ha entrado nada");
+  assert.ok(
+    html.includes("De esta compra no ha entrado nada todavía."),
+    "sin albaranes, su lista lo dice",
+  );
+});
+

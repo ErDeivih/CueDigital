@@ -274,7 +274,7 @@
 // `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
 // número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
 // caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
-const CACHE = "cuedigital-2026-10-06-71";
+const CACHE = "cuedigital-2026-10-09-72";
 
 const FICHEROS = [
   "/",
@@ -330,6 +330,10 @@ const FICHEROS = [
   "/react/pantallas/libro_del_almacen.js",
   "/react/pantallas/nuevo_albaran.js",
   "/react/pantallas/recepcion.js",
+  /* **La ficha de una compra** (S11, 09/10/2026): lo facturado, lo recibido, lo pagado y lo que queda.
+   * Va en la caché por lo de siempre: es una pantalla que se mira con el papel delante, y eso puede
+   * pasar en el almacén, donde no hay cobertura. */
+  "/react/pantallas/compra.js",
   "/react/pantallas/movimiento_de_almacen.js",
   "/react/pantallas/sacar_de_un_lote.js",
   "/react/pantallas/enganchar_la_factura.js",

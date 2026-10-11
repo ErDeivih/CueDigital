@@ -36,9 +36,62 @@ El instrumento que lo mide —`scripts/comprobar_si_una_factura_repetida_se_dupl
 propio** que se descubrió midiendo: envolvía `datos` dos veces, así que mandaba facturas **vacías** y su
 conclusión era cierta por casualidad; ahora exige que la factura llegue entera antes de concluir nada.
 
-**Pendiente:** **pago agrupado** (un pago que salda varias facturas) y **corrección/anulación con auditoría**
-dentro de este recorrido; la **ficha de compra** (punto 5, con pantallas y capturas); y **permisos, uso sin
-cobertura, conflictos de edición y restauración de copia**.
+**Acreditado desde el 09/10/2026 — el pago agrupado, la corrección con rastro y la separación al anular.**
+La compra de punta a punta pasa de **30 a 49 comprobaciones** (`0 fallos`), y las tres nuevas son las que
+faltaban del punto 3 del encargo: **un solo pago de 350 € salda dos facturas** (100 y 250) repartido por
+antigüedad —cada una queda a **0** por su identificador y las **dos aplicaciones suman 350,00 exactos**—;
+**corregir** la factura deja su entrada en la auditoría (`corregir_lineas`), **no mueve el almacén**
+(1000 → 1000) y **conserva el enganche** del albarán; y **anular el albarán devuelve exactamente lo que
+metió** (300 kg: 1000 → 700) mientras **anular la factura no vacía el almacén** (700 → 700), cada una con
+su rastro. Y las cifras nuevas son **obligatorias**: la prueba de la compra las exige literalmente
+(`backend/tests/test_la_compra_se_anda_entera.py`), con un mínimo de 40 comprobaciones para que quitarle
+secciones al guion se note.
+
+**Acreditado desde el 09/10/2026 — la ficha de la compra (punto 5), por la pantalla y con capturas.**
+`GET /api/compras/{id}` junta las cuatro cifras —**facturado, recibido, pagado y pendiente**— y la pantalla
+`/compras/:id` (`backend/web/react/pantallas/compra.js`) las enseña, con **enlaces** al albarán y al gasto
+(`albaran-abrir`, `gasto-abrir`) y con la **dirección permanente** que se lleva el contexto
+(`#/compras/3?campana=2026&finca=6`). El recorrido **se anda en un navegador de verdad**
+(`scripts/comprobar_la_ficha_de_la_compra_en_el_navegador.py`: **13 comprobaciones, 0 fallos**), incluido el
+camino del agricultor —lista de facturas → «VER LA COMPRA» → ficha—, y deja **dos capturas** en
+`docs/capturas/` (móvil y escritorio). Ahí se cazó un defecto real: la ficha se abría pero **la dirección no
+se escribía**, así que el enlace no se podía mandar a nadie; lo que se enseña sale del sitio de siempre
+—lo pagado, con `servicios.lo_pagado_de_un_gasto`, que ahora es la **regla única** del dinero— para que la
+ficha y la pantalla de gastos no puedan dar dos cifras distintas del mismo dinero. Lo que **no** se puede
+saber se declara: una línea sin enganche con el albarán sale como «no se puede saber», nunca como un cero.
+
+**Pendiente:** **permisos, uso sin cobertura, conflictos de edición y restauración de copia**; y de §S11,
+lo que la ficha todavía no enseña (varios tipos de IVA, portes y descuentos globales, moneda).
+
+### Lo que encontraron los revisores independientes, y qué se hizo (09/10/2026)
+
+Dos revisores que **no eran el autor** —uno de negocio y otro de pantallas— intentaron falsar lo de arriba
+midiendo, no leyendo. Los dos reprodujeron lo acreditado y **tiraron abajo seis cosas**, todas con
+reproducción mínima. Se arreglaron, cada una con su prueba (y las que se pudieron, **rojas antes**):
+
+| Lo que estaba mal | Cómo se arregló |
+|---|---|
+| **La ficha pedía textos que no le llegaban**: la puerta servía `textos.FACTURAS` y el componente lee ocho frases de `COMPRA` → **dos botones en blanco de 1059 px** y dos títulos vacíos, medido en Chrome | La puerta sirve `textos.COMPRA` y una prueba **cruza** lo que el componente pide con lo que la puerta sirve. El guion del navegador ahora exige que **los botones y los títulos digan algo** (antes solo miraba que existieran) |
+| **Corregir o borrar una factura con un albarán enganchado a sus líneas daba 500** (`FOREIGN KEY constraint failed`): el código borraba y rehacía las líneas, y su docstring afirmaba que «nada del programa apunta a una línea», que era falso | Las líneas se **actualizan en su sitio**, así que **el enganche del albarán sobrevive a la corrección** (que es lo que el encargo pide conservar). Quitar una línea apuntada contesta **409** con sus palabras. El guardián del borrado cuenta también el enganche fino |
+| **La ficha sumaba los gastos anulados**: el mismo dinero con dos cifras en dos pantallas | Los anulados no son deuda: se cuentan aparte y se dicen |
+| **«Pendiente 0,00 €» cuando no se sabe**: un gasto sin importe dejaba el total en cero mientras su propia fila decía «—» | `pendiente` sale «no se sabe» y se declara por qué |
+| **`falta` restaba unidades distintas**: 500 kg menos 300 L decían «faltan 200 kg» | Se resta solo con `servicios.se_pueden_sumar`; lo que llegó en otra unidad **se enseña** |
+| **Un albarán enganchado solo por línea no contaba** y la ficha decía «no ha entrado nada» de algo que sí sabía | Se reconocen los dos caminos: la cabecera **y** el enganche de línea |
+
+Y tres cosas más, menores pero reales: el **409 solo miraba los importes** (otras notas u otro IVA se
+tiraban en silencio, ahora dan 409); **reintentar el mismo comando después de corregir la factura daba un
+409 falso** (ahora devuelve la factura como está hoy y lo dice); y **la misma clave de un pago con otro
+dinero se tragaba los datos nuevos** (ahora es 409, como en las facturas). El aviso de «ese número y esa
+fecha» decía fecha cuando compara el año, y la captura «del móvil» era de 500 px: las dos corregidas
+(la captura es **390×1400** de verdad).
+
+**Límites declarados, que no se han cerrado:** todo lo medido es **SQLite** (los índices parciales tienen
+su variante `postgresql_where`, pero no se ha ejecutado la sonda de PostgreSQL); el **posible duplicado
+comercial** (mismo proveedor, número, año y total) no tiene índice único propio —la carrera la cubre la
+consulta previa, y el revisor no consiguió duplicarlo en 80 intentos, pero no está garantizado por la
+base—; el reenvío de un **pago** sigue contestando 201 y no 200; y las **capturas** no las ha podido mirar
+ningún agente (el modelo no acepta imágenes): se han verificado como PNG reales, con sus dimensiones, y por
+el texto que la propia página declara.
 
 ---
 

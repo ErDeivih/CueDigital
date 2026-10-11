@@ -56,6 +56,21 @@ router = APIRouter(prefix="/api/facturas", tags=["facturas"])
 # los papeles anexos, que ya está probada, para no tener dos listas de tipos de fichero.
 TIPOS = adjuntos.TIPOS_DOCUMENTO
 
+# **Los campos de una línea de factura que una corrección sí toca**, uno por uno y a la vista: lo que no
+# está aquí no se copia (la factura a la que pertenece, su explotación y su identificador se quedan como
+# están, que es justo lo que conserva el enganche del albarán).
+CAMPOS_DE_UNA_LINEA_DE_FACTURA = (
+    "descripcion",
+    "cantidad",
+    "unidad",
+    "precio_unitario",
+    "importe",
+    "numero_registro",
+    "lote",
+    "producto_id",
+    "fertilizante_id",
+)
+
 
 def _productos_conocidos(db, explotacion) -> list[dict]:
     """La cesta del agricultor, para poder decir «esta línea es el Glifosato que ya tienes»."""
@@ -221,6 +236,13 @@ def _la_misma_factura(db, factura: models.Factura, entrada: FacturaEntrada) -> b
     ):
         if not _los_importes_cuadran(suyo, mio):
             return False
+    # **Y los campos que no llevan cuenta, comparados tal cual** (09/10/2026, lo cazó el revisor): antes
+    # solo se miraban los importes y las líneas, así que la misma clave con otro `tipo_iva_pct` o con
+    # otras notas devolvía 200 «ya estaba» y **los datos nuevos se tiraban en silencio**, sin decir nada.
+    if (factura.tipo_iva_pct or 0) != (entrada.tipo_iva_pct or 0):
+        return False
+    if (factura.notas or "") != (entrada.notas or ""):
+        return False
 
     de_antes = _las_lineas_como_se_comparan(factura)
     de_ahora = sorted(
@@ -246,6 +268,26 @@ def _las_lineas_como_se_comparan(factura: models.Factura) -> list[tuple]:
             for linea in factura.lineas
         ),
         key=lambda fila: (fila[0], fila[1] or 0.0, fila[2], fila[3] or 0.0),
+    )
+
+
+def _la_factura_se_corrigio_despues(db, explotacion_id: int, factura_id: int) -> bool:
+    """¿Esta factura se corrigió después de apuntarse?
+
+    Hace falta para no contestar «conflicto» a un móvil que reintenta: si el agricultor corrigió la
+    factura, el cuerpo original ya no coincide con ella **porque él lo cambió**, no porque la petición
+    traiga dos cosas distintas. Lo dice la auditoría, que es donde está escrito.
+    """
+    return (
+        db.scalar(
+            select(models.Auditoria.id).where(
+                models.Auditoria.explotacion_id == explotacion_id,
+                models.Auditoria.entidad == "factura",
+                models.Auditoria.entidad_id == factura_id,
+                models.Auditoria.accion == "corregir_lineas",
+            )
+        )
+        is not None
     )
 
 
@@ -441,10 +483,26 @@ async def guardar_una_factura(
         # **El conflicto claro**: la misma clave de reenvío mandando datos distintos. Una petición
         # identifica **un** comando, y un comando no tiene dos cuerpos; aquí el programa no elige cuál
         # de las dos facturas vale, lo dice y que lo mire. Es lo único de este bloque que es un error.
+        #
+        # **Con una excepción, y la encontró el revisor** (09/10/2026): si la factura **se corrigió
+        # después** de apuntarse —hay una corrección suya en la auditoría—, lo que llega ya no coincidir
+        # con ella no es un conflicto: es que el resultado del comando **cambió** porque el agricultor lo
+        # cambió. El móvil que reintenta sin cobertura no puede recibir un «conflicto» por eso. Se
+        # devuelve la factura como está hoy, diciéndolo.
         if como == "clave_de_reenvio" and not lo_mismo:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=textos.mensaje("AL26_la_misma_clave_con_otros_datos"),
+            if not _la_factura_se_corrigio_despues(db, explotacion.id, ya.id):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=textos.mensaje("AL26_la_misma_clave_con_otros_datos"),
+                )
+            avisos = [
+                textos.MENSAJES["AL45_esa_factura_se_corrigio_despues"].format(
+                    numero=ya.numero_factura or ""
+                )
+            ]
+            respuesta.status_code = status.HTTP_200_OK
+            return _con_nombres(db, ya).model_copy(
+                update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
             )
         # Todo lo demás es «ya estaba» y se contesta con **la que había**, sin tocar nada: es lo que
         # pide el contrato §2 («reenviar el mismo comando devuelve su resultado») y lo que hace la
@@ -976,13 +1034,64 @@ def _tablas_que_apuntan_a_una_factura() -> list:
 
 
 def _cuantos_apuntes_usan_la_factura(db, explotacion_id: int, factura_id: int) -> int:
-    """Cuántas cosas del cuaderno apuntan a esa factura (los abonos que salieron de ella)."""
-    return sum(
+    """Cuántas cosas del cuaderno apuntan a esa factura.
+
+    **Y aquí entra el enganche fino** (09/10/2026, lo cazó el revisor): las líneas de un albarán pueden
+    decir a qué línea de la factura corresponden (`lineas_de_recepcion.linea_factura_id`), y eso es una
+    dependencia de verdad aunque la cabecera del albarán no lleve la factura. Contando solo `factura_id`,
+    borrar esa factura intentaba llevarse sus líneas y la base lo rechazaba con un **500** en vez de con
+    el 409 que explica qué pasa.
+    """
+    de_la_cabecera = sum(
         correcciones.cuantas_filas_apuntan_a(
             db, modelo, "factura_id", factura_id, explotacion_id
         )
         for modelo in _tablas_que_apuntan_a_una_factura()
     )
+    return de_la_cabecera + len(_los_albaranes_enganchados_a_las_lineas(db, explotacion_id, factura_id))
+
+
+def _los_albaranes_enganchados_a_las_lineas(db, explotacion_id: int, factura_id: int) -> list:
+    """Las líneas de albarán que dicen ser de una línea de esta factura (el enganche fino).
+
+    Existe porque **sí hay algo que apunta a una línea de factura**: el docstring de `corregir_factura`
+    decía que no, y era falso. Se descubrió midiendo: corregir una factura con un albarán enganchado
+    línea a línea contestaba **500** por la clave foránea `lineas_de_recepcion.linea_factura_id`.
+    """
+    return list(
+        db.scalars(
+            select(models.LineaDeRecepcion)
+            .join(
+                models.LineaDeFactura,
+                models.LineaDeFactura.id == models.LineaDeRecepcion.linea_factura_id,
+            )
+            .where(
+                models.LineaDeRecepcion.explotacion_id == explotacion_id,
+                models.LineaDeFactura.factura_id == factura_id,
+            )
+        )
+    )
+
+
+def _casar_las_lineas(viejas: list, nuevas: list) -> tuple[list[tuple], list, list]:
+    """Reparte las líneas nuevas sobre las viejas: **(parejas, sobrantes, por_poner)**.
+
+    **Por qué no se borran y se rehacen** (09/10/2026). Hasta hoy, corregir una factura borraba todas sus
+    líneas y añadía las nuevas, y el docstring lo justificaba diciendo que **nada del programa apunta a
+    una línea**. Es falso: `lineas_de_recepcion.linea_factura_id` apunta a `lineas_de_factura.id`, y es el
+    enganche que dice «esta línea del albarán es esta línea de la factura». Medido: con un albarán
+    enganchado así, corregir la factura contestaba **500** (`FOREIGN KEY constraint failed`) y el
+    agricultor se quedaba sin poder arreglar la factura.
+
+    Así que las líneas se **actualizan en su sitio**, por orden: la primera nueva sobre la primera vieja, y
+    así. El identificador se conserva —y con él el enganche del albarán, que es lo que el encargo pide que
+    se conserve—. Las que sobran de un lado o del otro se devuelven aparte: las nuevas, para añadirlas; las
+    viejas que no se usan, para quitarlas **solo si nadie las está apuntando** (lo decide quien llama).
+    """
+    parejas = list(zip(viejas, nuevas))
+    sobran_viejas = viejas[len(parejas) :]
+    por_poner = nuevas[len(parejas) :]
+    return parejas, sobran_viejas, por_poner
 
 
 @router.put("/{factura_id}", response_model=FacturaSalida)
@@ -1010,12 +1119,17 @@ def corregir_factura(
     diciendo lo de antes. Es la misma razón por la que borrar una factura quita del almacén lo que
     metió.
 
-    Las líneas **se rehacen enteras**, no se corrigen una a una. Nada del programa apunta a una línea
-    —la única tabla que apunta a `factura_id` es `lineas_de_factura`, que es parte de la propia
-    factura—, su identificador no viaja a la Junta, y rehacerlas es lo que garantiza que no quede
-    ninguna línea vieja colgando de una factura corregida. Lo que había antes y lo que hay ahora
-    queda apuntado en la auditoría (`corregir_lineas`), que es lo que permite contestar «¿y esto qué
-    decía?».
+    Las líneas **se corrigen en su sitio**, conservando su identificador. Antes se borraban y se rehacían
+    enteras, y este mismo docstring lo justificaba diciendo que **nada del programa apunta a una línea**:
+    era falso —`lineas_de_recepcion.linea_factura_id` apunta a `lineas_de_factura.id`, y es el enganche
+    fino del albarán—. Medido el 09/10/2026: con un albarán enganchado así, corregir la factura contestaba
+    **500** por la clave foránea. Ahora la primera línea nueva se escribe sobre la primera vieja y así, con
+    lo que **el enganche del albarán sobrevive a la corrección** (que es lo que el encargo pide que se
+    conserve). Y si una corrección quiere **quitar** una línea que un albarán está apuntando, contesta
+    **409** con sus palabras en vez de reventar: un enganche no se puede conservar si la línea desaparece.
+
+    Lo que había antes y lo que hay ahora queda apuntado en la auditoría (`corregir_lineas`), que es lo que
+    permite contestar «¿y esto qué decía?».
 
     Las comprobaciones son **las mismas que al guardar** (es la misma función,
     `_preparar_factura_guardable` y `_preparar_lineas_de_la_factura`): un producto de otra finca
@@ -1049,9 +1163,31 @@ def corregir_factura(
         explotacion_id=explotacion.id,
         usuario_id=usuario.id,
     )
-    for vieja in list(factura.lineas):
+    # **Las líneas se actualizan en su sitio**, conservando su identificador: ver el porqué, con la
+    # medición del 500, en el docstring de `_casar_las_lineas`.
+    parejas, sobran_viejas, por_poner = _casar_las_lineas(
+        sorted(factura.lineas, key=lambda fila: fila.id), lineas_de_ahora
+    )
+    # Quitar una línea que un albarán está apuntando dejaría su enganche sin nada a lo que apuntar. Se
+    # dice con palabras —y qué hacer— en vez de reventar contra la clave foránea.
+    if sobran_viejas:
+        se_van = {vieja.id for vieja in sobran_viejas}
+        if any(
+            linea.linea_factura_id in se_van
+            for linea in _los_albaranes_enganchados_a_las_lineas(
+                db, explotacion.id, factura.id
+            )
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=textos.mensaje("AL44_no_se_puede_quitar_una_linea_con_albaran"),
+            )
+    for vieja, nueva in parejas:
+        for campo in CAMPOS_DE_UNA_LINEA_DE_FACTURA:
+            setattr(vieja, campo, getattr(nueva, campo))
+    for vieja in sobran_viejas:
         db.delete(vieja)
-    for nueva in lineas_de_ahora:
+    for nueva in por_poner:
         db.add(nueva)
     db.add(
         models.Auditoria(

@@ -38,6 +38,10 @@ def interfaz() -> dict:
         "registro_electronico": textos.REGISTRO_ELECTRONICO,
         # Las facturas de compra: subirlas, leerlas y confirmarlas.
         "facturas": textos.FACTURAS,
+        # **La ficha de una compra** (S11, 09/10/2026): las cuatro cifras de una compra —facturado,
+        # recibido, pagado y pendiente— y las palabras de sus listas. Va aquí y no dentro de `facturas`
+        # porque es otra pantalla: la que junta la factura, el albarán y el dinero.
+        "compra": textos.COMPRA,
         # Dar de alta lo que se usa. Sin esto, al agricultor nuevo se le pide algo que
         # la aplicación no le deja hacer.
         "maestros": textos.MAESTROS,

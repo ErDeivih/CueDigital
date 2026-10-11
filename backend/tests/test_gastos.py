@@ -1014,6 +1014,47 @@ def _lo_que_contesta(respuesta, *esperados):
 class TestElRecorridoDeUnGastoDePuntaAPunta:
     """De apuntar el gasto a saber cuánto se debe: el camino entero, por la API."""
 
+    def test_la_misma_clave_de_pago_con_otro_dinero_es_un_conflicto(self, cliente, cuenta):
+        """Una petición de pago no puede traer dos dineros distintos (09/10/2026).
+
+        Lo encontró el revisor independiente: esta puerta devolvía el pago que ya estaba **y tiraba los
+        datos nuevos en silencio**, así que un pago de 900 € mandado con una clave ya usada por uno de 50 €
+        contestaba «ya estaba» y los 900 € se perdían sin que nadie lo dijera. Es la misma regla que la
+        puerta de las facturas: la misma clave con otros datos es un conflicto, no un reenvío.
+        """
+        from app import textos
+
+        un_pago = {
+            "importe": "50.00",
+            "fecha": "2026-03-20",
+            "forma": "transferencia",
+            "clave_de_reenvio": "pago-1",
+        }
+        primera = cliente.post("/api/gastos/pagos", headers=cuenta["cabeceras"], json=un_pago)
+        assert primera.status_code in (200, 201), primera.text
+
+        # El mismo comando otra vez: **se devuelve el mismo pago** y no se apunta otro.
+        repetido = cliente.post("/api/gastos/pagos", headers=cuenta["cabeceras"], json=un_pago)
+        assert repetido.status_code in (200, 201), repetido.text
+        assert repetido.json().get("ya_estaba") is True, repetido.text
+
+        # Y el mismo comando con **otro dinero**: conflicto, y el dinero nuevo no se pierde en silencio.
+        con_otro_dinero = cliente.post(
+            "/api/gastos/pagos",
+            headers=cuenta["cabeceras"],
+            json={**un_pago, "importe": "900.00"},
+        )
+        assert con_otro_dinero.status_code == 409, con_otro_dinero.text
+        assert textos.mensaje("G41_la_misma_clave_con_otros_datos") in con_otro_dinero.text
+
+        # Y el pago que había sigue siendo el de 50: lo que no se hizo fue perder los 900 en silencio.
+        los_pagos = cliente.get("/api/gastos/pagos", headers=cuenta["cabeceras"])
+        if los_pagos.status_code == 200:
+            suyos = los_pagos.json()
+            lista = suyos if isinstance(suyos, list) else (suyos.get("pagos") or [])
+            de_cincuenta = [uno for uno in lista if str(uno.get("importe")) == "50.00"]
+            assert de_cincuenta, "el pago de 50 tiene que seguir ahí"
+
     def _un_gasto(self, cliente, cuenta, **cambios):
         datos = {
             "fecha": "2026-03-04",

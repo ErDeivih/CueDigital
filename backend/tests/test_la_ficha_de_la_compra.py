@@ -286,3 +286,209 @@ def test_la_ficha_de_otra_finca_no_se_abre(cliente, cuenta, crear_cuenta):
     respuesta = cliente.get(f"/api/compras/{factura['id']}", headers=la_otra["cabeceras"])
 
     assert respuesta.status_code == 404, respuesta.text
+
+
+# ---------------------------------------------------------------------------
+# Lo que encontró el revisor independiente (09/10/2026)
+# ---------------------------------------------------------------------------
+#
+# Estas seis pruebas existen porque un revisor que no era yo **tiró abajo** lo que yo daba por bueno. Las
+# seis se pusieron rojas antes de arreglar nada, y cada una dice qué estaba mal:
+#
+#   1. **Los textos de la pantalla llegaban vacíos**: la puerta servía `textos.FACTURAS` y el componente
+#      pide ocho frases de `textos.COMPRA`, así que salían **dos botones en blanco de 1059 px**. La
+#      prueba de JavaScript no lo veía porque usa un juego de textos escrito a mano; esta **cruza** el
+#      componente con lo que la puerta sirve de verdad.
+#   2. La ficha **sumaba los gastos anulados**: dos pantallas daban dos cifras del mismo dinero.
+#   3. Un gasto **sin importe** dejaba el pendiente en **0,00 €** mientras su propia fila decía «—».
+#   4. `falta` **restaba unidades distintas**: 500 kg menos 300 L decían «faltan 200 kg».
+#   5. Un albarán enganchado **solo por línea** no contaba: la ficha decía «no ha entrado nada».
+#   6. Y **nadie avisaba** de que los gastos no cuadraran con lo facturado.
+
+
+def _los_textos_que_pide_la_pantalla() -> set[str]:
+    """Las claves de `textos` que lee `compra.js`, sacadas **del propio componente**.
+
+    Se leen del fichero, y no de una lista escrita aquí, porque una lista se queda vieja en cuanto
+    alguien añade una frase a la pantalla —que es exactamente cómo se coló el defecto—.
+    """
+    import pathlib
+    import re
+
+    componente = (
+        pathlib.Path(__file__).resolve().parents[1] / "web" / "react" / "pantallas" / "compra.js"
+    ).read_text(encoding="utf-8")
+    return set(re.findall(r"(?:textos\s*\|\|\s*\{\}|textos)\.([a-z_]+)", componente))
+
+
+def test_la_puerta_sirve_todos_los_textos_que_pide_la_pantalla(cliente, cuenta):
+    """**El defecto más gordo que encontró el revisor**: la pantalla pedía frases que no llegaban.
+
+    `compras_api` servía `textos.FACTURAS`, y de ahí no salen «Los albaranes de esta compra», «El dinero
+    de esta compra», «VER EL ALBARÁN» ni «VER EL GASTO»: salían **vacíos**. En un navegador de verdad
+    eso son dos botones en blanco y dos títulos sin texto, y las pruebas no lo veían porque la de
+    JavaScript usa un juego de textos escrito a mano. Esta cruza las dos mitades: **lo que el componente
+    lee, la puerta lo tiene que servir**.
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+
+    pide = _los_textos_que_pide_la_pantalla()
+    assert pide, "no he sabido leer qué textos pide `compra.js`: ¿ha cambiado de forma?"
+    faltan = sorted(clave for clave in pide if clave not in ficha["textos"])
+    assert not faltan, (
+        "la ficha pide textos que la puerta NO sirve, así que saldrían vacíos en pantalla: "
+        f"{faltan}. Lo que sí sirve: {sorted(ficha['textos'])}"
+    )
+    # Y que no lleguen vacíos: una clave que existe con el texto en blanco es el mismo defecto de antes,
+    # solo que más difícil de ver.
+    vacios = sorted(clave for clave in pide if not str(ficha["textos"][clave]).strip())
+    assert not vacios, f"textos servidos pero vacíos: {vacios}"
+
+
+def test_un_gasto_anulado_no_cuenta_como_deuda(cliente, cuenta):
+    """Lo que se anuló **no es una deuda**, y la ficha no puede sumarlo.
+
+    La pantalla de gastos deja fuera los anulados de «por pagar»; la ficha los sumaba, así que el mismo
+    dinero salía con dos cifras en dos pantallas. Ahora se cuentan aparte y se dice.
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])
+    gasto = _un_gasto(cliente, cuenta["cabeceras"], factura, importe="100.00")
+
+    anulado = cliente.post(
+        f"/api/gastos/{gasto['id']}/anular",
+        headers=cuenta["cabeceras"],
+        json={"motivo": "estaba duplicado"},
+    )
+    assert anulado.status_code in (200, 201), anulado.text
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    compra = ficha["compra"]
+    assert compra["cuantos_gastos"] == 0, "un gasto anulado no es un gasto de esta compra"
+    assert compra["cuantos_gastos_anulados"] == 1, "pero se dice que existe"
+    assert compra["pendiente"] == "0.00", compra["pendiente"]
+    assert any("anulado" in aviso for aviso in ficha["avisos"]), ficha["avisos"]
+
+    # Y el contraste que pedía el revisor: la pantalla de gastos dice lo mismo.
+    por_pagar = cliente.get("/api/gastos", headers=cuenta["cabeceras"]).json().get("por_pagar") or {}
+    assert float(por_pagar.get("importe") or 0) == 0.0, (
+        "la ficha y la pantalla de gastos tienen que decir lo mismo de este dinero"
+    )
+
+
+def test_un_gasto_sin_importe_deja_el_pendiente_en_no_se_sabe(cliente, cuenta):
+    """Un total al que le falta un sumando **no es un total**: se dice «—», no 0,00 €.
+
+    El modelo permite un gasto sin importe (el agricultor sabe que pagó la reparación y no se acuerda de
+    cuánto) y la API lo acepta. La ficha sumaba los pendientes conocidos y enseñaba **0,00 €** mientras su
+    propia fila decía «Pendiente: —»: se contradecía y afirmaba un cero que no sabía.
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])
+    respuesta = cliente.post(
+        "/api/gastos",
+        headers=cuenta["cabeceras"],
+        json={
+            "concepto": "Reparación sin apuntar el importe",
+            "fecha": "2026-03-16",
+            "categoria": "reparacion",
+            "factura_id": factura["id"],
+        },
+    )
+    assert respuesta.status_code in (200, 201), respuesta.text
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    compra = ficha["compra"]
+    assert compra["cuantos_gastos_sin_importe"] == 1
+    assert compra["pendiente"] is None, (
+        f"con un gasto sin importe, lo pendiente NO se sabe (salió {compra['pendiente']!r})"
+    )
+    assert any("no se puede saber lo que queda" in aviso for aviso in ficha["avisos"]), ficha["avisos"]
+
+
+def test_lo_recibido_en_otra_unidad_no_se_resta_a_la_factura(cliente, cuenta):
+    """500 kg menos 300 L no son 200 de nada: **no se resta**, y se dice qué llegó.
+
+    La ficha decía «faltan 200 kg» de una línea que venía en litros. El propio código dice que para eso
+    está `servicios.se_pueden_sumar`, y no lo usaba. Y lo que sí llegó **se enseña**, para que «no se
+    puede saber» no parezca «no llegó nada».
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])  # la línea viene en kg
+    articulo = _un_articulo(cliente, cuenta["cabeceras"])
+    _un_albaran(
+        cliente,
+        cuenta["cabeceras"],
+        factura,
+        articulo,
+        cantidad=300.0,
+        lineas=[
+            {
+                "articulo_id": articulo["id"],
+                "nombre": articulo["nombre"],
+                "unidad": "L",  # el albarán lo dice en litros
+                "cantidad": 300.0,
+                "linea_factura_id": factura["lineas"][0]["id"],
+            }
+        ],
+    )
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    la_linea = ficha["compra"]["recibido"]["por_linea"][0]
+    assert la_linea["recibido"] is None, f"no se pueden restar kg y L, y salió {la_linea['recibido']!r}"
+    assert la_linea["falta"] is None, "y por tanto no hay «falta» que enseñar"
+    assert la_linea["recibido_de_otros_modos"] == [{"cantidad": 300.0, "unidad": "L"}], (
+        "lo que sí llegó tiene que verse, o «no se puede saber» parecería «no llegó nada»"
+    )
+    # Y el total por unidad sí sale, porque ahí no se mezcla nada.
+    assert ficha["compra"]["recibido"]["por_unidad"] == {"L": 300.0}
+
+
+def test_un_albaran_enganchado_solo_por_linea_cuenta(cliente, cuenta):
+    """El enganche fino (`linea_factura_id`) **también** es un enganche.
+
+    Un albarán puede decir qué línea de la factura es cada una de sus líneas sin llevar la factura en la
+    cabecera. La ficha solo miraba la cabecera, así que decía «no ha entrado nada al almacén» y «no se
+    puede saber» de algo que sí sabía — y es el mismo caso que hacía fallar la corrección de la factura.
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])
+    articulo = _un_articulo(cliente, cuenta["cabeceras"])
+    albaran = _un_albaran(
+        cliente,
+        cuenta["cabeceras"],
+        factura,
+        articulo,
+        cantidad=300.0,
+        factura_id=None,  # **sin la factura en la cabecera**: solo por línea
+    )
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    recibido = ficha["compra"]["recibido"]
+    assert recibido["cuantas_recepciones"] == 1, "el albarán enganchado por línea tiene que contar"
+    assert [una["id"] for una in recibido["recepciones"]] == [albaran["id"]]
+    assert recibido["por_linea"][0]["recibido"] == 300.0
+    assert not any("no ha entrado nada" in aviso for aviso in ficha["avisos"]), ficha["avisos"]
+
+
+def test_si_los_gastos_no_cuadran_con_la_factura_se_dice(cliente, cuenta):
+    """Una factura de 663 con un gasto de 100 deja un pendiente de 100, y eso **hay que decirlo**.
+
+    No es un error del programa —el agricultor apunta la factura y el gasto por separado—, pero callarlo
+    deja creyendo que de una compra de 663 quedan 100 € por pagar. Es la mitad financiera de la regla del
+    «no lo sé»: lo que no cuadra se dice.
+    """
+    factura = _una_factura(cliente, cuenta["cabeceras"])  # 663
+    _un_gasto(cliente, cuenta["cabeceras"], factura, importe="100.00")
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    assert ficha["compra"]["pendiente"] == "100.00"
+    assert any("no cuadran" in aviso or "suman" in aviso for aviso in ficha["avisos"]), (
+        f"la ficha tiene que avisar de que los gastos no cuadran con la factura: {ficha['avisos']}"
+    )
+
+
+def test_si_los_gastos_cuadran_no_se_avisa_de_nada(cliente, cuenta):
+    """Y cuando cuadran, **no se dice nada**: un aviso de más enseña a no leerlos."""
+    factura = _una_factura(cliente, cuenta["cabeceras"])  # 663
+    _un_gasto(cliente, cuenta["cabeceras"], factura, importe="663.00")
+
+    ficha = _la_ficha(cliente, cuenta["cabeceras"], factura["id"])
+    assert not any("no cuadran" in aviso or "suman" in aviso for aviso in ficha["avisos"]), ficha["avisos"]

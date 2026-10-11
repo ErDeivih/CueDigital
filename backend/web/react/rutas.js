@@ -124,6 +124,10 @@ export const PANTALLAS = [
   // vuelve a pedir ese albarán al servidor (el libro no se descarga al arrancar), y si no hay cobertura
   // dice que no lo ha podido comprobar en vez de decir que no existe.
   { clave: "recepcion", patron: ["almacen", "recepcion", ":id"] },
+  // **La ficha de una compra** (S11, 09/10/2026): lo que dice la factura, lo que ha entrado, lo que se
+  // ha pagado y lo que queda, en un sitio. Va con su identificador porque es una ficha y no una lista:
+  // se puede enlazar, recargar y volver a ella, y al recargar `app.js` la pide al servidor.
+  { clave: "compra", patron: ["compras", ":id"] },
   // **Las semillas y lo que se ha sembrado** (T10, 03/10/2026). Las dos se reconstruyen enteras al abrir
   // su dirección —se piden al servidor—, así que se pueden enlazar, recargar y mandar a quien ayuda.
   // La semilla va **antes** que la siembra en la tabla por el orden de esta lista (no encajan las dos

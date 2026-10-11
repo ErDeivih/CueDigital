@@ -24,7 +24,7 @@ from __future__ import annotations
 import datetime as dt
 
 from fastapi import APIRouter
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from .. import dinero, gastos, models, servicios, textos
 from ..deps import Db, ExplotacionActual, obtener_de_la_explotacion
@@ -33,18 +33,37 @@ router = APIRouter(prefix="/api/compras", tags=["compras"])
 
 
 def _las_recepciones(db, explotacion_id: int, factura_id: int) -> list[models.Recepcion]:
-    """Los albaranes enganchados a esta factura, **incluidos los anulados**.
+    """Los albaranes de esta compra, **incluidos los anulados**.
 
     Los anulados se devuelven a propósito, y marcados: si el agricultor anuló un albarán de esta compra,
     tiene que poder verlo en la ficha —si no, parecería que nunca existió— y saber que **no cuenta**, que
     es lo que dice su campo `anulada`.
+
+    **Y se reconocen por los dos caminos** (09/10/2026, lo cazó el revisor): por la cabecera
+    (`Recepcion.factura_id`, que es como se engancha desde la ficha del albarán) y **por la línea**
+    (`LineaDeRecepcion.linea_factura_id`, que es el enganche fino, el que dice qué línea del albarán es
+    qué línea de la factura). Antes solo se miraba la cabecera, así que un albarán enganchado **solo**
+    por línea no aparecía: la ficha decía «no ha entrado nada» y «no se puede saber» de algo que sí sabía.
     """
+    por_linea = list(
+        db.scalars(
+            select(models.LineaDeRecepcion.recepcion_id)
+            .join(models.LineaDeFactura, models.LineaDeFactura.id == models.LineaDeRecepcion.linea_factura_id)
+            .where(
+                models.LineaDeRecepcion.explotacion_id == explotacion_id,
+                models.LineaDeFactura.factura_id == factura_id,
+            )
+        )
+    )
     return list(
         db.scalars(
             select(models.Recepcion)
             .where(
                 models.Recepcion.explotacion_id == explotacion_id,
-                models.Recepcion.factura_id == factura_id,
+                or_(
+                    models.Recepcion.factura_id == factura_id,
+                    models.Recepcion.id.in_(por_linea) if por_linea else False,
+                ),
             )
             .order_by(models.Recepcion.fecha, models.Recepcion.id)
         )
@@ -62,30 +81,48 @@ def _lo_recibido_por_linea(db, explotacion_id: int, factura: models.Factura) -> 
         db.scalars(
             select(models.LineaDeRecepcion)
             .join(models.Recepcion, models.Recepcion.id == models.LineaDeRecepcion.recepcion_id)
+            # **La línea tiene que ser de ESTA factura**, y se sabe por su enganche fino, no por la
+            # cabecera del albarán (09/10/2026): exigir `Recepcion.factura_id` dejaba fuera los albaranes
+            # enganchados solo por línea, que son justo los que hacen que esta pantalla sepa más.
+            .join(
+                models.LineaDeFactura,
+                models.LineaDeFactura.id == models.LineaDeRecepcion.linea_factura_id,
+            )
             .where(
                 models.LineaDeRecepcion.explotacion_id == explotacion_id,
                 models.Recepcion.anulada.is_(False),
-                models.Recepcion.factura_id == factura.id,
+                models.LineaDeFactura.factura_id == factura.id,
                 models.LineaDeRecepcion.linea_factura_id.is_not(None),
             )
         )
     )
-    recibido: dict[int, float] = {}
+    recibido: dict[int, list[tuple[float, str]]] = {}
     for linea in enganchadas:
         if linea.cantidad is None:
             continue
-        recibido[linea.linea_factura_id] = recibido.get(linea.linea_factura_id, 0.0) + float(
-            linea.cantidad
+        # **Con su unidad**, porque para restar hay que saber si se puede: 500 kg menos 300 L no son 200
+        # de nada (09/10/2026, lo cazó el revisor: esto restaba unidades distintas y decía «faltan 200 kg»
+        # de una línea que venía en litros).
+        recibido.setdefault(linea.linea_factura_id, []).append(
+            (float(linea.cantidad), (linea.unidad or "").strip())
         )
 
     salida = []
     for linea in sorted(factura.lineas, key=lambda fila: fila.id):
-        suyo = recibido.get(linea.id)
+        suyas = recibido.get(linea.id)
         facturado = linea.cantidad
+        la_unidad = (linea.unidad or "").strip()
+        if suyas is None:
+            suyo = None
+        elif any(not servicios.se_pueden_sumar(la_unidad, unidad) for _cantidad, unidad in suyas):
+            # Llegó, pero en una unidad que **no se puede comparar** con la de la factura: entonces la
+            # cantidad recibida **no se puede decir que sea** la de la factura. Se declara «no se sabe» en
+            # vez de restar peras con manzanas; lo que sí llegó se ve en `por_unidad`, que no mezcla.
+            suyo = None
+        else:
+            suyo = sum(cantidad for cantidad, _unidad in suyas)
         falta = None
         if suyo is not None and facturado is not None:
-            # **Solo se resta si se puede**: dos cantidades sin la misma unidad no se restan (sería
-            # inventarse una conversión). Si la unidad no está, se dice que no se sabe.
             falta = float(facturado) - suyo
         salida.append(
             {
@@ -95,6 +132,13 @@ def _lo_recibido_por_linea(db, explotacion_id: int, factura: models.Factura) -> 
                 "facturado": facturado,
                 "recibido": suyo,
                 "falta": falta,
+                # Y **lo que llegó de esta línea aunque no se pueda comparar**, para que el agricultor vea
+                # que sí entró algo y en qué unidad: sin esto, «no se puede saber» parecería «no llegó».
+                "recibido_de_otros_modos": [
+                    {"cantidad": cantidad, "unidad": unidad} for cantidad, unidad in (suyas or [])
+                ]
+                if suyo is None
+                else [],
             }
         )
     return salida
@@ -110,6 +154,22 @@ def _el_importe_del_papel(valor):
     literalmente lo que ya hace `extractos_api` con `factura.total` (línea 722).
     """
     return dinero.cantidad_a_decimal(valor)
+
+
+def _lo_que_ha_entrado_por_unidad(los_albaranes: list[dict]) -> dict[str, float]:
+    """Cuánto ha entrado de esta compra **por unidad**, contando solo los albaranes que cuentan.
+
+    Se devuelve un diccionario `{unidad: cantidad}` y no un solo número porque **dos unidades no se
+    suman**: 300 kg y 20 L no son 320 de nada. Es la misma regla que aplica el almacén al libro
+    (`servicios.se_pueden_sumar`), vista desde la ficha.
+    """
+    por_unidad: dict[str, float] = {}
+    for albaran in los_albaranes:
+        if albaran.get("anulada"):
+            continue
+        for unidad, cantidad in (albaran.get("cantidad_por_unidad") or {}).items():
+            por_unidad[unidad] = por_unidad.get(unidad, 0.0) + cantidad
+    return por_unidad
 
 
 def _los_pagos(db, explotacion_id: int, gasto_ids: list[int]) -> list[dict]:
@@ -212,13 +272,27 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
     los_gastos = []
     pagado_total = dinero.CERO
     pendiente_total = dinero.CERO
+    # **Lo que no se sabe, contado** (09/10/2026, lo cazó el revisor): un gasto sin importe —el modelo lo
+    # permite y la API lo acepta— deja su pendiente en `None`, y sumar «nada» no es sumar cero. Antes esa
+    # compra enseñaba **Pendiente 0,00 €** mientras su propia fila decía «Pendiente: —»: la pantalla
+    # afirmaba un cero que no sabía. Ahora, si falta un dato, el total **no se sabe** y se dice.
+    cuantos_sin_saber = 0
+    anulados = 0
     for gasto in suyos:
+        # **Un gasto anulado no es una deuda** (09/10/2026, lo cazó el revisor): la pantalla de gastos lo
+        # deja fuera de «por pagar» y esta ficha lo estaba sumando, así que el mismo dinero salía con dos
+        # cifras en dos pantallas. Se cuenta aparte y se dice, en vez de sumarlo o de esconderlo.
+        if gasto.anulado:
+            anulados += 1
+            continue
         pagado = servicios.lo_pagado_de_un_gasto(
             db, explotacion_id=explotacion.id, gasto_id=gasto.id
         )
         pendiente = gastos.pendiente_de(gasto.importe, pagado)
         pagado_total = dinero.suma(pagado_total, pagado)
-        if pendiente is not None:
+        if pendiente is None:
+            cuantos_sin_saber += 1
+        else:
             pendiente_total = dinero.suma(pendiente_total, pendiente)
         los_gastos.append(
             {
@@ -238,7 +312,28 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
             }
         )
 
-    los_pagos = _los_pagos(db, explotacion.id, [gasto.id for gasto in suyos])
+    los_pagos = _los_pagos(db, explotacion.id, [gasto["id"] for gasto in los_gastos])
+
+    # **Y si los gastos no cuadran con lo que dice la factura, se dice** (09/10/2026, lo cazó el revisor).
+    # No es un error del programa: el agricultor apunta primero la factura y el gasto después, y a veces
+    # con otro número. Pero si el papel dice 663 y los gastos suman 100, el «pendiente» de esta compra
+    # (100) no es el de la factura, y callarlo deja al agricultor creyendo que le quedan 100 € por pagar
+    # de una compra de 663. Es la mitad financiera de la regla del «no lo sé»: se dice lo que no cuadra.
+    lo_facturado = _el_importe_del_papel(factura.total)
+    lo_gastado = dinero.suma(
+        *[_el_importe_del_papel(fila["importe"]) for fila in los_gastos]
+    )
+    if (
+        lo_facturado is not None
+        and los_gastos
+        and not cuantos_sin_saber
+        and abs(lo_gastado - lo_facturado) >= 0.005
+    ):
+        avisos_del_cuadre = textos.MENSAJES["AL41_los_gastos_no_cuadran_con_la_factura"].format(
+            facturado=dinero.formatea(lo_facturado), gastado=dinero.formatea(lo_gastado)
+        )
+    else:
+        avisos_del_cuadre = ""
 
     # **Los avisos**: lo que no se puede saber y lo que no se ha movido. Sin ellos, un hueco parecería un
     # cero y una factura sin albarán parecería una compra sin mercancía.
@@ -253,6 +348,14 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
                 cuantas=len(sin_enganche)
             )
         )
+    if cuantos_sin_saber:
+        avisos.append(
+            textos.MENSAJES["AL42_hay_gastos_sin_importe"].format(cuantos=cuantos_sin_saber)
+        )
+    if anulados:
+        avisos.append(textos.MENSAJES["AL43_hay_gastos_anulados"].format(cuantos=anulados))
+    if avisos_del_cuadre:
+        avisos.append(avisos_del_cuadre)
 
     return {
         "compra": {
@@ -284,17 +387,26 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
                 "cuantas_recepciones": len(las_que_cuentan),
                 "cuantas_anuladas": len(recepciones) - len(las_que_cuentan),
                 "recepciones": los_albaranes,
+                # **El total que ha entrado, por unidad**, y solo de los albaranes que cuentan. Se suma
+                # aquí, con la unidad delante, a propósito: sumar dos unidades distintas no se puede, y
+                # sumar en el navegador (donde todo número es de coma flotante) es justo lo que el
+                # programa no hace.
+                "por_unidad": _lo_que_ha_entrado_por_unidad(los_albaranes),
                 "por_linea": por_linea,
                 "lineas_sin_enganche": len(sin_enganche),
                 "lineas_con_falta": len(con_falta),
                 "todo_recibido": todo_recibido,
             },
-            # El dinero.
+            # El dinero. **`pendiente` sale `None` —«no se sabe»— si algún gasto no tiene importe**:
+            # un total al que le faltan sumandos no es un total, y enseñarlo como 0,00 sería afirmar
+            # que no queda nada por pagar.
             "pagado": dinero.a_texto(pagado_total),
             "pagado_texto": dinero.formatea(pagado_total),
-            "pendiente": dinero.a_texto(pendiente_total),
-            "pendiente_texto": dinero.formatea(pendiente_total),
+            "pendiente": None if cuantos_sin_saber else dinero.a_texto(pendiente_total),
+            "pendiente_texto": "" if cuantos_sin_saber else dinero.formatea(pendiente_total),
             "cuantos_gastos": len(los_gastos),
+            "cuantos_gastos_sin_importe": cuantos_sin_saber,
+            "cuantos_gastos_anulados": anulados,
             "gastos": los_gastos,
             "pagos": los_pagos,
             # **Los identificadores para que la pantalla arme sus enlaces**, y nada más: el servidor no
@@ -304,5 +416,12 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
             "pago_ids": [pago["id"] for pago in los_pagos],
         },
         "avisos": avisos,
-        "textos": textos.FACTURAS,
+        # **`textos.COMPRA`, y no `textos.FACTURAS`** (09/10/2026). Aquí estaba el defecto más gordo que
+        # encontró el revisor de pantallas: la ficha pedía de este bloque ocho frases —«Los albaranes de
+        # esta compra», «El dinero de esta compra», los dos botones de enlace…— que **solo existen en
+        # `COMPRA`**, así que llegaban vacías: **dos botones en blanco de 1059 px** y dos títulos sin
+        # texto, medidos en Chrome. Y las pruebas no lo veían porque la de JavaScript usa un juego de
+        # textos escrito a mano. Ahora hay una prueba que **cruza** lo que el componente pide con lo que
+        # esta puerta sirve (ver `tests/test_la_ficha_de_la_compra.py`).
+        "textos": textos.COMPRA,
     }

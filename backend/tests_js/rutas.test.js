@@ -235,6 +235,9 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     // Y la ficha de un albarán (T09): su identificador va en el camino, así que se comprueba con su forma
     // completa. Sin él no tiene dirección (hay prueba propia más abajo), igual que una tierra.
     recepcion: { id: 5 },
+    // Y **la ficha de una compra** (S11, 09/10/2026): su identificador es el de la factura y va en el
+    // camino, así que se comprueba con su forma completa. Sin él no tiene dirección, igual que una tierra.
+    compra: { id: 9 },
     // T12 (03/10/2026): la ficha de una factura nuestra y las dos pantallas de una entrega (su importe y
     // su ajuste). Las tres llevan su identificador en el camino, así que se comprueban con su forma
     // completa; sin él no tienen dirección (hay prueba propia más abajo), igual que una tierra.
@@ -316,6 +319,9 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     // la prueba de abajo lo comprueba.
     "libro_almacen",
     "recepcion",
+    // **La ficha de una compra** (S11, 09/10/2026): `#/compras/<id>`. Es un sitio al que se vuelve —se
+    // enlaza, se recarga y el botón «atrás» del móvil vuelve a las facturas—, así que tiene dirección.
+    "compra",
     // T10/T15 (03/10/2026, del otro agente): las semillas y lo que hay sembrado. Se apuntan aquí
     // porque **este fichero es de T06** y esta lista es la que impide que una pantalla nueva se quede
     // sin dirección sin que nadie se entere; la prueba que las vigila es esta, así que la mantenemos

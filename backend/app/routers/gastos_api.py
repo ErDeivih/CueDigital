@@ -1724,6 +1724,20 @@ def apuntar_un_pago(datos: PagoEntrada, explotacion: ExplotacionActual, db: Db) 
             )
         )
         if ya is not None:
+            # **La misma clave con otros datos es un conflicto, no un reenvío** (09/10/2026, lo cazó el
+            # revisor): esta puerta devolvía el pago que ya estaba **y tiraba los datos nuevos en
+            # silencio**, así que un dinero de 900 € apuntado con una clave ya usada por uno de 50 €
+            # contestaba «ya estaba» y los 900 se perdían sin que nadie lo dijera. Es la misma regla que
+            # la puerta de las facturas: una petición identifica **un** comando.
+            if (
+                dinero.a_texto(dinero.a_decimal(datos.importe)) != dinero.a_texto(ya.importe)
+                or datos.fecha != ya.fecha
+                or (datos.forma or "transferencia") != (ya.forma or "")
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=textos.mensaje("G41_la_misma_clave_con_otros_datos"),
+                )
             return {
                 "pago": _como_se_ve_un_pago(db, explotacion, ya),
                 "ya_estaba": True,

@@ -1025,7 +1025,7 @@ MENSAJES: dict[str, str] = {
         "estaba apuntada. Míralo en la lista y anula la que sobre."
     ),
     "AL28_ese_numero_ya_esta_con_otros_importes": (
-        "De ese proveedor ya tienes una factura con ese número y esa fecha, y **no dice lo mismo**: "
+        "De ese proveedor ya tienes una factura con ese número y ese año, y **no dice lo mismo**: "
         "una de las dos tiene los importes mal. Se ha dejado la que había. Si te has equivocado al "
         "apuntar, corrígela; y si de verdad son dos facturas, apunta la segunda con su número."
     ),
@@ -1040,6 +1040,40 @@ MENSAJES: dict[str, str] = {
     "AL40_esta_factura_no_ha_metido_nada_en_el_almacen": (
         "De esta factura no ha entrado nada al almacén todavía: la mercancía la mete el albarán, no la "
         "factura. Si ya la tienes en casa, apunta el albarán y engánchalo aquí."
+    ),
+    # Los dos avisos que pidió el revisor (09/10/2026): la ficha sumaba gastos anulados y callaba lo que
+    # no sabía, así que dos pantallas daban dos cifras del mismo dinero y un cero parecía un dato.
+    "AL41_los_gastos_no_cuadran_con_la_factura": (
+        "La factura dice {facturado} y los gastos apuntados a ella suman {gastado}. Lo pendiente que "
+        "enseña arriba es lo de los gastos, no lo de la factura: mira cuál de los dos está mal antes de "
+        "darlo por bueno."
+    ),
+    "AL42_hay_gastos_sin_importe": (
+        "De esta compra hay {cuantos} gasto(s) sin el importe apuntado, así que **no se puede saber lo "
+        "que queda por pagar**: por eso arriba pone «—» y no una cifra. Apunta cuánto costó."
+    ),
+    "AL43_hay_gastos_anulados": (
+        "De esta compra hay {cuantos} gasto(s) anulados. No cuentan en lo que se ha pagado ni en lo que "
+        "queda —lo que se anuló no es una deuda—, pero siguen a la vista en Gastos por si hay que "
+        "mirarlos."
+    ),
+    # **La corrección que quiere quitar una línea que un albarán está apuntando** (09/10/2026). Antes
+    # contestaba 500 por la clave foránea; ahora lo dice y dice qué hacer.
+    "AL44_no_se_puede_quitar_una_linea_con_albaran": (
+        "No se puede quitar esa línea: un albarán dice que le corresponde, así que su mercancía se "
+        "quedaría sin saber de qué compra es. Si la línea sobra, anula antes el albarán; y si lo que "
+        "quieres es cambiar lo que dice, cambia sus números en vez de quitarla."
+    ),
+    # **El reintento de un móvil después de corregir la factura** (09/10/2026). No es un conflicto: el
+    # comando se atendió, y su resultado cambió porque el agricultor lo cambió él.
+    "AL45_esa_factura_se_corrigio_despues": (
+        "Esa petición ya se atendió, y la factura {numero} se corrigió después, así que lo que dice ahora "
+        "no es lo que traía esta petición. Se devuelve como está hoy: mírala antes de volver a mandarla."
+    ),
+    # Lo mismo para el dinero (09/10/2026): la misma clave con otro importe no es un reenvío.
+    "G41_la_misma_clave_con_otros_datos": (
+        "Esa petición ya se atendió, pero con otro dinero: una misma petición no puede traer dos pagos "
+        "distintos. Mira cuál es el bueno y apunta el otro como una petición nueva."
     ),
     # Estas tres no son avisos de que algo esté mal: son las tres razones por las que **no se puede
     # hacer la resta**. Es la misma decisión que en la cesta (A20–A23): decir «te quedan 0 litros»
@@ -5281,6 +5315,51 @@ CAMPANAS: dict[str, str] = {
         "Un año en tu cuaderno no tiene por qué empezar en enero: muchas cosechas empiezan en "
         "septiembre. Pon el día en que tú empiezas a apuntar ese año."
     ),
+}
+
+# **La ficha de una compra** (S11, 09/10/2026). Es la pantalla que junta las cuatro cifras que hasta
+# ahora vivían en tres sitios: lo que dice la factura, lo que ha entrado de verdad, lo que se ha pagado
+# y lo que queda. Las etiquetas se llaman como se llama cada cosa en el campo —«facturado», «recibido»,
+# «pagado», «pendiente»— porque son las palabras con las que el agricultor hace la pregunta.
+COMPRA: dict[str, str] = {
+    "titulo": "La compra",
+    "buscando": "Buscando la compra…",
+    "anulada": "Esta factura está anulada: no cuenta.",
+    "anulada_con_motivo": "Esta factura está anulada: {motivo}",
+    "no_se_sabe": "No se puede saber",
+    "nada_todavia": "Nada todavía",
+    "un_albaran_sin_numero": "Un albarán sin número",
+    "ese_albaran_esta_anulado": "Ese albarán está anulado, así que no metió nada.",
+    "las_lineas": "Lo que trae la factura",
+    "de_ese_pago_va_aqui": "De ese pago, a esta compra: {importe}",
+    "facturado": "Facturado",
+    "facturado_pista": "Lo que dice la factura del proveedor.",
+    "recibido": "Recibido",
+    "recibido_pista": "Lo que ha entrado de verdad en el almacén. Lo mete el albarán, no la factura.",
+    "pagado": "Pagado",
+    "pagado_pista": "El dinero que ya ha salido para esta compra.",
+    "pendiente": "Pendiente",
+    "pendiente_pista": "Lo que queda por pagar de esta compra.",
+    "recibido_de": "Lo que ha llegado",
+    "sin_albaran": "De esta compra no ha entrado nada todavía.",
+    "los_albaranes": "Los albaranes de esta compra",
+    "falta_por_llegar": "Falta por llegar",
+    "de_la_linea": "De esta línea han entrado {recibido} de {facturado} {unidad}.",
+    "linea_completa": "De esta línea ha entrado todo.",
+    "no_se_sabe_la_linea": "De esta línea no se puede saber cuánto ha entrado.",
+    "pero_ha_llegado": "Lo que sí ha llegado viene en otra unidad: {cuanto}.",
+    "el_dinero": "El dinero de esta compra",
+    "sin_gasto": (
+        "De esta factura todavía no hay ningún gasto apuntado, así que no se puede decir cuánto se ha "
+        "pagado. Apunta el gasto en «Gastos» y enlázalo con esta factura."
+    ),
+    "los_gastos": "Los gastos",
+    "los_pagos": "Los pagos",
+    "ver_el_albaran": "VER EL ALBARÁN",
+    "ver_el_gasto": "VER EL GASTO",
+    "ver_la_compra": "VER LA COMPRA",
+    "volver_a_las_facturas": "VOLVER A MIS FACTURAS",
+    "sin_lineas": "Esta factura no trae líneas apuntadas.",
 }
 
 FACTURAS: dict[str, str] = {

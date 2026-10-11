@@ -57,6 +57,8 @@ import { pantallaDeCesta } from "./react/pantallas/cesta.js";
 import { pantallaDelLibroDelAlmacen } from "./react/pantallas/libro_del_almacen.js";
 import { pantallaDeNuevoAlbaran } from "./react/pantallas/nuevo_albaran.js";
 import { pantallaDeRecepcion } from "./react/pantallas/recepcion.js";
+// **La ficha de una compra** (S11, 09/10/2026): facturado, recibido, pagado y pendiente en un sitio.
+import { pantallaDeLaCompra } from "./react/pantallas/compra.js";
 import { pantallaDeMovimientoDeAlmacen } from "./react/pantallas/movimiento_de_almacen.js";
 import { pantallaDeSacarDeUnLote } from "./react/pantallas/sacar_de_un_lote.js";
 import { pantallaDeEngancharLaFactura } from "./react/pantallas/enganchar_la_factura.js";
@@ -233,6 +235,9 @@ const PANTALLAS_EN_REACT = new Set([
   "libro_del_almacen",
   "nuevo_albaran",
   "recepcion",
+  // **La ficha de una compra** (S11, 09/10/2026). Tiene dirección propia —`#/compras/12`— porque es un
+  // sitio y no un paso: se puede enlazar, recargar y volver a ella sin perder nada.
+  "compra",
   "movimiento_de_almacen",
   "sacar_de_un_lote",
   "enganchar_la_factura",
@@ -830,6 +835,9 @@ const DIRECCION_PROPIA = {
   // recargar sin perder nada, que es lo que exige tener dirección.
   PantallaLibroDelAlmacen: "libro_almacen",
   PantallaRecepcion: "recepcion",
+  // **La ficha de una compra** (S11, 09/10/2026): su dirección es `#/compras/<id>`, y es de las que se
+  // reconstruyen enteras al abrirla (los datos se piden a su puerta).
+  PantallaCompra: "compra",
   // Las dos de T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra.
   // Las dos se reconstruyen enteras al abrir su dirección.
   PantallaTierrasDeLaExplotacion: "tierras_mapa",
@@ -1070,6 +1078,13 @@ function apuntarLaDireccion(listo) {
     if (!recepcion || !recepcion.id) return;
     parametros.id = recepcion.id;
   }
+  if (clave === "compra") {
+    // De qué compra es la ficha (S11): sin identificador no hay dirección que escribir, porque
+    // `#/compras/` no es la ficha de nada.
+    const compra = (estadoDeLaCompra() || {}).compra;
+    if (!compra || !compra.factura_id) return;
+    parametros.id = compra.factura_id;
+  }
   // **La ficha de un movimiento del banco (T20)**: su identificador en el camino (`#/cuentas/bancos/12`),
   // como la de un gasto o una máquina. Sale del estado, que es donde está el movimiento que se está
   // mirando.
@@ -1254,6 +1269,12 @@ function abrirLaPantalla(clave, parametros = {}) {
   // cobertura). Y no se adivina: sin cobertura no se puede afirmar que ese albarán no exista.
   if (clave === "recepcion") {
     return abrirLaRecepcion(parametros.id);
+  }
+  // **La ficha de una compra** (S11, 09/10/2026): sus datos **no están descargados** —la ficha los pide
+  // a `/api/compras/<id>` al abrirla—, así que se pregunta al servidor y se decide con lo que conteste:
+  // se abre, «eso no está en tu cuaderno» (404) o «no lo he podido comprobar» (sin cobertura).
+  if (clave === "compra") {
+    return abrirUnaCompra(parametros.id);
   }
   // **Las tierras en el mapa y en la tabla** (T06): lo que venga en la dirección (los filtros, cómo se
   // agrupa, qué capa se mira, qué tierras están marcadas) se pone en el estado **antes** de pedir los
@@ -5175,7 +5196,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-06-71";
+const VERSION_DE_LA_APLICACION = "2026-10-09-72";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -10934,6 +10955,211 @@ async function engancharLaFacturaElegida(facturaId) {
  * eñe salen cambiadas). Enseñar lo leído para que lo confirme es lo que hace que esto se pueda usar
  * sin jugarse un dato del cuaderno.
  */
+// ---------------------------------------------------------------------------
+// La ficha de una compra (S11, 09/10/2026)
+// ---------------------------------------------------------------------------
+//
+// POR QUÉ. Las cuatro cifras de una compra —lo facturado, lo que ha entrado, lo pagado y lo que
+// queda— estaban en tres pantallas distintas y nadie las juntaba, así que la pregunta que de verdad se
+// hace el agricultor había que contestarla recorriéndolas a mano. Esta pantalla las junta.
+//
+// Y **lo que no hace**: ni una suma aquí. Las cifras llegan del servidor ya contadas con `Decimal`
+// (en el navegador todo número es de coma flotante, y el dinero no se suma ahí); aquí solo se eligen
+// las palabras. Lo que sí se formatea aquí son **cantidades** —kilos, litros— con `numeroConUnidad`,
+// que es el formateador que ya usa el almacén.
+
+/** Lo que la ficha necesita para pintarse: lo que ha contestado el servidor y, si falló, qué dijo. */
+function estadoDeLaCompra() {
+  if (!estado.compra) {
+    estado.compra = {
+      datos: null,
+      // **La compra a secas, para poder escribir la dirección** (`#/compras/<id>`): `apuntarLaDireccion`
+      // necesita el identificador, y este es el sitio del que lo lee. Sin esto la ficha se abría pero la
+      // barra de direcciones se quedaba en la lista de facturas —medido en el navegador el 09/10/2026—,
+      // así que el enlace no se podía mandar a nadie: el «enlace permanente al contexto» del contrato.
+      compra: null,
+      error: "",
+    };
+  }
+  return estado.compra;
+}
+
+/**
+ * Abre la ficha de esa compra, preguntándosela al servidor.
+ *
+ * Se pinta **dos veces**: la primera sin datos (para que se vea que se está buscando, en vez de una
+ * pantalla en blanco) y la segunda con lo que ha contestado —o con lo que ha fallado—. El 404 y la
+ * falta de cobertura **no se confunden**: sin cobertura no se puede afirmar que esa compra no exista.
+ */
+async function abrirUnaCompra(facturaId) {
+  const suyo = estadoDeLaCompra();
+  if (!facturaId) return pantallaFacturas(); // `#/compras/` no es la ficha de nada
+  // **Sin cobertura no se puede afirmar que esa compra no exista** (09/10/2026, lo cazó el revisor): antes
+  // salía el mensaje crudo del navegador —«Failed to fetch», en inglés— y debajo los títulos y los estados
+  // vacíos, como si la compra existiera y estuviera vacía. Es la misma pantalla que usan las demás fichas.
+  if (!navigator.onLine) return pantallaDeUnaDireccionQueNoSePuedeComprobar();
+  suyo.datos = null;
+  suyo.compra = null;
+  suyo.error = "";
+  pantallaLaCompra();
+  try {
+    suyo.datos = await apiJson(`/api/compras/${facturaId}`);
+    // **Y la compra, para la dirección**: ver el porqué en `estadoDeLaCompra`.
+    suyo.compra = (suyo.datos || {}).compra || null;
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  pantallaLaCompra();
+}
+
+/**
+ * Lo que ha entrado, dicho en corto: «300 kg», o «300 kg · 20 L» si vino en dos unidades.
+ *
+ * **No se suman unidades distintas** (dos unidades no se suman a nada): cada una va con la suya, y si
+ * no ha entrado nada se dice, en vez de poner un cero que parecería una cifra.
+ */
+function loRecibidoEnPalabras(recibido, c) {
+  const porUnidad = recibido.por_unidad || {};
+  const trozos = Object.keys(porUnidad)
+    .sort()
+    .map((unidad) => {
+      const cuanto = porUnidad[unidad];
+      const medida = unidad === "sin_unidad" ? "" : unidad;
+      return numeroConUnidad(cuanto, medida);
+    });
+  if (trozos.length) return trozos.join(" · ");
+  return recibido.cuantas_recepciones > 0 ? c("no_se_sabe") : c("nada_todavia");
+}
+
+/** Deja los datos del servidor en las frases que pinta la ficha. */
+function laCompraParaLaPantalla(datos) {
+  const c = (clave) => t(`compra.${clave}`, "");
+  const compra = (datos || {}).compra;
+  if (!compra) return {};
+  const recibido = compra.recibido || {};
+  const cuando = [fechaOSinFecha(compra.fecha), compra.proveedor || ""].filter(Boolean).join(" · ");
+  const titulo = compra.numero_factura
+    ? `${compra.proveedor || ""} · ${compra.numero_factura}`
+    : compra.proveedor || c("titulo");
+  return {
+    titulo,
+    cuando,
+    anulada: compra.anulada
+      ? compra.motivo_anulacion
+        ? rellena(c("anulada_con_motivo"), { motivo: compra.motivo_anulacion })
+        : c("anulada")
+      : "",
+    // **Las cuatro cifras**, cada una con la frase que dice de dónde sale: son cosas distintas y se
+    // confunden con facilidad (la factura no mete mercancía; el albarán sí).
+    cifras: [
+      {
+        etiqueta: c("facturado"),
+        valor: compra.facturado_texto || compra.facturado || "—",
+        pista: c("facturado_pista"),
+      },
+      {
+        etiqueta: c("recibido"),
+        valor: loRecibidoEnPalabras(recibido, c),
+        pista: c("recibido_pista"),
+      },
+      {
+        etiqueta: c("pagado"),
+        valor: compra.pagado_texto || "—",
+        pista: c("pagado_pista"),
+      },
+      {
+        etiqueta: c("pendiente"),
+        valor: compra.pendiente_texto || "—",
+        pista: compra.cuantos_gastos ? c("pendiente_pista") : c("sin_gasto"),
+      },
+    ],
+    albaranes: (recibido.recepciones || []).map((albaran) => ({
+      id: albaran.id,
+      titulo: albaran.numero_albaran || c("un_albaran_sin_numero"),
+      cuando: [fechaOSinFecha(albaran.fecha), albaran.proveedor || ""].filter(Boolean).join(" · "),
+      trajo: Object.keys(albaran.cantidad_por_unidad || {})
+        .sort()
+        .map((unidad) =>
+          numeroConUnidad(
+            albaran.cantidad_por_unidad[unidad],
+            unidad === "sin_unidad" ? "" : unidad,
+          ),
+        )
+        .join(" · "),
+      anulado: albaran.anulada ? albaran.motivo_anulacion || c("ese_albaran_esta_anulado") : "",
+    })),
+    // Lo que ha entrado de cada línea, y lo que falta. **Cuando no se puede saber, se dice**: no se
+    // enseña un cero, que parecería «no ha entrado nada».
+    lineas: (recibido.por_linea || []).map((linea) => {
+      const unidad = linea.unidad || "";
+      // **La unidad la pone la frase, no el número** (09/10/2026, lo cazó el revisor): `numeroConUnidad`
+      // ya añade la unidad y la plantilla `de_la_linea` también, así que salía «de 500,00 kg kg». Aquí
+      // van los números pelados y la unidad la escribe la frase, una sola vez.
+      const de_otros_modos = (linea.recibido_de_otros_modos || [])
+        .map((otro) => numeroConUnidad(otro.cantidad, otro.unidad))
+        .join(" · ");
+      const recibido_de_la_linea =
+        linea.recibido === null || linea.recibido === undefined
+          ? de_otros_modos
+            ? `${c("no_se_sabe_la_linea")} ${rellena(c("pero_ha_llegado"), { cuanto: de_otros_modos })}`
+            : c("no_se_sabe_la_linea")
+          : linea.falta !== null && linea.falta !== undefined && linea.falta <= 0.0001
+            ? c("linea_completa")
+            : rellena(c("de_la_linea"), {
+                recibido: formateaNumero(linea.recibido, 2),
+                facturado: formateaNumero(linea.facturado, 2),
+                unidad,
+              });
+      return {
+        descripcion: linea.descripcion,
+        facturado: numeroConUnidad(linea.facturado, unidad),
+        recibido: recibido_de_la_linea,
+        falta:
+          linea.falta !== null && linea.falta !== undefined && linea.falta > 0.0001
+            ? `${c("falta_por_llegar")}: ${numeroConUnidad(linea.falta, unidad)}`
+            : "",
+      };
+    }),
+    gastos: (compra.gastos || []).map((gasto) => ({
+      id: gasto.id,
+      concepto: gasto.concepto,
+      importe: gasto.importe,
+      pagado: `${c("pagado")}: ${gasto.pagado || "—"}`,
+      pendiente: `${c("pendiente")}: ${gasto.pendiente || "—"}`,
+    })),
+    pagos: (compra.pagos || []).map((pago) => ({
+      cuando: [fechaOSinFecha(pago.fecha), pago.forma || ""].filter(Boolean).join(" · "),
+      importe: pago.importe,
+      aplicado: rellena(c("de_ese_pago_va_aqui"), { importe: pago.aplicado_a_esta_compra || "—" }),
+    })),
+    las_lineas: c("las_lineas"),
+    // Volver lleva **a la lista de facturas**, que es de donde se sale a una compra.
+    acciones: [
+      {
+        etiqueta: c("volver_a_las_facturas"),
+        accion: "facturas-abrir",
+        clase: "boton-claro",
+      },
+    ],
+  };
+}
+
+/** Pinta la ficha de la compra con lo que haya en el estado (datos, buscando o error). */
+function pantallaLaCompra() {
+  const suyo = estadoDeLaCompra();
+  const datos = suyo.datos;
+  const avisos = (datos || {}).avisos || [];
+  return montar(() =>
+    pantallaDeLaCompra({
+      textos: (datos || {}).textos || t("compra", {}),
+      compra: { ...laCompraParaLaPantalla(datos), avisos, buscando: t("compra.buscando", "") },
+      cargando: !datos && !suyo.error,
+      error: suyo.error || "",
+    }),
+  );
+}
+
+
 function estadoDeLasFacturas() {
   if (!estado.facturas) {
     estado.facturas = {
@@ -11007,9 +11233,18 @@ function pantallaFacturas() {
     total_numero: factura.total,
     papel: factura.tiene_fichero ? f("papel_guardado") : f("sin_fichero"),
     papel_corto: factura.tiene_fichero ? "" : f("papel_falta"),
-    // **Y sus botones** (ronda 93): hoy solo BORRAR (ver `OTRAS_COSAS.factura`: corregir una factura es
-    // la pantalla que revisa sus líneas, y ese camino todavía no se abre con lo guardado).
-    acciones: botonesDeCorregirYBorrar("factura", factura.id),
+    // **Y sus botones** (ronda 93): BORRAR, y desde el S11 (09/10/2026) **VER LA COMPRA**, que es la
+    // ficha que junta lo facturado, lo recibido, lo pagado y lo que queda. Va el primero porque es lo
+    // que se quiere hacer con una factura: mirarla entera antes de tocar nada.
+    acciones: [
+      {
+        etiqueta: t("compra.ver_la_compra", ""),
+        accion: "compra-abrir",
+        datos: { id: factura.id },
+        clase: "boton-claro",
+      },
+      ...botonesDeCorregirYBorrar("factura", factura.id),
+    ],
   }));
   const lector = estado.lectorDeFacturas ? estado.lectorDeFacturas.lector : null;
 
@@ -18591,6 +18826,12 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   if (nombre === "facturas-abrir") {
     estado.facturas = null;
     return pantallaFacturas();
+  }
+  // **Ver la compra entera** (S11, 09/10/2026): desde la lista de facturas, la ficha que junta lo
+  // facturado, lo recibido, lo pagado y lo que queda. Se abre por su puerta (`abrirUnaCompra`), que es
+  // la que pide los datos al servidor.
+  if (nombre === "compra-abrir") {
+    return abrirUnaCompra(Number(elemento.dataset.id));
   }
   if (nombre === "factura-nueva") {
     const facturas = estadoDeLasFacturas();
