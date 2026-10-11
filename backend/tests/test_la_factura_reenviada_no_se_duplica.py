@@ -456,6 +456,38 @@ def test_la_misma_clave_con_otro_contenido_es_conflicto_aunque_haya_correcciones
     assert _cuantas_facturas(db_sesion) == 1
 
 
+def test_corregir_el_numero_cambia_el_papel(cliente, cuenta, db_sesion):
+    """Corregir el número (o el total) **cambia el papel**, y la clave del papel se recalcula.
+
+    Sin esto, la corrección dejaría el **documento nuevo sin proteger** y el **viejo ocupado para
+    siempre**: apuntar por error el número que se acaba de corregir no encontraría nada, y apuntar el
+    número nuevo chocaría con una clave que ya no le corresponde a nadie. Se recalcula en la misma
+    preparación que el alta (como la campaña), así que las dos puertas dicen lo mismo.
+    """
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-15")
+    assert primera.status_code == 201, primera.text
+    ident = primera.json()["id"]
+
+    correccion = cliente.put(
+        f"/api/facturas/{ident}",
+        headers=cuenta["cabeceras"],
+        json=_cuerpo(numero_factura="2026/00124"),
+    )
+    assert correccion.status_code == 200, correccion.text
+
+    # **El papel viejo queda libre**: apuntarlo otra vez es una factura nueva de verdad.
+    el_viejo = _enviar(cliente, cuenta["cabeceras"], clave="peticion-16", numero_factura="2026/00123")
+    assert el_viejo.status_code == 201, el_viejo.text
+    assert _cuantas_facturas(db_sesion) == 2
+
+    # **Y el papel nuevo está ocupado** por la factura corregida: otro envío del mismo documento no entra.
+    el_nuevo = _enviar(
+        cliente, cuenta["cabeceras"], clave="peticion-17", numero_factura="2026/00124"
+    )
+    assert el_nuevo.status_code in (200, 409), el_nuevo.text
+    assert _cuantas_facturas(db_sesion) == 2, "el papel corregido sigue ocupado, y no por dos"
+
+
 def test_la_pantalla_manda_su_clave_de_reenvio_y_la_renueva_para_la_siguiente():
     """El alta de una factura de compra **manda la clave**, y la siguiente factura trae la suya.
 
@@ -482,6 +514,88 @@ def test_la_pantalla_manda_su_clave_de_reenvio_y_la_renueva_para_la_siguiente():
     assert "facturas.clave = null;" in app_js, (
         "la clave no se suelta después de guardar: la factura siguiente no sería una petición nueva"
     )
+
+
+def test_dos_envios_a_la_vez_del_mismo_papel_apuntan_una_sola_factura(cliente, cuenta, db_sesion):
+    """El posible duplicado comercial, **con garantía de verdad** (09/10/2026).
+
+    Lo dijo el revisor con estas palabras: *«80 intentos sin duplicar no constituyen una garantía»*. Y
+    tenía razón: la búsqueda previa **no cierra la carrera** —las dos peticiones pueden pasar por ella
+    antes de que ninguna escriba—. Lo que la cierra es el **índice único del papel** (`uq_factura_papel`),
+    y aquí se exige lo que eso tiene que dar: **una sola fila** y ninguna petición con un error opaco.
+
+    Los dos envíos son **peticiones distintas** (cada una con su clave) del mismo documento, que es como
+    llega el caso de verdad: dos pantallas abiertas, o un móvil que no sabía que el otro ya lo había
+    mandado.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as a_la_vez:
+        las_dos = list(
+            a_la_vez.map(
+                lambda indice: _enviar(
+                    cliente, cuenta["cabeceras"], clave=f"papel-{indice}"
+                ),
+                range(2),
+            )
+        )
+
+    codigos = sorted(respuesta.status_code for respuesta in las_dos)
+    assert codigos in ([200, 201], [200, 200]), (
+        f"las dos del mismo papel tienen que resolverse sin error opaco, y salieron {codigos}: "
+        + " | ".join(respuesta.text[:120] for respuesta in las_dos)
+    )
+    assert _cuantas_facturas(db_sesion) == 1, (
+        "el mismo documento no puede quedar dos veces, ni con dos envíos a la vez"
+    )
+
+
+def test_la_base_no_deja_dos_veces_el_mismo_papel(cliente, cuenta, db_sesion):
+    """**La garantía, en la base**: el índice único del papel muerde, y una anulada no lo ocupa.
+
+    Es la prueba contra la base a propósito: si alguien quitara el índice, el duplicado comercial
+    volvería a depender de que la búsqueda llegara a tiempo, que es la clase de protección que falla
+    justo cuando hay prisa (dos envíos a la vez).
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    from app.database import engine
+
+    assert engine.dialect.name == "sqlite", "esta prueba habla del índice de SQLite"
+    explotacion_id = db_sesion.scalar(select(models.Explotacion.id))
+
+    db_sesion.add(
+        models.Factura(
+            explotacion_id=explotacion_id, clave_del_papel="PROVEEDOR|B-1|2026|121.00", total=121.0
+        )
+    )
+    db_sesion.commit()
+
+    db_sesion.add(
+        models.Factura(
+            explotacion_id=explotacion_id, clave_del_papel="PROVEEDOR|B-1|2026|121.00", total=121.0
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_sesion.commit()
+    db_sesion.rollback()
+
+    # Y **una anulada no ocupa el papel**: si el agricultor anuló aquella factura porque estaba mal,
+    # tiene que poder apuntar ese mismo documento otra vez (es la parte de la regla vieja que sigue
+    # valiendo, porque habla del papel y no de la petición).
+    db_sesion.add(
+        models.Factura(
+            explotacion_id=explotacion_id,
+            clave_del_papel="PROVEEDOR|B-2|2026|50.00",
+            total=50.0,
+            anulada=True,
+        )
+    )
+    db_sesion.commit()
+    db_sesion.add(
+        models.Factura(
+            explotacion_id=explotacion_id, clave_del_papel="PROVEEDOR|B-2|2026|50.00", total=50.0
+        )
+    )
+    db_sesion.commit()
 
 
 def test_la_base_no_deja_dos_veces_la_misma_clave(cliente, cuenta, db_sesion):

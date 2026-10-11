@@ -2401,6 +2401,19 @@ class Factura(Base):
             "clave_de_reenvio",
             unique=True,
         ),
+        # **Y el mismo papel no entra dos veces, garantizado por la base** (09/10/2026). El índice excluye
+        # las anuladas —una factura anulada es lo que el agricultor ha dicho que estaba mal, y volver a
+        # apuntar ese papel tiene que ser posible: es la parte de la regla vieja que sigue valiendo, la que
+        # habla del papel y no de la petición—. Las de clave nula (sin número o sin proveedor) no chocan
+        # entre sí: `NULL` es distinto de `NULL` en un índice único, y ahí no hay nada que comparar.
+        Index(
+            "uq_factura_papel",
+            "explotacion_id",
+            "clave_del_papel",
+            unique=True,
+            sqlite_where=text("anulada = 0"),
+            postgresql_where=text("anulada = false"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -2445,6 +2458,21 @@ class Factura(Base):
     # clave recibía un 200 y sus datos se perdían en silencio; y no había forma de contestar «tu comando
     # original ya se atendió, pero su resultado cambió».
     huella_de_la_peticion: Mapped[str | None] = mapped_column(String(64))
+
+    # **La clave del papel** (09/10/2026): lo que identifica al documento —de quién es, su número, el año
+    # y el total—, normalizado y en un solo texto, para que **la base** pueda impedir que el mismo papel
+    # entre dos veces.
+    #
+    # **Por qué en la base y no solo en el código.** El posible duplicado comercial se buscaba con una
+    # consulta antes de insertar, y eso **no es una garantía**: dos peticiones simultáneas pueden pasarla
+    # las dos antes de que ninguna haya escrito. Lo dijo el revisor con estas palabras: «80 intentos sin
+    # duplicar no constituyen una garantía». Con esta columna y su índice único, la segunda inserción
+    # **falla en la base** y la puerta contesta con la factura que ya estaba (o con el conflicto, si dice
+    # otra cosa), en vez de dejar dos versiones del mismo papel en los libros.
+    #
+    # Es `None` cuando no se puede saber de quién es o no trae número: sin identidad no hay nada que
+    # impedir, y eso se declara (ver `AL27…`).
+    clave_del_papel: Mapped[str | None] = mapped_column(String(200), index=True)
 
     fichero_nombre: Mapped[str | None] = mapped_column(String(200))
     fichero_ruta: Mapped[str | None] = mapped_column(String(300))

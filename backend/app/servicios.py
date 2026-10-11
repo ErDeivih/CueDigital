@@ -1436,6 +1436,43 @@ def _las_partes_de_una_factura(
     }
 
 
+def clave_del_papel_de_una_factura(
+    proveedor: str | None,
+    proveedor_nif: str | None,
+    numero_factura: str | None,
+    fecha,
+    total,
+) -> str | None:
+    """Lo que identifica a **este documento**: de quién es, su número, su año y su total. O `None`.
+
+    Es la clave con la que **la base** impide que el mismo papel entre dos veces (el índice único
+    `uq_factura_papel`), y sale de los cuatro campos que el contrato §S10 nombra para el posible
+    duplicado comercial: *«por emisor/número/fecha/total»*. Se calcula con la misma normalización que usa
+    la búsqueda del código (`clave_de_una_factura` + `normaliza_para_comparar`), para que las dos digan lo
+    mismo.
+
+    **Por qué hace falta teniendo la búsqueda.** Buscar antes de insertar **no es una garantía**: dos
+    peticiones simultáneas pueden pasar las dos por la comprobación antes de que ninguna haya escrito, y
+    entonces quedan dos facturas del mismo papel. Con esto, la segunda **falla en la base** y la puerta
+    contesta con la que ya estaba. Lo que no se puede garantizar es lo que no se sabe: sin proveedor o sin
+    número la clave es `None`, y ahí la protección es la de siempre (avisar, `AL27…`).
+
+    El total entra porque **es parte del papel**: dos facturas del mismo número con distinto total son dos
+    documentos distintos (y hay una prueba que lo deja escrito). El año entra en vez de la fecha exacta
+    porque es el año lo que reinicia las numeraciones, y el día es el campo que más se equivoca al leer una
+    foto: si baila, es que una de las dos está mal apuntada, y para eso está el aviso.
+    """
+    if clave_de_una_factura(proveedor, proveedor_nif, numero_factura) is None:
+        return None
+    quien = normaliza_para_comparar(proveedor_nif) or normaliza_para_comparar(proveedor)
+    numero = normaliza_para_comparar(numero_factura)
+    anio = ""
+    if fecha is not None:
+        anio = str(getattr(fecha, "year", "") or str(fecha)[:4])
+    el_total = dinero.a_texto(dinero.cantidad_a_decimal(total)) or ""
+    return f"{quien}|{numero}|{anio}|{el_total}"[:200]
+
+
 def la_huella_de_una_peticion_de_factura(entrada) -> str:
     """El resumen del **cuerpo con el que se atiende una petición de factura**: su huella.
 

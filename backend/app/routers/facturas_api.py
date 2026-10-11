@@ -39,6 +39,7 @@ import datetime as dt
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from .. import adjuntos, correcciones, dinero, facturas as lectura, legal, models, ocr, servicios, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
@@ -287,6 +288,95 @@ def _la_factura_se_corrigio_despues(db, explotacion_id: int, factura_id: int) ->
     )
 
 
+def _la_respuesta_con_la_que_ya_estaba(
+    db,
+    explotacion,
+    ya: models.Factura,
+    como: str,
+    entrada: FacturaEntrada,
+    respuesta: Response,
+    huella: str,
+) -> FacturaSalida:
+    """Qué se contesta cuando esa petición —o ese papel— **ya estaba**.
+
+    Está en un solo sitio, y no dentro de la puerta, a propósito: se usa **dos veces**, y las dos tienen
+    que contestar lo mismo. La primera, cuando la búsqueda encuentra la factura antes de insertar; la
+    segunda, cuando **la base rechaza la inserción** porque otra petición simultánea se adelantó (el índice
+    único del papel). Si cada camino contestara por su cuenta, el mismo caso daría dos respuestas distintas
+    según quién llegara antes.
+
+    Los dos desenlaces, y por qué:
+
+      · **La misma clave de reenvío.** La **huella** decide si es el reenvío del comando original (misma
+        huella) o **otra petición** usando una clave ajena (huella distinta → **409**). Si es el reenvío de
+        siempre, se contesta con la factura **como está hoy**: si está anulada, con su estado y su motivo
+        (`AL46…`, y **nunca creando otra**); si se corrigió después, diciéndolo (`AL45…`); y si no, que ya
+        estaba (`AL25…`).
+      · **El posible duplicado comercial** (otra petición, el mismo papel): si dice lo mismo, se contesta
+        la que había; y si **dice otra cosa**, **409** (`AL47…`) con el papel que ya está delante, para que
+        decida el agricultor. No se apunta y **no se descarta en silencio**.
+    """
+    lo_mismo = _la_misma_factura(db, ya, entrada)
+    if como == "clave_de_reenvio":
+        # **¿Es el reenvío del comando original, o es otra petición con la misma clave?**
+        #
+        # Se decide con la **huella** (09/10/2026), y esto es lo que faltaba: antes se miraba **solo que
+        # hubiera habido una corrección**, así que después de corregir una factura **cualquier** cuerpo con
+        # aquella clave recibía un 200 «ya estaba» y sus datos se perdían en silencio. Y si la factura es de
+        # antes de tener huella (una instalación que se actualiza), se cae a comparar **el contenido con el
+        # de hoy**: si coincide, es su comando; si no, no se puede saber que lo sea, y en la duda **no se
+        # acepta en silencio** —se dice—.
+        es_el_comando_original = (
+            ya.huella_de_la_peticion == huella if ya.huella_de_la_peticion else lo_mismo
+        )
+        if not es_el_comando_original:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=textos.mensaje("AL26_la_misma_clave_con_otros_datos"),
+            )
+        if ya.anulada:
+            avisos = [
+                textos.MENSAJES["AL46_esa_factura_esta_anulada_y_no_se_reapunta"].format(
+                    motivo=f" ({ya.motivo_anulacion})" if ya.motivo_anulacion else ""
+                )
+            ]
+        elif _la_factura_se_corrigio_despues(db, explotacion.id, ya.id) and not lo_mismo:
+            avisos = [
+                textos.MENSAJES["AL45_esa_factura_se_corrigio_despues"].format(
+                    numero=ya.numero_factura or ""
+                )
+            ]
+        else:
+            avisos = [
+                textos.MENSAJES["AL25_esa_factura_ya_estaba"].format(
+                    fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
+                )
+            ]
+        respuesta.status_code = status.HTTP_200_OK
+        return _con_nombres(db, ya).model_copy(
+            update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
+        )
+
+    if not lo_mismo:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=textos.MENSAJES["AL47_ese_numero_ya_esta_y_dice_otra_cosa"].format(
+                numero=ya.numero_factura or "",
+                fecha=ya.fecha.strftime("%d/%m/%Y") if ya.fecha else "",
+                total=dinero.formatea(dinero.cantidad_a_decimal(ya.total)),
+            ),
+        )
+    avisos = [
+        textos.MENSAJES["AL25_esa_factura_ya_estaba"].format(
+            fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
+        )
+    ]
+    respuesta.status_code = status.HTTP_200_OK
+    return _con_nombres(db, ya).model_copy(
+        update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
+    )
+
+
 @router.post("/leer", response_model=FacturaLeidaSalida)
 async def leer_una_factura(
     explotacion: ExplotacionActual, db: Db, fichero: UploadFile = File(...)
@@ -479,81 +569,8 @@ async def guardar_una_factura(
     huella = servicios.la_huella_de_una_peticion_de_factura(entrada)
     ya, como = _la_factura_que_ya_estaba(db, explotacion, clave=clave, entrada=entrada)
     if ya is not None:
-        lo_mismo = _la_misma_factura(db, ya, entrada)
-        # **¿Es el reenvío del comando original, o es otra petición con la misma clave?**
-        #
-        # Se decide con la **huella** de la petición original (09/10/2026), y esto es lo que faltaba: antes
-        # se miraba **solo que hubiera habido una corrección**, así que después de corregir una factura
-        # **cualquier** cuerpo con aquella clave recibía un 200 «ya estaba» y sus datos se perdían en
-        # silencio. La huella distingue las dos cosas:
-        #
-        #   · la misma huella → **el mismo comando otra vez** (el móvil que reintenta sin cobertura), y se
-        #     contesta con el registro **como está hoy**, aunque se haya corregido o anulado después;
-        #   · otra huella → **otra petición** usando una clave ajena: conflicto, haya correcciones o no.
-        #
-        # Y si la factura es de antes de tener huella (una instalación que se actualiza), se cae a comparar
-        # **el contenido con el de hoy**: si coincide, es su comando; si no, no se puede saber que lo sea,
-        # y en la duda **no se acepta en silencio** —se dice—. La migración rellena esas huellas con el
-        # contenido que la factura tiene en el momento de actualizar (ver `database.rellenar_la_huella_del_comando`).
-        es_el_comando_original = (
-            ya.huella_de_la_peticion == huella
-            if ya.huella_de_la_peticion
-            else lo_mismo
-        )
-        if como == "clave_de_reenvio" and not es_el_comando_original:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=textos.mensaje("AL26_la_misma_clave_con_otros_datos"),
-            )
-        if como == "clave_de_reenvio":
-            # **El reenvío del comando original**: se contesta con **su resultado de hoy**, y se dice en
-            # qué estado está, porque el comando se atendió pero la factura puede haber cambiado después.
-            if ya.anulada:
-                avisos = [
-                    textos.MENSAJES["AL46_esa_factura_esta_anulada_y_no_se_reapunta"].format(
-                        motivo=ya.motivo_anulacion or ""
-                    )
-                ]
-            elif _la_factura_se_corrigio_despues(db, explotacion.id, ya.id) and not lo_mismo:
-                avisos = [
-                    textos.MENSAJES["AL45_esa_factura_se_corrigio_despues"].format(
-                        numero=ya.numero_factura or ""
-                    )
-                ]
-            else:
-                avisos = [
-                    textos.MENSAJES["AL25_esa_factura_ya_estaba"].format(
-                        fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
-                    )
-                ]
-            respuesta.status_code = status.HTTP_200_OK
-            return _con_nombres(db, ya).model_copy(
-                update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
-            )
-        # ── El **posible duplicado comercial**: otra petición, pero el mismo papel ────────────────────
-        #
-        # Si dice **lo mismo**, es el mismo papel y no hay nada que perder: se contesta con el que había.
-        # Y si dice **otra cosa**, no se apunta ni se descarta en silencio (09/10/2026, a petición de
-        # David): se contesta **409** para que el agricultor mire cuál de las dos es la buena, porque
-        # apuntar las dos dejaría dos versiones del mismo papel y quedarse con una sin decirlo sería
-        # perder lo que él acaba de escribir.
-        if not lo_mismo:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=textos.MENSAJES["AL47_ese_numero_ya_esta_y_dice_otra_cosa"].format(
-                    numero=ya.numero_factura or "",
-                    fecha=ya.fecha.strftime("%d/%m/%Y") if ya.fecha else "",
-                    total=dinero.formatea(dinero.cantidad_a_decimal(ya.total)),
-                ),
-            )
-        avisos = [
-            textos.MENSAJES["AL25_esa_factura_ya_estaba"].format(
-                fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
-            )
-        ]
-        respuesta.status_code = status.HTTP_200_OK
-        return _con_nombres(db, ya).model_copy(
-            update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
+        return _la_respuesta_con_la_que_ya_estaba(
+            db, explotacion, ya, como, entrada, respuesta, huella
         )
 
     factura = _preparar_factura_guardable(entrada, explotacion, db)
@@ -605,7 +622,20 @@ async def guardar_una_factura(
             },
         )
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # **Otra petición simultánea se ha adelantado** (09/10/2026): las dos pasaron la búsqueda antes
+        # de que ninguna escribiera, y el índice único del papel ha parado a esta. No es un error del
+        # agricultor: se contesta **lo mismo que si la hubiera encontrado la búsqueda**, que es lo que
+        # hace que el envío concurrente tenga una respuesta decente en vez de un 500.
+        db.rollback()
+        otra, como_otra = _la_factura_que_ya_estaba(db, explotacion, clave=clave, entrada=entrada)
+        if otra is None:
+            raise
+        return _la_respuesta_con_la_que_ya_estaba(
+            db, explotacion, otra, como_otra, entrada, respuesta, huella
+        )
     db.refresh(factura)
     # **Y cuando no se ha podido comprobar nada, se dice** (09/10/2026): una factura sin número o sin
     # proveedor se apunta igual -lo que llegó, llegó-, pero la respuesta declara que **no se sabe** si
@@ -667,6 +697,17 @@ def _preparar_factura_guardable(
         # Y la campaña se pone **después**, porque la de arriba es la del año del papel y es la que
         # manda: ver la decisión del principio.
         factura.campana_id = campana.id if campana else None
+    # **Y la clave del papel, siempre y aquí** (09/10/2026). Va al final y fuera del `if` a propósito: la
+    # clave tiene que salir de **lo que se va a guardar** —el alta y la corrección pasan las dos por aquí—,
+    # y al corregir el número, la fecha o el total el papel es **otro**: dejar la clave vieja dejaría el
+    # documento nuevo sin proteger y el viejo ocupado para siempre.
+    factura.clave_del_papel = servicios.clave_del_papel_de_una_factura(
+        factura.proveedor,
+        factura.proveedor_nif,
+        factura.numero_factura,
+        factura.fecha,
+        factura.total,
+    )
     return factura
 
 

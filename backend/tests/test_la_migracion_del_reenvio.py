@@ -27,6 +27,8 @@ tiene una instalación que viene de antes.
 
 from __future__ import annotations
 
+import datetime as dt
+
 from sqlalchemy import create_engine, inspect, text
 
 from app import database, servicios
@@ -76,7 +78,14 @@ def _una_copia_con_la_forma_vieja(ruta) -> "object":
                 "(2, 1, '2026-03-15', 'COOPERATIVA', 'F37012345', '2026/00123', "
                 " 170.0, 35.7, 21.0, 205.7, 'peticion-vieja', 1, 'me equivoqué'), "
                 "(3, 1, '2026-03-16', 'OTRO PROVEEDOR', NULL, 'B-9', "
-                " 100.0, 21.0, 21.0, 121.0, 'peticion-sola', 0, NULL)"
+                " 100.0, 21.0, 21.0, 121.0, 'peticion-sola', 0, NULL), "
+                # **Y dos vivas del MISMO papel** (mismo proveedor, número, año y total): es el duplicado
+                # comercial que la regla vieja dejaba pasar —no había índice del papel—, y es el que la
+                # migración tiene que dejar en condiciones sin borrar ninguna de las dos.
+                "(4, 1, '2026-04-01', 'COOPERATIVA', 'F37012345', '2026/00999', "
+                " 200.0, 42.0, 21.0, 242.0, 'peticion-cuatro', 0, NULL), "
+                "(5, 1, '2026-04-01', 'COOPERATIVA', 'F37012345', '2026/00999', "
+                " 200.0, 42.0, 21.0, 242.0, 'peticion-cinco', 0, NULL)"
             )
         )
         conexion.execute(
@@ -106,7 +115,7 @@ def _las_facturas(motor) -> list[dict]:
             for fila in conexion.execute(
                 text(
                     "SELECT id, clave_de_reenvio, anulada, motivo_anulacion, total, "
-                    "huella_de_la_peticion FROM facturas ORDER BY id"
+                    "huella_de_la_peticion, clave_del_papel FROM facturas ORDER BY id"
                 )
             ).mappings()
         ]
@@ -123,14 +132,32 @@ def test_la_migracion_resuelve_las_claves_repetidas_sin_perder_una_fila(tmp_path
     # La copia vieja no tiene `huella_de_la_peticion`, que es lo que le pasa a una instalación de antes.
     database.asegurar_columnas(motor)
     antes = _las_facturas(motor)
-    assert len(antes) == 3, "la copia de partida tiene que tener tres facturas"
+    assert len(antes) == 5, "la copia de partida tiene que tener cinco facturas"
 
-    sueltas, rellenadas = database.rellenar_la_huella_del_comando(motor)
+    # **Y se simula una instalación a medio migrar**: la clave del papel ya estaba puesta en las dos
+    # facturas del mismo documento (con la misma clave, que es el caso que hay que corregir). El contador
+    # de la migración cuenta justo eso —lo que había que arreglar—, y en una columna recién creada no hay
+    # nada que arreglar: por eso se pone aquí, antes de correrla.
+    la_clave_del_papel = servicios.clave_del_papel_de_una_factura(
+        "COOPERATIVA", "F37012345", "2026/00999", dt.date(2026, 4, 1), 242.0
+    )
+    with motor.begin() as conexion:
+        conexion.execute(
+            text("UPDATE facturas SET clave_del_papel = :clave WHERE id IN (4, 5)"),
+            {"clave": la_clave_del_papel},
+        )
+
+    sueltas, rellenadas, papeles = database.rellenar_la_huella_del_comando(motor)
 
     despues = _las_facturas(motor)
-    assert len(despues) == 3, "la migración no puede perder ni una fila"
+    assert len(despues) == 5, "la migración no puede perder ni una fila"
     assert sueltas == 1, f"tenía que soltar una clave repetida, soltó {sueltas}"
-    assert rellenadas == 2, f"tenía que rellenar dos huellas (las de clave), rellenó {rellenadas}"
+    assert rellenadas == 4, f"tenía que rellenar cuatro huellas (las de clave), rellenó {rellenadas}"
+    # **Y una clave del papel**: las facturas 4 y 5 son el mismo documento y las dos están vivas.
+    assert papeles == 1, (
+        "las facturas 4 y 5 son el mismo papel y las dos están vivas: tenía que soltar una clave del "
+        f"papel, soltó {papeles}"
+    )
 
     # **La clave se queda en la más antigua** (id 1) y la anulada la suelta.
     por_id = {fila["id"]: fila for fila in despues}
@@ -141,6 +168,12 @@ def test_la_migracion_resuelve_las_claves_repetidas_sin_perder_una_fila(tmp_path
     assert por_id[2]["anulada"] == 1
     assert por_id[2]["motivo_anulacion"] == "me equivoqué"
     assert por_id[1]["total"] == antes[0]["total"], "no se toca ningún dato del papel"
+
+    # **Y las dos del mismo papel siguen ahí**, con la clave del papel solo en la más antigua: lo que se
+    # suelta es la clave, no el documento. El duplicado lo resuelve el agricultor, no la migración.
+    assert por_id[4]["clave_del_papel"] is not None
+    assert por_id[5]["clave_del_papel"] is None
+    assert por_id[4]["total"] == por_id[5]["total"] == 242.0
 
     # Y las huellas: la de la factura viva coincide con **la de su contenido**, que es lo que permite
     # reconocer su reenvío después de migrar.
@@ -205,7 +238,7 @@ def test_la_migracion_se_puede_correr_dos_veces(tmp_path):
     database.rellenar_la_huella_del_comando(motor)
     las_huellas = {fila["id"]: fila["huella_de_la_peticion"] for fila in _las_facturas(motor)}
 
-    sueltas, rellenadas = database.rellenar_la_huella_del_comando(motor)
+    sueltas, rellenadas, papeles = database.rellenar_la_huella_del_comando(motor)
 
-    assert (sueltas, rellenadas) == (0, 0), "la segunda pasada no tiene nada que hacer"
+    assert (sueltas, rellenadas, papeles) == (0, 0, 0), "la segunda pasada no tiene nada que hacer"
     assert {fila["id"]: fila["huella_de_la_peticion"] for fila in _las_facturas(motor)} == las_huellas

@@ -794,11 +794,11 @@ def asegurar_indices(destino_engine: Engine | None = None) -> tuple[list[str], l
     return creados, cambiados
 
 
-def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tuple[int, int]:
+def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tuple[int, int, int]:
     """Deja las facturas que ya existían en condiciones para la clave que no se recicla (09/10/2026).
 
-    **Por qué hace falta, y por qué antes de los índices.** Dos cosas cambiaron el 09/10/2026, a
-    petición de David, y las dos necesitan tocar datos de una instalación que ya venía de antes:
+    **Por qué hace falta, y por qué antes de los índices.** Tres cosas cambiaron el 09/10/2026, a
+    petición de David, y las tres necesitan tocar datos de una instalación que ya venía de antes:
 
       1. **`facturas.clave_de_reenvio` pasa a ser única siempre** (antes se excluían las anuladas). Si una
          instalación tiene dos facturas con la misma clave —una de ellas anulada, que es justo lo que la
@@ -810,18 +810,24 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
          rellena con la huella de **lo que la factura dice hoy**: así el reenvío de su comando se reconoce
          si nadie la ha corregido, y si se corrigió, lo que llegue distinto será un conflicto —que es la
          parte prudente de la duda, y se prefiere a aceptar en silencio algo que no se puede comprobar—.
+      3. **La clave del papel** (`clave_del_papel`), la que hace que **la base** impida que el mismo
+         documento entre dos veces. Se rellena con lo que cada factura dice, y si aparecen **dos facturas
+         vivas del mismo papel** —que es un duplicado de verdad, de los que la regla vieja dejaba pasar— se
+         le deja la clave a la **más antigua** y las demás la sueltan. **No se borra ninguna**: el
+         duplicado sigue a la vista para que lo resuelva el agricultor, y a partir de ahí ya no entra otro
+         igual.
 
-    Devuelve `(claves_soltadas, huellas_rellenadas)`.
+    Devuelve `(claves_soltadas, huellas_rellenadas, papeles_soltados)`.
     """
     from sqlalchemy import inspect, text
 
     motor = destino_engine or engine
     inspector = inspect(motor)
     if not inspector.has_table("facturas"):
-        return 0, 0
+        return 0, 0, 0
     columnas = {columna["name"] for columna in inspector.get_columns("facturas")}
     if "clave_de_reenvio" not in columnas:
-        return 0, 0
+        return 0, 0, 0
 
     # Las claves repetidas: se queda con ella la más antigua (el identificador más bajo, que es el orden
     # en que se apuntaron) y las demás la sueltan.
@@ -882,7 +888,56 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
                 )
                 rellenadas += 1
 
-    return soltadas, rellenadas
+    # **Y la clave del papel**, que es la que hace que la base impida dos veces el mismo documento. Se
+    # decide **de una vez y por orden**: la primera factura viva de cada papel se queda con la clave y las
+    # siguientes del mismo papel se quedan sin ella. Así se llega siempre al mismo estado —la segunda
+    # pasada no cambia nada, que es lo que se le pide a algo que corre en cada arranque—, el duplicado
+    # **se queda a la vista** (no se borra ninguna fila) y a partir de ahí ya no entra otro igual.
+    papeles = 0
+    if "clave_del_papel" in columnas:
+        from . import servicios  # importación tardía: evita dependencia circular
+
+        with motor.connect() as conexion:
+            vivas = conexion.execute(
+                text(
+                    "SELECT id, explotacion_id, proveedor, proveedor_nif, numero_factura, fecha, total, "
+                    "clave_del_papel FROM facturas WHERE anulada = 0 ORDER BY id"
+                )
+            ).mappings().all()
+        # **El papel se reconoce dentro de una finca** —la misma factura en dos explotaciones son dos
+        # documentos de dos agricultores—, y por eso la finca entra en lo que ya se ha visto.
+        ya_vistos: set[str] = set()
+        for fila in vivas:
+            la_clave = servicios.clave_del_papel_de_una_factura(
+                fila["proveedor"],
+                fila["proveedor_nif"],
+                fila["numero_factura"],
+                fila["fecha"],
+                fila["total"],
+            )
+            if la_clave is None:
+                continue
+            suyo = f"{fila['explotacion_id']}|{la_clave}"
+            if suyo in ya_vistos:
+                # Es el segundo del mismo papel: se queda sin clave del papel. Se cuenta **solo si de
+                # verdad había que cambiarlo**, para que la segunda pasada no diga que ha hecho algo.
+                if fila["clave_del_papel"] is not None:
+                    with motor.begin() as conexion:
+                        conexion.execute(
+                            text("UPDATE facturas SET clave_del_papel = NULL WHERE id = :id"),
+                            {"id": fila["id"]},
+                        )
+                    papeles += 1
+                continue
+            ya_vistos.add(suyo)
+            if fila["clave_del_papel"] != la_clave:
+                with motor.begin() as conexion:
+                    conexion.execute(
+                        text("UPDATE facturas SET clave_del_papel = :clave WHERE id = :id"),
+                        {"clave": la_clave, "id": fila["id"]},
+                    )
+
+    return soltadas, rellenadas, papeles
 
 
 def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[str]]:
@@ -895,7 +950,7 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
     # **Los datos antes que los índices** (09/10/2026): el índice único de la clave de reenvío de las
     # facturas no se puede crear si quedan claves repetidas de la regla vieja, así que primero se sueltan
     # las de las facturas que no eran la petición original y se rellenan las huellas del comando.
-    sueltas, rellenadas = rellenar_la_huella_del_comando(motor)
+    sueltas, rellenadas, papeles = rellenar_la_huella_del_comando(motor)
     if sueltas:
         print(
             f"Claves de reenvío de factura repetidas: se han soltado {sueltas} "
@@ -905,6 +960,11 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(
             f"Huellas del comando de factura rellenadas: {rellenadas} "
             "(con lo que cada factura dice hoy)."
+        )
+    if papeles:
+        print(
+            f"Facturas vivas del mismo papel: se ha soltado la clave del papel en {papeles} "
+            "(la clave se queda en la más antigua; las dos siguen ahí, míralas y anula la que sobre)."
         )
     # Los índices, después de las columnas: un índice puede ser sobre una columna recién añadida.
     indices_creados, indices_cambiados = asegurar_indices(motor)
