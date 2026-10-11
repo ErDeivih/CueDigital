@@ -132,23 +132,31 @@ def crear(camino: str, token: str, cuerpo: dict, fichero: tuple | None = None):
         return respuesta.status_code, {"crudo": respuesta.text[:300]}, "multipart"
 
 
+def put_json(camino: str, token: str, cuerpo: dict):
+    """Corregir es un `PUT` con el **cuerpo entero**, igual que lo manda la pantalla."""
+    return _pedir(
+        urllib.request.Request(
+            f"{DIRECCION}{camino}",
+            data=json.dumps(cuerpo).encode("utf-8"),
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            method="PUT",
+        )
+    )
+
+
 def las_existencias(token: str) -> dict:
-    """{id_de_articulo: saldo}, **buscando en la respuesta en vez de suponer su forma**.
+    """{id_de_articulo: saldo}, leido de `articulos[].lotes[].saldo`, que es donde vive.
 
     La primera version suponia `existencias[].articulo_id/.saldo` y devolvia `{}` -medido-, que es
-    exactamente como se cuelan las comprobaciones vacuas: `None -> None` y la luz verde. Ahora se vuelca la
-    respuesta en crudo y se busca el saldo por el identificador del articulo, sea cual sea su envoltorio.
+    exactamente como se cuelan las comprobaciones vacuas: `None -> None` y la luz verde. El saldo **se suma
+    por LOTES**: un recorrido a ciegas que buscaba «el primer numero» devolvia `entradas` y parecia que el
+    almacen no subia (500 quieto) mientras si subia a 1000.
     """
     _, suyo = get("/api/almacen/existencias", token)
     # **Las claves y las filas**, no el volcado entero: la respuesta trae también los **textos de la pantalla**
     # (`textos: {...}`), que ocupan el recorte y escondían justo lo que había que mirar -el saldo por lote-.
     if isinstance(suyo, dict):
         print(f"  (existencias: claves {sorted(suyo.keys())})")
-        for clave, valor in suyo.items():
-            if isinstance(valor, list):
-                print(f"    ({clave}: {len(valor)} fila(s); la primera: {str(valor[0])[:320] if valor else '-'})")
-        # **Los campos del LOTE**, que es donde vive el saldo: la respuesta trae `articulos[].lotes[]` y el
-        # numero por envase esta ahi, no en el articulo. Se dicen sus claves y sus numeros, sin volcar el bulto.
         for uno in (suyo.get("articulos") or []):
             # Por **nombre**, no por el identificador: `articulo_id` es local de `main` y aqui no existe
             # (NameError, medido). El nombre del articulo es una constante del modulo y sirve para el volcado.
@@ -160,29 +168,8 @@ def las_existencias(token: str) -> dict:
                     print(f"      (lote: {numeros})")
     else:
         print(f"  (existencias: {str(suyo)[:320]})")
+
     salida: dict = {}
-
-    def mirar(cosa):
-        if isinstance(cosa, dict):
-            su_id = cosa.get("articulo_id") or cosa.get("id")
-            if su_id is not None:
-                for nombre in ("saldo", "cantidad", "existencias", "total", "hay"):
-                    if isinstance(cosa.get(nombre), (int, float, str)):
-                        try:
-                            salida[su_id] = float(cosa[nombre])
-                            break
-                        except (TypeError, ValueError):
-                            pass
-            for valor in cosa.values():
-                mirar(valor)
-        elif isinstance(cosa, list):
-            for uno in cosa:
-                mirar(uno)
-
-    # **El saldo se suma por LOTES** (medido, no supuesto). El recorrido a ciegas de antes buscaba «el primer
-    # numero» y devolvia `entradas` u otro cualquiera, y por eso el saldo parecia quieto -500- mientras el
-    # almacen si subia a 1000. El sitio de verdad es `articulos[].lotes[].saldo`.
-    salida.clear()
     for uno in (suyo or {}).get("articulos") or []:
         su_id = uno.get("articulo_id")
         if su_id is None:
@@ -198,6 +185,39 @@ def las_existencias(token: str) -> dict:
         # **Que lo diga**: un diccionario vacio en silencio es una luz verde vacua esperando a pasar.
         claves = sorted(suyo.keys()) if isinstance(suyo, dict) else type(suyo).__name__
         print(f"  (OJO: no he sabido leer las existencias; la respuesta trae: {claves})")
+    return salida
+
+
+def el_rastro(entidad: str, entidad_id, accion: str | None = None) -> list[dict]:
+    """Las entradas de auditoría de ese registro, **leidas de la base**, que es donde están.
+
+    La API no expone el rastro, así que se lee de la base de la prueba (el tercer argumento). Se devuelve
+    **la acción y la fecha**, no el volcado: lo que hay que comprobar es que la entrada existe y qué dice.
+    """
+    import sqlite3
+
+    conexion = sqlite3.connect(f"file:{LA_BASE}?mode=ro", uri=True)
+    conexion.row_factory = sqlite3.Row
+    try:
+        if accion is None:
+            filas = conexion.execute(
+                "select accion, datos from auditoria where entidad = ? and entidad_id = ?",
+                (entidad, entidad_id),
+            ).fetchall()
+        else:
+            filas = conexion.execute(
+                "select accion, datos from auditoria where entidad = ? and entidad_id = ? and accion = ?",
+                (entidad, entidad_id, accion),
+            ).fetchall()
+    finally:
+        conexion.close()
+    salida = []
+    for fila in filas:
+        try:
+            sus_datos = json.loads(fila["datos"]) if fila["datos"] else {}
+        except (TypeError, ValueError):
+            sus_datos = {"crudo": str(fila["datos"])[:120]}
+        salida.append({"accion": fila["accion"], "datos": sus_datos})
     return salida
 
 
@@ -564,6 +584,194 @@ def main() -> int:
         str(saldo_antes_de_enganchar) == str(saldo_tras_enganchar) and saldo_tras_enganchar is not None,
         "y **enganchar la factura no mete ni un kilo** (A15, con el saldo ya conocido)",
     )
+
+    # ── 10. Corregir la factura: el rastro, los enlaces y el almacen quieto ───────────────────────────
+    print("\n10) Corregir la factura: queda el rastro y no se mueve el almacen")
+    # **Corregir es cambiar lo que decia el papel, y eso no mueve mercancia**: la factura no mete ni saca
+    # nada del almacen (A15). Lo que si tiene que quedar es **el rastro** de que se corrigio, y **los
+    # enlaces** que ya tenia (los albaranes que apuntan a ella) no pueden perderse al corregirla.
+    saldo_antes_de_corregir = las_existencias(token).get(articulo_id)
+    codigo, corregida = put_json(
+        f"/api/facturas/{factura2_id}", token,
+        {
+            "fecha": "2026-10-09",
+            "proveedor": "Suministros del Paramo, S.L.",
+            "proveedor_nif": "B12345678",
+            "numero_factura": f"F-2026-post-{int(time.time()) % 10000:04d}",
+            "base_imponible": 663.0,
+            "cuota_iva": 0.0,
+            "total": TOTAL,
+            "leida_por": "a mano",
+            "lineas": [
+                # Se cambia **la descripcion de la linea**: es una correccion de verdad y no toca el dinero,
+                # asi que si algo se mueve tiene que ser por otro motivo y hay que verlo.
+                {"descripcion": f"{UNIDADES[0][0]} (corregido)", "cantidad": 500.0,
+                 "unidad": UNIDADES[0][1], "precio": 2.0, "importe": 1000.0}
+            ],
+        },
+    )
+    print(f"  (la correccion: {codigo} por PUT: total {str((corregida or {}).get('total'))!r})")
+    comprobar(codigo < 400, f"la factura se puede corregir ({codigo})")
+
+    rastro = el_rastro("factura", factura2_id, "corregir_lineas")
+    print(f"  (entradas de auditoria 'corregir_lineas' de ESA factura: {len(rastro)})")
+    comprobar(len(rastro) >= 1, f"y queda el rastro de la correccion en la auditoria ({len(rastro)} entrada/s)")
+
+    saldo_tras_corregir = las_existencias(token).get(articulo_id)
+    print(f"  (saldo antes/despues de corregir la factura: {saldo_antes_de_corregir!r} -> {saldo_tras_corregir!r})")
+    comprobar(
+        str(saldo_antes_de_corregir) == str(saldo_tras_corregir) and saldo_tras_corregir is not None,
+        "y corregir la factura **no mueve el almacen** (A15 otra vez, por el otro camino)",
+    )
+
+    # Los enlaces: el albaran parcial sigue apuntando a la factura que se corrigio.
+    _, las_recepciones = get("/api/almacen/recepciones", token)
+    la_lista = las_recepciones if isinstance(las_recepciones, list) else (
+        (las_recepciones or {}).get("recepciones") or []
+    )
+    enlazadas = [
+        uno for uno in la_lista
+        if str(uno.get("id")) == str(las_parciales[0]) and str(uno.get("factura_id")) == str(factura2_id)
+    ]
+    print(f"  (albaranes que siguen enganchados a la factura corregida: {len(enlazadas)})")
+    comprobar(len(enlazadas) == 1, "y el albaran sigue enganchado a la factura, **despues de corregirla**")
+
+    # ── 11. El pago agrupado: un dinero que salda DOS facturas ────────────────────────────────────────
+    print("\n11) El pago agrupado: un dinero, dos facturas")
+    # Hasta aqui los pagos iban **uno a una deuda**. Lo que falta del encargo es el caso normal de una
+    # transferencia: **un solo dinero que paga varias facturas a la vez**, repartido por antiguedad, y sin
+    # perder un centimo por el camino ni tocar las deudas que no son.
+    las_dos_deudas = []
+    for indice, importe in enumerate(("100.00", "250.00"), start=1):
+        codigo, suyo, como = crear(
+            "/api/gastos", token,
+            {
+                "concepto": f"Compra agrupada {indice}",
+                "importe": importe,
+                "fecha": f"2026-10-0{indice}",
+                "categoria": "abono",
+                "proveedor": "Suministros del Paramo, S.L.",
+                "factura_id": factura2_id,
+            },
+        )
+        su_id = (suyo or {}).get("id") or (((suyo or {}).get("gasto") or {}).get("id"))
+        print(f"  (la deuda {indice} de {importe}: {codigo} por {como}: id {su_id})")
+        comprobar(codigo < 400 and bool(su_id), f"la deuda {indice} ({importe} EUR) se apunta")
+        las_dos_deudas.append(su_id)
+
+    # Las demas deudas, para el contraste: no se pueden mover.
+    antes = los_gastos(token)
+    otras_antes = {
+        uno.get("id"): uno.get("pendiente")
+        for uno in (antes.get("gastos") or [])
+        if uno.get("id") not in las_dos_deudas
+    }
+
+    codigo, agrupado, como = crear(
+        "/api/gastos/pagos", token,
+        {
+            "importe": "350.00", "fecha": "2026-10-09",
+            "proveedor": "Suministros del Paramo, S.L.", "forma": "transferencia",
+            "clave_de_reenvio": f"pago-agrupado-{numero}",
+        },
+    )
+    agrupado_id = (agrupado or {}).get("id") or (((agrupado or {}).get("pago") or {}).get("id"))
+    print(f"  (el pago unico de 350: {codigo} por {como}: id {agrupado_id})")
+    comprobar(codigo < 400 and bool(agrupado_id), "un solo pago de 350 EUR para las dos deudas")
+
+    codigo, conciliado = post_json(
+        f"/api/gastos/pagos/{agrupado_id}/conciliar", token,
+        {"automatico": True, "gastos": las_dos_deudas, "aplicaciones": []},
+    )
+    print(f"  (el reparto: {codigo} por JSON)")
+    comprobar(codigo < 400, "y se reparte entre **las dos**, por antiguedad")
+
+    despues = los_gastos(token)
+    pendientes = [el_pendiente_de(despues, su_id) for su_id in las_dos_deudas]
+    print(f"  (pendiente de las dos deudas, por su id: {pendientes})")
+    comprobar(
+        all(uno is not None and abs(uno) < 0.01 for uno in pendientes),
+        f"y **las dos** quedan saldadas, cada una por su identificador ({pendientes})",
+    )
+
+    aplicaciones = ((conciliado or {}).get("pago") or {}).get("aplicaciones") or (
+        (conciliado or {}).get("aplicaciones") or []
+    )
+    aplicadas = sum(
+        float(uno.get("importe") or 0) for uno in aplicaciones if isinstance(uno, dict)
+    )
+    print(f"  (aplicaciones del pago: {len(aplicaciones)}; suman {aplicadas!r} de 350)")
+    comprobar(len(aplicaciones) == 2, f"y el pago dice **contra que dos** fue ({len(aplicaciones)} aplicacion/es)")
+    comprobar(
+        abs(aplicadas - 350.0) < 0.01,
+        f"y no se pierde un centimo: lo aplicado es el dinero entero ({aplicadas!r} de 350.00)",
+    )
+
+    otras_despues = {
+        uno.get("id"): uno.get("pendiente")
+        for uno in (despues.get("gastos") or [])
+        if uno.get("id") not in las_dos_deudas
+    }
+    comprobar(
+        otras_antes == otras_despues,
+        f"y **las demas deudas no se mueven** ({len(otras_antes)} comprobadas, una a una)",
+    )
+
+    # ── 12. Anular con auditoria: la mercancia y el papel son cosas distintas ─────────────────────────
+    print("\n12) Anular: la mercancia y el papel son dos cosas distintas")
+    # Lo que hay que acreditar aqui es la **separacion**: anular el albaran devuelve la mercancia (el
+    # almacen baja lo que metio) **sin tocar la factura**; y anular la factura **no vacia el almacen**,
+    # porque la factura no metio nada (A15). Y las dos anulaciones dejan su rastro.
+    saldo_antes_de_anular_el_albaran = las_existencias(token).get(articulo_id)
+    codigo, anulada_recepcion, como = crear(
+        f"/api/almacen/recepciones/{las_parciales[0]}/anular", token,
+        {"motivo": "venia de menos y se apunto de mas"},
+    )
+    print(f"  (anular el albaran de 300: {codigo} por {como})")
+    comprobar(codigo < 400, "el albaran se puede anular con su motivo")
+
+    saldo_tras_anular_el_albaran = las_existencias(token).get(articulo_id)
+    try:
+        bajado = float(saldo_antes_de_anular_el_albaran) - float(saldo_tras_anular_el_albaran)
+    except (TypeError, ValueError):
+        bajado = None
+    print(f"  (saldo antes/despues de anular el albaran: {saldo_antes_de_anular_el_albaran!r} -> "
+          f"{saldo_tras_anular_el_albaran!r}; ha bajado {bajado!r})")
+    comprobar(
+        bajado is not None and abs(bajado - 300.0) < 0.001,
+        f"y anular el albaran devuelve **exactamente lo que metio** ({bajado!r} de 300)",
+    )
+
+    rastro = el_rastro("recepcion", las_parciales[0], "anular")
+    print(f"  (entradas de auditoria de esa anulacion: {len(rastro)})")
+    comprobar(len(rastro) >= 1, f"y la anulacion del albaran deja su rastro ({len(rastro)} entrada/s)")
+
+    _, la_factura_tras_anular_el_albaran = get(f"/api/facturas/{factura2_id}", token)
+    comprobar(
+        str((la_factura_tras_anular_el_albaran or {}).get("total")) == str(TOTAL),
+        "y **la factura sigue con su total**: anular el albaran no toca el papel",
+    )
+
+    saldo_antes_de_anular_la_factura = las_existencias(token).get(articulo_id)
+    codigo, anulada_factura, como = crear(
+        f"/api/facturas/{factura2_id}/anular", token,
+        {"motivo": "el proveedor la rectifico"},
+    )
+    print(f"  (anular la factura: {codigo} por {como})")
+    comprobar(codigo < 400, "y la factura se puede anular con su motivo")
+
+    saldo_tras_anular_la_factura = las_existencias(token).get(articulo_id)
+    print(f"  (saldo antes/despues de anular la factura: {saldo_antes_de_anular_la_factura!r} -> "
+          f"{saldo_tras_anular_la_factura!r})")
+    comprobar(
+        str(saldo_antes_de_anular_la_factura) == str(saldo_tras_anular_la_factura)
+        and saldo_tras_anular_la_factura is not None,
+        "y **anular la factura no vacia el almacen**: no fue la factura la que metio la mercancia",
+    )
+
+    rastro = el_rastro("factura", factura2_id, "anular_factura")
+    print(f"  (entradas de auditoria de la anulacion de la factura: {len(rastro)})")
+    comprobar(len(rastro) >= 1, f"y la anulacion de la factura tambien deja su rastro ({len(rastro)} entrada/s)")
 
     # ── Resumen ──────────────────────────────────────────────────────────────────────────────────────
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {FALLOS}   Hallazgos: {len(HALLAZGOS)}")

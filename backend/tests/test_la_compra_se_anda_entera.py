@@ -52,6 +52,14 @@ LAS_CIFRAS = (
     # Y su estado, calculado por el servidor.
     "y su estado lo dice ('pagado')",
     "1000.0 -> 1000.0",        # A15: enganchar la factura no mete ni un kilo
+    # **El pago agrupado** (09/10/2026): un solo dinero de 350 que salda **dos** facturas -100 y 250-, cada
+    # una por su identificador, con sus dos aplicaciones y sin perder un céntimo por el camino.
+    "cada una por su identificador ([0.0, 0.0])",
+    "lo aplicado es el dinero entero (350.0 de 350.00)",
+    # **Y la separación, medida** (09/10/2026): anular el albarán devuelve exactamente lo que metió, y anular
+    # la factura no vacía el almacén, porque la mercancía no la metió la factura.
+    "anular el albaran devuelve **exactamente lo que metio** (300.0 de 300)",
+    "anular la factura no vacia el almacen",
 )
 
 
@@ -143,7 +151,11 @@ def test_la_compra_se_anda_entera():
                 # su trabajo.
                 cuantas = re.search(r"Comprobaciones:\s*(\d+)", salida)
                 assert cuantas, "el guion no dice cuantas comprobaciones ha hecho:\n" + salida[-800:]
-                assert int(cuantas.group(1)) >= 20, (
+                # **Cuarenta, y hoy hace cuarenta y nueve** (09/10/2026): el mínimo queda por debajo a
+                # propósito —lo que importa es que la compra haga su trabajo, no cuántos dígitos tenga la
+                # cifra—, pero **alto**, para que quitarle secciones al guion se note en vez de pasar en
+                # silencio por el hueco que dejó el «30» escrito a mano.
+                assert int(cuantas.group(1)) >= 40, (
                     f"la compra ha hecho muy pocas comprobaciones ({cuantas.group(1)}): ¿se ha quedado a medias?"
                 )
             finally:
