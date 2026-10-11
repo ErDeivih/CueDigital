@@ -169,6 +169,21 @@ def los_gastos(token: str) -> dict:
     return suyos or {}
 
 
+def el_por_pagar(token: str):
+    """El resumen de la explotacion. `por_pagar` es un OBJETO con su importe (medido, no supuesto).
+
+    Se usa **como contraste**, nunca como prueba: que el total baje 663 no dice cual factura se pago. La prueba
+    es el pendiente de la factura, por su identificador.
+    """
+    suyo = (los_gastos(token) or {}).get("por_pagar")
+    if isinstance(suyo, dict):
+        suyo = suyo.get("importe")
+    try:
+        return float(suyo)
+    except (TypeError, ValueError):
+        return None
+
+
 def el_de_id(suyos: dict, gasto_id: int) -> dict | None:
     """El gasto **por su identificador**, nunca por su concepto: el escenario tiene uno con el mismo texto."""
     for uno in (suyos or {}).get("gastos") or []:
@@ -315,6 +330,8 @@ def main() -> int:
         if uno.get("id") != gasto_id
     }
     print(f"  (y hay {len(las_otras_antes)} deudas mas, que no se deben tocar)")
+    resumen_antes = el_por_pagar(token)
+    print(f"  (el resumen de la explotacion, antes de pagar: por pagar {resumen_antes!r})")
 
     # ── 6. El pago de 200, aplicado A ESA deuda ──────────────────────────────────────────────────────
     print(f"\n6) El pago de {PRIMER_PAGO:.0f}, aplicado a ESA deuda")
@@ -407,6 +424,19 @@ def main() -> int:
     comprobar(
         str(mio.get("estado")) in ("pagado", "pago"),
         f"y su estado lo dice ({mio.get('estado')!r})",
+    )
+
+    # **Y el resumen de la explotacion, como CONTRASTE** (lo pide el encargo, y se hace en su sitio): el total
+    # tiene que haber bajado **exactamente** lo que se pago. Pero esto **no** acredita cual factura se pago:
+    # eso lo dice el pendiente de arriba, por su identificador. Si los dos numeros no cuadran, hay algo que
+    # explicar, y por eso se comprueban los dos.
+    resumen_despues = el_por_pagar(token)
+    print(f"  (y despues de pagar: por pagar {resumen_despues!r})")
+    comprobar(
+        resumen_antes is not None
+        and resumen_despues is not None
+        and abs((resumen_antes - resumen_despues) - TOTAL) < 0.01,
+        f"y el resumen de la explotacion baja lo pagado, {TOTAL:.0f} ({resumen_antes!r} -> {resumen_despues!r})",
     )
 
     # ── 8. A15: registrar la factura no vuelve a meter mercancia ─────────────────────────────────────
