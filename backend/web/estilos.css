@@ -737,6 +737,102 @@ textarea {
   font-weight: 700;
 }
 
+/* ------------------------------------------------- la ficha de una compra */
+
+/*
+ * **Las cuatro cifras de una compra, en una fila** (09/10/2026).
+ *
+ * POR QUÉ. Estas cuatro cifras —facturado, recibido, pagado y pendiente— son la razón de ser de la ficha:
+ * la pregunta del agricultor es «¿cuánto me falta por pagar de esto?», y para contestarla hay que verlas
+ * **juntas**. Estaban en una columna, así que en un ordenador de 1440 px cada cifra ocupaba el ancho
+ * entero y había que bajar para comparar dos: es lo que David vio en la captura del escritorio («la ficha
+ * sigue organizada como una columna móvil»).
+ *
+ * Y **estas clases no existían en este fichero**: la ficha las usaba desde el primer día y sin estilo
+ * alguno, que es exactamente por lo que salía en columna. Se escriben aquí, con la rejilla puesta.
+ *
+ * Cuatro columnas a partir de 64 rem (el mismo corte que el armazón de escritorio), dos entre 40 y 64 rem
+ * —tableta y ventana partida—, y dos también en el móvil: a 390 px cada hueco mide ~180 px, que es de
+ * sobra para «663,00 €». Nunca una sola columna: cuatro cifras apiladas son cuatro pantallas de scroll.
+ */
+.ficha-resumen-cifras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 64rem) {
+  .ficha-resumen-cifras {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+}
+
+.ficha-resumen {
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+  padding: 0.6rem 0.7rem;
+  /* Un importe largo no puede empujar la pantalla fuera: el mismo cuidado que en `resumen-dato`. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ficha-resumen-etiqueta {
+  font-size: 0.82rem;
+  font-weight: 700;
+  /* Mayúsculas sin gritar: es un rótulo, y el dato de debajo es lo que se lee. */
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--tinta-suave);
+}
+
+.ficha-resumen-valor {
+  font-size: var(--t-dato-grande);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/*
+ * **La tabla de las líneas** (09/10/2026). Cada línea tiene cuatro datos —qué es, lo facturado, lo que ha
+ * entrado y lo que falta— y en una lista de fichas había que leerlos en vertical, uno por renglón, sin
+ * poder comparar dos líneas. En una tabla se leen en columna, que es como se mira una factura de verdad.
+ *
+ * En el móvil la tabla se desplaza en horizontal (`tabla-scroll`, la pieza que ya usa el resto de la
+ * aplicación) en vez de apilarse: apilada, dos líneas ya no caben en una pantalla.
+ */
+.ficha-lineas {
+  margin: 0.4rem 0 0;
+}
+
+.ficha-lineas .tabla td:first-child {
+  /* La descripción es lo que se lee primero, y no puede quedar en dos letras cuando el resto aprieta. */
+  min-width: 12ch;
+}
+
+@media (max-width: 40rem) {
+  .ficha-lineas .tabla th,
+  .ficha-lineas .tabla td {
+    font-size: 0.92rem;
+  }
+}
+
+/*
+ * **Los dos bloques de la ficha, separados por una raya** (09/10/2026): lo que ha llegado (albaranes y
+ * líneas) y el dinero (gastos y pagos). No es decoración: son las dos mitades que se confunden —creer que
+ * una factura pagada ya ha metido la mercancía— y la raya es lo que las separa de un vistazo.
+ */
+.ficha-bloque {
+  border-top: 2px solid var(--borde);
+  margin-top: 1.2rem;
+  padding-top: 0.4rem;
+}
+
+.ficha-bloque h2:first-child {
+  margin-top: 0.4rem;
+}
+
 /* --------------------------------------------------------------- listas */
 
 .lista {

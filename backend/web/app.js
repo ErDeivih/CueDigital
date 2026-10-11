@@ -5196,7 +5196,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-09-72";
+const VERSION_DE_LA_APLICACION = "2026-10-11-73";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -11114,23 +11114,32 @@ function laCompraParaLaPantalla(datos) {
         descripcion: linea.descripcion,
         facturado: numeroConUnidad(linea.facturado, unidad),
         recibido: recibido_de_la_linea,
+        // **La cantidad sola** (09/10/2026): en la tabla, «Falta» ya lo dice la cabecera de su columna, así
+        // que repetirlo en cada fila («Falta por llegar: 200 kg») era decir dos veces lo mismo y dejar la
+        // columna más ancha que el dato. Cuando no falta nada va vacío, y la plantilla pone «—».
         falta:
           linea.falta !== null && linea.falta !== undefined && linea.falta > 0.0001
-            ? `${c("falta_por_llegar")}: ${numeroConUnidad(linea.falta, unidad)}`
+            ? numeroConUnidad(linea.falta, unidad)
             : "",
       };
     }),
     gastos: (compra.gastos || []).map((gasto) => ({
       id: gasto.id,
       concepto: gasto.concepto,
-      importe: gasto.importe,
-      pagado: `${c("pagado")}: ${gasto.pagado || "—"}`,
-      pendiente: `${c("pendiente")}: ${gasto.pendiente || "—"}`,
+      // **Los importes, como los manda el servidor en español** (09/10/2026): aquí salían `663.00` y
+      // `200.00` —sin coma decimal y sin moneda—, que es el texto de máquina. El dinero lo formatea quien
+      // lo cuenta, que es el servidor; aquí solo se elige la palabra. El texto de máquina se queda de
+      // respaldo para que una pantalla vieja frente a un servidor nuevo (o al revés) no enseñe «—».
+      importe: gasto.importe_texto || gasto.importe || "—",
+      pagado: `${c("pagado")}: ${gasto.pagado_texto || gasto.pagado || "—"}`,
+      pendiente: `${c("pendiente")}: ${gasto.pendiente_texto || gasto.pendiente || "—"}`,
     })),
     pagos: (compra.pagos || []).map((pago) => ({
       cuando: [fechaOSinFecha(pago.fecha), pago.forma || ""].filter(Boolean).join(" · "),
-      importe: pago.importe,
-      aplicado: rellena(c("de_ese_pago_va_aqui"), { importe: pago.aplicado_a_esta_compra || "—" }),
+      importe: pago.importe_texto || pago.importe || "—",
+      aplicado: rellena(c("de_ese_pago_va_aqui"), {
+        importe: pago.aplicado_texto || pago.aplicado_a_esta_compra || "—",
+      }),
     })),
     las_lineas: c("las_lineas"),
     // Volver lleva **a la lista de facturas**, que es de donde se sale a una compra.

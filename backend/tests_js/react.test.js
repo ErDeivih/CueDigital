@@ -7883,6 +7883,13 @@ const TEXTOS_DE_LA_COMPRA = {
   sin_lineas: "Esta factura no trae líneas apuntadas.",
   ver_el_albaran: "VER EL ALBARÁN",
   ver_el_gasto: "VER EL GASTO",
+  // **Los cuatro rótulos de la tabla de líneas** (11/10/2026). Esta copia es a mano para que la prueba no
+  // dependa del servidor, y por eso **hay que traer aquí cada frase nueva**: sin ellas, la tabla se pinta
+  // con las cabeceras vacías y la prueba de la presentación lo dice —que es como se ha encontrado—.
+  col_producto: "Producto",
+  col_facturado: "Facturado",
+  col_ha_entrado: "Ha entrado",
+  col_falta: "Falta",
 };
 
 /** Una compra completa: las cuatro cifras, un albarán, sus líneas, un gasto y un pago. */
@@ -7980,6 +7987,47 @@ test("la ficha lleva a sus albaranes y a sus gastos, y no los mete en la misma l
   assert.ok(
     html.indexOf("Los albaranes de esta compra") < html.indexOf("El dinero de esta compra"),
     "la mercancía va antes que el dinero: es el orden en que pasan las cosas",
+  );
+});
+
+test("la ficha presenta los cuatro indicadores en cuadricula, las lineas en tabla y el dinero aparte", async () => {
+  // **La presentación, no solo el contenido** (11/10/2026). Lo pidió David con estas palabras: «cuatro
+  // indicadores en una fila o cuadrícula en escritorio, líneas en tabla y documentos/pagos claramente
+  // separados». El contenido ya estaba reunido; lo que faltaba era la forma, y sin una prueba se puede
+  // volver a la columna de móvil sin que nadie se entere (que es lo que pasó: las clases de la ficha
+  // **no existían** en `estilos.css` y salía en columna también en el ordenador).
+  const html = await htmlDeLaCompra();
+
+  // 1. Los cuatro indicadores, cada uno en su caja, dentro de la rejilla que `estilos.css` pone en fila.
+  assert.match(html, /class="ficha-resumen-cifras"/, "la rejilla de las cuatro cifras no está");
+  const cajas = html.match(/class="ficha-resumen"/g) || [];
+  assert.equal(cajas.length, 4, `la rejilla tiene que tener cuatro cajas, tiene ${cajas.length}`);
+
+  // 2. Las líneas, en una **tabla** de verdad, con sus cuatro columnas y dentro del contenedor que la
+  //    desplaza en el móvil en vez de apilarla.
+  assert.match(html, /<table class="tabla"/, "las líneas no van en una tabla");
+  assert.match(html, /class="tabla-scroll ficha-lineas"/, "la tabla no está en su contenedor desplazable");
+  for (const columna of ["Producto", "Facturado", "Ha entrado", "Falta"]) {
+    assert.ok(
+      html.includes(`>${columna}</th>`) || html.includes(columna),
+      `falta la columna «${columna}» de la tabla de líneas`,
+    );
+  }
+  assert.match(html, /<tbody>[\s\S]*<tr>/, "la tabla no trae sus filas");
+
+  // 3. Los dos bloques: lo que ha llegado y el dinero, cada uno en su `section` con su raya.
+  const bloques = html.match(/class="ficha-bloque"/g) || [];
+  assert.equal(bloques.length, 2, `tienen que ser dos bloques separados, son ${bloques.length}`);
+  const primero = html.indexOf('class="ficha-bloque"');
+  const segundo = html.indexOf('class="ficha-bloque"', primero + 1);
+  assert.ok(
+    html.indexOf("Los albaranes de esta compra") > primero &&
+      html.indexOf("Los albaranes de esta compra") < segundo,
+    "los albaranes van en el bloque de lo que ha llegado",
+  );
+  assert.ok(
+    html.indexOf("El dinero de esta compra") > segundo,
+    "el dinero va en el segundo bloque, separado de la mercancía",
   );
 });
 

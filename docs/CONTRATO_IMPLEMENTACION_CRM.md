@@ -5,11 +5,37 @@ DeepSeek y cualquier agente implementador. Complementa el plan E0–E13 y la
 especificación detallada; este documento concreta contratos, pantallas y entregas.
 No autoriza pruebas sobre la base real ni sustituye una revisión agronómica.
 
-## 0. Estado a 09/10/2026 — la compra de punta a punta y el reenvío de la factura
+## 0. Estado a 11/10/2026 — la protección del reenvío y la presentación de la compra
 
-No es un plan nuevo: es lo que este contrato ya pide, comprobado desde fuera con
-`backend/scripts/comprobar_la_compra_de_punta_a_punta.py` (servidor aislado, base temporal, documentos
-ficticios). Hoy: **30 comprobaciones, 0 fallos**.
+No es un plan nuevo: es lo que este contrato ya pide, comprobado desde fuera con servidor aislado, base
+temporal y documentos ficticios.
+
+### Lo que hay hoy, medido
+
+| Qué | Con qué se mide | Hoy |
+|---|---|---|
+| La compra de punta a punta (factura → recepción → lote → gasto → pagos) | `backend/scripts/comprobar_la_compra_de_punta_a_punta.py` | **49 comprobaciones · 0 fallos** |
+| La ficha en un navegador de verdad | `backend/scripts/comprobar_la_ficha_de_la_compra_en_el_navegador.py` | **44 comprobaciones · 0 fallos** |
+| El reenvío de la factura | `backend/tests/test_la_factura_reenviada_no_se_duplica.py` | **17 pruebas** |
+| La migración del reenvío, sobre copia | `backend/tests/test_la_migracion_del_reenvio.py` | **3 pruebas** |
+| La ficha, en pruebas | `backend/tests/test_la_ficha_de_la_compra.py` | **11 pruebas** |
+| La suite entera | `python -m pytest tests -q` / `node --test "tests_js/*.test.js"` | **4736 · 0** de Python y **1080 · 0** de JavaScript |
+
+### La historia, aparte, para que nadie lea una cifra vieja como el estado
+
+Estas cifras **han subido**, y cada una se dice aquí una vez en vez de dejar el número viejo suelto más
+abajo:
+
+  · El guion de la compra fue **30** cuando se escribió, pasó a **49** al añadir el pago agrupado, la
+    corrección con rastro y la separación al anular, y sigue en **49**.
+  · La comprobación del navegador fue **13**, pasó a **15** cuando se le añadieron «los botones dicen algo» y
+    «ningún título sale en blanco» —las dos que habrían cazado los botones vacíos que encontró el revisor—,
+    y hoy son **44** con la presentación: la rejilla de los cuatro indicadores, la tabla de líneas, los dos
+    bloques, la barra a 1024 y a 1440 y los importes en español.
+  · El reenvío de la factura tenía **11 pruebas y tres desenlaces**; hoy tiene **17 y cuatro** (el cuarto es
+    el reenvío de un comando cuya factura se anuló, que contesta con su estado y **no crea otra factura**).
+  · Las capturas eran **dos** (móvil y escritorio); hoy son **tres**: móvil de 390 px, escritorio de 1440 y
+    escritorio de 1024.
 
 **Acreditado:** una compra identificable —proveedor → factura de **663 €** con líneas → recepción en las
 **mismas unidades** → lote → gasto **vinculado** por `factura_id` → pagos—. Los pagos se comprueban **por
@@ -31,13 +57,49 @@ número, año y total, pero otra petición) → **200 reconociéndolo por `numer
 veces; y **conflicto claro** (misma clave con otros datos) → **409**, porque una petición no tiene dos cuerpos.
 Cuando no hay número o proveedor, se apunta igual **diciendo que no se pudo comprobar** (`AL27…`). Todo eso
 está en **11 pruebas obligatorias** (`backend/tests/test_la_factura_reenviada_no_se_duplica.py`), seis de las
-cuales se pusieron **rojas antes** del arreglo: se desactivó la comprobación de la puerta y fallaron las seis.
-El instrumento que lo mide —`scripts/comprobar_si_una_factura_repetida_se_duplica.py`— tenía un **defecto
+cuales se pusieron **rojas antes** del arreglo: se desactivó la comprobación de la puerta y fallaron las seis.El instrumento que lo mide —`scripts/comprobar_si_una_factura_repetida_se_duplica.py`— tenía un **defecto
 propio** que se descubrió midiendo: envolvía `datos` dos veces, así que mandaba facturas **vacías** y su
 conclusión era cierta por casualidad; ahora exige que la factura llegue entera antes de concluir nada.
+*(Aquellas 11 pruebas son hoy **17**: lo que cambió después va en el apartado siguiente.)*
+
+**Acreditado desde el 11/10/2026 — la protección del reenvío, cerrada, y el duplicado comercial sin
+depender de la suerte.** Tres cosas cambiaron, a petición expresa, y las tres con prueba:
+
+  1. **La clave no se recicla.** El índice único ya **no excluye las anuladas**: una petición usada es una
+     petición usada, y el reenvío de un comando cuya factura se anuló contesta **200 con su estado anulado y
+     su motivo** (`AL46…`) y **nunca crea otra factura**. Antes la anulada soltaba su clave —la regla de los
+     albaranes—, y eso **confundía un reintento viejo que llega tarde con un alta nueva deliberada**: el
+     móvil que reintentaba sin cobertura recibía una factura nueva sin saberlo. Las altas nuevas se hacen con
+     **una clave nueva**, y para eso la pantalla del alta genera la suya al abrirse y la suelta al guardar
+     (`app.js`), de modo que la segunda factura del día es una petición distinta.
+  2. **El comando original tiene huella** (`facturas.huella_de_la_peticion`). La clave decía «esta petición
+     ya se atendió» pero no **qué traía**, y por eso, después de corregir una factura, **cualquier** cuerpo
+     con aquella clave recibía un 200 «ya estaba» y sus datos se perdían en silencio. Ahora: si lo que llega
+     tiene la huella del comando original es **su reenvío** y se contesta con el registro **como está hoy**
+     (corregido → `AL45…`; anulado → `AL46…`); y si no la tiene, es **otra petición** y es **409** (`AL26…`),
+     haya correcciones o no.
+  3. **El posible duplicado comercial ya no se descarta en silencio, y no depende de la suerte.** El mismo
+     papel con el mismo detalle se sigue contestando con el que había; pero si **dice otra cosa**, ahora es
+     **409** (`AL47…`) diciendo **qué factura es la que está** (número, fecha y total) para que decida el
+     agricultor, en vez de un aviso que nadie lee mientras sus datos se tiran. Y la garantía frente a dos
+     envíos **simultáneos** ya no es la consulta previa —el revisor lo dijo con estas palabras: «80 intentos
+     sin duplicar no constituyen una garantía»— sino el **índice único del papel** (`facturas.clave_del_papel`
+     + `uq_factura_papel`): la segunda inserción falla en la base y la puerta contesta lo mismo que si la
+     hubiera encontrado la búsqueda. La clave del papel **se recalcula al corregir** (si cambia el número, la
+     fecha o el total, el papel es otro) y **una anulada no lo ocupa**, que es la parte de la regla vieja que
+     sigue valiendo: habla del papel, no de la petición.
+  4. **La migración, ensayada sobre copia** (`database.rellenar_la_huella_del_comando`): resuelve las claves
+     repetidas de la regla vieja —se quedan en la factura **más antigua**— y rellena huellas y claves del
+     papel **sin borrar ninguna fila**; si encuentra **dos facturas vivas del mismo papel** —un duplicado de
+     verdad, de los que la regla vieja dejaba pasar— las deja **las dos a la vista** y lo dice, para que lo
+     resuelva el agricultor. Se puede correr dos veces: la segunda no cambia nada. Lo que no se puede
+     reconstruir —la huella de una factura corregida antes de que la huella existiera— se resuelve **por lo
+     prudente**: se dice el conflicto en vez de aceptar en silencio algo que no se puede comprobar.
+
 
 **Acreditado desde el 09/10/2026 — el pago agrupado, la corrección con rastro y la separación al anular.**
-La compra de punta a punta pasa de **30 a 49 comprobaciones** (`0 fallos`), y las tres nuevas son las que
+La compra de punta a punta pasó **de 30 a 49 comprobaciones** (`0 fallos`) —donde sigue: ver el estado de
+arriba—, y las tres nuevas son las que
 faltaban del punto 3 del encargo: **un solo pago de 350 € salda dos facturas** (100 y 250) repartido por
 antigüedad —cada una queda a **0** por su identificador y las **dos aplicaciones suman 350,00 exactos**—;
 **corregir** la factura deja su entrada en la auditoría (`corregir_lineas`), **no mueve el almacén**
@@ -52,13 +114,41 @@ secciones al guion se note.
 `/compras/:id` (`backend/web/react/pantallas/compra.js`) las enseña, con **enlaces** al albarán y al gasto
 (`albaran-abrir`, `gasto-abrir`) y con la **dirección permanente** que se lleva el contexto
 (`#/compras/3?campana=2026&finca=6`). El recorrido **se anda en un navegador de verdad**
-(`scripts/comprobar_la_ficha_de_la_compra_en_el_navegador.py`: **13 comprobaciones, 0 fallos**), incluido el
-camino del agricultor —lista de facturas → «VER LA COMPRA» → ficha—, y deja **dos capturas** en
-`docs/capturas/` (móvil y escritorio). Ahí se cazó un defecto real: la ficha se abría pero **la dirección no
+(`scripts/comprobar_la_ficha_de_la_compra_en_el_navegador.py`: fueron **13** comprobaciones cuando se
+escribió, luego **15**, y **hoy son 44 con la presentación** —ver el estado de arriba—), incluido el
+camino del agricultor —lista de facturas → «VER LA COMPRA» → ficha—, y deja **tres capturas** en
+`docs/capturas/` (móvil de 390 px, escritorio de 1440 y escritorio de 1024). Ahí se cazó un defecto real: la
+ficha se abría pero **la dirección no
 se escribía**, así que el enlace no se podía mandar a nadie; lo que se enseña sale del sitio de siempre
 —lo pagado, con `servicios.lo_pagado_de_un_gasto`, que ahora es la **regla única** del dinero— para que la
 ficha y la pantalla de gastos no puedan dar dos cifras distintas del mismo dinero. Lo que **no** se puede
 saber se declara: una línea sin enganche con el albarán sale como «no se puede saber», nunca como un cero.
+
+**Acreditado desde el 11/10/2026 — la ficha, presentada como una ficha de gestión.** El contenido ya estaba
+reunido, pero se leía como una columna de móvil también en el ordenador, y David lo vio en la captura:
+*«en escritorio la ficha sigue organizada como una columna móvil»*. Ahora:
+
+  · **Los cuatro indicadores van en una fila** a partir de 64 rem —medido en un navegador a **1440**: los
+    cuatro con la misma altura de arriba (173) y **263 px** de ancho cada uno— y en **cuadrícula de dos** por
+    debajo, también a 1024. Lo que no vuelve es la columna: cuatro cifras apiladas son cuatro pantallas.
+    (Esas clases **no existían en `estilos.css`**: la ficha las usaba desde el primer día y sin estilo
+    alguno, que es exactamente por lo que salía en columna.)
+  · **Las líneas van en una tabla** de verdad, con sus cuatro columnas —producto, facturado, ha entrado y
+    falta—, dentro del `tabla-scroll` que ya usa el resto de la aplicación para que el móvil la desplace en
+    horizontal en vez de apilarla.
+  · **Los documentos y el dinero van separados** en dos bloques con su raya: lo que ha llegado (albaranes y
+    líneas) y lo que se ha pagado (gastos y pagos). No es decoración: son las dos mitades que se confunden.
+  · **Los importes van con coma decimal y en euros**, y eso se comprueba: la puerta sirve el mismo importe en
+    texto de máquina y **en español** (`importe_texto`, `pagado_texto`, `pendiente_texto`, `aplicado_texto`,
+    `importe_texto`), porque el dinero lo formatea quien lo cuenta con `Decimal` y el navegador no formatea
+    dinero; el guion del navegador busca en pantalla cualquier cifra con punto y dos decimales (`663.00`) y
+    **falla si aparece**.
+  · **Y la barra de arriba, medida a 1024 y a 1440.** A 1440 usa la barra del armazón: **64 px** de alto, sus
+    **cuatro acciones a la vista** y la campaña y la cuenta **sin recortar** —lo que sí se recorta es el
+    **nombre de la explotación**, que es lo que el diseño decidió que cediera primero, y en el fixture lleva a
+    propósito un nombre larguísimo—. A 1024 el armazón usa la **cabecera compacta** (el corte de escritorio
+    está en 64 rem y el ancho de maquetación se queda en 1009 con la barra de desplazamiento), con sus **dos
+    acciones a la vista**. En los dos anchos: **ninguna acción oculta**.
 
 **Pendiente:** **permisos, uso sin cobertura, conflictos de edición y restauración de copia**; y de §S11,
 lo que la ficha todavía no enseña (varios tipos de IVA, portes y descuentos globales, moneda).

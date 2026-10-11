@@ -51,6 +51,18 @@ def comprobar(bien: bool, que: str) -> bool:
     return bien
 
 
+def en_consola(algo) -> str:
+    """Lo que se imprime, **en algo que la consola de Windows sepa escribir** (09/10/2026).
+
+    Medido: el texto de la barra de arriba trae el carácter del botón del menú (☰), y la consola de este
+    Windows va en `cp1252`, así que imprimirlo **reventaba el guion entero** con un `UnicodeEncodeError`
+    —después de haber medido bien la barra—. El fallo era del instrumento, no de la barra: lo que se
+    imprime es para leerlo, y un carácter que no se puede escribir se sustituye en vez de tumbar la
+    comprobación.
+    """
+    return str(algo).encode("ascii", "replace").decode("ascii")
+
+
 def _api(camino: str, token: str, cuerpo: dict | None = None, *, metodo: str = "POST"):
     """Una llamada a la API como la hace la pantalla. Devuelve (código, cuerpo)."""
     import httpx
@@ -241,8 +253,21 @@ def main() -> int:
                 break
             time.sleep(0.5)
         texto = el_texto(nav)
+        # **Los cuatro rótulos, medidos donde están y sin depender de las mayúsculas** (09/10/2026). Esta
+        # comprobación buscaba «Recibido» en el texto de toda la pantalla y **fallaba**: los rótulos se
+        # pintan en mayúsculas (`text-transform`, como los encabezados de las tablas del diseño), así que
+        # «Recibido» no aparecía con esa caja en ningún sitio —las otras tres palabras sí, por casualidad,
+        # en la tabla y en las filas del gasto—. El producto estaba bien; el instrumento medía otra cosa.
+        rotulos = nav.evaluar(
+            "[...document.querySelectorAll('#pantalla .ficha-resumen-etiqueta')].map((e) => e.innerText)"
+        )
+        print(f"  (rotulos de los cuatro indicadores: {en_consola(rotulos)})")
+        en_mayusculas = [str(rotulo).strip().upper() for rotulo in rotulos]
         for etiqueta in ("Facturado", "Recibido", "Pagado", "Pendiente"):
-            comprobar(etiqueta in texto, f"la ficha dice «{etiqueta}»")
+            comprobar(
+                etiqueta.upper() in en_mayusculas,
+                f"la ficha dice «{etiqueta}» en uno de sus cuatro indicadores",
+            )
         for cifra in ("663,00", "300,00", "200,00", "463,00"):
             comprobar(cifra in texto, f"y su cifra ({cifra})")
 
@@ -293,7 +318,26 @@ def main() -> int:
         movil = captura(nav, "movil")
         print(f"  (captura del movil: {movil})")
 
-        print("\n4) La direccion es permanente: se recarga y vuelve a salir")
+        print("\n4) **Ningun importe sin coma decimal ni moneda** (lo pidio David el 09/10/2026)")
+        # Un importe con punto y dos decimales es el texto de máquina que se colaba en la pantalla
+        # (`663.00`), y el revisor lo vio en la captura. Se busca en **todo** el texto de la ficha, que es
+        # donde aparecería, y no en un sitio concreto: no hay ninguna cifra de dinero que deba salir así.
+        sueltos = nav.evaluar(
+            """(() => {
+                const texto = (document.querySelector('#pantalla') || {}).innerText || '';
+                return (texto.match(/(^|[\\s(])\\d+\\.\\d\\d(?!\\d)/g) || []).map((t) => t.trim());
+            })()"""
+        )
+        comprobar(
+            not sueltos,
+            f"y ningun importe sale como texto de maquina (encontrados: {sueltos})",
+        )
+        comprobar(
+            "," in el_texto(nav) and "€" in el_texto(nav),
+            "y los importes van con coma decimal y en euros",
+        )
+
+        print("\n5) La direccion es permanente: se recarga y vuelve a salir")
         nav.abrir(f"{DIRECCION}/#/compras/{factura_id}", esperar=2.5)
         nav.esperar("(document.querySelector('#pantalla') || {}).innerText || ''", segundos=15)
         for intento in range(30):
@@ -307,24 +351,210 @@ def main() -> int:
             "al recargar el enlace permanente, la ficha sale igual",
         )
 
-    # Y la captura del escritorio, que es donde se mira con el papel delante.
-    with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
-        nav.orden(
-            "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": "window.localStorage.setItem('cuedigital.token', "
-                + json.dumps(token)
-                + ");"
-            },
-        )
-        nav.abrir(f"{DIRECCION}/#/compras/{factura_id}", esperar=2.5)
-        nav.esperar("(document.querySelector('#pantalla') || {}).innerText || ''", segundos=15)
-        for intento in range(30):
-            if "Pendiente" in el_texto(nav):
-                break
-            time.sleep(0.5)
-        escritorio = captura(nav, "escritorio")
-        print(f"  (captura del escritorio: {escritorio})")
+    # ── El escritorio, a los dos anchos que pidió David: 1440 y 1024 ────────────────────────────────────
+    for ancho in (1440, 1024):
+        with NavegadorDeVerdad(ancho=ancho, alto=900) as nav:
+            nav.orden(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": "window.localStorage.setItem('cuedigital.token', "
+                    + json.dumps(token)
+                    + ");"
+                },
+            )
+            nav.abrir(f"{DIRECCION}/#/compras/{factura_id}", esperar=2.5)
+            nav.esperar("(document.querySelector('#pantalla') || {}).innerText || ''", segundos=15)
+            for intento in range(30):
+                if "Pendiente" in el_texto(nav):
+                    break
+                time.sleep(0.5)
+
+            print(f"\n6) **La ficha y la barra a {ancho} px**")
+
+            # **Los cuatro indicadores, en una fila o cuadrícula.** Es lo que pidió David: en el escritorio
+            # la ficha seguía siendo una columna móvil, con cada cifra ocupando el ancho entero. Se mide de
+            # verdad: las cuatro cajas tienen que compartir la misma altura de arriba —una fila— y estar en
+            # cuatro columnas distintas.
+            la_rejilla = nav.evaluar(
+                """(() => {
+                    const cajas = [...document.querySelectorAll('#pantalla .ficha-resumen')];
+                    return {
+                        cuantas: cajas.length,
+                        arribas: cajas.map((c) => Math.round(c.getBoundingClientRect().top)),
+                        izquierdas: cajas.map((c) => Math.round(c.getBoundingClientRect().left)),
+                        anchos: cajas.map((c) => Math.round(c.getBoundingClientRect().width)),
+                    };
+                })()"""
+            )
+            print(f"     (indicadores: {en_consola(la_rejilla)})")
+            comprobar(la_rejilla["cuantas"] == 4, f"la ficha trae sus cuatro indicadores ({la_rejilla['cuantas']})")
+            # **En escritorio ancho, una fila** (1440). A 1024 la rejilla baja a dos filas de dos —que es
+            # una cuadrícula, y es lo que el encargo pide («una fila o cuadrícula»)—, y lo que **no** puede
+            # pasar en ninguno de los dos es que vuelvan a la columna móvil: cuatro cifras apiladas son
+            # cuatro pantallas de scroll, que es justo el defecto que se venía a arreglar.
+            if ancho >= 1440:
+                comprobar(
+                    len(set(la_rejilla["arribas"])) == 1,
+                    f"y los cuatro estan en la misma fila (arribas: {la_rejilla['arribas']})",
+                )
+            else:
+                comprobar(
+                    len(set(la_rejilla["arribas"])) <= 2,
+                    f"y a {ancho} van en cuadricula, no en columna (arribas: {la_rejilla['arribas']})",
+                )
+            comprobar(
+                len({izquierda for izquierda in la_rejilla["izquierdas"]}) >= 2,
+                f"y hay al menos dos columnas (izquierdas: {la_rejilla['izquierdas']})",
+            )
+            comprobar(
+                min(la_rejilla["anchos"]) >= 120,
+                f"y ninguno encogido a una tira (el mas estrecho: {min(la_rejilla['anchos'])} px)",
+            )
+
+            # **La barra de arriba, entera y sin acciones ocultas.** David vio la barra cortada en la
+            # captura. Se comprueba la cabecera que de verdad se usa a este ancho (el armazón de escritorio
+            # a partir de 64rem, la de móvil por debajo): ni se sale del ancho, ni recorta su contenido, ni
+            # esconde ningún botón.
+            la_barra = nav.evaluar(
+                """(() => {
+                    // **`offsetParent` NO sirve aquí** (09/10/2026, y costó una medición falsa): la barra
+                    // del armazón de escritorio es `position: fixed`, y en un elemento fijo `offsetParent`
+                    // vale `null` **por especificación**. Con aquella comprobación, a 1440 px la barra de
+                    // verdad salía «oculta» y el guion medía la cabecera del móvil —que allí mide 0 px—,
+                    // diciendo que había 0 botones a la vista. Se mide con la caja y el estilo calculado,
+                    // que es lo que de verdad dice si algo se ve.
+                    const visible = (el) => {
+                        if (!el) return false;
+                        const c = el.getBoundingClientRect();
+                        const e = getComputedStyle(el);
+                        return (
+                            c.width > 0 &&
+                            c.height > 0 &&
+                            e.display !== 'none' &&
+                            e.visibility !== 'hidden' &&
+                            Number(e.opacity) > 0
+                        );
+                    };
+                    const deEscritorio = document.querySelector('.marco .barra');
+                    const usaEscritorio = visible(deEscritorio);
+                    const caja = usaEscritorio ? deEscritorio : document.querySelector('.cabecera');
+                    if (!caja) return {hay: false};
+                    const datos = caja.querySelector('.barra-datos') || caja;
+                    const acciones = caja.querySelector('.barra-acciones') || caja.querySelector('.cabecera-botones');
+                    const botones = [...(acciones ? acciones.querySelectorAll('button, a') : [])];
+                    // **Qué se recorta, y cuál no** (09/10/2026). La casa tiene decidido que, si algo tiene
+                    // que ceder en esta barra, ceda **el nombre de la explotación**, y nunca la campaña ni
+                    // la cuenta ni las acciones (está escrito en el CSS y lo mide
+                    // `scripts/medir_la_barra_de_escritorio.py`). Así que no basta con «hay algo cortado»:
+                    // hay que decir **qué**, porque recortar el nombre es lo previsto y recortar la campaña
+                    // es el defecto que David vio en la captura.
+                    const trozos = [...datos.querySelectorAll('.barra-dato')].map((d) => ({
+                        rotulo: ((d.querySelector('.barra-rotulo') || {}).innerText || '').trim(),
+                        recortado: d.scrollWidth > d.clientWidth + 1,
+                    }));
+                    return {
+                        hay: true,
+                        usaEscritorio,
+                        anchoCaja: Math.round(caja.getBoundingClientRect().width),
+                        altoCaja: Math.round(caja.getBoundingClientRect().height),
+                        datosRecortados: datos.scrollWidth > datos.clientWidth + 1,
+                        trozos,
+                        botones: botones.length,
+                        botonesVisibles: botones.filter(visible).length,
+                        texto: (caja.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 120),
+                    };
+                })()"""
+            )
+            print(f"     (barra: {en_consola(la_barra)})")
+            comprobar(bool(la_barra.get("hay")), f"a {ancho} px hay una barra de arriba")
+            # **Lo esencial no se recorta.** El nombre de la explotación sí puede (es lo que la casa decidió
+            # que ceda, y aquí se le está dando un nombre larguísimo a propósito: el del fixture lleva un
+            # número detrás). Lo que no puede quedar cortado es la **campaña** —el agricultor tiene que saber
+            # en qué año apunta— ni la **cuenta**, que es lo que David vio cortado en la captura.
+            # **A 1024 el armazón usa la cabecera de móvil, y eso es una decisión del diseño, no un
+            # recorte** (medido el 09/10/2026): el corte de escritorio está en `64rem`, y a 1024 px de
+            # ventana el ancho de maquetación se queda en 1009 por la barra de desplazamiento, así que la
+            # consulta de medios no entra y sale la cabecera compacta —con sus acciones, las dos a la
+            # vista—. Donde se exige que la campaña y la cuenta estén sin cortar es donde existen: en la
+            # barra del armazón de escritorio.
+            if la_barra.get("usaEscritorio"):
+                esenciales = [
+                    trozo
+                    for trozo in la_barra.get("trozos", [])
+                    if "CAMPA" in trozo["rotulo"].upper() or "CUENTA" in trozo["rotulo"].upper()
+                ]
+                comprobar(
+                    len(esenciales) >= 2,
+                    f"y la barra dice la campana y la cuenta "
+                    f"({[t['rotulo'] for t in la_barra.get('trozos', [])]})",
+                )
+                recortados_esenciales = [
+                    trozo["rotulo"] for trozo in esenciales if trozo["recortado"]
+                ]
+                comprobar(
+                    not recortados_esenciales,
+                    f"y ninguna de las dos sale cortada (cortadas: {recortados_esenciales})",
+                )
+                # **Y se dice qué sí se recorta**, que es el nombre de la explotación: la casa decidió que
+                # ceda él antes que la campaña o la cuenta, y aquí se le está dando un nombre larguísimo a
+                # propósito. Dejarlo escrito evita que alguien lea «hay algo recortado» como un defecto.
+                print(
+                    "     (recortado por el nombre largo: "
+                    f"{[t['rotulo'] for t in la_barra.get('trozos', []) if t['recortado']]})"
+                )
+            else:
+                comprobar(
+                    not la_barra.get("datosRecortados"),
+                    f"y la cabecera que se usa a {ancho} px no recorta nada",
+                )
+            comprobar(
+                la_barra.get("botones", 0) > 0
+                and la_barra.get("botones") == la_barra.get("botonesVisibles"),
+                f"y no esconde ninguna accion ({la_barra.get('botonesVisibles')} de "
+                f"{la_barra.get('botones')} a la vista)",
+            )
+
+            # **Y las líneas, en tabla**: es lo que pidió David («líneas en tabla»). Una tabla de verdad,
+            # con sus encabezados, y no una lista de fichas.
+            la_tabla = nav.evaluar(
+                """(() => {
+                    const tabla = document.querySelector('#pantalla table.tabla');
+                    if (!tabla) return {hay: false};
+                    return {
+                        hay: true,
+                        filas: tabla.querySelectorAll('tbody tr').length,
+                        columnas: [...tabla.querySelectorAll('thead th')].map((th) => (th.innerText || '').trim()),
+                        scroll: (tabla.parentElement.className || '').includes('tabla-scroll'),
+                    };
+                })()"""
+            )
+            print(f"     (lineas: {la_tabla})")
+            comprobar(bool(la_tabla.get("hay")), "las lineas van en una tabla")
+            comprobar(la_tabla.get("filas", 0) >= 1, "con sus filas")
+            comprobar(
+                len(la_tabla.get("columnas", [])) == 4,
+                f"y sus cuatro columnas ({la_tabla.get('columnas')})",
+            )
+            comprobar(bool(la_tabla.get("scroll")), "y la tabla se puede desplazar en el movil")
+
+            # Y los dos bloques separados: lo que ha llegado y el dinero.
+            los_bloques = nav.evaluar(
+                "document.querySelectorAll('#pantalla section.ficha-bloque').length"
+            )
+            comprobar(los_bloques == 2, f"y los dos bloques separados: datos y dinero ({los_bloques})")
+
+            # **Ninguna cifra de dinero en texto de máquina**, tampoco aquí.
+            sueltos_aqui = nav.evaluar(
+                """(() => {
+                    const texto = (document.querySelector('#pantalla') || {}).innerText || '';
+                    return (texto.match(/(^|[\\s(])\\d+\\.\\d\\d(?!\\d)/g) || []).map((t) => t.trim());
+                })()"""
+            )
+            comprobar(not sueltos_aqui, f"y ningun importe como 663.00 (encontrados: {sueltos_aqui})")
+
+            print(f"     (texto de la barra: {en_consola(la_barra.get('texto'))})")
+            destino = captura(nav, "escritorio" if ancho == 1440 else f"escritorio-{ancho}")
+            print(f"  (captura a {ancho}: {destino})")
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {FALLOS}")
     print(f"Capturas en {CARPETA}")

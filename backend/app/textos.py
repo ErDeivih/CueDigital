@@ -5345,6 +5345,13 @@ COMPRA: dict[str, str] = {
     "un_albaran_sin_numero": "Un albarán sin número",
     "ese_albaran_esta_anulado": "Ese albarán está anulado, así que no metió nada.",
     "las_lineas": "Lo que trae la factura",
+    # **Los rótulos de la tabla de líneas** (09/10/2026). La tabla tiene cuatro columnas —qué es, lo
+    # facturado, lo que ha entrado y lo que falta— y los encabezados los sirve el servidor como todo lo
+    # demás: la pantalla elige el dibujo, no las palabras.
+    "col_producto": "Producto",
+    "col_facturado": "Facturado",
+    "col_ha_entrado": "Ha entrado",
+    "col_falta": "Falta",
     "de_ese_pago_va_aqui": "De ese pago, a esta compra: {importe}",
     "facturado": "Facturado",
     "facturado_pista": "Lo que dice la factura del proveedor.",

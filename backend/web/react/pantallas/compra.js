@@ -73,21 +73,15 @@ function UnAlbaran({ albaran, textos }) {
   `;
 }
 
-/** Una línea de la factura, con lo que ha entrado de ella y lo que falta. */
+/** Una línea de la factura, **como fila de una tabla**: qué es, lo facturado, lo que entró y lo que falta. */
 function UnaLinea({ linea }) {
   return html`
-    <li>
-      <div className="apunte-cabecera">
-        <strong>${frase(linea.descripcion)}</strong>
-        <span>${frase(linea.facturado)}</span>
-      </div>
-      <div className="apunte-detalle">${frase(linea.recibido)}</div>
-      ${
-        // Lo que falta solo se puede decir cuando se sabe: si no hay enganche con el albarán, la frase
-        // ya lo explica y no se añade una resta que no se ha podido hacer.
-        linea.falta ? html`<div className="apunte-detalle">${frase(linea.falta)}</div>` : null
-      }
-    </li>
+    <tr>
+      <td>${frase(linea.descripcion)}</td>
+      <td className="tabla-numero">${frase(linea.facturado)}</td>
+      <td>${frase(linea.recibido)}</td>
+      <td className="tabla-numero">${frase(linea.falta || "—")}</td>
+    </tr>
   `;
 }
 
@@ -130,6 +124,10 @@ export function PantallaCompra({ textos = {}, compra = {}, cargando = false, err
   const lineas = compra.lineas || [];
   const gastos = compra.gastos || [];
   const pagos = compra.pagos || [];
+  // **Los documentos en un bloque y el dinero en otro** (09/10/2026). Antes eran cinco listas seguidas con
+  // sus títulos, todas con el mismo aspecto, así que la vista no separaba las dos cosas que el agricultor
+  // no puede confundir: **lo que ha llegado** (el albarán y lo que trae la factura) y **lo que se ha
+  // pagado**. Cada mitad va en su `section`, con su raya.
   return html`
     <h1>${frase(compra.titulo)}</h1>
     <p className="pista">${frase(compra.cuando)}</p>
@@ -157,58 +155,82 @@ export function PantallaCompra({ textos = {}, compra = {}, cargando = false, err
       )}
     </div>
 
-    <h2>${frase((textos || {}).los_albaranes)}</h2>
-    ${
-      albaranes.length
-        ? html`<ul className="lista">
-            ${albaranes.map(
-              (albaran, indice) =>
-                html`<${UnAlbaran} key=${indice} albaran=${albaran} textos=${textos} />`,
-            )}
-          </ul>`
-        : html`<p className="pista-campo">${frase((textos || {}).sin_albaran)}</p>`
-    }
-
-    <h2>${frase(compra.las_lineas)}</h2>
-    ${
-      lineas.length
-        ? html`<ul className="lista">
-            ${lineas.map((linea, indice) => html`<${UnaLinea} key=${indice} linea=${linea} />`)}
-          </ul>`
-        : html`<p className="pista-campo">${frase((textos || {}).sin_lineas)}</p>`
-    }
-
-    <h2>${frase((textos || {}).el_dinero)}</h2>
-    ${
-      gastos.length
-        ? html`<ul className="lista">
-            ${gastos.map(
-              (gasto, indice) => html`<${UnGasto} key=${indice} gasto=${gasto} textos=${textos} />`,
-            )}
-          </ul>`
-        : html`<p className="pista-campo">${frase((textos || {}).sin_gasto)}</p>`
-    }
-    ${
-      // Los pagos solo salen si los hay: una lista vacía con su título sería ruido.
-      pagos.length
-        ? html`
-            <h3>${frase((textos || {}).los_pagos)}</h3>
-            <ul className="lista">
-              ${pagos.map(
-                (pago, indice) => html`
-                  <li key=${indice}>
-                    <div className="apunte-cabecera">
-                      <strong>${frase(pago.cuando)}</strong>
-                      <span>${frase(pago.importe)}</span>
-                    </div>
-                    <div className="apunte-detalle">${frase(pago.aplicado)}</div>
-                  </li>
-                `,
+    <section className="ficha-bloque">
+      <h2>${frase((textos || {}).los_albaranes)}</h2>
+      ${
+        albaranes.length
+          ? html`<ul className="lista">
+              ${albaranes.map(
+                (albaran, indice) =>
+                  html`<${UnAlbaran} key=${indice} albaran=${albaran} textos=${textos} />`,
               )}
-            </ul>
-          `
-        : null
-    }
+            </ul>`
+          : html`<p className="pista-campo">${frase((textos || {}).sin_albaran)}</p>`
+      }
+
+      <h2>${frase(compra.las_lineas)}</h2>
+      ${
+        lineas.length
+          ? html`
+              <div className="tabla-scroll ficha-lineas">
+                <table className="tabla" aria-label=${frase(compra.las_lineas)}>
+                  <thead>
+                    <tr>
+                      <th scope="col">${frase((textos || {}).col_producto)}</th>
+                      <th scope="col" className="tabla-numero">
+                        ${frase((textos || {}).col_facturado)}
+                      </th>
+                      <th scope="col">${frase((textos || {}).col_ha_entrado)}</th>
+                      <th scope="col" className="tabla-numero">
+                        ${frase((textos || {}).col_falta)}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${lineas.map(
+                      (linea, indice) => html`<${UnaLinea} key=${indice} linea=${linea} />`,
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            `
+          : html`<p className="pista-campo">${frase((textos || {}).sin_lineas)}</p>`
+      }
+    </section>
+
+    <section className="ficha-bloque">
+      <h2>${frase((textos || {}).el_dinero)}</h2>
+      ${
+        gastos.length
+          ? html`<ul className="lista">
+              ${gastos.map(
+                (gasto, indice) => html`<${UnGasto} key=${indice} gasto=${gasto} textos=${textos} />`,
+              )}
+            </ul>`
+          : html`<p className="pista-campo">${frase((textos || {}).sin_gasto)}</p>`
+      }
+      ${
+        // Los pagos solo salen si los hay: una lista vacía con su título sería ruido.
+        pagos.length
+          ? html`
+              <h3>${frase((textos || {}).los_pagos)}</h3>
+              <ul className="lista">
+                ${pagos.map(
+                  (pago, indice) => html`
+                    <li key=${indice}>
+                      <div className="apunte-cabecera">
+                        <strong>${frase(pago.cuando)}</strong>
+                        <span>${frase(pago.importe)}</span>
+                      </div>
+                      <div className="apunte-detalle">${frase(pago.aplicado)}</div>
+                    </li>
+                  `,
+                )}
+              </ul>
+            `
+          : null
+      }
+    </section>
 
     <${Botones} botones=${compra.acciones} />
   `;

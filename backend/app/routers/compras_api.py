@@ -199,6 +199,11 @@ def _los_pagos(db, explotacion_id: int, gasto_ids: list[int]) -> list[dict]:
             {
                 "id": pago.id,
                 "importe": dinero.a_texto(pago.importe),
+                # **Y el mismo importe en español** (09/10/2026): la ficha enseñaba `200.00` —sin coma y sin
+                # moneda— porque el navegador recibía el texto de máquina y no tiene con qué formatearlo
+                # (el dinero se cuenta y se formatea aquí, con `Decimal`). El texto de máquina sigue ahí
+                # para lo que lo necesite; lo que se enseña es este.
+                "importe_texto": dinero.formatea(pago.importe),
                 "fecha": pago.fecha.isoformat() if pago.fecha else None,
                 "forma": pago.forma,
                 "aplicado_a_esta_compra": dinero.CERO,
@@ -209,6 +214,7 @@ def _los_pagos(db, explotacion_id: int, gasto_ids: list[int]) -> list[dict]:
         )
     # Se pasa a texto al final, con el acumulador ya cerrado: sumar textos sería sumar letras.
     for suyo in pagos.values():
+        suyo["aplicado_texto"] = dinero.formatea(suyo["aplicado_a_esta_compra"])
         suyo["aplicado_a_esta_compra"] = dinero.a_texto(suyo["aplicado_a_esta_compra"])
     return sorted(pagos.values(), key=lambda fila: (fila["fecha"] or "", fila["id"]))
 
@@ -302,6 +308,12 @@ def ver_una_compra(factura_id: int, explotacion: ExplotacionActual, db: Db) -> d
                 "importe": dinero.a_texto(gasto.importe),
                 "pagado": dinero.a_texto(pagado),
                 "pendiente": dinero.a_texto(pendiente),
+                # **Y los tres en español**, por lo mismo que en los pagos: la ficha los enseña, y el
+                # navegador no formatea dinero. Cuando no se sabe, el texto va vacío y la pantalla dice
+                # «—»: un cero ahí parecería un dato.
+                "importe_texto": dinero.formatea(gasto.importe),
+                "pagado_texto": dinero.formatea(pagado),
+                "pendiente_texto": "" if pendiente is None else dinero.formatea(pendiente),
                 "estado": gastos.estado_de_un_gasto(
                     importe=gasto.importe,
                     pagado=pagado,

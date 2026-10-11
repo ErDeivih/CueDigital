@@ -148,7 +148,7 @@ Las tres últimas, por orden:
 | **Los años de mi cuaderno** (la campaña) (`backend/web/react/pantallas/campanas.js`) | ✅ En React |
 | **El libro del almacén** (`backend/web/react/pantallas/libro_del_almacen.js`) | ✅ En React (T09) |
 | **La ficha de un albarán** (`backend/web/react/pantallas/recepcion.js`) | ✅ En React (T09) |
-| **La ficha de una compra** (`backend/web/react/pantallas/compra.js`) | ✅ En React (S11, 09/10/2026) |
+| **La ficha de una compra** (`backend/web/react/pantallas/compra.js`) | ✅ En React (S11, 09/10/2026; presentación de escritorio, 11/10/2026) |
 | **Apuntar un albarán** (`backend/web/react/pantallas/nuevo_albaran.js`) | ✅ En React (T09) |
 | **Una merma, un ajuste o una entrada** (`backend/web/react/pantallas/movimiento_de_almacen.js`) | ✅ En React (T09) |
 | **Sacar de un envase desde un apunte** (`backend/web/react/pantallas/sacar_de_un_lote.js`) | ✅ En React (T09) |
