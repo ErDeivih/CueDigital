@@ -861,14 +861,19 @@ class TestBorrarUnaFactura:
         assert cliente.get("/api/facturas/resumen", headers=cuenta["cabeceras"]).json() == []
 
     def test_se_borra_la_factura_repetida_aunque_el_producto_ya_se_haya_echado(
-        self, cliente, cuenta, campana, parcela
+        self, cliente, cuenta, campana, parcela, db_sesion
     ):
         """Es el caso que rompe la regla fácil («no se borra si su producto ya se ha usado»).
 
-        El agricultor sube dos veces la misma factura, que es lo que hace todo el mundo: se compró
-        una vez y hay dos apuntes. El producto **sí se ha echado**, pero la otra factura sigue ahí y
+        El agricultor tiene dos apuntes de la misma compra —subió la misma factura dos veces, que es
+        lo que hace todo el mundo—. El producto **sí se ha echado**, pero la otra factura sigue ahí y
         la cuenta cuadra, así que borrar la repetida es lo correcto —y negarse lo dejaría con una
         factura falsa dentro, que es justo lo que pidió arreglar—.
+
+        **Y desde el 09/10/2026 la puerta ya no deja crear ese duplicado** (ver el comentario de
+        abajo), así que el duplicado se pone **como está en la realidad**: ya dentro de la base, de
+        una versión anterior del programa. Lo que se sigue probando es lo mismo de antes —que se
+        puede borrar—, y además queda escrito que la puerta lo rechaza.
         """
         producto = _un_producto(cliente, cuenta["cabeceras"])
         una = _guardar_factura(
@@ -877,12 +882,57 @@ class TestBorrarUnaFactura:
             numero_factura="2026/00123",
             lineas=[{**UNA_LINEA, "cantidad": 5, "unidad": "L", "producto_id": producto["id"]}],
         )
-        _guardar_factura(
+        # **La puerta ya no crea la segunda** (09/10/2026). Antes esta línea guardaba una factura
+        # repetida y el `_guardar_factura` exigía 201; ahora la misma factura, por la puerta, contesta
+        # **200 con la que ya estaba** y sin apuntar nada, que es lo que pide el contrato §2
+        # («reenviar el mismo comando devuelve su resultado; no crea otro movimiento»). Se comprueba
+        # aquí, en el mismo sitio donde antes se colaba el duplicado.
+        repetida_por_la_puerta = _guardar_factura_crudo(
             cliente,
             cuenta["cabeceras"],
             numero_factura="2026/00123",
             lineas=[{**UNA_LINEA, "cantidad": 5, "unidad": "L", "producto_id": producto["id"]}],
         )
+        assert repetida_por_la_puerta.status_code == 200, repetida_por_la_puerta.text
+        cuerpo_repetido = repetida_por_la_puerta.json()
+        assert cuerpo_repetido["ya_estaba"] is True
+        assert cuerpo_repetido["como_se_reconocio"] == "numero_de_factura"
+        assert cuerpo_repetido["id"] == una["id"], "se devuelve **la que ya estaba**, no otra"
+        assert "no se ha contado dos veces" in " ".join(cuerpo_repetido["avisos"])
+
+        # El duplicado que sí existe: el que ya estaba en la base de antes.
+        de_antes = db_sesion.get(models.Factura, una["id"])
+        repetida = models.Factura(
+            explotacion_id=de_antes.explotacion_id,
+            campana_id=de_antes.campana_id,
+            fecha=de_antes.fecha,
+            proveedor=de_antes.proveedor,
+            proveedor_nif=de_antes.proveedor_nif,
+            numero_factura=de_antes.numero_factura,
+            base_imponible=de_antes.base_imponible,
+            cuota_iva=de_antes.cuota_iva,
+            tipo_iva_pct=de_antes.tipo_iva_pct,
+            total=de_antes.total,
+            leida_por=de_antes.leida_por,
+        )
+        db_sesion.add(repetida)
+        # Se guarda antes de la línea porque la línea necesita el identificador de su factura, que lo
+        # pone la base al insertarla: lo mismo que hace el alta en `facturas_api.guardar_una_factura`.
+        db_sesion.flush()
+        db_sesion.add(
+            models.LineaDeFactura(
+                explotacion_id=de_antes.explotacion_id,
+                factura_id=repetida.id,
+                descripcion=UNA_LINEA["descripcion"],
+                cantidad=5,
+                unidad="L",
+                precio_unitario=UNA_LINEA["precio_unitario"],
+                importe=UNA_LINEA["importe"],
+                producto_id=producto["id"],
+            )
+        )
+        db_sesion.commit()
+
         _se_echa(cliente, cuenta["cabeceras"], campana, parcela, producto, dosis=2)
         # Se han echado 4,86 L y hay 10 L comprados: con una de las dos facturas, todavía cuadra.
         assert _la_cesta(cliente, cuenta["cabeceras"], producto["id"])["queda"] == pytest.approx(
@@ -1181,7 +1231,12 @@ class TestLoQueSeCuentaAntesDeBorrar:
             servicios.columnas_que_una_correccion_no_toca(
                 models.Factura, FacturaEntrada, FacturaSalida
             )
-        ) == ["anulada", "campana_id", "creada_en", "fichero_bytes", "fichero_nombre",
+        # **Y desde el 09/10/2026, la clave de reenvío** (09/10/2026). La factura entró en el club de
+        # las que no se apuntan dos veces (`clave_de_reenvio`), así que el alta la **acepta**; pero la
+        # lectura **no la devuelve** —no es un dato del papel, es la identidad de la petición que
+        # creó la fila—, y por eso la regla la deja quieta al corregir, que es justo lo que tiene que
+        # pasar: corregir un importe no puede cambiar qué petición trajo esta factura.
+        ) == ["anulada", "campana_id", "clave_de_reenvio", "creada_en", "fichero_bytes", "fichero_nombre",
               "fichero_ruta", "fichero_tipo", "huella"]
 
         # Y se quedan fuera por el motivo que dice la regla, no por casualidad.

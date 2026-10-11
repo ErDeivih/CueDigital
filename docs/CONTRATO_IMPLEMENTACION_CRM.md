@@ -5,7 +5,7 @@ DeepSeek y cualquier agente implementador. Complementa el plan E0–E13 y la
 especificación detallada; este documento concreta contratos, pantallas y entregas.
 No autoriza pruebas sobre la base real ni sustituye una revisión agronómica.
 
-## 0. Estado a 08/10/2026 — la compra de punta a punta
+## 0. Estado a 09/10/2026 — la compra de punta a punta y el reenvío de la factura
 
 No es un plan nuevo: es lo que este contrato ya pide, comprobado desde fuera con
 `backend/scripts/comprobar_la_compra_de_punta_a_punta.py` (servidor aislado, base temporal, documentos
@@ -20,12 +20,24 @@ ya conocido (**1000 → 1000**): la factura **no** vuelve a meter mercancía. **
 200 kg **sin factura**, que suman **500 → 1000** con tres movimientos. **Factura posterior al albarán**:
 enganche por `POST /api/almacen/recepciones/{id}/factura` → **200**.
 
-**Pendiente, con el patrón ya localizado:** el **reenvío de facturas** —`models.Factura` no tiene
-`clave_de_reenvio` y su puerta **no consulta** el duplicado (`_ya_estaba` sólo se usa al leer)—; el patrón a
-copiar está en `almacen_api.crear_recepcion` (clave → el original con **200**; número + proveedor → el que
-había; y `AL5…` cuando no se puede saber), separando **reenvío técnico** de **duplicado comercial** con
-**409**. Faltan también **pago agrupado**, **corrección/anulación con auditoría**, la **ficha de compra**
-(punto 5, con pantallas y capturas), convertir el guion en **pruebas obligatorias**, y **permisos, uso sin
+**Acreditado desde el 09/10/2026 — el reenvío de la factura, resuelto en el servidor.** Era el hueco que este
+mismo apartado tenía apuntado: `models.Factura` era **la única entidad del programa sin `clave_de_reenvio`** y
+su puerta **siempre insertaba** (medido: `201`, `201`, dos filas). Ya no: la columna existe con **índice único
+parcial por explotación, filtrado por `anulada = 0`** —la misma decisión que `Recepcion` y
+`MovimientoDeExistencias`, y por el mismo motivo escrito allí: una anulada **no ocupa su clave**, porque anular
+existe justo para poder apuntar la buena después—, y la puerta separa **tres desenlaces**: reenvío técnico
+(misma clave, mismos datos) → **200 con la que ya estaba**; posible **duplicado comercial** (mismo proveedor,
+número, año y total, pero otra petición) → **200 reconociéndolo por `numero_de_factura`**, sin contar dos
+veces; y **conflicto claro** (misma clave con otros datos) → **409**, porque una petición no tiene dos cuerpos.
+Cuando no hay número o proveedor, se apunta igual **diciendo que no se pudo comprobar** (`AL27…`). Todo eso
+está en **11 pruebas obligatorias** (`backend/tests/test_la_factura_reenviada_no_se_duplica.py`), seis de las
+cuales se pusieron **rojas antes** del arreglo: se desactivó la comprobación de la puerta y fallaron las seis.
+El instrumento que lo mide —`scripts/comprobar_si_una_factura_repetida_se_duplica.py`— tenía un **defecto
+propio** que se descubrió midiendo: envolvía `datos` dos veces, así que mandaba facturas **vacías** y su
+conclusión era cierta por casualidad; ahora exige que la factura llegue entera antes de concluir nada.
+
+**Pendiente:** **pago agrupado** (un pago que salda varias facturas) y **corrección/anulación con auditoría**
+dentro de este recorrido; la **ficha de compra** (punto 5, con pantallas y capturas); y **permisos, uso sin
 cobertura, conflictos de edición y restauración de copia**.
 
 ---

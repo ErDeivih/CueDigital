@@ -1007,6 +1007,28 @@ MENSAJES: dict[str, str] = {
         "Esto entró con un albarán, así que se deshace anulando el albarán: lo que vino en un papel "
         "se corrige en ese papel. Anula el albarán y apunta el bueno, y el almacén se ajusta solo."
     ),
+    # **El reenvío de una factura** (09/10/2026). El contrato §2 dice que reenviar el mismo comando
+    # devuelve su resultado y no crea otro movimiento, y que el duplicado puede ser exacto (la misma
+    # petición) o **posible** (el mismo emisor, número, fecha y total). Son dos cosas distintas y el
+    # agricultor tiene que poder distinguirlas, así que se dicen con dos mensajes distintos.
+    "AL25_esa_factura_ya_estaba": (
+        "Esa factura ya la tenías apuntada{fecha}. No se ha vuelto a apuntar, así que no se ha "
+        "contado dos veces. Si la que había estaba mal, corrígela; y si no vale, anúlala."
+    ),
+    "AL26_la_misma_clave_con_otros_datos": (
+        "Esa petición ya se atendió, pero con otros datos: una misma petición no puede traer dos "
+        "facturas distintas. Mira cuál de las dos es la buena y vuelve a mandarla como una petición "
+        "nueva."
+    ),
+    "AL27_no_se_pudo_comprobar_si_ya_estaba_la_factura": (
+        "Como esta factura no dice el número (o no dice de quién es), no se ha podido comprobar si ya "
+        "estaba apuntada. Míralo en la lista y anula la que sobre."
+    ),
+    "AL28_ese_numero_ya_esta_con_otros_importes": (
+        "De ese proveedor ya tienes una factura con ese número y esa fecha, y **no dice lo mismo**: "
+        "una de las dos tiene los importes mal. Se ha dejado la que había. Si te has equivocado al "
+        "apuntar, corrígela; y si de verdad son dos facturas, apunta la segunda con su número."
+    ),
     # Estas tres no son avisos de que algo esté mal: son las tres razones por las que **no se puede
     # hacer la resta**. Es la misma decisión que en la cesta (A20–A23): decir «te quedan 0 litros»
     # cuando no se sabe sería peor que decir que no se sabe.

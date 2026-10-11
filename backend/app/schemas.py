@@ -2419,6 +2419,17 @@ class FacturaEntrada(EntradaBase):
     notas: str | None = None
     # De dónde salió la propuesta: pdf | escaneo | foto | a mano.
     leida_por: str | None = None
+    # **El identificador único de la petición** (contrato §2), con los dos nombres que usa la casa:
+    # `clave_de_reenvio` (el del contrato) e `id_local` (el de la cola del móvil, `web/nucleo.js`).
+    # Se aceptan los dos porque son la misma cosa, y perder la protección contra el doble apunte por
+    # un nombre distinto sería el peor motivo para perderla —es lo que hace `almacen_api._la_clave`
+    # con los albaranes—.
+    clave_de_reenvio: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Factura, "clave_de_reenvio")
+    )
+    id_local: str | None = Field(
+        default=None, max_length=_cabe_en_la_columna(models.Factura, "clave_de_reenvio")
+    )
     lineas: list[LineaDeFacturaEntrada] = Field(default_factory=list)
 
 
@@ -2460,6 +2471,16 @@ class FacturaSalida(SalidaBase):
     anulada: bool
     motivo_anulacion: str | None
     creada_en: dt.datetime
+    # **Si esta factura ya estaba apuntada** (09/10/2026). El contrato §2 dice que reenviar el mismo
+    # comando devuelve su resultado y no crea otro movimiento, así que la respuesta tiene que poder
+    # decirlo: `ya_estaba` es «no se ha apuntado otra vez» y `como_se_reconocio` es **por qué** —
+    # por la clave de reenvío (reenvío técnico) o por el número de factura y el proveedor (posible
+    # duplicado comercial)—. Sin esto la pantalla no puede distinguir «guardada» de «ya la tenías».
+    ya_estaba: bool = False
+    como_se_reconocio: str | None = None
+    # Y en palabras, para que la pantalla lo pueda enseñar tal cual: por qué no se ha apuntado otra
+    # vez, o por qué no se ha podido comprobar si ya estaba.
+    avisos: list[str] = Field(default_factory=list)
     lineas: list[LineaDeFacturaSalida] = Field(default_factory=list)
 
 

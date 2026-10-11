@@ -7,6 +7,7 @@ probarse sin levantar un servidor ni hacer peticiones HTTP.
 
 from __future__ import annotations
 
+import datetime as dt
 import unicodedata
 from dataclasses import dataclass
 
@@ -1279,6 +1280,83 @@ def el_mismo_albaran(
         return nif == otro_nif
     if nombre and otro_nombre:
         return nombre == otro_nombre
+    return True
+
+
+def clave_de_una_factura(
+    proveedor: str | None, proveedor_nif: str | None, numero_factura: str | None
+) -> str | None:
+    """La clave con la que se reconoce una factura ya apuntada, o `None` si no se puede reconocer.
+
+    Es la misma regla que `clave_de_un_albaran`, y por el mismo motivo: **el proveedor y el número**,
+    y nada más. El número solo no vale —dos proveedores numeran como quieren— y si falta cualquiera de
+    los dos la respuesta es `None`, que es «no se puede comprobar» y **no** es «no estaba». Cuando no
+    se puede comprobar, el programa lo dice (`AL27…`) en vez de dar por bueno que no hay duplicado.
+
+    Para comparar dos facturas de verdad hay que usar `el_misma_factura`, porque lo normal es que el
+    NIF venga en una y no en la otra.
+    """
+    numero = normaliza_para_comparar(numero_factura)
+    if not numero:
+        return None
+    quien = normaliza_para_comparar(proveedor_nif) or normaliza_para_comparar(proveedor)
+    if not quien:
+        return None
+    return f"{quien}|{numero}"
+
+
+def el_misma_factura(
+    *,
+    proveedor: str | None,
+    proveedor_nif: str | None,
+    numero_factura: str | None,
+    fecha: dt.date | None = None,
+    total: float | None = None,
+    otro_proveedor: str | None,
+    otro_proveedor_nif: str | None,
+    otro_numero_factura: str | None,
+    otra_fecha: dt.date | None = None,
+    otro_total: float | None = None,
+) -> bool:
+    """¿Estas dos facturas son **el mismo papel**? Es lo que separa el reenvío del duplicado.
+
+    El contrato (§ S10) dice que el posible duplicado se reconoce **por emisor, número, fecha y
+    total**, y que el duplicado exacto se reconoce por la huella. Aquí se hace la parte del papel,
+    con las mismas precauciones que `el_mismo_albaran` y una más:
+
+      · **El número y el proveedor**, como en los albaranes: el NIF manda cuando los dos lo traen, si
+        solo uno lo trae se comparan los nombres, y si no se puede comparar nada **se dan por el
+        mismo**: en la duda, no duplicar es lo que protege las cuentas.
+      · **El año, no el día.** Es el año lo que hace que dos «1234» sean distintos —las numeraciones
+        se reinician—, y el día es justo el campo que más se equivoca al leer una foto. Dos facturas
+        del mismo proveedor, con el mismo número, en el mismo año y por el mismo dinero son el mismo
+        papel; si el día baila, es que una de las dos está mal apuntada, y eso se dice (`AL28…`) en
+        vez de apuntar dos veces.
+      · **El total**, y solo si lo traen las dos: sin total no se puede comparar, y entonces **no se
+        usa como excusa para duplicar**.
+    """
+    if normaliza_para_comparar(numero_factura) != normaliza_para_comparar(otro_numero_factura):
+        return False
+    if not normaliza_para_comparar(numero_factura):
+        return False
+
+    nombre = normaliza_para_comparar(proveedor)
+    otro_nombre = normaliza_para_comparar(otro_proveedor)
+    nif = normaliza_para_comparar(proveedor_nif)
+    otro_nif = normaliza_para_comparar(otro_proveedor_nif)
+    if nif and otro_nif:
+        if nif != otro_nif:
+            return False
+    elif nombre and otro_nombre:
+        if nombre != otro_nombre:
+            return False
+    # Y si no se puede comparar el proveedor (uno trae solo nombre y el otro solo NIF), se dan por el
+    # mismo, como en los albaranes.
+
+    if fecha is not None and otra_fecha is not None and fecha.year != otra_fecha.year:
+        return False
+    if total is not None and otro_total is not None and abs(total - otro_total) >= 0.005:
+        return False
     return True
 
 

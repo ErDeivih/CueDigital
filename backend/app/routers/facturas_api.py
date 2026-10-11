@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 
@@ -109,6 +109,143 @@ def _ya_estaba(db, explotacion, huella: str) -> models.Factura | None:
             models.Factura.huella == huella,
             models.Factura.anulada.is_(False),
         )
+    )
+
+
+def _la_clave(entrada: FacturaEntrada) -> str | None:
+    """La clave de reenvío de la petición, con el nombre que la mande.
+
+    Es el «identificador único de petición» del contrato (§2). Se acepta con los dos nombres
+    —`clave_de_reenvio` y `id_local` (el de la cola del móvil)— porque son la misma cosa, igual que
+    en `almacen_api._la_clave`: perder esta protección por un nombre distinto sería el peor motivo
+    para perderla.
+    """
+    clave = (entrada.clave_de_reenvio or entrada.id_local or "").strip()
+    return clave[:120] or None
+
+
+def _la_factura_que_ya_estaba(
+    db, explotacion, *, clave: str | None, entrada: FacturaEntrada
+) -> tuple[models.Factura | None, str]:
+    """La factura que ya está apuntada, si lo está, y **cómo se ha reconocido**.
+
+    Las dos formas, por este orden, y las dos solo miran facturas que **no estén anuladas**: una
+    factura anulada es lo que el agricultor ha dicho que estaba mal, así que volver a apuntarla tiene
+    que ser posible —si no, no habría forma de arreglarlo—. Es la misma decisión, con el mismo
+    motivo, que en `almacen_api._recepcion_que_ya_estaba`.
+
+      1. **La clave de reenvío.** Si esta misma petición ya se atendió, se devuelve la misma factura:
+         es el **reenvío técnico**, el de la cola del móvil cuando reintenta sin cobertura. El
+         contrato §2 es literal: «reenviar el mismo comando devuelve su resultado; no crea otro
+         movimiento».
+      2. **El papel**: el mismo proveedor, el mismo número, el mismo año y el mismo total. Eso es el
+         **posible duplicado comercial** —el agricultor apuntando dos veces la misma factura, o una
+         foto subida dos veces— y se reconoce distinto a propósito, para que la pantalla pueda decir
+         cuál de las dos cosas es.
+    """
+    if clave:
+        ya = db.scalar(
+            select(models.Factura).where(
+                models.Factura.explotacion_id == explotacion.id,
+                models.Factura.clave_de_reenvio == clave,
+                models.Factura.anulada.is_(False),
+            )
+        )
+        if ya is not None:
+            return ya, "clave_de_reenvio"
+
+    if servicios.clave_de_una_factura(
+        entrada.proveedor, entrada.proveedor_nif, entrada.numero_factura
+    ) is None:
+        # Sin número o sin proveedor no se puede reconocer nada, y eso **no** es «no estaba»: quien
+        # llama tiene que decirlo en la pantalla (ver `AL27_no_se_pudo_comprobar_si_ya_estaba_la_factura`).
+        return None, ""
+
+    candidatas = db.scalars(
+        select(models.Factura).where(
+            models.Factura.explotacion_id == explotacion.id,
+            models.Factura.anulada.is_(False),
+        )
+    )
+    for candidata in candidatas:
+        if not servicios.el_misma_factura(
+            proveedor=candidata.proveedor,
+            proveedor_nif=candidata.proveedor_nif,
+            numero_factura=candidata.numero_factura,
+            fecha=candidata.fecha,
+            total=candidata.total,
+            otro_proveedor=entrada.proveedor,
+            otro_proveedor_nif=entrada.proveedor_nif,
+            otro_numero_factura=entrada.numero_factura,
+            otra_fecha=entrada.fecha,
+            otro_total=entrada.total,
+        ):
+            continue
+        return candidata, "numero_de_factura"
+    return None, ""
+
+
+def _los_importes_cuadran(uno: float | None, otro: float | None) -> bool:
+    """¿Son el mismo dinero? `None` es «no lo sé», y «no lo sé» **no** es «distinto»."""
+    if uno is None or otro is None:
+        return True
+    return abs(uno - otro) < 0.005
+
+
+def _la_misma_factura(db, factura: models.Factura, entrada: FacturaEntrada) -> bool:
+    """¿La factura que ya estaba dice **exactamente lo mismo** que esta petición?
+
+    Es la pregunta que separa las dos cosas que el encargo pide no confundir:
+
+      · Si dice lo mismo, esto es un **reenvío**: el mismo comando otra vez, y se contesta con su
+        resultado sin tocar nada.
+      · Si dice otra cosa, la misma clave está mandando **dos facturas distintas**, y eso no puede
+        ser: una petición no tiene dos cuerpos. Se contesta **409** y que lo mire, en vez de
+        elegir por él cuál de las dos vale.
+
+    Se comparan los datos del papel y **las líneas**, porque dos facturas del mismo proveedor y por
+    el mismo dinero pueden tener líneas distintas y entonces no son la misma.
+    """
+    if factura.fecha != entrada.fecha:
+        return False
+    if (factura.proveedor or "") != (entrada.proveedor or ""):
+        return False
+    if (factura.proveedor_nif or "") != (entrada.proveedor_nif or ""):
+        return False
+    if (factura.numero_factura or "") != (entrada.numero_factura or ""):
+        return False
+    for suyo, mio in (
+        (factura.base_imponible, entrada.base_imponible),
+        (factura.cuota_iva, entrada.cuota_iva),
+        (factura.total, entrada.total),
+    ):
+        if not _los_importes_cuadran(suyo, mio):
+            return False
+
+    de_antes = _las_lineas_como_se_comparan(factura)
+    de_ahora = sorted(
+        (
+            (linea.descripcion or "", linea.cantidad, (linea.unidad or ""), linea.importe)
+            for linea in entrada.lineas
+        ),
+        key=lambda fila: (fila[0], fila[1] or 0.0, fila[2], fila[3] or 0.0),
+    )
+    return de_antes == de_ahora
+
+
+def _las_lineas_como_se_comparan(factura: models.Factura) -> list[tuple]:
+    """Las líneas de una factura guardada, en la misma forma que las de la petición.
+
+    Se comparan **la descripción, la cantidad, la unidad y el importe**: lo que hace que una línea sea
+    la misma línea. El precio unitario no entra porque se recalcula de los otros dos y las facturas
+    redondean; y el orden no entra porque se ordenan las dos listas.
+    """
+    return sorted(
+        (
+            (linea.descripcion or "", linea.cantidad, (linea.unidad or ""), linea.importe)
+            for linea in factura.lineas
+        ),
+        key=lambda fila: (fila[0], fila[1] or 0.0, fila[2], fila[3] or 0.0),
     )
 
 
@@ -255,6 +392,7 @@ def _la_campana(db, explotacion, fecha: dt.date | None) -> models.Campana | None
 async def guardar_una_factura(
     explotacion: ExplotacionActual,
     db: Db,
+    respuesta: Response,
     datos: str = File(...),
     fichero: UploadFile | None = File(default=None),
 ) -> FacturaSalida:
@@ -262,6 +400,29 @@ async def guardar_una_factura(
 
     Los datos llegan como un JSON en el campo `datos` porque en la misma petición viaja el fichero:
     un formulario con fichero no puede llevar un cuerpo JSON normal.
+
+    ## Una factura no se apunta dos veces (09/10/2026)
+
+    El contrato §2 dice que **cada comando de negocio lleva identificador único de petición** y que
+    **reenviar el mismo comando devuelve su resultado y no crea otro movimiento**. Esta puerta no lo
+    cumplía: era la única del programa que siempre insertaba, así que dos envíos idénticos dejaban
+    dos facturas iguales en los libros —medido: 201, 201 y dos filas—. Ahora hay tres desenlaces, y
+    son tres cosas distintas que el agricultor tiene que poder distinguir:
+
+      · **Reenvío técnico** (la misma clave de reenvío y los mismos datos): se contesta **200** con la
+        factura que ya estaba, y `ya_estaba` lo dice. Es la cola del móvil reintentando sin
+        cobertura. No se toca nada.
+      · **Posible duplicado comercial** (mismo proveedor, mismo número, mismo año y mismo total, pero
+        otra petición): también se devuelve la que había, con **200** y reconociéndolo por
+        `numero_de_factura`, porque es lo mismo que hace la puerta de los albaranes y por el mismo
+        motivo: **en la duda, no duplicar**. Si además los importes o las líneas no dicen lo mismo,
+        se avisa (`AL28…`) en vez de apuntar dos veces el mismo papel con dos cifras distintas.
+      · **Conflicto claro** (la misma clave de reenvío con **datos distintos**): **409**. Una petición
+        identifica un comando, y un comando no tiene dos cuerpos. Aquí el programa no elige cuál de
+        las dos vale: lo dice y que lo mire.
+
+    Y cuando la factura no trae número o no trae proveedor, no se puede comprobar nada: se apunta
+    igual —lo que llegó, llegó— y la respuesta lo dice (`AL27…`). No saber no es un «sí» ni un «no».
     """
     import json
 
@@ -273,7 +434,40 @@ async def guardar_una_factura(
             detail="No se han podido leer los datos de la factura.",
         ) from fallo
 
+    clave = _la_clave(entrada)
+    ya, como = _la_factura_que_ya_estaba(db, explotacion, clave=clave, entrada=entrada)
+    if ya is not None:
+        lo_mismo = _la_misma_factura(db, ya, entrada)
+        # **El conflicto claro**: la misma clave de reenvío mandando datos distintos. Una petición
+        # identifica **un** comando, y un comando no tiene dos cuerpos; aquí el programa no elige cuál
+        # de las dos facturas vale, lo dice y que lo mire. Es lo único de este bloque que es un error.
+        if como == "clave_de_reenvio" and not lo_mismo:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=textos.mensaje("AL26_la_misma_clave_con_otros_datos"),
+            )
+        # Todo lo demás es «ya estaba» y se contesta con **la que había**, sin tocar nada: es lo que
+        # pide el contrato §2 («reenviar el mismo comando devuelve su resultado») y lo que hace la
+        # puerta de los albaranes. Cuando es el mismo papel pero **no dice lo mismo**, el aviso lo
+        # dice (`AL28…`): una de las dos tiene los importes mal, y eso hay que mirarlo, no apuntarlo.
+        if lo_mismo:
+            avisos = [
+                textos.MENSAJES["AL25_esa_factura_ya_estaba"].format(
+                    fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
+                )
+            ]
+        else:
+            # El mismo papel con otros importes o con otras líneas: hay un número mal en una de las
+            # dos, y el aviso dice cuál es el camino (corregir la que había, o apuntar la otra con su
+            # número) en vez de elegir por el agricultor.
+            avisos = [textos.mensaje("AL28_ese_numero_ya_esta_con_otros_importes")]
+        respuesta.status_code = status.HTTP_200_OK
+        return _con_nombres(db, ya).model_copy(
+            update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
+        )
+
     factura = _preparar_factura_guardable(entrada, explotacion, db)
+    factura.clave_de_reenvio = clave
     db.add(factura)
     # Se guarda antes de las líneas porque cada línea necesita **el identificador de su factura**
     # (`lineas_de_factura.factura_id`), y ese identificador lo pone la base de datos al insertarla.
@@ -320,7 +514,16 @@ async def guardar_una_factura(
     )
     db.commit()
     db.refresh(factura)
-    return _con_nombres(db, factura)
+    # **Y cuando no se ha podido comprobar nada, se dice** (09/10/2026): una factura sin número o sin
+    # proveedor se apunta igual -lo que llegó, llegó-, pero la respuesta declara que **no se sabe** si
+    # ya estaba, en vez de dar por bueno que no había duplicado. Es la misma mitad de la regla que en
+    # los albaranes (`AL5…`) y en el resto del programa: «no lo sé» no es un «no».
+    avisos = []
+    if servicios.clave_de_una_factura(
+        factura.proveedor, factura.proveedor_nif, factura.numero_factura
+    ) is None:
+        avisos.append(textos.mensaje("AL27_no_se_pudo_comprobar_si_ya_estaba_la_factura"))
+    return _con_nombres(db, factura).model_copy(update={"avisos": avisos})
 
 
 def _preparar_factura_guardable(

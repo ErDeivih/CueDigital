@@ -2382,6 +2382,25 @@ class Factura(Base):
 
     __tablename__ = "facturas"
 
+    # **La clave de reenvío no se puede repetir dentro de una explotación, pero una factura anulada
+    # no la ocupa** (09/10/2026). Es la misma decisión, con el mismo motivo escrito, que en
+    # `Recepcion` y `MovimientoDeExistencias`: con un `UniqueConstraint` a secas, una factura
+    # anulada seguiría ocupando su clave y el agricultor no podría volver a apuntarla desde el móvil
+    # -que reenvía con la misma clave-, y le saldría un error de la base en vez de un arreglo.
+    # **Anular existe justo para poder apuntar la buena después.**
+    __table_args__ = (
+        Index(
+            "uq_factura_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            # Las dos formas, por lo mismo que en las recepciones: el programa puede correr sobre
+            # PostgreSQL, y allí un índice único sin condición volvería a bloquear la anulada.
+            sqlite_where=text("anulada = 0"),
+            postgresql_where=text("anulada = false"),
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
     campana_id: Mapped[int | None] = mapped_column(ForeignKey("campanas.id"), index=True)
@@ -2400,6 +2419,19 @@ class Factura(Base):
     leida_por: Mapped[str | None] = mapped_column(String(20))
     # La huella del fichero: sirve para avisar de que esa misma factura ya se subió.
     huella: Mapped[str | None] = mapped_column(String(64), index=True)
+
+    # **El identificador único de la petición** (contrato §2, «cada comando de negocio lleva
+    # identificador único de petición»). Lo manda la pantalla al abrir el formulario y la cola del
+    # móvil lo repite tal cual cuando reintenta sin cobertura. Es lo que permite distinguir un
+    # **reenvío técnico** -el mismo comando que ya se atendió, que devuelve su resultado y no crea
+    # otro movimiento- de un **posible duplicado comercial**, que es un papel distinto que se parece.
+    #
+    # **Por qué esto faltaba y qué costaba** (09/10/2026): la factura era la única entidad del
+    # programa sin clave de reenvío -sus hermanas la tienen desde el principio-, así que
+    # `POST /api/facturas` **siempre insertaba**: dos envíos idénticos dejaban dos facturas iguales
+    # en los libros. Medido: 201, 201 y dos filas. El patrón a copiar está en
+    # `almacen_api.crear_recepcion`, que es la misma situación con albaranes.
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
 
     fichero_nombre: Mapped[str | None] = mapped_column(String(200))
     fichero_ruta: Mapped[str | None] = mapped_column(String(300))
