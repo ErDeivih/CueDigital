@@ -239,6 +239,22 @@ export const PANTALLAS = [
  * esta tabla. Se dice aquí, y no en `app.js`, porque es la misma lista vista desde los dos lados: si
  * mañana una lista nueva quiere recordar su vista, tiene que entrar en los dos sitios.
  */
+/**
+ * **Hoy NINGUNA pantalla usa esto, y conviene saberlo antes de perder el tiempo con ello** (11/10/2026).
+ *
+ * POR QUÉ ESTÁ ESCRITO Y NO SE USA. Este mecanismo pretendía que una lista recordara su vista (su buscador y
+ * su orden) por su clave. Se midió al arreglar los filtros de lo que se vende (CRM-01): **`esUnListado` no
+ * tiene un solo consumidor en todo el programa** —ni en `app.js`, ni en las pantallas de React, ni en otro
+ * módulo—, y su única prueba es la que comprueba que la función hace lo que dice. Lo que de verdad conserva
+ * la vista de una lista en este programa es **otra cosa**: los filtros **viajan en la dirección**
+ * (`parametrosDeLaPantalla` los escribe y `abrirLaPantalla` los lee), que es lo que permite recargar,
+ * mandar el enlace y volver de una ficha sin perder nada. Eso se comprueba con una prueba de
+ * comportamiento (`tests_js/interfaz.test.js`, la de los filtros de ventas).
+ *
+ * Así que: **no conectes una lista a `LISTADOS` esperando que eso arregle sus filtros** —no los arregla, no
+ * lo usa nadie—; escribe sus filtros en la dirección, como las demás. Y si alguien decide conectar esto o
+ * retirarlo, que lo haga sabiendo lo que hay: es una lista de claves sin lector.
+ */
 export const LISTADOS = ["tierras", "cuaderno", "facturas", "anos", "almacen", "cultivos"];
 
 /**
