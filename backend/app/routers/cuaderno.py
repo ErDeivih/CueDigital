@@ -25,7 +25,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy import select
 
-from .. import catalogos, legal, models, servicios, sigpac, textos
+from .. import catalogos, dinero, legal, models, servicios, sigpac, textos
 from ..deps import Db, ExplotacionActual
 
 router = APIRouter(prefix="/api", tags=["cuaderno"])
@@ -67,15 +67,45 @@ CABECERAS_VENTA = [
     "Qué",
     "Variedad",
     "Cuánto",
+    # **El dinero de la venta** (CRM-01, 11/10/2026): el cuaderno decía qué se vendió y a quién, pero **no
+    # por cuánto**, que es la mitad de lo que se mira en una inspección y en una cuenta. Se añade el importe
+    # y el precio, con la misma regla que en las pantallas: los dos son **opcionales** —una entrega puede
+    # apuntarse antes de saber el precio (el A08)—, así que cuando no consta se escribe lo que dice el
+    # programa en todas partes: «Falta el importe», nunca un cero que parecería una venta de cero euros.
+    "Importe",
+    "Precio",
     "Partida",
     "A quién",
     "Nº albarán",
     "De dónde",
 ]
 
-CABECERAS_VENTA_PDF = ["Día", "Qué", "Cuánto", "A quién", "Partida", "De dónde"]
+CABECERAS_VENTA_PDF = [
+    "Día",
+    "Qué",
+    "Cuánto",
+    "Importe",
+    "Precio",
+    "A quién",
+    "Partida",
+    "De dónde",
+]
 
-ANCHOS_VENTA_CM = (1.7, 2.6, 2.0, 4.3, 3.0, 5.0)
+ANCHOS_VENTA_CM = (1.7, 2.6, 2.0, 2.1, 1.9, 4.3, 3.0, 4.0)
+
+
+def _el_dinero_de_una_venta(valor) -> str:
+    """Un importe de una venta para el papel: en euros y con coma, o **dicho con palabras** si no consta.
+
+    Es la regla del «no lo sé» del programa entero, aplicada al cuaderno: un importe que no se apuntó **no es
+    cero**, y escribirlo como `0,00 €` en un documento que va a una inspección sería decir algo que no es
+    verdad. La frase es la misma que usa la pantalla de lo que se vende (`textos.VENTA`), para que el papel y
+    la pantalla digan lo mismo.
+    """
+    suyo = dinero.a_decimal(valor)
+    if suyo is None:
+        return textos.VENTA["estado_sin_importe"]
+    return dinero.formatea(suyo)
 
 CABECERAS_ANALISIS = [
     "Muestra",
@@ -932,6 +962,8 @@ def exportar_csv(
                 venta.producto,
                 venta.variedad or "",
                 _texto_cantidad(venta),
+                _el_dinero_de_una_venta(venta.importe),
+                _el_dinero_de_una_venta(venta.precio_unitario),
                 venta.lote or "",
                 venta.comprador or "",
                 venta.numero_albaran or "",
@@ -1216,6 +1248,8 @@ def exportar_pdf(
                     legal.formatea_fecha(venta.fecha),
                     f"{venta.producto}" + (f" ({venta.variedad})" if venta.variedad else ""),
                     _texto_cantidad(venta),
+                    _el_dinero_de_una_venta(venta.importe),
+                    _el_dinero_de_una_venta(venta.precio_unitario),
                     venta.comprador or "",
                     venta.lote or "",
                     _donde_salio(db, venta),

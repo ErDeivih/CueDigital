@@ -138,3 +138,82 @@ class TestElCuadernoNoInventaCeros:
             "la dosis que sí se apuntó (0,5 L/ha) no sale en el cuaderno: "
             "la prueba del defecto estaría vaciando también lo que se sabe"
         )
+
+
+class TestElDineroDeLaVentaEnElCuaderno:
+    """**El cuaderno tiene que decir por cuánto se vendió** (CRM-01, 11/10/2026).
+
+    POR QUÉ EXISTE. El encargo de CRM-01 pide «importes españoles en listas, fichas **y documentos**», y las
+    dos salidas del cuaderno decían qué se vendió, cuánto y a quién —**pero no por cuánto**—. Es la mitad que
+    se mira en una inspección y en una cuenta, y no había **ninguna** prueba que mirara si el documento lleva
+    dinero.
+
+    Y con la misma regla del fichero en el que está: una entrega puede apuntarse **antes de saber el precio**
+    (el caso A08), y ahí el documento escribe «Falta el importe», **nunca `0,00 €`** —que sería afirmar una
+    venta de cero euros que nadie ha hecho—.
+    """
+
+    def _una_venta(self, cliente, cuenta, campana, importe):
+        cuerpo = {
+            "campana_id": campana["id"],
+            "fecha": "2026-07-10",
+            "producto": "Trigo blando",
+            "cantidad": 1000.0,
+            "unidad": "kg",
+            "comprador": "Cooperativa Agrícola de Peñaranda",
+        }
+        if importe is not None:
+            cuerpo["importe"] = importe
+        respuesta = cliente.post("/api/ventas", headers=cuenta["cabeceras"], json=cuerpo)
+        assert respuesta.status_code == 201, respuesta.text
+        return respuesta.json()
+
+    def test_el_csv_lleva_el_importe_de_la_venta_en_euros(self, cliente, cuenta, campana):
+        self._una_venta(cliente, cuenta, campana, "1210.00")
+        csv = cliente.get(
+            f"/api/cuaderno/export.csv?campana_id={campana['id']}", headers=cuenta["cabeceras"]
+        )
+        texto = csv.content.decode("utf-8")
+        assert "Importe;Precio" in texto, (
+            "el cuaderno no lleva las columnas del dinero de la venta, así que no dice por cuánto se vendió"
+        )
+        assert "1.210,00 €" in texto, (
+            f"el importe de la venta no sale en el cuaderno con coma y en euros:\n{texto[:600]}"
+        )
+
+    def test_una_venta_sin_precio_dice_que_falta_y_no_escribe_cero(self, cliente, cuenta, campana):
+        """La regla de este fichero, aplicada al dinero: lo que no se sabe **no es un cero**."""
+        self._una_venta(cliente, cuenta, campana, None)
+        csv = cliente.get(
+            f"/api/cuaderno/export.csv?campana_id={campana['id']}", headers=cuenta["cabeceras"]
+        )
+        texto = csv.content.decode("utf-8")
+        assert "Falta el importe" in texto, (
+            "una venta sin precio tiene que decir que falta el importe, no callarse"
+        )
+        assert "0,00 €" not in texto, (
+            "y **no** puede escribir «0,00 €»: sería afirmar una venta de cero euros que nadie ha hecho"
+        )
+
+    def test_el_pdf_tambien_lleva_el_importe(self, cliente, cuenta, campana):
+        """Y en el PDF, que es el documento que se firma, el dinero también tiene que estar.
+
+        Se comprueba el **texto del PDF**, no que la petición conteste 200: un documento que se genera sin
+        una columna pasa cualquier comprobación de código de estado, y el que lo firma no se entera.
+        """
+        import pdfplumber
+
+        self._una_venta(cliente, cuenta, campana, "1210.00")
+        pdf = cliente.get(
+            f"/api/cuaderno/pdf?campana_id={campana['id']}", headers=cuenta["cabeceras"]
+        )
+        assert pdf.status_code == 200, pdf.text
+        assert pdf.content[:4] == b"%PDF", "eso no es un PDF"
+        with pdfplumber.open(io.BytesIO(pdf.content)) as documento:
+            texto = "\n".join((pagina.extract_text() or "") for pagina in documento.pages)
+        assert "Importe" in texto and "Precio" in texto, (
+            "el PDF del cuaderno no lleva las columnas del dinero de la venta"
+        )
+        assert "1.210,00 €" in texto, (
+            f"el importe de la venta no sale en el PDF con coma y en euros:\n{texto[:600]}"
+        )
