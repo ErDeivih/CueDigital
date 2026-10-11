@@ -808,6 +808,10 @@ const TABLA_DE_LA_PANTALLA = {
   // La maquinaria (T14): una lista con su buscador y su orden, como las demás. Su columna de la próxima
   // revisión se ordena **por la fecha**, no por el texto ya escrito.
   maquinaria: "maquinaria",
+  // **Lo que se vende** (CRM-01, 11/10/2026): es una lista con buscador, filtros y orden —y su orden lo
+  // hace el servidor, porque su importe está guardado como texto decimal—, así que entra aquí como las
+  // demás. Faltaba, y por eso sus filtros no llegaban a la dirección.
+  ventas: "ventas",
 };
 
 /**
@@ -980,6 +984,15 @@ function parametrosDeLaPantalla(clave) {
   if (clave === "cuaderno") {
     const elegida = filaElegida("apuntes");
     if (elegida) parametros.id = elegida;
+  }
+  // **Lo que se vende** (CRM-01, 11/10/2026): su buscador y sus filtros —«solo las que están pendientes»,
+  // «solo las que no tienen importe»— viajan en la dirección, como los de las tierras y los del almacén.
+  // Antes se quedaban en `estado.filtroVentas` y **volver de una ficha los perdía**: era lo único de esta
+  // pantalla que no se podía enlazar ni mandar a quien ayuda («mira las ventas que faltan por cobrar»).
+  if (clave === "ventas") {
+    const suyo = estado.filtroVentas || {};
+    if (suyo.q) parametros.q = suyo.q;
+    if (suyo.solo) parametros.solo = suyo.solo;
   }
   // **La pantalla de las tierras de T06** (03/10/2026): lo que el agricultor tenga puesto viaja en la
   // dirección, como en cualquier lista de este programa. Es lo que hace que se pueda recargar y
@@ -1206,6 +1219,26 @@ function abrirLaPantalla(clave, parametros = {}) {
   if (tabla) {
     if (clave === "tierras" && parametros.q !== undefined) {
       estado.filtroTierrasMisCosas = String(parametros.q || "");
+    }
+    // **Y los filtros de lo que se vende, de la dirección al estado** (CRM-01, 11/10/2026). Se limpian
+    // cuando la dirección no los trae, y eso es a propósito: quedarse con el filtro anterior haría que una
+    // dirección **sin** filtros enseñara una lista filtrada, que es justo lo que no se puede.
+    if (clave === "ventas") {
+      const antes = estado.filtroVentas || {};
+      estado.filtroVentas = {
+        q: parametros.q === undefined ? "" : String(parametros.q || ""),
+        solo: parametros.solo === undefined ? "" : String(parametros.solo || ""),
+        orden: antes.orden || "",
+        sentido: antes.sentido || -1,
+      };
+      // **Y si la dirección trae un filtro, la tabla se vuelve a pedir con él** (CRM-01, 11/10/2026). La
+      // tabla de lo que se vende se pide **con el resto de los datos** al arrancar (`cargarDatos`), y esa
+      // petición no lleva filtros: sin esto, el filtro estaría **en la dirección y no en lo que se ve**, que
+      // es la peor de las dos mentiras posibles —una dirección que promete una lista filtrada y una pantalla
+      // que enseña otra—. Se mide en `tests_js/interfaz.test.js`.
+      if (estado.filtroVentas.q || estado.filtroVentas.solo) {
+        recargarLaTablaDeVentas().catch(() => {});
+      }
     }
     if (parametros.orden) {
       estado.ordenDeLaTabla = estado.ordenDeLaTabla || {};

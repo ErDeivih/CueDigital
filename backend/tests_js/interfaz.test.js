@@ -10972,6 +10972,37 @@ async function irAtras(entorno, direccion) {
   await new Promise((resolver) => setTimeout(resolver, 30));
 }
 
+test("los filtros de la lista de ventas viajan en la direccion y vuelven", async () => {
+  // **CRM-01, 11/10/2026**: la revisión independiente midió que los filtros de esta lista vivían solo en
+  // memoria —`estado.filtroVentas`— y que **volver de una ficha los perdía**. No había ninguna prueba de
+  // esto, ni para ventas ni para ninguna lista. Aquí se exige el camino entero, en dos mitades:
+  //
+  //   1. el agricultor pone «solo las pendientes» → **la dirección lo lleva** (y por tanto se puede mandar
+  //      o recargar sin perderlo);
+  //   2. y al abrir el CRM **con esa dirección**, el filtro llega al servidor en la petición de la tabla.
+  const conLaTabla = {
+    "/api/ventas/tabla": { columnas: [], filas: [], pie: "", total: 0 },
+  };
+  const { entorno } = await cargarAplicacion(conLaTabla);
+  await pulsar(entorno, "ventas-abrir");
+  await pulsar(entorno, "ventas-solo-pendientes");
+  const direccion = laDireccion(entorno);
+  assert.match(
+    direccion,
+    /solo=pendientes/,
+    `la dirección no lleva el filtro, así que volver lo perdería: ${direccion}`,
+  );
+
+  // Y la vuelta: se abre el CRM con esa dirección y el filtro tiene que llegar al servidor.
+  const { servidor } = await cargarAplicacion({ ...conLaTabla }, { direccion });
+  const pedidas = servidor.llamadas.filter((ruta) => ruta.startsWith("/api/ventas/tabla"));
+  assert.ok(pedidas.length >= 1, "con esa dirección no se ha pedido la tabla de ventas");
+  assert.ok(
+    pedidas.some((ruta) => ruta.includes("solo=pendientes")),
+    `el filtro de la dirección no ha llegado a la tabla: ${JSON.stringify(pedidas)}`,
+  );
+});
+
 test("abrir una tierra por su dirección deja esa tierra abierta", async () => {
   // La aceptación de T04 en una línea: `#/tierras/2` tiene que abrir **la tierra 2**, con su panel, sin
   // que nadie tenga que buscarla en la lista de 64.
