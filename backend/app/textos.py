@@ -3219,6 +3219,11 @@ COBRO: dict[str, str] = {
         "Y sobran {sobrante}, que se quedan sin asignar hasta que sepas a qué van."
     ),
     "imputado": "Va a la factura",
+    # **Un cobro que salda varias deudas** (CRM-01, 11/10/2026). Hace falta un rótulo propio porque el de
+    # arriba dice «Va a **la** factura», en singular, y un ingreso repartido va a varias: sin esto, la ficha
+    # enseñaba el nombre de una sola —o decía «sin factura», que es lo contrario de lo que ha hecho el
+    # agricultor—.
+    "repartido_entre": "Repartido entre estas facturas",
     "sin_asignar": "Sin asignar",
     "sin_asignar_titulo": "Cobros que todavía no sé de qué factura son",
     "sin_asignar_explica": (

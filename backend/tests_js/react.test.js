@@ -8064,3 +8064,98 @@ test("la ficha dice lo que no se puede saber en vez de enseñar un cero", async 
   );
 });
 
+// ---------------------------------------------------------------------------
+// El cobro repartido entre varias facturas (CRM-01, 11/10/2026)
+// ---------------------------------------------------------------------------
+
+/** Los textos del bloque del cobro, los que la ficha necesita para decir cada cosa. */
+const TEXTOS_DEL_COBRO = {
+  cobro: {
+    imputado: "Va a la factura",
+    sin_factura: "Todavía no sé de qué factura es",
+    repartido_entre: "Repartido entre estas facturas",
+    sin_asignar: "Sin asignar",
+    forma: "Forma",
+    etiqueta_forma: "Transferencia",
+    cliente: "Cliente",
+    referencia: "Referencia",
+    sin_nada: "Todavía no has apuntado ningún cobro.",
+    sin_asignar_titulo: "Cobros que todavía no sé de qué factura son",
+    sin_asignar_explica: "Este dinero ha entrado y todavía no se sabe qué factura salda.",
+    nuevo: "APUNTAR UN COBRO",
+  },
+  acciones: { volver: "VOLVER" },
+};
+
+async function htmlDeLosCobros({ cobros = [], ...resto } = {}) {
+  const { pantallaDeCobros } = await import(
+    `../web/react/pantallas/cobros.js?prueba=${Math.random()}`
+  );
+  return globalThis.ReactDOMServer.renderToStaticMarkup(
+    React.createElement(pantallaDeCobros, {
+      textos: structuredClone(TEXTOS_DEL_COBRO),
+      cobros,
+      sin_asignar: [],
+      resumen: "",
+      error: "",
+      ...resto,
+    }),
+  );
+}
+
+test("un cobro repartido entre varias facturas dice a cuáles va y cuánto a cada una", async () => {
+  // **El caso que el encargo pide con números**: 350 repartidos entre una deuda de 100 y otra de 250. La
+  // ficha miraba `factura_numero`, que en un reparto va **vacío a propósito** —el dinero vive en las
+  // aplicaciones—, así que un ingreso repartido decía «sin factura»: justo lo contrario de lo que acaba de
+  // hacer el agricultor. Esta prueba exige las dos partes de la respuesta y la ausencia de la mentira.
+  const html = await htmlDeLosCobros({
+    cobros: [
+      {
+        id: 1,
+        fecha_linea: "",
+        texto_importe: "350,00 €",
+        aplicaciones: [
+          { factura_emitida_id: 4, factura_numero: "F-2026-4", texto_importe: "100,00 €" },
+          { factura_emitida_id: 5, factura_numero: "F-2026-5", texto_importe: "250,00 €" },
+        ],
+      },
+    ],
+  });
+  assert.ok(
+    html.includes("Repartido entre estas facturas"),
+    `la ficha no dice que el cobro va a varias facturas:\n${html}`,
+  );
+  assert.ok(html.includes("F-2026-4") && html.includes("100,00 €"), "falta la primera factura y su parte");
+  assert.ok(html.includes("F-2026-5") && html.includes("250,00 €"), "falta la segunda factura y su parte");
+  assert.ok(
+    !html.includes("Todavía no sé de qué factura es"),
+    "un cobro repartido no puede decir que no se sabe de qué factura es: sí se sabe, va a dos",
+  );
+});
+
+test("un cobro de una sola factura se sigue enseñando como siempre", async () => {
+  // El control: lo de arriba no puede haber cambiado el caso de siempre —un cobro que salda una factura, que
+  // es el A06—, ni el de un dinero que todavía no se sabe a qué va.
+  const deUna = await htmlDeLosCobros({
+    cobros: [
+      {
+        id: 1,
+        fecha_linea: "",
+        texto_importe: "40,00 €",
+        factura_numero: "F-2026-1",
+        aplicaciones: [{ factura_emitida_id: 1, factura_numero: "F-2026-1", texto_importe: "40,00 €" }],
+      },
+    ],
+  });
+  assert.ok(deUna.includes("Va a la factura") && deUna.includes("F-2026-1"), "el caso de una sola factura ha cambiado");
+  assert.ok(!deUna.includes("Repartido entre estas facturas"), "con una sola factura no se habla de reparto");
+
+  const sinSaber = await htmlDeLosCobros({
+    cobros: [{ id: 2, fecha_linea: "", texto_importe: "300,00 €", aplicaciones: [] }],
+  });
+  assert.ok(
+    sinSaber.includes("Todavía no sé de qué factura es"),
+    "un dinero que no se sabe a qué va tiene que seguir diciéndolo",
+  );
+});
+

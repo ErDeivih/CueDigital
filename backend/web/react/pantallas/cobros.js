@@ -33,10 +33,28 @@ function FichaDeCobro({ cobro, textos }) {
       }
       <strong>${frase(cobro.texto_importe)}</strong>
       <dl>
-        <div className="resumen-dato">
-          <dt>${frase(c.imputado)}</dt>
-          <dd>${frase(cobro.factura_numero || c.sin_factura)}</dd>
-        </div>
+        ${
+          // **Un cobro repartido entre varias deudas** (CRM-01, 11/10/2026): se enseña **a qué facturas va y
+          // cuánto a cada una**. Hacía falta porque la ficha miraba `factura_numero`, que en un reparto va
+          // vacío **a propósito** —el dinero vive en las aplicaciones—, así que un ingreso repartido decía
+          // «sin factura»: justo lo contrario de lo que acaba de hacer el agricultor. Con una sola no cambia
+          // nada, y sin ninguna sigue diciendo que no se sabe de cuál es, que es la verdad.
+          (cobro.aplicaciones || []).length > 1
+            ? html`<div className="resumen-dato">
+                <dt>${frase(c.repartido_entre)}</dt>
+                <dd>
+                  ${cobro.aplicaciones.map(
+                    (a) => html`<div key=${String(a.factura_emitida_id)}>
+                      ${frase(a.factura_numero || "")} · ${frase(a.texto_importe)}
+                    </div>`,
+                  )}
+                </dd>
+              </div>`
+            : html`<div className="resumen-dato">
+                <dt>${frase(c.imputado)}</dt>
+                <dd>${frase(cobro.factura_numero || c.sin_factura)}</dd>
+              </div>`
+        }
         ${
           cobro.texto_sin_asignar
             ? html`<div className="resumen-dato">
