@@ -189,21 +189,37 @@ def _la_linea_de_factura_de_una_entrega(
     )
 
 
-def lo_cobrado_de_una_factura(db, *, explotacion_id: int, factura_id: int) -> Decimal:
-    """Lo que se ha cobrado de esa factura: la suma de lo imputado de sus cobros vivos.
+def lo_cobrado_de_una_factura(
+    db, *, explotacion_id: int, factura_id: int, sin_este_cobro: int | None = None
+) -> Decimal:
+    """Lo que se ha cobrado de esa factura: la suma de **las aplicaciones vivas** que van contra ella.
 
-    Suma `importe_imputado` y no `importe`: si un cobro era más grande que lo que se debía, lo que
-    sobra está sin conciliar y no es dinero de esta factura. Contarlo aquí dejaría un pendiente
-    negativo y un cobrado inflado, que es exactamente lo que el A06 mide.
+    **Suma las aplicaciones y no el importe del cobro** (CRM-01, 11/10/2026): un cobro puede saldar varias
+    facturas —y entonces cada una recibe su parte— y puede ser más grande que lo que se debe, en cuyo caso lo
+    que sobre está sin asignar y **no es dinero de esta factura**. Contar el importe entero dejaría un
+    pendiente negativo y un cobrado inflado, que es exactamente lo que el caso A06 mide.
+
+    `sin_este_cobro` deja fuera las aplicaciones de un cobro concreto, y hace falta al **reimputar**: si al
+    cambiar un cobro se contara su propio dinero, el pendiente saldría recortado por él mismo y el segundo
+    pago se imputaría de menos.
     """
-    cobros = db.scalars(
-        select(models.Cobro).where(
-            models.Cobro.explotacion_id == explotacion_id,
-            models.Cobro.factura_emitida_id == factura_id,
-            models.Cobro.anulado.is_(False),
-        )
+    condiciones = [
+        models.AplicacionDeUnCobro.explotacion_id == explotacion_id,
+        models.AplicacionDeUnCobro.factura_emitida_id == factura_id,
+        models.AplicacionDeUnCobro.anulado.is_(False),
+    ]
+    if sin_este_cobro is not None:
+        condiciones.append(models.AplicacionDeUnCobro.cobro_id != sin_este_cobro)
+    aplicaciones = db.scalars(
+        select(models.AplicacionDeUnCobro)
+        # **Y la aplicación de un cobro anulado no cuenta** (CRM-01, 11/10/2026): anular el cobro devuelve la
+        # deuda a estar pendiente, así que su aplicación no puede seguir sumando. Se calla por los dos
+        # lados —aquí y marcándola al anular— porque el dinero de una factura no puede depender de que todos
+        # los caminos de anulación se acuerden de hacerlo.
+        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
+        .where(*condiciones, models.Cobro.anulado.is_(False))
     )
-    return dinero.suma(*[dinero.a_decimal(c.importe_imputado) for c in cobros])
+    return dinero.suma(*[dinero.a_decimal(a.importe) for a in aplicaciones])
 
 
 def las_entregas_de_una_factura(
@@ -1981,21 +1997,70 @@ def _imputar(db, explotacion, cobro: models.Cobro, factura) -> tuple[Decimal, De
     if factura is None:
         cobro.factura_emitida_id = None
         cobro.importe_imputado = None
+        # **Y su aplicación se retira**, que es lo que devuelve la deuda a estar pendiente. No se borra: se
+        # marca anulada con su motivo, como manda el patrón que documentan las referencias (deshacer
+        # conciliación desvincula y no destruye el documento).
+        _retirar_la_aplicacion(db, cobro, motivo="este cobro ya no va contra ninguna factura")
         return (dinero.CERO, dinero.a_decimal(cobro.importe) or dinero.CERO)
     cobro.factura_emitida_id = factura.id
     ya_cobrado = lo_cobrado_de_una_factura(
         db,
         explotacion_id=explotacion.id,
         factura_id=factura.id,
+        # Lo cobrado por **otros** cobros: ver el porqué en `lo_cobrado_de_una_factura`.
+        sin_este_cobro=cobro.id,
     )
-    # Lo cobrado por **otros** cobros: al reimputar este no se cuenta a sí mismo, o el pendiente
-    # saldría recortado por su propio dinero y el segundo pago se imputaría de menos.
-    if cobro.id is not None:
-        ya_cobrado = dinero.suma(ya_cobrado, -(dinero.a_decimal(cobro.importe_imputado) or dinero.CERO))
     pendiente = ventas.pendiente_de(factura.importe_total, ya_cobrado)
     imputado, sobrante = ventas.reparto_de_un_cobro(cobro.importe, pendiente)
     cobro.importe_imputado = imputado
+    _dejar_la_aplicacion(db, explotacion, cobro, factura, imputado)
     return (imputado, sobrante)
+
+
+def _dejar_la_aplicacion(db, explotacion, cobro: models.Cobro, factura, imputado: Decimal) -> None:
+    """Deja **una** aplicación viva de este cobro contra esa factura, por ese importe.
+
+    Es el camino de siempre (un cobro que salda **una** factura) el que pasa por aquí. El reparto entre
+    varias deudas se apunta con `aplicaciones` en el alta y deja **una fila por factura**.
+
+    Si el importe imputado es cero —el caso de un cobro que llega cuando ya no se debe nada— **no se deja
+    aplicación**: el dinero está sin asignar y una fila de cero euros no diría nada.
+    """
+    ya = db.scalar(
+        select(models.AplicacionDeUnCobro).where(
+            models.AplicacionDeUnCobro.cobro_id == cobro.id,
+            models.AplicacionDeUnCobro.factura_emitida_id == factura.id,
+            models.AplicacionDeUnCobro.anulado.is_(False),
+        )
+    )
+    if imputado is None or imputado <= 0:
+        if ya is not None:
+            db.delete(ya)
+        return
+    if ya is None:
+        db.add(
+            models.AplicacionDeUnCobro(
+                explotacion_id=explotacion.id,
+                cobro_id=cobro.id,
+                factura_emitida_id=factura.id,
+                importe=imputado,
+            )
+        )
+    else:
+        ya.importe = imputado
+
+
+def _retirar_la_aplicacion(db, cobro: models.Cobro, *, motivo: str) -> None:
+    """Marca anuladas las aplicaciones vivas de ese cobro, con su motivo, en vez de borrarlas."""
+    suyas = db.scalars(
+        select(models.AplicacionDeUnCobro).where(
+            models.AplicacionDeUnCobro.cobro_id == cobro.id,
+            models.AplicacionDeUnCobro.anulado.is_(False),
+        )
+    )
+    for aplicacion in suyas:
+        aplicacion.anulado = True
+        aplicacion.motivo_anulacion = motivo
 
 
 @router.post("/cobros", response_model=RespuestaDeUnCobro, status_code=status.HTTP_201_CREATED)
@@ -2256,6 +2321,11 @@ def anular_un_cobro(
     cobro = obtener_de_la_explotacion(db, models.Cobro, cobro_id, explotacion.id)
     cobro.anulado = True
     cobro.motivo_anulacion = motivo
+    # **Y sus aplicaciones se retiran con él** (CRM-01, 11/10/2026), conservando su importe y con el motivo
+    # de la anulación: es lo que hace que la deuda vuelva a estar pendiente sin destruir el rastro de lo que
+    # se había conciliado. La lectura ya no las cuenta por el cobro anulado, pero dejarlas vivas sería
+    # engañoso para quien mire la tabla.
+    _retirar_la_aplicacion(db, cobro, motivo=f"se anuló el cobro: {motivo}")
     _el_rastro_de_un_cobro(db, explotacion.id, cobro, accion="anular", datos={"motivo": motivo})
     db.commit()
     return como_se_ve_un_cobro(db, explotacion, cobro)

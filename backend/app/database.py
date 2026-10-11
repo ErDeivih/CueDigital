@@ -949,6 +949,61 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
     return soltadas, rellenadas, papeles
 
 
+def repartir_lo_cobrado_que_ya_estaba(destino_engine: Engine | None = None) -> int:
+    """Pasa a la tabla de aplicaciones **lo que ya estaba imputado** en los cobros de antes (CRM-01).
+
+    **Por qué hace falta.** Hasta el 11/10/2026 un cobro decía a qué factura iba con **una columna**
+    (`factura_emitida_id`) y cuánto con otra (`importe_imputado`). A partir de ahora eso vive en
+    `aplicaciones_de_cobro`, que es lo que permite repartir un ingreso entre **varias** deudas. Si un cobro
+    que ya existía se quedara sin su aplicación, su dinero **desaparecería de la factura**: la factura
+    volvería a estar pendiente y el cobro seguiría apuntado, que es la peor de las mentiras posibles en un
+    cuaderno de cuentas.
+
+    **La regla, y es la que conserva las cuentas idénticas:** se crea **una** aplicación por cada cobro vivo
+    que tenga factura **e** `importe_imputado` con valor —que es exactamente lo que sumaba
+    `lo_cobrado_de_una_factura`—, con el importe **tal cual está guardado**, sin recalcularlo. Un cobro sin
+    factura (dinero sin conciliar) o con el imputado vacío **no** genera aplicación: hoy no aportaba nada a
+    ninguna factura y después tampoco.
+
+    Se puede correr dos veces: solo mira los cobros que **no** tienen ya su aplicación.
+    """
+    from sqlalchemy import inspect, text
+
+    motor = destino_engine or engine
+    inspector = inspect(motor)
+    if not inspector.has_table("cobros") or not inspector.has_table("aplicaciones_de_cobro"):
+        return 0
+
+    with motor.begin() as conexion:
+        los_que_faltan = conexion.execute(
+            text(
+                "SELECT c.id, c.explotacion_id, c.factura_emitida_id, c.importe_imputado "
+                "FROM cobros c WHERE c.factura_emitida_id IS NOT NULL "
+                "AND c.importe_imputado IS NOT NULL AND NOT EXISTS ("
+                "  SELECT 1 FROM aplicaciones_de_cobro a WHERE a.cobro_id = c.id"
+                ")"
+            )
+        ).fetchall()
+        for fila in los_que_faltan:
+            conexion.execute(
+                text(
+                    "INSERT INTO aplicaciones_de_cobro "
+                    "(explotacion_id, cobro_id, factura_emitida_id, importe, anulado) "
+                    "VALUES (:explotacion, :cobro, :factura, :importe, :no)"
+                ),
+                {
+                    "explotacion": fila[1],
+                    "cobro": fila[0],
+                    "factura": fila[2],
+                    "importe": fila[3],
+                    # El booleano, en lo que entiende cada motor: en PostgreSQL `anulado` es un boolean de
+                    # verdad y un 0 no vale (lo mismo que en el reenvío de facturas).
+                    "no": False if motor.dialect.name.startswith("postgres") else 0,
+                },
+            )
+    return len(los_que_faltan)
+
+
 def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[str]]:
     """Deja la base de datos lista para funcionar, y la pone al día si venía de antes."""
     from . import models  # importación tardía: evita dependencia circular
@@ -974,6 +1029,15 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(
             f"Facturas vivas del mismo papel: se ha soltado la clave del papel en {papeles} "
             "(la clave se queda en la más antigua; las dos siguen ahí, míralas y anula la que sobre)."
+        )
+    # **Y lo que ya estaba imputado, a la tabla de aplicaciones** (CRM-01, 11/10/2026): un cobro de antes
+    # tiene que conservar el dinero que ya tenía asignado a su factura, o la factura volvería a estar
+    # pendiente sin que nadie hubiera cobrado nada.
+    repartidos = repartir_lo_cobrado_que_ya_estaba(motor)
+    if repartidos:
+        print(
+            f"Cobros con dinero ya imputado: {repartidos} pasados a la tabla de aplicaciones "
+            "(una aplicación por cobro, con el importe que ya tenían; no se recalcula nada)."
         )
     # Los índices, después de las columnas: un índice puede ser sobre una columna recién añadida.
     indices_creados, indices_cambiados = asegurar_indices(motor)
