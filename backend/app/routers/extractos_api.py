@@ -342,6 +342,8 @@ TEXTO_DE_CADA_MOTIVO_DE_RECHAZO = {
     extractos.SIGNO_DESCONOCIDO: "T20_signo_desconocido",
     extractos.IMPORTE_CERO: "T20_importe_cero",
     extractos.IMPORTE_ILEGIBLE: "T20_importe_ilegible",
+    # **La moneda que no es el euro** (CRM-02, 11/10/2026): la fila se rechaza y se dice por qué.
+    extractos.MONEDA_DISTINTA: "T20_moneda_distinta",
     extractos.COLUMNAS_DE_MAS: "T20_columnas_de_mas",
     extractos.SIN_CABECERAS: "T20_sin_cabeceras",
 }

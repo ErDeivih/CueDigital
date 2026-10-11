@@ -8162,6 +8162,10 @@ MENSAJES_DE_LOS_EXTRACTOS: dict[str, str] = {
     "T20_signo_desconocido": "Una línea trae una señal de cargo o abono que este programa no conoce. Dinos qué quiere decir y vuelve a subir el extracto.",
     "T20_importe_cero": "Una línea del extracto trae 0,00 € y no se ha apuntado: un movimiento de cero euros no es un movimiento.",
     "T20_importe_ilegible": "El importe de una línea no se ha podido leer. Mira esa línea en el fichero de tu banco y escríbelo a mano.",
+    # **La moneda que no es el euro** (CRM-02, 11/10/2026): no se apunta como si fueran euros. Y se dice por
+    # qué no se convierte: porque este programa **no convierte monedas** —no tiene ninguna fuente de cambio
+    # acreditada— y un cambio inventado sería un número falso en las cuentas de la campaña.
+    "T20_moneda_distinta": "Una línea del extracto está en otra moneda y no se ha apuntado: este programa no convierte monedas, porque no tiene de dónde sacar el cambio. Descarga el extracto en euros o convierte esa línea en tu banco.",
     "T20_columnas_de_mas": "Una línea trae más columnas que la cabecera, así que no se sabe qué número es cada cosa. Mira esa línea en el fichero de tu banco.",
     "T20_sin_cabeceras": "En este fichero no se encuentran las cabeceras de las columnas, así que no se sabe qué es cada número. Descarga el extracto otra vez desde tu banca.",
     "T20_esa_linea_no_se_ha_entendido": "Hay una línea del extracto que no se ha podido entender y no se ha apuntado. Mira la vista previa para ver cuál es.",

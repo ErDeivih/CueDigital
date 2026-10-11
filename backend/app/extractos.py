@@ -234,6 +234,68 @@ IMPORTE_CERO = "importe_cero"
 IMPORTE_ILEGIBLE = "importe_ilegible"
 COLUMNAS_DE_MAS = "columnas_de_mas"
 SIN_CABECERAS = "sin_cabeceras"
+# **Una línea en otra moneda** (CRM-02, 11/10/2026). El perfil no tiene columna de moneda y el módulo del
+# dinero **no convierte** (`dinero.py`: «un importe en otra moneda se guardaría como si fuera un euro, así que
+# no se admite»). Así que la fila de otra divisa **se rechaza con su motivo** en vez de apuntarse como euros,
+# que es lo que hacía: sumar 1.000 dólares como 1.000 euros en los ingresos de la campaña, en silencio.
+MONEDA_DISTINTA = "moneda_distinta"
+
+# Las marcas de otra moneda que **se reconocen para rechazarlas**. No es la lista de las que existen: es la de
+# las que se han visto en un extracto de verdad y no son euros. **Lo que no está aquí no se adivina**: un
+# importe sin marca se lee como euros, que es lo que es en una cuenta española. Y el euro **no** está en la
+# lista: `1.234,56 EUR` y `€1.234,56` se apuntan.
+MARCAS_DE_OTRA_MONEDA = (
+    "$",
+    "usd",
+    "dolar",
+    "dólar",
+    "dollars",
+    "£",
+    "gbp",
+    "libra",
+    "pounds",
+    "chf",
+    "franco suizo",
+    "¥",
+    "jpy",
+    "yen",
+    "sek",
+    "nok",
+    "dkk",
+    "cad",
+    "aud",
+    "mxn",
+    "ars",
+    "cop",
+    "clp",
+    "pen",
+    "brl",
+)
+
+
+# Los nombres con los que un fichero llama a la columna de la divisa. Se buscan **por el nombre de la
+# cabecera**, como todas las demás columnas de este lector.
+ETIQUETAS_DE_DIVISA = ("divisa", "moneda", "currency", "divisa iso", "moneda iso", "codigo divisa")
+
+
+def _una_cabecera_de_divisa(cabecera: str) -> bool:
+    """¿Esa cabecera es la de la columna de la divisa? (`Divisa`, `MONEDA`, `Currency`, `Divisa ISO`…)"""
+    suya = (cabecera or "").strip().lower()
+    return any(suya == etiqueta or suya.startswith(f"{etiqueta} ") for etiqueta in ETIQUETAS_DE_DIVISA)
+
+
+def _tiene_otra_moneda(texto: str) -> bool:
+    """¿Esa casilla trae una moneda que **no** es el euro?
+
+    Se mira en la casilla del importe —y en la de la divisa, si el fichero tiene esa columna—, y **no en el
+    concepto**, donde «libra» o «dólar» pueden ser parte de una frase. Se busca **marca a marca** de una lista
+    corta y escrita a mano. Es la misma regla que con las letras `C`/`D` del signo: se rechaza lo que se
+    reconoce, y no se adivina lo que no.
+    """
+    suyo = (texto or "").strip().lower()
+    if not suyo:
+        return False
+    return any(marca in suyo for marca in MARCAS_DE_OTRA_MONEDA)
 
 MOTIVOS_DE_RECHAZO = (
     SIN_FECHA,
@@ -244,6 +306,7 @@ MOTIVOS_DE_RECHAZO = (
     SIGNO_DESCONOCIDO,
     IMPORTE_CERO,
     IMPORTE_ILEGIBLE,
+    MONEDA_DISTINTA,
     COLUMNAS_DE_MAS,
     SIN_CABECERAS,
 )
@@ -911,6 +974,13 @@ def _lee_el_importe_y_el_signo(
             return ""
         return fila[posicion]
 
+    # **Una moneda que no es el euro no se suma** (CRM-02, 11/10/2026). Se mira la casilla del importe —y las
+    # de debe/haber, que son la misma idea— antes de leer el número, porque una vez leído ya es tarde: el
+    # importe viajaría como euros y engordaría los ingresos de la campaña sin que nadie lo vea.
+    for nombre in ("importe", "debe", "haber"):
+        if _tiene_otra_moneda(celda(nombre)):
+            return (None, None, MONEDA_DISTINTA)
+
     if perfil.estilo_del_signo == SIGNO_DEBE_HABER:
         debe, estado_debe = _lee_un_numero(celda("debe"), decimal_declarado=perfil.decimal)
         haber, estado_haber = _lee_un_numero(celda("haber"), decimal_declarado=perfil.decimal)
@@ -1228,6 +1298,12 @@ def lee_extracto(
 
     # Y lo mismo con un importe sin signo: si el saldo del fichero demuestra si ese dinero entra o
     # sale, se lee. Si no lo demuestra, se queda sin decidir y esas líneas se rechazan.
+    # **Y dónde está la columna de la divisa**, si el fichero trae una (`divisa`, `moneda`, `currency`…): se
+    # busca **por el nombre de su cabecera**, nunca por su posición, como todas las demás columnas de este
+    # lector. Sirve para lo de abajo: una línea en otra moneda se rechaza en vez de apuntarse como euros.
+    donde_la_divisa = next(
+        (i for i, cabecera in enumerate(cabeceras) if _una_cabecera_de_divisa(cabecera)), None
+    )
     signo_deducido: str | None = None
     lineas_del_signo: tuple[int, ...] = ()
     if perfil.estilo_del_signo == SIGNO_EN_EL_IMPORTE and perfil.sin_signo_quiere_decir is None:
@@ -1263,13 +1339,38 @@ def lee_extracto(
         fecha_valor, _ = _lee_una_fecha(
             celda("fecha_valor"), formato_declarado=perfil.formato_de_fecha
         )
+        # **La columna de la divisa, si el fichero la trae** (CRM-02, 11/10/2026). Es el camino por el que de
+        # verdad se colaba una moneda distinta: con el importe limpio (`1.000,00`) y la divisa en **su propia
+        # columna** (`USD`), y un perfil que dice que sin signo el dinero entra, la línea se apuntaba como
+        # **1.000,00 €** y la columna de la divisa se ignoraba sin decir nada. Medido, no supuesto.
+        if donde_la_divisa is not None and _tiene_otra_moneda(
+            fila[donde_la_divisa] if donde_la_divisa < len(fila) else ""
+        ):
+            rechazadas.append(
+                FilaRechazada(
+                    numero_de_linea=numero,
+                    motivo=MONEDA_DISTINTA,
+                    texto=";".join(fila),
+                    lo_que_dice=(fila[donde_la_divisa] if donde_la_divisa < len(fila) else None),
+                )
+            )
+            continue
         importe, signo, estado_del_dinero = _lee_el_importe_y_el_signo(fila, indices, perfil)
-        if estado_del_dinero in (DEBE_Y_HABER, SIGNO_DESCONOCIDO, SIN_SIGNO, IMPORTE_CERO, IMPORTE_ILEGIBLE):
-            # Las cinco formas de no poder leer el dinero de una fila, cada una con su motivo. Y son
-            # cinco motivos distintos y no uno porque el agricultor tiene que poder arreglarlos, y
+        if estado_del_dinero in (
+            DEBE_Y_HABER,
+            SIGNO_DESCONOCIDO,
+            SIN_SIGNO,
+            IMPORTE_CERO,
+            IMPORTE_ILEGIBLE,
+            # **Y la moneda que no es el euro** (CRM-02, 11/10/2026): no se apunta como si fueran euros.
+            MONEDA_DISTINTA,
+        ):
+            # Las seis formas de no poder leer el dinero de una fila, cada una con su motivo. Y son
+            # seis motivos distintos y no uno porque el agricultor tiene que poder arreglarlos, y
             # cada uno se arregla de una manera: «no sé si entra o sale» se arregla diciendo el
-            # formato, «trae debe y haber» mirando la línea, y «es un cero» no se arregla: esa línea
-            # no es un movimiento.
+            # formato, «trae debe y haber» mirando la línea, «es un cero» no se arregla —esa línea
+            # no es un movimiento—, y «está en otra moneda» se arregla con un extracto en euros o
+            # convirtiéndolo en su banco.
             # Lo que se enseña de esa fila: el número que no se ha podido leer, para que el
             # agricultor reconozca la línea en su fichero.
             lo_que_trae = celda("importe") or celda("signo") or celda("debe") or celda("haber") or None
