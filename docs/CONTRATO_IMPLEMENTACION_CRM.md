@@ -202,12 +202,11 @@ ingreso entre varias deudas**, y eso lo pide el encargo con números. Ahora se p
     cobro, el de la factura emitida, el del ajuste y el de las aplicaciones, más el aislamiento por finca,
     anular liberando la clave y **dos envíos concurrentes del mismo cobro** que dejan uno solo.
 
-**Y lo que queda de este ticket, dicho para que no se lea como terminado:** la **pantalla** del reparto
-—elegir varias facturas al apuntar un cobro y enseñar las aplicaciones en la ficha del cobro y en la de la
-factura, que el servidor ya las manda— y la **revisión visual** con capturas nuevas. (Los filtros de la lista
-de ventas y el dinero en los documentos **están cerrados**: ver el apartado siguiente.) El contrato §S12
-sigue siendo el destino, no una promesa cumplida: la emisión fiscal automatizada no se activa sin fuentes
-oficiales propias.
+**Y lo que queda de este ticket, dicho para que no se lea como terminado:** la **revisión visual** con
+capturas nuevas (la pantalla del reparto incluida), que necesita ojos y no la puede hacer quien escribe
+esto. (Los filtros de la lista de ventas, el dinero en los documentos y **la pantalla del reparto** están
+cerrados: ver los dos apartados siguientes.) El contrato §S12 sigue siendo el destino, no una promesa
+cumplida: la emisión fiscal automatizada no se activa sin fuentes oficiales propias.
 
 ### Los filtros de la lista de ventas y el dinero en los documentos (11/10/2026)
 
@@ -231,6 +230,21 @@ Dos cosas de las de arriba, cerradas y con su medición:
     replica sus columnas y tiene una prueba que escribe el cuaderno y lo **vuelve a leer con el lector
     oficial**: añadir «Importe» ahí no completaría el documento, **rompería el formato**. Queda escrito en el
     propio módulo, que es donde lo leerá quien vaya a añadirlo.
+
+### La pantalla del reparto, y los cinco sitios que leían el dato viejo (11/10/2026)
+
+  · **Un cobro se reparte entre varias facturas desde la pantalla**: una casilla por factura con **lo que le
+    queda por cobrar** y un importe **opcional** —si no se escribe, a cada una se le aplica lo que le queda—;
+    con más de una marcada se manda `aplicaciones`, con una la factura de siempre, y **nunca las dos**, que el
+    servidor contesta 422. Tiene prueba de comportamiento: las dos facturas del encargo marcadas → al
+    servidor llegan **dos aplicaciones** con lo que le queda a cada una y **no** una factura suelta.
+  · **Y hay una lección que conviene que quede escrita**: este cambio no falló por la tabla nueva. Falló
+    porque **cinco sitios leían el dato viejo** —el `cobrado` de la factura, la ficha del cobro, la lista del
+    dinero sin asignar, el **margen** de lo que se vende y la **conciliación del banco**—: los cinco estaban
+    bien mientras un cobro saldaba una sola factura, y los cinco fallaban en silencio en cuanto existe el
+    reparto. Los cinco están corregidos, **la regla del dinero vive en un solo sitio**
+    (`servicios.lo_cobrado_de_una_factura`, como la hermana de las compras desde el 09/10/2026) y el recorrido
+    lo comprueba de punta a punta: **39 comprobaciones · 0 fallos**.
 
 **Pendiente:** **permisos, uso sin cobertura, conflictos de edición y restauración de copia**; y de §S11,
 lo que la ficha todavía no enseña (varios tipos de IVA, portes y descuentos globales, moneda).
