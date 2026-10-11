@@ -2009,7 +2009,13 @@ def listar_cobros(
     )
     vistos = [como_se_ve_un_cobro(db, explotacion, cobro) for cobro in cobros]
     if solo == "sin_asignar":
-        vistos = [cobro for cobro in vistos if cobro.factura_emitida_id is None]
+        # **«Sin asignar» es «sin ninguna aplicación», no «sin la columna de la factura»** (CRM-01, 11/10/2026).
+        # Un cobro repartido entre varias deudas tiene `factura_emitida_id` vacío **a propósito** —el dinero
+        # vive en las aplicaciones—, así que mirando esa columna el agricultor veía su ingreso recién
+        # repartido en la lista del dinero que «todavía no se sabe de qué factura es», justo debajo de la
+        # frase que dice que está esperando a que se le diga. Es la misma trampa que la ficha del cobro y el
+        # `cobrado` de la factura: la mitad que lee el dato viejo no se entera del nuevo.
+        vistos = [cobro for cobro in vistos if not cobro.aplicaciones]
     return vistos
 
 

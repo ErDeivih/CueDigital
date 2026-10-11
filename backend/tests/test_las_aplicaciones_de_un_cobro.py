@@ -264,3 +264,42 @@ def test_no_se_puede_aplicar_un_cobro_a_una_factura_de_otra_finca(cliente, cuent
     assert respuesta.status_code == 404, respuesta.text
     # Y la factura de esta finca sigue pendiente: el intento no ha dejado rastro en el dinero.
     assert _la_factura(cliente, cuenta, la_mia["id"])["pendiente"] == "100.00"
+
+
+def test_un_cobro_repartido_no_sale_en_la_lista_del_dinero_sin_asignar(cliente, cuenta, campana):
+    """**El mismo defecto, en la lista del dinero sin asignar** (CRM-01, 11/10/2026).
+
+    `solo=sin_asignar` miraba la columna de la factura del cobro, y en un reparto esa columna va **vacía a
+    propósito**: el agricultor veía su ingreso recién repartido entre dos deudas en la lista de «dinero que
+    todavía no sé de qué factura es», justo debajo de la frase que dice que está esperando a que se le diga.
+    Lo que separa los dos casos es **tener o no tener aplicaciones**, que es donde vive el reparto.
+    """
+    una = _una_factura_de(cliente, cuenta, campana, "100.00", "CRM01-APL-12")
+    otra = _una_factura_de(cliente, cuenta, campana, "250.00", "CRM01-APL-13")
+    repartido = _el_cobro(
+        cliente,
+        cuenta,
+        {
+            "fecha": "2026-08-01",
+            "importe": "350.00",
+            "aplicaciones": [
+                {"factura_emitida_id": una["id"], "importe": "100.00"},
+                {"factura_emitida_id": otra["id"], "importe": "250.00"},
+            ],
+        },
+    )
+    assert repartido.status_code == 201, repartido.text
+
+    # Un dinero que sí está sin asignar, para que la lista no esté vacía por casualidad.
+    suelto = _el_cobro(cliente, cuenta, {"fecha": "2026-08-02", "importe": "80.00"})
+    assert suelto.status_code == 201, suelto.text
+
+    sin_asignar = cliente.get("/api/cobros?solo=sin_asignar", headers=cuenta["cabeceras"]).json()
+    identificadores = [c["id"] for c in sin_asignar]
+    assert suelto.json()["cobro"]["id"] in identificadores, (
+        f"el dinero que de verdad no se sabe a qué va tiene que salir en su lista: {identificadores}"
+    )
+    assert repartido.json()["cobro"]["id"] not in identificadores, (
+        "un cobro repartido entre dos facturas ha salido en la lista del dinero sin asignar: "
+        "se sabe perfectamente a qué va"
+    )
