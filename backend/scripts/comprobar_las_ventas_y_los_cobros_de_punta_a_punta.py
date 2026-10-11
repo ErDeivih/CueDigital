@@ -312,9 +312,48 @@ def main() -> int:
         f"y los importes van con coma decimal y en euros ({suya['texto_pendiente']})",
     )
 
+    # ── 7) Que el reparto no se cuente dos veces ni desaparezca (11/10/2026) ─────────────────────────
+    print("\n7) El reparto, visto desde las otras pantallas: el banco y el dinero sin asignar")
+    # Un dinero que de verdad no se sabe a qué va, para que las listas no estén vacías por casualidad.
+    _, suelto = caso.un_cobro("80.00", None)
+
+    _, sin_asignar = _pedir(caso.http, "get", "/api/cobros?solo=sin_asignar")
+    identificadores = [c["id"] for c in sin_asignar]
+    comprobar(
+        (suelto or {}).get("cobro", {}).get("id") in identificadores,
+        "el dinero que no se sabe a que va sale en su lista",
+    )
+    comprobar(
+        (repartido or {}).get("cobro", {}).get("id") not in identificadores,
+        "y el cobro **repartido a mano** no sale ahi: se sabe perfectamente a que va "
+        "(miraba la columna de la factura, que en un reparto va vacia a proposito)",
+    )
+
+    # Y la conciliacion del banco: las dos deudas del reparto estan cobradas, asi que no se ofrecen para
+    # conciliar; y el ingreso repartido tampoco, porque su dinero **ya esta** donde tenia que estar.
+    _, pendientes = _pedir(caso.http, "get", "/api/bancos/pendientes")
+    comprobar(
+        isinstance(pendientes, list),
+        f"la lista de papeles por conciliar del banco se lee ({type(pendientes).__name__})",
+    )
+    por_clase = {}
+    for documento in pendientes if isinstance(pendientes, list) else []:
+        por_clase.setdefault(documento.get("clase"), set()).add(documento.get("documento_id"))
+    comprobar(
+        factura_d["id"] not in por_clase.get("factura_emitida", set()),
+        "la primera deuda del reparto **no** aparece como pendiente en el banco",
+    )
+    comprobar(
+        factura_e["id"] not in por_clase.get("factura_emitida", set()),
+        "y la segunda tampoco",
+    )
+    comprobar(
+        (repartido or {}).get("cobro", {}).get("id") not in por_clase.get("cobro", set()),
+        "y el ingreso repartido no se ofrece para conciliar otra vez",
+    )
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {FALLOS}")
     return 0 if FALLOS == 0 else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
