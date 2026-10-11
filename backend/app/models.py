@@ -1780,8 +1780,19 @@ class MovimientoDeExtracto(Base):
 
     __tablename__ = "movimientos_de_extracto"
     __table_args__ = (
-        # **El índice que impide apuntar dos veces la misma línea del banco.** Es parcial a propósito:
-        # si algún día una línea se anula, su clave tiene que quedar libre.
+        # **El índice que impide apuntar dos veces la misma línea del banco.** Es el que hace que subir el
+        # mismo extracto dos veces no duplique nada, y el que sostiene que dos operaciones iguales legítimas
+        # se conserven (el `clave_de_duplicado` lleva el contador de aparición).
+        #
+        # **NO es parcial, y aquí decía que sí** (corregido el 11/10/2026 al inventariar CRM-02). El comentario
+        # decía «es parcial a propósito: si algún día una línea se anula, su clave tiene que quedar libre»,
+        # pero este `Index` **no lleva `where`** y esta tabla **no tiene columna de anulación**: un índice
+        # parcial sobre una columna que no existe no se puede escribir, así que el comentario prometía algo
+        # imposible y quien lo leyera daría por hecho que anular una línea libera su clave.
+        #
+        # **Anular una línea de extracto no existe hoy**, y cuando exista hay que hacer las dos cosas: la
+        # columna y el `where` (`sqlite_where=text("anulada = 0")`, `postgresql_where=text("anulada = false")`,
+        # como el reenvío de facturas y las conciliaciones). Se deja dicho aquí, que es donde se va a mirar.
         Index(
             "uq_movimiento_de_extracto",
             "explotacion_id",
@@ -1867,6 +1878,18 @@ class ConciliacionDeMovimiento(Base):
     )
     # cobro | factura_emitida | factura_de_compra (y lo que traiga el T13)
     clase: Mapped[str] = mapped_column(String(30))
+    # **A qué papel va, y por eso NO lleva clave foránea** (aclarado el 11/10/2026 al inventariar CRM-02).
+    # El inventario lo apuntó como un hueco —«la barrera entre fincas es solo de código»—, y la mitad es
+    # cierta: la base no puede defender este vínculo. Pero **no es un olvido ni se puede arreglar con una
+    # `ForeignKey`**: este campo apunta a **tablas distintas** según `clase` (un cobro, una factura nuestra,
+    # una factura de compra…), y una clave foránea va contra **una** tabla. Es una referencia polimórfica, y
+    # las tres formas de hacerla en la base (una columna por clase, una tabla puente, o `clase` dentro de la
+    # clave) son peores que lo que hay: cambiarían el esquema para defender algo que **el código ya defiende**
+    # por tres sitios —`obtener_de_la_explotacion` al conciliar, `revisa_una_conciliacion` devolviendo
+    # «es de otra finca», y `proponer_conciliaciones` descartando el papel ajeno—, cada uno con su prueba.
+    #
+    # Lo que sí se puede hacer, si algún día molesta, es una comprobación de integridad en la importación de
+    # las copias de seguridad (que ningún `documento_id` quede huérfano), y eso no necesita tocar el esquema.
     documento_id: Mapped[int] = mapped_column(Integer, index=True)
     # Lo que de este movimiento se apunta a ese papel. Obligatorio: una conciliación sin importe no
     # dice nada, y el programa reparte por orden cuando el agricultor no dice cuánto.
