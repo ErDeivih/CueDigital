@@ -1479,6 +1479,56 @@ class Cobro(Base):
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class AplicacionDeUnCobro(Base):
+    """Contra qué factura va un cobro, y cuánto. **Es lo que permite que un ingreso salde varias deudas.**
+
+    ## Por qué existe, si el cobro ya tenía una factura
+
+    `Cobro.factura_emitida_id` dice «este dinero va contra **esa** factura» y `importe_imputado` cuánto de
+    él. Con eso se puede cobrar una factura en dos veces, que es el caso A06 y funciona; lo que **no** se
+    puede es repartir **un** ingreso entre **varias** deudas —un cliente que paga de una vez tres
+    albaranes—, y eso lo pide el encargo de CRM-01 con un caso concreto: *«un cobro de 350 aplicado a dos
+    deudas 100/250, las aplicaciones suman 350 y el saldo sin aplicar queda en 0»*.
+
+    ## La misma forma que las aplicaciones de un pago, y a propósito
+
+    Es hermana de `AplicacionDeUnPago` (`models.py`), que es como ya se reparten los pagos de las compras:
+    **una fila por deuda con su importe**, y ninguna de las dos crea el documento contrario —conciliar no
+    emite una factura, igual que conciliar un pago no crea un gasto—.
+
+    ## Y anular es desvincular, no borrar
+
+    Las referencias que estudió el ticket (ERPNext *Payment Entry*, Odoo) coinciden en esto: deshacer una
+    conciliación **quita la asignación y no toca el documento original**. Por eso la fila no se borra: se
+    marca `anulado` con su motivo, conserva su importe y la deuda vuelve a estar pendiente. El índice único
+    va filtrado por `anulado = 0`, así que el mismo cobro puede volver a aplicarse a esa misma factura más
+    adelante sin chocar con el rastro de la vez anterior.
+    """
+
+    __tablename__ = "aplicaciones_de_cobro"
+    __table_args__ = (
+        # Un cobro no puede estar aplicado dos veces a la misma factura mientras las dos filas estén vivas;
+        # anulada la primera, la segunda entra (es volver a conciliar, no duplicar).
+        Index(
+            "uq_aplicacion_de_cobro",
+            "cobro_id",
+            "factura_emitida_id",
+            unique=True,
+            sqlite_where=text("anulado = 0"),
+            postgresql_where=text("anulado = false"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    cobro_id: Mapped[int] = mapped_column(ForeignKey("cobros.id"), index=True)
+    factura_emitida_id: Mapped[int] = mapped_column(ForeignKey("facturas_emitidas.id"), index=True)
+    importe: Mapped[Decimal] = mapped_column(Dinero, nullable=False)
+    anulado: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class AjusteDeEntrega(Base):
     """Una devolución, o un ajuste de peso, humedad o calidad sobre una entrega.
 
