@@ -194,34 +194,18 @@ def _la_linea_de_factura_de_una_entrega(
 def lo_cobrado_de_una_factura(
     db, *, explotacion_id: int, factura_id: int, sin_este_cobro: int | None = None
 ) -> Decimal:
-    """Lo que se ha cobrado de esa factura: la suma de **las aplicaciones vivas** que van contra ella.
+    """Lo que se ha cobrado de esa factura. **La regla vive en `servicios`** (11/10/2026).
 
-    **Suma las aplicaciones y no el importe del cobro** (CRM-01, 11/10/2026): un cobro puede saldar varias
-    facturas —y entonces cada una recibe su parte— y puede ser más grande que lo que se debe, en cuyo caso lo
-    que sobre está sin asignar y **no es dinero de esta factura**. Contar el importe entero dejaría un
-    pendiente negativo y un cobrado inflado, que es exactamente lo que el caso A06 mide.
-
-    `sin_este_cobro` deja fuera las aplicaciones de un cobro concreto, y hace falta al **reimputar**: si al
-    cambiar un cobro se contara su propio dinero, el pendiente saldría recortado por él mismo y el segundo
-    pago se imputaría de menos.
+    Aquí queda solo el nombre que usaba este fichero, delegando: la regla la comparten la ficha de la
+    factura, el margen de lo que se vende y la conciliación del banco, y tenerla en tres copias fue
+    exactamente cómo el reparto de un cobro se quedó sin contar en cinco sitios distintos.
     """
-    condiciones = [
-        models.AplicacionDeUnCobro.explotacion_id == explotacion_id,
-        models.AplicacionDeUnCobro.factura_emitida_id == factura_id,
-        models.AplicacionDeUnCobro.anulado.is_(False),
-    ]
-    if sin_este_cobro is not None:
-        condiciones.append(models.AplicacionDeUnCobro.cobro_id != sin_este_cobro)
-    aplicaciones = db.scalars(
-        select(models.AplicacionDeUnCobro)
-        # **Y la aplicación de un cobro anulado no cuenta** (CRM-01, 11/10/2026): anular el cobro devuelve la
-        # deuda a estar pendiente, así que su aplicación no puede seguir sumando. Se calla por los dos
-        # lados —aquí y marcándola al anular— porque el dinero de una factura no puede depender de que todos
-        # los caminos de anulación se acuerden de hacerlo.
-        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
-        .where(*condiciones, models.Cobro.anulado.is_(False))
+    return servicios.lo_cobrado_de_una_factura(
+        db,
+        explotacion_id=explotacion_id,
+        factura_id=factura_id,
+        sin_este_cobro=sin_este_cobro,
     )
-    return dinero.suma(*[dinero.a_decimal(a.importe) for a in aplicaciones])
 
 
 def las_entregas_de_una_factura(

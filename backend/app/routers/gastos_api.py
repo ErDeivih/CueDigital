@@ -611,25 +611,12 @@ def las_cuentas(explotacion: ExplotacionActual, db: Db, campana_id: int | None =
     # cobrado de la factura.
     cobrado_por_venta: dict[int, Decimal] = {}
     if campana_id is not None:
-        cobrado_por_factura: dict[int, Decimal] = {}
-        # **El dinero cobrado de cada factura sale de las aplicaciones** (CRM-01, 11/10/2026), no de la
-        # columna del cobro: un ingreso puede saldar **varias** deudas y entonces esa columna va **vacía a
-        # propósito** —el dinero vive en las aplicaciones—, así que sumándola el margen de esa venta salía
-        # **sin cobrar**, que es un número equivocado en la pantalla donde el agricultor decide qué sembrar.
-        # La regla es la misma que la del cobrado de una factura (`ventas_api.lo_cobrado_de_una_factura`).
-        for aplicacion in db.scalars(
-            select(models.AplicacionDeUnCobro)
-            .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
-            .where(
-                models.AplicacionDeUnCobro.explotacion_id == explotacion.id,
-                models.AplicacionDeUnCobro.anulado.is_(False),
-                models.Cobro.anulado.is_(False),
-            )
-        ):
-            suyo = dinero.a_decimal(aplicacion.importe) or dinero.CERO
-            cobrado_por_factura[aplicacion.factura_emitida_id] = dinero.suma(
-                cobrado_por_factura.get(aplicacion.factura_emitida_id, dinero.CERO), suyo
-            )
+        # **El dinero cobrado de cada factura sale de la regla única** (`servicios.lo_cobrado_por_factura`,
+        # CRM-01, 11/10/2026): antes se sumaba aquí `importe_imputado` agrupando por la columna del cobro, y
+        # como un ingreso puede saldar **varias** deudas —con esa columna vacía a propósito—, el margen de
+        # esa venta salía **sin cobrar**, que es un número equivocado en la pantalla donde el agricultor
+        # decide qué sembrar. La regla es la misma que la del cobrado de una factura, y ahora es una sola.
+        cobrado_por_factura = servicios.lo_cobrado_por_factura(db, explotacion_id=explotacion.id)
         for factura in db.scalars(
             select(models.FacturaEmitida).where(
                 models.FacturaEmitida.explotacion_id == explotacion.id,

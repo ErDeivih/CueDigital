@@ -1575,6 +1575,71 @@ def lo_pagado_de_un_gasto(db: Session, *, explotacion_id: int, gasto_id: int):
     return dinero.suma(*[aplicacion.importe for aplicacion in aplicaciones])
 
 
+def lo_cobrado_de_una_factura(
+    db: Session, *, explotacion_id: int, factura_id: int, sin_este_cobro: int | None = None
+):
+    """Cuánto dinero de los cobros **vivos** está aplicado a esta factura nuestra.
+
+    Se suman **las aplicaciones**, no los cobros. Y no es un detalle: un ingreso puede saldar **varias**
+    deudas —350 repartidos entre una factura de 100 y otra de 250—, así que la columna `factura_emitida_id`
+    del cobro va **vacía a propósito** cuando hay reparto. Sumando esa columna, la factura aparecía pendiente
+    aunque estuviera cobrada, y el dinero se perdía de vista en cinco sitios distintos.
+
+    **Está aquí y no en `ventas_api` desde el 11/10/2026**, por el mismo motivo por el que
+    `lo_pagado_de_un_gasto` está aquí al lado (y es el patrón de la casa): esa regla la usan **tres** sitios
+    —la ficha y la lista de lo que se vende, el **margen** de una venta y la **conciliación del banco**—, y
+    con una copia en cada uno ya se vio lo que pasa: cinco pantallas leyendo el dato viejo y cinco cifras
+    del mismo dinero. **Una regla, un sitio.**
+
+    `sin_este_cobro` deja fuera las aplicaciones de un cobro concreto, y hace falta al **reimputar**: si al
+    cambiar un cobro se contara su propio dinero, el pendiente saldría recortado por él mismo y el segundo
+    pago se imputaría de menos.
+    """
+    condiciones = [
+        models.AplicacionDeUnCobro.explotacion_id == explotacion_id,
+        models.AplicacionDeUnCobro.factura_emitida_id == factura_id,
+        models.AplicacionDeUnCobro.anulado.is_(False),
+        # **Y la aplicación de un cobro anulado no cuenta**: anular el cobro devuelve la deuda a estar
+        # pendiente, y el dinero de una factura no puede depender de que todos los caminos de anulación se
+        # acuerden de marcar también su aplicación.
+        models.Cobro.anulado.is_(False),
+    ]
+    if sin_este_cobro is not None:
+        condiciones.append(models.AplicacionDeUnCobro.cobro_id != sin_este_cobro)
+    aplicaciones = db.scalars(
+        select(models.AplicacionDeUnCobro)
+        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
+        .where(*condiciones)
+    )
+    return dinero.suma(*[aplicacion.importe for aplicacion in aplicaciones])
+
+
+def lo_cobrado_por_factura(db: Session, *, explotacion_id: int) -> dict[int, Decimal]:
+    """Lo cobrado de **cada** factura de la explotación, de una vez: `{factura_id: lo cobrado}`.
+
+    Es la misma regla que `lo_cobrado_de_una_factura`, en la forma que necesita quien tiene que recorrer
+    todas las facturas de una campaña (el margen de lo que se vende, 11/10/2026) **sin hacer una consulta
+    por factura**. Las facturas sin ningún cobro no salen en el diccionario: quien lo lea tiene que tratar
+    el «no está» como un cero, que es lo que es.
+    """
+    aplicaciones = db.scalars(
+        select(models.AplicacionDeUnCobro)
+        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
+        .where(
+            models.AplicacionDeUnCobro.explotacion_id == explotacion_id,
+            models.AplicacionDeUnCobro.anulado.is_(False),
+            models.Cobro.anulado.is_(False),
+        )
+    )
+    por_factura: dict[int, Decimal] = {}
+    for aplicacion in aplicaciones:
+        por_factura[aplicacion.factura_emitida_id] = dinero.suma(
+            por_factura.get(aplicacion.factura_emitida_id, dinero.CERO),
+            dinero.a_decimal(aplicacion.importe) or dinero.CERO,
+        )
+    return por_factura
+
+
 def se_pueden_sumar(unidad_a: str | None, unidad_b: str | None) -> bool:
     """¿Estas dos cantidades se pueden meter en la misma cuenta?
 

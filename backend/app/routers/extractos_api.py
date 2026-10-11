@@ -49,7 +49,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, 
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
-from .. import adjuntos, dinero, extractos, models, textos, ventas
+from .. import adjuntos, dinero, extractos, models, servicios, textos, ventas
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import EntradaBase, SalidaBase, _un_importe_que_cabe
 
@@ -659,24 +659,12 @@ def _los_pendientes(db, explotacion) -> list[extractos.DocumentoPorConciliar]:
             # Una factura sin importe no se puede cobrar a medias: no se sabe cuánto le falta.
             pendiente = None
         else:
-            # **Lo cobrado sale de las aplicaciones** (CRM-01, 11/10/2026), como en la ficha de la factura:
-            # la columna del cobro va vacía cuando un ingreso salda varias deudas, así que sumándola esta
-            # factura aparecía **pendiente** en la conciliación del banco aunque ya estuviera cobrada, y el
-            # agricultor volvía a conciliar un dinero que ya estaba donde tenía que estar.
-            cobrado = dinero.suma(
-                *[
-                    dinero.a_decimal(a.importe)
-                    for a in db.scalars(
-                        select(models.AplicacionDeUnCobro)
-                        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
-                        .where(
-                            models.AplicacionDeUnCobro.explotacion_id == explotacion.id,
-                            models.AplicacionDeUnCobro.factura_emitida_id == factura.id,
-                            models.AplicacionDeUnCobro.anulado.is_(False),
-                            models.Cobro.anulado.is_(False),
-                        )
-                    ).all()
-                ]
+            # **Lo cobrado sale de la regla única** (`servicios.lo_cobrado_de_una_factura`, 11/10/2026): antes
+            # se sumaba aquí la columna del cobro, que va vacía cuando un ingreso salda varias deudas, así
+            # que esta factura aparecía **pendiente** en la conciliación del banco aunque ya estuviera
+            # cobrada, y el agricultor volvía a conciliar un dinero que ya estaba donde tenía que estar.
+            cobrado = servicios.lo_cobrado_de_una_factura(
+                db, explotacion_id=explotacion.id, factura_id=factura.id
             )
             pendiente = ventas.pendiente_de(
                 total,
