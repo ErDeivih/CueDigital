@@ -1713,9 +1713,12 @@ div.tarjeta:active {
 
   /* El botón de apuntar, en la barra: es la acción que más se usa y está siempre a la vista. */
   .marco .barra-acciones .boton {
-    /* 2.9rem eran ~46 px y, con el relleno, sacaban la barra de 64: **2.2rem cabe** y sigue siendo cómodo con
-       el ratón, que es como se usa esta barra (07/10/2026). */
-    min-height: 2.2rem;
+    /* **2,9 rem, que es lo que dice el diseño** (CRM-00, 11/10/2026). Aquí ponía 2,2 rem —unos 35 px— con
+       este motivo escrito: «2.9rem eran ~46 px y, con el relleno, sacaban la barra de 64». Medido hoy: el
+       relleno de esta barra es 0,2rem por arriba y por abajo, así que **46 + 6,4 = 52,4 y cabe en los 64**.
+       Y `DESIGN.md` es explícito: «los botones de la barra… miden 2,9 rem (unos 46 px)… **no se baja de
+       40**». Los 35 px de antes estaban por debajo de ese suelo, y el agricultor tiene entre 50 y 70 años. */
+    min-height: 2.9rem;
     /* El rótulo de un botón no se parte en varias líneas: eso es lo que lo hacía alto (07/10/2026). */
     white-space: nowrap;
     margin: 0;
@@ -1723,9 +1726,40 @@ div.tarjeta:active {
     justify-content: center;
   }
 
-  /* La letra grande y el salir: siguen ahí, más pequeños porque se pulsan con el ratón. */
+  /* **Y no se estira** (CRM-00, 11/10/2026). Medido: `APUNTAR` mide **536 px** dentro de la barra porque
+     `.boton-principal` trae del móvil `flex: 1 1 45%` —allí la acción principal ocupa el ancho de la
+     pantalla, que es lo que el diseño pide para el pulgar—. En la barra eso no: 536 px es más que el hueco
+     que queda y era **lo que empujaba «A+» y «Salir» fuera de la ventana**. Aquí manda su etiqueta. */
+  .marco .barra-acciones .boton-principal {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* **Un nombre largo se recorta; una acción, nunca** (CRM-00, 11/10/2026). La barra tiene que caber con
+     cualquier nombre de explotación o de cuenta: lo que cede es el nombre —con puntos suspensivos—, y las
+     acciones se quedan enteras dentro de la pantalla. El `title` y el `aria-label` conservan el texto
+     completo para quien lo necesite. */
+  .marco .barra-datos .barra-valor,
+  .marco .barra-datos .boton-letra {
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Y el aviso de lo pendiente —«Te faltan 26 cosas por apuntar»— es un botón, no un párrafo: se recorta
+     antes que empujar la barra. Lo que dice entero sigue estando en su `aria-label`. */
   .marco .barra-acciones .boton-letra {
-    min-height: 2.2rem;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* La letra grande y el salir: **46 px de alto**, como el resto de la barra (CRM-00, 11/10/2026). Estaban
+     en 2,2rem —35 px— por lo mismo que el botón principal, y con el mismo cálculo: 46 + el relleno de la
+     barra cabe en sus 64 px. `DESIGN.md` no baja de 40. */
+  .marco .barra-acciones .boton-letra {
+    min-height: 2.9rem;
     margin: 0;
     /* **Recortar, no envolver** (07/10/2026): este boton lleva el **nombre de la finca**, y con uno de 48
        caracteres se partia en varias lineas: medía **112 px** y era lo unico que mantenia la barra por encima

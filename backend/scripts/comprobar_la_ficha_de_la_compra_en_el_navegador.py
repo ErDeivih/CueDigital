@@ -27,6 +27,7 @@ from __future__ import annotations
 import base64
 import json
 import pathlib
+import struct
 import sys
 import time
 
@@ -178,11 +179,97 @@ def _la_compra_de_la_prueba(token: str) -> int:
     return factura_id
 
 
-def captura(nav: NavegadorDeVerdad, nombre: str) -> pathlib.Path:
+# **La visibilidad, de verdad** (11/10/2026, CRM-00). Se usa desde todas las comprobaciones de pantalla.
+#
+# POR QUÉ ESTÁ AQUÍ Y NO DENTRO DE CADA CONSULTA. La comprobación que había daba por «visible» un control
+# con tal de que tuviera tamaño y no estuviera en `display: none`, y **eso no es visible**: el revisor lo
+# demostró midiendo —en la captura de escritorio había controles **fuera de la ventana** y la prueba los
+# contaba como a la vista—. Un rectángulo de 120 px que empieza en 1400 con la ventana de 1440 está
+# cortado; uno que empieza en 1500 no se ve en absoluto. Lo mismo vale para un ancestro con `overflow:
+# hidden`: el elemento existe, mide, y no se ve.
+#
+# Así que «visible y utilizable» es aquí: tiene tamaño, no está oculto por estilo, **y su rectángulo entero
+# cabe dentro de la ventana y dentro de todos los ancestros que recortan**. Es la definición que el
+# encargo pide («un rectángulo con ancho positivo fuera de la pantalla no es visible»).
+LA_VISIBILIDAD = """
+    const totalmenteVisible = (el) => {
+        if (!el) return {visible: false, motivo: 'no existe'};
+        const estilo = getComputedStyle(el);
+        if (estilo.display === 'none') return {visible: false, motivo: 'display none'};
+        if (estilo.visibility === 'hidden') return {visible: false, motivo: 'visibility hidden'};
+        if (Number(estilo.opacity) === 0) return {visible: false, motivo: 'opacidad 0'};
+        const c = el.getBoundingClientRect();
+        if (c.width <= 0 || c.height <= 0) return {visible: false, motivo: 'sin tamano'};
+        // **La ventana**: el rectángulo entero, no solo su esquina.
+        if (c.left < -0.5 || c.top < -0.5 || c.right > window.innerWidth + 0.5 || c.bottom > window.innerHeight + 0.5) {
+            return {
+                visible: false,
+                motivo: 'fuera de la ventana',
+                caja: [Math.round(c.left), Math.round(c.top), Math.round(c.right), Math.round(c.bottom)],
+                ventana: [window.innerWidth, window.innerHeight],
+            };
+        }
+        // **Y los ancestros que recortan**, subiendo por el árbol: un `overflow: hidden` corta igual que el
+        // borde de la pantalla, y es justo lo que hace la barra con el nombre largo.
+        for (let padre = el.parentElement; padre; padre = padre.parentElement) {
+            const suyo = getComputedStyle(padre);
+            const recorta = ['hidden', 'clip', 'auto', 'scroll'].includes(suyo.overflowX) ||
+                             ['hidden', 'clip', 'auto', 'scroll'].includes(suyo.overflowY);
+            if (!recorta) continue;
+            const p = padre.getBoundingClientRect();
+            if (c.left < p.left - 0.5 || c.right > p.right + 0.5 || c.top < p.top - 0.5 || c.bottom > p.bottom + 0.5) {
+                return {visible: false, motivo: 'recortado por ' + (padre.className || padre.tagName), };
+            }
+        }
+        return {visible: true, motivo: '', caja: [Math.round(c.left), Math.round(c.top), Math.round(c.right), Math.round(c.bottom)]};
+    };
+"""
+
+
+def la_visibilidad(nav: NavegadorDeVerdad, selector: str) -> dict:
+    """Qué dice la visibilidad de verdad sobre esos controles: uno a uno, con su motivo si no se ven."""
+    return nav.evaluar(
+        "(() => {"
+        + LA_VISIBILIDAD
+        + f"""
+        const controles = [...document.querySelectorAll({json.dumps(selector)})];
+        return {{
+            ventana: [window.innerWidth, window.innerHeight],
+            cuantos: controles.length,
+            suyos: controles.map((el) => {{
+                const suyo = totalmenteVisible(el);
+                return {{
+                    texto: (el.innerText || el.value || el.getAttribute('aria-label') || '').replace(/\\s+/g, ' ').trim().slice(0, 40),
+                    accion: el.dataset ? (el.dataset.accion || '') : '',
+                    visible: suyo.visible,
+                    motivo: suyo.motivo,
+                    caja: suyo.caja || null,
+                }};
+            }}),
+        }};
+    }})()"""
+    )
+
+
+def captura(nav: NavegadorDeVerdad, nombre: str) -> dict:
+    """La captura, **diciendo de qué tamaño es y con qué ventana se hizo** (CRM-00, 11/10/2026).
+
+    Antes devolvía solo la ruta y el guion decía «captura del móvil» sin más: la ventana del navegador de
+    Windows no baja de ~500 px, así que una captura «de 390» salía de 500 y nadie se enteraba hasta que el
+    revisor midió el PNG. Ahora se devuelven las dos cosas —lo que dice la página (`innerWidth`) y lo que
+    mide la imagen—, para poder contrastarlas.
+    """
     CARPETA.mkdir(parents=True, exist_ok=True)
     destino = CARPETA / f"compra-{nombre}.png"
-    destino.write_bytes(base64.b64decode(nav.orden("Page.captureScreenshot", {"format": "png"})["data"]))
-    return destino
+    crudo = base64.b64decode(nav.orden("Page.captureScreenshot", {"format": "png"})["data"])
+    destino.write_bytes(crudo)
+    ancho_imagen, alto_imagen = struct.unpack(">II", crudo[16:24])
+    ventana = nav.evaluar("[window.innerWidth, window.innerHeight]")
+    return {
+        "ruta": destino,
+        "ventana": ventana,
+        "imagen": [ancho_imagen, alto_imagen],
+    }
 
 
 def el_texto(nav: NavegadorDeVerdad) -> str:
@@ -316,7 +403,10 @@ def main() -> int:
         )
 
         movil = captura(nav, "movil")
-        print(f"  (captura del movil: {movil})")
+        print(
+            f"  (captura del movil: {movil['ruta'].name}, ventana {movil['ventana']}, "
+            f"imagen {movil['imagen']})"
+        )
 
         print("\n4) **Ningun importe sin coma decimal ni moneda** (lo pidio David el 09/10/2026)")
         # Un importe con punto y dos decimales es el texto de máquina que se colaba en la pantalla
@@ -412,31 +502,17 @@ def main() -> int:
             )
 
             # **La barra de arriba, entera y sin acciones ocultas.** David vio la barra cortada en la
-            # captura. Se comprueba la cabecera que de verdad se usa a este ancho (el armazón de escritorio
-            # a partir de 64rem, la de móvil por debajo): ni se sale del ancho, ni recorta su contenido, ni
-            # esconde ningún botón.
+            # captura y el revisor lo confirmó midiendo: había controles **fuera de la ventana** que la
+            # comprobación anterior contaba como visibles, porque solo miraba que tuvieran tamaño. Aquí se
+            # mide lo que pidió el encargo: el **rectángulo completo** de cada control, dentro de la ventana
+            # y dentro de los ancestros que recortan (`LA_VISIBILIDAD`). Un rectángulo con ancho positivo
+            # fuera de la pantalla **no** es visible.
             la_barra = nav.evaluar(
-                """(() => {
-                    // **`offsetParent` NO sirve aquí** (09/10/2026, y costó una medición falsa): la barra
-                    // del armazón de escritorio es `position: fixed`, y en un elemento fijo `offsetParent`
-                    // vale `null` **por especificación**. Con aquella comprobación, a 1440 px la barra de
-                    // verdad salía «oculta» y el guion medía la cabecera del móvil —que allí mide 0 px—,
-                    // diciendo que había 0 botones a la vista. Se mide con la caja y el estilo calculado,
-                    // que es lo que de verdad dice si algo se ve.
-                    const visible = (el) => {
-                        if (!el) return false;
-                        const c = el.getBoundingClientRect();
-                        const e = getComputedStyle(el);
-                        return (
-                            c.width > 0 &&
-                            c.height > 0 &&
-                            e.display !== 'none' &&
-                            e.visibility !== 'hidden' &&
-                            Number(e.opacity) > 0
-                        );
-                    };
+                "(() => {"
+                + LA_VISIBILIDAD
+                + """
                     const deEscritorio = document.querySelector('.marco .barra');
-                    const usaEscritorio = visible(deEscritorio);
+                    const usaEscritorio = totalmenteVisible(deEscritorio).visible;
                     const caja = usaEscritorio ? deEscritorio : document.querySelector('.cabecera');
                     if (!caja) return {hay: false};
                     const datos = caja.querySelector('.barra-datos') || caja;
@@ -444,10 +520,8 @@ def main() -> int:
                     const botones = [...(acciones ? acciones.querySelectorAll('button, a') : [])];
                     // **Qué se recorta, y cuál no** (09/10/2026). La casa tiene decidido que, si algo tiene
                     // que ceder en esta barra, ceda **el nombre de la explotación**, y nunca la campaña ni
-                    // la cuenta ni las acciones (está escrito en el CSS y lo mide
-                    // `scripts/medir_la_barra_de_escritorio.py`). Así que no basta con «hay algo cortado»:
-                    // hay que decir **qué**, porque recortar el nombre es lo previsto y recortar la campaña
-                    // es el defecto que David vio en la captura.
+                    // la cuenta ni las acciones. Así que no basta con «hay algo cortado»: hay que decir
+                    // **qué**.
                     const trozos = [...datos.querySelectorAll('.barra-dato')].map((d) => ({
                         rotulo: ((d.querySelector('.barra-rotulo') || {}).innerText || '').trim(),
                         recortado: d.scrollWidth > d.clientWidth + 1,
@@ -455,15 +529,53 @@ def main() -> int:
                     return {
                         hay: true,
                         usaEscritorio,
+                        ventana: [window.innerWidth, window.innerHeight],
                         anchoCaja: Math.round(caja.getBoundingClientRect().width),
                         altoCaja: Math.round(caja.getBoundingClientRect().height),
-                        datosRecortados: datos.scrollWidth > datos.clientWidth + 1,
+                        caja: (() => {
+                            const c = caja.getBoundingClientRect();
+                            return [Math.round(c.left), Math.round(c.top), Math.round(c.right), Math.round(c.bottom)];
+                        })(),
                         trozos,
-                        botones: botones.length,
-                        botonesVisibles: botones.filter(visible).length,
+                        acciones: botones.map((b) => {
+                            const suyo = totalmenteVisible(b);
+                            return {
+                                texto: (b.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 30),
+                                visible: suyo.visible,
+                                motivo: suyo.motivo,
+                                caja: suyo.caja || null,
+                            };
+                        }),
                         texto: (caja.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 120),
                     };
                 })()"""
+            )
+            print(f"     (barra: {en_consola(la_barra)})")
+            comprobar(bool(la_barra.get("hay")), f"a {ancho} px hay una barra de arriba")
+            # **Cada acción, entera dentro de la ventana.** Esta es la comprobación que sustituye a contar
+            # cajas: se exige el rectángulo completo, así que un control cortado por el borde derecho o
+            # sacado de la pantalla cuenta como lo que es.
+            las_acciones = la_barra.get("acciones", [])
+            cortadas = [
+                f"{accion['texto'] or '(sin texto)'} [{accion['motivo']}] {accion['caja']}"
+                for accion in las_acciones
+                if not accion["visible"]
+            ]
+            comprobar(
+                bool(las_acciones),
+                f"y la barra tiene acciones ({[a['texto'] for a in las_acciones]})",
+            )
+            comprobar(
+                not cortadas,
+                f"y todas sus acciones estan enteras dentro de la ventana "
+                f"({len(las_acciones) - len(cortadas)} de {len(las_acciones)}; cortadas: {cortadas})",
+            )
+            # Y **la barra entera** también: si la propia barra se sale, algo de dentro está fuera aunque
+            # sus botones quepan (el nombre, la campaña o la cuenta).
+            dentro = la_barra.get("caja") or [0, 0, 0, 0]
+            comprobar(
+                dentro[0] >= -0.5 and dentro[2] <= (la_barra.get("ventana") or [0, 0])[0] + 0.5,
+                f"y la barra entera cabe en la ventana (barra {dentro}, ventana {la_barra.get('ventana')})",
             )
             print(f"     (barra: {en_consola(la_barra)})")
             comprobar(bool(la_barra.get("hay")), f"a {ancho} px hay una barra de arriba")
@@ -502,16 +614,52 @@ def main() -> int:
                     "     (recortado por el nombre largo: "
                     f"{[t['rotulo'] for t in la_barra.get('trozos', []) if t['recortado']]})"
                 )
-            else:
-                comprobar(
-                    not la_barra.get("datosRecortados"),
-                    f"y la cabecera que se usa a {ancho} px no recorta nada",
-                )
+            # Y las acciones, ya comprobadas arriba una a una con su rectángulo entero. Aquí se deja dicho
+            # cuántas son, porque el encargo pide poder **activarlas**, no solo verlas: se cuentan las que
+            # además se pueden pulsar (no `disabled`) y tienen área de toque suficiente.
+            cuantas = len(las_acciones)
+            pulsables = nav.evaluar(
+                "(() => {"
+                + LA_VISIBILIDAD
+                + """
+                    // **La barra que de verdad se usa a este ancho**, que es la misma regla que arriba: a 1024
+                    // el armazón enseña la cabecera compacta, y medir los botones de la barra escondida daba
+                    // cuatro botones de 0×0 —un fallo del instrumento, no de la pantalla— (CRM-00).
+                    const deEscritorio = document.querySelector('.marco .barra');
+                    const caja = totalmenteVisible(deEscritorio).visible
+                        ? deEscritorio
+                        : document.querySelector('.cabecera');
+                    if (!caja) return {cuantas: 0, pequenas: [], deshabilitadas: []};
+                    const acciones = caja.querySelector('.barra-acciones') || caja.querySelector('.cabecera-botones');
+                    const botones = [...(acciones ? acciones.querySelectorAll('button, a') : [])];
+                    const c = (b) => {
+                        const r = b.getBoundingClientRect();
+                        return [Math.round(r.width), Math.round(r.height)];
+                    };
+                    return {
+                        cuantas: botones.length,
+                        suyos: botones.map((b) => ({
+                            texto: (b.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 26),
+                            clase: b.className,
+                            ancho: c(b)[0],
+                            alto: c(b)[1],
+                        })),
+                        pequenas: botones.filter((b) => c(b)[0] < 44 || c(b)[1] < 44).map((b) => [
+                            (b.innerText || '').trim().slice(0, 20),
+                            c(b),
+                        ]),
+                        deshabilitadas: botones.filter((b) => b.disabled).map((b) => (b.innerText || '').trim()),
+                    };
+                })()"""
+            )
+            print(f"     (acciones: {en_consola(pulsables)})")
             comprobar(
-                la_barra.get("botones", 0) > 0
-                and la_barra.get("botones") == la_barra.get("botonesVisibles"),
-                f"y no esconde ninguna accion ({la_barra.get('botonesVisibles')} de "
-                f"{la_barra.get('botones')} a la vista)",
+                not pulsables.get("deshabilitadas"),
+                f"y ninguna accion esta deshabilitada ({pulsables.get('deshabilitadas')})",
+            )
+            comprobar(
+                not pulsables.get("pequenas"),
+                f"y todas tienen area de toque (menos de 44 px: {pulsables.get('pequenas')})",
             )
 
             # **Y las líneas, en tabla**: es lo que pidió David («líneas en tabla»). Una tabla de verdad,
@@ -554,7 +702,10 @@ def main() -> int:
 
             print(f"     (texto de la barra: {en_consola(la_barra.get('texto'))})")
             destino = captura(nav, "escritorio" if ancho == 1440 else f"escritorio-{ancho}")
-            print(f"  (captura a {ancho}: {destino})")
+            print(
+                f"  (captura a {ancho}: {destino['ruta'].name}, ventana {destino['ventana']}, "
+                f"imagen {destino['imagen']})"
+            )
 
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {FALLOS}")
     print(f"Capturas en {CARPETA}")

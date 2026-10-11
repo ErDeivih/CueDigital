@@ -19,7 +19,7 @@ temporal y documentos ficticios.
 | El reenvío de la factura | `backend/tests/test_la_factura_reenviada_no_se_duplica.py` | **17 pruebas** |
 | La migración del reenvío, sobre copia | `backend/tests/test_la_migracion_del_reenvio.py` | **3 pruebas** |
 | La ficha, en pruebas | `backend/tests/test_la_ficha_de_la_compra.py` | **11 pruebas** |
-| La suite entera | `python -m pytest tests -q` / `node --test "tests_js/*.test.js"` | **4736 · 0** de Python y **1080 · 0** de JavaScript |
+| La suite entera | `python -m pytest tests -q` / `node --test "tests_js/*.test.js"` | **4746 · 0** de Python y **1081 · 0** de JavaScript |
 
 ### La historia, aparte, para que nadie lea una cifra vieja como el estado
 
