@@ -208,6 +208,44 @@ esto. (Los filtros de la lista de ventas, el dinero en los documentos y **la pan
 cerrados: ver los dos apartados siguientes.) El contrato §S12 sigue siendo el destino, no una promesa
 cumplida: la emisión fiscal automatizada no se activa sin fuentes oficiales propias.
 
+### El banco por fichero y la conciliación reversible (CRM-02, inventariado el 11/10/2026)
+
+**Lo primero, porque cambia lo que hay que hacer:** el módulo **ya existe** y es el ticket T20 —cinco tablas,
+2.293 + 1.987 líneas, una pantalla de 1.156 y **91 + 43 pruebas en verde**—. Así que CRM-02 no es «hacer el
+banco»: es **cerrar once criterios** sobre algo que funciona. De los once, **siete cumplen**: el fichero
+repetido o solapado no duplica (con el **contador de aparición** `#n`, que es también lo que hace que dos
+operaciones iguales legítimas se conserven), el traspaso entre cuentas propias no altera ingresos ni gastos,
+el aislamiento entre fincas, la huella del lote, que la propuesta **no** sea una confirmación silenciosa, y
+—desde hoy— la moneda. **Tres están a medias**, los tres por falta de prueba con las cifras del encargo
+(un movimiento de 1210 repartido en 400 + 810; un papel pagado con **dos** movimientos distintos; deshacer
+**y volver a conciliar** comparando saldos), y **uno a medias más**: la **estrategia de identidad por
+formato**, que hoy no se declara en ninguna parte (y en N43 **no hay** identificador único por apunte, así que
+no puede ser la misma que en un CSV).
+
+**Lo que se ha cerrado el 11/10/2026:**
+
+  · **Una moneda que no es el euro no se suma como si lo fuera.** El hueco se **reprodujo midiendo**, en el
+    camino que de verdad hacen los bancos: el importe limpio en su columna y **la divisa en su propia
+    columna** (`Fecha;Concepto;Importe;Divisa` con `1.000,00;USD`). Con un perfil que declara «sin signo el
+    dinero entra» —configuración normal— esa línea se apuntaba como **1.000,00 €** y la columna de la divisa
+    se **ignoraba en silencio**. Ahora la columna se busca **por el nombre de su cabecera** y la fila se
+    **rechaza con su motivo** (`moneda_distinta`), como ya se rechazan a propósito las letras `C`/`D` del
+    signo. **No se convierte**: no hay de dónde sacar el cambio y `dinero.py` dice de sí mismo que no
+    convierte monedas. El criterio pide «no sumar sin conversión acreditada»; la respuesta honesta es **no
+    sumar, y decirlo**. Seis pruebas nuevas.
+  · **Dos cosas del esquema que estaban mal dichas.** El comentario del índice único de una línea de extracto
+    decía que «es parcial a propósito» y **no puede serlo** (no lleva `where` y no hay columna de anulación):
+    prometía algo imposible. Y el vínculo de una conciliación **no lleva clave foránea y no se le puede
+    poner**: apunta a **tablas distintas** según `clase`, es una **referencia polimórfica**, y lo defiende el
+    código por tres sitios con su prueba cada uno. Las dos cosas quedan escritas donde se leen —una corrige
+    una mentira y la otra evita que alguien «arregle» lo que no está roto—.
+
+**Y lo que queda, en orden:** las tres pruebas con las cifras del encargo; la identidad por formato; la
+pantalla (lista de **duplicadas por fila**, las **aplicaciones del candidato** y las **discrepancias** antes
+de confirmar, y la lista de **lotes** con su huella, que hoy no tiene ni ruta); y los formatos que ya están
+declarados y no se leen (**N43** el siguiente, tras el CSV). **Límite que no se toca**: nada de PSD2 ni
+credenciales bancarias.
+
 ### Los filtros de la lista de ventas y el dinero en los documentos (11/10/2026)
 
 Dos cosas de las de arriba, cerradas y con su medición:
