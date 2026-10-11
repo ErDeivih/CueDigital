@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
-from . import borradores, catalogos, correcciones, geo, legal, models, textos
+from . import borradores, catalogos, correcciones, dinero, geo, legal, models, textos
 from .schemas import FertilizacionEntrada, TratamientoEntrada
 
 
@@ -1358,6 +1358,31 @@ def el_misma_factura(
     if total is not None and otro_total is not None and abs(total - otro_total) >= 0.005:
         return False
     return True
+
+
+def lo_pagado_de_un_gasto(db: Session, *, explotacion_id: int, gasto_id: int):
+    """Cuánto dinero de los pagos **vivos** está aplicado a este gasto.
+
+    Se suman **las aplicaciones**, no los pagos: es lo que hace que un pago de 500 € contra tres gastos
+    cuente 60 en uno, 40 en otro y 400 en el tercero, y no 500 en cada uno (que es la forma fácil de
+    contar el mismo dinero tres veces).
+
+    **Está aquí y no en `gastos_api` desde el 09/10/2026**, cuando llegó la ficha de la compra: esa
+    ficha enseña «pagado» y «pendiente» de un gasto, y si se calcularan con otra copia de la regla
+    podrían salir **dos cifras distintas del mismo dinero** en dos pantallas. Una regla, un sitio.
+    """
+    aplicaciones = list(
+        db.scalars(
+            select(models.AplicacionDeUnPago)
+            .join(models.PagoDeGasto, models.PagoDeGasto.id == models.AplicacionDeUnPago.pago_id)
+            .where(
+                models.AplicacionDeUnPago.explotacion_id == explotacion_id,
+                models.AplicacionDeUnPago.gasto_id == gasto_id,
+                models.PagoDeGasto.anulado.is_(False),
+            )
+        )
+    )
+    return dinero.suma(*[aplicacion.importe for aplicacion in aplicaciones])
 
 
 def se_pueden_sumar(unidad_a: str | None, unidad_b: str | None) -> bool:

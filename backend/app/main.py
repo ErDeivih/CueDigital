@@ -29,6 +29,8 @@ from .routers import (
     buscar_api,
     contactos_api,
     cuenta,
+    # **La ficha de la compra** (S11, 09/10/2026): facturado, recibido, pagado y pendiente en un sitio.
+    compras_api,
     cuaderno,
     cuaderno_cyl_api,
     documentos_api,
@@ -176,6 +178,7 @@ app.include_router(parcelas.router)
 app.include_router(mapa.router)
 app.include_router(cuaderno_cyl_api.router)
 app.include_router(facturas_api.router)
+app.include_router(compras_api.router)
 app.include_router(maestros.router)
 # El almacén (T09): el albarán que llega, los lotes y el libro de movimientos. Va detrás de las
 # facturas porque engancha la factura de un albarán, y detrás de los maestros porque el artículo se

@@ -1029,6 +1029,18 @@ MENSAJES: dict[str, str] = {
         "una de las dos tiene los importes mal. Se ha dejado la que había. Si te has equivocado al "
         "apuntar, corrígela; y si de verdad son dos facturas, apunta la segunda con su número."
     ),
+    # **La ficha de la compra** (S11, 09/10/2026): lo que se ha facturado, lo que ha entrado de verdad, lo
+    # que se ha pagado y lo que queda. Estas dos dicen lo que **no se puede saber**, que es tan importante
+    # como las cifras: sin ellas, un hueco parecería un cero.
+    "AL29_no_se_puede_saber_lo_recibido_por_linea": (
+        "De esta factura, {cuantas} línea(s) no están enganchadas a ningún albarán línea a línea, así "
+        "que no se puede saber cuánto ha entrado de cada una. Abajo están los albaranes que sí traen "
+        "esta factura: míralos para saber qué falta por llegar."
+    ),
+    "AL40_esta_factura_no_ha_metido_nada_en_el_almacen": (
+        "De esta factura no ha entrado nada al almacén todavía: la mercancía la mete el albarán, no la "
+        "factura. Si ya la tienes en casa, apunta el albarán y engánchalo aquí."
+    ),
     # Estas tres no son avisos de que algo esté mal: son las tres razones por las que **no se puede
     # hacer la resta**. Es la misma decisión que en la cesta (A20–A23): decir «te quedan 0 litros»
     # cuando no se sabe sería peor que decir que no se sabe.

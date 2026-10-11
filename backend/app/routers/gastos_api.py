@@ -58,7 +58,7 @@ from decimal import Decimal
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from .. import correcciones, dinero, gastos, models, textos, ventas
+from .. import correcciones, dinero, gastos, models, servicios, textos, ventas
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
@@ -173,22 +173,12 @@ def _sus_repartos(db: Db, explotacion_id: int, gasto_id: int) -> list[models.Rep
 def _lo_pagado(db: Db, explotacion_id: int, gasto_id: int) -> Decimal:
     """Cuánto dinero de los pagos vivos está aplicado a este gasto.
 
-    Se suman **las aplicaciones**, no los pagos: es lo que hace que un pago de 500 € contra tres
-    gastos cuente 60 en uno, 40 en otro y 400 en el tercero, y no 500 en cada uno (que es la forma
-    fácil de contar el mismo dinero tres veces).
+    **La regla se mudó a `servicios.lo_pagado_de_un_gasto`** (09/10/2026), cuando la ficha de la compra
+    empezó a enseñar «pagado» y «pendiente» del mismo gasto: dos copias de esta cuenta podrían dar dos
+    cifras distintas del mismo dinero en dos pantallas. Aquí se queda el nombre de siempre para no
+    tocar los sitios que ya la llamaban.
     """
-    aplicaciones = list(
-        db.scalars(
-            select(models.AplicacionDeUnPago)
-            .join(models.PagoDeGasto, models.PagoDeGasto.id == models.AplicacionDeUnPago.pago_id)
-            .where(
-                models.AplicacionDeUnPago.explotacion_id == explotacion_id,
-                models.AplicacionDeUnPago.gasto_id == gasto_id,
-                models.PagoDeGasto.anulado.is_(False),
-            )
-        )
-    )
-    return dinero.suma(*[aplicacion.importe for aplicacion in aplicaciones])
+    return servicios.lo_pagado_de_un_gasto(db, explotacion_id=explotacion_id, gasto_id=gasto_id)
 
 
 def _el_cuadre_del_reparto(
