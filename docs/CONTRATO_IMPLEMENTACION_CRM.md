@@ -172,6 +172,43 @@ reunido, pero se leía como una columna de móvil también en el ordenador, y Da
     está en 64 rem y el ancho de maquetación se queda en 1009 con la barra de desplazamiento), con sus **dos
     acciones a la vista**. En los dos anchos: **ninguna acción oculta**.
 
+### Acreditado desde el 11/10/2026 — las ventas y los cobros (CRM-01)
+
+El módulo existía y funcionaba a medias: la venta, la factura emitida y el cobro con su cobro parcial (el
+caso A06: 121 facturados, 40 cobrados, 81 pendientes) ya estaban. Lo que **no** se podía era **repartir un
+ingreso entre varias deudas**, y eso lo pide el encargo con números. Ahora se puede:
+
+  · **`AplicacionDeUnCobro`** (`aplicaciones_de_cobro`): una fila por factura con su importe, hermana de
+    `AplicacionDeUnPago`. El reparto no vive en una columna del cobro, y **anular es desvincular**: la fila
+    conserva su importe y su motivo, y la deuda vuelve a estar pendiente (es el *unreconcile* que documentan
+    ERPNext y Odoo, y lo único que las dos fuentes dicen igual).
+  · **El alta acepta `aplicaciones`**, con sus dos invariantes comprobadas y dichas con palabras: **no se
+    reparte más de lo que entró** (Σ aplicaciones ≤ importe del cobro) y **a una factura no se le aplica más
+    de lo que debe**. Una factura suelta y un reparto a la vez se rechazan, en vez de elegir por el
+    agricultor. Lo que no se reparte queda **sin asignar**, que es un dato y no dinero perdido.
+  · **El dinero de una factura se cuenta por las aplicaciones** —también el `cobrado` de su ficha, que
+    sumaba la columna vieja: era un defecto real que la prueba del reparto destapó (la factura de 100 seguía
+    pendiente después de cobrarla)—.
+  · **La migración** pasa a la tabla lo que ya estaba imputado, **con el importe que ya tenía**, sin
+    recalcular nada: las cuentas de lo que hay en la base no cambian.
+  · **Las cifras del encargo, medidas** con `scripts/comprobar_las_ventas_y_los_cobros_de_punta_a_punta.py`
+    (**33 comprobaciones · 0 fallos**): 1210 → cobro 400 → **810** → cobro 810 → **0** por identificador y
+    con otra venta intacta al lado; un cobro de **350** entre dos deudas de **100** y **250** con las dos a
+    cero y **0 sin asignar**; un cobro de **400** con **350** aplicado dejando **50,00 €** sin asignar;
+    **8000 kg** sin precio con el importe en «no se sabe» (no un cero) y sin poder facturar (422); y el
+    reenvío del mismo cobro con **mismo identificador** y el dinero sin doblar.
+  · **Los índices únicos ya no están sin acreditar** (lo midió la revisión independiente): seis pruebas
+    nuevas (`backend/tests/test_lo_que_no_se_apunta_dos_veces.py`) **hacen fallar** el de la venta, el del
+    cobro, el de la factura emitida, el del ajuste y el de las aplicaciones, más el aislamiento por finca,
+    anular liberando la clave y **dos envíos concurrentes del mismo cobro** que dejan uno solo.
+
+**Y lo que queda de este ticket, dicho para que no se lea como terminado:** la **pantalla** del reparto
+(elegir varias facturas al apuntar un cobro y enseñar las aplicaciones en la ficha), los **filtros de la
+lista de ventas**, que hoy viven en memoria y no se conservan al volver, y los **importes en los
+documentos** (el PDF/CSV del cuaderno y la hoja de la Junta no llevan importe, precio ni pendiente). El
+contrato §S12 sigue siendo el destino, no una promesa cumplida: la emisión fiscal automatizada no se activa
+sin fuentes oficiales propias.
+
 **Pendiente:** **permisos, uso sin cobertura, conflictos de edición y restauración de copia**; y de §S11,
 lo que la ficha todavía no enseña (varios tipos de IVA, portes y descuentos globales, moneda).
 
