@@ -829,6 +829,15 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
     if "clave_de_reenvio" not in columnas:
         return 0, 0, 0
 
+    # **`anulada` no se escribe igual en los dos motores** (CRM-00, 11/10/2026). Esta migración lleva SQL a
+    # mano, y el SQL de antes decía `anulada = 0` en todas partes: en SQLite una columna booleana es un
+    # entero y eso vale, pero en PostgreSQL es un `boolean` de verdad y `= 0` **no compila**. El revisor lo
+    # señaló («la migración nueva contiene SQL `anulada = 0`: revisar la portabilidad con booleanos reales
+    # antes de activar ese motor») y esto es ese repaso: la condición se escribe una vez, según el motor.
+    # Se dice lo que se ha comprobado —que el SQL es el de cada motor— y **no** que se haya probado contra
+    # PostgreSQL, porque aquí no hay ninguno (ver el límite declarado en el contrato).
+    no_anulada = "anulada = false" if motor.dialect.name.startswith("postgres") else "anulada = 0"
+
     # Las claves repetidas: se queda con ella la más antigua (el identificador más bajo, que es el orden
     # en que se apuntaron) y las demás la sueltan.
     soltadas = 0
@@ -901,7 +910,7 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
             vivas = conexion.execute(
                 text(
                     "SELECT id, explotacion_id, proveedor, proveedor_nif, numero_factura, fecha, total, "
-                    "clave_del_papel FROM facturas WHERE anulada = 0 ORDER BY id"
+                    "clave_del_papel FROM facturas WHERE " + no_anulada + " ORDER BY id"
                 )
             ).mappings().all()
         # **El papel se reconoce dentro de una finca** —la misma factura en dos explotaciones son dos

@@ -456,6 +456,53 @@ def test_la_misma_clave_con_otro_contenido_es_conflicto_aunque_haya_correcciones
     assert _cuantas_facturas(db_sesion) == 1
 
 
+def test_una_factura_legada_sin_huella_no_inventa_su_comando_original(cliente, cuenta, db_sesion):
+    """Una factura de **antes de que hubiera huella**: se dice qué se puede comprobar y qué no.
+
+    **Lo pidió el revisor** (11/10/2026): *«Migración de huellas históricas. Se calcula con el contenido
+    actual, que puede ser ya corregido. No describirla como prueba recuperada del comando original.
+    Añadir caso legado corregido y explicitar qué reenvíos pueden verificarse y cuáles requieren revisión;
+    no inventar la petición perdida»*.
+
+    La migración rellena la huella con **lo que la factura dice hoy**, así que:
+
+      · el reenvío de **ese** contenido se reconoce —y eso es lo que se puede afirmar: *este comando ya se
+        atendió*—;
+      · el de **otro** contenido es un **conflicto**, y eso es lo prudente: **no se sabe** si es el comando
+        original (la factura pudo corregirse antes de que existiera la huella) o una petición distinta, y en
+        la duda el programa **no acepta en silencio** algo que no puede comprobar. Queda para revisión
+        humana, no se resuelve inventando la petición perdida.
+
+    Aquí se reproduce el caso legado **por el camino de verdad**: se apunta la factura y luego se le borra
+    la huella a mano, que es exactamente como queda una factura de antes en la base migrada.
+    """
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-legada")
+    assert primera.status_code == 201, primera.text
+    ident = primera.json()["id"]
+
+    # La migración de una instalación antigua rellena la huella con lo que la factura dice; aquí se simula
+    # el estado **de antes de la migración**: con clave y sin huella.
+    la_factura = _la_de_id(db_sesion, ident)
+    la_factura.huella_de_la_peticion = None
+    db_sesion.commit()
+    assert _la_de_id(db_sesion, ident).huella_de_la_peticion is None
+
+    # **Lo que sí se puede afirmar**: el mismo contenido es el comando que se atendió.
+    el_de_siempre = _enviar(cliente, cuenta["cabeceras"], clave="peticion-legada")
+    assert el_de_siempre.status_code == 200, el_de_siempre.text
+    assert el_de_siempre.json()["id"] == ident
+    assert _cuantas_facturas(db_sesion) == 1
+
+    # **Lo que no**: otro contenido con la misma clave no se puede dar por bueno —no se sabe si es el
+    # comando original de una factura corregida— y se contesta conflicto, sin tocar nada.
+    otro = _enviar(cliente, cuenta["cabeceras"], clave="peticion-legada", notas="otra cosa distinta")
+    assert otro.status_code == 409, (
+        f"con una huella que no se puede comprobar no se puede contestar {otro.status_code}: {otro.text}"
+    )
+    assert textos.mensaje("AL26_la_misma_clave_con_otros_datos") in otro.text
+    assert _cuantas_facturas(db_sesion) == 1, "y no se ha apuntado nada"
+
+
 def test_corregir_el_numero_cambia_el_papel(cliente, cuenta, db_sesion):
     """Corregir el número (o el total) **cambia el papel**, y la clave del papel se recalcula.
 
