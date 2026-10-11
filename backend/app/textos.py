@@ -3224,6 +3224,14 @@ COBRO: dict[str, str] = {
     # enseñaba el nombre de una sola —o decía «sin factura», que es lo contrario de lo que ha hecho el
     # agricultor—.
     "repartido_entre": "Repartido entre estas facturas",
+    # **Y el reparto, mientras se apunta** (CRM-01, 11/10/2026): un ingreso puede saldar varias deudas de
+    # una vez (350 que saldan una factura de 100 y otra de 250). Se marcan las que salda y, si no se escribe
+    # el importe, a cada una se le aplica lo que le queda por cobrar.
+    "reparto_pista": (
+        "Si este dinero salda varias facturas, márcalas aquí. Si no escribes el importe, a cada una se "
+        "le aplica lo que le queda por cobrar."
+    ),
+    "reparto_lo_que_le_queda": "lo que le queda",
     "sin_asignar": "Sin asignar",
     "sin_asignar_titulo": "Cobros que todavía no sé de qué factura son",
     "sin_asignar_explica": (

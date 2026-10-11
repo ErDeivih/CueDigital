@@ -13914,6 +13914,9 @@ async function pantallaCobroNuevo(idDeFactura = null) {
     cliente: "",
     contacto_id: "",
     factura_emitida_id: idDeFactura || "",
+    // **El reparto empieza vacío** (CRM-01, 11/10/2026): se llena si el agricultor marca varias facturas
+    // en las casillas, y va en el borrador para que un envío fallido no pierda lo que había marcado.
+    reparto: [],
     forma: "transferencia",
     referencia: "",
     notas: "",
@@ -13962,13 +13965,41 @@ async function guardarElCobro() {
   borrador.notas = leer("cobro-notas");
   // La ficha de contacto de quien ha pagado (revisión del T12).
   borrador.contacto_id = leer("cobro-contacto");
+  // **El reparto entre varias facturas** (CRM-01, 11/10/2026): las que el agricultor haya marcado, con el
+  // importe que haya escrito o, si no escribió ninguno, **lo que le queda por cobrar** a cada una, que es lo
+  // que se quiere casi siempre. Se leen **una a una por su identificador** —y no con un selector de todos los
+  // marcados— porque así es como lee los campos el resto de este fichero, y porque un selector obligaría al
+  // `document` de las pruebas a saber de selectores, que es justo lo que no tiene que saber.
+  // Se guarda en el borrador para que un envío fallido no pierda el reparto.
+  borrador.reparto = (estado.facturasEmitidas || [])
+    .map((factura) => {
+      const casilla = document.getElementById(`cobro-reparto-${factura.id}`);
+      if (!casilla || !casilla.checked) return null;
+      const escrito = leer(`cobro-reparto-importe-${factura.id}`);
+      return {
+        factura_emitida_id: Number(factura.id),
+        importe: escrito || String(factura.pendiente || ""),
+      };
+    })
+    .filter(Boolean);
   try {
     const respuesta = await apiJson("/api/cobros", {
       method: "POST",
       body: JSON.stringify({
         fecha: borrador.fecha || hoyISO(),
         importe: borrador.importe || null,
-        factura_emitida_id: borrador.factura_emitida_id ? Number(borrador.factura_emitida_id) : null,
+        // **O una factura, o el reparto, nunca las dos**: el servidor contesta 422 si van juntas, y con
+        // razón —no se sabe cuál manda—. Se manda el reparto en cuanto hay más de una marcada, y con una
+        // sola se manda la factura de siempre para no cambiar el camino que ya funciona.
+        ...(borrador.reparto.length > 1
+          ? { aplicaciones: borrador.reparto }
+          : {
+              factura_emitida_id: borrador.reparto.length
+                ? borrador.reparto[0].factura_emitida_id
+                : borrador.factura_emitida_id
+                  ? Number(borrador.factura_emitida_id)
+                  : null,
+            }),
         cliente: borrador.cliente || null,
         // Vacío es «sin enlazar con ninguna ficha» y viaja como `null`, no como cero. Se lee del
         // formulario aquí mismo (y se ha guardado en el borrador, para no perderlo si falla el envío).

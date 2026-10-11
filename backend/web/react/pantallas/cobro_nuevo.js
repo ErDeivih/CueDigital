@@ -78,6 +78,46 @@ export function PantallaCobroNuevo({ textos = {}, borrador = {}, facturas = [], 
         )}
       </select>
     </div>
+    ${
+      // **Un ingreso puede saldar varias deudas** (CRM-01, 11/10/2026): 350 que entran de una vez y saldan
+      // una factura de 100 y otra de 250. Eso no se puede decir con el desplegable de arriba, que es de una
+      // sola; aquí se marcan **varias** y, si no se escribe nada, a cada una se le aplica **lo que le
+      // queda por cobrar** —que es lo que se quiere casi siempre y evita teclear dos cifras para nada—.
+      // El importe se puede escribir cuando se cobra **menos** de lo que se debe, que también pasa.
+      facturas.length
+        ? html`<div className="campo">
+            <p className="pista-campo">${frase(c.reparto_pista)}</p>
+            ${facturas.map(
+              (factura) => html`<div className="reparto-fila" key=${`reparto-${factura.id}`}>
+                <label htmlFor=${`cobro-reparto-${factura.id}`}>
+                  <input
+                    type="checkbox"
+                    id=${`cobro-reparto-${factura.id}`}
+                    data-factura=${String(factura.id)}
+                    defaultChecked=${Boolean(
+                      (borrador.reparto || []).some(
+                        (fila) => Number(fila.factura_emitida_id) === Number(factura.id),
+                      ),
+                    )}
+                  />
+                  ${frase(factura.titulo_con_pendiente)}
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  id=${`cobro-reparto-importe-${factura.id}`}
+                  placeholder=${frase(c.reparto_lo_que_le_queda)}
+                  defaultValue=${String(
+                    ((borrador.reparto || []).find(
+                      (fila) => Number(fila.factura_emitida_id) === Number(factura.id),
+                    ) || {}).importe || "",
+                  )}
+                />
+              </div>`,
+            )}
+          </div>`
+        : null
+    }
     <${Campo} id="cobro-forma" etiqueta=${c.forma} opciones=${formas} valor=${borrador.forma} />
     <${Campo}
       id="cobro-referencia"

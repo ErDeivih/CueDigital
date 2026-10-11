@@ -7342,6 +7342,56 @@ test("las siete acciones de la factura nuestra se pulsan de verdad (T12)", async
   assert.equal(ultimoMontaje().type.name, "PantallaFacturasEmitidas", "quitar una factura no vuelve a la lista");
 });
 
+/**
+ * Marca una casilla, como el agricultor con el dedo.
+ *
+ * El DOM de mentira no tiene casillas —solo `entorno.nodos`, que es un `Map`—, así que se le mete una con
+ * `checked`, igual que `escribir` le mete un `value`.
+ */
+function marcar(entorno, id) {
+  const nodo = entorno.nodos.get(id) || { id };
+  nodo.checked = true;
+  entorno.nodos.set(id, nodo);
+}
+
+test("un cobro se reparte entre dos facturas desde la pantalla (CRM-01)", async () => {
+  // **La cifra del encargo, por la puerta por la que entra el agricultor**: 350 que entran de una vez y
+  // saldan una deuda de 100 y otra de 250. Se marcan las dos, no se escribe ningún importe —se aplica lo
+  // que le queda a cada una, que es lo que se quiere casi siempre— y lo que tiene que llegar al servidor es
+  // **una aplicación por factura**, no una factura suelta.
+  const conDosDeudas = {
+    ...elDineroDeLaRevision(),
+    "/api/facturas-emitidas": [
+      unaFacturaEmitida({ id: 7, pendiente: "100.00" }),
+      unaFacturaEmitida({ id: 8, pendiente: "250.00" }),
+    ],
+  };
+  const { entorno, servidor } = await cargarAplicacion(conDosDeudas);
+  await pulsar(entorno, "cobros-ver");
+  await pulsar(entorno, "cobro-nuevo");
+  escribir(entorno, "cobro-importe", "350,00");
+  marcar(entorno, "cobro-reparto-7");
+  marcar(entorno, "cobro-reparto-8");
+  await pulsar(entorno, "cobro-guardar");
+
+  const enviado = loMandado(servidor, "/api/cobros", "POST").slice(-1)[0];
+  assert.ok(enviado, `no se ha apuntado el cobro: ${servidor.llamadasConMetodo.join(", ")}`);
+  assert.deepEqual(
+    (enviado.cuerpo.aplicaciones || []).map((fila) => [fila.factura_emitida_id, fila.importe]),
+    [
+      [7, "100.00"],
+      [8, "250.00"],
+    ],
+    `el reparto no viaja con una fila por factura y lo que le queda a cada una: ${JSON.stringify(enviado.cuerpo)}`,
+  );
+  assert.equal(
+    enviado.cuerpo.factura_emitida_id,
+    undefined,
+    "y no viaja **también** una factura suelta: el servidor contesta 422 a las dos cosas a la vez, con razón",
+  );
+  assert.ok(enviado.cuerpo.clave_de_reenvio, "el reparto viaja sin clave de reenvío");
+});
+
 test("las nueve acciones del cobro se pulsan de verdad (T12)", async () => {
   const { entorno, servidor } = await cargarAplicacion(elDineroDeLaRevision());
 
