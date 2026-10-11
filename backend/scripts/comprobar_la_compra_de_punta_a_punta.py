@@ -140,7 +140,26 @@ def las_existencias(token: str) -> dict:
     respuesta en crudo y se busca el saldo por el identificador del articulo, sea cual sea su envoltorio.
     """
     _, suyo = get("/api/almacen/existencias", token)
-    print(f"  (existencias, en crudo: {str(suyo)[:280]})")
+    # **Las claves y las filas**, no el volcado entero: la respuesta trae también los **textos de la pantalla**
+    # (`textos: {...}`), que ocupan el recorte y escondían justo lo que había que mirar -el saldo por lote-.
+    if isinstance(suyo, dict):
+        print(f"  (existencias: claves {sorted(suyo.keys())})")
+        for clave, valor in suyo.items():
+            if isinstance(valor, list):
+                print(f"    ({clave}: {len(valor)} fila(s); la primera: {str(valor[0])[:320] if valor else '-'})")
+        # **Los campos del LOTE**, que es donde vive el saldo: la respuesta trae `articulos[].lotes[]` y el
+        # numero por envase esta ahi, no en el articulo. Se dicen sus claves y sus numeros, sin volcar el bulto.
+        for uno in (suyo.get("articulos") or []):
+            # Por **nombre**, no por el identificador: `articulo_id` es local de `main` y aqui no existe
+            # (NameError, medido). El nombre del articulo es una constante del modulo y sirve para el volcado.
+            if str(uno.get("nombre")) == UNIDADES[0][0] and (uno.get("lotes") or []):
+                las_lotes = uno.get("lotes") or []
+                print(f"    (mi articulo ({uno.get('articulo_id')}) tiene {len(las_lotes)} lote(s))")
+                for lote in las_lotes:
+                    numeros = {k: v for k, v in lote.items() if isinstance(v, (int, float, str))}
+                    print(f"      (lote: {numeros})")
+    else:
+        print(f"  (existencias: {str(suyo)[:320]})")
     salida: dict = {}
 
     def mirar(cosa):
@@ -160,7 +179,25 @@ def las_existencias(token: str) -> dict:
             for uno in cosa:
                 mirar(uno)
 
-    mirar(suyo)
+    # **El saldo se suma por LOTES** (medido, no supuesto). El recorrido a ciegas de antes buscaba «el primer
+    # numero» y devolvia `entradas` u otro cualquiera, y por eso el saldo parecia quieto -500- mientras el
+    # almacen si subia a 1000. El sitio de verdad es `articulos[].lotes[].saldo`.
+    salida.clear()
+    for uno in (suyo or {}).get("articulos") or []:
+        su_id = uno.get("articulo_id")
+        if su_id is None:
+            continue
+        total = 0.0
+        for lote in uno.get("lotes") or []:
+            try:
+                total += float(lote.get("saldo") or 0)
+            except (TypeError, ValueError):
+                pass
+        salida[su_id] = total
+    if not salida:
+        # **Que lo diga**: un diccionario vacio en silencio es una luz verde vacua esperando a pasar.
+        claves = sorted(suyo.keys()) if isinstance(suyo, dict) else type(suyo).__name__
+        print(f"  (OJO: no he sabido leer las existencias; la respuesta trae: {claves})")
     return salida
 
 
@@ -446,6 +483,86 @@ def main() -> int:
     comprobar(
         str(las_de_ahora.get(articulo_id)) == str(saldo_despues),
         f"y el almacen no ha cambiado desde la recepcion ({saldo_despues!r} -> {las_de_ahora.get(articulo_id)!r})",
+    )
+
+    # ── 9. Recepcion parcial, y factura POSTERIOR al albaran ─────────────────────────────────────────
+    print("\n9) Recepcion parcial, y la factura despues del albaran")
+    # El orden dificil: llega mercancia en dos veces **sin factura**, y la factura aparece despues. Es el caso
+    # que el encargo pide y el que mi entrega anterior no acreditaba -una compra unica con sus vinculos-.
+    saldo_antes_de_las_dos = (las_existencias(token).get(articulo_id))
+    print(f"  (saldo antes de las dos entregas: {saldo_antes_de_las_dos!r})")
+
+    las_parciales = []
+    for cuantas in (300.0, 200.0):
+        codigo, suya, como = crear(
+            "/api/almacen/recepciones", token,
+            {
+                "fecha": "2026-10-08",
+                "proveedor": "Suministros del Paramo, S.L.",
+                "proveedor_nif": "B12345678",
+                "numero_albaran": f"A-parcial-{int(cuantas)}-{int(time.time()) % 10000:04d}",
+                "clave_de_reenvio": f"parcial-{int(cuantas)}-{numero}",
+                "lineas": [
+                    {"articulo_id": articulo_id, "nombre": UNIDADES[0][0], "unidad": UNIDADES[0][1], "cantidad": cuantas}
+                ],
+            },
+        )
+        suyo = (suya or {}).get("recepcion") or suya or {}
+        print(f"  (recepcion parcial de {cuantas:.0f}: {codigo} por {como}: factura_id={suyo.get('factura_id')!r})")
+        comprobar(codigo < 400, f"la entrega parcial de {cuantas:.0f} se apunta **sin factura**")
+        comprobar(
+            not suyo.get("factura_id"),
+            f"y entra **sin factura** -la factura vendra despues- (factura_id: {suyo.get('factura_id')!r})",
+        )
+        las_parciales.append(suyo.get("id"))
+
+    saldo_tras_las_dos = las_existencias(token).get(articulo_id)
+    print(f"  (saldo tras las dos entregas: {saldo_tras_las_dos!r})")
+    try:
+        subido_parcial = float(saldo_tras_las_dos) - float(saldo_antes_de_las_dos)
+    except (TypeError, ValueError):
+        subido_parcial = None
+    comprobar(
+        subido_parcial is not None and abs(subido_parcial - 500.0) < 0.001,
+        f"y las dos entregas suman lo suyo, **sin factura ninguna** ({saldo_antes_de_las_dos!r} -> {saldo_tras_las_dos!r})",
+    )
+
+    # Y ahora **la factura, despues**: se crea y se engancha por su propia puerta.
+    codigo, factura2, como = crear(
+        "/api/facturas", token,
+        {
+            "fecha": "2026-10-09",
+            "proveedor": "Suministros del Paramo, S.L.",
+            "proveedor_nif": "B12345678",
+            "numero_factura": f"F-2026-post-{int(time.time()) % 10000:04d}",
+            "base_imponible": 663.0,
+            "cuota_iva": 0.0,
+            "total": TOTAL,
+            "leida_por": "a mano",
+            "lineas": [
+                {"descripcion": UNIDADES[0][0], "cantidad": 500.0, "unidad": UNIDADES[0][1], "precio": 2.0, "importe": 1000.0}
+            ],
+        },
+    )
+    factura2_id = (factura2 or {}).get("id") or ((factura2 or {}).get("factura") or {}).get("id")
+    print(f"  (la factura posterior: {codigo} por {como}: id {factura2_id})")
+    comprobar(codigo < 400 and bool(factura2_id), f"y la factura de despues entra ({factura2_id})")
+
+    saldo_antes_de_enganchar = las_existencias(token).get(articulo_id)
+    codigo, enganchada, como = crear(
+        f"/api/almacen/recepciones/{las_parciales[0]}/factura", token, {"factura_id": factura2_id}
+    )
+    print(f"  (el enganche: {codigo} por {como}: {str(enganchada)[:200]})")
+    suya = (enganchada or {}).get("recepcion") or enganchada or {}
+    comprobar(
+        codigo < 400 and str(suya.get("factura_id")) == str(factura2_id),
+        f"y el albaran se engancha a la factura **por su puerta**, despues ({suya.get('factura_id')!r})",
+    )
+    saldo_tras_enganchar = las_existencias(token).get(articulo_id)
+    print(f"  (saldo antes/despues de enganchar la factura: {saldo_antes_de_enganchar!r} -> {saldo_tras_enganchar!r})")
+    comprobar(
+        str(saldo_antes_de_enganchar) == str(saldo_tras_enganchar) and saldo_tras_enganchar is not None,
+        "y **enganchar la factura no mete ni un kilo** (A15, con el saldo ya conocido)",
     )
 
     # ── Resumen ──────────────────────────────────────────────────────────────────────────────────────
