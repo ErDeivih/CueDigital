@@ -60,6 +60,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from .. import adjuntos, catalogos, correcciones, dinero, legal, models, servicios, textos, validaciones, ventas
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
@@ -2264,23 +2265,53 @@ def apuntar_un_cobro(
         clave_de_reenvio=datos.clave_de_reenvio,
     )
     db.add(cobro)
-    db.flush()
-    if datos.aplicaciones:
-        imputado, sobrante = _repartir_el_cobro(db, explotacion, cobro, datos.aplicaciones)
-    else:
-        imputado, sobrante = _imputar(db, explotacion, cobro, factura)
-    _el_rastro_de_un_cobro(
-        db,
-        explotacion.id,
-        cobro,
-        accion="crear",
-        datos={
-            "importe": dinero.a_texto(importe),
-            "factura": factura.id if factura else None,
-            "imputado": dinero.a_texto(imputado),
-        },
-    )
-    db.commit()
+    # **El `try` envuelve también el `flush`** (CRM-01, 11/10/2026), y esto se aprendió midiendo: el choque
+    # con el índice de la clave salta **al insertar** —que es lo que hace `flush`—, no al confirmar, así que
+    # un `try` alrededor del `commit` no recogía nada y el `IntegrityError` seguía saliendo sin manejar. Se
+    # envolvió primero solo el `commit`, y la prueba de concurrencia siguió fallando **2 de cada 6 vueltas**
+    # hasta que se envolvió lo que de verdad falla.
+    try:
+        db.flush()
+        if datos.aplicaciones:
+            imputado, sobrante = _repartir_el_cobro(db, explotacion, cobro, datos.aplicaciones)
+        else:
+            imputado, sobrante = _imputar(db, explotacion, cobro, factura)
+        _el_rastro_de_un_cobro(
+            db,
+            explotacion.id,
+            cobro,
+            accion="crear",
+            datos={
+                "importe": dinero.a_texto(importe),
+                "factura": factura.id if factura else None,
+                "imputado": dinero.a_texto(imputado),
+            },
+        )
+        db.commit()
+    except IntegrityError:
+        # **La carrera, resuelta como si la hubiera encontrado la búsqueda**: dos envíos a la vez con la misma
+        # clave pueden pasar los dos por la comprobación de arriba antes de que ninguno haya escrito, y lo que
+        # los separa es el índice único de la base. El móvil que reintenta recibe **su cobro**, no un 500.
+        db.rollback()
+        ya = db.scalar(
+            select(models.Cobro).where(
+                models.Cobro.explotacion_id == explotacion.id,
+                models.Cobro.clave_de_reenvio == datos.clave_de_reenvio,
+            )
+        )
+        if ya is None:
+            raise
+        return RespuestaDeUnCobro(
+            cobro=como_se_ve_un_cobro(db, explotacion, ya),
+            ya_estaba=True,
+            factura=(
+                como_se_ve_una_factura(
+                    db, explotacion, db.get(models.FacturaEmitida, ya.factura_emitida_id)
+                )
+                if ya.factura_emitida_id
+                else None
+            ),
+        )
 
     avisos: list[str] = []
     if factura is not None and sobrante > 0:
