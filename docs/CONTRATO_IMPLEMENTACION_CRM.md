@@ -21,6 +21,28 @@ temporal y documentos ficticios.
 | La ficha, en pruebas | `backend/tests/test_la_ficha_de_la_compra.py` | **11 pruebas** |
 | La suite entera | `python -m pytest tests -q` / `node --test "tests_js/*.test.js"` | **4746 · 0** de Python y **1081 · 0** de JavaScript |
 
+### El tratamiento del conflicto comercial, en una tabla (CRM-00, 11/10/2026)
+
+El revisor pidió revisar «el cambio de clave de papel ante variaciones de total y proveedor» y **documentar
+el tratamiento**. Esto es lo que hace el programa **hoy**, caso por caso, todo con su prueba:
+
+| Lo que llega | Qué hace | Por qué |
+|---|---|---|
+| La misma clave, la **misma huella** | **200** con el registro **como está hoy**, diciendo si se corrigió (`AL45…`) o si está anulada (`AL46…`) | Es el reenvío del comando: `AL26…` lo separa de otra petición |
+| La misma clave, **otra huella** | **409** (`AL26…`), haya correcciones o no | Una petición no tiene dos cuerpos |
+| Mismo emisor, número y año, **mismo contenido** | **200** con la que había (`AL25…`) | Es el mismo papel: no se duplica ni se pierde nada |
+| Mismo emisor, número y año, **contenido distinto** | **409** (`AL47…`) nombrando la factura que ya está | No se apunta ni se descarta en silencio: decide el agricultor |
+| Mismo emisor, número y año, **otro total** | **201** y **aviso** (`AL48…`) con el número, la fecha y el importe de la otra | Decisión del contrato §S10: un total distinto es otro documento —y bloquearlo dejaría sin salida a dos facturas legítimas del mismo número—, pero **el caso que llega de verdad es un número tecleado mal** (663 por 636) y tiene que verse |
+| Mismo emisor y número, **año distinto** | **201** sin aviso | Las numeraciones se reinician cada año: son dos documentos, y avisar sería ruido constante |
+| A la que **llega** le falta el importe | **200** con la que había (`AL25…`) | El papel es el mismo y no se pierde nada de lo que él escribió: no escribió importe |
+| A la que **hay** le falta el importe y esta lo trae | **200** con la que había **y aviso** (`AL49…`) | El papel es el mismo, pero su importe **no se puede tirar sin decirlo**: se le dice que lo ponga corrigiendo esa factura |
+| Sin número o sin proveedor | se apunta y se dice que **no se pudo comprobar** (`AL27…`) | «No lo sé» no es un «no» |
+
+**Lo que no se puede garantizar, y se dice:** la garantía de la base (`uq_factura_papel`) cubre el caso en
+que **el papel se puede calcular** —hace falta emisor y número—; sin ellos no hay nada que impedir en la
+base y la protección es la del código (`AL27…`). Y la clave del papel **incluye el total**, así que el
+mismo número con otro importe no está bloqueado por la base: lo que hay es el aviso `AL48…`.
+
 ### La historia, aparte, para que nadie lea una cifra vieja como el estado
 
 Estas cifras **han subido**, y cada una se dice aquí una vez en vez de dejar el número viejo suelto más

@@ -2296,6 +2296,22 @@ function montarServidor(cambios = {}) {
       } catch (error) {
         enviado = opciones.body;
       }
+    } else if (opciones.body && typeof opciones.body.get === "function") {
+      // **Un cuerpo de formulario, que también se mira** (CRM-00, 11/10/2026). El alta de una factura de
+      // compra manda un `FormData` (los datos **y** el fichero del justificante), y hasta hoy el arnés lo
+      // registraba como `null`: ninguna prueba veía lo que salía por ahí —ni la clave de reenvío, que es lo
+      // que impide que un reintento apunte la factura dos veces—. Se lee el campo `datos`, que es el JSON
+      // que la pantalla construye.
+      const datos = opciones.body.get("datos");
+      if (datos) {
+        try {
+          enviado = JSON.parse(datos);
+        } catch (error) {
+          enviado = datos;
+        }
+      }
+      const fichero = opciones.body.get("fichero");
+      if (fichero) enviado = { ...(enviado || {}), __fichero: true };
     }
     enviados.push({ metodo, ruta, cuerpo: enviado });
     const crudo =
@@ -7997,6 +8013,38 @@ test("se enseña lo que el programa ha leído, para que el agricultor lo confirm
   );
 });
 
+test("la factura siguiente lleva su propia clave de reenvío", async () => {
+  // **La otra mitad de la clave** (CRM-00, 11/10/2026): si la clave se quedara puesta después de guardar,
+  // la segunda factura del día viajaría con la clave de la primera y el servidor la tomaría por un
+  // **reenvío** —contestarle «ya estaba»— así que **no se apuntaría**, y el agricultor vería su factura
+  // desaparecer sin un error. Por eso se apunta la clave al abrir el alta y se suelta al guardar: dos altas
+  // distintas tienen que llevar dos claves distintas.
+  const { entorno, servidor } = await cargarAplicacion();
+  await pulsar(entorno, "facturas-abrir");
+
+  const apuntarUnaFactura = async () => {
+    await pulsar(entorno, "factura-nueva");
+    elegirLaFactura(entorno);
+    await pulsar(entorno, "factura-leer");
+    rellenarLasLineasDeLaFactura(entorno);
+    await pulsar(entorno, "factura-guardar");
+  };
+
+  await apuntarUnaFactura();
+  await apuntarUnaFactura();
+
+  const claves = servidor.enviados
+    .filter((uno) => uno.metodo === "POST" && uno.ruta === "/api/facturas")
+    .map((uno) => uno.cuerpo && uno.cuerpo.clave_de_reenvio);
+  assert.equal(claves.length, 2, `tienen que salir dos altas, salieron ${claves.length}`);
+  assert.ok(claves[0] && claves[1], `las dos altas tienen que llevar clave: ${JSON.stringify(claves)}`);
+  assert.notEqual(
+    claves[0],
+    claves[1],
+    "la segunda factura viaja con la clave de la primera: el servidor la daría por reenviada y no la apuntaría",
+  );
+});
+
 test("con la factura escrita a mano sale la pantalla en blanco para rellenarla", async () => {
   // Quien no quiere (o no puede) hacer la foto tiene que poder apuntar la factura igual.
   const { entorno } = await cargarAplicacion();
@@ -8028,6 +8076,18 @@ test("al confirmar se guarda lo que está en la pantalla", async () => {
     servidor.llamadasConMetodo.includes("POST /api/facturas"),
     "no ha guardado la factura",
   );
+  // **Y el alta lleva su clave de reenvío** (CRM-00, 11/10/2026). Esto se comprobaba leyendo el texto de
+  // `app.js` —un guardián de texto, que la guía del perfil prohíbe como sustituto de una comprobación de
+  // comportamiento—, y ahora se mira **lo que de verdad sale por la puerta**: sin clave, un reintento del
+  // mismo formulario (un doble toque, un corte de red) apuntaría la factura **dos veces**.
+  const elAlta = servidor.enviados.filter((uno) => uno.metodo === "POST" && uno.ruta === "/api/facturas");
+  assert.ok(elAlta.length >= 1, "no se ha mandado el alta");
+  const suClave = elAlta[elAlta.length - 1].cuerpo && elAlta[elAlta.length - 1].cuerpo.clave_de_reenvio;
+  assert.ok(
+    typeof suClave === "string" && suClave.length > 0,
+    `el alta de la factura no manda clave de reenvío: ${JSON.stringify(elAlta[elAlta.length - 1].cuerpo)}`,
+  );
+  assert.match(suClave, /^factura-de-compra-/, `la clave no es de este alta: ${suClave}`);
   // Y después de guardar se enseña la confirmación, que también es de React: se le pasa la frase
   // del servidor, y **no** la lista (que es lo que se vería si se hubiera quedado a medias).
   const elemento = montajes[montajes.length - 1].elemento;

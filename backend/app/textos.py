@@ -1074,6 +1074,20 @@ MENSAJES: dict[str, str] = {
         "Esa petición ya se atendió, pero con otro dinero: una misma petición no puede traer dos pagos "
         "distintos. Mira cuál es el bueno y apunta el otro como una petición nueva."
     ),
+    # **El mismo número y el mismo año, pero otro dinero** (CRM-00, 11/10/2026). No se bloquea —son dos
+    # documentos, según el contrato §S10—, pero **no se calla**: el caso que llega de verdad es un número
+    # tecleado mal, y el agricultor tiene que poder verlo sin buscarlo.
+    "AL48_ese_numero_ya_esta_con_otro_total": (
+        "Se ha apuntado. Ojo: ya tienes otra factura de ese proveedor con el número {numero}, del "
+        "{fecha}, por {total}, y esta trae otro importe. Si es la misma y te has equivocado al teclear, "
+        "corrige la que sobra; y si son dos documentos distintos, no hay nada que hacer."
+    ),
+    # **La que hay no dice el importe y esta sí** (CRM-00, 11/10/2026): no se apunta otra vez —el papel es el
+    # mismo—, pero el importe que acaba de escribir no se tira sin decirlo.
+    "AL49_la_que_hay_no_dice_el_importe": (
+        "La factura {numero} ya estaba apuntada, pero **sin el importe**. No se ha apuntado otra vez; si "
+        "quieres guardar estas cifras, corrige esa factura y ponle el importe ahí."
+    ),
     # **El reenvío de un comando cuya factura se anuló** (09/10/2026, a petición de David). La clave no se
     # recicla: se contesta con el estado, y se dice cómo darla de alta otra vez.
     "AL46_esa_factura_esta_anulada_y_no_se_reapunta": (

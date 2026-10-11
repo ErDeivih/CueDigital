@@ -371,6 +371,17 @@ def _la_respuesta_con_la_que_ya_estaba(
             fecha=f" (el {ya.fecha.strftime('%d/%m/%Y')})" if ya.fecha else ""
         )
     ]
+    # **Y si la que hay no dice el importe y esta sí, se dice** (CRM-00, 11/10/2026). Es el otro lado de los
+    # datos incompletos, y el único en el que se podía perder algo: el agricultor apunta la factura sin el
+    # total (no lo tenía a mano) y más tarde la vuelve a mandar **con** el total. El papel es el mismo —mismo
+    # número, mismo año— así que no se apunta otra vez, pero contestar solo «ya estaba» dejaría su importe
+    # sin guardar y sin decirlo. Aquí se le dice dónde ponerlo: corrigiendo la que hay.
+    if ya.total is None and entrada.total is not None:
+        avisos.append(
+            textos.MENSAJES["AL49_la_que_hay_no_dice_el_importe"].format(
+                numero=ya.numero_factura or ""
+            )
+        )
     respuesta.status_code = status.HTTP_200_OK
     return _con_nombres(db, ya).model_copy(
         update={"ya_estaba": True, "como_se_reconocio": como, "avisos": avisos}
@@ -646,7 +657,80 @@ async def guardar_una_factura(
         factura.proveedor, factura.proveedor_nif, factura.numero_factura
     ) is None:
         avisos.append(textos.mensaje("AL27_no_se_pudo_comprobar_si_ya_estaba_la_factura"))
+    else:
+        # **El mismo número y el mismo año, pero otro dinero** (CRM-00, 11/10/2026). Es el único caso que
+        # se apuntaba **en silencio**, y lo señaló el revisor: *«identidad del documento no es solo
+        # igualdad de importe; incluir mismo emisor/número/año con total corregido»*.
+        #
+        # La decisión del programa no cambia —el contrato §S10 dice que el papel se reconoce por emisor,
+        # número, fecha **y total**, así que un total distinto es otro documento, y hay una prueba que lo
+        # deja escrito—, pero **deja de ser mudo**: si ya hay una factura viva de ese proveedor con ese
+        # número y ese año por otro importe, se apunta esta y **se dice cuál es la otra**, porque el caso
+        # que de verdad llega es el número tecleado mal (663 por 636) y el agricultor tiene que poder verlo.
+        la_otra = _la_del_mismo_numero_con_otro_total(db, explotacion, entrada)
+        if la_otra is not None:
+            avisos.append(
+                textos.MENSAJES["AL48_ese_numero_ya_esta_con_otro_total"].format(
+                    numero=la_otra.numero_factura or "",
+                    fecha=la_otra.fecha.strftime("%d/%m/%Y") if la_otra.fecha else "",
+                    total=dinero.formatea(dinero.cantidad_a_decimal(la_otra.total)),
+                )
+            )
     return _con_nombres(db, factura).model_copy(update={"avisos": avisos})
+
+
+def _la_del_mismo_numero_con_otro_total(db, explotacion, entrada: FacturaEntrada):
+    """La factura viva de ese proveedor con **el mismo número y el mismo año**, si la hay, sea cual sea su
+    importe.
+
+    Es lo que permite decir «esa factura ya está, pero por otro dinero» en vez de apuntar la segunda sin
+    decir nada. Se busca por el mismo camino que el posible duplicado (`servicios.clave_de_una_factura`,
+    que es proveedor + número) y se afina con el año, que es lo que hace que dos «1234» de años distintos
+    sean documentos distintos.
+    """
+    if servicios.clave_de_una_factura(
+        entrada.proveedor, entrada.proveedor_nif, entrada.numero_factura
+    ) is None:
+        return None
+    quien = servicios.normaliza_para_comparar(entrada.proveedor_nif) or servicios.normaliza_para_comparar(
+        entrada.proveedor
+    )
+    numero = servicios.normaliza_para_comparar(entrada.numero_factura)
+    suyas = db.scalars(
+        select(models.Factura).where(
+            models.Factura.explotacion_id == explotacion.id,
+            models.Factura.anulada.is_(False),
+            models.Factura.numero_factura.is_not(None),
+        )
+    )
+    for candidata in suyas:
+        if servicios.normaliza_para_comparar(candidata.numero_factura) != numero:
+            continue
+        suyo = servicios.normaliza_para_comparar(
+            candidata.proveedor_nif
+        ) or servicios.normaliza_para_comparar(candidata.proveedor)
+        # El proveedor: si los dos traen algo y no coinciden, es otro proveedor y no es este caso.
+        if quien and suyo and quien != suyo:
+            continue
+        # El año, solo si los dos lo traen: sin fecha no se puede afirmar que sea de otro año.
+        if (
+            entrada.fecha is not None
+            and candidata.fecha is not None
+            and entrada.fecha.year != candidata.fecha.year
+        ):
+            continue
+        # Y **solo si el dinero es distinto**: si es el mismo, este no es el caso —ese lo resuelve la
+        # búsqueda del posible duplicado, que contesta con la que ya estaba—. Y si a alguna de las dos le
+        # falta el importe, tampoco: `_los_importes_cuadran` trata «no lo sé» como «no se sabe», y en la
+        # duda no se afirma que sea otro dinero.
+        if (
+            candidata.total is not None
+            and entrada.total is not None
+            and _los_importes_cuadran(candidata.total, entrada.total)
+        ):
+            continue
+        return candidata
+    return None
 
 
 def _preparar_factura_guardable(

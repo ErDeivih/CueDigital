@@ -503,6 +503,107 @@ def test_una_factura_legada_sin_huella_no_inventa_su_comando_original(cliente, c
     assert _cuantas_facturas(db_sesion) == 1, "y no se ha apuntado nada"
 
 
+def test_el_mismo_papel_con_otro_total_se_apunta_pero_no_en_silencio(cliente, cuenta, db_sesion):
+    """Mismo emisor, número y año con **otro total**: se apunta, y **se dice cuál es la otra**.
+
+    **Lo pidió el revisor** (CRM-00, 11/10/2026): *«revisar sin ampliar alcance el cambio de clave de papel
+    ante variaciones de total y proveedor. Identidad del documento no es solo igualdad de importe. Incluir
+    mismo emisor/número/año con total corregido»*.
+
+    El **tratamiento**, que es lo que este caso documenta:
+
+      · La decisión **no cambia**: el contrato §S10 reconoce el papel por emisor, número, fecha **y total**,
+        así que un total distinto es otro documento y se apunta (hay una prueba por encima que lo exige).
+      · Lo que cambia es que **deja de ser mudo**. Antes se creaba la segunda sin decir nada, y el caso que
+        llega de verdad no es «dos facturas del mismo número»: es un número o un importe **tecleado mal**
+        (663 por 636). Con el aviso, el agricultor ve que tiene dos y cuál era la otra.
+      · Y no se convierte en un **409** a propósito: bloquearlo dejaría sin salida a las dos facturas
+        legítimas del mismo número y año, y el programa no puede decidir cuál de las dos sobra.
+    """
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-20")
+    assert primera.status_code == 201, primera.text
+    assert primera.json()["avisos"] == [], "la primera no tiene nada que avisar"
+
+    # El mismo número y el mismo año, con las cifras bailadas (el caso real: 663 tecleado como 636).
+    con_otro_total = _enviar(
+        cliente, cuenta["cabeceras"], clave="peticion-21", total=636.0, base_imponible=636.0
+    )
+    assert con_otro_total.status_code == 201, con_otro_total.text
+    avisos = con_otro_total.json()["avisos"]
+    assert any("otro importe" in aviso for aviso in avisos), (
+        f"apuntar la segunda sin decir que ya había otra por otro importe es lo que había que quitar: {avisos}"
+    )
+    # Y el aviso **nombra la otra**, que es lo que permite encontrarla: su número y su fecha.
+    assert "2026/00123" in " ".join(avisos)
+    assert "15/03/2026" in " ".join(avisos)
+    assert _cuantas_facturas(db_sesion) == 2, "las dos están: la decisión del contrato no cambia"
+
+
+def test_el_mismo_numero_en_otro_ano_es_otro_documento_y_no_avisa(cliente, cuenta, db_sesion):
+    """El mismo número en **otro año** es otro documento, y no hay nada que avisar.
+
+    Es la otra mitad de la decisión: las numeraciones se reinician cada año, así que «2026/00123» y
+    «2025/00123» del mismo proveedor son dos papeles distintos —y el aviso de «ya tienes otra con ese
+    número» sería un ruido que aparecería siempre—. Se deja escrito para que nadie lo «arregle» metiendo
+    el año fuera de la comparación.
+    """
+    del_2026 = _enviar(cliente, cuenta["cabeceras"], clave="peticion-22")
+    assert del_2026.status_code == 201, del_2026.text
+
+    del_2025 = _enviar(cliente, cuenta["cabeceras"], clave="peticion-23", fecha="2025-03-15")
+    assert del_2025.status_code == 201, del_2025.text
+    assert del_2025.json()["avisos"] == [], (
+        "el mismo número de otro año no es el mismo papel: avisar aquí sería ruido en cada factura"
+    )
+    assert _cuantas_facturas(db_sesion) == 2
+
+
+def test_sin_importe_en_la_que_llega_no_se_afirma_que_sea_otro_dinero(cliente, cuenta, db_sesion):
+    """Datos incompletos: si a la que **llega** le falta el importe, no se afirma que sea otro dinero.
+
+    La regla del «no lo sé» aplicada a este aviso: no se puede decir «esa otra es por otro importe» cuando
+    el que llega no trae importe. El papel es el mismo número y el mismo año, así que se contesta con **la
+    que había** (`AL25…`) y no se apunta otra vez: **no se pierde nada de lo que él ha escrito**, porque no
+    ha escrito ningún importe. Lo que no se hace es inventar una diferencia que no consta.
+    """
+    con_importe = _enviar(cliente, cuenta["cabeceras"], clave="peticion-24")
+    assert con_importe.status_code == 201, con_importe.text
+
+    sin_importe = _enviar(cliente, cuenta["cabeceras"], clave="peticion-25", total=None)
+    assert sin_importe.status_code == 200, sin_importe.text
+    los_avisos = " ".join(sin_importe.json()["avisos"])
+    assert "otro importe" not in los_avisos, (
+        f"no se puede afirmar que sea otro dinero si el que llega no trae importe: {los_avisos}"
+    )
+    assert "ya la tenías apuntada" in los_avisos, f"y hay que decir qué pasa con ese número: {los_avisos}"
+    assert _cuantas_facturas(db_sesion) == 1, "el mismo papel no se apunta dos veces"
+
+
+def test_si_la_que_hay_no_dice_el_importe_y_esta_si_el_importe_no_se_tira(cliente, cuenta, db_sesion):
+    """**El caso que sí perdía un dato**: la que hay sin importe, y esta con él.
+
+    Es la otra mitad de los datos incompletos, y la única en la que se podía perder algo de verdad: el
+    agricultor apunta la factura sin el total —no lo tenía a mano— y días después la vuelve a mandar **con**
+    el total. El papel es el mismo (mismo número, mismo año), así que no se apunta otra vez; pero contestar
+    solo «ya estaba» dejaba su importe **sin guardar y sin decirlo**.
+
+    El tratamiento es decirle dónde ponerlo: corrigiendo la factura que ya está (`AL49…`). No se inventa un
+    segundo documento para meter el importe, que dejaría dos facturas del mismo papel.
+    """
+    sin_importe = _enviar(cliente, cuenta["cabeceras"], clave="peticion-26", total=None)
+    assert sin_importe.status_code == 201, sin_importe.text
+    ident = sin_importe.json()["id"]
+
+    con_importe = _enviar(cliente, cuenta["cabeceras"], clave="peticion-27")
+    assert con_importe.status_code == 200, con_importe.text
+    assert con_importe.json()["id"] == ident, "se contesta la que ya estaba, no otra"
+    los_avisos = " ".join(con_importe.json()["avisos"])
+    assert "sin el importe" in los_avisos, (
+        f"el importe que acaba de escribir no se puede tirar sin decirlo: {los_avisos}"
+    )
+    assert _cuantas_facturas(db_sesion) == 1, "y no se ha creado un segundo documento del mismo papel"
+
+
 def test_corregir_el_numero_cambia_el_papel(cliente, cuenta, db_sesion):
     """Corregir el número (o el total) **cambia el papel**, y la clave del papel se recalcula.
 
@@ -535,32 +636,19 @@ def test_corregir_el_numero_cambia_el_papel(cliente, cuenta, db_sesion):
     assert _cuantas_facturas(db_sesion) == 2, "el papel corregido sigue ocupado, y no por dos"
 
 
-def test_la_pantalla_manda_su_clave_de_reenvio_y_la_renueva_para_la_siguiente():
-    """El alta de una factura de compra **manda la clave**, y la siguiente factura trae la suya.
-
-    **Esto es un guardián de texto, y se dice.** Comprobar de verdad que el cuerpo que sale lleva la clave
-    exigiría montar el formulario entero en el arnés de JavaScript, y hoy ese arnés **no define
-    `FormData`** ni ejerce este camino (su `fetch` de mentira solo registra los cuerpos de texto). Lo que
-    esta prueba impide es lo que ya pasó de verdad hasta hoy: que la protección por clave estuviera escrita
-    en el servidor y **no la usara nadie desde la pantalla**, así que el reenvío de un guardado no se
-    reconocía. Es el mismo tipo de guardián que ya usa el proyecto para «toda dirección de la tabla tiene
-    su puerta».
-    """
-    import pathlib
-
-    app_js = (pathlib.Path(__file__).resolve().parents[1] / "web" / "app.js").read_text(
-        encoding="utf-8"
-    )
-    assert 'datos.clave_de_reenvio =\n        facturas.clave || (facturas.clave = claveDeReenvio(' in app_js, (
-        "el alta de una factura de compra no manda clave de reenvío: un reintento la apuntaría dos veces"
-    )
-    assert 'facturas.clave = claveDeReenvio("factura-de-compra");' in app_js, (
-        "no se genera una clave nueva al abrir el alta: la segunda factura viajaría con la clave de la "
-        "primera y el servidor la tomaría por un reenvío"
-    )
-    assert "facturas.clave = null;" in app_js, (
-        "la clave no se suelta después de guardar: la factura siguiente no sería una petición nueva"
-    )
+# **Aqui habia un guardian de texto y ya no esta** (CRM-00, 11/10/2026). Comprobaba, leyendo el fuente
+# de `web/app.js`, que el alta de una factura mandara la clave de reenvio y que la soltara al guardar. La
+# guia del perfil lo pide justo al reves: *«no ampliar la suite con guardianes de texto que sustituyan
+# comprobaciones de comportamiento»*. Ahora se comprueba **por comportamiento** en
+# `tests_js/interfaz.test.js`, que ya sabia pulsar «GUARDAR» de verdad:
+#
+#   - «al confirmar se guarda lo que esta en la pantalla» mira **lo que sale por la puerta** -el cuerpo
+#     `FormData` del alta- y exige que lleve su `clave_de_reenvio`;
+#   - «la factura siguiente lleva su propia clave de reenvio» apunta **dos** facturas y exige que las
+#     claves sean distintas, que es lo que impide que la segunda viaje como un reenvio de la primera.
+#
+# Para poder mirarlo, el arnes de JavaScript tuvo que aprender a leer el `FormData` (antes lo registraba
+# como `null`, asi que **ninguna** prueba veia lo que salia por ese camino).
 
 
 def test_dos_envios_a_la_vez_del_mismo_papel_apuntan_una_sola_factura(cliente, cuenta, db_sesion):
