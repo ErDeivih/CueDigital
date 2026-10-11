@@ -114,6 +114,15 @@ class ElCaso:
             cuerpo["clave_de_reenvio"] = clave
         return _pedir(self.http, "post", "/api/cobros", cuerpo)
 
+    def un_cobro_repartido(self, importe: str, aplicaciones: list[dict]):
+        """Un cobro repartido entre varias deudas: una fila por factura, con su importe."""
+        return _pedir(
+            self.http,
+            "post",
+            "/api/cobros",
+            {"fecha": "2026-08-01", "importe": importe, "aplicaciones": aplicaciones},
+        )
+
     def la_factura(self, factura_id: int):
         return _pedir(self.http, "get", f"/api/facturas-emitidas/{factura_id}")
 
@@ -196,30 +205,51 @@ def main() -> int:
         f"y lo que sobra se dice como sin asignar ({sin_asignar!r})",
     )
 
-    # ── 3) El reparto de un cobro entre dos deudas (el criterio que hoy no se puede cumplir) ─────────
+    # ── 3) El reparto de un cobro entre dos deudas (el criterio que no se cumplía) ───────────────────
     print("\n3) Un cobro de 350 repartido entre dos deudas de 100 y 250")
     _, entrega_d = caso.una_venta("100.00", cantidad=100.0, producto="Centeno")
     _, factura_d = caso.una_factura([entrega_d["id"]], "CRM01-F4")
     _, entrega_e = caso.una_venta("250.00", cantidad=250.0, producto="Triticale")
     _, factura_e = caso.una_factura([entrega_e["id"]], "CRM01-F5")
 
-    codigo, repartido = caso.un_cobro("350.00", factura_d["id"])
-    comprobar(codigo == 201, f"el cobro de 350 entra apuntando a la primera deuda ({codigo})")
-    _, la_otra = caso.la_factura(factura_e["id"])
-    # **Esto es el hueco, medido**: con una sola `factura_emitida_id`, la segunda deuda no recibe nada.
-    comprobar(
-        la_otra["pendiente"] == "250.00",
-        f"la segunda deuda **no** recibe parte del cobro: sigue pendiente entera "
-        f"({la_otra['pendiente']}; el reparto entre varias deudas no existe todavia)",
+    codigo, repartido = caso.un_cobro_repartido(
+        "350.00",
+        [
+            {"factura_emitida_id": factura_d["id"], "importe": "100.00"},
+            {"factura_emitida_id": factura_e["id"], "importe": "250.00"},
+        ],
     )
+    comprobar(codigo == 201, f"el cobro repartido entra ({codigo})")
+    suyas = (repartido or {}).get("cobro", {}).get("aplicaciones") or []
+    comprobar(len(suyas) == 2, f"con una aplicacion por deuda ({len(suyas)})")
+    comprobar(
+        sum(float(a["importe"]) for a in suyas) == 350.0,
+        f"y las aplicaciones suman los 350 que entraron "
+        f"({[a['importe'] for a in suyas]})",
+    )
+    comprobar(
+        (repartido or {}).get("cobro", {}).get("texto_sin_asignar", "x") == "",
+        "y no queda nada sin asignar",
+    )
+    # **Por identificador**: cada deuda queda saldada, que es lo que el criterio pide.
     _, la_primera = caso.la_factura(factura_d["id"])
+    _, la_segunda = caso.la_factura(factura_e["id"])
     comprobar(
-        la_primera["pendiente"] == "0.00",
-        f"y la primera queda saldada con sus 100 ({la_primera['pendiente']})",
+        la_primera["pendiente"] == "0.00" and la_segunda["pendiente"] == "0.00",
+        f"y las dos deudas quedan a cero ({la_primera['pendiente']} y {la_segunda['pendiente']})",
     )
+
+    # Y el sobrante, con el caso del encargo: 400 de los que solo se aplican 350.
+    _, entrega_f = caso.una_venta("350.00", cantidad=350.0, producto="Alfalfa")
+    _, factura_f = caso.una_factura([entrega_f["id"]], "CRM01-F5b")
+    codigo, con_sobrante = caso.un_cobro_repartido(
+        "400.00", [{"factura_emitida_id": factura_f["id"], "importe": "350.00"}]
+    )
+    comprobar(codigo == 201, f"un cobro de 400 con 350 aplicados entra ({codigo})")
     comprobar(
-        repartido["cobro"]["texto_sin_asignar"] != "",
-        "el sobrante de ese cobro queda dicho como sin asignar, no perdido",
+        (con_sobrante or {}).get("cobro", {}).get("texto_sin_asignar") == "50,00 €",
+        f"y los 50 que sobran se dicen sin asignar "
+        f"({(con_sobrante or {}).get('cobro', {}).get('texto_sin_asignar')!r}, no un pago perdido)",
     )
 
     # ── 4) 8000 kg con el precio sin conocer ─────────────────────────────────────────────────────────

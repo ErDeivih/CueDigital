@@ -66,6 +66,7 @@ from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotaci
 from ..schemas import (
     AjusteDeUnaEntrega,
     AjusteEntrada,
+    AplicacionDeUnCobroSalida,
     CobroDeUnaFactura,
     CobroEntrada,
     ColumnaDeUnaTabla,
@@ -1594,17 +1595,24 @@ def como_se_ve_una_factura(db, explotacion, factura: models.FacturaEmitida) -> F
             )
         )
 
+    # **Los cobros que van contra esta factura se buscan por sus aplicaciones** (CRM-01, 11/10/2026), no por
+    # la columna del cobro: un ingreso repartido entre varias deudas tiene esa columna **vacía** a propósito
+    # —el dinero vive en las aplicaciones—, así que mirando la columna esta factura no vería su parte y
+    # volvería a estar pendiente sin que nadie hubiera dejado de cobrar.
     cobros = db.scalars(
         select(models.Cobro)
+        .join(models.AplicacionDeUnCobro, models.AplicacionDeUnCobro.cobro_id == models.Cobro.id)
         .where(
             models.Cobro.explotacion_id == explotacion.id,
-            models.Cobro.factura_emitida_id == factura.id,
+            models.AplicacionDeUnCobro.factura_emitida_id == factura.id,
+            models.AplicacionDeUnCobro.anulado.is_(False),
             models.Cobro.anulado.is_(False),
         )
         .order_by(models.Cobro.fecha.asc(), models.Cobro.id.asc())
     )
     cobros_vistos = [como_se_ve_un_cobro(db, explotacion, cobro) for cobro in cobros]
-    cobrado = dinero.suma(*[c.importe_imputado for c in cobros_vistos])
+    # Y el cobrado, de la regla única: la suma de las aplicaciones vivas contra esta factura.
+    cobrado = lo_cobrado_de_una_factura(db, explotacion_id=explotacion.id, factura_id=factura.id)
     # Una factura quitada **no se debe**: se enseña lo que decía (su total y sus líneas) y su estado, pero
     # el pendiente es cero de verdad, no un cero por no mirarlo.
     pendiente = dinero.CERO if anulada else ventas.pendiente_de(total, cobrado)
@@ -1657,14 +1665,44 @@ def como_se_ve_una_factura(db, explotacion, factura: models.FacturaEmitida) -> F
 
 
 def como_se_ve_un_cobro(db, explotacion, cobro: models.Cobro) -> CobroDeUnaFactura:
-    """Un cobro, con lo que va a la factura y lo que sobra dicho por separado."""
+    """Un cobro, con **a qué facturas va** y lo que sobra dicho por separado (CRM-01, 11/10/2026).
+
+    Las cifras salen de **las aplicaciones**, que es donde vive el reparto: `imputado` es lo que suman y
+    `sin asignar` lo que falta hasta el importe del cobro. Un cobro sin ninguna aplicación es dinero que
+    todavía no se sabe a qué va, y se dice así —«sin asignar», no «sobra»—.
+    """
     importe = dinero.a_decimal(cobro.importe)
-    imputado = dinero.a_decimal(cobro.importe_imputado)
+    suyas = list(
+        db.scalars(
+            select(models.AplicacionDeUnCobro)
+            .where(
+                models.AplicacionDeUnCobro.cobro_id == cobro.id,
+                models.AplicacionDeUnCobro.anulado.is_(False),
+            )
+            .order_by(models.AplicacionDeUnCobro.id)
+        )
+    )
+    aplicaciones_vistas: list[AplicacionDeUnCobroSalida] = []
+    for aplicacion in suyas:
+        su_factura = db.get(models.FacturaEmitida, aplicacion.factura_emitida_id)
+        # El aislamiento no se supone: si la base se editara a mano, una aplicación de otra finca no se
+        # enseña (es la misma comprobación que hace este mismo sitio con la factura del cobro).
+        if su_factura is not None and su_factura.explotacion_id != explotacion.id:
+            continue
+        aplicaciones_vistas.append(
+            AplicacionDeUnCobroSalida(
+                factura_emitida_id=aplicacion.factura_emitida_id,
+                factura_numero=su_factura.numero if su_factura else None,
+                importe=dinero.a_decimal(aplicacion.importe),
+                texto_importe=dinero.formatea(aplicacion.importe),
+            )
+        )
+    imputado = dinero.suma(*[v.importe for v in aplicaciones_vistas]) if aplicaciones_vistas else None
     sobrante = None
-    if cobro.factura_emitida_id is None:
-        # Sin factura, todo el dinero está sin asignar: no es que sobre, es que no se sabe a qué va.
+    if not aplicaciones_vistas:
+        # Sin ninguna aplicación, todo el dinero está sin asignar: no es que sobre, es que no se sabe a
+        # qué va.
         sobrante = importe
-        imputado = None
     elif importe is not None and imputado is not None:
         sobrante = dinero.resta(importe, imputado)
     factura = (
@@ -1686,6 +1724,7 @@ def como_se_ve_un_cobro(db, explotacion, cobro: models.Cobro) -> CobroDeUnaFactu
         importe=importe,
         texto_importe=dinero.formatea(importe),
         importe_imputado=imputado,
+        aplicaciones=aplicaciones_vistas,
         texto_imputado=dinero.formatea(imputado) if imputado is not None else "",
         sin_asignar=sobrante,
         texto_sin_asignar=dinero.formatea(sobrante) if sobrante else "",
@@ -2050,6 +2089,79 @@ def _dejar_la_aplicacion(db, explotacion, cobro: models.Cobro, factura, imputado
         ya.importe = imputado
 
 
+def _repartir_el_cobro(db, explotacion, cobro: models.Cobro, aplicaciones) -> tuple[Decimal, Decimal]:
+    """Reparte un cobro entre **varias** facturas. Devuelve `(lo imputado, lo que queda sin asignar)`.
+
+    Es lo que el encargo de CRM-01 pide con números: *«un cobro de 350 aplicado a dos deudas 100/250, las
+    aplicaciones suman 350 y el saldo sin aplicar queda en 0»*. Las dos invariantes que documentan las
+    referencias que estudió el ticket (ERPNext: *«the total allocated amount can be less than or equal to
+    the payment, but it cannot exceed the available amount»*) se comprueban aquí, y con palabras:
+
+      · **Entre todas no se reparte más de lo que entró.** Si suman más que el importe del cobro, no se
+        apunta nada y se dice cuánto es lo que sobra de la suma.
+      · **A una factura no se le aplica más de lo que debe.** Lo que se debe se calcula **en este momento**
+        y contando lo que ya se ha aplicado en esta misma petición, así que dos filas para la misma factura
+        no pueden pasar de su pendiente entre las dos.
+      · Y lo que **no** se reparte queda sin asignar, que es un dato: no se pierde ni se mete en ninguna
+        factura a la fuerza.
+    """
+    importe_del_cobro = dinero.a_decimal(cobro.importe) or dinero.CERO
+    ya_repartido: dict[int, Decimal] = {}
+    for aplicacion in aplicaciones:
+        su_importe = dinero.redondea(dinero.a_decimal(aplicacion.importe) or dinero.CERO)
+        if su_importe <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Una parte del cobro no puede ser de cero euros ni negativa.",
+            )
+        la_factura = _la_factura_a_la_que_se_imputa(db, explotacion, aplicacion.factura_emitida_id)
+        pendiente = ventas.pendiente_de(
+            la_factura.importe_total,
+            dinero.suma(
+                lo_cobrado_de_una_factura(
+                    db, explotacion_id=explotacion.id, factura_id=la_factura.id
+                ),
+                ya_repartido.get(la_factura.id, dinero.CERO),
+            ),
+        )
+        if pendiente is None or su_importe > pendiente:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    f"A la factura {la_factura.numero or la_factura.id} no se le pueden aplicar "
+                    f"{dinero.formatea(su_importe)}: solo le quedan "
+                    f"{dinero.formatea(pendiente or dinero.CERO)} por cobrar."
+                ),
+            )
+        ya_repartido[la_factura.id] = dinero.suma(
+            ya_repartido.get(la_factura.id, dinero.CERO), su_importe
+        )
+        db.add(
+            models.AplicacionDeUnCobro(
+                explotacion_id=explotacion.id,
+                cobro_id=cobro.id,
+                factura_emitida_id=la_factura.id,
+                importe=su_importe,
+            )
+        )
+    total = dinero.suma(*ya_repartido.values()) if ya_repartido else dinero.CERO
+    if total > importe_del_cobro:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                f"El reparto suma {dinero.formatea(total)} y el cobro es de "
+                f"{dinero.formatea(importe_del_cobro)}: no se puede repartir más de lo que entró."
+            ),
+        )
+    # Una sola factura: se deja también en las columnas de siempre para que las pantallas que las leen no se
+    # queden sin el dato. Con varias, esas columnas van vacías a propósito: el dinero vive en las
+    # aplicaciones, y poner una de las facturas ahí haría creer que el cobro es entero suyo.
+    if len(ya_repartido) == 1:
+        cobro.factura_emitida_id = next(iter(ya_repartido))
+        cobro.importe_imputado = total
+    return (total, dinero.redondea(importe_del_cobro - total))
+
+
 def _retirar_la_aplicacion(db, cobro: models.Cobro, *, motivo: str) -> None:
     """Marca anuladas las aplicaciones vivas de ese cobro, con su motivo, en vez de borrarlas."""
     suyas = db.scalars(
@@ -2129,6 +2241,17 @@ def apuntar_un_cobro(
         )
 
     factura = _la_factura_a_la_que_se_imputa(db, explotacion, datos.factura_emitida_id)
+    # **El reparto entre varias deudas** (CRM-01, 11/10/2026): o viene una factura suelta —el camino de
+    # siempre— o viene la lista de a qué va cada parte. Las dos cosas a la vez no: se contesta 422 en vez de
+    # elegir por el agricultor cuál de las dos manda.
+    if datos.aplicaciones and datos.factura_emitida_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                "O me dices a qué factura va el cobro, o me dices cómo se reparte entre varias; "
+                "las dos cosas a la vez no, porque no sé cuál manda."
+            ),
+        )
     cobro = models.Cobro(
         explotacion_id=explotacion.id,
         fecha=datos.fecha,
@@ -2142,7 +2265,10 @@ def apuntar_un_cobro(
     )
     db.add(cobro)
     db.flush()
-    imputado, sobrante = _imputar(db, explotacion, cobro, factura)
+    if datos.aplicaciones:
+        imputado, sobrante = _repartir_el_cobro(db, explotacion, cobro, datos.aplicaciones)
+    else:
+        imputado, sobrante = _imputar(db, explotacion, cobro, factura)
     _el_rastro_de_un_cobro(
         db,
         explotacion.id,

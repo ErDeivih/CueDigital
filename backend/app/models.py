@@ -1425,9 +1425,17 @@ class Cobro(Base):
 
     Apuntan a una **factura**, no a una entrega. El motivo es que el dinero se cobra contra un
     documento, y permitir imputar un cobro a una entrega suelta abriría la puerta a contar el mismo
-    euro dos veces (una por la entrega y otra por la factura que la contiene). La conciliación
-    muchos a muchos —un ingreso que salda tres facturas— es el ticket T20 y no se hace aquí: se dice
-    en el informe de entrega.
+    euro dos veces (una por la entrega y otra por la factura que la contiene).
+
+    ## Y desde el 11/10/2026 sí se reparte entre varias facturas
+
+    Aquí decía que «la conciliación muchos a muchos —un ingreso que salda tres facturas— es el ticket T20 y
+    no se hace aquí». **Ya se hace, y en CRM-01**: el encargo de ese ticket pide justo ese caso con números
+    («un cobro de 350 aplicado a dos deudas 100/250»), así que el reparto vive en
+    `AplicacionDeUnCobro` —una fila por factura con su importe, hermana de `AplicacionDeUnPago`—. Las dos
+    columnas de esta tabla (`factura_emitida_id`, `importe_imputado`) se siguen rellenando **cuando el cobro
+    salda una sola factura**, para no romper lo que ya las lee; con varias van vacías a propósito, porque el
+    dinero está en las aplicaciones y poner una de ellas aquí haría creer que el cobro es entero suyo.
     """
 
     __tablename__ = "cobros"

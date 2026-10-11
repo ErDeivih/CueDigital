@@ -1514,6 +1514,19 @@ class LineaDeUnaFacturaEmitida(BaseModel):
     diferencia: bool = False
 
 
+class AplicacionDeUnCobroSalida(BaseModel):
+    """A qué factura va una parte de este cobro, y cuánto (CRM-01, 11/10/2026).
+
+    Es lo que permite que un ingreso salde **varias** deudas: una fila por factura. Se enseña en la ficha del
+    cobro y en la de la factura, para que se pueda comprobar de dónde sale cada cifra.
+    """
+
+    factura_emitida_id: int
+    factura_numero: str | None = None
+    importe: Decimal | None = None
+    texto_importe: str = ""
+
+
 class CobroDeUnaFactura(BaseModel):
     """Un cobro, tal y como se enseña (en la lista y dentro de la factura)."""
 
@@ -1528,6 +1541,9 @@ class CobroDeUnaFactura(BaseModel):
     texto_imputado: str = ""
     sin_asignar: Decimal | None = None
     texto_sin_asignar: str = ""
+    # **A qué facturas va este dinero** (CRM-01): una fila por deuda. Un cobro que salda una sola factura
+    # trae una; uno que salda tres, tres; y un dinero sin conciliar, ninguna.
+    aplicaciones: list[AplicacionDeUnCobroSalida] = []
     factura_emitida_id: int | None = None
     factura_numero: str | None = None
     cliente: str | None = None
@@ -1574,12 +1590,32 @@ class FacturaEmitidaSalida(SalidaBase):
     entregas: int = 0
 
 
+class AplicacionDeUnCobroEntrada(BaseModel):
+    """Una parte del cobro, contra una factura concreta (CRM-01, 11/10/2026).
+
+    Es lo que permite repartir **un** ingreso entre **varias** deudas —el cliente que paga de una vez tres
+    albaranes—, que es el caso que el encargo pide con números: 350 entre una deuda de 100 y otra de 250.
+    """
+
+    factura_emitida_id: int
+    importe: Decimal | None = None
+
+    @field_validator("importe", mode="before")
+    @classmethod
+    def _el_importe_es_exacto(cls, valor):
+        return _un_importe_que_cabe(valor)
+
+
 class CobroEntrada(EntradaBase):
     fecha: dt.date | None = None
     # Obligatorio y mayor que cero: un cobro de cero euros no es un cobro. Se comprueba en el router
     # para poder decirlo con palabras.
     importe: Decimal | None = None
+    # **Una factura suelta** (el camino de siempre: este cobro salda esta factura) **o el reparto**, pero no
+    # las dos cosas: `aplicaciones` manda cuando viene, porque es lo que permite varias deudas. Si vienen las
+    # dos, se contesta 422 diciendo cuál sobra en vez de elegir por el agricultor.
     factura_emitida_id: int | None = None
+    aplicaciones: list[AplicacionDeUnCobroEntrada] | None = None
     cliente: str | None = Field(default=None, max_length=_cabe_en_la_columna(models.Cobro, "cliente"))
     contacto_id: int | None = None
     forma: str = Field(default="transferencia", max_length=_cabe_en_la_columna(models.Cobro, "forma"))
