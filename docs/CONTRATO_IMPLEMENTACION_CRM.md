@@ -5,6 +5,31 @@ DeepSeek y cualquier agente implementador. Complementa el plan E0–E13 y la
 especificación detallada; este documento concreta contratos, pantallas y entregas.
 No autoriza pruebas sobre la base real ni sustituye una revisión agronómica.
 
+## 0. Estado a 08/10/2026 — la compra de punta a punta
+
+No es un plan nuevo: es lo que este contrato ya pide, comprobado desde fuera con
+`backend/scripts/comprobar_la_compra_de_punta_a_punta.py` (servidor aislado, base temporal, documentos
+ficticios). Hoy: **30 comprobaciones, 0 fallos**.
+
+**Acreditado:** una compra identificable —proveedor → factura de **663 €** con líneas → recepción en las
+**mismas unidades** → lote → gasto **vinculado** por `factura_id` → pagos—. Los pagos se comprueban **por
+identificador**, no por el total: el pendiente de **esa** factura va **663 → 463 → 0**, con **sus**
+aplicaciones, **su** saldo sin aplicar y **las demás deudas sin moverse** (40 comprobadas); el resumen de la
+explotación (**3.531,20 → 2.868,20**) se contrasta **además**, nunca en lugar de. **A15** medido con el saldo
+ya conocido (**1000 → 1000**): la factura **no** vuelve a meter mercancía. **Recepción parcial**: 300 kg y
+200 kg **sin factura**, que suman **500 → 1000** con tres movimientos. **Factura posterior al albarán**:
+enganche por `POST /api/almacen/recepciones/{id}/factura` → **200**.
+
+**Pendiente, con el patrón ya localizado:** el **reenvío de facturas** —`models.Factura` no tiene
+`clave_de_reenvio` y su puerta **no consulta** el duplicado (`_ya_estaba` sólo se usa al leer)—; el patrón a
+copiar está en `almacen_api.crear_recepcion` (clave → el original con **200**; número + proveedor → el que
+había; y `AL5…` cuando no se puede saber), separando **reenvío técnico** de **duplicado comercial** con
+**409**. Faltan también **pago agrupado**, **corrección/anulación con auditoría**, la **ficha de compra**
+(punto 5, con pantallas y capturas), convertir el guion en **pruebas obligatorias**, y **permisos, uso sin
+cobertura, conflictos de edición y restauración de copia**.
+
+---
+
 ## 1. Orden de lectura y decisiones de producto
 
 Leer AGENTS.md, PLAN_CRM_AGRARIO_2026.md, ESPECIFICACION_DETALLADA_CRM_2026.md,
