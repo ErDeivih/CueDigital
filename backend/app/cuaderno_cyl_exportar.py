@@ -25,6 +25,21 @@ mismo. Es la mejor prueba que se le puede hacer a un escritor de ficheros.
 datos pide el cuaderno y no están puestos, y dónde se ponen. Eso es lo que el agricultor necesita para
 terminarlo, y es la respuesta a «¿qué datos me hacen falta?»: no una lista inventada, sino **la lista
 que sale de comparar el cuaderno oficial con lo que él tiene apuntado**.
+
+## Aquí NO van los importes, y es a propósito (11/10/2026)
+
+Al cerrar el ticket CRM-01 se pidió «importes españoles en listas, fichas **y documentos**», y este es uno de
+los documentos. Se midió antes de tocar: **el cuaderno oficial de la Junta no tiene ninguna columna de
+dinero** —ni este escritor ni el lector oficial (`app/cuaderno_cyl.py`) mencionan importe ni precio en
+ninguna de sus 25 hojas—, porque es un registro de **actividad** (qué se aplicó, dónde y cuándo), no de
+cuentas. Y este fichero replica **las mismas columnas** que el fichero que el agricultor descarga del Cuecyl,
+con una prueba que escribe el cuaderno y lo **vuelve a leer con el lector oficial**.
+
+Así que añadir aquí «Importe» o «Precio» **no sería completar el documento: sería romper el formato** que se
+está replicando, y el cuaderno dejaría de leerse con el lector de la Junta. El dinero de lo que se vende va
+donde va: en **el cuaderno del agricultor** —el CSV y el PDF de `routers/cuaderno.py`, que son el papel que
+firma y guarda— y en las pantallas de lo que se vende y de sus cobros. Está comprobado con pruebas que miran
+el texto del CSV y del PDF, no el código de estado.
 """
 
 from __future__ import annotations
