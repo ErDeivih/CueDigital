@@ -1236,8 +1236,12 @@ class TestLoQueSeCuentaAntesDeBorrar:
         # lectura **no la devuelve** —no es un dato del papel, es la identidad de la petición que
         # creó la fila—, y por eso la regla la deja quieta al corregir, que es justo lo que tiene que
         # pasar: corregir un importe no puede cambiar qué petición trajo esta factura.
+        # **Y desde el 09/10/2026, la huella del comando** (09/10/2026): es lo que identifica **la
+        # petición que trajo esta factura**, así que una corrección no puede tocarla —si la tocara, el
+        # reenvío de aquel comando dejaría de reconocerse—. Igual que la clave de reenvío, entra por el
+        # alta (para guardarla) y no se devuelve al leer, así que la regla la deja quieta.
         ) == ["anulada", "campana_id", "clave_de_reenvio", "creada_en", "fichero_bytes", "fichero_nombre",
-              "fichero_ruta", "fichero_tipo", "huella"]
+              "fichero_ruta", "fichero_tipo", "huella", "huella_de_la_peticion"]
 
         # Y se quedan fuera por el motivo que dice la regla, no por casualidad.
         assert "fichero_estado" not in DocumentoEntrada.model_fields

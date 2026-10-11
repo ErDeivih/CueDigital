@@ -1028,8 +1028,7 @@ MENSAJES: dict[str, str] = {
         "De ese proveedor ya tienes una factura con ese número y ese año, y **no dice lo mismo**: "
         "una de las dos tiene los importes mal. Se ha dejado la que había. Si te has equivocado al "
         "apuntar, corrígela; y si de verdad son dos facturas, apunta la segunda con su número."
-    ),
-    # **La ficha de la compra** (S11, 09/10/2026): lo que se ha facturado, lo que ha entrado de verdad, lo
+    ),    # **La ficha de la compra** (S11, 09/10/2026): lo que se ha facturado, lo que ha entrado de verdad, lo
     # que se ha pagado y lo que queda. Estas dos dicen lo que **no se puede saber**, que es tan importante
     # como las cifras: sin ellas, un hueco parecería un cero.
     "AL29_no_se_puede_saber_lo_recibido_por_linea": (
@@ -1074,6 +1073,21 @@ MENSAJES: dict[str, str] = {
     "G41_la_misma_clave_con_otros_datos": (
         "Esa petición ya se atendió, pero con otro dinero: una misma petición no puede traer dos pagos "
         "distintos. Mira cuál es el bueno y apunta el otro como una petición nueva."
+    ),
+    # **El reenvío de un comando cuya factura se anuló** (09/10/2026, a petición de David). La clave no se
+    # recicla: se contesta con el estado, y se dice cómo darla de alta otra vez.
+    "AL46_esa_factura_esta_anulada_y_no_se_reapunta": (
+        "Esa petición ya se atendió, y su factura está anulada{motivo}. No se ha apuntado nada: una "
+        "petición ya usada no vale para dar de alta otra factura. Si la quieres otra vez, mándala como "
+        "una petición nueva."
+    ),
+    # **El posible duplicado comercial que dice otra cosa** (09/10/2026): antes se contestaba «ya estaba»
+    # y lo que llegaba se perdía en silencio. Ahora se para y se explica, para que decida el agricultor.
+    "AL47_ese_numero_ya_esta_y_dice_otra_cosa": (
+        "Ya tienes una factura de ese proveedor con el número {numero}, del {fecha}, por {total}, y "
+        "**dice otra cosa** que esta. No se ha apuntado nada para no dejar dos versiones del mismo "
+        "papel. Míralas: si la que había está mal, corrígela; y si de verdad son dos facturas distintas, "
+        "apunta esta con su número."
     ),
     # Estas tres no son avisos de que algo esté mal: son las tres razones por las que **no se puede
     # hacer la resta**. Es la misma decisión que en la cesta (A20–A23): decir «te quedan 0 litros»

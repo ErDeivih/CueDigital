@@ -2382,22 +2382,24 @@ class Factura(Base):
 
     __tablename__ = "facturas"
 
-    # **La clave de reenvío no se puede repetir dentro de una explotación, pero una factura anulada
-    # no la ocupa** (09/10/2026). Es la misma decisión, con el mismo motivo escrito, que en
-    # `Recepcion` y `MovimientoDeExistencias`: con un `UniqueConstraint` a secas, una factura
-    # anulada seguiría ocupando su clave y el agricultor no podría volver a apuntarla desde el móvil
-    # -que reenvía con la misma clave-, y le saldría un error de la base en vez de un arreglo.
-    # **Anular existe justo para poder apuntar la buena después.**
+    # **La clave de reenvío no se puede repetir dentro de una explotación, ni siquiera después de
+    # anular** (09/10/2026, a petición expresa de David). Antes el índice excluía las anuladas —la
+    # decisión que la casa había tomado con `Recepcion` y `MovimientoDeExistencias`, y por el motivo que
+    # está escrito allí: *«anular existe justo para poder apuntar la buena después»*—. El problema de esa
+    # regla, que se vio al revisar esto: **no distingue una alta nueva deliberada de un reintento viejo
+    # que llega tarde**. Un móvil sin cobertura que reintenta el comando de ayer, después de que alguien
+    # anulara aquella factura, no está pidiendo «apunta esta otra»: está pidiendo lo mismo de siempre, y
+    # recibía una factura nueva sin saberlo.
+    #
+    # Así que ahora la clave es única **siempre**, y el reenvío de un comando anulado contesta con **su
+    # estado anulado** diciendo que, para darla de alta otra vez, hace falta **una petición nueva**.
+    # (En los albaranes y los movimientos sigue valiendo la regla de antes: esto es de la factura.)
     __table_args__ = (
         Index(
             "uq_factura_reenvio",
             "explotacion_id",
             "clave_de_reenvio",
             unique=True,
-            # Las dos formas, por lo mismo que en las recepciones: el programa puede correr sobre
-            # PostgreSQL, y allí un índice único sin condición volvería a bloquear la anulada.
-            sqlite_where=text("anulada = 0"),
-            postgresql_where=text("anulada = false"),
         ),
     )
 
@@ -2432,6 +2434,17 @@ class Factura(Base):
     # en los libros. Medido: 201, 201 y dos filas. El patrón a copiar está en
     # `almacen_api.crear_recepcion`, que es la misma situación con albaranes.
     clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+
+    # **La huella del comando original** (09/10/2026): el resumen del cuerpo con el que se atendió esta
+    # petición, calculado al apuntarla (`servicios.la_huella_de_una_peticion_de_factura`).
+    #
+    # **Por qué hace falta teniendo la clave.** La clave dice «esta petición ya se atendió»; la huella
+    # dice **qué traía**. Sin ella no se puede distinguir el reenvío de siempre —el móvil que reintenta
+    # sin cobertura— de otra petición distinta que usa la misma clave, y esa confusión tenía dos
+    # consecuencias, las dos medidas: después de corregir una factura, **cualquier** cuerpo con aquella
+    # clave recibía un 200 y sus datos se perdían en silencio; y no había forma de contestar «tu comando
+    # original ya se atendió, pero su resultado cambió».
+    huella_de_la_peticion: Mapped[str | None] = mapped_column(String(64))
 
     fichero_nombre: Mapped[str | None] = mapped_column(String(200))
     fichero_ruta: Mapped[str | None] = mapped_column(String(300))

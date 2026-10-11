@@ -1360,6 +1360,159 @@ def el_misma_factura(
     return True
 
 
+def _la_huella_de(partes: dict) -> str:
+    """El resumen, en una huella: `sha256` del texto canónico de esos datos.
+
+    Canónico quiere decir **el mismo para los mismos datos**: las claves ordenadas, sin espacios de más y
+    sin escapar los acentos, para que dos cuerpos que dicen lo mismo den la misma huella y uno que cambia
+    un céntimo dé otra.
+    """
+    import hashlib
+    import json as _json
+
+    texto = _json.dumps(partes, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+
+def _el_importe_de_una_huella(valor):
+    """Un número, en texto, para que entre en la huella: `663.0` y `"663.00"` son lo mismo."""
+    return dinero.a_texto(dinero.cantidad_a_decimal(valor))
+
+
+def _la_fecha_de_una_huella(valor):
+    """Una fecha, en texto `AAAA-MM-DD`, venga como `date` o como el texto que devuelve SQLite."""
+    if valor is None:
+        return None
+    if hasattr(valor, "isoformat"):
+        return valor.isoformat()
+    return str(valor)[:10]
+
+
+def _las_partes_de_una_factura(
+    *,
+    fecha,
+    proveedor,
+    proveedor_nif,
+    numero_factura,
+    base_imponible,
+    cuota_iva,
+    tipo_iva_pct,
+    total,
+    notas,
+    lineas,
+) -> dict:
+    """Los datos de una factura que entran en la huella del comando, normalizados.
+
+    **Lo que NO entra, y es a propósito** (09/10/2026): ni el `producto_id` ni el `fertilizante_id` de las
+    líneas. Esos los puede **inferir el servidor** al guardar (`_producto_de_la_factura` engancha la línea
+    con un producto de la cesta a partir del número de registro o del nombre), así que no forman parte de
+    lo que dice la petición: si entraran, la huella de la petición y la de lo guardado **no coincidirían**
+    y el reenvío del comando original daría un conflicto falso —que es justo lo que la huella viene a
+    arreglar—. Lo que entra es lo que dice el papel: la fecha, quién, el número, los importes y las líneas
+    con su descripción, cantidad, unidad, precio e importe.
+    """
+    return {
+        "fecha": _la_fecha_de_una_huella(fecha),
+        "proveedor": (proveedor or "").strip(),
+        "proveedor_nif": (proveedor_nif or "").strip(),
+        "numero_factura": (numero_factura or "").strip(),
+        "base_imponible": _el_importe_de_una_huella(base_imponible),
+        "cuota_iva": _el_importe_de_una_huella(cuota_iva),
+        "tipo_iva_pct": _el_importe_de_una_huella(tipo_iva_pct),
+        "total": _el_importe_de_una_huella(total),
+        "notas": (notas or "").strip(),
+        "lineas": [
+            {
+                "descripcion": (linea.get("descripcion") or "").strip(),
+                "cantidad": _el_importe_de_una_huella(linea.get("cantidad")),
+                "unidad": (linea.get("unidad") or "").strip(),
+                "precio_unitario": _el_importe_de_una_huella(linea.get("precio_unitario")),
+                "importe": _el_importe_de_una_huella(linea.get("importe")),
+                "numero_registro": (linea.get("numero_registro") or "").strip(),
+                "lote": (linea.get("lote") or "").strip(),
+            }
+            for linea in lineas
+        ],
+    }
+
+
+def la_huella_de_una_peticion_de_factura(entrada) -> str:
+    """El resumen del **cuerpo con el que se atiende una petición de factura**: su huella.
+
+    **Para qué.** La clave de reenvío dice «esta petición ya se atendió», pero no dice **qué traía**. Con
+    la huella se separan las dos cosas que la clave sola confundía (09/10/2026):
+
+      · **El reenvío de siempre**: lo que llega tiene la misma huella que el comando original, así que es
+        el mismo comando otra vez —el móvil que reintenta sin cobertura— y se contesta con su resultado
+        actual, aunque la factura se haya corregido o anulado después.
+      · **Otra cosa con la misma clave**: la huella no coincide. Eso no es un reenvío, es una petición
+        distinta usando una clave ajena, y es un **conflicto**.
+
+    Se calcula **siempre desde la petición** —al apuntar y al reenviar—, así que las dos veces pasan por
+    la misma normalización y coinciden por construcción. La variante de lo ya guardado
+    (`la_huella_de_una_factura_guardada`) existe para las facturas de antes de que hubiera huella, y sus
+    datos pasan por las mismas reglas.
+    """
+    return _la_huella_de(
+        _las_partes_de_una_factura(
+            fecha=entrada.fecha,
+            proveedor=entrada.proveedor,
+            proveedor_nif=entrada.proveedor_nif,
+            numero_factura=entrada.numero_factura,
+            base_imponible=entrada.base_imponible,
+            cuota_iva=entrada.cuota_iva,
+            tipo_iva_pct=entrada.tipo_iva_pct,
+            total=entrada.total,
+            notas=entrada.notas,
+            lineas=[linea.model_dump() for linea in entrada.lineas],
+        )
+    )
+
+
+def la_huella_de_una_factura_guardada(factura, lineas) -> str:
+    """La huella del comando de una factura **ya guardada**, para las que son de antes.
+
+    La usa la migración (`database.rellenar_la_huella_del_comando`) para las facturas que ya tenían clave
+    de reenvío cuando esto no existía: se rellena con **lo que la factura dice hoy**. Si nadie la ha
+    corregido, esa huella es la de su comando original y su reenvío se reconoce; si se corrigió, lo que
+    llegue distinto dará conflicto —la parte prudente de la duda, mejor que aceptar en silencio algo que
+    no se puede comprobar—.
+
+    `factura` y `lineas` son filas tal y como salen de la base (diccionarios o `RowMapping`).
+    """
+    def de_la_fila(fila, campo):
+        try:
+            return fila[campo]
+        except (KeyError, TypeError, IndexError):
+            return None
+
+    return _la_huella_de(
+        _las_partes_de_una_factura(
+            fecha=de_la_fila(factura, "fecha"),
+            proveedor=de_la_fila(factura, "proveedor"),
+            proveedor_nif=de_la_fila(factura, "proveedor_nif"),
+            numero_factura=de_la_fila(factura, "numero_factura"),
+            base_imponible=de_la_fila(factura, "base_imponible"),
+            cuota_iva=de_la_fila(factura, "cuota_iva"),
+            tipo_iva_pct=de_la_fila(factura, "tipo_iva_pct"),
+            total=de_la_fila(factura, "total"),
+            notas=de_la_fila(factura, "notas"),
+            lineas=[
+                {
+                    "descripcion": de_la_fila(linea, "descripcion"),
+                    "cantidad": de_la_fila(linea, "cantidad"),
+                    "unidad": de_la_fila(linea, "unidad"),
+                    "precio_unitario": de_la_fila(linea, "precio_unitario"),
+                    "importe": de_la_fila(linea, "importe"),
+                    "numero_registro": de_la_fila(linea, "numero_registro"),
+                    "lote": de_la_fila(linea, "lote"),
+                }
+                for linea in lineas
+            ],
+        )
+    )
+
+
 def lo_pagado_de_un_gasto(db: Session, *, explotacion_id: int, gasto_id: int):
     """Cuánto dinero de los pagos **vivos** está aplicado a este gasto.
 

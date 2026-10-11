@@ -794,6 +794,97 @@ def asegurar_indices(destino_engine: Engine | None = None) -> tuple[list[str], l
     return creados, cambiados
 
 
+def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tuple[int, int]:
+    """Deja las facturas que ya existían en condiciones para la clave que no se recicla (09/10/2026).
+
+    **Por qué hace falta, y por qué antes de los índices.** Dos cosas cambiaron el 09/10/2026, a
+    petición de David, y las dos necesitan tocar datos de una instalación que ya venía de antes:
+
+      1. **`facturas.clave_de_reenvio` pasa a ser única siempre** (antes se excluían las anuladas). Si una
+         instalación tiene dos facturas con la misma clave —una de ellas anulada, que es justo lo que la
+         regla vieja permitía—, el índice único **no se puede crear** y el programa no arranca. Se resuelve
+         dejando la clave en la **más antigua** (la que atendió la petición) y **quitándosela a las
+         demás**. No se borra ni una fila ni se toca ningún dato del papel: se suelta una clave, y esas
+         facturas quedan como cualquier otra sin clave. Se dice cuántas, para que no sea un cambio mudo.
+      2. **La huella del comando** (`huella_de_la_peticion`) no existe en las facturas de antes. Se
+         rellena con la huella de **lo que la factura dice hoy**: así el reenvío de su comando se reconoce
+         si nadie la ha corregido, y si se corrigió, lo que llegue distinto será un conflicto —que es la
+         parte prudente de la duda, y se prefiere a aceptar en silencio algo que no se puede comprobar—.
+
+    Devuelve `(claves_soltadas, huellas_rellenadas)`.
+    """
+    from sqlalchemy import inspect, text
+
+    motor = destino_engine or engine
+    inspector = inspect(motor)
+    if not inspector.has_table("facturas"):
+        return 0, 0
+    columnas = {columna["name"] for columna in inspector.get_columns("facturas")}
+    if "clave_de_reenvio" not in columnas:
+        return 0, 0
+
+    # Las claves repetidas: se queda con ella la más antigua (el identificador más bajo, que es el orden
+    # en que se apuntaron) y las demás la sueltan.
+    soltadas = 0
+    with motor.begin() as conexion:
+        repetidas = conexion.execute(
+            text(
+                "SELECT explotacion_id, clave_de_reenvio, COUNT(*) AS cuantas, MIN(id) AS la_primera "
+                "FROM facturas WHERE clave_de_reenvio IS NOT NULL "
+                "GROUP BY explotacion_id, clave_de_reenvio HAVING COUNT(*) > 1"
+            )
+        ).fetchall()
+        for fila in repetidas:
+            resultado = conexion.execute(
+                text(
+                    "UPDATE facturas SET clave_de_reenvio = NULL "
+                    "WHERE explotacion_id = :explotacion AND clave_de_reenvio = :clave AND id <> :primera"
+                ),
+                {
+                    "explotacion": fila[0],
+                    "clave": fila[1],
+                    "primera": fila[3],
+                },
+            )
+            soltadas += resultado.rowcount or 0
+
+    # Y las huellas que falten, con lo que la factura dice hoy.
+    rellenadas = 0
+    if "huella_de_la_peticion" in columnas:
+        from . import servicios  # importación tardía: evita dependencia circular
+
+        with motor.begin() as conexion:
+            pendientes = conexion.execute(
+                text(
+                    "SELECT id FROM facturas "
+                    "WHERE clave_de_reenvio IS NOT NULL AND huella_de_la_peticion IS NULL"
+                )
+            ).fetchall()
+        for (factura_id,) in pendientes:
+            with motor.begin() as conexion:
+                la_factura = conexion.execute(
+                    text("SELECT * FROM facturas WHERE id = :id"), {"id": factura_id}
+                ).mappings().first()
+                if la_factura is None:
+                    continue
+                lineas = conexion.execute(
+                    text(
+                        "SELECT descripcion, cantidad, unidad, precio_unitario, importe, "
+                        "numero_registro, lote, producto_id, fertilizante_id "
+                        "FROM lineas_de_factura WHERE factura_id = :id ORDER BY id"
+                    ),
+                    {"id": factura_id},
+                ).mappings().all()
+                huella = servicios.la_huella_de_una_factura_guardada(la_factura, lineas)
+                conexion.execute(
+                    text("UPDATE facturas SET huella_de_la_peticion = :huella WHERE id = :id"),
+                    {"huella": huella, "id": factura_id},
+                )
+                rellenadas += 1
+
+    return soltadas, rellenadas
+
+
 def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[str]]:
     """Deja la base de datos lista para funcionar, y la pone al día si venía de antes."""
     from . import models  # importación tardía: evita dependencia circular
@@ -801,6 +892,20 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
     motor = destino_engine or engine
     models.Base.metadata.create_all(bind=motor)
     anadidas, imposibles = asegurar_columnas(motor)
+    # **Los datos antes que los índices** (09/10/2026): el índice único de la clave de reenvío de las
+    # facturas no se puede crear si quedan claves repetidas de la regla vieja, así que primero se sueltan
+    # las de las facturas que no eran la petición original y se rellenan las huellas del comando.
+    sueltas, rellenadas = rellenar_la_huella_del_comando(motor)
+    if sueltas:
+        print(
+            f"Claves de reenvío de factura repetidas: se han soltado {sueltas} "
+            "(la clave se queda en la factura más antigua de cada petición; no se ha borrado nada)."
+        )
+    if rellenadas:
+        print(
+            f"Huellas del comando de factura rellenadas: {rellenadas} "
+            "(con lo que cada factura dice hoy)."
+        )
     # Los índices, después de las columnas: un índice puede ser sobre una columna recién añadida.
     indices_creados, indices_cambiados = asegurar_indices(motor)
     if indices_creados or indices_cambiados:

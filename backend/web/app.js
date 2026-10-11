@@ -11177,6 +11177,10 @@ function estadoDeLasFacturas() {
       // El fichero elegido, guardado aquí **antes** de repintar: ver la nota de `leerFactura`.
       fichero: null,
       guardada: null,
+      // **La clave de reenvío del alta que se está escribiendo** (09/10/2026): se genera al abrir el
+      // formulario (`factura-nueva`) y viaja con todos los intentos de guardado de **esta** factura, para
+      // que un reintento sin cobertura no la apunte dos veces; la factura siguiente trae la suya.
+      clave: null,
       error: "",
     };
   }
@@ -11761,6 +11765,14 @@ async function guardarFactura() {
       });
     } else {
       const cuerpo = new FormData();
+      // **La clave de reenvío del alta** (09/10/2026). Faltaba, y sin ella el servidor no podía
+      // distinguir el reenvío de este guardado de otra factura: la protección por clave que se acaba de
+      // cerrar no llegaba a usarse desde la pantalla. Se genera **al abrir el alta** y se guarda en el
+      // estado, así que un reintento del mismo formulario —un doble toque, un corte de red— lleva la
+      // misma clave y **no apunta la factura dos veces**; y al guardarla se suelta, de modo que **la
+      // siguiente factura es una petición nueva**, con su clave nueva, que es lo que pide el contrato.
+      datos.clave_de_reenvio =
+        facturas.clave || (facturas.clave = claveDeReenvio("factura-de-compra"));
       cuerpo.append("datos", JSON.stringify(datos));
       // El fichero va con la factura: es el justificante, y es lo que hay que poder enseñar.
       if (facturas.fichero) cuerpo.append("fichero", facturas.fichero);
@@ -11785,6 +11797,10 @@ async function guardarFactura() {
     facturas.guardada = detalle;
     facturas.interpretacion = null;
     facturas.fichero = null;
+    // **Y se suelta la clave**: la siguiente factura es un alta nueva y necesita la suya (09/10/2026).
+    // Si se quedara puesta, la segunda factura del día viajaría con la clave de la primera y el servidor
+    // la trataría como un reenvío: no se apuntaría.
+    facturas.clave = null;
     await cargarDatos().catch(() => {});
   } catch (error) {
     facturas.error = error.message || f("no_se_pudo");
@@ -18838,6 +18854,11 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     facturas.interpretacion = null;
     facturas.fichero = null;
     facturas.error = "";
+    // **Y una clave nueva para este alta** (09/10/2026): la clave se genera al abrir el formulario y
+    // viaja con todos los intentos de guardado de **esta** factura, así que un reintento no la apunta dos
+    // veces y la factura siguiente —que abre su propio formulario— es una petición distinta. Es la pauta
+    // de la casa para los formularios que pueden reintentarse sin cobertura.
+    facturas.clave = claveDeReenvio("factura-de-compra");
     // **Y se deja de corregir** (ronda 93): sin esto, entrar en «AÑADIR UNA FACTURA» después de haber
     // empezado a corregir una dejaría la factura en corrección puesta, y la factura nueva que se
     // escribiera se guardaría **encima de la que se estaba corrigiendo**. Es el mismo cuidado que con

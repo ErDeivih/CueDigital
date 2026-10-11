@@ -191,16 +191,20 @@ def test_el_mismo_papel_con_otra_peticion_no_se_apunta_dos_veces(cliente, cuenta
     assert _cuantas_facturas(db_sesion) == 1
 
 
-def test_el_mismo_papel_con_otros_importes_avisa_y_no_duplica(cliente, cuenta, db_sesion):
-    """El mismo número, el mismo año y **el mismo total**, pero el detalle no dice lo mismo.
+def test_el_mismo_papel_con_otro_detalle_no_se_descarta_en_silencio(cliente, cuenta, db_sesion):
+    """El mismo papel que **dice otra cosa**: **409**, y con el que había delante para decidir.
 
-    Aquí está el caso que de verdad llega a este aviso, y se aprendió midiendo: el **total forma
-    parte de lo que identifica al papel** —el contrato §S10 dice «emisor/número/fecha/total»—, así que
-    dos facturas con el mismo número y **distinto total** no son el mismo papel para el programa (ver
-    la prueba de abajo, que lo deja escrito). Lo que sí llega aquí es el mismo papel con el **detalle**
-    mal: la base imponible o el IVA de una de las dos está equivocado. Entonces no se apunta la
-    segunda —eso dejaría dos cifras del mismo papel— pero tampoco se calla: el aviso dice que hay que
-    mirarlo.
+    **Esto cambió el 09/10/2026, a petición de David.** Antes se contestaba 200 con un aviso: la factura
+    que había se devolvía y **lo que acababa de escribir el agricultor se perdía en silencio** —un aviso
+    que nadie lee y unos datos que no se guardan—. Lo que él pidió es que un posible duplicado comercial
+    con diferencias **no se descarte callando**: se para, se dice qué factura es la que ya está (con su
+    número, su fecha y su total) y que decida: corregir la que había, o apuntar esta con su número.
+
+    Aquí está el caso que llega a este aviso, y se aprendió midiendo: el **total forma parte de lo que
+    identifica al papel** —el contrato §S10 dice «emisor/número/fecha/total»—, así que dos facturas con el
+    mismo número y **distinto total** no son el mismo papel (ver la prueba de abajo, que lo deja escrito).
+    Lo que sí llega es el mismo papel con el **detalle** mal: la base imponible o el IVA de una de las dos
+    está equivocado.
     """
     primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-5")
     assert primera.status_code == 201, primera.text
@@ -212,12 +216,13 @@ def test_el_mismo_papel_con_otros_importes_avisa_y_no_duplica(cliente, cuenta, d
         base_imponible=160.0,  # el total no se toca: es lo que identifica el papel
         cuota_iva=45.70,
     )
-    assert con_el_detalle_mal.status_code == 200, con_el_detalle_mal.text
-    de_vuelta = con_el_detalle_mal.json()
-
-    assert de_vuelta["ya_estaba"] is True
-    assert de_vuelta["como_se_reconocio"] == "numero_de_factura"
-    assert textos.mensaje("AL28_ese_numero_ya_esta_con_otros_importes") in de_vuelta["avisos"]
+    assert con_el_detalle_mal.status_code == 409, (
+        f"un documento con diferencias no se puede descartar en silencio: {con_el_detalle_mal.text}"
+    )
+    assert "dice otra cosa" in con_el_detalle_mal.text
+    # Y se dice **cuál** es la que ya está, que es lo que permite decidir sin buscar entre los papeles.
+    assert "2026/00123" in con_el_detalle_mal.text
+    assert "205,70" in con_el_detalle_mal.text
     assert _cuantas_facturas(db_sesion) == 1
 
 
@@ -241,14 +246,19 @@ def test_el_mismo_numero_con_otro_total_es_otra_factura(cliente, cuenta, db_sesi
     assert _cuantas_facturas(db_sesion) == 2
 
 
-def test_un_reenvio_despues_de_anularla_la_vuelve_a_apuntar(cliente, cuenta, db_sesion):
-    """El reenvío después de la anulación: **la anulada no ocupa su clave**, y se puede rehacer.
+def test_un_reenvio_despues_de_anularla_no_crea_otra_factura(cliente, cuenta, db_sesion):
+    """El reenvío de un comando **ya anulado**: se devuelve su estado, y **no se crea otra factura**.
 
-    Es la decisión que la casa ya tomó con los albaranes y con los movimientos, y está escrita en sus
-    modelos: *«con un `UniqueConstraint` a secas, un albarán anulado seguía ocupando su clave y el
-    agricultor no podía volver a apuntarlo desde el móvil —que reenvía con la misma clave—: le salía
-    un error de la base. **Anular existe justo para poder apuntar la buena después**»*. Aquí se exige
-    lo mismo para la factura: la anulada se queda anulada, con su motivo, y el reenvío crea la buena.
+    **Esto cambió el 09/10/2026, y a petición expresa.** Antes la anulada no ocupaba su clave —era la
+    decisión que la casa había tomado con los albaranes y los movimientos— y el reenvío creaba una
+    factura nueva. El problema, que señaló David al revisar esto: así **no se distingue una alta nueva
+    deliberada de un reintento viejo que llega tarde**. Un móvil sin cobertura que reintenta el comando
+    de ayer, después de que alguien anulara aquella factura, no está pidiendo «apunta esta otra»: está
+    pidiendo lo mismo de siempre, y recibía una factura nueva sin saberlo.
+
+    Ahora la clave **no se puede reutilizar nunca** (el índice único ya no excluye las anuladas), y el
+    reenvío del comando original contesta **200 con la factura anulada y su motivo**, diciendo que para
+    darla de alta otra vez hace falta **una petición nueva**.
     """
     primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-7")
     assert primera.status_code == 201, primera.text
@@ -262,12 +272,27 @@ def test_un_reenvio_despues_de_anularla_la_vuelve_a_apuntar(cliente, cuenta, db_
     assert anulada.status_code == 200, anulada.text
     assert anulada.json()["anulada"] is True
 
-    # La misma petición otra vez: ahora **sí** tiene que apuntarse, porque la que había ya no vale.
+    # El mismo comando otra vez: **el estado, no una factura nueva**.
     de_nuevo = _enviar(cliente, cuenta["cabeceras"], clave="peticion-7")
-    assert de_nuevo.status_code == 201, de_nuevo.text
-    assert de_nuevo.json()["id"] != ident, "la buena es una fila nueva, no la anulada resucitada"
+    assert de_nuevo.status_code == 200, de_nuevo.text
+    devuelta = de_nuevo.json()
+    assert devuelta["id"] == ident, "es la misma factura, la anulada, no una nueva"
+    assert devuelta["anulada"] is True
+    assert devuelta["motivo_anulacion"] == "me equivoqué de proveedor"
+    assert "anulada" in " ".join(devuelta["avisos"]).lower(), devuelta["avisos"]
+    assert _cuantas_facturas(db_sesion) == 1, "el reenvío de un comando anulado no crea otra factura"
 
-    assert _cuantas_facturas(db_sesion) == 2, "la anulada se conserva con su motivo"
+    # **Y la misma clave con otro contenido sigue siendo un conflicto**, aunque esté anulada: la clave
+    # identifica un comando, y ese comando no se puede reciclar para otra cosa.
+    otro_contenido = _enviar(cliente, cuenta["cabeceras"], clave="peticion-7", total=999.99)
+    assert otro_contenido.status_code == 409, otro_contenido.text
+    assert _cuantas_facturas(db_sesion) == 1
+
+    # **La alta nueva deliberada se hace con una clave nueva**, y entonces sí entra.
+    la_buena = _enviar(cliente, cuenta["cabeceras"], clave="peticion-7-bis", total=999.99)
+    assert la_buena.status_code == 201, la_buena.text
+    assert la_buena.json()["id"] != ident
+    assert _cuantas_facturas(db_sesion) == 2, "la anulada se conserva con su motivo, y la nueva entra"
     la_vieja = _la_de_id(db_sesion, ident)
     assert la_vieja.anulada is True
     assert la_vieja.motivo_anulacion == "me equivoqué de proveedor"
@@ -365,10 +390,98 @@ def test_reintentar_despues_de_corregir_la_factura_no_es_un_conflicto(cliente, c
     )
     assert reintento.json()["id"] == ident, "se devuelve la factura de esa petición, no otra"
     assert reintento.json()["ya_estaba"] is True
+    assert reintento.json()["lineas"][0]["descripcion"].endswith("(corregido)"), (
+        "y se devuelve **como está hoy**, con la corrección dentro"
+    )
     assert any("se corrigió después" in aviso for aviso in reintento.json()["avisos"]), (
         "y se dice por qué no coincide: " + str(reintento.json()["avisos"])
     )
     assert _cuantas_facturas(db_sesion) == 1
+
+
+def test_la_misma_clave_con_otro_contenido_es_conflicto_aunque_haya_correcciones(
+    cliente, cuenta, db_sesion
+):
+    """**El otro contenido no se puede colar por haber una corrección** (09/10/2026).
+
+    Aquí estaba el agujero que señaló David al revisar esto: para no dar un 409 falso al móvil que
+    reintenta después de una corrección, la puerta miraba **solo que hubiera habido una corrección**, sin
+    distinguir *el reenvío del comando original* de *otra petición distinta con la misma clave*. Así que
+    después de corregir una factura, **cualquier cuerpo con aquella clave recibía un 200** y sus datos se
+    perdían en silencio: exactamente lo que la clave de reenvío existe para impedir.
+
+    La solución es **guardar la huella del comando original** (`huella_de_la_peticion`): si lo que llega
+    tiene esa huella, es el reenvío de siempre y se contesta con el registro actual; si no la tiene, es
+    otra cosa y es un **409**, haya correcciones o no.
+    """
+    original = _cuerpo()
+    primera = _enviar(cliente, cuenta["cabeceras"], clave="peticion-14")
+    assert primera.status_code == 201, primera.text
+    ident = primera.json()["id"]
+
+    correccion = cliente.put(
+        f"/api/facturas/{ident}",
+        headers=cuenta["cabeceras"],
+        json=_cuerpo(
+            numero_factura="2026/00123",
+            lineas=[
+                {
+                    "descripcion": "GLIFOSATO 36% SL 20 L (corregido)",
+                    "cantidad": 5,
+                    "unidad": "L",
+                    "precio_unitario": 34.0,
+                    "importe": 170.0,
+                }
+            ],
+        ),
+    )
+    assert correccion.status_code == 200, correccion.text
+
+    # El comando ORIGINAL, tal cual **y con su clave**: es un reenvío, y se contesta con el registro
+    # actual. (Sin la clave no sería el mismo comando: sería otra petición hablando del mismo papel.)
+    el_de_siempre = cliente.post(
+        "/api/facturas",
+        headers=cuenta["cabeceras"],
+        data={"datos": json.dumps({**original, "clave_de_reenvio": "peticion-14"})},
+    )
+    assert el_de_siempre.status_code == 200, el_de_siempre.text
+    assert el_de_siempre.json()["id"] == ident
+
+    # Y **otro** cuerpo con la misma clave, después de la corrección: conflicto.
+    otro = _enviar(cliente, cuenta["cabeceras"], clave="peticion-14", notas="esto no lo había dicho")
+    assert otro.status_code == 409, (
+        f"otro contenido con la misma clave no puede contestar {otro.status_code}: {otro.text}"
+    )
+    assert textos.mensaje("AL26_la_misma_clave_con_otros_datos") in otro.text
+    assert _cuantas_facturas(db_sesion) == 1
+
+
+def test_la_pantalla_manda_su_clave_de_reenvio_y_la_renueva_para_la_siguiente():
+    """El alta de una factura de compra **manda la clave**, y la siguiente factura trae la suya.
+
+    **Esto es un guardián de texto, y se dice.** Comprobar de verdad que el cuerpo que sale lleva la clave
+    exigiría montar el formulario entero en el arnés de JavaScript, y hoy ese arnés **no define
+    `FormData`** ni ejerce este camino (su `fetch` de mentira solo registra los cuerpos de texto). Lo que
+    esta prueba impide es lo que ya pasó de verdad hasta hoy: que la protección por clave estuviera escrita
+    en el servidor y **no la usara nadie desde la pantalla**, así que el reenvío de un guardado no se
+    reconocía. Es el mismo tipo de guardián que ya usa el proyecto para «toda dirección de la tabla tiene
+    su puerta».
+    """
+    import pathlib
+
+    app_js = (pathlib.Path(__file__).resolve().parents[1] / "web" / "app.js").read_text(
+        encoding="utf-8"
+    )
+    assert 'datos.clave_de_reenvio =\n        facturas.clave || (facturas.clave = claveDeReenvio(' in app_js, (
+        "el alta de una factura de compra no manda clave de reenvío: un reintento la apuntaría dos veces"
+    )
+    assert 'facturas.clave = claveDeReenvio("factura-de-compra");' in app_js, (
+        "no se genera una clave nueva al abrir el alta: la segunda factura viajaría con la clave de la "
+        "primera y el servidor la tomaría por un reenvío"
+    )
+    assert "facturas.clave = null;" in app_js, (
+        "la clave no se suelta después de guardar: la factura siguiente no sería una petición nueva"
+    )
 
 
 def test_la_base_no_deja_dos_veces_la_misma_clave(cliente, cuenta, db_sesion):
@@ -398,8 +511,11 @@ def test_la_base_no_deja_dos_veces_la_misma_clave(cliente, cuenta, db_sesion):
         db_sesion.commit()
     db_sesion.rollback()
 
-    # Y **la anulada no ocupa la clave**, que es lo que permite volver a apuntarla: la misma clave,
-    # pero con la primera anulada, sí entra.
+    # **Y la anulada también ocupa la clave** (09/10/2026, a petición de David): es lo que hace que el
+    # reenvío de un comando anulado conteste con su estado en vez de crear una factura nueva. Antes esta
+    # prueba exigía lo contrario —«la anulada no ocupa la clave»—, que era la regla de los albaranes; para
+    # la factura se cambió porque no distinguía un alta nueva deliberada de un reintento viejo que llega
+    # tarde. Las altas nuevas se hacen con una clave nueva.
     db_sesion.add(
         models.Factura(
             explotacion_id=explotacion_id, clave_de_reenvio="otra", anulada=True, total=1.0
@@ -408,5 +524,13 @@ def test_la_base_no_deja_dos_veces_la_misma_clave(cliente, cuenta, db_sesion):
     db_sesion.commit()
     db_sesion.add(
         models.Factura(explotacion_id=explotacion_id, clave_de_reenvio="otra", total=2.0)
+    )
+    with pytest.raises(IntegrityError):
+        db_sesion.commit()
+    db_sesion.rollback()
+
+    # Y con una clave **nueva** sí entra: es la forma de dar de alta otra factura de verdad.
+    db_sesion.add(
+        models.Factura(explotacion_id=explotacion_id, clave_de_reenvio="otra-nueva", total=2.0)
     )
     db_sesion.commit()
