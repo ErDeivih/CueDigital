@@ -612,16 +612,23 @@ def las_cuentas(explotacion: ExplotacionActual, db: Db, campana_id: int | None =
     cobrado_por_venta: dict[int, Decimal] = {}
     if campana_id is not None:
         cobrado_por_factura: dict[int, Decimal] = {}
-        for cobro in db.scalars(
-            select(models.Cobro).where(
-                models.Cobro.explotacion_id == explotacion.id,
+        # **El dinero cobrado de cada factura sale de las aplicaciones** (CRM-01, 11/10/2026), no de la
+        # columna del cobro: un ingreso puede saldar **varias** deudas y entonces esa columna va **vacía a
+        # propósito** —el dinero vive en las aplicaciones—, así que sumándola el margen de esa venta salía
+        # **sin cobrar**, que es un número equivocado en la pantalla donde el agricultor decide qué sembrar.
+        # La regla es la misma que la del cobrado de una factura (`ventas_api.lo_cobrado_de_una_factura`).
+        for aplicacion in db.scalars(
+            select(models.AplicacionDeUnCobro)
+            .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
+            .where(
+                models.AplicacionDeUnCobro.explotacion_id == explotacion.id,
+                models.AplicacionDeUnCobro.anulado.is_(False),
                 models.Cobro.anulado.is_(False),
-                models.Cobro.factura_emitida_id.is_not(None),
             )
         ):
-            suyo = cobro.importe_imputado if cobro.importe_imputado is not None else dinero.CERO
-            cobrado_por_factura[cobro.factura_emitida_id] = dinero.suma(
-                cobrado_por_factura.get(cobro.factura_emitida_id, dinero.CERO), suyo
+            suyo = dinero.a_decimal(aplicacion.importe) or dinero.CERO
+            cobrado_por_factura[aplicacion.factura_emitida_id] = dinero.suma(
+                cobrado_por_factura.get(aplicacion.factura_emitida_id, dinero.CERO), suyo
             )
         for factura in db.scalars(
             select(models.FacturaEmitida).where(

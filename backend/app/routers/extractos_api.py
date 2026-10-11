@@ -659,13 +659,20 @@ def _los_pendientes(db, explotacion) -> list[extractos.DocumentoPorConciliar]:
             # Una factura sin importe no se puede cobrar a medias: no se sabe cuánto le falta.
             pendiente = None
         else:
+            # **Lo cobrado sale de las aplicaciones** (CRM-01, 11/10/2026), como en la ficha de la factura:
+            # la columna del cobro va vacía cuando un ingreso salda varias deudas, así que sumándola esta
+            # factura aparecía **pendiente** en la conciliación del banco aunque ya estuviera cobrada, y el
+            # agricultor volvía a conciliar un dinero que ya estaba donde tenía que estar.
             cobrado = dinero.suma(
                 *[
-                    dinero.a_decimal(c.importe_imputado)
-                    for c in db.scalars(
-                        select(models.Cobro).where(
-                            models.Cobro.explotacion_id == explotacion.id,
-                            models.Cobro.factura_emitida_id == factura.id,
+                    dinero.a_decimal(a.importe)
+                    for a in db.scalars(
+                        select(models.AplicacionDeUnCobro)
+                        .join(models.Cobro, models.Cobro.id == models.AplicacionDeUnCobro.cobro_id)
+                        .where(
+                            models.AplicacionDeUnCobro.explotacion_id == explotacion.id,
+                            models.AplicacionDeUnCobro.factura_emitida_id == factura.id,
+                            models.AplicacionDeUnCobro.anulado.is_(False),
                             models.Cobro.anulado.is_(False),
                         )
                     ).all()
@@ -689,11 +696,20 @@ def _los_pendientes(db, explotacion) -> list[extractos.DocumentoPorConciliar]:
             )
         )
 
+    # **Y el dinero que de verdad está sin asignar** (CRM-01, 11/10/2026): lo que separa los dos casos es
+    # **tener o no tener aplicaciones**, no la columna de la factura —un cobro repartido entre varias deudas
+    # la tiene vacía a propósito, así que con la columna este bucle ofrecía para conciliar un ingreso que ya
+    # estaba conciliado a mano, y encima con su importe entero—.
     for cobro in db.scalars(
-        select(models.Cobro).where(
+        select(models.Cobro)
+        .where(
             models.Cobro.explotacion_id == explotacion.id,
             models.Cobro.anulado.is_(False),
-            models.Cobro.factura_emitida_id.is_(None),
+            ~models.Cobro.id.in_(
+                select(models.AplicacionDeUnCobro.cobro_id).where(
+                    models.AplicacionDeUnCobro.anulado.is_(False)
+                )
+            ),
         )
     ).all():
         importe = dinero.a_decimal(cobro.importe)
