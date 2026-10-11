@@ -203,11 +203,34 @@ ingreso entre varias deudas**, y eso lo pide el encargo con números. Ahora se p
     anular liberando la clave y **dos envíos concurrentes del mismo cobro** que dejan uno solo.
 
 **Y lo que queda de este ticket, dicho para que no se lea como terminado:** la **pantalla** del reparto
-(elegir varias facturas al apuntar un cobro y enseñar las aplicaciones en la ficha), los **filtros de la
-lista de ventas**, que hoy viven en memoria y no se conservan al volver, y los **importes en los
-documentos** (el PDF/CSV del cuaderno y la hoja de la Junta no llevan importe, precio ni pendiente). El
-contrato §S12 sigue siendo el destino, no una promesa cumplida: la emisión fiscal automatizada no se activa
-sin fuentes oficiales propias.
+—elegir varias facturas al apuntar un cobro y enseñar las aplicaciones en la ficha del cobro y en la de la
+factura, que el servidor ya las manda— y la **revisión visual** con capturas nuevas. (Los filtros de la lista
+de ventas y el dinero en los documentos **están cerrados**: ver el apartado siguiente.) El contrato §S12
+sigue siendo el destino, no una promesa cumplida: la emisión fiscal automatizada no se activa sin fuentes
+oficiales propias.
+
+### Los filtros de la lista de ventas y el dinero en los documentos (11/10/2026)
+
+Dos cosas de las de arriba, cerradas y con su medición:
+
+  · **Los filtros de lo que se vende viajan en la dirección.** Estaban en memoria (`estado.filtroVentas`) y
+    **volver de una ficha los perdía**; se midió por qué: `ventas` no estaba en `TABLA_DE_LA_PANTALLA`, así
+    que ni su orden ni sus filtros tenían camino a la dirección. Ahora se escriben y se leen como en las
+    demás listas, y al abrir con un filtro puesto **la tabla se vuelve a pedir con él** —la del arranque se
+    pide sin filtros, y sin eso el filtro estaría en la dirección y no en la pantalla—. Tiene prueba de
+    comportamiento con las dos mitades. *(De paso se midió que `LISTADOS`/`esUnListado` **no lo usa nadie**:
+    el mecanismo de «vista que recordar» está declarado y sin conectar, y queda dicho donde está para que
+    nadie lo conecte esperando que arregle unos filtros, porque no los arregla.)*
+  · **El cuaderno del agricultor dice por cuánto se vendió.** Su CSV y su PDF llevan **Importe** y
+    **Precio** con coma decimal y euros, y cuando el precio no consta escriben **«Falta el importe»**, nunca
+    `0,00 €` —un cero ahí sería afirmar una venta de cero euros que nadie ha hecho—. Tres pruebas nuevas
+    miran **el texto del documento** (el del CSV y el del PDF, con `pdfplumber`), no el código de estado.
+  · **Y la hoja de la Junta no lleva importes, a propósito.** Se midió antes de tocarla: el cuaderno oficial
+    de Castilla y León **no tiene ninguna columna de dinero** —ni el escritor ni el lector oficial del Cuecyl
+    la mencionan en sus 25 hojas—, porque es un registro de **actividad**, no de cuentas. Este programa
+    replica sus columnas y tiene una prueba que escribe el cuaderno y lo **vuelve a leer con el lector
+    oficial**: añadir «Importe» ahí no completaría el documento, **rompería el formato**. Queda escrito en el
+    propio módulo, que es donde lo leerá quien vaya a añadirlo.
 
 **Pendiente:** **permisos, uso sin cobertura, conflictos de edición y restauración de copia**; y de §S11,
 lo que la ficha todavía no enseña (varios tipos de IVA, portes y descuentos globales, moneda).
