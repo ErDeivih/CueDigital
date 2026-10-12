@@ -56,6 +56,17 @@
    */
   --foco: #ffd24a;
 
+  /*
+   * **Las dos transparencias con las que se sigue una fila con el ojo** (11/10/2026). Son los factores que usa
+   * el SCSS oficial de Odoo 17 para el **hover** de una fila (`.055`) y la **cebra** (`.01`): con veinte filas
+   * de números, lo que evita perderse no es un color, es poder seguir la fila con la vista. Van aquí, con los
+   * demás colores, porque el proyecto tiene una prueba que **no deja escribir un color suelto fuera de
+   * `:root`** —y hace bien: así no entran colores nuevos por las esquinas—. La primera versión de esto las
+   * escribió a mano dentro del `@media` y el guardián la cazó, que es exactamente para lo que está.
+   */
+  --fila-al-pasar: rgba(0, 0, 0, 0.055);
+  --fila-par: rgba(0, 0, 0, 0.01);
+
   --toque: 64px;
   --radio: 14px;
   --letra: 18px;
@@ -2734,10 +2745,10 @@ div.tarjeta:active {
   }
 
   .tabla tbody tr:hover {
-    background: rgba(0, 0, 0, 0.055);
+    background: var(--fila-al-pasar);
   }
 
   .tabla tbody tr:nth-child(even) {
-    background: rgba(0, 0, 0, 0.01);
+    background: var(--fila-par);
   }
 }
