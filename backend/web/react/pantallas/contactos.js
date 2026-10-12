@@ -76,6 +76,47 @@ function Buscador({ id, etiqueta, pista, accion, accionLimpiar, etiquetaLimpiar,
 }
 
 /**
+ * La tabla montada **con lo que la pantalla sí recibe**: las tarjetas.
+ *
+ * POR QUÉ ASÍ (11/10/2026). La primera versión montaba la tabla en `app.js` y se la pasaba como propiedad, y
+ * **no llegaba**: medido con dos sondas en el navegador, `app.js` construía las **6 columnas y las 20 filas** y
+ * **el componente recibía `tabla: null`**, porque esta pantalla se repinta con los datos de la caché del campo
+ * y las propiedades montadas allí no viajan. Montarla aquí con las tarjetas lo resuelve de raíz: **no depende
+ * de por dónde venga el repintado**.
+ *
+ * Y los datos están: cada tarjeta trae el nombre (`etiqueta`), los papeles en palabras (`rotulo`) y sus
+ * **pares etiqueta/valor** (`filas`), con las etiquetas que sirve el servidor. El valor se busca **por la
+ * etiqueta**, para que las columnas queden alineadas aunque a un contacto le falte un dato.
+ */
+function tablaDeLasTarjetas(tarjetas, c) {
+  const sinDato = c.tabla_sin_dato || "—";
+  const elValorDe = (tarjeta, etiqueta) => {
+    const fila = (tarjeta.filas || []).find((suya) => suya.etiqueta === etiqueta);
+    return fila && fila.valor ? fila.valor : sinDato;
+  };
+  return {
+    columnas: [
+      { texto: c.tabla_nombre, campo: "nombre", clase: "" },
+      { texto: c.tabla_que_es, clase: "" },
+      { texto: c.nif, clase: "" },
+      { texto: c.telefono, clase: "tabla-numero" },
+      { texto: c.correo, clase: "" },
+      { texto: c.tabla_acciones, clase: "tabla-acciones" },
+    ],
+    filas: tarjetas.map((tarjeta) => ({
+      celdas: [
+        { texto: tarjeta.etiqueta, accion: "contacto-abrir", datos: { id: tarjeta.id } },
+        { texto: tarjeta.rotulo || sinDato },
+        { texto: elValorDe(tarjeta, c.nif) },
+        { texto: elValorDe(tarjeta, c.telefono), clase: "tabla-numero" },
+        { texto: elValorDe(tarjeta, c.correo) },
+      ],
+      acciones: [{ accion: "contacto-abrir", texto: c.tabla_abrir, datos: { id: tarjeta.id } }],
+    })),
+  };
+}
+
+/**
  * La lista de las personas y las empresas de la finca.
  *
  * Propiedades:
@@ -96,6 +137,17 @@ export function PantallaDeLosContactos({
   cargando = false,
 }) {
   const c = textos.contactos || {};
+  // **La tabla: la de las tarjetas** (11/10/2026). Se monta aquí, con lo que la pantalla **sí recibe**, porque
+  // la que se montaba en `app.js` y viajaba como propiedad **no llegaba**: medido con dos sondas, `app.js`
+  // construía las 6 columnas y las 20 filas y el componente recibía `tabla: null` —esta pantalla se repinta con
+  // los datos de la caché del campo y las propiedades montadas allí no viajan—. Si algún día llega montada y
+  // con filas, se usa esa; mientras, la de aquí.
+  const laTabla =
+    tabla && tabla.filas && tabla.filas.length
+      ? tabla
+      : tarjetas.length
+        ? tablaDeLasTarjetas(tarjetas, c)
+        : null;
   return html`
     <h1>${frase(c.titulo)}</h1>
     <p className="pista">${frase(c.explica)}</p>
@@ -131,8 +183,8 @@ export function PantallaDeLosContactos({
       // la vez que se ponía la tabla, y como la tabla no llegó a pintarse, el ordenador se quedó **sin nada**.
       // Aquí va por pasos a propósito: primero la tabla, comprobada; después se callan las tarjetas, con sus
       // pruebas delante. Un cambio de aspecto no puede poder vaciar una pantalla.
-      tabla && tabla.filas && tabla.filas.length
-        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${tabla} /></div>`
+      laTabla
+        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${laTabla} /></div>`
         : null
     }
 

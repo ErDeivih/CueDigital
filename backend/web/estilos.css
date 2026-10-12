@@ -2772,3 +2772,21 @@ div.tarjeta:active {
     background: var(--fila-par);
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Cuando la pantalla trae su tabla, las tarjetas se callan** (11/10/2026).
+ *
+ * Es la misma pantalla con dos formas —la tabla en el ordenador, las tarjetas en el móvil— y lo decide el
+ * CSS, nunca el JavaScript: es la regla escrita del proyecto.
+ *
+ * **Y se decide por la presencia de la tabla, no por el ancho**: así, si algún día la tabla no se puede montar
+ * (una pantalla sin datos, un fallo), **las tarjetas vuelven solas** y la pantalla nunca queda vacía. Eso pasó
+ * una vez —se envolvieron las tarjetas en `.solo-movil` a la vez que se ponía la tabla, la tabla no llegó y el
+ * escritorio se quedó sin nada— y no vuelve a pasar. `:has()` pregunta si está la tabla; en un navegador que
+ * no lo entienda, se ven las tarjetas, que es exactamente lo de antes.
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  #pantalla:has(.solo-escritorio.tabla-scroll) .tarjeta {
+    display: none;
+  }
+}
