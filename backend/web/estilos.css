@@ -2628,7 +2628,21 @@ div.tarjeta:active {
 
   .boton-principal,
   .boton.boton-principal {
-    min-height: 38px;
+    /* El mismo suelo de 40 que el resto: la acción principal puede ser más ancha, pero no más baja. */
+    min-height: 40px;
+  }
+
+  /*
+   * **Y los de la cabecera del marco** (11/10/2026): `APUNTAR`, la letra grande y `Salir`. Medían **46,4 px**
+   * después de haber bajado los de la pantalla, y el motivo era el de siempre en este fichero: la regla que
+   * los gobierna es `.marco .barra-acciones .boton`, con **tres clases**, así que le gana a mi `.boton` de una
+   * sola. Se les pone el mismo selector —y por estar al final del fichero, gana— y quedan a 40, el suelo del
+   * contrato.
+   */
+  .marco .barra-acciones .boton {
+    min-height: 40px;
+    padding: 5px 10px;
+    border-width: 2px;
   }
 
   .campo input,

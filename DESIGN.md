@@ -410,8 +410,12 @@ esto vive dentro de su `@media`.
   copiando la densidad de Odoo/Frappe y se han devuelto a 40 al leer este párrafo**: un suelo
   con motivo de accesibilidad no lo rompe el agente por su cuenta, lo rompe el dueño del
   producto si quiere. Sigue siendo mucho más denso que los 46-64 de antes.
-  **Pendiente y medido**: los botones de la cabecera del marco (`Salir`, `A+`, `APUNTAR`)
-  siguen midiendo **46,4 px**; hay que bajarles el suelo y no se ha hecho todavía.
+  **Hecho el mismo día**: los botones de la cabecera del marco (`Salir`, `A+`, `APUNTAR`) medían
+  **46,4 px** y ya están en **40**, el mismo suelo. No bajaban porque la regla que los gobierna
+  (`.marco .barra-acciones .boton`, tres clases) le ganaba por especificidad a la del botón a
+  secas; se les puso su mismo selector, al final del fichero, y cedieron. Es la tercera vez en
+  el mismo día que un cambio de CSS «no hacía nada» por esto: **cuando algo no se mueve, lo
+  primero que hay que mirar es quién gana, no repetir el valor más fuerte.**
 - **Las listas se ven en tabla** (tierras, cuaderno, años, facturas y almacén): cabecera por
   columna —y la cabecera es un botón cuando la columna se puede ordenar—, los números
   alineados a la derecha, las acciones en la última columna y **el total al pie**, que es la
