@@ -17248,19 +17248,67 @@ async function abrirLosContactos() {
 /** La lista de contactos, ya en React. */
 function pantallaContactos() {
   const suyo = estadoDeLosContactos();
-  montar(() =>
-    pantallaDeLosContactos({
-      textos: textosDeLosContactos(),
-      tarjetas: suyo.lista.map(tarjetaDeUnContacto),
-      // El singular y el plural con las dos formas del servidor: «Tienes 1 fichas» es lo primero que
-      // hace desconfiar de un programa.
-      resumen: suyo.lista.length ? conCuenta(t("contactos", {}), "cuantas", suyo.lista.length) : "",
-      buscado: suyo.buscado,
-      aviso: suyo.aviso || "",
-      error: suyo.error || "",
-      cargando: suyo.cargando,
-    }),
-  );
+  // **La tabla del ordenador** (11/10/2026). La pantalla se pintaba como una lista de un renglón por nombre:
+  // medido en el navegador, **20 tarjetas de 92 px**, donde un CRM enseña filas de 45. La tabla se monta aquí
+  // y la pinta el componente dentro de `.solo-escritorio`; las dos formas van en el mismo HTML y las separa
+  // el CSS, que es la regla del proyecto.
+  //
+  // **SIN TERMINAR, y se dice por qué**: medido con dos sondas en el navegador, este objeto **sí** trae la
+  // tabla (6 columnas y 20 filas, comprobado) pero **el componente recibe `tabla: null`**. O sea: las
+  // propiedades que se montan aquí **no llegan a la pantalla** cuando algo la repinta con los datos de la
+  // caché del campo. Mientras eso no se arregle, la tabla **no se ve** y las tarjetas siguen como siempre:
+  // por eso esto se deja aquí, sin efecto, en vez de envolver las tarjetas en `.solo-movil` y dejar el
+  // escritorio vacío —que es lo que pasó en el primer intento y hubo que revertir—.
+  const props = {
+    textos: textosDeLosContactos(),
+    tarjetas: suyo.lista.map(tarjetaDeUnContacto),
+    tabla: tablaDeLosContactos(suyo.lista),
+    // El singular y el plural con las dos formas del servidor: «Tienes 1 fichas» es lo primero que
+    // hace desconfiar de un programa.
+    resumen: suyo.lista.length ? conCuenta(t("contactos", {}), "cuantas", suyo.lista.length) : "",
+    buscado: suyo.buscado,
+    aviso: suyo.aviso || "",
+    error: suyo.error || "",
+    cargando: suyo.cargando,
+  };
+  montar(() => pantallaDeLosContactos(props));
+}
+
+/**
+ * La tabla de la lista de contactos, para el ordenador.
+ *
+ * **La forma la manda el componente** (`web/react/piezas/tabla.js`): cada fila escribe **una celda menos que
+ * columnas hay**, porque la última columna es la de las acciones y la pinta él. **Los datos ya venían**: la
+ * lista trae el nombre, los papeles, el NIF, el teléfono y la localidad, así que **no hace falta puerta nueva
+ * en el servidor** —el primer plan pedía copiar `/api/ventas/tabla` y era trabajo de más—.
+ */
+function tablaDeLosContactos(lista) {
+  const c = t("contactos", {});
+  const sinDato = c.tabla_sin_dato || "—";
+  const losPapeles = (contacto) => {
+    const suyos = (contacto.papeles || []).map((papel) => elNombreDelPapel(papel)).filter(Boolean);
+    return suyos.length ? suyos.join(", ") : c.tabla_que_es_sin_papel || sinDato;
+  };
+  return {
+    columnas: [
+      { texto: c.tabla_nombre, campo: "nombre", clase: "" },
+      { texto: c.tabla_que_es, clase: "" },
+      { texto: c.tabla_nif, clase: "" },
+      { texto: c.tabla_telefono, clase: "tabla-numero" },
+      { texto: c.tabla_localidad, clase: "" },
+      { texto: c.tabla_acciones, clase: "tabla-acciones" },
+    ],
+    filas: (lista || []).map((contacto) => ({
+      celdas: [
+        { texto: contacto.nombre, accion: "contacto-abrir", datos: { id: contacto.id } },
+        { texto: losPapeles(contacto) },
+        { texto: contacto.nif || sinDato },
+        { texto: contacto.telefono || sinDato, clase: "tabla-numero" },
+        { texto: contacto.localidad || sinDato },
+      ],
+      acciones: [{ accion: "contacto-abrir", texto: c.tabla_abrir, datos: { id: contacto.id } }],
+    })),
+  };
 }
 
 /** Abre la ficha de un contacto (`id` vacío es «una ficha nueva»). */

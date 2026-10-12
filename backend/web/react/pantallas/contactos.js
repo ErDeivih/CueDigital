@@ -35,6 +35,7 @@
 
 import { AvisoDeError, Boton, BotonSencillo, frase, html } from "../componentes.js";
 import { Tarjeta } from "../piezas/tarjeta.js";
+import { Tabla } from "../piezas/tabla.js";
 
 /** Un campo de escribir con su etiqueta y su pista. Descontrolado: lo lee `app.js` por su `id`. */
 function Campo({ id, etiqueta, pista, valor = "", area = false }) {
@@ -87,6 +88,7 @@ function Buscador({ id, etiqueta, pista, accion, accionLimpiar, etiquetaLimpiar,
 export function PantallaDeLosContactos({
   textos = {},
   tarjetas = [],
+  tabla = null,
   resumen = "",
   buscado = "",
   aviso = "",
@@ -117,6 +119,21 @@ export function PantallaDeLosContactos({
       tarjetas.length === 0
         ? html`<p className="aviso">${frase(c.vacia)}</p>`
         : html`<p className="pista">${frase(resumen)}</p>`
+    }
+
+    ${
+      // **La tabla, en el ordenador** (11/10/2026). Es la pantalla central del CRM y se pintaba como una lista
+      // de un renglón por nombre: medido, **20 tarjetas de 92 px**, donde un CRM enseña filas de 45. Va dentro
+      // de `.solo-escritorio`, que es lo que la enseña en el ordenador y la esconde en el móvil —el mismo
+      // HTML para las dos formas y el CSS decidiendo, que es la regla del proyecto—.
+      //
+      // **Y las tarjetas NO se envuelven todavía**: en el intento anterior se envolvieron en `.solo-movil` a
+      // la vez que se ponía la tabla, y como la tabla no llegó a pintarse, el ordenador se quedó **sin nada**.
+      // Aquí va por pasos a propósito: primero la tabla, comprobada; después se callan las tarjetas, con sus
+      // pruebas delante. Un cambio de aspecto no puede poder vaciar una pantalla.
+      tabla && tabla.filas && tabla.filas.length
+        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${tabla} /></div>`
+        : null
     }
 
     ${tarjetas.map(
