@@ -6848,6 +6848,8 @@ CONTACTOS: dict[str, object] = {
 }
 
 MENSAJES_DE_LOS_CONTACTOS: dict[str, str] = {
+    # Una nota vacía no es una nota (CRM-03, criterio (f), 11/10/2026).
+    "C7_una_nota_necesita_texto": "Una nota tiene que decir algo. Escribe lo que quieras apuntar.",
     # --- Lo que se le dice cuando algo no se puede hacer, siempre con la salida
     "C2_eso_no_se_puede_enlazar": (
         "Ese nombre no se puede enlazar desde aquí. Vuelve a las fichas y busca el nombre entre los "

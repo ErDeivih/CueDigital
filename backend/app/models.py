@@ -3396,6 +3396,30 @@ class Contacto(Base):
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class NotaDeUnContacto(Base):
+    """Una nota sobre una ficha, **con quién la escribió y cuándo** (CRM-03, criterio (f), 11/10/2026).
+
+    Hasta hoy la ficha tenía **un campo de notas** y nada más: se corregía y se perdía lo de antes, y no se sabía
+    quién había escrito qué. En una finca eso importa: «este nos dejó tirados en la campaña del 24» es una nota
+    que conviene poder atribuir, y dos personas de la casa apuntan cosas distintas.
+
+    **Las notas no se corrigen: se apuntan.** Son el diario de la ficha —lo que se va sabiendo— y no un dato que
+    se pone al día: si algo se escribió mal, se escribe otra nota diciéndolo. Por eso no entra en `correcciones`.
+    """
+
+    __tablename__ = "notas_de_un_contacto"
+    __table_args__ = (Index("ix_nota_de_contacto", "contacto_id", "creado_en"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    contacto_id: Mapped[int] = mapped_column(ForeignKey("contactos.id"), index=True)
+    # **El autor puede faltar y se dice**: hay notas que escribe el programa, y `None` es «no la escribió una
+    # persona». Inventarle un autor sería peor que no tenerlo.
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    texto: Mapped[str] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class PapelDeUnContacto(Base):
     """Qué hace esa persona o esa empresa con esta finca. **Puede hacer varios a la vez.**
 

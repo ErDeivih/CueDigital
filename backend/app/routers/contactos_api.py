@@ -50,6 +50,7 @@ from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotaci
 from ..schemas import (
     ConfirmacionDeLaMigracion,
     BajaDeUnContacto,
+    NotaDeUnContactoEntrada,
     ContactoEntrada,
     ContactoSalida,
     DeshacerLaMigracion,
@@ -265,6 +266,10 @@ def _pintar_contacto(
         # de verdad** —una ficha de baja se leía como activa—. Lo cazó la prueba del criterio (e). Un valor por
         # defecto en una salida es una mentira que espera su turno: si falta el dato, tiene que fallar.
         "activo": contacto.activo,
+        # **La lista no lleva las notas**: se leen al abrir la ficha, que es cuando se miran. Se manda la lista
+        # vacía —y se manda— porque el esquema la exige: una ficha sin notas y una ficha a la que se le han
+        # olvidado no pueden leerse igual.
+        "notas_con_autor": [],
         "es_empresa": contacto.es_empresa,
         "nif": contacto.nif,
         "telefono": contacto.telefono,
@@ -284,6 +289,44 @@ def _pintar_contacto(
         "enlaces": len(suyos),
         "nombres_escritos": sorted({uno["texto"] for uno in suyos}),
     }
+
+
+def _las_notas(db, contacto: models.Contacto) -> list[dict]:
+    """Las notas de una ficha, **de la más nueva a la más vieja**, con el nombre de quien la escribió.
+
+    Va aquí, en `_la_ficha`, y **no** en `_pintar_contacto`: aquella no recibe la sesión de la base (11/10/2026,
+    y costó una ronda entera de trabajo perdido por meterlo ahí).
+
+    El nombre del autor se busca con una consulta aparte en vez de con una relación: son pocas notas por ficha y
+    así esta pantalla no arrastra el modelo de usuarios entero. Si el autor no está —o la escribió el programa—,
+    se dice con `None` y la pantalla lo enseña como «el programa».
+    """
+    suyas = list(
+        db.scalars(
+            select(models.NotaDeUnContacto)
+            .where(models.NotaDeUnContacto.contacto_id == contacto.id)
+            .order_by(models.NotaDeUnContacto.creado_en.desc(), models.NotaDeUnContacto.id.desc())
+        )
+    )
+    los_autores = [nota.usuario_id for nota in suyas if nota.usuario_id]
+    nombres = (
+        {
+            fila.id: fila.nombre
+            for fila in db.scalars(select(models.Usuario).where(models.Usuario.id.in_(los_autores)))
+        }
+        if los_autores
+        else {}
+    )
+    return [
+        {
+            "id": nota.id,
+            "texto": nota.texto,
+            "autor": nombres.get(nota.usuario_id) if nota.usuario_id else None,
+            "creado_en": nota.creado_en,
+        }
+        for nota in suyas
+    ]
+
 
 
 def _la_ficha(db, contacto: models.Contacto, escritos: list[dict]) -> dict:
@@ -306,6 +349,9 @@ def _la_ficha(db, contacto: models.Contacto, escritos: list[dict]) -> dict:
             escritos=escritos,
             papeles_escritos=_lo_que_escribe_cada_papel(escritos),
         ),
+        # **Las notas, con su autor** (CRM-03, criterio (f)): la lista entera, de la más nueva a la más vieja.
+        # El campo `notas` de siempre se queda como está —es el texto libre de la ficha— y esto es el diario.
+        "notas_con_autor": _las_notas(db, contacto),
         "vivos": [
             {
                 "id": identificador,
@@ -562,6 +608,42 @@ def volver_a_usarlo(
     db.commit()
     db.refresh(contacto)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.post("/{contacto_id}/notas", response_model=ContactoSalida)
+def apuntar_una_nota(
+    contacto_id: int,
+    datos: NotaDeUnContactoEntrada,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Apunta una nota en la ficha, con quién la escribe y cuándo** (CRM-03, criterio (f), 11/10/2026).
+
+    Las notas **no se corrigen: se apuntan**. Son el diario de la ficha, así que si algo se escribió mal se
+    escribe otra nota diciéndolo —y así queda lo de antes, que es lo que un diario tiene que hacer—.
+
+    **El autor lo pone el servidor**, de su vale: aceptarlo del navegador sería poder firmar cosas que no ha
+    escrito uno.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    texto = logica.limpia(datos.texto)
+    if not texto:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=textos.mensaje("C7_una_nota_necesita_texto"),
+        )
+    db.add(
+        models.NotaDeUnContacto(
+            explotacion_id=explotacion.id,
+            contacto_id=contacto.id,
+            usuario_id=usuario.id,
+            texto=texto,
+        )
+    )
+    db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
 
 
 @router.get("/escritos", response_model=list[NombreEscrito])

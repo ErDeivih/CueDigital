@@ -3545,6 +3545,16 @@ class EnlaceDeUnContacto(SalidaBase):
     escrito: NombreEscrito
 
 
+class NotaDeUnContactoEntrada(EntradaBase):
+    """Una nota sobre una ficha: **solo el texto**. El autor y la fecha los pone el servidor.**
+
+    No se acepta un autor escrito a mano: el autor es quien está apuntando, y eso lo sabe el servidor
+    por su vale. Dejarlo venir del navegador sería poder firmar cosas que no ha escrito uno.
+    """
+
+    texto: str
+
+
 class BajaDeUnContacto(EntradaBase):
     """Dar de baja a un contacto, o volver a usarlo: **el motivo es opcional**.
 
@@ -3553,6 +3563,19 @@ class BajaDeUnContacto(EntradaBase):
     """
 
     motivo: str | None = None
+
+
+class NotaDeUnContactoSalida(BaseModel):
+    """Una nota de una ficha, con quién la escribió (CRM-03, criterio (f), 11/10/2026).
+
+    `autor` puede ser `None` y **se dice**: hay notas que escribe el programa, y `None` es «no la
+    escribió una persona». Inventarle un autor sería peor que no tenerlo.
+    """
+
+    id: int
+    texto: str
+    autor: str | None = None
+    creado_en: dt.datetime
 
 
 class ContactoSalida(SalidaBase):
@@ -3580,6 +3603,13 @@ class ContactoSalida(SalidaBase):
     # como activa. En una salida, un valor por defecto es una mentira esperando su turno: si falta el
     # dato, que falle.
     activo: bool
+    # Las notas de la ficha, de la más nueva a la más vieja, con su autor (criterio (f)).
+    #
+    # **Sin valor por defecto**: la lista de contactos la manda vacía y la ficha la manda
+    # llena, pero las dos la mandan. Un valor por defecto aquí taparía un olvido —que es lo que
+    # pasó con `activo`—, y una ficha sin notas y una ficha con las notas olvidadas no son lo
+    # mismo.
+    notas_con_autor: list[NotaDeUnContactoSalida]
     origen: str = "a_mano"
     # Los papeles que el agricultor le ha marcado.
     papeles: list[str] = []
