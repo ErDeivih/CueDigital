@@ -127,11 +127,35 @@ def test_la_compra_se_anda_entera():
                         + "\n\n--- lo que dijo el servidor ---\n"
                         + diario.read_text(encoding="utf-8", errors="replace")[-3000:]
                     )
-                suyo = subprocess.run(  # noqa: S603 - es el propio proyecto
-                    [PYTHON, str(GUION), direccion, carpeta, str(base)],
-                    cwd=str(BACKEND), env=entorno, capture_output=True, text=True,
-                    encoding="utf-8", errors="replace", timeout=600,
-                )
+                try:
+                    suyo = subprocess.run(  # noqa: S603 - es el propio proyecto
+                        [PYTHON, str(GUION), direccion, carpeta, str(base)],
+                        cwd=str(BACKEND), env=entorno, capture_output=True, text=True,
+                        encoding="utf-8", errors="replace", timeout=600,
+                    )
+                except subprocess.TimeoutExpired as tardanza:
+                    # **Si el guion se pasa de tiempo, la prueba tiene que decir por qué** (11/10/2026).
+                    # Esto no es teoría: el 11/10/2026 esta prueba falló **intermitentemente** en el recuento
+                    # —que corre la suite dos veces seguidas— y el mensaje que quedó fue, entero, un
+                    # `TimeoutExpired … timed out after 600 seconds`: **decía que se había quedado sin tiempo
+                    # y no decía qué estaba haciendo**. Hubo que leer el XML a mano para saber que era aquí, y
+                    # aun así quedó sin saberse **por qué** se quedó. Un timeout sin la salida del que se pasó
+                    # es la mitad de un diagnóstico.
+                    #
+                    # Se enseña lo que el guion **llegó a imprimir** y si el servidor **sigue vivo**: entre las
+                    # dos cosas se distingue «el servidor se murió» de «el guion se atascó en un paso».
+                    vivo = servidor.poll() is None
+                    raise AssertionError(
+                        "el guion del recorrido no ha terminado en 600 segundos. **No dice que la compra esté"
+                        f" rota**: dice que el guion se quedó a medias. El servidor de pruebas está"
+                        f" {'vivo' if vivo else 'MUERTO'}"
+                        + ("" if vivo else f" (código {servidor.poll()})")
+                        + "\n\n--- lo que llegó a imprimir el guion ---\n"
+                        + ((tardanza.stdout or "") if isinstance(tardanza.stdout, str) else "")
+                        + ((tardanza.stderr or "") if isinstance(tardanza.stderr, str) else "")[-3000:]
+                        + "\n\n--- lo que dijo el servidor ---\n"
+                        + diario.read_text(encoding="utf-8", errors="replace")[-3000:]
+                    ) from tardanza
                 salida = (suyo.stdout or "") + (suyo.stderr or "")
                 faltan = [cifra for cifra in LAS_CIFRAS if cifra not in salida]
                 assert not faltan, (
