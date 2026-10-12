@@ -50,7 +50,12 @@ from . import models
 # no se tocan (una corrección no puede cambiar de finca ni de fila), y el estado de anulación
 # tampoco: corregir un apunte anulado no lo resucita, y para eso está volver a apuntarlo.
 CAMPO_QUE_NO_SE_TOCA = frozenset(
-    {"id", "explotacion_id", "anulado", "motivo_anulacion", "creado_en", "actualizado_en"}
+    # `activo` se añade el 11/10/2026 (CRM-03, criterio (e)) y **no es una excepción cómoda**: dar de baja a
+    # un contacto es **una acción propia** —con su botón y su motivo—, no una corrección de sus datos. Si
+    # `corregir` la copiara, dos cosas malas pasarían: la primera, que llegaría vacía desde el formulario y la
+    # base rechazaría el guardado (`NOT NULL`) —que es justo lo que cazaron las pruebas—; y la segunda, peor,
+    # que **corregir el teléfono de una ficha dada de baja la reactivaría sin que nadie lo haya pedido**.
+    {"id", "explotacion_id", "anulado", "motivo_anulacion", "activo", "creado_en", "actualizado_en"}
 )
 
 

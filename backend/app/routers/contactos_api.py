@@ -258,6 +258,12 @@ def _pintar_contacto(
     return {
         "id": contacto.id,
         "nombre": contacto.nombre,
+        # **El estado, que hay que decir** (CRM-03, criterio (e), 11/10/2026). Se cuenta aquí y **no se deja
+        # con un valor por defecto en el esquema**: la primera versión ponía `activo: bool = True` en
+        # `ContactoSalida` y, como esta respuesta no lo traía, **el esquema rellenaba `True` y tapaba el valor
+        # de verdad** —una ficha de baja se leía como activa—. Lo cazó la prueba del criterio (e). Un valor por
+        # defecto en una salida es una mentira que espera su turno: si falta el dato, tiene que fallar.
+        "activo": contacto.activo,
         "es_empresa": contacto.es_empresa,
         "nif": contacto.nif,
         "telefono": contacto.telefono,

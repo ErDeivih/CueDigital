@@ -3562,6 +3562,14 @@ class ContactoSalida(SalidaBase):
     direccion: str | None = None
     localidad: str | None = None
     notas: str | None = None
+    # Si se sigue trabajando con esta ficha (CRM-03, criterio (e)): **un contacto inactivo conserva sus
+    # relaciones**, así que se enseña el estado en vez de esconder la ficha.
+    #
+    # **Sin valor por defecto, y es a propósito**: con `= True`, la primera versión tapaba el valor de
+    # verdad —la respuesta no lo traía y el esquema rellenaba `True`—, así que una ficha de baja se leía
+    # como activa. En una salida, un valor por defecto es una mentira esperando su turno: si falta el
+    # dato, que falle.
+    activo: bool
     origen: str = "a_mano"
     # Los papeles que el agricultor le ha marcado.
     papeles: list[str] = []

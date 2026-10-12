@@ -3385,6 +3385,14 @@ class Contacto(Base):
     # de la migración**: es suya, y deshacer no puede llevársela. Se marca al corregirla o al tocarle
     # los papeles a mano, y deshacer la respeta y lo dice en la respuesta.
     editado_a_mano: Mapped[bool] = mapped_column(Boolean, default=False)
+    # **Si se sigue trabajando con él o no** (CRM-03, criterio (e), 11/10/2026): *«un contacto inactivo
+    # conserva sus relaciones»*. **No se borra**: el día que se deja de tratar con un proveedor, sus facturas y
+    # sus ventas siguen apuntándole, y borrar la ficha las dejaría huérfanas —y borrar el pasado no es lo que
+    # el agricultor pide cuando dice «este ya no»—. `True` por defecto: una ficha recién apuntada está activa,
+    # y dar de baja es una decisión que se toma. Va con `default` de Python y no `server_default`, como
+    # `editado_a_mano`, porque `database.asegurar_columnas` es quien traduce el valor por defecto a cada
+    # dialecto cuando añade la columna a una tabla que ya existía.
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
