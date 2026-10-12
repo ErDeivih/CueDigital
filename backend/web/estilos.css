@@ -2711,3 +2711,33 @@ div.tarjeta:active {
     min-height: 38px;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Los números se alinean y la fila se sigue con el ojo** (11/10/2026).
+ *
+ * Son dos detalles que hacen que una tabla se lea como una tabla, y los dos están en el SCSS oficial de Odoo
+ * 17 (`addons/web/static/src/scss/`), no en mi opinión:
+ *  · `font-variant-numeric: tabular-nums` en la tabla, para que **los números de una columna se alineen por la
+ *    coma** (sin esto, un 1 y un 8 ocupan anchos distintos y la columna «baila»);
+ *  · **hover de fila al 5,5 % y cebra al 1 %** de negro (`$table-hover-bg-factor: .055`,
+ *    `$table-striped-bg-factor: 0.01`): con veinte filas de números, lo que evita perderse **no** es un color,
+ *    es seguir la fila con el ojo.
+ *
+ * La paleta no se toca: el hover y la cebra se hacen con negro translúcido, que es como lo hace Odoo, y así no
+ * aparece un color nuevo en el sistema de diseño del proyecto.
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .tabla tbody td,
+  .tabla tfoot td,
+  .tabla-numero {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabla tbody tr:hover {
+    background: rgba(0, 0, 0, 0.055);
+  }
+
+  .tabla tbody tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.01);
+  }
+}
