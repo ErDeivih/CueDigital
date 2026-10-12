@@ -1615,3 +1615,37 @@ test("el botón de apuntar sale apagado en el HTML mientras se envía", async ()
 function unaPropuestaPipeline() {
   return unaPropuesta({ clave: "segura1" });
 }
+
+test("la lista de contactos, en el ordenador, va en tabla con sus columnas", async () => {
+  // **La tabla del ordenador de la lista de contactos** (11/10/2026). Medido en el navegador, esa pantalla
+  // pintaba **20 tarjetas de 92 px** y ninguna columna, donde un programa de gestión enseña filas de 45. Esto
+  // lo deja escrito: si alguien la quita, se entera.
+  //
+  // Y se comprueba lo que costó tres intentos: que la tabla **se monta con las tarjetas que la pantalla ya
+  // recibe**, no con una propiedad que se le pase desde fuera —la que se montaba en `app.js` no llegaba,
+  // porque esta pantalla se repinta con los datos de la caché del campo—.
+  const html = await htmlDeLosContactos({
+    tarjetas: [
+      {
+        id: 1,
+        etiqueta: "Cooperativa Agrícola de Peñaranda",
+        rotulo: "Proveedor, Cliente",
+        lineas: [],
+        avisos: [],
+        filas: [
+          { etiqueta: TEXTOS.nif, valor: "B09123456" },
+          { etiqueta: TEXTOS.telefono, valor: "947 123 456" },
+        ],
+      },
+    ],
+  });
+  assert.ok(html.includes('class="tabla"'), `la lista de contactos no va en tabla:\n${html}`);
+  assert.ok(html.includes("solo-escritorio"), "la tabla tiene que ir en la parte de escritorio");
+  assert.ok(html.includes("Cooperativa Agrícola de Peñaranda"), "la fila lleva el nombre");
+  assert.ok(html.includes("B09123456"), "y el NIF, que viene de las filas de la tarjeta");
+  assert.ok(html.includes("947 123 456"), "y el teléfono");
+  assert.ok(
+    html.includes("contacto-abrir"),
+    "y el nombre es un botón que abre la ficha: en una tabla no se toca la fila entera",
+  );
+});
