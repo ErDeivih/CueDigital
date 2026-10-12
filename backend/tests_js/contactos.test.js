@@ -1648,7 +1648,7 @@ test("la lista de contactos, en el ordenador, va en tabla con sus columnas", asy
   // tiene la tabla nueva (11/10/2026): las tarjetas **tambien** llevan dentro una `<table class="tabla">`
   // para sus filas de datos, asi que preguntar por eso daba verde aunque la tabla no estuviera. Se supo
   // rompiendo la tabla a proposito y viendo que la prueba **no** se ponia roja.
-    html.includes("solo-escritorio tabla-scroll"),
+    html.includes('data-tabla="contactos"'),
     `la lista de contactos no va en tabla:\n${html}`,
   );
   assert.ok(html.includes("solo-escritorio"), "la tabla tiene que ir en la parte de escritorio");

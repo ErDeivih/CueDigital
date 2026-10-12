@@ -184,7 +184,7 @@ export function PantallaDeLosContactos({
       // Aquí va por pasos a propósito: primero la tabla, comprobada; después se callan las tarjetas, con sus
       // pruebas delante. Un cambio de aspecto no puede poder vaciar una pantalla.
       laTabla
-        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${laTabla} /></div>`
+        ? html`<div className="solo-escritorio tabla-scroll" data-tabla="contactos"><${Tabla} tabla=${laTabla} /></div>`
         : null
     }
 
