@@ -968,3 +968,107 @@ Las cuatro prioridades, **hechas y medidas**, y cada una con el comando que lo v
    renglones con su pantalla y 22 pantallas con su renglón).
 3. **El comentario del grupo «Normativa»** sigue diciendo que ese grupo no existe, y sigue siendo verdad:
    lo que se añadió es **un renglón** en el grupo de Inicio, no un grupo nuevo.
+
+
+---
+
+# EL ESCRITORIO (11/10/2026)
+
+## Por qué se hizo
+
+El dueño del producto miró las capturas y dijo, de `docs/capturas/`: *«no se parece a un CRM normal, parece una
+UI para niños pequeños»*. Y después: *«que la complejidad esté para PC»*, dejando el móvil para lo
+imprescindible (subir una factura, un resumen rápido, apuntar un trabajo). **Tenía razón**, y la causa no se
+buscó en el gusto: se **midió**.
+
+## Lo que se midió, y las cuatro causas
+
+Los números salen del navegador de verdad (`backend/scripts/medir_la_densidad_de_la_interfaz.py`), sobre la
+página renderizada, no del CSS.
+
+| lo que se mide | antes | ahora | de dónde sale el número de destino |
+|---|---|---|---|
+| **fila de una tabla** | **277,9 px** | **46 px** | Frappe 15: `.list-row { height: 40px }` |
+| cabecera de una tabla | 50 px | **29** | Frappe 15: `.list-row-head { height: 30px }` |
+| **ancho del contenido** | **704 px** (44 rem, centrado) | **~1300** | Odoo ocupa el ancho; **ya lo pedía este proyecto** |
+| cuerpo | 18 px | **16** | Odoo y Frappe usan 14; **no se baja de 16** (suelo del proyecto) |
+| título de pantalla | 24 px | **20** | el escritorio que Stitch ya dibujó (`estructura.html`) |
+| botón (pantalla y cabecera) | 44–48 px | **40** | **el suelo del contrato**, por la edad del agricultor |
+| radio de control | 14 px | **8** | Odoo 4, `frappe-ui` 8 para lo que se toca |
+| números de una columna | — | **`tabular-nums`** | Odoo 17 lo pone en su tabla |
+| seguir una fila con el ojo | — | **hover 5,5 % y cebra 1 %** | los factores de Odoo |
+
+**Las cuatro causas, encontradas midiendo celda por celda** (ninguna se veía en la captura: se veía «feo» y no
+se sabía por qué):
+
+1. **Los tokens del móvil aplicados al escritorio**: 18 px de letra, controles de 64 y radios de 14 son los del
+   **campo** —una mano, sol, guantes— y se usaban también en el despacho.
+2. **La columna de acciones con cinco botones apilados**: 5 × 46 = los 278 px de la fila.
+3. **Un texto largo de verdad** —una descripción de sitio— partido en **ocho renglones** dentro de una columna
+   de 100 px. Ahora se recorta a una línea y se lee entero en la ficha.
+4. **El tope de 44 rem del contenido**: en un monitor de 1440 es **menos de la mitad del ancho**, con franjas
+   vacías. Era el patrón de la aplicación de teléfono.
+
+## El armazón, uno solo
+
+El diseño de escritorio del proyecto estaba dibujado **siete veces con siete medidas distintas** (menú de 224 a
+320 px, barra de 56 a 80). Se eligen las del encargo escrito (`backend/scripts/disenar_con_stitch.py`):
+**menú 240 px, barra 64, panel 340**, radio 8. Medido en el navegador: `240px minmax(0,1fr) 340px`.
+
+## Las pantallas del CRM que estaban en forma de móvil
+
+| pantalla | antes | ahora |
+|---|---|---|
+| `#/contactos` — «Las personas y las empresas» | 20 tarjetas de **92 px** | **20 filas de 46** con 6 columnas |
+| `#/ventas/cobros` — «Lo que me han pagado» | **una tarjeta por cobro** | **6 columnas, fila de 45** |
+| `#/facturas` — «Mis facturas» | tarjeta / lista | **8 columnas, fila de 45** |
+| `#/compras/<id>` — la ficha de la compra | — | **4 columnas, fila de 31** |
+
+**Las dos formas van en el mismo HTML y las separa el CSS** (`.solo-escritorio` y `.solo-movil`), nunca
+JavaScript: es la regla del proyecto. Y las tarjetas se callan **solo si la tabla está** —se pregunta con
+`:has()`—, así que **si un día la tabla no se puede montar, las tarjetas vuelven solas y la pantalla nunca
+queda vacía**. Eso pasó una vez y no vuelve a pasar.
+
+## Dónde se aplica
+
+Una **capa al final de `backend/web/estilos.css`**, toda dentro de `@media (min-width: 64rem)`. **El móvil no
+cambia ni un píxel.** Está al final a propósito: la primera versión se escribió arriba y **no hacía nada**,
+porque reglas posteriores con la misma especificidad ganaban por orden de fuente. Cuando algo «no se mueve», lo
+primero que hay que mirar es **quién gana**, no repetir el valor más fuerte.
+
+## Pruebas y capturas
+
+- **JavaScript: 1088 pruebas, 0 fallos**, con dos nuevas para las tablas de contactos y de cobros. La de
+  contactos **se demostró que puede fallar** (con `const laTabla = null;` se pone roja; con la tabla, verde), y
+  para eso se le puso a la tabla una **marca propia** (`data-tabla="contactos"`): las tarjetas de esa pantalla
+  **llevan dentro su propia `<table class="tabla">`**, así que preguntar por la clase o por la etiqueta daba
+  verde aunque la tabla no estuviera.
+- **Python: 4798 pruebas, 0 fallos**, guardianes de `DESIGN.md`, de textos y de colores sueltos incluidos.
+- **La ficha de la compra en el navegador** (CRM-00, 53 comprobaciones): en verde.
+- **Capturas** en `docs/capturas/`: `ventas-escritorio-antes.png` y `ventas-escritorio-crm.png` (la misma
+  pantalla y la misma ventana), `contactos-escritorio-antes.png` y `contactos-escritorio-tabla.png`, y
+  `cobros-escritorio-tabla.png`.
+- **Instrumentos nuevos**: `medir_la_densidad_de_la_interfaz.py` (mide la densidad en el navegador),
+  `capturar_una_pantalla_del_escritorio.py`, `medir_las_pantallas_de_compra_y_cobro.py` y
+  `capturar_la_lista_de_cobros.py` (montan el escenario **prestado** de los guiones que ya lo crean: nada de
+  datos inventados).
+
+## Lo que queda pendiente, y es decisión del dueño
+
+1. **Bajar los botones de 40 a 34** (Odoo 33, Frappe 28). Hoy manda el suelo de 40 escrito en `DESIGN.md` con un
+   motivo de accesibilidad: *«el agricultor tiene entre 50 y 70 años y aquí no se baja de 40»*. **No lo rompe el
+   agente por su cuenta.**
+2. **Bajar la letra de 16 a 14** (lo que usan los tres CRM). Mismo caso: el proyecto se puso el suelo de 16.
+3. **El tono del color**: en un CRM real el color se reserva a los estados y la acción principal es casi negra
+   (Frappe usa `gray-900`). **La paleta no se ha tocado**: es la del sistema de diseño del proyecto.
+4. **El móvil adelgazado** a lo acordado: subir una factura, un resumen rápido y apuntar un trabajo. Todavía no
+   se ha empezado.
+
+## Límites, dichos
+
+- **La revisión visual la hace una persona.** Yo no veo las capturas: mido.
+- **La lista de cobros con un reparto** se contó como «a qué facturas va» en la celda, y los importes de cada
+  factura se leen en la ficha. Es una decisión tomada con la prueba de CRM-01 delante, no una preferencia.
+- Los números de Odoo y Frappe salen de **su código fuente oficial** (el SCSS que despliegan) y de la
+  documentación de `frappe-ui`; **no se midieron en pantalla** porque **no hay ningún CRM instalado en esta
+  máquina** y no se instaló ninguno.
