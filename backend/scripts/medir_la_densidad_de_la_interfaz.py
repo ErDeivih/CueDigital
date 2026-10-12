@@ -41,7 +41,12 @@ LO_QUE_SE_MIDE = {
     "cuerpo": "body",
     "titulo": "h1",
     "subtitulo": "h2",
-    "fila_de_tabla": "table tbody td",
+    # **La fila, no la celda** (11/10/2026). La primera versión medía `table tbody td` y salían 277,9 px: eso
+    # es la celda **estirada** por la tabla, no el alto de la fila, que es justo el número que mide la
+    # densidad. Un instrumento que da un número grande y equivocado es peor que no medir: se corrige midiendo
+    # el `tr`.
+    "fila_de_tabla": "table tbody tr",
+    "celda_de_tabla": "table tbody td",
     "cabecera_de_tabla": "table thead th",
     "fila_de_lista": ".lista li",
     "boton": "button.boton, .boton",
