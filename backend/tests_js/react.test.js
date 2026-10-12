@@ -8159,3 +8159,47 @@ test("un cobro de una sola factura se sigue enseñando como siempre", async () =
   );
 });
 
+
+test("la lista de cobros, en el ordenador, va en tabla y dice a qué factura va cada uno", async () => {
+  // **La tabla del ordenador de la lista de cobros** (11/10/2026). Se pasó de una tarjeta por cobro a una
+  // tabla con columnas, y esto lo deja escrito: si alguien la quita, se entera.
+  //
+  // **Y con el caso que casi se cuela**: un cobro **repartido** entre varias facturas no lleva
+  // `factura_numero` (el dinero vive en las aplicaciones) y la primera versión de la tabla caía en el
+  // respaldo y escribía «Todavía no sé de qué factura es», justo lo contrario de la verdad. Aquí se exige
+  // que diga **a qué facturas va**.
+  const html = await htmlDeLosCobros({
+    cobros: [
+      {
+        id: 1,
+        fecha_linea: "20/07/2026",
+        texto_importe: "350,00 €",
+        cliente: "Cooperativa Agrícola de Peñaranda",
+        etiqueta_forma: "Transferencia",
+        aplicaciones: [
+          { factura_emitida_id: 4, factura_numero: "F-2026-4", texto_importe: "100,00 €" },
+          { factura_emitida_id: 5, factura_numero: "F-2026-5", texto_importe: "250,00 €" },
+        ],
+      },
+      {
+        id: 2,
+        fecha_linea: "21/07/2026",
+        texto_importe: "40,00 €",
+        factura_numero: "F-2026-9",
+        etiqueta_forma: "Efectivo",
+      },
+    ],
+  });
+  assert.ok(html.includes('class="tabla"'), `la lista de cobros no va en tabla:\n${html}`);
+  assert.ok(html.includes("solo-escritorio"), "la tabla tiene que ir en la parte de escritorio");
+  assert.ok(html.includes("F-2026-4") && html.includes("F-2026-5"), "un reparto tiene que decir a qué facturas va");
+  assert.ok(
+    !html.includes("Todavía no sé de qué factura es"),
+    "un cobro repartido SÍ sabe de qué factura es: no puede decir lo contrario",
+  );
+  assert.ok(html.includes("F-2026-9"), "y un cobro de una sola factura, también");
+  assert.ok(
+    (html.match(/tabla-acciones/g) || []).length >= 2,
+    "cada fila lleva su columna de acciones",
+  );
+});
