@@ -2656,3 +2656,21 @@ div.tarjeta:active {
     border-width: 2px;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Y el contenido ocupa el ancho** (11/10/2026).
+ *
+ * Medido: `.pantalla` estaba limitada a **44 rem = 704 px** y centrada. En un monitor de 1440 eso es **menos de
+ * la mitad del ancho**, con franjas vacías a los dos lados: es el patrón de la aplicación de móvil, y es —con
+ * los 18 px de letra— lo que más hace que una pantalla de despacho parezca de teléfono. Los CRM ocupan el
+ * ancho y reparten en paneles (Odoo: ancho completo con el área de trabajo en gris; Frappe: barra lateral de
+ * 224 px y el resto para la tabla).
+ *
+ * Se quita **solo el tope**, y solo en escritorio: los formularios de dentro conservan el suyo (34 rem), que
+ * es lo que evita que una línea de texto se estire hasta ser ilegible.
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .pantalla {
+    max-width: none;
+  }
+}

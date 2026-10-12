@@ -38,6 +38,9 @@ ANCHO = int(sys.argv[3]) if len(sys.argv) > 3 else 1440
 #     debería ser 28-34;
 #   · los radios y el relleno: lo que hace que todo parezca una pastilla de colores en vez de una herramienta.
 LO_QUE_SE_MIDE = {
+    # **El ancho del contenido** (11/10/2026): estaba topado en 44 rem = 704 px y centrado, que en un monitor
+    # de 1440 es menos de la mitad del ancho. Es el patrón de móvil, y sin medirlo no se ve en los números.
+    "ancho_del_contenido": ".pantalla",
     "cuerpo": "body",
     "titulo": "h1",
     "subtitulo": "h2",
