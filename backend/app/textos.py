@@ -6624,6 +6624,11 @@ CONTACTOS: dict[str, object] = {
     # su «qué es», que es lo que se lee de un vistazo en la lista y en la tabla: un contacto de baja
     # **no se esconde**, porque su pasado sigue apuntándole; lo que hace es decirlo.
     "de_baja": "DE BAJA",
+    "dejarlo_de_usar": "DEJAR DE USARLO",
+    "volver_a_usarlo": "VOLVER A USARLO",
+    "dejarlo_de_usar_pista": (
+        "Deja de ofrecerse sin borrar nada: sus facturas y sus ventas siguen apuntándole."
+    ),
     "de_baja_pista": "Ya no se trabaja con esta ficha. Sigue aquí porque sus papeles la necesitan.",
     # **Los rótulos de la tabla del ordenador** (11/10/2026). Van aquí, con los demás textos del servidor, y no
     # escritos a mano en el HTML, porque el contrato de la tabla lo pide así (`web/react/piezas/tabla.js`: «los

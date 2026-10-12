@@ -402,6 +402,21 @@ export function PantallaDeUnContacto({
                 datos=${{ id: valor("id") }}
                 clase="boton-claro"
               />
+              ${
+                // **Dejar de usarlo / volver a usarlo** (CRM-03, criterio (e), 11/10/2026). El botón dice el
+                // estado en el que se está y lo que va a pasar: con la ficha activa pone «DEJAR DE USARLO» y con
+                // la ficha de baja, «VOLVER A USARLO».
+                //
+                // **No lleva confirmación, y no es un olvido**: no se borra nada y se deshace con el mismo
+                // botón, así que preguntar sería estorbar. La confirmación se guarda para BORRAR, que sí se
+                // lleva cosas por delante.
+                html`<${Boton}
+                  etiqueta=${valor("activo") === false ? c.volver_a_usarlo : c.dejarlo_de_usar}
+                  accion=${valor("activo") === false ? "contacto-alta" : "contacto-baja"}
+                  datos=${{ id: valor("id") }}
+                  clase="boton-claro"
+                />`
+              }
               <button type="button" className="boton boton-claro" data-accion="contacto-borrar">
                 ${frase(c.borrar)}
               </button>

@@ -17457,6 +17457,29 @@ async function guardarElContacto() {
 }
 
 /** Borra la ficha (con su confirmación, que la pone la pantalla). */
+/**
+ * **Deja de usarlo o vuelve a usarlo** (CRM-03, criterio (e), 11/10/2026).
+ *
+ * Va por la puerta de verdad (`/baja` y `/alta`), que deja traza con el motivo; desde aquí no se manda motivo
+ * porque el botón no lo pregunta: se puede escribir al corregir la ficha, y un diálogo para algo que se deshace
+ * con el mismo botón sería estorbar. **Y recarga la lista** después, porque el estado se ve en el rótulo —que es
+ * la columna «Qué es» de la tabla— y ese rótulo lo monta la lista.
+ */
+async function cambiarElUsoDelContacto(id, activo) {
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const resultado = await mandarCambio(`/api/contactos/${id}/${activo ? "alta" : "baja"}`, "POST", {});
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  await recargarLosContactos();
+  const suya = await mandarCambio(`/api/contactos/${id}`, "GET", null);
+  if (!suya.error && suya.datos) suyo.ficha = suya.datos;
+  suyo.aviso = activo ? t("contactos.volver_a_usarlo", "") : t("contactos.dejarlo_de_usar", "");
+  pantallaFichaDeContacto();
+}
+
 async function borrarElContacto(id) {
   const suyo = estadoDeLosContactos();
   suyo.borrando = false;
@@ -19245,6 +19268,12 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     const suyo = estadoDeLosContactos();
     suyo.borrando = false;
     return pantallaFichaDeContacto();
+  }
+  if (nombre === "contacto-baja") {
+    return cambiarElUsoDelContacto(Number(elemento.dataset.id), false);
+  }
+  if (nombre === "contacto-alta") {
+    return cambiarElUsoDelContacto(Number(elemento.dataset.id), true);
   }
   if (nombre === "contacto-borrar-si") {
     return borrarElContacto(Number(elemento.dataset.id));
