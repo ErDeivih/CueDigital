@@ -3545,6 +3545,16 @@ class EnlaceDeUnContacto(SalidaBase):
     escrito: NombreEscrito
 
 
+class BajaDeUnContacto(EntradaBase):
+    """Dar de baja a un contacto, o volver a usarlo: **el motivo es opcional**.
+
+    No es obligatorio porque no todo el mundo quiere explicarlo, pero **se guarda si se escribe**: la
+    auditoría está para poder contestar «¿por qué dejamos de trabajar con este?» dentro de un año.
+    """
+
+    motivo: str | None = None
+
+
 class ContactoSalida(SalidaBase):
     """Un contacto con sus papeles y lo que se sabe de él.
 

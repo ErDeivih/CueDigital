@@ -49,6 +49,7 @@ from .. import correcciones, models, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     ConfirmacionDeLaMigracion,
+    BajaDeUnContacto,
     ContactoEntrada,
     ContactoSalida,
     DeshacerLaMigracion,
@@ -487,6 +488,76 @@ def crear(
             )
             if valor not in (None, "")
         },
+    )
+    db.commit()
+    db.refresh(contacto)
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.post("/{contacto_id}/baja", response_model=ContactoSalida)
+def dar_de_baja(
+    contacto_id: int,
+    datos: BajaDeUnContacto,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Deja de usarse, sin borrarlo**: el criterio (e) de CRM-03 (11/10/2026).
+
+    El motivo por el que existe esta puerta y no vale con borrar la ficha: **el pasado sigue apuntándole**. Sus
+    facturas, sus ventas y sus papeles no se van a ir, así que borrar la ficha las dejaría huérfanas —y borrar
+    el pasado no es lo que el agricultor pide cuando dice «con este ya no trabajo»—.
+
+    La vuelta (`/alta`) es la misma puerta al revés, y las dos **dejan traza**: quién lo hizo y, si lo escribió,
+    por qué. Dar de baja **no** es una corrección de los datos (`correcciones.CAMPO_QUE_NO_SE_TOCA` lo tiene
+    fuera a propósito): es una decisión, y va con **su propia acción** en la auditoría.
+
+    **Reenviarla no apunta dos veces**: si ya está de baja, se contesta la ficha tal cual sin escribir nada. El
+    agricultor toca dos veces con los guantes, y el programa no puede contar dos bajas donde hubo una.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    if not contacto.activo:
+        return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+    contacto.activo = False
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="baja",
+        datos={"activo": [True, False], "motivo": [None, logica.limpia(datos.motivo) or None]},
+    )
+    db.commit()
+    db.refresh(contacto)
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.post("/{contacto_id}/alta", response_model=ContactoSalida)
+def volver_a_usarlo(
+    contacto_id: int,
+    datos: BajaDeUnContacto,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Vuelve a usarse** (11/10/2026): la misma puerta al revés, con su traza.
+
+    Existe porque dar de baja no puede ser de un solo sentido: un proveedor con el que se dejó de trabajar
+    vuelve, y volver a apuntarlo duplicaría su ficha —y sus facturas viejas apuntan a la de antes—.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    if contacto.activo:
+        return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+    contacto.activo = True
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="alta",
+        datos={"activo": [False, True], "motivo": [None, logica.limpia(datos.motivo) or None]},
     )
     db.commit()
     db.refresh(contacto)
