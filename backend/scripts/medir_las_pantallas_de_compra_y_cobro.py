@@ -78,10 +78,27 @@ def main() -> int:
     cobro_ok = False
     if campana is not None:
         try:
-            _el_caso_del_encargo(token, campana)
-            cobro_ok = True
+            devuelto = _el_caso_del_encargo(token, campana)
+            # **Se imprime lo que devuelve** en vez de suponer su forma: la primera versión daba por hecho que
+            # era una tupla de dos identificadores y no lo era, y así se ve de un vistazo qué es.
+            print(f"  (el caso del encargo devuelve: {devuelto!r})")
+            partes = devuelto if isinstance(devuelto, (list, tuple)) else [devuelto]
+            candidatos = [parte for parte in partes if isinstance(parte, int)]
+            if candidatos:
+                from capturar_la_pantalla_del_reparto import _api  # noqa: PLC0415
+
+                # Un cobro de verdad por la puerta de verdad: 40 € contra la primera de las deudas.
+                hecho = _api(
+                    "/api/cobros",
+                    token,
+                    {"fecha": "2026-07-20", "importe": "40.00", "factura_emitida_id": candidatos[0]},
+                )
+                print(f"  (el cobro: {hecho!r})"[:220])
+                cobro_ok = True
+            else:
+                print("  (el caso del encargo no ha devuelto identificadores: no se crea el cobro)")
         except Exception as error:  # noqa: BLE001
-            print(f"  (no he podido montar el cobro: {type(error).__name__}: {str(error)[:70]})")
+            print(f"  (no he podido montar el cobro: {type(error).__name__}: {str(error)[:90]})")
 
     rutas = ["#/facturas"]
     if compra_id:
