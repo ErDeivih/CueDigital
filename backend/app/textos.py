@@ -6614,6 +6614,22 @@ CONTACTOS: dict[str, object] = {
     # uno se leería «Su nombre está escrito en 1 papeles», que es lo primero que hace desconfiar.
     "cuantos_escritos": "Su nombre está escrito en {cuantas} papeles.",
     "cuantos_escritos_uno": "Su nombre está escrito en 1 papel.",
+    # **Los rótulos de la tabla del ordenador** (11/10/2026). Van aquí, con los demás textos del servidor, y no
+    # escritos a mano en el HTML, porque el contrato de la tabla lo pide así (`web/react/piezas/tabla.js`: «los
+    # textos de las columnas y del resumen vienen del servidor»). La última columna es siempre la de las
+    # acciones: el componente pinta ahí sus botones y por eso una fila escribe **una celda menos** que columnas
+    # hay (hay una prueba que lo impide).
+    "tabla_nombre": "Nombre",
+    "tabla_que_es": "Qué es",
+    "tabla_nif": "NIF",
+    "tabla_telefono": "Teléfono",
+    "tabla_localidad": "Localidad",
+    "tabla_acciones": "Acciones",
+    "tabla_abrir": "ABRIR LA FICHA",
+    # Lo que se escribe en la celda cuando un dato no está puesto. Un hueco en blanco no dice si falta el dato
+    # o si la pantalla se ha equivocado; una raya, sí.
+    "tabla_sin_dato": "—",
+    "tabla_que_es_sin_papel": "Sin papel apuntado",
     "buscando": "Buscando…",
     "buscar": "Buscar por el nombre",
     "buscar_pista": "Escribe unas letras del nombre. No hacen falta las tildes.",

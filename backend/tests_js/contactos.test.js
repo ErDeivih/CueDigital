@@ -73,6 +73,19 @@ const TEXTOS = {
     cuantas_una: "Tienes 1 ficha apuntada.",
     cuantos_escritos: "Su nombre está escrito en {cuantas} papeles.",
     cuantos_escritos_uno: "Su nombre está escrito en 1 papel.",
+    // Los rótulos de la tabla del ordenador (11/10/2026). El guardián de textos
+    // (`tests/test_que_no_falte_ningun_texto.py`) los exige copiados aquí: las pruebas de las pantallas solo ven
+    // lo que hay en este fichero, y así se comprueba que la pantalla **no escribe ninguna frase dentro** del
+    // componente. Los pidió él, con la lista exacta, en cuanto los añadí al servidor.
+    tabla_nombre: "Nombre",
+    tabla_que_es: "Qué es",
+    tabla_nif: "NIF",
+    tabla_telefono: "Teléfono",
+    tabla_localidad: "Localidad",
+    tabla_acciones: "Acciones",
+    tabla_abrir: "ABRIR LA FICHA",
+    tabla_sin_dato: "—",
+    tabla_que_es_sin_papel: "Sin papel apuntado",
     buscando: "Buscando…",
     buscar: "Buscar por el nombre",
     buscar_pista: "Escribe unas letras del nombre. No hacen falta las tildes.",
