@@ -73,6 +73,13 @@ const TEXTOS = {
     cuantas_una: "Tienes 1 ficha apuntada.",
     cuantos_escritos: "Su nombre está escrito en {cuantas} papeles.",
     cuantos_escritos_uno: "Su nombre está escrito en 1 papel.",
+    // El estado y sus botones (CRM-03, criterio (e), 11/10/2026). El guardián los exige copiados aquí: las
+    // pruebas de las pantallas solo ven lo que hay en este fichero.
+    de_baja: "DE BAJA",
+    de_baja_pista: "Ya no se trabaja con esta ficha. Sigue aquí porque sus papeles la necesitan.",
+    dejarlo_de_usar: "DEJAR DE USARLO",
+    dejarlo_de_usar_pista: "Deja de ofrecerse sin borrar nada: sus facturas y sus ventas siguen apuntándole.",
+    volver_a_usarlo: "VOLVER A USARLO",
     // Los rótulos de la tabla del ordenador (11/10/2026). El guardián de textos
     // (`tests/test_que_no_falte_ningun_texto.py`) los exige copiados aquí: las pruebas de las pantallas solo ven
     // lo que hay en este fichero, y así se comprueba que la pantalla **no escribe ninguna frase dentro** del

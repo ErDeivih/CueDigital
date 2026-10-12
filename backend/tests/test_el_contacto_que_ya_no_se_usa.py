@@ -138,3 +138,27 @@ def test_dar_de_baja_dos_veces_no_apunta_dos_veces(cliente, cuenta, db_sesion):
     assert len(_la_traza(db_sesion, ficha["id"], "baja")) == 1, (
         "dos bajas seguidas tienen que dejar **una** traza: la segunda no cambia nada"
     )
+
+
+def test_un_contacto_de_baja_se_sigue_ofreciendo_para_lo_de_antes(cliente, cuenta, db_sesion):
+    """**Y sigue ofreciéndose, a propósito** (CRM-03, criterio (e), 11/10/2026).
+
+    La decisión, y su motivo, que conviene no deshacer: en este programa los sitios donde se ofrece un contacto
+    son sitios de **historia** —enlazar el nombre escrito en una factura vieja, elegir el comprador de una venta
+    pasada—, y **el proveedor con el que ya no trabajas es justamente el que necesita que sus papeles viejos
+    sigan teniendo ficha**. Filtrarlo sería quitar la ficha que hace falta para ese trabajo. Lo que hace un
+    contacto de baja es **decirlo** —su rótulo lleva «DE BAJA»—, no esconderse.
+
+    Esta prueba existe para que nadie lo «arregle» filtrando sin leer esto.
+    """
+    ficha = _una_ficha(cliente, cuenta, "Proveedor de toda la vida", ["proveedor"])
+    cliente.post(f"/api/contactos/{ficha['id']}/baja", headers=cuenta["cabeceras"], json={"motivo": "Se jubiló"})
+
+    suyos = cliente.get("/api/contactos", headers=cuenta["cabeceras"])
+    assert suyos.status_code == 200, suyos.text
+    el_suyo = [uno for uno in suyos.json() if uno["id"] == ficha["id"]]
+    assert el_suyo, (
+        "un contacto de baja tiene que seguir en la lista: sus facturas y sus ventas viejas lo necesitan"
+    )
+    assert el_suyo[0]["activo"] is False, "y tiene que venir con su estado, para poder marcarlo"
+    assert el_suyo[0]["papeles"] == ["proveedor"], "y con sus papeles"
