@@ -2538,3 +2538,37 @@ div.tarjeta:active {
   margin: 0.2rem 0 0.6rem;
   padding-left: 1.3rem;
 }
+
+/* ============================================================================
+ * LA CAPA DE ESCRITORIO (11/10/2026)
+ *
+ * POR QUÉ ESTÁ AL FINAL Y NO ARRIBA. La primera versión de esto se escribió junto a los tokens, en la
+ * cabecera del fichero, y **no hizo nada**: `.tabla-acciones .boton` está declarado más abajo (línea ~1989)
+ * con la misma especificidad, así que ganaba por orden de fuente. Se descubrió **midiendo** —la fila seguía
+ * en 249 px— y no leyendo. Esta capa vive al final a propósito: **es la última palabra sobre el escritorio**,
+ * y así no hay que adivinar quién gana.
+ *
+ * QUÉ ARREGLA. En la tabla de lo que se vende, la última celda lleva cinco botones (`PONER EL IMPORTE`,
+ * `FACTURAR ESTA ENTREGA`, `APUNTAR UNA DEVOLUCIÓN`, `CORREGIR`, `BORRAR`) y estaban **uno debajo de otro**:
+ * cada fila medía **249 px** en vez de treinta y pocos. Con eso, una pantalla de 1440 enseña cuatro ventas
+ * donde un CRM enseña veinte. Eso —y no el color— es lo que hacía que la aplicación leyera como un juguete.
+ *
+ * SOLO ESCRITORIO: en el móvil el ancho no da para cinco botones al lado, y ahí siguen apilados.
+ * ========================================================================== */
+
+@media (min-width: 64rem) {
+  .tabla-acciones {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .tabla-acciones .boton {
+    min-height: 26px;
+    padding: 0 0.5rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+}
