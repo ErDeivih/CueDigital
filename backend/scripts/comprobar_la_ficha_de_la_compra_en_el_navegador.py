@@ -657,9 +657,24 @@ def main() -> int:
                 not pulsables.get("deshabilitadas"),
                 f"y ninguna accion esta deshabilitada ({pulsables.get('deshabilitadas')})",
             )
+            # **El área de toque, según dónde se esté** (11/10/2026). Esto exigía 44 px en **todas** las
+            # anchuras, y era correcto mientras el escritorio usaba la letra y los controles del móvil. El
+            # dueño del producto decidió lo contrario con estas palabras: *«no se parece a un CRM normal,
+            # parece una UI para niños pequeños»* y *«que la complejidad esté para PC»*. Así que el suelo de
+            # **44 px**, que es el del **dedo**, se queda donde hay dedo —el móvil, que tiene su propia
+            # comprobación más arriba, a 390 px— y en el escritorio se exige el suelo de un CRM de ratón:
+            # **30 px**. No es aflojar la prueba por conveniencia: es que medía la decisión vieja, y la
+            # decisión es nueva y está escrita.
+            SUELO_DE_ESCRITORIO = 30
+            pequenas = [
+                suyo
+                for suyo in pulsables.get("suyos", [])
+                if suyo["ancho"] < SUELO_DE_ESCRITORIO or suyo["alto"] < SUELO_DE_ESCRITORIO
+            ]
             comprobar(
-                not pulsables.get("pequenas"),
-                f"y todas tienen area de toque (menos de 44 px: {pulsables.get('pequenas')})",
+                not pequenas,
+                f"y las acciones de escritorio no bajan de {SUELO_DE_ESCRITORIO} px "
+                f"(bajan: {pequenas}; las de móvil siguen a 44, que es su comprobación)",
             )
 
             # **Y las líneas, en tabla**: es lo que pidió David («líneas en tabla»). Una tabla de verdad,
