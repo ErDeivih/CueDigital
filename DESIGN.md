@@ -385,10 +385,13 @@ móvil en medio de la pantalla.
 La misma aplicación, con el marco de un programa de gestión. **El móvil no se toca**: todo
 esto vive dentro de su `@media`.
 
-- **Menú lateral fijo de 17 rem** a la izquierda, en verde oscuro, con el nombre de la
-  cuenta arriba y **todos los módulos** debajo, uno por renglón (Panel, Mi cuaderno, Mis
+- **Menú lateral fijo de 15 rem (240 px)** a la izquierda, en verde oscuro, con el nombre de
+  la cuenta arriba y **todos los módulos** debajo, uno por renglón (Panel, Mi cuaderno, Mis
   tierras, Qué hay sembrado, El almacén, Los análisis, El plan de abono, Lo que he
   vendido, Los papeles, Mis facturas, Los años del cuaderno, La Junta, Mis datos, Ayuda).
+  Medía 17 rem (272) hasta el 11/10/2026: el encargo de escritorio del propio proyecto pide
+  **240 px** (`backend/scripts/disenar_con_stitch.py`), y el armazón estaba dibujado siete
+  veces con siete anchos distintos —de 224 a 320—, así que se elige **uno**.
 - **El módulo en el que se está, marcado con tres cosas a la vez:** fondo distinto,
   barra amarilla a la izquierda y `aria-current="page"`. El color solo no informa.
 - **Barra de arriba, fija, con lo que hay que saber siempre:** la campaña que se está
@@ -396,22 +399,62 @@ esto vive dentro de su `@media`.
   identifica por el nombre del titular, y poner «Finca: David Pérez Velasco» sería decir
   una cosa que no es. Lleva además el botón **APUNTAR**, la letra grande y salir.
 - **La pantalla ocupa todo el ancho** que sobra del menú, con 32 px de aire a los lados.
-- **Los botones de la barra y de las filas de una tabla miden 2,9 rem** (unos 46 px): con
-  ratón no hacen falta 64, pero el agricultor tiene entre 50 y 70 años y aquí no se baja
-  de 40. **Los botones de las acciones principales siguen midiendo lo mismo que en el
-  móvil.**
+  **Y lo cumple desde el 11/10/2026**: el CSS tenía un `max-width: 44rem` (704 px) heredado
+  del móvil, así que el contrato decía esto y el código hacía otra cosa. Medido antes de
+  arreglarlo: 704 px de contenido en una ventana de 1440, con franjas vacías a los dos lados.
+  Ahora mide ~1300. Los formularios de dentro **sí** conservan su tope (34 rem), que es lo que
+  evita que una línea de texto se estire hasta ser ilegible.
+- **Los botones de la barra y de las filas de una tabla miden 2,9 rem (unos 46 px)**, y en el
+  escritorio se quedan en **40 px**: el suelo no se baja, y el motivo sigue siendo el mismo que
+  estaba escrito aquí (el agricultor tiene entre 50 y 70 años). **El 11/10/2026 se bajaron a 34
+  copiando la densidad de Odoo/Frappe y se han devuelto a 40 al leer este párrafo**: un suelo
+  con motivo de accesibilidad no lo rompe el agente por su cuenta, lo rompe el dueño del
+  producto si quiere. Sigue siendo mucho más denso que los 46-64 de antes.
+  **Pendiente y medido**: los botones de la cabecera del marco (`Salir`, `A+`, `APUNTAR`)
+  siguen midiendo **46,4 px**; hay que bajarles el suelo y no se ha hecho todavía.
 - **Las listas se ven en tabla** (tierras, cuaderno, años, facturas y almacén): cabecera por
   columna —y la cabecera es un botón cuando la columna se puede ordenar—, los números
   alineados a la derecha, las acciones en la última columna y **el total al pie**, que es la
   cuenta que se viene a hacer en esa lista. Los mismos datos, en el móvil, van en tarjetas:
   las dos formas están en el mismo HTML y las separa el CSS (`.solo-escritorio` y
   `.solo-movil`), nunca JavaScript.
-- **La ficha de la fila elegida, en un panel al lado** (20 rem), sin salir de la página: se
+- **La ficha de la fila elegida, en un panel al lado** (21,25 rem = 340 px, que es lo que pide
+  el encargo de escritorio), sin salir de la página: se
   toca el **nombre** —que es un botón, porque un `<tr>` no se puede enfocar con el
   teclado— y al lado salen sus datos y sus botones. Volver a tocar el mismo nombre cierra el
   panel. La fila entera **no** es un botón.
 - **Nada de sombras, degradados ni animaciones**, igual que en el móvil: cambia el
   ancho, no el lenguaje.
+
+#### La densidad del escritorio, y de dónde salen sus números (11/10/2026)
+
+El dueño del producto miró las capturas y dijo: *«no se parece a un CRM normal, parece una UI
+para niños pequeños»*, y después: *«que la complejidad esté para PC»*. Tenía razón, y estaba
+medido: los valores de arriba son los del **móvil en el campo** (una mano, sol, guantes) y se
+usaban también en el escritorio. Lo que se ha cambiado, y con qué se ha contrastado:
+
+| lo que se mide | antes | ahora | de dónde sale el número |
+|---|---|---|---|
+| cuerpo | 18 px | **16** | Odoo 17 y Frappe 15 usan 14; **no se baja de 16** por el suelo de legibilidad del proyecto |
+| título de pantalla | 24 px | **20** | el escritorio que Stitch ya dibujó para este proyecto (`estructura.html`) |
+| fila de tabla | 277,9 px | **46,2** | Frappe 15: `.list-row { height: 40px }` |
+| cabecera de tabla | 50 px | **28,9** | Frappe 15: `.list-row-head { height: 30px }` |
+| ancho del contenido | 704 px | **~1300** | Odoo ocupa el ancho; ya lo pedía este contrato |
+| radio de control | 14 px | **8** | Odoo 4, `frappe-ui` 8 para lo que se toca |
+| números de una columna | — | **`tabular-nums`** | Odoo 17 lo pone en su tabla: sin eso las cifras «bailan» |
+| seguir una fila con el ojo | — | **hover 5,5 % y cebra 1 %** | los factores de Odoo (`$table-hover-bg-factor`, `$table-striped-bg-factor`) |
+
+**Las tres causas de que una fila midiera 278 px**, encontradas **midiendo celda por celda** (no
+leyendo el CSS, donde no se ven): los cinco botones de la columna de acciones **apilados**; **un
+texto largo de verdad** —una descripción de sitio— partido en ocho renglones en una columna de
+100 px, que ahora se recorta a una línea con puntos suspensivos; y las alturas heredadas del
+móvil. Con eso, la pantalla pasó de **cuatro filas a veinte**.
+
+**Y la regla que se ha seguido al escribir esto**: el suelo de **44 px de área de toque** —que
+es el del dedo— se queda donde hay dedo (el móvil, que tiene su propia comprobación), y en el
+escritorio se mide con el suyo. La prueba que lo comprobaba exigía 44 px en **todas** las
+anchuras: medía una decisión que ha cambiado, y se ha actualizado **con el motivo escrito**,
+no para que pasara.
 
 ## Elevation & Depth
 

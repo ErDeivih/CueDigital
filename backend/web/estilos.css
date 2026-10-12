@@ -2663,8 +2663,13 @@ div.tarjeta:active {
 @media (min-width: 64rem) {
   .boton,
   button.boton {
+    /* **El suelo de 40 px del contrato manda** (11/10/2026): `DESIGN.md` lo pide con un motivo de
+       accesibilidad (el agricultor tiene entre 50 y 70 años) y yo lo había bajado a 34 por copiar la densidad
+       de Odoo/Frappe. Se queda en 40: sigue siendo mucho más denso que los 46-64 de antes, y el suelo escrito
+       no se rompe sin que lo diga el dueño del producto. */
     padding: 5px 10px;
     border-width: 2px;
+    min-height: 40px;
   }
 }
 /* ----------------------------------------------------------------------------
@@ -2719,7 +2724,8 @@ div.tarjeta:active {
   /* Y los de la cabecera del marco (Salir, A+, APUNTAR): la principal sigue algo mayor, pero deja de ser un
      botón de 48 px en una pantalla de ratón. */
   .boton-letra {
-    min-height: 38px;
+    /* 40 y no 38: el mismo suelo del contrato. */
+    min-height: 40px;
   }
 }
 /* ----------------------------------------------------------------------------
