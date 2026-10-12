@@ -1653,3 +1653,54 @@ class TestElGuionDeLaMigracion:
 def _huella_de_los_nombres(el_guion, ruta) -> str:
     """La huella que el propio guion calcula sobre lo escrito: es la que él comprueba antes y después."""
     return el_guion._huella_del_texto(pathlib.Path(ruta))
+
+
+class TestLaMigracionDejaRastro:
+    """CRM-03: apuntar de golpe los nombres del cuaderno **deja quién lo hizo** (11/10/2026).
+
+    Es la otra mitad del requisito que la revisión del T11 tenía fichado (`docs/REVISION_T11.md:364-368`): el
+    contrato pide autor para toda entidad de negocio, y hasta hoy se podían meter veinte fichas de una vez
+    **sin que quedara quién**. Lo que hay que poder contestar es «¿quién apuntó estas veinte de golpe?», y por
+    eso la migración guarda **una** fila con el resumen y no una por ficha: la de cada ficha ya la deja su
+    alta, y veinte filas iguales no contestan esa pregunta.
+
+    Y se mira **la fila de la auditoría**, no la respuesta: un rastro que solo se ve en la respuesta HTTP no
+    sirve para lo que sirve un rastro.
+    """
+
+    def test_la_migracion_apunta_en_la_auditoria_quien_la_hizo(
+        self, cliente, cuenta, db_sesion, una_factura
+    ):
+        import sqlalchemy
+
+        una_factura("Cooperativa Agrícola de Peñaranda")
+        revision = _la_revision(cliente, cuenta["cabeceras"])
+        seguras = [propuesta for propuesta in revision["propuestas"] if propuesta["segura"]]
+        assert len(seguras) == 1, "la prueba necesita una sola propuesta segura"
+
+        aplicada = cliente.post(
+            "/api/contactos/migracion/aplicar",
+            headers=cuenta["cabeceras"],
+            json={"claves": [seguras[0]["clave"]]},
+        )
+        assert aplicada.status_code == 200, aplicada.text
+
+        rastro = list(
+            db_sesion.scalars(
+                sqlalchemy.select(models.Auditoria).where(
+                    models.Auditoria.accion == "migrar_nombres"
+                )
+            )
+        )
+        assert len(rastro) == 1, (
+            f"la migración tiene que dejar **una** fila de rastro, y ha dejado {len(rastro)}"
+        )
+        apunte = rastro[0]
+        assert apunte.usuario_id is not None, (
+            "y tiene que decir **quién**: eso es lo que se venía a arreglar"
+        )
+        assert apunte.entidad == "contacto"
+        assert apunte.datos["fichas"] == [None, 1], f"con el resumen de lo que hizo: {apunte.datos}"
+        assert apunte.datos["textos_tocados"] == [None, 0], (
+            "y con que **no se tocó ni una letra** de los textos históricos, que es la promesa del ticket"
+        )

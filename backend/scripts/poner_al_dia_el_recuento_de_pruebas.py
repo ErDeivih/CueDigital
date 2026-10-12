@@ -29,8 +29,15 @@ LOS_VIEJOS = ("4665", "4666", "4670", "4672", "4673", "4674", "4675")
 LOS_DOCUMENTOS = ("README.md", "AGENTS.md", "docs/LO_QUE_PIDE_LA_JUNTA.md")
 
 
-def correr_la_suite() -> tuple[int, int, int]:
-    """Devuelve (recogidas, fallos, errores)."""
+def correr_la_suite() -> tuple[int, int, int, list[str]]:
+    """Devuelve (recogidas, fallos, errores, **los nombres de los que fallan**).
+
+    POR QUÉ DEVUELVE LOS NOMBRES (11/10/2026). El informe XML que se escribía ya los traía, pero **no se
+    imprimían**, y me costó una ronda: el recuento dijo «4792 recogidas, 1 fallos» **dos veces seguidas**, y
+    como no decía cuáles hubo que correr la suite entera otra vez para averiguarlo —y en esa corrida salió
+    verde, así que el fallo era **intermitente y se quedó sin nombre**—. Un recuento que dice que algo falla y
+    no dice **qué** es un instrumento a medias: la próxima vez el nombre queda escrito.
+    """
     informe = pathlib.Path(tempfile.gettempdir()) / "el-recuerdo.xml"
     suyo = subprocess.run(  # noqa: S603 — es el propio proyecto
         [sys.executable, "-m", "pytest", "tests", "-q", f"--junit-xml={informe}"],
@@ -42,14 +49,26 @@ def correr_la_suite() -> tuple[int, int, int]:
     )
     if not informe.exists():
         print(suyo.stdout[-1500:] if suyo.stdout else "(sin salida)")
-        return (0, 1, 0)
+        return (0, 1, 0, [])
     arbol = ET.parse(informe).getroot()
     suite = arbol if arbol.tag == "testsuite" else arbol.find("testsuite")
+    fallando = [
+        f"{caso.get('classname', '')}::{caso.get('name', '')}"
+        for caso in suite.iter("testcase")
+        if list(caso.iter("failure")) or list(caso.iter("error"))
+    ]
     return (
         int(suite.get("tests", 0)),
         int(suite.get("failures", 0)),
         int(suite.get("errors", 0)),
+        fallando,
     )
+
+
+def _decir_lo_que_falla(fallando: list[str]) -> None:
+    """Los nombres, uno por línea y con su archivo: sin esto, «1 fallos» no dice nada que se pueda buscar."""
+    for nombre in fallando:
+        print(f"   FALLA: {nombre}")
 
 
 def poner_el_recuento(real: str) -> list[str]:
@@ -89,8 +108,9 @@ def poner_el_recuento(real: str) -> list[str]:
 
 def main() -> int:
     print("1) la suite entera, tal como está:")
-    recogidas, fallos, errores = correr_la_suite()
+    recogidas, fallos, errores, fallando = correr_la_suite()
     print(f"   {recogidas} recogidas, {fallos} fallos, {errores} errores")
+    _decir_lo_que_falla(fallando)
     if not recogidas:
         print("=> no he podido leer el recuento del informe: mira la salida de arriba")
         return 1
@@ -102,8 +122,9 @@ def main() -> int:
         print(f"   · {fichero}")
 
     print("3) y la suite entera otra vez, para ver el guardián del recuento en verde:")
-    recogidas2, fallos2, errores2 = correr_la_suite()
+    recogidas2, fallos2, errores2, fallando2 = correr_la_suite()
     print(f"   {recogidas2} recogidas, {fallos2} fallos, {errores2} errores")
+    _decir_lo_que_falla(fallando2)
 
     if recogidas2 == recogidas and fallos2 == 0 and errores2 == 0:
         print(f"\n=> EN VERDE: {real} pruebas de Python, 0 fallos, y los documentos al día")
