@@ -20,6 +20,7 @@
  * y ni una frase escrita a mano.
  */
 
+import { Tabla } from "../piezas/tabla.js";
 import { Boton, Botones, frase, html } from "../componentes.js";
 
 /** Un cobro de la lista, con lo que va a la factura y lo que sobra. */
@@ -94,6 +95,59 @@ function FichaDeCobro({ cobro, textos }) {
 }
 
 /**
+ * La tabla de los cobros, para el ordenador.
+ *
+ * **Se monta aquí, dentro del componente**, y no en `app.js`, por lo que se aprendió con la lista de contactos
+ * (11/10/2026): montada allí y pasada como propiedad **no llegaba** —esta pantalla se repinta con los datos de
+ * la caché del campo— y la tabla no se veía aunque estuviera construida. Con los cobros que ya recibe, da igual
+ * por dónde venga el repintado.
+ *
+ * **Y el caso del reparto, que casi se me cuela**: un cobro repartido entre varias facturas **no lleva
+ * `factura_numero`** —el dinero vive en las aplicaciones, que es como se hizo en CRM-01— y la primera versión
+ * de esta tabla caía en el respaldo y escribía «Todavía no sé de qué factura es», **justo lo contrario de la
+ * verdad**: sí se sabe, va a dos. Lo cazó una prueba de CRM-01 («un cobro repartido entre varias facturas dice
+ * a cuáles va y cuánto a cada una»). Ahora la celda dice **a qué facturas va**, y los importes de cada una
+ * siguen en la ficha, que es donde se leen.
+ */
+function tablaDeLosCobros(cobros, c) {
+  const aQueFacturas = (cobro) => {
+    const suyas = cobro.aplicaciones || [];
+    if (suyas.length) {
+      const numeros = suyas.map((aplicacion) => aplicacion.factura_numero).filter(Boolean);
+      return numeros.length ? numeros.join(" y ") : c.tabla_repartido || "Varias facturas";
+    }
+    return cobro.factura_numero || c.sin_factura || "";
+  };
+  return {
+    columnas: [
+      { texto: c.fecha, clase: "" },
+      { texto: c.cuanto, clase: "tabla-numero" },
+      { texto: c.imputado, clase: "" },
+      { texto: c.cliente, clase: "" },
+      { texto: c.forma, clase: "" },
+      { texto: c.tabla_acciones || "Acciones", clase: "tabla-acciones" },
+    ],
+    filas: cobros.map((cobro) => ({
+      celdas: [
+        { texto: cobro.fecha_linea || cobro.fecha || "" },
+        { texto: cobro.texto_importe || "" },
+        { texto: aQueFacturas(cobro) },
+        { texto: cobro.cliente || "" },
+        { texto: cobro.etiqueta_forma || "" },
+      ],
+      acciones: [
+        {
+          accion: cobro.factura_emitida_id ? "cobro-desconciliar" : "cobro-conciliar",
+          texto: cobro.factura_emitida_id ? c.deshacer : c.conciliar,
+          datos: { id: cobro.id },
+        },
+        { accion: "cobro-anular", texto: c.anular, datos: { id: cobro.id } },
+      ],
+    })),
+  };
+}
+
+/**
  * La pantalla entera.
  *
  * Propiedades:
@@ -107,11 +161,20 @@ function FichaDeCobro({ cobro, textos }) {
 export function PantallaCobros({ textos = {}, cobros = [], sin_asignar = [], resumen = "", error = "" }) {
   const c = textos.cobro || {};
   const acciones = textos.acciones || {};
+  // **La tabla, en el ordenador**: medido, esta pantalla pintaba **una tarjeta por cobro** y ninguna tabla,
+  // donde un programa de gestión enseña filas. Se monta con los cobros que ya recibe.
+  const laTabla = cobros.length ? tablaDeLosCobros(cobros, c) : null;
   return html`
     <h1>${frase(c.titulo)}</h1>
     <p className="pista">${frase(c.explica)}</p>
     ${error ? html`<p className="aviso-error" role="alert">${frase(error)}</p>` : null}
     ${resumen ? html`<p className="cuantas">${frase(resumen)}</p>` : null}
+
+    ${
+      laTabla
+        ? html`<div className="solo-escritorio tabla-scroll"><${Tabla} tabla=${laTabla} /></div>`
+        : null
+    }
 
     ${
       cobros.length === 0

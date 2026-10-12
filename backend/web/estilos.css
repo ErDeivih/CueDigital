@@ -2790,3 +2790,16 @@ div.tarjeta:active {
     display: none;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Y en la lista de cobros, cuando hay tabla, las tarjetas se callan** (11/10/2026).
+ *
+ * Igual que en contactos, y por el mismo motivo: es la misma pantalla con dos formas y lo decide el CSS. Se
+ * pregunta **si está la tabla** (no el ancho), así que si algún día la tabla no se puede montar, **las
+ * tarjetas vuelven solas** y la pantalla no queda vacía.
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  #pantalla:has(.solo-escritorio.tabla-scroll) ul.lista {
+    display: none;
+  }
+}
