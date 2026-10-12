@@ -125,6 +125,53 @@ body {
   padding: 0;
 }
 
+/*
+ * **La densidad del ESCRITORIO** (11/10/2026).
+ *
+ * POR QUÉ. El dueño del producto miró las capturas y dijo: *«no se parece a un CRM normal, parece una UI
+ * para niños pequeños»*. Y tenía razón: los tokens de arriba —18 px de letra, 64 de control, 14 de radio— son
+ * los del **móvil en el campo** (una mano, sol, guantes) y se estaban usando **también en el escritorio**, que
+ * es donde se trabaja de verdad. Medido en un navegador de verdad (`scripts/medir_la_densidad_de_la_interfaz.py`):
+ * cuerpo **18 px**, título **24**, botón de **46 px** de alto con radio **14**, campo de **64**, y **una fila
+ * de la tabla de ventas de 278 px** —cinco botones apilados de 35—. Un CRM enseña veinte filas donde esto
+ * enseña cuatro.
+ *
+ * **Y no es una opinión contra otra**: el escritorio que **Stitch ya dibujó para este proyecto** va a 14 px de
+ * base, 13 en la tabla, 11 en la cabecera, controles de 34 y filas de ~34, con radios de 3 a 10
+ * (`docs/stitch/escritorio/estructura.html`). Lo de aquí se acerca a eso **sin bajar del suelo de
+ * legibilidad que el proyecto se puso a sí mismo** («cuerpo 16 px mínimo y nada de etiquetas por debajo de
+ * 10 px», `docs/REDISENO_V0_STITCH_20261007.md:43-49`): **16 / 13 / 11 en vez de 14 / 12 / 9**.
+ *
+ * **Y todo va dentro del `@media`**: el móvil no cambia ni un píxel. El armazón de escritorio ya se esconde
+ * por debajo de 64 rem, así que este es el mismo corte que usa el resto del fichero.
+ *
+ * Lo que **no** se toca aquí: la paleta (es idéntica a la del sistema de diseño) y el suelo de la letra
+ * grande (`body.letra-grande`, que sube por accesibilidad y sigue mandando).
+ */
+@media (min-width: 64rem) {
+  :root {
+    --letra: 16px;
+    --radio: 8px;
+    --toque: 34px;
+    --t-pregunta: 1.15rem;
+    --t-titulo: 1.25rem;
+    --t-subtitulo: 1.05rem;
+    --t-bloque: 0.95rem;
+    --t-dato-grande: 1.35rem;
+    --t-dato-mando: 1.6rem;
+    --t-boton-principal: 1.05rem;
+    --t-boton: 0.9rem;
+    --t-campo: 0.95rem;
+    --t-pista: 0.85rem;
+    /* Y el ritmo se aprieta en la misma proporción: el aire es la mitad de lo que hace que una pantalla
+       parezca de juguete. */
+    --e-md: 8px;
+    --e-lg: 12px;
+    --e-xl: 18px;
+    --e-xxl: 24px;
+  }
+}
+
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: var(--letra);
