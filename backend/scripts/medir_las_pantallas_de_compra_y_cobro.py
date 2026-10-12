@@ -59,7 +59,14 @@ def main() -> int:
     print(f"  (direccion: {DIRECCION})")
     escenario = preparar(DIRECCION)
     token = escenario.volumen.token
-    campana = escenario.volumen.campana.id if hasattr(escenario.volumen, "campana") else None
+    # **`campana_actual()` es un método y `campanas` una lista** (11/10/2026). La primera versión pedía
+    # `volumen.campana`, que no existe, así que se quedaba en `None` y **el escenario del cobro nunca se
+    # montó**: el medidor dijo «no hay datos» sin decir que el que no había montado nada era él. Es la misma
+    # familia de fallo que el resto de la sesión: el instrumento, antes que el producto.
+    campana = escenario.volumen.campana_actual.id
+    print(f"  (campaña para el cobro: {campana})")
+    if campana is None:
+        print("  (sin campaña: no se puede montar el cobro)")
 
     # **Los escenarios, prestados de los guiones que ya los montan.**
     try:
@@ -68,11 +75,6 @@ def main() -> int:
     except Exception as error:  # noqa: BLE001 - se dice y se sigue, que esto es un medidor
         compra_id = None
         print(f"  (no he podido montar la compra: {type(error).__name__}: {str(error)[:70]})")
-    if campana is None:
-        try:
-            campana = preparar(DIRECCION).volumen.campana.id
-        except Exception:  # noqa: BLE001
-            campana = None
     cobro_ok = False
     if campana is not None:
         try:
