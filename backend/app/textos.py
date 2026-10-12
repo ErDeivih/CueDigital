@@ -3219,6 +3219,12 @@ COBRO: dict[str, str] = {
         "Y sobran {sobrante}, que se quedan sin asignar hasta que sepas a qué van."
     ),
     "imputado": "Va a la factura",
+    # **Los dos rótulos de la tabla del ordenador** (11/10/2026). Los demás ya estaban —`fecha`, `cuanto`,
+    # `imputado`, `cliente`, `forma`—, así que la tabla **no inventa vocabulario**: dice lo mismo que la ficha.
+    # Y `tabla_repartido` es el que se escribe cuando un cobro va a varias facturas y no se pueden listar sus
+    # números: mejor «Varias facturas» que el texto de «no sé de qué factura es», que sería mentira.
+    "tabla_acciones": "Acciones",
+    "tabla_repartido": "Varias facturas",
     # **Un cobro que salda varias deudas** (CRM-01, 11/10/2026). Hace falta un rótulo propio porque el de
     # arriba dice «Va a **la** factura», en singular, y un ingreso repartido va a varias: sin esto, la ficha
     # enseñaba el nombre de una sola —o decía «sin factura», que es lo contrario de lo que ha hecho el
