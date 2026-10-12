@@ -2674,3 +2674,40 @@ div.tarjeta:active {
     max-width: none;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Los últimos 15 px: la fila a ~40 y la cabecera a ~30** (11/10/2026).
+ *
+ * Medido con `getComputedStyle`, uno por uno, porque el alto de una tabla no lo manda una sola cosa:
+ *  · la **cabecera** medía 50 px = su botón de ordenar (`tabla-orden`, **32 px**) más 16 de relleno;
+ *  · la **fila** medía 54 px = la celda más alta (**38 px** de contenido, la de las acciones con sus botones)
+ *    más 16 de relleno;
+ *  · y los **botones de la cabecera** (`Salir`, `A+`, `APUNTAR`) no son `.boton`: llevan `min-height: 48px`
+ *    propio, y por eso seguían a 46-48 aunque los de la pantalla ya estaban en 34.
+ *
+ * Los números de destino son los de Frappe 15 (fila **40 px**, cabecera **30 px**, control **28**), leídos de
+ * su SCSS oficial: `frappe/public/scss/desk/list.scss` (`.list-row { height: 40px }`, `.list-row-head
+ * { height: 30px }`) y `css_variables.scss` (`$input-height: 28px`).
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .tabla thead th {
+    padding: 3px 8px;
+  }
+
+  /* El botón con el que se ordena una columna: en el escritorio es una etiqueta que se pulsa, no un botón de
+     dedo. A 20 px de alto, la cabecera se queda en unos 30. */
+  .tabla-orden {
+    min-height: 20px;
+    padding: 0 2px;
+  }
+
+  .tabla tbody td {
+    padding: 4px 8px;
+  }
+
+  /* Y los de la cabecera del marco (Salir, A+, APUNTAR): la principal sigue algo mayor, pero deja de ser un
+     botón de 48 px en una pantalla de ratón. */
+  .boton-letra {
+    min-height: 38px;
+  }
+}
