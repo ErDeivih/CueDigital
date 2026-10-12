@@ -2572,3 +2572,26 @@ div.tarjeta:active {
     white-space: nowrap;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Y una celda de tabla es UNA línea** (11/10/2026).
+ *
+ * POR QUÉ. El último culpable de que una fila midiera 249 px no era ni la letra ni los botones: era **un
+ * texto largo en una columna estrecha**. Medido celda por celda: la de «De dónde» llevaba «El Alto de la
+ * Dehesa Boyal, detrás del corral de las ovejas merinas» y, con ~100 px de ancho, se partía en **ocho
+ * renglones** (232 px). Eso es una descripción de sitio enseñada entera donde un CRM enseña un dato.
+ *
+ * Se recorta **a una línea con puntos suspensivos** (256 px como mucho) y el texto entero se sigue leyendo en
+ * la ficha del registro, que es donde se lee. Es solo escritorio: en el móvil esa columna no existe (allí la
+ * lista son tarjetas, con su espacio).
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .tabla tbody td .tabla-dato {
+    display: inline-block;
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+}
