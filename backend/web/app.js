@@ -17202,7 +17202,13 @@ function tarjetaDeUnContacto(contacto) {
   return {
     id: contacto.id,
     etiqueta: contacto.nombre,
-    rotulo: losPapelesEnPalabras(contacto.papeles),
+    // **Y si está de baja, se dice en el rótulo** (CRM-03, criterio (e), 11/10/2026): es la columna
+    // «Qué es» de la tabla y el rótulo de la tarjeta, así que se ve en el ordenador y en el móvil sin
+    // añadir una columna nueva. Un contacto de baja **no se esconde**: su pasado sigue apuntándole, y
+    // lo que tiene que hacer es decirlo.
+    rotulo: [losPapelesEnPalabras(contacto.papeles), contacto.activo === false ? "DE BAJA" : ""]
+      .filter(Boolean)
+      .join(" · "),
     lineas: (contacto.nombres_escritos || []).slice(0, 3),
     filas: filas.filter((fila) => fila.valor),
     avisos: [],

@@ -6620,6 +6620,11 @@ CONTACTOS: dict[str, object] = {
     # uno se leería «Su nombre está escrito en 1 papeles», que es lo primero que hace desconfiar.
     "cuantos_escritos": "Su nombre está escrito en {cuantas} papeles.",
     "cuantos_escritos_uno": "Su nombre está escrito en 1 papel.",
+    # **El estado, a la vista** (CRM-03, criterio (e), 11/10/2026). Va en el rótulo de la ficha y en
+    # su «qué es», que es lo que se lee de un vistazo en la lista y en la tabla: un contacto de baja
+    # **no se esconde**, porque su pasado sigue apuntándole; lo que hace es decirlo.
+    "de_baja": "DE BAJA",
+    "de_baja_pista": "Ya no se trabaja con esta ficha. Sigue aquí porque sus papeles la necesitan.",
     # **Los rótulos de la tabla del ordenador** (11/10/2026). Van aquí, con los demás textos del servidor, y no
     # escritos a mano en el HTML, porque el contrato de la tabla lo pide así (`web/react/piezas/tabla.js`: «los
     # textos de las columnas y del resumen vienen del servidor»). La última columna es siempre la de las
