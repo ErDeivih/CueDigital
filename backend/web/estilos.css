@@ -2595,3 +2595,64 @@ div.tarjeta:active {
     vertical-align: bottom;
   }
 }
+/* ----------------------------------------------------------------------------
+ * **Los controles de escritorio y el armazón canónico** (11/10/2026).
+ *
+ * 1) LOS CONTROLES, DE RATÓN. Medido: la barra de botones seguía a **46 px** de alto y los campos a 64. Eso
+ *    es tamaño de dedo en una pantalla de despacho. Bajan a **34** (que es lo que usa el escritorio que
+ *    Stitch ya dibujó) y **la acción principal se queda algo mayor (38)**, porque sigue siendo la que se
+ *    pulsa sin mirar.
+ *
+ * 2) EL ARMAZÓN, UNO SOLO. El diseño de escritorio del proyecto está dibujado **siete veces con medidas
+ *    distintas** (menú de 224 a 320 px, barra de 56 a 80), y eso es una decisión que no se puede dejar
+ *    abierta. Se eligen las del encargo escrito (`disenar_con_stitch.py`): **menú 240, barra 64, panel 340**.
+ *    La barra ya medía 64, así que solo cambian el menú (272 → 240) y el panel (320 → 340).
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .boton,
+  button.boton {
+    min-height: 34px;
+  }
+
+  .boton-principal,
+  .boton.boton-principal {
+    min-height: 38px;
+  }
+
+  .campo input,
+  .campo select,
+  .campo textarea,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    min-height: 34px;
+  }
+
+  :root {
+    --ancho-menu: 15rem; /* 240 px */
+  }
+
+  .marco {
+    grid-template-columns: 15rem minmax(0, 1fr) 21.25rem; /* menú 240 · panel 340 */
+  }
+}
+/* ----------------------------------------------------------------------------
+ * **Y el alto de un botón no lo manda el `min-height`: lo manda el relleno** (11/10/2026).
+ *
+ * Medido con `getComputedStyle`, después de fallar dos veces por suponer: `.boton` tenía
+ * `min-height: 34px` **aplicado** y seguía midiendo **44 px**, porque el relleno de móvil (11,2 arriba y
+ * abajo) más el borde grueso (**3 px**, la regla de «bordes con intención» del sistema de campo) suman los
+ * 10 px que sobran. En un despacho el relleno es de 5-6 y el borde de 2: el mismo botón baja a **34**.
+ * Es la tercera vez en esta sesión que el número que faltaba estaba en una propiedad que no era la que yo
+ * creía, y las tres se resolvieron **midiendo el elemento**, no leyendo el fichero.
+ * -------------------------------------------------------------------------- */
+
+@media (min-width: 64rem) {
+  .boton,
+  button.boton {
+    padding: 5px 10px;
+    border-width: 2px;
+  }
+}

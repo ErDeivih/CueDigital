@@ -49,7 +49,12 @@ LO_QUE_SE_MIDE = {
     "celda_de_tabla": "table tbody td",
     "cabecera_de_tabla": "table thead th",
     "fila_de_lista": ".lista li",
-    "boton": "button.boton, .boton",
+    # **El botón de la PANTALLA, no el primero del documento** (11/10/2026). Medía `button.boton, .boton` a
+    # secas, y el primero del documento es el de la **cabecera** (`Salir`, `A+`): así estuve tres rondas
+    # creyendo que un cambio no funcionaba porque el número que leía era de otro botón. Un selector que no
+    # dice **de qué** es el elemento que mide es la mitad de un instrumento.
+    "boton": "#pantalla .boton",
+    "boton_de_la_cabecera": ".marco .barra-acciones .boton",
     "campo": "input[type='text'], select",
     "dato_resumen": ".resumen-dato dt",
     "barra": ".marco .barra-acciones, .barra-acciones",
