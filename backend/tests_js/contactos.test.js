@@ -1639,7 +1639,18 @@ test("la lista de contactos, en el ordenador, va en tabla con sus columnas", asy
       },
     ],
   });
-  assert.ok(html.includes('class="tabla"'), `la lista de contactos no va en tabla:\n${html}`);
+  // **Se pregunta por la ETIQUETA `<table>`**, no por la clase (11/10/2026): la primera version preguntaba
+  // por `class="tabla"` y **esa cadena aparece en esa pantalla por otro sitio**, asi que la prueba pasaba
+  // aunque la tabla no estuviera. Se supo rompiendo la tabla a proposito y viendo que la prueba **no** se
+  // ponia roja; la de cobros si se puso. Una prueba que no puede fallar no es una prueba.
+  assert.ok(
+    // **Se pregunta por SU contenedor** (`solo-escritorio tabla-scroll`), que es lo unico que solo
+  // tiene la tabla nueva (11/10/2026): las tarjetas **tambien** llevan dentro una `<table class="tabla">`
+  // para sus filas de datos, asi que preguntar por eso daba verde aunque la tabla no estuviera. Se supo
+  // rompiendo la tabla a proposito y viendo que la prueba **no** se ponia roja.
+    html.includes("solo-escritorio tabla-scroll"),
+    `la lista de contactos no va en tabla:\n${html}`,
+  );
   assert.ok(html.includes("solo-escritorio"), "la tabla tiene que ir en la parte de escritorio");
   assert.ok(html.includes("Cooperativa Agrícola de Peñaranda"), "la fila lleva el nombre");
   assert.ok(html.includes("B09123456"), "y el NIF, que viene de las filas de la tarjeta");
