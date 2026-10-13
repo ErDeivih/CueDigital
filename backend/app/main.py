@@ -58,6 +58,7 @@ from .routers import (
     # **Las próximas acciones** (Entrega 3, 13/10/2026): lo que hay que hacer, cruzando fichas.
     tareas_api,
     fusion_api,
+    terceros_api,
 )
 
 # Los tipos de fichero se declaran a mano A PROPÓSITO.
@@ -172,6 +173,7 @@ app.include_router(cuenta.router)
 # **Las próximas acciones** (Entrega 3, 13/10/2026): lo que hay que hacer, cruzando fichas.
 app.include_router(tareas_api.router)
 app.include_router(fusion_api.router)
+app.include_router(terceros_api.router)
 # **La normativa**, con las demas puertas de consulta (07/10/2026).
 app.include_router(normativa_api.router)
 # Las fincas de una cuenta y quién entra en ellas (varias cuentas en la misma finca): va justo detrás de
