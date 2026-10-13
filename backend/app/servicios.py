@@ -7,6 +7,7 @@ probarse sin levantar un servidor ni hacer peticiones HTTP.
 
 from __future__ import annotations
 
+from . import geo
 import datetime as dt
 import unicodedata
 from dataclasses import dataclass
@@ -561,6 +562,43 @@ def superficie_contada_del_grupo(grupo) -> float | None:
         return None
     return round(sum(parcela.superficie_ha for parcela in parcelas), 4)
 
+
+
+def solapes_del_grupo(grupo) -> list[dict]:
+    """**Las parejas de tierras del grupo cuyas formas se pisan**, y qué dice `geo.se_solapan`.
+
+    POR QUE EXISTE. `superficie_contada_del_grupo` suma las hectareas de las tierras de un grupo y **no mira si
+    sus formas se pisan**: dos tierras solapadas cuentan **dos veces** la parte comun, y el total *«parece bueno y
+    no lo es»* — que es exactamente la frase que esa misma funcion usa para otra cosa (una tierra sin superficie).
+
+    ESTE ES EL AVISO QUE PIDE EL CONTRATO: *«formas solapadas no duplican superficie unica **sin advertencia**»*
+    (§2.1, E2). Y **no corrige nada**: el propio `geo.se_solapan` ya lo decidio — *«se avisa para que se mire, y
+    no se corrige nada… el contrato pide **detectar** solapes y **decirlo**, no arreglarlos por su cuenta»*.
+
+    Se devuelven **solo las parejas que avisan** (`si` o `puede`), cada una con la palabra que salio: `no` es que
+    estan bien y `no_se` es que a alguna le falta la forma, y de eso ya se encarga la regla de A7. Devolverlas
+    tambien seria ruido y escondería el aviso entre lo que no lo es.
+    """
+    from .versiones_de_recinto import texto_del_solape
+
+    parcelas = getattr(grupo, "parcelas", None) or []
+    avisos: list[dict] = []
+    for i, una in enumerate(parcelas):
+        for otra in parcelas[i + 1:]:
+            como = geo.se_solapan(getattr(una, "geometria", None), getattr(otra, "geometria", None))
+            if como in (geo.SOLAPE_SEGURO, geo.SOLAPE_POSIBLE):
+                avisos.append(
+                    {
+                        "una": getattr(una, "id", None),
+                        "otra": getattr(otra, "id", None),
+                        "como": como,
+                        # **Y se dice qué significa**, porque «puede» no se entiende solo.
+                        # **La frase la tiene la casa, y vive en `versiones_de_recinto`** (no en `geo`): se importa aqui
+                        # dentro para no crear un ciclo entre los dos modulos.
+                        "que_significa": texto_del_solape(como),
+                    }
+                )
+    return avisos
 
 def _nitrogeno_en_la_tierra(
     db: Session,
