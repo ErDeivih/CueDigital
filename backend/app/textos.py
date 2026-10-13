@@ -8965,3 +8965,45 @@ AYUDA_DE_LA_NORMATIVA: dict[str, str] = {
     'N09': 'La ITEAF y la ITV son dos obligaciones distintas, y no vencen a la vez para el tractor, el remolque y el equipo de aplicación. Manda la fecha del documento de inspección.',
     'N10': 'Llevar los registros, el formato exigido y la comunicación a la Administración son tres cosas separadas. Que el cuaderno sea voluntario no te exime de lo que pida tu sector.',
 }
+
+# **Los servicios a terceros** (CRM-04, 14/10/2026). Se definen UNA vez y los sirve `interfaz.py`, como todo lo
+# demás: si se escribieran dentro de la pantalla, la pantalla saldría **muda** —que es el fallo que ya ha aparecido
+# dos veces en esta casa— y además habría dos verdades que se pueden separar.
+TRABAJOS_A_TERCEROS: dict[str, str] = {
+    "titulo": "Los servicios a terceros",
+    "pista": (
+        "Los trabajos que se le hacen a otra persona: se propone, se acepta, se apunta lo que de verdad se hizo, y "
+        "el cobro va al saldo de su ficha, como todo el dinero de esta casa."
+    ),
+    "cargando": "Mirando los trabajos…",
+    "para_quien": "¿Para quién es?",
+    "elije_el_cliente": "Elige el cliente",
+    "que_se_le_hace": "¿Qué se le hace?",
+    "donde": "¿Dónde? (el sitio es suyo, no tuyo)",
+    "cuantas_hectareas": "¿Cuántas hectáreas?",
+    "de_quien_es_el_insumo": "¿De quién es el gasoil o la semilla?",
+    "insumo_propio": "Mío (sí descuenta de mi almacén)",
+    "insumo_del_cliente": "Del cliente (NO toca mi almacén)",
+    "a_cuanto_la_hora": "¿A cuánto la hora?",
+    "proponer": "Proponer el trabajo",
+    "la_superficie_no_es_tuya": (
+        "Sus hectáreas no se suman a las tuyas: no son tuyas y no salen en tu PAC."
+    ),
+    "no_hay_ninguno": "Todavía no le has hecho ningún trabajo a nadie.",
+    "donde_y_cuanto": "Dónde y cuánto",
+    "insumo": "El gasoil",
+    "tarifa": "La tarifa",
+    "coste": "El coste",
+    "estado": "Estado",
+    "aceptada_esta": "(la aceptada)",
+    "coste_no_consta": "no consta",
+    "no_consta": "no consta",
+    "aceptar": "Aceptar",
+    "apuntar_el_parte": "Apuntar lo hecho",
+    "cancelar": "Cancelar",
+    "propuesto": "Propuesto",
+    "aceptado": "Aceptado",
+    "hecho": "Hecho",
+    "cancelado": "Cancelado",
+}
+

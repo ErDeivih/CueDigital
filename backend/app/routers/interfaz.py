@@ -27,6 +27,7 @@ def interfaz() -> dict:
     # las tareas salía **muda**: el título vacío y los botones sin texto. Lo cazó el recorrido andado en
     # navegador, no las pruebas: las demás pantallas pasan el diccionario entero y esta no.
     "tareas": textos.TAREAS,
+        "trabajos_a_terceros": textos.TRABAJOS_A_TERCEROS,
         "cuaderno": textos.PANTALLA_CUADERNO,
         # El mapa: sus botones, sus avisos y las cuatro formas de contar la zona de nitratos.
         # Sin esto la pantalla sale con los botones en blanco: los textos viven aquí, y el
