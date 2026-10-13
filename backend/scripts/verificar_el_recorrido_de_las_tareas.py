@@ -1716,6 +1716,55 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             "y la misma lista que antes de recargar "
             f"({[f.get('titulo') for f in (tras_recargar.get('filas') or [])]})",
         )
+        # **Y la misma recarga, pero con el filtro «vencidas»**, que es el que nombra el encargo y el único que
+        # separa unas pocas filas de las seis. Se mide aparte porque «hoy» deja UNA fila y una lista de una fila
+        # se parece demasiado a una lista bien filtrada: con seis tareas, dejar dos dentro y cuatro fuera es una
+        # medida que no se puede confundir con «no filtró».
+        decir("")
+        decir("  --- y con el filtro «vencidas» puesto, se recarga la página entera ---")
+        nav.pulsar('[data-accion="tareas-ver"][data-vencimiento="vencidas"]')
+        nav.esperar(
+            "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
+            f"{len(medidos['vencidas']['de_la_puerta'])}",
+            segundos=25,
+        )
+        time.sleep(0.8)
+        antes_vencidas = leer_la_lista(nav)
+        decir(
+            f"antes de recargar: {antes_vencidas.get('direccion')!r}  "
+            f"filas: {antes_vencidas.get('cuantas')}"
+        )
+        nav.orden("Page.reload", {"ignoreCache": True})
+        time.sleep(3.5)
+        nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=30)
+        time.sleep(1.5)
+        tras_vencidas = leer_la_lista(nav)
+        decir(
+            f"después de recargar: {tras_vencidas.get('direccion')!r}  filas: {tras_vencidas.get('cuantas')}  "
+            f"marcado: {[f.get('vencimiento') for f in (tras_vencidas.get('filtros') or []) if f.get('marcado')]}"
+        )
+        decir(f"lo que se ve: {(tras_vencidas.get('texto') or '')[:600]!r}")
+        resultado["lista_vencidas_tras_recargar"] = tras_vencidas
+        las_vencidas_de_la_puerta = len(medidos["vencidas"]["de_la_puerta"])
+        comprobar(
+            el_camino_de_la_direccion(tras_vencidas.get("direccion")) == "#/tareas"
+            and lleva_el_filtro(tras_vencidas.get("direccion"), "vencidas"),
+            "tras recargar CON «vencidas», el filtro sigue puesto en la dirección "
+            f"({tras_vencidas.get('direccion')!r}; se esperaba el camino #/tareas con vencimiento='vencidas')",
+        )
+        comprobar(
+            tras_vencidas.get("cuantas") == las_vencidas_de_la_puerta
+            and tras_vencidas.get("cuantas") < len(LAS_TAREAS),
+            "y la lista sigue filtrada tras recargar: "
+            f"{tras_vencidas.get('cuantas')} filas (la puerta dice {las_vencidas_de_la_puerta} para «vencidas»; "
+            f"sin filtro serían {len(LAS_TAREAS)})",
+        )
+        resultado["recarga_vencidas"] = (
+            el_camino_de_la_direccion(tras_vencidas.get("direccion")) == "#/tareas"
+            and lleva_el_filtro(tras_vencidas.get("direccion"), "vencidas")
+            and tras_vencidas.get("cuantas") == las_vencidas_de_la_puerta
+            and tras_vencidas.get("cuantas") < len(LAS_TAREAS)
+        )
 
         # ---- extra: ¿y si la dirección CON el filtro se abre desde fuera? -------------
         # **Esto separa dos averías que se arreglan en sitios distintos** (y que hasta ahora iban juntas): que el
