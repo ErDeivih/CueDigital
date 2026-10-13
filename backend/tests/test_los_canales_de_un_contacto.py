@@ -423,3 +423,89 @@ def test_vaciar_un_campo_a_proposito_SI_lo_vacia(cliente, cuenta, db_sesion):
     assert corregida.status_code == 200, corregida.text
     assert corregida.json()["correo"] is None, f"mandarlo vacío sí lo borra: {corregida.json()['correo']}"
     assert corregida.json()["telefono"] == "947 123 456", "y lo demás sigue donde estaba"
+
+# ---------------------------------------------------------------------------
+# El canal espejo del campo de siempre (13/10/2026)
+# ---------------------------------------------------------------------------
+
+
+def _los_de_su_clase(respuesta, clase: str) -> list[dict]:
+    """Los canales de una clase, tal y como los devuelve la puerta (que es lo que ve la pantalla)."""
+    return [canal for canal in respuesta.json()["canales"] if canal["clase"] == clase]
+
+
+def test_corregir_el_telefono_pone_al_dia_su_canal(cliente, cuenta):
+    """**Lo que se ve tiene que ser lo que hay**: el campo y su canal espejo no pueden discrepar.
+
+    Medido antes de arreglarlo: campo «600 000 000» y el canal principal seguía diciendo «947 123 456» — y la
+    pantalla **enseña los canales**, así que el agricultor veía el teléfono de antes.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+
+    corregida = cliente.put(
+        f"/api/contactos/{ficha['id']}",
+        headers=cuenta["cabeceras"],
+        json={"nombre": "Cooperativa con otro teléfono", "telefono": "600 000 000"},
+    )
+    assert corregida.status_code == 200, corregida.text
+
+    los_telefonos = _los_de_su_clase(corregida, "telefono")
+    assert len(los_telefonos) == 1, f"no puede haber dos por corregir el campo: {los_telefonos}"
+    assert los_telefonos[0]["telefono"] == "600 000 000", (
+        f"el canal tiene que decir lo mismo que el campo: {los_telefonos[0]['telefono']}"
+    )
+    assert los_telefonos[0]["principal"] is True, "y sigue siendo el principal"
+    # Y lo demás no se toca.
+    assert _los_de_su_clase(corregida, "correo")[0]["correo"] == "administracion@cooperativa.test"
+
+
+def test_corregir_NO_toca_un_canal_con_etiqueta(cliente, cuenta):
+    """**Un canal con etiqueta es del agricultor**, y corregir el campo no puede borrarle el teléfono a nadie.
+
+    Es la diferencia que más importa de todo esto: el «móvil de Ana» no es «el de siempre».
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    # Se apunta otro teléfono **con etiqueta** y se hace principal (el de siempre deja de serlo).
+    con_etiqueta = _apuntar_un_canal(
+        cliente, cuenta, ficha["id"], clase="telefono", etiqueta="el móvil de Ana", telefono="600 111 222", principal=True
+    )
+    assert con_etiqueta.status_code == 200, con_etiqueta.text
+    assert [c["telefono"] for c in _los_de_su_clase(con_etiqueta, "telefono") if c["principal"]] == ["600 111 222"]
+
+    # Y se corrige el campo de siempre.
+    corregida = cliente.put(
+        f"/api/contactos/{ficha['id']}",
+        headers=cuenta["cabeceras"],
+        json={"nombre": "Cooperativa", "telefono": "947 000 000"},
+    )
+    assert corregida.status_code == 200, corregida.text
+
+    los_telefonos = _los_de_su_clase(corregida, "telefono")
+    el_de_ana = next(canal for canal in los_telefonos if canal["etiqueta"] == "el móvil de Ana")
+    assert el_de_ana["telefono"] == "600 111 222", (
+        f"el canal con etiqueta sigue con SU número, no con el del campo: {el_de_ana['telefono']}"
+    )
+    assert el_de_ana["principal"] is True, "y sigue siendo el principal, que es el que se eligió"
+    # Y el campo tiene su propio canal espejo, sin etiqueta, con el valor nuevo y **sin** ser principal.
+    el_del_campo = next(canal for canal in los_telefonos if canal["etiqueta"] is None)
+    assert el_del_campo["telefono"] == "947 000 000", el_del_campo
+    assert el_del_campo["principal"] is False, "el principal lo eligió el agricultor y no se pisa"
+
+
+def test_vaciar_el_campo_se_lleva_su_canal_espejo(cliente, cuenta):
+    """Si el campo se vacía y el canal **era su espejo**, el canal se va con él — y solo el espejo."""
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    assert len([canal for canal in ficha["canales"] if canal["clase"] == "telefono"]) == 1
+
+    corregida = cliente.put(
+        f"/api/contactos/{ficha['id']}",
+        headers=cuenta["cabeceras"],
+        json={"nombre": "Cooperativa sin teléfono", "telefono": ""},
+    )
+    assert corregida.status_code == 200, corregida.text
+
+    assert _los_de_su_clase(corregida, "telefono") == [], (
+        f"el espejo se va con el campo: {_los_de_su_clase(corregida, 'telefono')}"
+    )
+    # Y el correo y la dirección, que no se tocaron, siguen.
+    assert sorted(canal["clase"] for canal in corregida.json()["canales"]) == ["correo", "direccion"]

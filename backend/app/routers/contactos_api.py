@@ -345,6 +345,67 @@ def _los_canales_del_alta(db, contacto: models.Contacto) -> None:
         )
 
 
+def _los_canales_siguen_a_la_ficha(db, contacto: models.Contacto) -> None:
+    """**Si un canal era el espejo del campo de siempre, se pone al día con él** (Entrega 2, 13/10/2026).
+
+    POR QUÉ. Los cuatro campos de siempre (teléfono, correo, dirección, localidad) **se quedan** y el alta crea con
+    ellos un canal **principal** por clase. Pero al **corregir la ficha** se cambiaba el campo y el canal se quedaba
+    con el valor viejo: **la pantalla enseña los canales**, así que el agricultor veía el teléfono de antes. Medido
+    antes de arreglarlo: campo «600 000 000» y canal «947 123 456».
+
+    **La regla, y la diferencia importa**: un canal **sin etiqueta** es el **espejo** del campo, y se pone al día con
+    él (o se va, si el campo se ha vaciado). Un canal **con etiqueta** («el del almacén», «el móvil de Ana») es **del
+    agricultor**: puede tener el mismo número que el de siempre y aun así ser otro, y por eso **no se toca**.
+    Confundir los dos sería borrarle el teléfono a alguien por corregir el de la ficha.
+
+    Y una cosa que aprendí a golpes: la primera vez que lo intenté, esto «borraba de más» —y **no era verdad**: los
+    campos llegaban vacíos porque la corrección **borraba los campos que no se mandaban** (un defecto peor, arreglado
+    aparte ese mismo día). Con la raíz arreglada, esto hace lo que dice.
+    """
+    for clase, nuevo, localidad in (
+        ("telefono", contacto.telefono, None),
+        ("correo", contacto.correo, None),
+        ("direccion", contacto.direccion, contacto.localidad),
+    ):
+        # **El espejo es el canal SIN ETIQUETA de esa clase**, sea o no el principal. Buscar «el principal» sería un
+        # error que ya cometí: si el agricultor eligió como principal un canal **con nombre** («el móvil de Ana»),
+        # mirando al principal se ve la etiqueta, se decide no tocar nada —bien— y **el espejo del campo se queda sin
+        # poner al día**, que es justo lo que hay que arreglar.
+        el_espejo = db.scalar(
+            select(models.CanalDeUnContacto).where(
+                models.CanalDeUnContacto.explotacion_id == contacto.explotacion_id,
+                models.CanalDeUnContacto.contacto_id == contacto.id,
+                models.CanalDeUnContacto.clase == clase,
+                models.CanalDeUnContacto.etiqueta.is_(None),
+            )
+        )
+        if el_espejo is None:
+            # No hay espejo de esa clase: si el campo tiene algo, se le hace uno. **No se usa `_los_canales_del_alta`
+            # aquí**: esa crea un canal por cada clase que no tenga ninguno, y lo que hace falta es solo este.
+            if nuevo and str(nuevo).strip():
+                db.add(
+                    models.CanalDeUnContacto(
+                        explotacion_id=contacto.explotacion_id,
+                        contacto_id=contacto.id,
+                        clase=clase,
+                        etiqueta=None,
+                        telefono=nuevo if clase == "telefono" else None,
+                        correo=nuevo if clase == "correo" else None,
+                        direccion=nuevo if clase == "direccion" else None,
+                        localidad=localidad if clase == "direccion" else None,
+                        # **No se hace principal**: si ya hay uno de esa clase, el agricultor lo eligió y no se pisa.
+                        principal=False,
+                    )
+                )
+            continue
+        if not nuevo or not str(nuevo).strip():
+            db.delete(el_espejo)  # El campo se vació y el canal **era su espejo**: se va con él.
+            continue
+        setattr(el_espejo, clase, nuevo)
+        if clase == "direccion":
+            el_espejo.localidad = localidad
+
+
 def _los_canales(db, contacto: models.Contacto) -> list[dict]:
     """Los canales de una ficha, **el principal de cada clase primero** y luego los demás por etiqueta.
 
@@ -1685,6 +1746,9 @@ def corregir(
         explotacion_id=explotacion.id,
         usuario_id=usuario.id,
     )
+    # **Y los canales, detrás del campo**: si el principal era el espejo del campo, se pone al día con él; si
+    # tiene etiqueta, es del agricultor y no se toca.
+    _los_canales_siguen_a_la_ficha(db, contacto)
     _papeles_que_se_quedan(db, contacto, datos)
     db.commit()
     db.refresh(contacto)
