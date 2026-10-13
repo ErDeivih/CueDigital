@@ -332,11 +332,31 @@ def reconstruir_para_que_nazcan_las_claves_ajenas(motor: Engine) -> list[str]:
     `_reconstruir_tabla` copia todas las filas y las deja igual: lo que cambia es el esquema de delante. Y es
     **idempotente**: si la clave ya está, no se toca nada.
     """
+    pendientes = [
+        tabla
+        for tabla in TABLAS_QUE_NECESITAN_RECONSTRUIRSE_POR_UNA_CLAVE_AJENA
+        if las_claves_ajenas_que_faltan(motor, tabla)
+    ]
+    if not pendientes:
+        return []
+
+    # **Sin copia no se reconstruye**, con las mismas palabras y el mismo motivo que la función de al lado: una
+    # base en memoria o PostgreSQL no se pueden copiar aquí, y lo honesto es **parar y decirlo** en vez de
+    # reconstruir sin vuelta atrás. Lo LEÍ antes de escribir esto, en vez de suponerlo.
+    if _ruta_del_fichero(motor) is None:
+        raise RuntimeError(
+            "Esta base no es un fichero de SQLite, así que no se puede guardar una copia antes de "
+            "reconstruir tablas, y sin copia no se reconstruye nada. En PostgreSQL (o en una base en "
+            "memoria) hace falta una migración de verdad, con su copia y su herramienta. No se ha tocado nada."
+        )
+    copia = _copia_de_seguridad_del_fichero(motor)
+
     reconstruidas: list[str] = []
-    for tabla in TABLAS_QUE_NECESITAN_RECONSTRUIRSE_POR_UNA_CLAVE_AJENA:
-        if las_claves_ajenas_que_faltan(motor, tabla):
-            _reconstruir_tabla(motor, tabla, copia=None)
-            reconstruidas.append(tabla)
+    for tabla in pendientes:
+        # **Se pasa el objeto de la tabla**, no su nombre: así lo hace la función de al lado. (La primera vez pasé
+        # el nombre; se habría visto al llamarla de verdad, y por eso la pruebo suelta antes de armarla.)
+        _reconstruir_tabla(motor, models.Base.metadata.tables[tabla], copia=copia)
+        reconstruidas.append(tabla)
     return reconstruidas
 
 
