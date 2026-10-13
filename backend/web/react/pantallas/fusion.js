@@ -186,3 +186,11 @@ export function PantallaDeLaFusion({
     </section>
   `;
 }
+
+/** El envoltorio: la pantalla, con lo que le llega del estado. **`app.js` importa ESTO**, no el componente: es la
+ * misma forma que las demás pantallas, y si falta, el navegador se niega a cargar el módulo entero («does not provide
+ * an export named…») y la aplicación no arranca. */
+export function pantallaDeLaFusion(propiedades) {
+  return html`<${PantallaDeLaFusion} ...${propiedades} />`;
+}
+
