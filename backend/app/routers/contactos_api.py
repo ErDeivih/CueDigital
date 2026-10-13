@@ -1839,7 +1839,7 @@ def marcar_un_papel(
     # inventario de la fusión (`CRM-04-FUSION-INVENTARIO.md`) y el encargo pide «historial y auditoría». Se guarda
     # la lista **tal cual**, para que la auditoría diga QUÉ se marcó y no un «algo cambió».
     correcciones.apuntar(
-        db, explotacion_id=explotacion.id, usuario_id=usuario.id, entidad="contacto",
+        db, explotacion_id=explotacion.id, usuario_id=_usuario.id, entidad="contacto",
         entidad_id=contacto.id, accion="papeles", datos={"papeles": sorted(papeles)},
     )
     db.commit()
@@ -1911,6 +1911,13 @@ def enlazar(
         )
     )
     contacto.editado_a_mano = True
+    # **Y queda dicho** (14/10/2026). Enlazar ponía `editado_a_mano` y **no dejaba rastro**: lo midió el
+    # inventario de la fusión, y el encargo pide «historial y auditoría». Se apunta QUÉ se enlazó (tabla, campo y
+    # registro), que es lo que permite deshacerlo después sin adivinar.
+    correcciones.apuntar(
+        db, explotacion_id=explotacion.id, usuario_id=_usuario.id, entidad="contacto",
+        entidad_id=contacto.id, accion="enlazar", datos={"tabla": campo.tabla, "campo": campo.campo, "registro_id": datos.registro_id},
+    )
     db.commit()
     db.refresh(contacto)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
@@ -1942,6 +1949,12 @@ def quitar_el_enlace(
         )
     db.delete(enlace)
     contacto.editado_a_mano = True
+    # **Y queda dicho** (14/10/2026), por el mismo motivo: quitar un enlace tampoco dejaba rastro, y
+    # `enlaces_de_contacto` **no tiene columna de anulación** — la auditoría es lo único que lo reconstruye.
+    correcciones.apuntar(
+        db, explotacion_id=explotacion.id, usuario_id=_usuario.id, entidad="contacto",
+        entidad_id=contacto.id, accion="quitar_el_enlace", datos={"enlace_id": enlace.id},
+    )
     db.commit()
     db.refresh(contacto)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
