@@ -3692,6 +3692,17 @@ class TareaSalida(BaseModel):
     cancelada_por: str | None = None
 
 
+class ListaDeTareas(BaseModel):
+    """**La lista de lo que hay que hacer** (Entrega 3).
+
+    Va envuelta en un diccionario con nombre (`tareas`) por el mismo motivo que las demás listas de la
+    casa: el día que haya que decir algo **de la lista** —cuántas van vencidas, si hay más de las que se
+    enseñan—, hay sitio donde ponerlo sin cambiar la forma de lo que ya viaja.
+    """
+
+    tareas: list[TareaSalida]
+
+
 class ContactoSalida(SalidaBase):
     """Un contacto con sus papeles y lo que se sabe de él.
 
