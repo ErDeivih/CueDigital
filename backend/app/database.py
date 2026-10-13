@@ -1201,6 +1201,16 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(f"Índices de la base de datos ({'; '.join(partes)}).")
     # Y después de añadir lo que falte, se quita la obligación de decir «sí o no» donde el tercer
     # estado («no se sabe») es la respuesta buena. Ver `COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS`.
+    # **Y las claves ajenas que falten** (14/10/2026). Una tabla que nació sin la suya —porque `ALTER TABLE
+    # ADD COLUMN` no puede añadir una clave ajena en SQLite— se reconstruye aquí, **con el esquema del modelo**
+    # (con su clave primaria, que es lo que hace que las tablas que apuntan a ella sigan valiendo) y copiando
+    # las filas tal cual. Hace **su propia copia** antes de tocar nada, y si la base no es un fichero **para y lo
+    # dice** en vez de reconstruir sin vuelta atrás. Es **idempotente**: si la clave ya está —que es el caso
+    # normal, en todos los arranques menos el primero— no hace absolutamente nada. Las tres cosas están
+    # probadas en `tests/test_las_claves_ajenas_que_faltan.py`.
+    claves = reconstruir_para_que_nazcan_las_claves_ajenas(motor)
+    if claves:
+        print(f"Tablas reconstruidas para que nazca su clave ajena: {', '.join(claves)}")
     reconstruidas = reconstruir_para_poder_decir_no_se(motor)
     if reconstruidas:
         print(
