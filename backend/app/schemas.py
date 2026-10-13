@@ -3588,6 +3588,30 @@ class NotaDeUnContactoSalida(BaseModel):
     clave_de_reenvio: str | None = None
 
 
+class SaldoDeUnContacto(BaseModel):
+    """Cuánto nos debe y cuánto le debemos, **separados y sin compensar** (13/10/2026).
+
+    Los dos lados van aparte a propósito: que a la misma persona se le venda y se le compre es lo normal, y restar
+    una deuda de la otra esconde las dos. Cada lado lleva sus **documentos** —para poder abrir de la cifra al
+    papel— y `sin_importe`, que cuenta los que no se sabe cuánto valen: **un importe desconocido no es un cero**.
+
+    `sin_asignar` es dinero que está y no se sabe de qué (un cobro o un pago sin aplicar) y **no rebaja ninguna
+    deuda**; `para_revisar` son los **excesos** —se ha cobrado o pagado más de lo que valía el documento— que se
+    marcan para mirarlos y **no se llaman anticipo**. `cobertura` dice hasta dónde llega este saldo y qué queda
+    fuera, porque la factura de compra no tiene contacto y **no se adjudica por nombre**.
+    """
+
+    contacto_id: int
+    # La moneda **se declara**: no hay columna de moneda en la base y `dinero.py` deja escrito que aquí todo es
+    # euro, así que se dice en vez de suponerlo.
+    moneda: str
+    nos_debe: dict
+    le_debemos: dict
+    sin_asignar: dict
+    para_revisar: list[dict]
+    cobertura: dict
+
+
 class ContactoSalida(SalidaBase):
     """Un contacto con sus papeles y lo que se sabe de él.
 

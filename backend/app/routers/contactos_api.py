@@ -46,11 +46,13 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .. import contactos as logica
+from .. import saldos
 from .. import correcciones, models, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     ConfirmacionDeLaMigracion,
     BajaDeUnContacto,
+    SaldoDeUnContacto,
     NotaDeUnContactoEntrada,
     ContactoEntrada,
     ContactoSalida,
@@ -667,6 +669,25 @@ def _lo_que_contesta_una_accion_ya_guardada(ya, contacto, texto: str, db, explot
         status_code=status.HTTP_409_CONFLICT,
         detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
     )
+
+
+@router.get("/{contacto_id}/saldo", response_model=SaldoDeUnContacto)
+def el_saldo(
+    contacto_id: int,
+    db: Db,
+    explotacion: ExplotacionActual,
+    _usuario: UsuarioActual,
+) -> dict:
+    """**Cuánto nos debe y cuánto le debemos**, con los documentos que lo explican (13/10/2026).
+
+    Se apoya en `app/saldos.py`, que a su vez usa **la regla única del dinero** (`app/servicios.py`): aquí no se
+    suma dinero por cuenta propia.
+
+    **Y se busca el contacto con `_el_contacto_de_la_finca`**, que es lo que hace que el saldo de un contacto de
+    otra finca **no se pueda ver** ni sabiendo su identificador: contesta 404, igual que la ficha.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    return saldos.el_saldo_de_un_contacto(db, explotacion_id=explotacion.id, contacto_id=contacto.id)
 
 
 @router.post("/{contacto_id}/notas", response_model=ContactoSalida)
