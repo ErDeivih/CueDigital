@@ -17559,7 +17559,12 @@ function estadoDeLasTareas() {
 
 /** Los textos de esta pantalla. */
 function textosDeLasTareas() {
-  return t("tareas", {});
+  // **Envuelto, como TODAS las demás pantallas** (14/10/2026). Aquí ponía `return t("tareas", {})`, o sea que se
+  // le pasaba a la pantalla **ya el vocabulario**; y la pantalla hace `textos.tareas`, que entonces es `undefined`,
+  // y se queda con `{}`: **todos los rótulos vacíos** (el título, los cuatro filtros y la marca «Vencida»). Lo cazó
+  // el recorrido andado en navegador, midiendo el DOM; las pruebas de servidor no lo podían ver. Es la misma familia
+  // del commit 0370184 —la FORMA de lo que se pasa—, pero al otro lado del cable.
+  return { tareas: t("tareas", {}) };
 }
 
 /** Pinta la lista tal y como está el estado ahora mismo. */
