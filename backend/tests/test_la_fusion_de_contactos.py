@@ -14,6 +14,8 @@ Lo que se prueba aquí:
 
 from __future__ import annotations
 
+import pytest
+
 from sqlalchemy import select
 
 from app import models
@@ -345,3 +347,40 @@ def test_deshacer_dos_veces_la_segunda_avisa_y_no_toca_nada(cliente, cuenta, db_
 
     otra_vez = cliente.post(f"/api/contactos/{destino['id']}/deshacer-la-fusion", headers=cuenta["cabeceras"])
     assert otra_vez.status_code == 409, f"la segunda vez tiene que negarse: {otra_vez.status_code}"
+
+def test_un_fallo_a_mitad_no_deja_cambios_parciales(cliente, cuenta, db_sesion, monkeypatch):
+    """**Fallo intermedio sin cambios parciales.** Si algo revienta al fusionar, no se mueve ni una fila.
+
+    CÓMO SE INDUCE, y por qué así. La auditoría es **el primer paso** de la fusión —a propósito, porque es lo único
+    que sabe qué era de quién—, así que se hace fallar **ahí**: si la fusión no puede dejar constancia, **no empieza**.
+    Es la forma más limpia de probar las dos cosas de una vez: que la auditoría va primero y que todo va dentro de una
+    transacción.
+
+    (Lo que NO cubre: un fallo **después** de escribir la auditoría. Eso queda declarado como pendiente.)
+    """
+    from app import correcciones
+
+    origen = _una_ficha(cliente, cuenta, "Origen que falla")
+    destino = _una_ficha(cliente, cuenta, "Destino que falla")
+    assert cliente.post(
+        f"/api/contactos/{origen['id']}/tareas", headers=cuenta["cabeceras"], json={"titulo": "No se tiene que mover"}
+    ).status_code == 200
+    db_sesion.expire_all()
+
+    def _revienta(*argumentos, **opciones):
+        raise RuntimeError("la auditoría no se puede escribir: la fusión NO puede empezar")
+
+    monkeypatch.setattr(correcciones, "apuntar", _revienta)
+
+    with pytest.raises(RuntimeError):
+        cliente.post(f"/api/contactos/{origen['id']}/fusion/{destino['id']}", headers=cuenta["cabeceras"])
+
+    # **Ni una fila movida**: la tarea sigue en el origen y el origen no remite a nadie.
+    db_sesion.rollback()
+    db_sesion.expire_all()
+    assert db_sesion.get(models.Contacto, origen["id"]).fusionado_con_id is None, "el origen no se ha fusionado"
+    suyas = list(db_sesion.scalars(select(models.Tarea).where(models.Tarea.contacto_id == origen["id"])))
+    assert [tarea.titulo for tarea in suyas] == ["No se tiene que mover"], "y la tarea sigue en su sitio"
+    assert list(db_sesion.scalars(select(models.Tarea).where(models.Tarea.contacto_id == destino["id"]))) == [], (
+        "y en el destino no ha aparecido nada"
+    )
