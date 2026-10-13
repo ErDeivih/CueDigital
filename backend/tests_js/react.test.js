@@ -8203,3 +8203,52 @@ test("la lista de cobros, en el ordenador, va en tabla y dice a qué factura va 
     "cada fila lleva su columna de acciones",
   );
 });
+
+// ---------------------------------------------------------------------------
+// La ficha de un gasto: el camino de vuelta a la de su proveedor (Entrega 1)
+// ---------------------------------------------------------------------------
+
+/** El cargador de la ficha de un gasto, con la caché rota como los demás de este fichero. */
+async function cargarLosGastos() {
+  return import(`../web/react/pantallas/gastos.js?prueba=${Math.random()}`);
+}
+
+/** El HTML de la ficha de un gasto, tal y como lo dibujaría React. */
+async function htmlDeUnGasto(gasto = {}, cambios = {}) {
+  const { PantallaDeUnGasto } = await cargarLosGastos();
+  return globalThis.ReactDOMServer.renderToStaticMarkup(
+    React.createElement(PantallaDeUnGasto, {
+      textos: {
+        gasto: { ficha_del_proveedor: "Ver la ficha de su proveedor" },
+        acciones: { volver: "VOLVER" },
+      },
+      gasto,
+      ...cambios,
+    }),
+  );
+}
+
+test("la ficha de un gasto lleva a la de su proveedor, y no lo enseña si no sabe de quién es", async () => {
+  // **POR QUÉ** (Entrega 1, 13/10/2026). La revisión del saldo midió que, desde el documento, el botón «volver»
+  // llevaba a la lista de cuentas y **no había forma de volver a la ficha del contacto**, así que el criterio
+  // «ficha → cifra → documento → **vuelta**» no se podía andar.
+  //
+  // **El botón «volver» no se toca, y es una decisión**: esa pantalla se abre también desde la lista de cuentas, y
+  // mandarla siempre al contacto rompería el camino normal. Lo que se añade es un **camino propio**, que además
+  // sirve por sí mismo: mirar quién es el proveedor mientras se mira lo que se le compró. Y solo es posible porque
+  // **la ficha del contacto tiene dirección** (`#/contactos/<id>`).
+  const conProveedor = await htmlDeUnGasto({ id: 9, concepto: "Abono", contacto_id: 22 });
+  assert.ok(
+    conProveedor.includes("#/contactos/22"),
+    `la ficha del gasto tiene que llevar a la de su proveedor:\n${conProveedor}`,
+  );
+  assert.ok(conProveedor.includes("Ver la ficha de su proveedor"), "y con su rótulo");
+
+  // Y si el gasto **no sabe** de quién es, no se inventa un enlace: uno que no lleva a ninguna parte es peor que
+  // ninguno.
+  const sinProveedor = await htmlDeUnGasto({ id: 9, concepto: "Abono" });
+  assert.ok(
+    !sinProveedor.includes("#/contactos/"),
+    `sin contacto no puede haber enlace a ninguna ficha:\n${sinProveedor}`,
+  );
+});
