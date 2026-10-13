@@ -116,6 +116,8 @@ QUIEN = "Cuaderno de volumen"
 COMPROBACIONES = 0
 FALLOS = 0
 PANTALLA: dict = {}
+# Las capturas que se han guardado de verdad, para poder contarlas y enseñarlas en el resumen.
+CAPTURAS: list[str] = []
 # La vuelta que se está andando, para que los pasos se numeren dentro de su vuelta y no se confundan los de una
 # con los de la otra: dos recorridos con los mismos números de paso no se pueden leer.
 VUELTA_ACTUAL = 0
@@ -316,7 +318,9 @@ def lo_que_ha_quedado_vivo() -> list[str]:
         "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -ne $null -and "
         "( $_.CommandLine -like '*cd-tareas-*' -or $_.CommandLine -like '*cuedigital-cdp-*' -or "
         "( $_.CommandLine -like '*uvicorn*' -and $_.CommandLine -like '*--port %d*' ) ) } | "
-        "ForEach-Object { \"$($_.ProcessId) $($_.Name)\" }" % PUERTO
+        "Where-Object { @('python.exe','pythonw.exe','chrome.exe','msedge.exe','node.exe') -contains $_.Name } | "
+        "ForEach-Object { \"$($_.ProcessId) $($_.Name) $($_.CommandLine.Substring(0, [Math]::Min(160, $_.CommandLine.Length)))\" }"
+        % PUERTO
     )
     try:
         salida = subprocess.run(  # noqa: S603
@@ -482,6 +486,44 @@ window.addEventListener('unhandledrejection', (e) => {
   const r = e.reason;
   window.__los_errores.push('promesa rechazada: ' + String((r && r.message) || r));
 });
+// **Y todas las direcciones por las que pasa la página** (medido, 14/10/2026): un filtro que se escribe en la
+// dirección y se borra acto seguido no se puede ver leyendo la dirección al final; hay que apuntar la historia.
+window.__las_direcciones = [window.location.hash];
+window.addEventListener('hashchange', () => {
+  const ultima = window.__las_direcciones[window.__las_direcciones.length - 1];
+  if (ultima !== window.location.hash) window.__las_direcciones.push(window.location.hash);
+});
+"""
+
+# **Los textos de la lista, vistos desde dentro.** Lo que llega a la pantalla es lo que hay guardado en el móvil
+# (`cuedigital.interfaz`), así que se mira **eso** y no una idea de lo que debería ser. Y se mira también lo que
+# contesta la puerta, para poder decir de dónde sale.
+LA_SONDA_DE_LOS_TEXTOS = """
+(async () => {
+  const de = (interfaz) => {
+    if (!interfaz) return { hay: false };
+    const suyo = interfaz.tareas;
+    if (suyo === undefined) return { hay: false };
+    const esLista = Array.isArray(suyo);
+    return {
+      hay: true,
+      es_lista: esLista,
+      tipo: esLista ? 'array' : typeof suyo,
+      claves_o_elementos: esLista
+        ? suyo.slice(0, 8)
+        : (suyo && typeof suyo === 'object' ? Object.keys(suyo).slice(0, 8) : null),
+      sabe_decir_el_titulo: esLista ? suyo.indexOf('titulo') >= 0 : Boolean(suyo && suyo.titulo),
+      contactos_es_objeto: Boolean(interfaz.contactos && typeof interfaz.contactos === 'object'
+        && !Array.isArray(interfaz.contactos)),
+      trabajos_es_lista: Array.isArray(interfaz.trabajos),
+    };
+  };
+  let guardado = null;
+  try { guardado = JSON.parse(window.localStorage.getItem('cuedigital.interfaz') || 'null'); } catch (e) { guardado = null; }
+  let deLaPuerta = null;
+  try { deLaPuerta = await (await fetch('/api/interfaz')).json(); } catch (e) { deLaPuerta = null; }
+  return { en_el_movil: de(guardado), de_la_puerta: de(deLaPuerta) };
+})()
 """
 
 
@@ -536,11 +578,16 @@ def decir_lo_que_se_ve(lo_que_hay: dict, cuanto: int = 1200) -> None:
 
 
 def guardar_captura(nav, destino: pathlib.Path) -> str:
-    """Una captura de verdad, con su tamaño medido del propio PNG."""
+    """Una captura de verdad, con su tamaño medido del propio PNG.
+
+    **Y se apunta en `CAPTURAS`**, porque una captura que se guarda y no se cuenta es una captura que el informe
+    no puede enseñar: el resumen decía «capturas: 0» con seis ficheros en el disco.
+    """
     crudo = base64.b64decode(nav.orden("Page.captureScreenshot", {"format": "png"})["data"])
     destino.write_bytes(crudo)
     ancho, alto = struct.unpack(">II", crudo[16:24])
     decir(f"captura: {destino}  ({ancho}x{alto}, {len(crudo)} bytes)")
+    CAPTURAS.append(str(destino))
     return str(destino)
 
 
@@ -587,10 +634,16 @@ def _la_tecla(caracter: str) -> tuple[int, str]:
 
 
 def _limpiar_el_campo(nav, campo: str) -> None:
-    """Vaciar el campo **no es teclear**: es dejar la mesa limpia para poder medir la manera siguiente."""
+    """Vaciar el campo **no es teclear**: es dejar la mesa limpia para poder medir la manera siguiente.
+
+    **Y se le quita el foco (`blur`) además de vaciarlo, que es lo que costó una vuelta** (medido, 14/10/2026):
+    en un campo `date`, vaciarlo y volver a enfocarlo **no reinicia el trozo que se está editando**, así que los
+    dígitos del día siguiente entran en el año y el campo se queda vacío. La combinación que sí funciona es
+    `value = ''` → `blur()` → `focus()`; con eso, teclear `13102026` deja `2026-10-13`, y sin el `blur` deja `''`.
+    """
     nav.evaluar(
-        "(() => { const el = document.getElementById(%s); if (el) el.value = ''; return true; })()"
-        % json.dumps(campo)
+        "(() => { const el = document.getElementById(%s); if (el) { el.value = ''; el.blur(); }"
+        " return true; })()" % json.dumps(campo)
     )
 
 
@@ -941,10 +994,17 @@ def el_alta_de_una_tarea(
                 vistos.setdefault(intento["manera"], intento)
             for clave, intento in vistos.items():
                 decir(
-                    f"         probado {clave!r} en #tarea-fecha con los dígitos en orden "
+                    f"         probado {clave!r} en #tarea-fecha, con la sonda 25/12/2026 y los dígitos en orden "
                     f"{intento['orden']!r} ({intento['digitos']}) → el campo quedó en {intento['valor']!r} "
                     f"(el campo tenía el foco: {intento['con_foco']})"
                 )
+            for intento in intentos:
+                if intento.get("confirmacion"):
+                    decir(
+                        f"         y con el día de verdad, en orden {intento['orden']!r} "
+                        f"({intento['digitos']}) → {intento['valor']!r} "
+                        f"(se esperaba {fecha.isoformat()!r})"
+                    )
             if manera is None:
                 decir(
                     "       NO HA ENTRADO TECLEANDO en #tarea-fecha: se han probado "
@@ -1359,6 +1419,29 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             f"tabla: {lista.get('hay_tabla')}  filas: {lista.get('cuantas')}"
         )
         decir(f"filtros que hay: {como_texto(lista.get('filtros'))}")
+        # **¿De dónde salen las palabras de esta pantalla?** Se mira lo que hay guardado en el móvil y lo que
+        # contesta la puerta: si el rótulo de la pantalla sale vacío, hay que poder decir **por qué**, y eso no se
+        # adivina — se mide.
+        los_textos = nav.evaluar(LA_SONDA_DE_LOS_TEXTOS)
+        decir(f"los textos de la lista, en el móvil: {como_texto((los_textos or {}).get('en_el_movil'))}")
+        decir(f"y los que contesta /api/interfaz:  {como_texto((los_textos or {}).get('de_la_puerta'))}")
+        resultado["los_textos_de_la_lista"] = los_textos
+        en_el_movil = (los_textos or {}).get("en_el_movil") or {}
+        comprobar(
+            en_el_movil.get("es_lista") is False and en_el_movil.get("sabe_decir_el_titulo") is True,
+            "lo que la puerta manda en `tareas` es un diccionario con sus rótulos, no una lista de nombres "
+            f"(tipo {en_el_movil.get('tipo')!r}, es_lista={en_el_movil.get('es_lista')}, "
+            f"sabe_decir_el_titulo={en_el_movil.get('sabe_decir_el_titulo')})",
+        )
+        comprobar(
+            bool(lista.get("titulo")),
+            f"la pantalla de la lista enseña su título ({lista.get('titulo')!r})",
+        )
+        comprobar(
+            all((f.get("texto") or "").strip() for f in (lista.get("filtros") or [])),
+            "y los cuatro botones de filtro llevan su rótulo "
+            f"({[(f.get('vencimiento'), f.get('texto')) for f in (lista.get('filtros') or [])]})",
+        )
         comprobar(
             lista.get("hay_tabla") is True and lista.get("cuantas") == len(LAS_TAREAS),
             f"la lista enseña las {len(LAS_TAREAS)} tareas sin filtro ({lista.get('cuantas')})",
@@ -1408,6 +1491,10 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             codigo, suyas = la_puerta(token, "GET", camino, que="sí")
             comprobar(codigo == 200, f"la puerta {camino} contesta ({codigo})")
             de_la_puerta = sorted(t.get("titulo") or "" for t in (suyas or {}).get("tareas", []))
+            # **Se borra la historia de direcciones justo antes de pulsar**, para poder decir si la dirección del
+            # filtro **llega a existir** y quién la quita después. Sin esto, una dirección que se escribe y se
+            # borra en el mismo suspiro se lee como «nunca se escribió», que es otra cosa.
+            nav.evaluar("(() => { window.__las_direcciones = [window.location.hash]; return 1; })()")
             nav.pulsar(selector)
             llego = nav.esperar(
                 "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
@@ -1415,12 +1502,15 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 segundos=25,
             )
             time.sleep(0.6)
+            la_historia = nav.evaluar("window.__las_direcciones || []")
             filtrada = leer_la_lista(nav)
             decir(
                 f"la pantalla se ha puesto al día tras pulsar: {llego}   "
                 f"dirección: {filtrada.get('direccion')!r}   filas: {filtrada.get('cuantas')}   "
-                f"marcado: {[f.get('texto') for f in (filtrada.get('filtros') or []) if f.get('marcado')]}"
+                f"marcado: {[f.get('vencimiento') for f in (filtrada.get('filtros') or []) if f.get('marcado')]}"
             )
+            decir(f"direcciones por las que ha pasado la página: {la_historia}")
+            resultado["filtros_medidos"][nombre + "__historia"] = la_historia
             for fila in filtrada.get("filas") or []:
                 decir(
                     f"             {fila['titulo']!r} vencida={fila['vencida_marcada']} "
@@ -1431,13 +1521,13 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 el_camino_de_la_direccion(filtrada.get("direccion")) == "#/tareas"
                 and lleva_el_filtro(filtrada.get("direccion"), valor),
                 f"la dirección cambia al filtro «{nombre}» ({filtrada.get('direccion')!r}; se esperaba el "
-                f"camino #/tareas con vencimiento={valor!r})",
+                f"camino #/tareas con vencimiento={valor!r}). Direcciones por las que ha pasado: {la_historia}",
             )
             los_marcados = [f for f in (filtrada.get("filtros") or []) if f.get("marcado")]
             comprobar(
                 len(los_marcados) == 1 and los_marcados[0].get("vencimiento") == valor,
                 f"y el filtro puesto queda marcado, y solo él "
-                f"({[(f.get('texto'), f.get('vencimiento')) for f in los_marcados]})",
+                f"({[f.get('vencimiento') for f in los_marcados]})",
             )
             en_pantalla = sorted(f.get("titulo") or "" for f in (filtrada.get("filas") or []))
             decir(f"la puerta dice: {de_la_puerta}")

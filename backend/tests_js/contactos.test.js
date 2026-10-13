@@ -2493,3 +2493,22 @@ test("sin permiso económico no se enseña el bloque del dinero (y con permiso, 
   // **Y la ficha sigue estando**: no se ha roto nada más.
   assert.ok(sinPermiso.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${sinPermiso}`);
 });
+
+test("sin poder modificar, la ficha no ofrece los botones que cambian nada", async () => {
+  // **POR QUÉ** (Entrega 4, 13/10/2026). El servidor ya deniega la escritura con un 403 —hay pruebas que lo fijan— y
+  // esta es la otra mitad: **no ofrecer** lo que no se puede hacer, para que el agricultor no pulse un botón que le
+  // va a dar un error. Todo lo que hay en la barra de acciones de la ficha **escribe** (guardar, enlazar, dar de baja
+  // o volver a usar, y borrar), así que con `puede_modificar` en falso no se ofrece ninguno.
+  //
+  // **Y con permiso sí**: la mitad que se olvida, y que dejaría la ficha sin botones para todo el mundo.
+  const conPermiso = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4 }, puede_modificar: true });
+  assert.ok(conPermiso.includes('data-accion="contacto-guardar"'), `con permiso tiene que estar:\n${conPermiso}`);
+  assert.ok(conPermiso.includes('data-accion="contacto-borrar"'), "y el de borrar");
+
+  const sinPermiso = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4 }, puede_modificar: false });
+  assert.ok(!sinPermiso.includes('data-accion="contacto-guardar"'), "sin permiso no se ofrece guardar");
+  assert.ok(!sinPermiso.includes('data-accion="contacto-borrar"'), "ni borrar");
+  assert.ok(!sinPermiso.includes('data-accion="contacto-baja"'), "ni dar de baja");
+  // **Y la ficha sigue entera**: se puede mirar, que es lo que sí puede hacer.
+  assert.ok(sinPermiso.includes("contacto-nombre"), `la ficha tiene que seguir viéndose:\n${sinPermiso}`);
+});

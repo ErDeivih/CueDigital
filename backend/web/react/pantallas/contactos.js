@@ -727,6 +727,13 @@ export function PantallaDeUnContacto({
         : null
     }
 
+    ${
+      // **Y los botones que CAMBIAN la ficha, solo si esta cuenta puede cambiarla** (Entrega 4). Todo lo que
+      // hay en esta barra escribe: guardar, enlazar, dar de baja o volver a usar, y borrar. Si no se puede
+      // modificar, no se ofrecen — y si alguien llega por la URL o por un identificador, **la puerta contesta
+      // 403 igual**: esto es no ofrecer, no autorizar.
+      puede_modificar
+        ? html`
     <div className="barra-acciones">
       <button
         type="button"
@@ -768,6 +775,9 @@ export function PantallaDeUnContacto({
       }
       <${Boton} etiqueta=${c.volver_a_los_contactos} accion="contactos-ver" clase="boton-claro" />
     </div>
+          `
+        : null
+    }
   `;
 }
 
