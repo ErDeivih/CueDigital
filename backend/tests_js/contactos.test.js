@@ -76,6 +76,12 @@ const TEXTOS = {
     // transcritas a mano: el guardián exige que sean las mismas palabras.
     // Los rótulos del saldo (Entrega 1). Copiados del servidor, no transcritos a mano.
     // Los rótulos de los canales (Entrega 2). Copiados del servidor, no a mano.
+    canales_apuntar: "Apuntar otro",
+    canales_hacer_principal: "Usar este",
+    canales_quitar: "Quitar",
+    canales_cual: "¿Qué es?",
+    canales_el_dato: "El teléfono, el correo o la dirección",
+    canales_como_se_llama: "Cómo lo llamas tú (el almacén, el móvil de Ana…)",
     canales_titulo: "Sus teléfonos, correos y direcciones",
     canales_pista: "Los de siempre y los demás: el del almacén, el móvil de quien atiende, la dirección de entrega. El principal es el que se usa si no se dice otra cosa.",
     canales_principal: "El principal",

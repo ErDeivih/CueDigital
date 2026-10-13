@@ -334,6 +334,8 @@ export function PantallaDeUnContacto({
   papeles = [],
   vivos = [],
   corrigiendo = false,
+  // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
+  canal_a_medias = null,
   borrando = false,
   guardando = false,
   error = "",
@@ -585,10 +587,57 @@ export function PantallaDeUnContacto({
                           : html` · ${frase(canal.direccion)}${canal.localidad ? html` (${frase(canal.localidad)})` : null}`
                     }
                     ${canal.principal ? html` · <strong>${frase(c.canales_principal)}</strong>` : null}
+                    ${" "}
+                    ${
+                      // **Y qué se puede hacer con él** (Entrega 2): usarlo como principal o quitarlo. El que ya es
+                      // principal no lleva el botón de usarlo: un botón que no hace nada es peor que no tenerlo.
+                      canal.principal
+                        ? null
+                        : html`<${BotonSencillo}
+                            etiqueta=${c.canales_hacer_principal}
+                            accion="canal-principal"
+                            datos=${{ id: borrador.id, canal: canal.id }}
+                          />`
+                    }
+                    <${BotonSencillo}
+                      etiqueta=${c.canales_quitar}
+                      accion="canal-quitar"
+                      datos=${{ id: borrador.id, canal: canal.id }}
+                    />
                   </li>
                 `,
               )}
             </ul>
+            ${
+              // **El alta rápida** (Entrega 2). Tres controles y un botón: qué es, cómo lo llamas tú y el dato. La
+              // clase va en una lista porque son tres y no hay más; la etiqueta no, porque la escribe el agricultor
+              // con sus palabras («el del almacén») y una lista cerrada le obligaría a mentir.
+              html`
+                <div className="alta-rapida-de-canal">
+                  <label>
+                    ${frase(c.canales_cual)}
+                    <select id="canal-clase" defaultValue="telefono">
+                      <option value="telefono">${frase(c.telefono)}</option>
+                      <option value="correo">${frase(c.correo)}</option>
+                      <option value="direccion">${frase(c.direccion)}</option>
+                    </select>
+                  </label>
+                  <label>
+                    ${frase(c.canales_el_dato)}
+                    <input id="canal-valor" type="text" value=${(canal_a_medias || {}).valor || ""} />
+                  </label>
+                  <label>
+                    ${frase(c.canales_como_se_llama)}
+                    <input id="canal-etiqueta" type="text" value=${(canal_a_medias || {}).etiqueta || ""} />
+                  </label>
+                  <${BotonSencillo}
+                    etiqueta=${c.canales_apuntar}
+                    accion="canal-nuevo"
+                    datos=${{ id: borrador.id }}
+                  />
+                </div>
+              `
+            }
           `
         : null
     }
@@ -756,6 +805,7 @@ export function pantallaDeUnContacto(propiedades) {
       guardando=${propiedades.guardando}
       error=${propiedades.error}
       saldo=${propiedades.saldo}
+    canal_a_medias=${propiedades.canal_a_medias || null}
     />
   `;
 }

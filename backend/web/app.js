@@ -17413,6 +17413,8 @@ function pantallaFichaDeContacto() {
       // El saldo, tal cual llegó del servidor (con el dinero ya escrito). `null` mientras no se sabe
       // es un hueco, **no un cero**.
       saldo: suyo.saldo || null,
+    // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
+    canal_a_medias: suyo.canal_a_medias || null,
       puedeDesenlazar: true,
       corrigiendo: Boolean(suyo.corrigiendo),
       borrando: suyo.borrando,
@@ -17506,6 +17508,70 @@ async function guardarElContacto() {
  * Si el campo está vacío no se llama a la puerta: se dice con palabras. El servidor también lo comprueba —una
  * nota vacía no es una nota—, pero así el agricultor lo lee sin esperar a la vuelta.
  */
+async function apuntarUnCanal(id) {
+  // **Apuntar un teléfono, un correo o una dirección más** (Entrega 2, 13/10/2026). Misma forma que la nota: se
+  // valida con palabras, se manda, y si el servidor dice que no, **no se pierde lo escrito**.
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const elDelCampo = (nombre) => {
+    const campo = document.getElementById(nombre);
+    return campo ? campo.value.trim() : "";
+  };
+  const clase = elDelCampo("canal-clase");
+  const valor = elDelCampo("canal-valor");
+  const etiqueta = elDelCampo("canal-etiqueta");
+  if (!valor) {
+    suyo.error = t("mensajes.C7_un_canal_necesita_algo_escrito", "");
+    return pantallaFichaDeContacto();
+  }
+  // El valor va en **el campo de su clase**, que es como lo guarda el servidor: un teléfono no lleva dirección
+  // dentro. La clase la elige el agricultor en la lista, y si no elige ninguna, se dice con palabras.
+  if (!["telefono", "correo", "direccion"].includes(clase)) {
+    suyo.error = t("mensajes.C7_esa_clase_de_canal_no_existe", "");
+    return pantallaFichaDeContacto();
+  }
+  const cuerpo = { clase, etiqueta };
+  cuerpo[clase] = valor;
+  const resultado = await mandarCambio(`/api/contactos/${id}/canales`, "POST", cuerpo);
+  if (resultado.error) {
+    // **Lo escrito se queda** en el estado y la pantalla lo vuelve a poner: apuntar un teléfono con guantes y que
+    // se borre por un fallo de red es exactamente lo que no puede pasar.
+    suyo.canal_a_medias = { clase, valor, etiqueta };
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  suyo.canal_a_medias = null;
+  // **Se vuelve a abrir la ficha por su puerta**: es la que la lee entera, con sus canales y su saldo.
+  return abrirLaFichaDeUnContacto(id);
+}
+
+async function elCanalPrincipal(id, canalId) {
+  // **Elegir cuál es el principal de su clase.** El servidor aparta al anterior en la misma transacción, así que
+  // aquí no hay nada que ordenar: se manda y se vuelve a leer la ficha.
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const resultado = await mandarCambio(`/api/contactos/${id}/canales/${canalId}/principal`, "POST", {});
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  return abrirLaFichaDeUnContacto(id);
+}
+
+async function quitarElCanal(id, canalId) {
+  // **Quitar un canal.** Se borra de verdad —un teléfono que ya no es de nadie no es un documento—, pero **el
+  // rastro se queda en la auditoría**, así que no se pierde la memoria de que existió. Y si era el principal, el
+  // servidor pone otro de su clase: la clase no se queda sin ninguno.
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const resultado = await mandarCambio(`/api/contactos/${id}/canales/${canalId}`, "DELETE", null);
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  return abrirLaFichaDeUnContacto(id);
+}
+
 async function apuntarLaNota(id) {
   const suyo = estadoDeLosContactos();
   suyo.error = "";
@@ -19359,6 +19425,15 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   if (nombre === "contacto-nota") {
     return apuntarLaNota(Number(elemento.dataset.id));
   }
+    // **Los canales** (Entrega 2, 13/10/2026): apuntar uno más, elegir cuál es el principal y quitar. Tres
+    // acciones y ninguna pantalla nueva: se vuelve a abrir la ficha por su puerta, que la lee entera.
+    if (nombre === "canal-nuevo") return apuntarUnCanal(Number(elemento.dataset.id));
+    if (nombre === "canal-principal") {
+      return elCanalPrincipal(Number(elemento.dataset.id), Number(elemento.dataset.canal));
+    }
+    if (nombre === "canal-quitar") {
+      return quitarElCanal(Number(elemento.dataset.id), Number(elemento.dataset.canal));
+    }
   if (nombre === "contacto-baja") {
     return cambiarElUsoDelContacto(Number(elemento.dataset.id), false);
   }

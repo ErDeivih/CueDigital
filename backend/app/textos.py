@@ -6612,6 +6612,12 @@ CONTACTOS: dict[str, object] = {
     "canales_principal": "El principal",
     "canales_sin_etiqueta": "Sin nombre",
     "canales_sin_nada_mas": "No hay ninguno más apuntado.",
+    "canales_apuntar": "Apuntar otro",
+    "canales_hacer_principal": "Usar este",
+    "canales_quitar": "Quitar",
+    "canales_cual": "¿Qué es?",
+    "canales_el_dato": "El teléfono, el correo o la dirección",
+    "canales_como_se_llama": "Cómo lo llamas tú (el almacén, el móvil de Ana…)",
     # **El saldo del contacto** (Entrega 1, 13/10/2026). Se dicen los dos sentidos por separado y con
     # sus palabras, porque la pantalla es donde se entiende que no se restan.
     "saldo_titulo": "Lo que hay con este contacto",
