@@ -436,6 +436,42 @@ def escribir_en_un_campo(nav, campo: str, valor: str) -> str:
     return "javascript"
 
 
+# **Los repintados de la ficha, contados.** Si el texto tecleado desaparece de un campo, hay que saber si es
+# porque la pantalla se ha vuelto a pintar encima: contarlo es lo que convierte «no se queda» en un dato.
+VIGILAR_LOS_REPINTADOS = """
+(() => {
+  window.__repintados = 0;
+  const p = document.getElementById('pantalla');
+  if (!p) return 'no hay pantalla que vigilar';
+  const vigia = new MutationObserver((cambios) => { window.__repintados += cambios.length; });
+  vigia.observe(p, { childList: true, subtree: true, characterData: true });
+  window.__el_vigia = vigia;
+  return 'vigilando';
+})()
+"""
+
+# **La sonda del campo**, que es lo que hace falta para saber por qué no se queda lo tecleado: cuántos
+# elementos con ese `id` hay (un `id` repetido es un defecto en sí), cuál tiene el foco y qué dice el DOM.
+LA_SONDA_DEL_CAMPO = """
+(() => {
+  const todos = [...document.querySelectorAll('#canal-valor')];
+  const el = document.getElementById('canal-valor');
+  return {
+    cuantos_con_ese_id: todos.length,
+    cuantas_pantallas: document.querySelectorAll('#pantalla').length,
+    tiene_el_foco: Boolean(el) && document.activeElement === el,
+    quien_tiene_el_foco: document.activeElement
+      ? (document.activeElement.id || document.activeElement.tagName)
+      : null,
+    valor: el ? el.value : null,
+    valor_atributo: el ? el.getAttribute('value') : null,
+    se_ve: el ? el.checkVisibility({ checkVisibilityCSS: true }) : null,
+    repintados: window.__repintados,
+  };
+})()
+"""
+
+
 def pulsar_sin_reventar(nav, selector: str) -> str | None:
     """Pulsa, y **si no se puede, lo dice**: un paso que no se puede dar no puede tumbar el recorrido."""
     try:
@@ -667,6 +703,41 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             f"#canal-valor={json.dumps((ficha['alta'] or {}).get('hay_valor'))} "
             f"#canal-etiqueta={json.dumps((ficha['alta'] or {}).get('hay_etiqueta'))}"
         )
+        # **Por qué no se queda lo tecleado, medido y no supuesto.** El teclado del protocolo **sí llega** a
+        # un `input` de una página en blanco (comprobado aparte, con `Input.insertText` y con teclas una a
+        # una), así que si aquí no llega es por algo de esta pantalla. Se mira: dónde está el foco, cuántos
+        # elementos hay con ese `id`, si el texto entra y desaparece, y cuántas veces se repinta la ficha.
+        decir(f"se enciende el vigía de repintados: {nav.evaluar(VIGILAR_LOS_REPINTADOS)}")
+        antes = nav.evaluar(LA_SONDA_DEL_CAMPO)
+        decir(f"el campo, antes de teclear: {como_texto(antes)}")
+        nav.evaluar("document.getElementById('canal-valor').focus()")
+        con_foco = nav.evaluar(LA_SONDA_DEL_CAMPO)
+        decir(f"y con el foco pedido:        {como_texto(con_foco)}")
+        comprobar(
+            bool((con_foco or {}).get("tiene_el_foco")),
+            "el campo #canal-valor coge el foco cuando se le pide",
+        )
+        comprobar(
+            (con_foco or {}).get("cuantos_con_ese_id") == 1,
+            f"y hay UN solo campo con ese id ({(con_foco or {}).get('cuantos_con_ese_id')})",
+        )
+        nav.escribir(SEGUNDO_TELEFONO)
+        justo_despues = nav.evaluar(LA_SONDA_DEL_CAMPO)
+        time.sleep(0.8)
+        un_poco_despues = nav.evaluar(LA_SONDA_DEL_CAMPO)
+        decir(f"justo después de teclear:    {como_texto(justo_despues)}")
+        decir(f"y 0,8 segundos después:      {como_texto(un_poco_despues)}")
+        decir(
+            "el teclado del protocolo llega al campo y lo que pasa después: "
+            f"entra={bool((justo_despues or {}).get('valor'))} "
+            f"se_queda={bool((un_poco_despues or {}).get('valor'))} "
+            f"repintados_durante_el_tecleo={(un_poco_despues or {}).get('repintados')}"
+        )
+        comprobar(
+            bool((un_poco_despues or {}).get("valor")),
+            "lo tecleado en #canal-valor SE QUEDA en el campo (no lo borra un repintado)",
+        )
+
         # Se teclea **en el campo**, no se pone el valor por JavaScript: `Input.insertText` es lo que hace
         # el navegador cuando el agricultor escribe. Y **se lee lo que ha quedado en el campo**, porque un
         # tecleo que no llega es un paso que no se ha dado.

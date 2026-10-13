@@ -196,7 +196,18 @@ def test_la_lista_filtra_por_responsable_estado_y_vencimiento(cliente, cuenta):
     assert [t["titulo"] for t in _la_lista(cliente, cuenta, estado="hecha")] == ["Ya hecha"]
     assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="vencidas")] == ["Vencida de Ana"]
     assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="hoy")] == ["De hoy de Ana"]
-    assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="sin_fecha")] == ["Sin fecha de Luis"]
+    # **«Sin fecha» es sin fecha, no «pendiente y sin fecha»** — y esa fue la aserción que escribí mal: yo esperaba
+    # solo la de Luis, y la lista devolvía también «Ya hecha», **porque tampoco tiene fecha**, y eso es lo correcto.
+    # El filtro dice lo que dice; el que quería decir otra cosa era yo. Así que aquí se prueba **combinando**, que es
+    # lo que de verdad hace falta: una tarea sin fecha **y todavía pendiente**.
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="sin_fecha")] == [
+        "Sin fecha de Luis",
+        "Ya hecha",
+    ], "sin fecha son las dos: la pendiente y la que ya se hizo"
+    sin_fecha_y_pendientes = _la_lista(cliente, cuenta, vencimiento="sin_fecha", estado="pendiente")
+    assert [t["titulo"] for t in sin_fecha_y_pendientes] == ["Sin fecha de Luis"], (
+        "y combinando los dos filtros, solo la que queda por hacer"
+    )
 
 
 def test_la_lista_pone_primero_lo_que_hay_que_hacer(cliente, cuenta):
