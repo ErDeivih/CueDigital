@@ -678,6 +678,17 @@ export function pantallaDeLosContactos(propiedades) {
 }
 
 /** Y el de la ficha. */
+/**
+ * **El envoltorio de la ficha del contacto, y por qué importa** (13/10/2026).
+ *
+ * Lo que usa la aplicación es **esta** función, no el componente: `app.js` monta `pantallaDeUnContacto(props)`. Por
+ * eso una propiedad que no se reenvíe aquí **no llega nunca a la pantalla**, aunque el componente sepa pintarla y
+ * aunque `app.js` la mande.
+ *
+ * Pasó con el saldo: `app.js` lo mandaba, el componente lo pintaba… y **el bloque no aparecía**, porque faltaba
+ * esta línea. Lo encontró la verificación en navegador (13 fallos de 34) y **no** las pruebas, porque montaban el
+ * componente directamente. Es el mismo error que tuvo `tabla` antes. De ahí la prueba que monta **por aquí**.
+ */
 export function pantallaDeUnContacto(propiedades) {
   return html`
     <${PantallaDeUnContacto}
@@ -689,6 +700,7 @@ export function pantallaDeUnContacto(propiedades) {
       borrando=${propiedades.borrando}
       guardando=${propiedades.guardando}
       error=${propiedades.error}
+      saldo=${propiedades.saldo}
     />
   `;
 }
