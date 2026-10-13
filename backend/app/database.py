@@ -287,6 +287,58 @@ COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS: tuple[tuple[str, str], ...] = (
     ("equipos_aplicacion", "titularidad"),
 )
 
+# **Tablas que hay que reconstruir para que nazca una CLAVE AJENA** (14/10/2026).
+#
+# POR QUÉ ES UNA LISTA APARTE. La de arriba se llama «columnas que dejaron de ser obligatorias» y sirve para
+# poder guardar un «no se sabe»; esto es otra cosa: aquí falta una **clave ajena que el modelo declara y la
+# base del agricultor no tiene**. Se dice con su nombre para que nadie tenga que adivinar por qué está aquí una
+# tabla que no tiene ninguna columna anulable.
+#
+# EL CASO, medido (`CRM-04-FUSION-INVENTARIO.md`): `ventas_de_cosecha.contacto_id` **no tiene clave ajena en la
+# base del agricultor**. En una base nueva sí; en la migrada no, porque `asegurar_columnas` usa `ALTER TABLE ADD
+# COLUMN` —y SQLite **no puede añadir una clave ajena así**—. De las seis columnas de dinero que una fusión
+# tendría que repuntar, es **la única cuyo error no caza la base**: una venta puede quedarse apuntando a una
+# ficha que no existe y nadie se entera.
+TABLAS_QUE_NECESITAN_RECONSTRUIRSE_POR_UNA_CLAVE_AJENA: tuple[str, ...] = (
+    "ventas_de_cosecha",
+)
+
+
+def las_claves_ajenas_que_faltan(motor: Engine, tabla: str) -> set[str]:
+    """Las columnas de esa tabla que el modelo declara con clave ajena y la base **no** tiene (solo SQLite)."""
+    if motor.dialect.name != "sqlite":
+        return set()
+    # **El import va aquí dentro a propósito**: `database.py` no importa los modelos arriba (sería un círculo,
+    # porque los modelos necesitan la base para declararse), así que se pide dentro, que es cuando ya está todo.
+    from . import models  # noqa: PLC0415
+
+    # **`PRAGMA foreign_key_list` da la tabla referenciada en el índice 2 y la columna LOCAL en el 3.** La
+    # primera vez leí el 2, así que comparaba nombres de COLUMNA contra nombres de TABLA: la resta salía
+    # siempre con algo y la tabla se habría reconstruido **en cada arranque** — que es justo lo contrario de lo
+    # que hace falta. Lo cazó la prueba de idempotencia.
+    with motor.connect() as conexion:
+        declaradas = {fila[3] for fila in conexion.exec_driver_sql(f'PRAGMA foreign_key_list("{tabla}")')}
+    del_modelo = {
+        columna.name
+        for columna in models.Base.metadata.tables[tabla].columns
+        if columna.foreign_keys
+    }
+    return del_modelo - declaradas
+
+
+def reconstruir_para_que_nazcan_las_claves_ajenas(motor: Engine) -> list[str]:
+    """**Reconstruye las tablas a las que les falta una clave ajena**, sin tocar ni una fila.
+
+    `_reconstruir_tabla` copia todas las filas y las deja igual: lo que cambia es el esquema de delante. Y es
+    **idempotente**: si la clave ya está, no se toca nada.
+    """
+    reconstruidas: list[str] = []
+    for tabla in TABLAS_QUE_NECESITAN_RECONSTRUIRSE_POR_UNA_CLAVE_AJENA:
+        if las_claves_ajenas_que_faltan(motor, tabla):
+            _reconstruir_tabla(motor, tabla, copia=None)
+            reconstruidas.append(tabla)
+    return reconstruidas
+
 
 def reconstruir_para_poder_decir_no_se(
     destino_engine: Engine | None = None, *, copia_ya_hecha: str | None = None
@@ -1129,7 +1181,6 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(f"Índices de la base de datos ({'; '.join(partes)}).")
     # Y después de añadir lo que falte, se quita la obligación de decir «sí o no» donde el tercer
     # estado («no se sabe») es la respuesta buena. Ver `COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS`.
-    reconstruidas = reconstruir_para_poder_decir_no_se(motor)
     if reconstruidas:
         print(
             "Columnas que ahora pueden decir «no se sabe» (se han reconstruido sus tablas, "
