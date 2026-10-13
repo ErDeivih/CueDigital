@@ -22,7 +22,7 @@ from __future__ import annotations
 import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import and_, select
 
 from .. import correcciones, models, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, PuedeVerLoEconomico
@@ -56,7 +56,20 @@ def _el_vencimiento_que_se_pide(vencimiento: str | None, hoy: dt.date):
     pantalla solo pinta.
     """
     if vencimiento == "vencidas":
-        return models.Tarea.fecha_prevista.is_not(None), models.Tarea.fecha_prevista < hoy
+        # **Y pendiente** (14/10/2026). Antes filtraba **solo por la fecha**, así que una tarea **hecha** con fecha
+        # pasada salía en «vencidas» mientras su propia bandera decía `vencida: false` — el filtro y la bandera
+        # contándose cosas distintas. Lo midió el recorrido andado: «el filtro de vencidas trae una tarea que el
+        # servidor marca vencida: false». Y lo que el encargo pide es exactamente esto: *«vista de **pendientes** de
+        # hoy y vencidos»*.
+        # **Las condiciones se COMBINAN, no se añaden**: quien llama desempaqueta dos valores (si tiene fecha, y la
+        # condición), así que devolver tres revienta con «too many values to unpack». Lo cazó la prueba.
+        return (
+            models.Tarea.fecha_prevista.is_not(None),
+            and_(
+                models.Tarea.estado == models.Tarea.PENDIENTE,
+                models.Tarea.fecha_prevista < hoy,
+            ),
+        )
     if vencimiento == "hoy":
         return models.Tarea.fecha_prevista.is_not(None), models.Tarea.fecha_prevista == hoy
     if vencimiento == "sin_fecha":

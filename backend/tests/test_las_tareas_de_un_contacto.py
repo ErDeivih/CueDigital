@@ -332,3 +332,36 @@ def test_las_tareas_de_otra_finca_no_se_ven_ni_se_cierran(cliente, cuenta, crear
     assert cerrar.status_code == 404, f"tiene que dar 404 y ha dado {cerrar.status_code}"
     mover = cliente.put(f"/api/tareas/{suya['id']}", headers=otro["cabeceras"], json={"titulo": "Robada"})
     assert mover.status_code == 404, mover.status_code
+
+def test_una_tarea_hecha_con_fecha_pasada_no_es_una_vencida(cliente, cuenta):
+    """**El filtro y la bandera dicen lo mismo.** Lo midió el recorrido andado en navegador:
+
+    «el filtro de vencidas trae una tarea que el servidor marca `vencida: false`» — una tarea **hecha** con fecha
+    pasada. El filtro miraba **solo la fecha**, así que salía en «vencidas» mientras su propia bandera decía que no.
+    El encargo lo pide así: *«vista de **pendientes** de hoy y vencidos»*, y *«la fecha vencida no transforma
+    automáticamente una tarea en cancelada»* — que es otra cosa: la tarea sigue ahí, pero **deja de estar vencida
+    cuando se hace**.
+    """
+    creada = cliente.post(
+        "/api/contactos", headers=cuenta["cabeceras"], json={"nombre": "Cooperativa de las vencidas"}
+    )
+    assert creada.status_code == 201, creada.text
+    ayer = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    suya = cliente.post(
+        f"/api/contactos/{creada.json()['id']}/tareas",
+        headers=cuenta["cabeceras"],
+        json={"titulo": "Se hace tarde", "fecha_prevista": ayer},
+    ).json()["tareas"][0]
+
+    # De partida **sí** está vencida, y sale en el filtro.
+    vencidas = cliente.get("/api/tareas?vencimiento=vencidas", headers=cuenta["cabeceras"]).json()["tareas"]
+    assert [t["id"] for t in vencidas] == [suya["id"]], [t["id"] for t in vencidas]
+    assert vencidas[0]["vencida"] is True, vencidas[0]
+
+    # Se hace. **Y deja de estar vencida** — y por tanto deja de salir en el filtro.
+    assert cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"]).status_code == 200
+    vencidas = cliente.get("/api/tareas?vencimiento=vencidas", headers=cuenta["cabeceras"]).json()["tareas"]
+    assert vencidas == [], f"una tarea hecha no es una vencida: {[(t['id'], t['estado']) for t in vencidas]}"
+    # **Y sigue estando en la lista de todas**, que es lo que el encargo protege: no desaparece.
+    todas = cliente.get("/api/tareas", headers=cuenta["cabeceras"]).json()["tareas"]
+    assert [t["id"] for t in todas] == [suya["id"]], "hecha, pero sigue estando"

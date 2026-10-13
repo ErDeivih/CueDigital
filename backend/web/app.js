@@ -1327,6 +1327,12 @@ function abrirLaPantalla(clave, parametros = {}) {
   // se abre, «eso no está en tu cuaderno» (404) o «no lo he podido comprobar» (sin cobertura).
   if (clave === "tareas") {
     // **Lo que hay que hacer** (Entrega 3): la lista, con los filtros que vengan en la dirección.
+    // **Y el filtro se copia al estado ANTES de abrir** (14/10/2026). `abrirLasTareas` ya lo lee de la dirección
+    // —por eso la lista sale filtrada tras recargar—, pero al pintar se **reescribe la dirección desde el
+    // estado**, y si aquí no está, la barra pierde el filtro: la lista enseña 2 filas y la dirección no dice por
+    // qué. Es el mismo cuidado que la rama de ventas, más arriba, y lo midió el recorrido andado en navegador
+    // (la dirección mentía: copiarla daba la lista SIN filtrar).
+    estado.filtroTareas = parametros.vencimiento || null;
     return abrirLasTareas(parametros);
   }
   if (clave === "contacto") {
