@@ -357,6 +357,7 @@ const FICHEROS = [
   // agricultor abre `#/tareas` **sin cobertura** y se encuentra una pantalla en blanco: es justo lo que la
   // prueba `test_todo_el_javascript_de_react_se_guarda_para_el_campo` vigila, y por eso la cazó.
   "/react/pantallas/tareas.js",
+  "/react/pantallas/trabajos_a_terceros.js",
   "/react/pantallas/revision_de_contactos.js",
   // La maquinaria (T14, 03/10/2026): la lista y la ficha de una máquina.
   "/react/pantallas/maquinaria.js",
