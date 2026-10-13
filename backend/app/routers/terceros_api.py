@@ -30,6 +30,7 @@ from sqlalchemy import select
 
 from .. import models, textos
 from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
+from app.deps import PuedeVerLoEconomico
 
 router = APIRouter(prefix="/api/trabajos-a-terceros", tags=["trabajos a terceros"])
 
@@ -298,3 +299,72 @@ def cancelar(
     db.commit()
     db.refresh(trabajo)
     return _lo_que_se_ve(trabajo, _el_cliente(db, explotacion.id, trabajo.contacto_id))
+
+
+# ---------------------------------------------------------------------------
+# EL MARGEN DE UN TRABAJO A UN TERCERO
+# ---------------------------------------------------------------------------
+
+@router.get("/{trabajo_id}/margen")
+def el_margen_del_trabajo(
+    trabajo_id: int,
+    db: Db,
+    usuario: UsuarioActual,
+    explotacion: ExplotacionActual,
+    _: PuedeVerLoEconomico,
+):
+    """**Lo facturado, lo que costó y lo que queda** (CRM-04, 14/10/2026).
+
+    POR QUÉ ESTA PUERTA. El contrato del ticket pide *«margen marca costes desconocidos»*. El parte ya apunta
+    `coste_conocido` y ya avisa con `coste_conocido_o_no`, pero **no había margen**: el inventario del CRM-05
+    lo encontró medido (`terceros_api.py:266` escribe el coste; no había nada que lo comparara con el ingreso).
+    Y un margen que trata un coste que no consta como un cero **miente**: diría que un trabajo sin coste
+    apuntado es todo beneficio.
+
+    CÓMO SE ENLAZA EL INGRESO, SIN ADJUDICAR NADA A OJO. **Por la `clave_de_reenvio`**: es la llave que este
+    proyecto usa para decir «esto y aquello son el mismo asunto», y el trabajo a un tercero **ya la lleva**
+    (`uq_trabajo_a_tercero_reenvio`). Así **no** se adjudica un documento «por coincidencia de nombres», que es
+    lo que el encargo prohíbe: se adjudica por la clave que el agricultor escribió.
+
+    Y las dos banderas van separadas, porque son **dos** incógnitas distintas: `coste_conocido_o_no` y
+    `facturado_o_no`. Si falta cualquiera de las dos, **el margen NO se calcula** — se dice que no consta.
+    """
+    trabajo = _suyo(db, explotacion.id, trabajo_id)
+
+    # **Lo facturado**: las ventas y las facturas emitidas de ESTA finca con la misma clave. Se pide el importe
+    # de cada una y se suman aparte, para poder decir **cuántos documentos** lo sostienen (la cobertura).
+    facturado = Decimal("0")
+    documentos = 0
+    if trabajo.clave_de_reenvio:
+        for modelo, columna in (
+            (models.VentaDeCosecha, models.VentaDeCosecha.importe),
+            (models.FacturaEmitida, models.FacturaEmitida.importe_total),
+        ):
+            filas = db.execute(
+                select(columna).where(
+                    modelo.explotacion_id == explotacion.id,
+                    modelo.clave_de_reenvio == trabajo.clave_de_reenvio,
+                )
+            ).scalars().all()
+            for importe in filas:
+                if importe is not None:
+                    facturado += Decimal(str(importe))
+                    documentos += 1
+
+    coste = trabajo.coste_conocido
+    hay_facturado = bool(trabajo.clave_de_reenvio) and documentos > 0
+    hay_coste = coste is not None
+    return {
+        "trabajo_id": trabajo.id,
+        "clave_de_reenvio": trabajo.clave_de_reenvio,
+        # **Lo que se sabe**, con sus dos banderas.
+        "facturado": facturado if hay_facturado else None,
+        "facturado_o_no": hay_facturado,
+        "coste_conocido": coste,
+        "coste_conocido_o_no": hay_coste,
+        "documentos": documentos,
+        # **Y el margen, solo si las dos están.** Si falta una, `None` y el porqué en la bandera: es la
+        # diferencia entre «no lo sé» y «cero», que es lo que el contrato pide en todo el módulo.
+        "margen": (facturado - Decimal(str(coste))) if (hay_facturado and hay_coste) else None,
+        "sin_clave_de_reenvio": not bool(trabajo.clave_de_reenvio),
+    }
