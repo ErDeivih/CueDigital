@@ -30,6 +30,20 @@ def _un_contacto(cliente, cuenta, nombre: str = "Cooperativa de Peñaranda") -> 
     return respuesta.json()
 
 
+def _la_de_titulo(respuesta, titulo: str) -> dict:
+    """**La tarea que se acaba de crear, buscada por su título**, y no por su posición.
+
+    POR QUÉ ESTE AYUDANTE, y me costó tres «defectos» falsos: yo hacía `_sus_tareas(…)[0]` dando por hecho que la
+    primera de la respuesta era la que había creado. **No lo es**: la respuesta trae **todas** las tareas de la ficha,
+    ordenadas, y la primera puede ser otra —así que completé **la tarea equivocada** y luego le eché la culpa al
+    filtro por estado y al orden, que **funcionaban bien**—. Se busca por el título, que es lo que identifica lo que
+    uno acaba de apuntar.
+    """
+    suyas = [tarea for tarea in _sus_tareas(respuesta) if tarea["titulo"] == titulo]
+    assert len(suyas) == 1, f"tiene que haber una sola «{titulo}»: {[t['titulo'] for t in _sus_tareas(respuesta)]}"
+    return suyas[0]
+
+
 def _apuntar_una_tarea(cliente, cuenta, contacto_id: int, **tarea):
     return cliente.post(
         f"/api/contactos/{contacto_id}/tareas", headers=cuenta["cabeceras"], json=tarea
@@ -76,7 +90,7 @@ def test_una_fecha_vencida_no_cancela_la_tarea(cliente, cuenta):
     respuesta = _apuntar_una_tarea(
         cliente, cuenta, ficha["id"], titulo="Llevar la factura", fecha_prevista=ayer
     )
-    suya = _sus_tareas(respuesta)[0]
+    suya = _la_de_titulo(respuesta, "Llevar la factura")
     assert suya["estado"] == models.Tarea.PENDIENTE, f"la fecha no la cancela: {suya}"
     assert suya["vencida"] is True, f"pero se dice que está vencida: {suya}"
     assert suya["fecha_prevista"] == ayer, "y conserva su día, que es el dato que el agricultor puso"
@@ -86,9 +100,9 @@ def test_una_tarea_de_hoy_no_esta_vencida(cliente, cuenta):
     """El día de hoy no está pasado: lo de hoy es **lo de hoy**, no lo vencido."""
     ficha = _un_contacto(cliente, cuenta)
     hoy = dt.date.today().isoformat()
-    suya = _sus_tareas(
+    suya = _la_de_titulo(
         _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar hoy", fecha_prevista=hoy)
-    )[0]
+    , "Llamar hoy")
     assert suya["vencida"] is False, f"lo de hoy no está vencido: {suya}"
     assert suya["fecha_texto"] == dt.date.today().strftime("%d/%m/%Y"), suya["fecha_texto"]
 
@@ -172,7 +186,9 @@ def test_la_lista_filtra_por_responsable_estado_y_vencimiento(cliente, cuenta):
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Vencida de Ana", responsable="Ana", fecha_prevista=ayer)
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="De hoy de Ana", responsable="Ana", fecha_prevista=hoy)
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Sin fecha de Luis", responsable="Luis")
-    hecha = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya hecha", responsable="Ana"))[0]
+    hecha = _la_de_titulo(
+        _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya hecha", responsable="Ana"), "Ya hecha"
+    )
     cliente.post(f"/api/tareas/{hecha['id']}/completar", headers=cuenta["cabeceras"])
 
     assert len(_la_lista(cliente, cuenta)) == 4, "sin filtros están todas"
@@ -195,7 +211,7 @@ def test_la_lista_pone_primero_lo_que_hay_que_hacer(cliente, cuenta):
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Sin fecha")
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Mañana", fecha_prevista=manana)
     _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Vencida", fecha_prevista=ayer)
-    hecha = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Hecha"))[0]
+    hecha = _la_de_titulo(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Hecha"), "Hecha")
     cliente.post(f"/api/tareas/{hecha['id']}/completar", headers=cuenta["cabeceras"])
 
     assert [t["titulo"] for t in _la_lista(cliente, cuenta)] == [
@@ -215,9 +231,12 @@ def test_reprogramar_cambia_solo_lo_que_se_manda(cliente, cuenta):
     ficha = _un_contacto(cliente, cuenta)
     ayer = (dt.date.today() - dt.timedelta(days=1)).isoformat()
     manana = (dt.date.today() + dt.timedelta(days=1)).isoformat()
-    suya = _sus_tareas(
-        _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llevar la factura", responsable="Ana", fecha_prevista=ayer)
-    )[0]
+    suya = _la_de_titulo(
+        _apuntar_una_tarea(
+            cliente, cuenta, ficha["id"], titulo="Llevar la factura", responsable="Ana", fecha_prevista=ayer
+        ),
+        "Llevar la factura",
+    )
 
     movida = cliente.put(
         f"/api/tareas/{suya['id']}", headers=cuenta["cabeceras"], json={"fecha_prevista": manana}
@@ -240,7 +259,7 @@ def test_reprogramar_cambia_solo_lo_que_se_manda(cliente, cuenta):
 def test_completar_apunta_quien_y_cuando(cliente, cuenta, db_sesion):
     """**Quién y cuándo**, que es lo que pide el encargo. Y la tarea **no se borra**: se queda hecha."""
     ficha = _un_contacto(cliente, cuenta)
-    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"))[0]
+    suya = _la_de_titulo(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"), "Llamar")
 
     hecha = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"])
     assert hecha.status_code == 200, hecha.text
@@ -259,7 +278,7 @@ def test_cerrar_dos_veces_no_deja_dos_trazas(cliente, cuenta, db_sesion):
     hora del primero (que es el dato que dice cuándo se hizo de verdad).
     """
     ficha = _un_contacto(cliente, cuenta)
-    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"))[0]
+    suya = _la_de_titulo(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"), "Llamar")
     primera = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"]).json()["tareas"][0]
     segunda = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"]).json()["tareas"][0]
     assert segunda["completada_en"] == primera["completada_en"], "el segundo toque no puede mover la hora"
@@ -280,7 +299,9 @@ def test_cerrar_dos_veces_no_deja_dos_trazas(cliente, cuenta, db_sesion):
 def test_cancelar_no_borra_y_lo_dice(cliente, cuenta):
     """**Cancelar no es borrar**: la tarea se queda, cancelada, con quién y cuándo."""
     ficha = _un_contacto(cliente, cuenta)
-    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya no hace falta"))[0]
+    suya = _la_de_titulo(
+        _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya no hace falta"), "Ya no hace falta"
+    )
     cancelada = cliente.post(f"/api/tareas/{suya['id']}/cancelar", headers=cuenta["cabeceras"])
     assert cancelada.status_code == 200, cancelada.text
     despues = cancelada.json()["tareas"][0]
@@ -292,7 +313,7 @@ def test_cancelar_no_borra_y_lo_dice(cliente, cuenta):
 def test_las_tareas_de_otra_finca_no_se_ven_ni_se_cierran(cliente, cuenta, crear_cuenta):
     """**Aislamiento en la lista**: la otra finca no ve nada, y no puede cerrar lo que no es suyo."""
     mia = _un_contacto(cliente, cuenta)
-    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, mia["id"], titulo="Mía"))[0]
+    suya = _la_de_titulo(_apuntar_una_tarea(cliente, cuenta, mia["id"], titulo="Mía"), "Mía")
     otro = crear_cuenta("otro-lista@ejemplo.test")
 
     assert _la_lista(cliente, otro) == [], "la otra finca no ve las tareas de esta"

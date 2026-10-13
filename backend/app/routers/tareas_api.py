@@ -26,7 +26,7 @@ from sqlalchemy import select
 
 from .. import correcciones, models, textos
 from ..deps import Db, ExplotacionActual, UsuarioActual
-from ..schemas import EntradaDeUnaTarea, ListaDeTareas
+from ..schemas import CorreccionDeUnaTarea, EntradaDeUnaTarea, ListaDeTareas
 # El ayudante que cuenta una tarea (con lo que **se calcula**: `vencida` y la fecha dicha con palabras). Vive hoy en
 # el router de contactos porque el primer sitio donde hizo falta fue la ficha; **cuando haya un tercer sitio que lo
 # use, se mueve a un módulo suyo** —duplicarlo sería tener dos verdades sobre lo mismo, que es lo que no se hace—.
@@ -111,7 +111,7 @@ def las_tareas(
 @router.put("/{tarea_id}", response_model=ListaDeTareas)
 def reprogramar_una_tarea(
     tarea_id: int,
-    datos: EntradaDeUnaTarea,
+    datos: CorreccionDeUnaTarea,
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,

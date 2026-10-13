@@ -278,7 +278,7 @@ LEER_LA_FICHA = """
   const p = document.querySelector('#pantalla');
   if (!p) return { hay_pantalla: false };
   const texto = (n) => (n ? n.textContent.replace(/\\s+/g, ' ').trim() : '');
-  const TITULO = "@TITULO@", PRINCIPAL = "@PRINCIPAL@";
+  const TITULO = @TITULO@, PRINCIPAL = @PRINCIPAL@;
   const secciones = [...p.querySelectorAll('h2')].map(texto);
   const lista = p.querySelector('ul.lista-de-canales');
   const canales = lista

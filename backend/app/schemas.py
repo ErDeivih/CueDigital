@@ -3667,6 +3667,25 @@ class EntradaDeUnaTarea(EntradaBase):
     clave_de_reenvio: str | None = None
 
 
+class CorreccionDeUnaTarea(EntradaBase):
+    """**Corregir una tarea: todo opcional** (Entrega 3, 13/10/2026).
+
+    POR QUÉ NO VALE LA ENTRADA DE CREAR, y me costó una prueba roja: allí `titulo` es **obligatorio**
+    —porque una tarea sin saber qué hay que hacer no es nada—, así que un `PUT` que solo quería mover el
+    día daba **422 «Field required»**. O sea que la corrección parcial que dejé documentada («lo que no
+    viene no se toca») **era imposible**: la puerta exigía el título en cada cambio.
+
+    Aquí **todo es opcional de verdad**, y quien decide qué se toca es `model_fields_set`: los campos que
+    **vienen** en la petición. Un campo que no viene no se toca, y uno que viene nulo **sí** se vacía
+    (eso es lo que permite «quitarle la fecha a una tarea»).
+    """
+
+    titulo: str | None = None
+    descripcion: str | None = None
+    responsable: str | None = None
+    fecha_prevista: dt.date | None = None
+
+
 class TareaSalida(BaseModel):
     """Cómo se cuenta una tarea, con lo que se **calcula** y no se guarda.
 
