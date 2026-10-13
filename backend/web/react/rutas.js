@@ -144,6 +144,11 @@ export const PANTALLAS = [
   // después de `contactos` por el orden de esta tabla (dos tramos contra uno: no se pisan).
   { clave: "contactos", patron: ["contactos"] },
   { clave: "revisar_contactos", patron: ["contactos", "revisar"] },
+  // **La ficha de un contacto** (Entrega 1, 13/10/2026): con su identificador, como la de una compra o un
+  // gasto. Va **despues** de `revisar_contactos` a proposito: `:id` tambien casaria con «revisar», y el literal
+  // tiene que ir primero (lo dice la nota de arriba de esta tabla). Sin direccion no se puede recargar la ficha
+  // ni volver a ella, que es lo que la revision midio.
+  { clave: "contacto", patron: ["contactos", ":id"] },
   { clave: "facturas", patron: ["facturas"] },
   // Revisar una factura **que ya está guardada**: su identificador va en el camino, y con él la pantalla
   // se vuelve a armar entera con lo que hay en el cuaderno. Lo que se acaba de leer de una foto **no**

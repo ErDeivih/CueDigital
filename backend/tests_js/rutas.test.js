@@ -238,6 +238,10 @@ test("la ida y la vuelta cuadra en todas las pantallas de la tabla", () => {
     // Y **la ficha de una compra** (S11, 09/10/2026): su identificador es el de la factura y va en el
     // camino, así que se comprueba con su forma completa. Sin él no tiene dirección, igual que una tierra.
     compra: { id: 9 },
+  // **La ficha de un contacto** (Entrega 1, 13/10/2026): su identificador va en el camino (`#/contactos/5`),
+  // así que se comprueba con su forma completa. Sin él no tiene dirección, igual que una tierra. Se le dio
+  // dirección porque la revisión del saldo midió que **recargar la ficha la perdía entera**.
+  contacto: { id: 5 },
     // T12 (03/10/2026): la ficha de una factura nuestra y las dos pantallas de una entrega (su importe y
     // su ajuste). Las tres llevan su identificador en el camino, así que se comprueban con su forma
     // completa; sin él no tienen dirección (hay prueba propia más abajo), igual que una tierra.
@@ -336,6 +340,10 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     // formularios), y la prueba de abajo lo comprueba.
     "contactos",
     "revisar_contactos",
+    // **La ficha de un contacto** (Entrega 1, 13/10/2026): `#/contactos/<id>`. Se le dio dirección porque la
+    // revisión del saldo midió que, sin ella, **recargar la ficha la perdía entera** y no había forma de
+    // volver a ella: es un sitio al que se vuelve —se enlaza, se recarga y «atrás» vuelve a la lista—.
+    "contacto",
     "facturas",
     "interpretacion_factura",
     "anos",

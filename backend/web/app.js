@@ -842,6 +842,7 @@ const DIRECCION_PROPIA = {
   // **La ficha de una compra** (S11, 09/10/2026): su dirección es `#/compras/<id>`, y es de las que se
   // reconstruyen enteras al abrirla (los datos se piden a su puerta).
   PantallaCompra: "compra",
+  PantallaDeUnContacto: "contacto",
   // Las dos de T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra.
   // Las dos se reconstruyen enteras al abrir su dirección.
   PantallaTierrasDeLaExplotacion: "tierras_mapa",
@@ -937,7 +938,6 @@ const PANTALLAS_SIN_DIRECCION = new Set([
   // botón— y la lista de nombres escritos para enlazarlos. Al recargar saldrían vacías, y una ficha
   // vacía que parece guardada es peor que no tener dirección: la dirección se queda en la pantalla de
   // la que salieron (las fichas o la revisión).
-  "PantallaDeUnContacto",
   "PantallaDeLosNombresEscritos",
   // Y las cuatro del dinero de lo que se vende (T12, 03/10/2026): la lista de facturas, el paso de
   // juntar entregas, la lista de cobros y apuntar un cobro. **Al recargar saldrían vacías** —la segunda
@@ -1090,6 +1090,13 @@ function apuntarLaDireccion(listo) {
     const recepcion = (estadoDelLibro() || {}).recepcion;
     if (!recepcion || !recepcion.id) return;
     parametros.id = recepcion.id;
+  }
+  if (clave === "contacto") {
+    // De qué contacto es la ficha. **Sin identificador no hay dirección que escribir**: `#/contactos/` no es la
+    // ficha de nadie, y escribirla a medias dejaría una dirección que no lleva a ninguna parte.
+    const ficha = (estadoDeLosContactos() || {}).ficha;
+    if (!ficha || !ficha.id) return;
+    parametros.id = ficha.id;
   }
   if (clave === "compra") {
     // De qué compra es la ficha (S11): sin identificador no hay dirección que escribir, porque
@@ -1306,6 +1313,11 @@ function abrirLaPantalla(clave, parametros = {}) {
   // **La ficha de una compra** (S11, 09/10/2026): sus datos **no están descargados** —la ficha los pide
   // a `/api/compras/<id>` al abrirla—, así que se pregunta al servidor y se decide con lo que conteste:
   // se abre, «eso no está en tu cuaderno» (404) o «no lo he podido comprobar» (sin cobertura).
+  if (clave === "contacto") {
+    // Se abre **por su puerta**, que es la que la pide al servidor: recargar tiene que dejar la ficha entera,
+    // con sus notas y su saldo.
+    return abrirLaFichaDeUnContacto(parametros.id);
+  }
   if (clave === "compra") {
     return abrirUnaCompra(parametros.id);
   }
