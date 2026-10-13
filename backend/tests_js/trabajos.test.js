@@ -160,6 +160,9 @@ const AGENDA = {
   // frase que no esté en los textos**.
   cultivos: "Cultivos",
   sin_cultivos: "No hay ninguna siembra ni plantación apuntada en esta tierra.",
+  // **Los papeles de esta tierra** (CRM-06, 14/10/2026): su propia seccion, como Cultivos.
+  papeles: "Los papeles de esta tierra",
+  sin_papeles: "No tiene ningun papel enlazado todavia.",
   revisado: "Corregido después",
   firmado: "Está firmado: no se puede borrar, solo anular",
   observaciones_de_campo: "Lo que he visto en el campo",

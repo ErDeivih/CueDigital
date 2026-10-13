@@ -22720,7 +22720,12 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
     // dinero que ha costado esa tierra es del T13. Cada una manda lo suyo y la pantalla los junta;
     // mezclarlos en una sola respuesta obligaría a que un ticket supiera del otro.
     const campana = estado.campana ? `?campana_id=${estado.campana.id}` : "";
-    const [tierra, costes, laTierra] = await Promise.all([
+    // **Y una CUARTA puerta** (CRM-06, 14/10/2026): **los papeles de esta tierra**. Es la misma regla que
+    // las otras tres —cada dato por la puerta que lo tiene, y la pantalla los junta—, y por eso la bandeja
+    // tuvo que aprender a pedirse **por aquello con lo que un papel esta enlazado**. Sin ese filtro habria
+    // que traerse la bandeja entera y cruzarla aqui, que es justo lo contrario de lo que esta casa hace.
+    // Y si no contesta, la ficha se ensena igual: **lo que falta es una parte, no la pantalla**.
+    const [tierra, costes, laTierra, papeles] = await Promise.all([
       apiJson(`/api/trabajos/tierra/${Number(parcelaId)}`),
       // Si las cuentas no contestan, la historia se enseña igual: lo que falta es una parte, no la
       // pantalla. El bloque de los costes simplemente no sale.
@@ -22732,6 +22737,8 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
       // ahí: una petición más, pequeña, y **cada dato por la puerta que lo tiene**. Si esa puerta falla, la
       // ficha se enseña igual, sin la forma.
       apiJson(`/api/parcelas/${Number(parcelaId)}`).catch(() => null),
+      // **Los papeles que cuelgan de esta tierra**, por la clase nueva del CRM-06.
+      apiJson(`/api/bandeja?estado=todos&clase=tierra&entidad_id=${Number(parcelaId)}`).catch(() => null),
     ]);
     // **La tierra viene envuelta** (07/10/2026): el objeto que devuelve el estado lleva la tierra **dentro**,
     // en `tierra.tierra` —lo lee así `pantallaLaHistoria`, que hace `const tierra = datos.tierra`—, y aquí se
@@ -22740,6 +22747,9 @@ async function abrirLaHistoriaDeUnaTierra(parcelaId) {
     // los trabajos (`{"previsto": {…}}`, `{"labor": {…}}`): se escribe donde se lee, no donde parece.
     if (laTierra && laTierra.dibujo && tierra.tierra) tierra.tierra.dibujo = laTierra.dibujo;
     suyo.tierra = tierra;
+    // **Se escribe donde se lee, no donde parece** — la trampa del envoltorio que esta casa ya pago: la
+    // bandeja contesta `{papeles: [...], ...}`, asi que se guarda LA LISTA, no la respuesta entera.
+    suyo.papelesDeLaTierra = (papeles && papeles.papeles) || [];
     suyo.costes = costes;
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
@@ -22866,6 +22876,11 @@ function pantallaLaHistoria() {
         // comentario de arriba con la referencia: *antes de quitar el panel, la ficha tiene que tener todo lo
         // que el panel daba*. El dato viene ya en la tierra (`dibujo`, de `/api/parcelas`).
         dibujo: tierra.dibujo || "",
+        // **Y los papeles que cuelgan de ella** (CRM-06, 14/10/2026): un contrato de arrendamiento,
+        // la factura de esa parcela, una inspeccion. Estaban en la bandeja y la ficha no los tenia: es la
+        // misma regla que la referencia y el dibujo — antes de dejar la ficha como pantalla unica, tiene
+        // que tener lo que daban las otras.
+        papeles: suyo.papelesDeLaTierra || [],
       },
       historial: ((datos.historial || {}).lineas || []).map((linea) => {
         const trabajo = linea.trabajo || {};

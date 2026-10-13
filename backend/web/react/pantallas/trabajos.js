@@ -578,6 +578,10 @@ export function PantallaDeUnTrabajo({
  *    y cada una con sus filas ya montadas.
  *  - `estado`: qué tiene sembrado, qué se ha hecho y qué queda previsto.
  *  - `no_consta`: las frases de lo que no se puede saber, con su explicación (la nascencia de una lluvia,
+ *  - `papeles`: **los papeles que cuelgan de esta tierra** (CRM-06, 14/10/2026): un
+ *    contrato de arrendamiento, la factura de esa parcela, una inspeccion. Se piden por la clase
+ *    `tierra` de los vinculos —cada dato por la puerta que lo tiene— y **si no llegan, la ficha se
+ *    ensena igual**: lo que falta es una seccion, no la pantalla.
  *    lo que quedó en el suelo después de la cosecha).
  */
 export function PantallaDeLaTierra({
@@ -588,6 +592,11 @@ export function PantallaDeLaTierra({
   costes = null,
   no_consta = [],
   error = "",
+  // **Los papeles que cuelgan de esta tierra** (CRM-06, 14/10/2026): un contrato de
+  // arrendamiento, la factura de esa parcela, una inspeccion. Se piden por la clase `tierra`
+  // de los vinculos, que es lo que hizo falta anadir en la bandeja: **cada dato por la puerta
+  // que lo tiene**, y la pantalla los junta.
+  papeles = [],
 }) {
   const a = textos.agenda || {};
   const cultivo = (estado && estado.cultivo_declarado) || null;
@@ -677,7 +686,32 @@ export function PantallaDeLaTierra({
         : null
     }
 
-    <h2>${frase(a.cultivos)}</h2>
+        <h2>${frase(a.papeles)}</h2>
+    ${
+      papeles.length === 0
+        ? html`<div className="aviso">${frase(a.sin_papeles)}</div>`
+        : html`
+            <ul className="lista">
+              ${papeles.map(
+                (papel, indice) => html`
+                  <li key=${`papel-${indice}`}>
+                    <strong>${frase(papel.titulo || a.sin_decir)}</strong>
+                    <span className="pista-campo"> · ${frase(papel.etiqueta_tipo || a.sin_decir)}</span>
+                    <span className="pista-campo"> · ${frase(papel.fecha || a.sin_decir)}</span>
+                    ${
+                      papel.quien
+                        ? html`<span className="pista-campo"> · ${frase(papel.quien)}</span>`
+                        : null
+                    }
+                    <span className="pista-campo"> · ${frase(papel.etiqueta_estado || a.sin_decir)}</span>
+                  </li>
+                `,
+              )}
+            </ul>
+          `
+    }
+
+<h2>${frase(a.cultivos)}</h2>
         ${
           cultivos.length === 0
             ? html`<div className="aviso">${frase(a.sin_cultivos)}</div>`

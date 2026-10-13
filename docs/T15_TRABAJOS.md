@@ -590,6 +590,9 @@ AGENDA: dict[str, str] = {
     "ver_el_gasto": "VER EL GASTO",
     "cultivos": "Cultivos",
     "sin_cultivos": "No hay ninguna siembra ni plantación apuntada en esta tierra.",
+    # **Los papeles de esta tierra** (CRM-06, 14/10/2026): su propia seccion, como Cultivos.
+    "papeles": "Los papeles de esta tierra",
+    "sin_papeles": "No tiene ningun papel enlazado todavia.",
 }
 ```
 

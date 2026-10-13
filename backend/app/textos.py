@@ -8256,6 +8256,10 @@ AGENDA: dict[str, str] = {
     # lo anulado—, porque dentro de la historia había que leerla línea a línea para saber qué se sembró.
     "cultivos": "Cultivos",
     "sin_cultivos": "No hay ninguna siembra ni plantación apuntada en esta tierra.",
+    # **Los papeles de esta tierra** (CRM-06, 14/10/2026): un contrato de arrendamiento, la
+    # factura de esa parcela, una inspeccion. Es una seccion mas de la ficha, como Cultivos.
+    "papeles": "Los papeles de esta tierra",
+    "sin_papeles": "No tiene ningun papel enlazado todavia.",
     "historial_explica": "Sale todo, también lo anulado, con el motivo por el que se anuló. Nada se borra.",
     "historial_vacio": "En esta tierra no hay ningún trabajo apuntado.",
     "revisado": "Corregido después",
