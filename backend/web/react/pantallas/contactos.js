@@ -626,11 +626,11 @@ export function PantallaDeUnContacto({
                   </label>
                   <label>
                     ${frase(c.canales_el_dato)}
-                    <input id="canal-valor" type="text" value=${(canal_a_medias || {}).valor || ""} />
+                    <input id="canal-valor" type="text" defaultValue=${(canal_a_medias || {}).valor || ""} />
                   </label>
                   <label>
                     ${frase(c.canales_como_se_llama)}
-                    <input id="canal-etiqueta" type="text" value=${(canal_a_medias || {}).etiqueta || ""} />
+                    <input id="canal-etiqueta" type="text" defaultValue=${(canal_a_medias || {}).etiqueta || ""} />
                   </label>
                   <${BotonSencillo}
                     etiqueta=${c.canales_apuntar}
@@ -700,15 +700,15 @@ export function PantallaDeUnContacto({
                 <div className="alta-rapida-de-tarea">
                   <label>
                     ${frase(c.tareas_que_hacer)}
-                    <input id="tarea-titulo" type="text" value=${(tarea_a_medias || {}).titulo || ""} />
+                    <input id="tarea-titulo" type="text" defaultValue=${(tarea_a_medias || {}).titulo || ""} />
                   </label>
                   <label>
                     ${frase(c.tareas_cuando)}
-                    <input id="tarea-fecha" type="date" value=${(tarea_a_medias || {}).fecha || ""} />
+                    <input id="tarea-fecha" type="date" defaultValue=${(tarea_a_medias || {}).fecha || ""} />
                   </label>
                   <label>
                     ${frase(c.tareas_quien)}
-                    <input id="tarea-responsable" type="text" value=${(tarea_a_medias || {}).responsable || ""} />
+                    <input id="tarea-responsable" type="text" defaultValue=${(tarea_a_medias || {}).responsable || ""} />
                   </label>
                   <${BotonSencillo}
                     etiqueta=${c.tareas_apuntar}
