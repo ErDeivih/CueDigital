@@ -7472,6 +7472,8 @@ MENSAJES.update(MENSAJES_DE_LA_MAQUINARIA)
 # de sitio se pulsan mal.
 
 GASTOS: dict = {
+    # **El camino de vuelta a la ficha del proveedor** (Entrega 1, 13/10/2026).
+    "ficha_del_proveedor": "Ver la ficha de su proveedor",
     "titulo": "Mis cuentas",
     "explica": (
         "Aquí está lo que te ha costado, a qué va y cuánto te queda por pagar. Lo que no sepas se "

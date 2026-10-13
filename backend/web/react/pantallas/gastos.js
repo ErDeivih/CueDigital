@@ -740,6 +740,18 @@ export function PantallaDeUnGasto({
   return html`
     <h1>${frase(gasto.concepto)}</h1>
     <p className="pista">${frase(gasto.proveedor || "")}</p>
+    ${
+      // **Y su ficha, si el gasto sabe de quién es** (Entrega 1, 13/10/2026). La revisión del saldo midió que,
+      // desde el documento, el botón «volver» llevaba a la lista de cuentas y **no había forma de volver a la
+      // ficha del contacto**. Ahora que la ficha **tiene dirección** (`#/contactos/<id>`), se puede ofrecer este
+      // camino, que además sirve por sí mismo: mirar quién es el proveedor mientras se mira lo que se le compró.
+      // Si el gasto no sabe de quién es, no se enseña nada: un enlace a ninguna parte es peor que ninguno.
+      gasto.contacto_id
+        ? html`<p className="pista">
+            <a href=${`#/contactos/${gasto.contacto_id}`}>${frase(g.ficha_del_proveedor)}</a>
+          </p>`
+        : null
+    }
     ${error ? html`<${AvisoDeError} texto=${error} />` : null}
     ${aviso ? html`<div className="aviso">${frase(aviso)}</div>` : null}
     ${gasto.anulado ? html`<p className="aviso">${frase(g.esta_anulado)}</p>` : null}
