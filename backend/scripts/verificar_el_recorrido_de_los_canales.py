@@ -602,8 +602,9 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
                 f"({ficha.get('cuantos_canales')})",
             )
             comprobar(
-                sorted(ficha.get("principales") or []) == ["correo", "direccion", "telefono"],
-                f"y los tres salen como principales de su clase ({ficha.get('principales')})",
+                la_regla_del_principal(ficha.get("canales") or []),
+                "y cada clase con valores tiene UNA sola marca «El principal» "
+                f"({los_principales_por_clase(ficha.get('canales') or [])})",
             )
             comprobar(
                 (ficha.get("alta") or {}).get("hay_boton") is True,
@@ -716,25 +717,21 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             el_de_siempre.get("principal") is True,
             "de partida el principal del teléfono es el de siempre",
         )
-        el_boton = (
-            f'[data-accion="canal-principal"][data-canal="{el_nuevo["id"]}"]'
-        )
+        el_nuevo_id = int(el_nuevo["id"])
+        el_de_siempre_id = int(el_de_siempre["id"])
+        el_boton = f'[data-accion="canal-principal"][data-canal="{el_nuevo_id}"]'
         hay_boton = nav.evaluar(f"Boolean(document.querySelector({json.dumps(el_boton)}))")
         decir(
-            f"el botón de usar como principal en el canal {el_nuevo['id']}: {hay_boton}  "
+            f"el botón de usar como principal en el canal {el_nuevo_id}: {hay_boton}  "
             "(el que ya es principal no lo lleva, y eso es lo que se comprueba)"
         )
         comprobar(
             bool(hay_boton),
             f"el canal nuevo ({SEGUNDO_TELEFONO}) trae el botón de «usar este»",
         )
+        el_del_viejo = f'[data-accion="canal-principal"][data-canal="{el_de_siempre_id}"]'
         comprobar(
-            nav.evaluar(
-                "Boolean(document.querySelector('"
-                f'[data-accion="canal-principal"][data-canal="{el_de_siempre["id"]}"]'
-                "'))"
-            )
-            is False,
+            nav.evaluar(f"Boolean(document.querySelector({json.dumps(el_del_viejo)}))") is False,
             "y el que ya es principal NO trae ese botón (un botón que no hace nada sería un botón de más)",
         )
         if hay_boton:
@@ -764,9 +761,9 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             f"y el de siempre ({TELEFONO}) ha dejado de llevarlo",
         )
         # Y en la pantalla, que es lo que se mira: la marca «El principal» tiene que estar **una sola vez**
-        # por clase, y en el `li` del nuevo.
+        # por clase, y en el `li` del nuevo. Se mira clase por clase, que es como lo pide el encargo.
         suyos = principal.get("canales") or []
-        de_telefono = [canal for canal in suyos if canal.get("clase") == "Teléfono" or "Teléfono" in canal.get("clase", "")]
+        de_telefono = los_del_telefono(suyos)
         con_marca = [canal for canal in de_telefono if canal.get("principal")]
         comprobar(
             len(con_marca) == 1 and SEGUNDO_TELEFONO in (con_marca[0]["texto"] if con_marca else ""),
@@ -774,9 +771,9 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             f"({[canal['texto'] for canal in con_marca]})",
         )
         comprobar(
-            len([canal for canal in suyos if canal.get("principal")]) == 3,
-            "y no hay dos marcados en ninguna clase "
-            f"({[canal['texto'] for canal in suyos if canal.get('principal')]})",
+            la_regla_del_principal(suyos),
+            "y no hay dos marcados: cada clase con valores tiene una sola marca "
+            f"({los_principales_por_clase(suyos)})",
         )
 
         paso("7", "RECARGAR la página entera y ver si se queda")
@@ -824,11 +821,7 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             guardar_captura(nav, CARPETA / "canales-tras-recargar.png")
         )
         suyos = recargada.get("canales") or []
-        los_dos = [
-            canal
-            for canal in suyos
-            if canal.get("clase", "").startswith("Teléfono")
-        ]
+        los_dos = los_del_telefono(suyos)
         comprobar(
             len(los_dos) == 2,
             f"tras recargar la página entera siguen los DOS teléfonos ({len(los_dos)})",
@@ -844,12 +837,17 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             any(ETIQUETA in (canal.get("texto") or "") for canal in los_dos),
             f"y el nuevo conserva su etiqueta «{ETIQUETA}»",
         )
+        comprobar(
+            la_regla_del_principal(suyos),
+            "y sigue habiendo una sola marca por clase "
+            f"({los_principales_por_clase(suyos)})",
+        )
 
         paso("8", f"QUITAR el principal ({SEGUNDO_TELEFONO}) y ver quién pasa a serlo")
-        el_boton = f'[data-accion="canal-quitar"][data-canal="{el_nuevo["id"]}"]'
+        el_boton = f'[data-accion="canal-quitar"][data-canal="{el_nuevo_id}"]'
         comprobar(
             bool(nav.evaluar(f"Boolean(document.querySelector({json.dumps(el_boton)}))")),
-            f"el canal {el_nuevo['id']} trae su botón de quitar",
+            f"el canal {el_nuevo_id} trae su botón de quitar",
         )
         aviso = pulsar_sin_reventar(nav, el_boton)
         if aviso is None:
@@ -869,7 +867,7 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             not any(SEGUNDO_TELEFONO in (canal.get("texto") or "") for canal in suyos),
             f"el canal quitado ({SEGUNDO_TELEFONO}) desaparece de la pantalla",
         )
-        de_telefono = [canal for canal in suyos if canal.get("clase", "").startswith("Teléfono")]
+        de_telefono = los_del_telefono(suyos)
         comprobar(
             len(de_telefono) == 1 and TELEFONO in de_telefono[0]["texto"],
             f"y queda el otro de su clase ({[canal['texto'] for canal in de_telefono]})",
@@ -878,6 +876,11 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             len(de_telefono) == 1 and de_telefono[0].get("principal") is True,
             f"y ese otro ha pasado a ser el principal ({EL_PRINCIPAL}): "
             f"{[canal['texto'] for canal in de_telefono]}",
+        )
+        comprobar(
+            la_regla_del_principal(suyos),
+            "y la clase no se ha quedado sin ninguno ni con dos marcas "
+            f"({los_principales_por_clase(suyos)})",
         )
         _, ficha_ahora = la_puerta(token, "GET", f"/api/contactos/{contacto_id}")
         los_telefonos = [
@@ -904,7 +907,7 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             guardar_captura(nav, CARPETA / "canales-tras-recargar-2.png")
         )
         suyos = recargada.get("canales") or []
-        de_telefono = [canal for canal in suyos if canal.get("clase", "").startswith("Teléfono")]
+        de_telefono = los_del_telefono(suyos)
         comprobar(
             len(de_telefono) == 1
             and TELEFONO in de_telefono[0]["texto"]
@@ -915,6 +918,11 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
         comprobar(
             recargada.get("cuantos_canales") == 3,
             f"y siguen los tres canales del principio ({recargada.get('cuantos_canales')})",
+        )
+        comprobar(
+            la_regla_del_principal(suyos),
+            "y la regla del principal sigue en pie "
+            f"({los_principales_por_clase(suyos)})",
         )
         resultado["errores_de_la_pagina"] = nav.evaluar("window.__los_errores || []")
         decir(f"errores de la página en todo el recorrido: {como_texto(resultado['errores_de_la_pagina'])}")
@@ -1058,16 +1066,8 @@ def main() -> int:
         decir(f"las dos negativas, con su texto:                            {como_texto(las_puertas)}")
         decir(f"errores de la página:                                       {como_texto(recorrido.get('errores_de_la_pagina'))}")
 
-        los_dos = [
-            canal
-            for canal in (recorrido.get("tras_apuntar") or {}).get("canales") or []
-            if canal.get("clase", "").startswith("Teléfono")
-        ]
-        de_telefono_tras_quitar = [
-            canal
-            for canal in (despues_de_quitar.get("canales") or [])
-            if canal.get("clase", "").startswith("Teléfono")
-        ]
+        los_dos = los_del_telefono((recorrido.get("tras_apuntar") or {}).get("canales") or [])
+        de_telefono_tras_quitar = los_del_telefono(despues_de_quitar.get("canales") or [])
         print(
             "\nHUELLA"
             f" canales={(recorrido.get('tras_apuntar') or {}).get('cuantos_canales')}"
@@ -1076,7 +1076,7 @@ def main() -> int:
             f" alta={bool((ficha_en_pantalla.get('alta') or {}).get('hay_boton'))}"
             f" dos_telefonos={len(los_dos) == 2}"
             f" principal={bool(despues_de_recargar.get('cuantos_canales') == 4)}"
-            f" recarga={len([c for c in (despues_de_recargar.get('canales') or []) if c.get('clase', '').startswith('Teléfono')]) == 2}"
+            f" recarga={len(los_del_telefono(despues_de_recargar.get('canales') or [])) == 2}"
             f" quitar={len(de_telefono_tras_quitar) == 1}"
             f" promueve={bool(de_telefono_tras_quitar and de_telefono_tras_quitar[0].get('principal') is True)}"
             f" recarga2={despues_de_recargar_2.get('cuantos_canales') == 3}"

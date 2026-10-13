@@ -152,3 +152,151 @@ def test_las_tareas_de_otra_finca_no_se_tocan(cliente, cuenta, crear_cuenta):
         json={"titulo": "Colarse"},
     )
     assert respuesta.status_code == 404, f"tiene que dar 404 y ha dado {respuesta.status_code}"
+
+# ---------------------------------------------------------------------------
+# Las puertas de la lista y del cierre (Entrega 3)
+# ---------------------------------------------------------------------------
+
+
+def _la_lista(cliente, cuenta, **filtros):
+    respuesta = cliente.get("/api/tareas", headers=cuenta["cabeceras"], params=filtros)
+    assert respuesta.status_code == 200, respuesta.text
+    return respuesta.json()["tareas"]
+
+
+def test_la_lista_filtra_por_responsable_estado_y_vencimiento(cliente, cuenta):
+    """**Los tres filtros del encargo**, y cada uno deja fuera lo que tiene que dejar fuera."""
+    ficha = _un_contacto(cliente, cuenta)
+    ayer = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    hoy = dt.date.today().isoformat()
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Vencida de Ana", responsable="Ana", fecha_prevista=ayer)
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="De hoy de Ana", responsable="Ana", fecha_prevista=hoy)
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Sin fecha de Luis", responsable="Luis")
+    hecha = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya hecha", responsable="Ana"))[0]
+    cliente.post(f"/api/tareas/{hecha['id']}/completar", headers=cuenta["cabeceras"])
+
+    assert len(_la_lista(cliente, cuenta)) == 4, "sin filtros están todas"
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, responsable="Luis")] == ["Sin fecha de Luis"]
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, estado="hecha")] == ["Ya hecha"]
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="vencidas")] == ["Vencida de Ana"]
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="hoy")] == ["De hoy de Ana"]
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, vencimiento="sin_fecha")] == ["Sin fecha de Luis"]
+
+
+def test_la_lista_pone_primero_lo_que_hay_que_hacer(cliente, cuenta):
+    """**El orden es el del trabajo**: lo pendiente antes que lo cerrado, y dentro, lo vencido arriba.
+
+    Y **lo que no tiene fecha va al final** de lo pendiente: una tarea sin día no está «para ya», y ponerla arriba
+    sería mentir con el orden.
+    """
+    ficha = _un_contacto(cliente, cuenta)
+    ayer = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    manana = (dt.date.today() + dt.timedelta(days=1)).isoformat()
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Sin fecha")
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Mañana", fecha_prevista=manana)
+    _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Vencida", fecha_prevista=ayer)
+    hecha = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Hecha"))[0]
+    cliente.post(f"/api/tareas/{hecha['id']}/completar", headers=cuenta["cabeceras"])
+
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta)] == [
+        "Vencida",
+        "Mañana",
+        "Sin fecha",
+        "Hecha",
+    ], "vencido primero, luego el día, luego sin fecha, y lo cerrado al final"
+
+
+def test_reprogramar_cambia_solo_lo_que_se_manda(cliente, cuenta):
+    """**Corrección parcial**: se mueve el día y el responsable se queda.
+
+    Es el mismo cuidado que en los canales: lo que no viene **no se toca**. Y **quitar la fecha** (mandándola nula a
+    propósito) deja la tarea **sin fecha**, que es una decisión del agricultor y no un descuido.
+    """
+    ficha = _un_contacto(cliente, cuenta)
+    ayer = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    manana = (dt.date.today() + dt.timedelta(days=1)).isoformat()
+    suya = _sus_tareas(
+        _apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llevar la factura", responsable="Ana", fecha_prevista=ayer)
+    )[0]
+
+    movida = cliente.put(
+        f"/api/tareas/{suya['id']}", headers=cuenta["cabeceras"], json={"fecha_prevista": manana}
+    )
+    assert movida.status_code == 200, movida.text
+    despues = movida.json()["tareas"][0]
+    assert despues["fecha_prevista"] == manana, f"el día tiene que cambiar: {despues}"
+    assert despues["responsable"] == "Ana", f"y el responsable quedarse: {despues}"
+    assert despues["titulo"] == "Llevar la factura", "y el título también"
+    assert despues["vencida"] is False, "y ya no está vencida"
+
+    # **Quitarle la fecha** a propósito.
+    sin_fecha = cliente.put(
+        f"/api/tareas/{suya['id']}", headers=cuenta["cabeceras"], json={"fecha_prevista": None}
+    )
+    assert sin_fecha.status_code == 200, sin_fecha.text
+    assert sin_fecha.json()["tareas"][0]["fecha_texto"] == "Sin fecha", sin_fecha.json()["tareas"][0]
+
+
+def test_completar_apunta_quien_y_cuando(cliente, cuenta, db_sesion):
+    """**Quién y cuándo**, que es lo que pide el encargo. Y la tarea **no se borra**: se queda hecha."""
+    ficha = _un_contacto(cliente, cuenta)
+    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"))[0]
+
+    hecha = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"])
+    assert hecha.status_code == 200, hecha.text
+    despues = hecha.json()["tareas"][0]
+    assert despues["estado"] == models.Tarea.HECHA, despues
+    assert despues["completada_por"], f"tiene que quedar quién: {despues}"
+    assert despues["completada_en"], f"y cuándo: {despues}"
+    # Y sigue en la lista: hecha, no borrada.
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, estado="hecha")] == ["Llamar"]
+
+
+def test_cerrar_dos_veces_no_deja_dos_trazas(cliente, cuenta, db_sesion):
+    """**Las acciones repetidas no duplican trazas** (la frase del encargo).
+
+    El agricultor toca dos veces con los guantes: el segundo toque **no** puede ser un segundo cierre, ni cambiar la
+    hora del primero (que es el dato que dice cuándo se hizo de verdad).
+    """
+    ficha = _un_contacto(cliente, cuenta)
+    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Llamar"))[0]
+    primera = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"]).json()["tareas"][0]
+    segunda = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=cuenta["cabeceras"]).json()["tareas"][0]
+    assert segunda["completada_en"] == primera["completada_en"], "el segundo toque no puede mover la hora"
+
+    db_sesion.expire_all()
+    trazas = list(
+        db_sesion.scalars(
+            select(models.Auditoria).where(
+                models.Auditoria.entidad == "tarea",
+                models.Auditoria.entidad_id == suya["id"],
+                models.Auditoria.accion == "tarea_completar",
+            )
+        )
+    )
+    assert len(trazas) == 1, f"una sola traza, y hay {len(trazas)}"
+
+
+def test_cancelar_no_borra_y_lo_dice(cliente, cuenta):
+    """**Cancelar no es borrar**: la tarea se queda, cancelada, con quién y cuándo."""
+    ficha = _un_contacto(cliente, cuenta)
+    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, ficha["id"], titulo="Ya no hace falta"))[0]
+    cancelada = cliente.post(f"/api/tareas/{suya['id']}/cancelar", headers=cuenta["cabeceras"])
+    assert cancelada.status_code == 200, cancelada.text
+    despues = cancelada.json()["tareas"][0]
+    assert despues["estado"] == models.Tarea.CANCELADA, despues
+    assert despues["cancelada_por"] and despues["cancelada_en"], f"con quién y cuándo: {despues}"
+    assert [t["titulo"] for t in _la_lista(cliente, cuenta, estado="cancelada")] == ["Ya no hace falta"]
+
+
+def test_las_tareas_de_otra_finca_no_se_ven_ni_se_cierran(cliente, cuenta, crear_cuenta):
+    """**Aislamiento en la lista**: la otra finca no ve nada, y no puede cerrar lo que no es suyo."""
+    mia = _un_contacto(cliente, cuenta)
+    suya = _sus_tareas(_apuntar_una_tarea(cliente, cuenta, mia["id"], titulo="Mía"))[0]
+    otro = crear_cuenta("otro-lista@ejemplo.test")
+
+    assert _la_lista(cliente, otro) == [], "la otra finca no ve las tareas de esta"
+    cerrar = cliente.post(f"/api/tareas/{suya['id']}/completar", headers=otro["cabeceras"])
+    assert cerrar.status_code == 404, f"tiene que dar 404 y ha dado {cerrar.status_code}"
+    mover = cliente.put(f"/api/tareas/{suya['id']}", headers=otro["cabeceras"], json={"titulo": "Robada"})
+    assert mover.status_code == 404, mover.status_code
