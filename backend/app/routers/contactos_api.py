@@ -301,6 +301,50 @@ def _pintar_contacto(
 CLASES_DE_CANAL = ("telefono", "correo", "direccion")
 
 
+def _los_canales_del_alta(db, contacto: models.Contacto) -> None:
+    """**Lo que se apunta en la ficha es el principal de su clase** (Entrega 2, 13/10/2026).
+
+    POR QUÉ HACE FALTA. Los cuatro campos de siempre (teléfono, correo, dirección y localidad) **se quedan** —los leen
+    cinco sitios—, pero la pantalla nueva enseña **canales**, y el bloque de los canales solo se pinta si hay alguno.
+    Sin esto, una ficha **recién creada** con teléfono, correo y dirección llegaba a la pantalla **sin bloque y sin
+    alta rápida**, y el agricultor no podía apuntar el segundo teléfono. Lo midió la verificación en navegador —«los
+    canales que traía la ficha recién creada, por la puerta: 0»— y no lo veía ninguna prueba.
+
+    **La misma regla que la migración**: se **copia**, no se traslada, y lo que ya estaba apuntado es el
+    **principal** de su clase. Y no se duplica ni se pisa: si esa clase ya tiene canal (porque la migración lo trajo,
+    o porque se apuntó a mano), se deja como está.
+    """
+    for clase, valor, localidad in (
+        ("telefono", contacto.telefono, None),
+        ("correo", contacto.correo, None),
+        ("direccion", contacto.direccion, contacto.localidad),
+    ):
+        if not valor or not str(valor).strip():
+            continue
+        ya_tiene = db.scalar(
+            select(models.CanalDeUnContacto).where(
+                models.CanalDeUnContacto.explotacion_id == contacto.explotacion_id,
+                models.CanalDeUnContacto.contacto_id == contacto.id,
+                models.CanalDeUnContacto.clase == clase,
+            )
+        )
+        if ya_tiene is not None:
+            continue
+        db.add(
+            models.CanalDeUnContacto(
+                explotacion_id=contacto.explotacion_id,
+                contacto_id=contacto.id,
+                clase=clase,
+                etiqueta=None,
+                telefono=contacto.telefono if clase == "telefono" else None,
+                correo=contacto.correo if clase == "correo" else None,
+                direccion=contacto.direccion if clase == "direccion" else None,
+                localidad=localidad if clase == "direccion" else None,
+                principal=True,
+            )
+        )
+
+
 def _los_canales(db, contacto: models.Contacto) -> list[dict]:
     """Los canales de una ficha, **el principal de cada clase primero** y luego los demás por etiqueta.
 
@@ -696,6 +740,10 @@ def crear(
     )
     papeles = _comprobar_los_papeles(datos.papeles)
     db.add(contacto)
+    db.flush()
+    # **Y sus canales** (Entrega 2): lo que se acaba de apuntar en la ficha es el principal de su clase, para
+    # que la pantalla nueva los enseñe y se pueda apuntar el segundo teléfono sin salir de aquí.
+    _los_canales_del_alta(db, contacto)
     db.flush()
     _guardar_los_papeles(db, contacto, papeles)
     # **El alta deja rastro** (CRM-03, 11/10/2026). Es el requisito que la revisión del T11 tenía fichado

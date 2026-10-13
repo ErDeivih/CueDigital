@@ -42,7 +42,15 @@ def _los_canales_de(db_sesion, contacto_id: int) -> list[models.CanalDeUnContact
 def test_la_migracion_lleva_lo_que_ya_estaba_a_su_canal_principal(cliente, cuenta, db_sesion):
     """Lo que ya estaba apuntado **no se pierde**: pasa a ser el principal de su clase, tal cual."""
     ficha = _un_contacto_con_todo(cliente, cuenta)
-    assert _los_canales_de(db_sesion, ficha["id"]) == [], "de partida no hay canales: son nuevos"
+    # **Ojo, que esto cambió el 13/10/2026 y la prueba se actualiza a propósito**: antes, una ficha recién creada
+    # **no** traía canales, y esta prueba empezaba comprobando que la lista estaba vacía. Ahora el alta **sí** los
+    # crea —el bloque de la pantalla solo sale si hay alguno, y sin él no se puede apuntar el segundo teléfono—, así
+    # que para probar la migración hay que **poner la ficha como estaba antes de que existiera esa función**:
+    # los cuatro campos apuntados y ningún canal. Se quitan los que creó el alta y se sigue.
+    for canal in _los_canales_de(db_sesion, ficha["id"]):
+        db_sesion.delete(canal)
+    db_sesion.commit()
+    assert _los_canales_de(db_sesion, ficha["id"]) == [], "se deja la ficha como una de antes: sin canales"
 
     llevados = database.llevar_los_canales_de_los_contactos_a_su_tabla()
     assert llevados >= 3, f"tenía que llevarse el teléfono, el correo y la dirección: {llevados}"
@@ -329,3 +337,36 @@ def test_la_migracion_de_los_canales_CORRE_AL_ARRANCAR(cliente, cuenta, db_sesio
         f"{[(canal.clase, canal.telefono, canal.correo) for canal in suyos]}"
     )
     assert all(canal.principal for canal in suyos), "y como principal de su clase, que es como estaban apuntados"
+
+def test_una_ficha_nueva_ya_trae_sus_canales(cliente, cuenta, db_sesion):
+    """**Lo que se apunta al crear la ficha es el principal de su clase**, desde el primer momento.
+
+    POR QUÉ, y lo midió la verificación en navegador: «los canales que traía la ficha recién creada, por la puerta:
+    **0**». Los cuatro campos de siempre se guardaban, pero **canales no había ninguno**, y como el bloque de la
+    pantalla solo se pinta si hay alguno, una ficha nueva llegaba **sin bloque y sin alta rápida**: el paso de apuntar
+    el segundo teléfono **no se podía andar**. La migración arreglaba las fichas que ya existían; esto arregla las
+    nuevas.
+
+    Y la regla es la misma que la de la migración: se **copia** (los cuatro campos se quedan), y lo apuntado es el
+    **principal**.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+
+    # 1) En la respuesta de la propia puerta —que es lo que ve la pantalla al guardar—.
+    assert len(ficha["canales"]) == 3, (
+        f"la ficha nueva tiene que traer sus canales ya: {ficha['canales']}"
+    )
+
+    # 2) Y en la base, con su clase, su valor y su principal.
+    suyos = _los_canales_de(db_sesion, ficha["id"])
+    assert sorted(canal.clase for canal in suyos) == ["correo", "direccion", "telefono"], (
+        f"una clase por cada cosa apuntada: {[(c.clase, c.telefono, c.correo) for c in suyos]}"
+    )
+    assert all(canal.principal for canal in suyos), "y lo apuntado en el alta es el principal de su clase"
+    la_direccion = next(canal for canal in suyos if canal.clase == "direccion")
+    assert la_direccion.localidad == "Peñaranda de Bracamonte", (
+        f"la dirección se lleva con su localidad: {la_direccion.localidad}"
+    )
+    # **Tal cual se escribió**: ni el teléfono se arregla ni se le inventa etiqueta.
+    el_telefono = next(canal for canal in suyos if canal.clase == "telefono")
+    assert el_telefono.telefono == "947 123 456" and el_telefono.etiqueta is None, el_telefono
