@@ -6862,6 +6862,12 @@ CONTACTOS: dict[str, object] = {
 }
 
 MENSAJES_DE_LOS_CONTACTOS: dict[str, str] = {
+    # La accion ya se guardo, pero con otro texto o en otro contacto (13/10/2026, revision). Se dice
+    # lo que pasa y que NO se ha cambiado nada, para que el agricultor no crea que su texto nuevo esta
+    # guardado: lo que escribio sigue en la pantalla, y volver a pulsar lo apunta como nota nueva.
+    "C7_la_accion_ya_se_guardo_de_otra_manera": (
+        "Esta acción ya se había guardado, pero con otro texto. No se ha cambiado nada: lo que has escrito sigue aquí, y si vuelves a pulsar se apunta como nota nueva."
+    ),
     # Una nota vacía no es una nota (CRM-03, criterio (f), 11/10/2026).
     "C7_una_nota_necesita_texto": "Una nota tiene que decir algo. Escribe lo que quieras apuntar.",
     # --- Lo que se le dice cuando algo no se puede hacer, siempre con la salida

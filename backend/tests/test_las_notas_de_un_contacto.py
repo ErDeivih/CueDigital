@@ -154,11 +154,13 @@ def test_dos_acciones_voluntarias_con_el_mismo_texto_son_dos_notas(cliente, cuen
     llamada es una acción nueva.
     """
     ficha = _una_ficha(cliente, cuenta, "Taller de prueba")
-    for _ in range(2):
+    # **Con sus dos claves, como las manda el navegador** (13/10/2026, revisión): dos acciones distintas, cada una
+    # con la suya. Antes se mandaban las dos sin clave, que no es lo que hace la pantalla.
+    for clave in ("nota-1-aaaaaa", "nota-2-bbbbbb"):
         respuesta = cliente.post(
             f"/api/contactos/{ficha['id']}/notas",
             headers=cuenta["cabeceras"],
-            json={"texto": "Le volví a llamar."},
+            json={"texto": "Le volví a llamar.", "clave_de_reenvio": clave},
         )
         assert respuesta.status_code == 200, respuesta.text
     suyas = list(
@@ -250,3 +252,129 @@ def test_una_nota_no_se_puede_apuntar_en_un_contacto_de_otra_finca(cliente, cuen
     assert respuesta.status_code == 404, (
         f"un contacto de otra finca tiene que dar 404, y ha dado {respuesta.status_code}: {respuesta.text}"
     )
+
+def test_la_misma_clave_con_otro_texto_no_se_da_por_guardada(cliente, cuenta, db_sesion):
+    """**Misma clave, otro texto: 409 y no se toca nada** (13/10/2026, revisión).
+
+    Es el caso que se pierde en silencio si solo se mira la clave: se pierde la respuesta, el agricultor **edita**
+    lo que había escrito y vuelve a pulsar. Si el servidor contestara «ya está», daría por guardado un texto que
+    **no se guardó** y su nota nueva desaparecería sin que nadie se entere.
+    """
+    ficha = _una_ficha(cliente, cuenta, "Cooperativa de Peñaranda")
+    clave = "nota-1712345678-conflicto"
+    primera = cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Preguntar por el precio del abono.", "clave_de_reenvio": clave},
+    )
+    assert primera.status_code == 200, primera.text
+
+    # El agricultor edita el texto y reintenta con la misma acción.
+    segunda = cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Preguntar por el precio del abono Y por el gasóleo.", "clave_de_reenvio": clave},
+    )
+    assert segunda.status_code == 409, (
+        f"la misma clave con otro texto tiene que dar 409, y ha dado {segunda.status_code}: {segunda.text}"
+    )
+    assert "otro texto" in segunda.text, f"y explicarlo: {segunda.text}"
+
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 1, f"el conflicto no puede apuntar nada: hay {len(suyas)} notas"
+    assert suyas[0].texto == "Preguntar por el precio del abono.", (
+        "y la que había se queda **como estaba**: el conflicto no la cambia"
+    )
+
+
+def test_la_misma_clave_en_otro_contacto_no_se_da_por_guardada(cliente, cuenta, db_sesion):
+    """**Misma clave, otro contacto: 409** (13/10/2026, revisión).
+
+    Una acción es *esta nota, en este contacto, con este texto*. Con dos fichas abiertas —o con un navegador que
+    cruzó dos formularios— la misma clave puede llegar apuntando a otra ficha, y contestar «ya está» dejaría la
+    segunda sin su nota.
+    """
+    una = _una_ficha(cliente, cuenta, "Primer proveedor")
+    otra = _una_ficha(cliente, cuenta, "Segundo proveedor")
+    clave = "nota-1712345678-cruzada"
+    assert cliente.post(
+        f"/api/contactos/{una['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Mismo texto.", "clave_de_reenvio": clave},
+    ).status_code == 200
+
+    cruzada = cliente.post(
+        f"/api/contactos/{otra['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Mismo texto.", "clave_de_reenvio": clave},
+    )
+    assert cruzada.status_code == 409, (
+        f"la misma clave en otro contacto tiene que dar 409, y ha dado {cruzada.status_code}"
+    )
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == otra["id"])
+        )
+    )
+    assert suyas == [], "y no puede apuntar nada en la segunda ficha"
+
+
+def test_dos_envios_simultaneos_con_la_misma_accion_apuntan_una_nota(cliente, cuenta, db_sesion):
+    """**Dos envíos a la vez, de verdad** (13/10/2026, revisión).
+
+    La consulta previa y el guardado son dos operaciones: dos peticiones simultáneas pueden encontrar la clave
+    libre las dos. El índice único impide duplicar la nota, pero **alguien tiene que recoger el choque** —deshacer
+    lo intentado, leer lo que quedó y contestar—, y sin eso el agricultor vería un error del servidor y no sabría
+    si su nota se guardó.
+
+    **Con hilos, no con dos llamadas seguidas**: dos llamadas consecutivas no prueban concurrencia ninguna, porque
+    la primera termina antes de empezar la segunda. Eso lo pidió la revisión con estas palabras.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    ficha = _una_ficha(cliente, cuenta, "Taller de los hilos")
+    clave = "nota-1712345678-simultanea"
+
+    def enviar(_):
+        return cliente.post(
+            f"/api/contactos/{ficha['id']}/notas",
+            headers=cuenta["cabeceras"],
+            json={"texto": "La misma nota desde dos sitios.", "clave_de_reenvio": clave},
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        respuestas = list(pool.map(enviar, range(2)))
+
+    codigos = sorted(respuesta.status_code for respuesta in respuestas)
+    assert codigos == [200, 200], (
+        f"las dos tienen que contestar bien (una guarda y la otra reconoce la acción): {codigos} "
+        f"{[r.text[:120] for r in respuestas]}"
+    )
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 1, f"y tiene que quedar **una** nota, no dos: hay {len(suyas)}"
+
+
+def test_dos_claves_distintas_con_el_mismo_texto_son_dos_notas(cliente, cuenta, db_sesion):
+    """Y dos acciones distintas con el mismo texto son dos notas (13/10/2026): el caso real del navegador."""
+    ficha = _una_ficha(cliente, cuenta, "Recambios del Páramo")
+    for clave in ("nota-a-111111", "nota-b-222222"):
+        respuesta = cliente.post(
+            f"/api/contactos/{ficha['id']}/notas",
+            headers=cuenta["cabeceras"],
+            json={"texto": "Le volví a llamar.", "clave_de_reenvio": clave},
+        )
+        assert respuesta.status_code == 200, respuesta.text
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 2, f"dos claves distintas son dos acciones: hay {len(suyas)}"

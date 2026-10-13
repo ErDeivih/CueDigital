@@ -43,6 +43,7 @@ import hashlib
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from .. import contactos as logica
 from .. import correcciones, models, textos
@@ -631,6 +632,43 @@ def volver_a_usarlo(
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
 
 
+def _la_nota_de_esta_accion(db, explotacion_id: int, clave: str):
+    """La nota que guardó esa acción, si ya se guardó. `None` si no hay ninguna.
+
+    **Buscada por la clave y por la finca**, que es lo que hace que la clave de una finca no choque con la de otra.
+    """
+    if not clave:
+        return None
+    return db.scalar(
+        select(models.NotaDeUnContacto).where(
+            models.NotaDeUnContacto.explotacion_id == explotacion_id,
+            models.NotaDeUnContacto.clave_de_reenvio == clave,
+        )
+    )
+
+
+def _lo_que_contesta_una_accion_ya_guardada(ya, contacto, texto: str, db, explotacion) -> dict:
+    """Lo que se contesta cuando esa acción **ya se había guardado** (13/10/2026, revisión).
+
+    Se compara **la acción entera** —la nota, su contacto y su texto— y no solo la clave:
+
+      - **Coincide**: es un reenvío legítimo (doble clic, respuesta perdida, reintento sin cobertura). Se contesta
+        la ficha, con la nota que ya estaba, y **no se apunta otra**.
+      - **No coincide**: llegó la misma clave con **otro texto** o en **otro contacto**. Entonces **409** y no se
+        toca nada. Contestar «ya está» aquí sería dar por guardado algo que **no se guardó**: el agricultor editó
+        lo que había escrito, la respuesta se había perdido, y su texto nuevo desaparecería sin que nadie se
+        entere. El navegador conserva el borrador y lo explica; con eso, lo que escribió no se pierde.
+
+    Se usa desde los dos caminos: el de la consulta previa y el de la colisión al guardar.
+    """
+    if ya.contacto_id == contacto.id and (ya.texto or "") == texto:
+        return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
+    )
+
+
 @router.post("/{contacto_id}/notas", response_model=ContactoSalida)
 def apuntar_una_nota(
     contacto_id: int,
@@ -648,27 +686,25 @@ def apuntar_una_nota(
     escrito uno.
     """
     contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
-    # **El reenvío seguro, lo primero** (13/10/2026): si esta acción ya se guardó, se contesta la ficha tal cual
-    # y **no se apunta otra nota**. Cubre el doble clic, la respuesta que se perdió por el camino y el reintento
-    # del móvil sin cobertura. Es la misma pieza que llevan las ventas, las facturas, los cobros y las
-    # recepciones; dos acciones **voluntarias** con el mismo texto sí son dos notas, porque la clave es de la
-    # acción y no del texto.
-    clave = (datos.clave_de_reenvio or "").strip()
-    if clave:
-        ya = db.scalar(
-            select(models.NotaDeUnContacto).where(
-                models.NotaDeUnContacto.explotacion_id == explotacion.id,
-                models.NotaDeUnContacto.clave_de_reenvio == clave,
-            )
-        )
-        if ya is not None:
-            return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
     texto = logica.limpia(datos.texto)
     if not texto:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=textos.mensaje("C7_una_nota_necesita_texto"),
         )
+    # **El reenvío seguro, con la identidad COMPLETA de la acción** (13/10/2026, revisión).
+    #
+    # La clave sola no basta: identifica **una acción**, y una acción es *esta nota, en este contacto, con este
+    # texto*. Si llega la misma clave con **otro texto** o en **otro contacto**, no es un reenvío: es que el
+    # agricultor editó lo que había escrito (o el navegador cruzó dos formularios), y contestar «ya está» sería
+    # dar por guardado algo que **no se guardó** —pérdida silenciosa—. En ese caso se contesta **409** y no se
+    # toca nada: el navegador conserva el borrador y lo explica.
+    clave = (datos.clave_de_reenvio or "").strip()
+    if clave:
+        ya = _la_nota_de_esta_accion(db, explotacion.id, clave)
+        if ya is not None:
+            return _lo_que_contesta_una_accion_ya_guardada(ya, contacto, texto, db, explotacion)
+
     db.add(
         models.NotaDeUnContacto(
             explotacion_id=explotacion.id,
@@ -678,7 +714,19 @@ def apuntar_una_nota(
             clave_de_reenvio=clave or None,
         )
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # **Y la colisión, que es de verdad** (13/10/2026, revisión): la consulta de arriba y el guardado son dos
+        # operaciones, así que dos peticiones simultáneas pueden encontrar la clave libre las dos. El índice
+        # único impide duplicar la nota, pero **alguien tiene que recoger el choque**: se deshace lo intentado, se
+        # lee lo que quedó y se contesta como corresponde. Sin esto, el agricultor vería un error del servidor
+        # (500) y no sabría si su nota se guardó.
+        db.rollback()
+        ya = _la_nota_de_esta_accion(db, explotacion.id, clave)
+        if ya is None:
+            raise
+        return _lo_que_contesta_una_accion_ya_guardada(ya, contacto, texto, db, explotacion)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
 
 

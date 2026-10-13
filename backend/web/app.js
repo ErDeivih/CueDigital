@@ -17506,6 +17506,15 @@ async function apuntarLaNota(id) {
     // Antes se repintaba con el campo vacío y el agricultor tenía que escribirlo otra vez —con guantes— después de
     // un fallo de red. Es lo que la revisión pidió comprobar.
     suyo.nota_a_medias = texto;
+    // **Y si el servidor dice que esa acción ya se guardó con otro texto** (409), la acción está **gastada**: se
+    // renueva la clave para que, al volver a pulsar, su texto editado se apunte como nota **nueva** y no se pierda.
+    // Sin esto el agricultor se quedaría en un 409 para siempre, porque la misma clave con otro texto siempre choca.
+    //
+    // **Esto faltaba, y lo encontró la prueba de pantalla** —no una lectura—: el primer intento de cablearlo no se
+    // aplicó (mi ancla llevaba `\n` y este fichero es CRLF) y mi comprobación —«la cadena está en el fichero»— dio
+    // verde porque esa misma cadena ya existía en **otra** función. Que un texto esté en algún sitio no es que esté
+    // donde tiene que estar.
+    if (resultado.estado === 409) suyo.clave_de_la_nota = null;
     suyo.error = resultado.error;
     return pantallaFichaDeContacto();
   }

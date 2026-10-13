@@ -1998,3 +1998,123 @@ test("lo escrito sigue estando si el envío de la nota falla", async () => {
     "lo escrito no llega a la pantalla: se queda en el estado y el agricultor lo pierde",
   );
 });
+
+// ===========================================================================
+// El conflicto de reenvío: la misma clave con OTRO texto (revisión del dueño, 13/10/2026)
+//
+// **POR QUÉ ESTA SECCIÓN EXISTE.** La clave de reenvío protege del doble toque, pero **no es la acción
+// entera**: una acción es *esta nota, en este contacto, con este texto*. Si la clave se reutilizara sin
+// mirar el texto, el agricultor escribiría «Preguntar por el abono», la respuesta se perdería (sin
+// cobertura), le añadiría «y por el gasóleo» y volvería a pulsar… y el servidor contestaría «ya está»
+// **sin haber guardado nunca la nota**: su texto nuevo desaparecería en silencio. Por eso la puerta
+// contesta **409** cuando la clave ya se usó con otro texto o en otro contacto, y por eso el front, ante
+// ese 409, **conserva el borrador y renueva la clave**, para que lo escrito se pueda apuntar como nota
+// nueva. Las dos mitades del acuerdo se vigilan aquí: la del servidor, en Python
+// (`tests/test_las_notas_de_un_contacto.py`).
+// ===========================================================================
+
+/** Los envíos que han ido a la puerta de las notas de una ficha, en orden. */
+function losEnviosDeLaNota(servidor, id = 4) {
+  return servidor.enviados.filter(
+    (uno) => uno.metodo === "POST" && uno.ruta === `/api/contactos/${id}/notas`,
+  );
+}
+
+test("un 409 conserva lo escrito, lo explica y renueva la clave de la acción", async () => {
+  // **El momento que la revisión pidió cerrar.** La clave ya se usó, pero **con otro texto**: el servidor
+  // contesta **409** en vez de dar por guardado algo que no se guardó. Lo que se mira aquí es lo que tiene
+  // que hacer la pantalla con ese «no»: (a) **no perder lo escrito** —lo que el agricultor tecleó con
+  // guantes no se puede quedar por el camino— y (b) **renovar la clave**, porque si el reintento llevara la
+  // clave vieja el servidor volvería a contestar 409 y el texto se quedaría atrapado: no se apuntaría nunca.
+  const texto = "Preguntar por el abono";
+  const explicacion = "Esta acción ya se había guardado, pero con otro texto.";
+  const { entorno, servidor } = await arrancarCon(
+    lasRespuestasDeArranque({
+      "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+      "POST /api/contactos/4/notas": falla(explicacion, 409),
+    }),
+  );
+  await pulsar(entorno, "contactos-ver");
+  await pulsar(entorno, "contacto-abrir", { id: 4 });
+  escribir(entorno, "contacto-nota-texto", texto);
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+
+  // (a) **Lo escrito sigue ahí**, y no se calla lo que ha pasado: el agricultor lee por qué.
+  assert.equal(
+    ultimoMontaje().props.borrador.nota_a_medias,
+    texto,
+    "el 409 se lleva por delante lo escrito: el agricultor tendría que teclearlo otra vez, con guantes",
+  );
+  const html = globalThis.ReactDOMServer.renderToStaticMarkup(ultimoMontaje());
+  assert.ok(
+    elCampoDeLaNota(html).includes(`value="${texto}"`),
+    `la ficha repintada deja el campo de la nota vacío después del 409:\n${html}`,
+  );
+  assert.equal(
+    ultimoMontaje().props.error,
+    explicacion,
+    "no se lee lo que ha contestado el servidor: el agricultor no sabe que no se ha guardado nada",
+  );
+
+  // (b) **Y la acción se renueva**: la segunda pulsación ya no es el reenvío de la primera (que el servidor
+  // rechazó), así que tiene que viajar con una clave **distinta**. Es lo que permite que su texto no se
+  // pierda: con la clave vieja, cada reintento chocaría otra vez contra el 409.
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+  const envios = losEnviosDeLaNota(servidor);
+  assert.equal(envios.length, 2, "el reintento después del 409 no ha llegado al servidor");
+  const primera = envios[0].cuerpo.clave_de_reenvio;
+  const segunda = envios[1].cuerpo.clave_de_reenvio;
+  assert.ok(primera && segunda, "alguna de las dos llamadas viaja sin clave de reenvío");
+  assert.notEqual(
+    segunda,
+    primera,
+    "el reintento reutiliza la clave del 409: el servidor volvería a contestar 409 y el texto no se apuntaría nunca",
+  );
+  assert.equal(
+    envios[1].cuerpo.texto,
+    texto,
+    "el reintento manda otra cosa que lo que hay en el campo de la nota",
+  );
+});
+
+test("la respuesta perdida y la edición después: el reintento lleva la misma clave y lo editado", async () => {
+  // **La otra cara del mismo acuerdo**, y por eso va pegada a la de arriba: allí el servidor dice «no lo he
+  // guardado» (409) y la clave se renueva; aquí **no lo dice** —la respuesta se pierde, el móvil se quedó
+  // sin cobertura con la petición ya mandada— y por eso la clave **se conserva**: la nota puede estar
+  // guardada en el servidor, y la misma acción no se apunta dos veces. El agricultor **edita** entonces lo
+  // que había escrito y vuelve a pulsar, así que se comprueban los dos momentos: **respuesta perdida →
+  // edición → reintento**, con la misma clave y con **lo editado** en el cuerpo, que es el texto que tiene
+  // delante.
+  const primero = "Preguntar por el abono";
+  const editado = "Preguntar por el abono y por el gasóleo";
+  const { entorno, servidor } = await arrancarCon(
+    lasRespuestasDeArranque({
+      "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+      "POST /api/contactos/4/notas": falla("No se ha podido guardar la nota."),
+    }),
+  );
+  await pulsar(entorno, "contactos-ver");
+  await pulsar(entorno, "contacto-abrir", { id: 4 });
+
+  escribir(entorno, "contacto-nota-texto", primero);
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+  assert.equal(
+    ultimoMontaje().props.borrador.nota_a_medias,
+    primero,
+    "la respuesta perdida se lleva el borrador: no quedaría nada que editar",
+  );
+
+  // El agricultor le añade lo del gasóleo, con lo de antes delante, y vuelve a pulsar.
+  escribir(entorno, "contacto-nota-texto", editado);
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+
+  const envios = losEnviosDeLaNota(servidor);
+  assert.equal(envios.length, 2, "el reintento después de editar no ha llegado al servidor");
+  assert.equal(envios[0].cuerpo.texto, primero, "la primera llamada no llevaba lo que se había escrito");
+  assert.equal(envios[1].cuerpo.texto, editado, "se manda lo de antes en vez de lo editado");
+  assert.equal(
+    envios[1].cuerpo.clave_de_reenvio,
+    envios[0].cuerpo.clave_de_reenvio,
+    "la respuesta perdida pudo haber guardado la nota: el reintento tiene que llevar la MISMA clave o la apuntaría dos veces",
+  );
+});
