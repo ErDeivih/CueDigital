@@ -6603,6 +6603,15 @@ MENSAJES.update(MENSAJES_DE_LAS_SEMILLAS)
 #  4. **Ningún texto lleva marcas de ningún tipo** (ni asteriscos ni almohadillas): lo que se lee en
 #     pantalla es exactamente lo que hay escrito aquí, letra a letra.
 CONTACTOS: dict[str, object] = {
+    # **Los canales** (Entrega 2, 13/10/2026): varios teléfonos, correos y direcciones con su etiqueta y
+    # su principal. Se dice cuál es el principal porque, si hay dos teléfonos, hay que saber cuál se marca.
+    "canales_titulo": "Sus teléfonos, correos y direcciones",
+    "canales_pista": (
+        "Los de siempre y los demás: el del almacén, el móvil de quien atiende, la dirección de entrega. El principal es el que se usa si no se dice otra cosa."
+    ),
+    "canales_principal": "El principal",
+    "canales_sin_etiqueta": "Sin nombre",
+    "canales_sin_nada_mas": "No hay ninguno más apuntado.",
     # **El saldo del contacto** (Entrega 1, 13/10/2026). Se dicen los dos sentidos por separado y con
     # sus palabras, porque la pantalla es donde se entiende que no se restan.
     "saldo_titulo": "Lo que hay con este contacto",

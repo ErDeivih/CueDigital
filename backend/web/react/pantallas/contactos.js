@@ -559,6 +559,40 @@ export function PantallaDeUnContacto({
         : null
     }
 
+    ${
+      // **Sus canales** (Entrega 2, 13/10/2026): los teléfonos, correos y direcciones, con su etiqueta y su
+      // principal. Se enseña **cuál es el principal** y no una lista pelada, porque cuando hay dos teléfonos hay que
+      // saber cuál se marca —y eso es justo lo que el agricultor quiere saber de un vistazo—.
+      //
+      // La clase se dice con su palabra (un teléfono es «Teléfono») y un canal sin etiqueta lo dice: **no se deja un
+      // hueco en blanco**, que parecería un descuido de la pantalla en vez de un dato que nadie apuntó.
+      corrigiendo && (borrador.canales || []).length
+        ? html`
+            <h2>${frase(c.canales_titulo)}</h2>
+            <p className="pista">${frase(c.canales_pista)}</p>
+            <ul className="lista lista-de-canales">
+              ${borrador.canales.map(
+                (canal) => html`
+                  <li key=${String(canal.id)}>
+                    <strong>${frase(c[canal.clase] || canal.clase)}</strong>
+                    ${canal.etiqueta ? html` · ${frase(canal.etiqueta)}` : html` · ${frase(c.canales_sin_etiqueta)}`}
+                    ${
+                      // El valor, del campo que le toca a su clase. La dirección lleva su pueblo detrás.
+                      canal.clase === "telefono"
+                        ? html` · ${frase(canal.telefono)}`
+                        : canal.clase === "correo"
+                          ? html` · ${frase(canal.correo)}`
+                          : html` · ${frase(canal.direccion)}${canal.localidad ? html` (${frase(canal.localidad)})` : null}`
+                    }
+                    ${canal.principal ? html` · <strong>${frase(c.canales_principal)}</strong>` : null}
+                  </li>
+                `,
+              )}
+            </ul>
+          `
+        : null
+    }
+
     <div className="barra-acciones">
       <button
         type="button"
