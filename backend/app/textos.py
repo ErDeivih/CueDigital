@@ -6910,6 +6910,8 @@ MENSAJES_DE_LOS_CONTACTOS: dict[str, str] = {
     # Las dos cosas que sí se exigen a un canal (Entrega 2, 13/10/2026).
     "C7_esa_clase_de_canal_no_existe": "Eso no es un teléfono, un correo ni una dirección.",
     "C7_un_canal_necesita_algo_escrito": "Escribe el teléfono, el correo o la dirección.",
+    # Lo único que se le exige a una próxima acción (Entrega 3, 13/10/2026): que se sepa qué hay que hacer.
+    "C7_una_tarea_necesita_titulo": "Escribe qué hay que hacer.",
     # La accion ya se guardo, pero con otro texto o en otro contacto (13/10/2026, revision). Se dice
     # lo que pasa y que NO se ha cambiado nada, para que el agricultor no crea que su texto nuevo esta
     # guardado: lo que escribio sigue en la pantalla, y volver a pulsar lo apunta como nota nueva.

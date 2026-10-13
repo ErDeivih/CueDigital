@@ -3502,8 +3502,11 @@ class Tarea(Base):
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
     # De quién es la acción. Una tarea **siempre** es de un contacto: es una próxima acción **con** alguien.
     contacto_id: Mapped[int] = mapped_column(ForeignKey("contactos.id"), index=True)
-    # Y, cuando exista, del trabajo del que sale (una labor apalabrada, un servicio a un tercero…).
-    trabajo_id: Mapped[int | None] = mapped_column(ForeignKey("trabajos.id"), nullable=True)
+    # **El vínculo al trabajo del que sale NO está todavía, y es a propósito.** El encargo dice «vínculos a contacto
+    # y, **cuando exista**, a documentos o trabajos»: puse la clave ajena a `trabajos` dando por hecho que esa tabla
+    # existía —vi la *ruta* `/api/trabajos` y supuse el *modelo*— y no existe, así que SQLAlchemy no podía ni montar
+    # la tabla (`NoReferencedTableError`). Cuando exista de verdad, se añade aquí con su clave ajena y su migración;
+    # mientras tanto **no se inventa una columna que apunte a ninguna parte**.
     titulo: Mapped[str] = mapped_column(String(200))
     descripcion: Mapped[str | None] = mapped_column(Text)
     # Quién la tiene que hacer. Es el nombre del usuario del sistema (ver la Entrega 4: los permisos por materia).

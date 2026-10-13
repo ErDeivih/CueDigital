@@ -53,6 +53,7 @@ from ..schemas import (
     ConfirmacionDeLaMigracion,
     BajaDeUnContacto,
     CanalDeUnContactoEntrada,
+    EntradaDeUnaTarea,
     SaldoDeUnContacto,
     NotaDeUnContactoEntrada,
     ContactoEntrada,
@@ -275,6 +276,7 @@ def _pintar_contacto(
         # olvidado no pueden leerse igual.
         "notas_con_autor": [],
         "canales": [],
+        "tareas": [],
         "es_empresa": contacto.es_empresa,
         "nif": contacto.nif,
         "telefono": contacto.telefono,
@@ -395,6 +397,66 @@ def _un_canal_guardable(datos) -> dict:
     }
 
 
+def _una_tarea(tarea: models.Tarea, hoy: dt.date | None = None) -> dict:
+    """Una tarea, con **lo que se calcula** al leer.
+
+    **`vencida` no se guarda**: se calcula (fecha anterior a hoy **y** todavía pendiente). El encargo lo dice con
+    estas palabras: *«la fecha vencida no transforma automáticamente una tarea en cancelada»*. Si fuera un estado
+    guardado haría falta algo que pasara por las filas cada noche, y lo que no se ejecuta no se puede prometer.
+
+    **Y la fecha se dice con palabras** («15/10/2026») o «Sin fecha»: el front no tiene que saber formatear fechas,
+    que es de donde salen los errores de formato y de zona horaria. «Sin fecha» **no es** «hoy».
+    """
+    hoy = hoy or dt.date.today()
+    return {
+        "id": tarea.id,
+        "contacto_id": tarea.contacto_id,
+        "titulo": tarea.titulo,
+        "descripcion": tarea.descripcion,
+        "responsable": tarea.responsable,
+        "fecha_prevista": tarea.fecha_prevista,
+        "fecha_texto": (
+            tarea.fecha_prevista.strftime("%d/%m/%Y") if tarea.fecha_prevista else "Sin fecha"
+        ),
+        "estado": tarea.estado,
+        "vencida": bool(
+            tarea.fecha_prevista
+            and tarea.estado == models.Tarea.PENDIENTE
+            and tarea.fecha_prevista < hoy
+        ),
+        "completada_en": tarea.completada_en,
+        "completada_por": tarea.completada_por,
+        "cancelada_en": tarea.cancelada_en,
+        "cancelada_por": tarea.cancelada_por,
+    }
+
+
+def _las_tareas(db, contacto: models.Contacto) -> list[dict]:
+    """Las tareas de una ficha: **primero lo que hay que hacer**, y dentro de eso lo más antiguo primero.
+
+    El orden es el del trabajo: las pendientes antes que las hechas, y entre las pendientes **lo vencido arriba**,
+    porque es lo que se ha pasado de fecha. Lo que ya está hecho o cancelado va al final y no estorba.
+    """
+    suyas = list(
+        db.scalars(
+            select(models.Tarea).where(
+                models.Tarea.explotacion_id == contacto.explotacion_id,
+                models.Tarea.contacto_id == contacto.id,
+            )
+        )
+    )
+    suyas.sort(
+        key=lambda t: (
+            t.estado != models.Tarea.PENDIENTE,
+            # Sin fecha va **después** de las que tienen día: una tarea sin día no está «para ya».
+            t.fecha_prevista is None,
+            t.fecha_prevista or dt.date.max,
+            t.id,
+        )
+    )
+    return [_una_tarea(t) for t in suyas]
+
+
 def _las_notas(db, contacto: models.Contacto) -> list[dict]:
     """Las notas de una ficha, **de la más nueva a la más vieja**, con el nombre de quien la escribió.
 
@@ -480,6 +542,9 @@ def _la_ficha(db, contacto: models.Contacto, escritos: list[dict]) -> dict:
         # **Y sus canales** (Entrega 2): con su etiqueta y su principal. La lista de contactos manda
         # la lista vacía, igual que con las notas: se miran al abrir la ficha.
         "canales": _los_canales(db, contacto),
+        # **Y sus próximas acciones** (Entrega 3): lo que hay que hacer con este contacto, con lo
+        # pendiente y lo vencido primero. La lista manda la lista vacía, como con las notas.
+        "tareas": _las_tareas(db, contacto),
         "vivos": [
             {
                 "id": identificador,
@@ -959,6 +1024,65 @@ def quitar_un_canal(
         )
         if el_siguiente is not None:
             el_siguiente.principal = True
+    db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.post("/{contacto_id}/tareas", response_model=ContactoSalida)
+def apuntar_una_tarea(
+    contacto_id: int,
+    datos: EntradaDeUnaTarea,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Apunta una próxima acción con este contacto** (Entrega 3, 13/10/2026).
+
+    Lo único que se exige es **saber qué hay que hacer** (el título). El responsable, la descripción y el día son
+    opcionales de verdad: una tarea **sin fecha** es una tarea («llamar al del pienso algún día»), y obligarla a
+    tener fecha sería inventarla.
+
+    **Reenviar no duplica**: si viene la misma clave de reenvío, se devuelve la ficha con la tarea que ya había, sin
+    apuntar otra ni dejar dos trazas. Es el mismo patrón que las notas y los cobros.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    titulo = logica.limpia(datos.titulo)
+    if not titulo:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=textos.mensaje("C7_una_tarea_necesita_titulo"),
+        )
+    if datos.clave_de_reenvio:
+        la_misma = db.scalar(
+            select(models.Tarea).where(
+                models.Tarea.explotacion_id == explotacion.id,
+                models.Tarea.clave_de_reenvio == datos.clave_de_reenvio,
+            )
+        )
+        if la_misma is not None:
+            # **La acción ya estaba hecha**: se devuelve lo que hay, sin apuntar nada nuevo.
+            return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+    tarea = models.Tarea(
+        explotacion_id=explotacion.id,
+        contacto_id=contacto.id,
+        titulo=titulo,
+        descripcion=logica.limpia(datos.descripcion) or None,
+        responsable=logica.limpia(datos.responsable) or None,
+        fecha_prevista=datos.fecha_prevista,
+        estado=models.Tarea.PENDIENTE,
+        clave_de_reenvio=datos.clave_de_reenvio,
+    )
+    db.add(tarea)
+    db.flush()
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="tarea_crear",
+        datos={"titulo": [None, tarea.titulo], "fecha_prevista": [None, str(tarea.fecha_prevista or "")]},
+    )
     db.commit()
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
 

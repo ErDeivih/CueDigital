@@ -3651,6 +3651,47 @@ class CanalDeUnContactoSalida(BaseModel):
     principal: bool
 
 
+class EntradaDeUnaTarea(EntradaBase):
+    """**Una próxima acción** (Entrega 3, 13/10/2026).
+
+    `fecha_prevista` es un **día**, no un instante: la acción se piensa por días («el martes») y poner
+    una hora obligaría a inventarla. Si no viene, la tarea queda **sin fecha**, que es una de las tres
+    cosas que hay que poder distinguir (las otras: vencida y hecha).
+    """
+
+    titulo: str
+    descripcion: str | None = None
+    responsable: str | None = None
+    # El día, en formato `AAAA-MM-DD`. `None` es «sin fecha», no «hoy».
+    fecha_prevista: dt.date | None = None
+    clave_de_reenvio: str | None = None
+
+
+class TareaSalida(BaseModel):
+    """Cómo se cuenta una tarea, con lo que se **calcula** y no se guarda.
+
+    `vencida` **se calcula al leer** (fecha anterior a hoy y todavía pendiente): no es un estado guardado,
+    porque el encargo dice que una fecha vencida **no** transforma la tarea en cancelada, y un estado que
+    hubiera que ir actualizando cada noche es una promesa que no se puede cumplir.
+    """
+
+    id: int
+    contacto_id: int
+    titulo: str
+    descripcion: str | None = None
+    responsable: str | None = None
+    fecha_prevista: dt.date | None = None
+    # El día **dicho con palabras** («15/10/2026») o «Sin fecha». El front no tiene que saber formatear
+    # fechas, que es de donde salen los errores de formato y de zona.
+    fecha_texto: str
+    estado: str
+    vencida: bool
+    completada_en: dt.datetime | None = None
+    completada_por: str | None = None
+    cancelada_en: dt.datetime | None = None
+    cancelada_por: str | None = None
+
+
 class ContactoSalida(SalidaBase):
     """Un contacto con sus papeles y lo que se sabe de él.
 
@@ -3686,6 +3727,10 @@ class ContactoSalida(SalidaBase):
     # Los canales de la ficha (Entrega 2): sus teléfonos, correos y direcciones, con etiqueta y
     # principal. Va **sin valor por defecto**, por el mismo motivo que las notas.
     canales: list[CanalDeUnContactoSalida]
+    # Las próximas acciones de la ficha (Entrega 3). **Sin valor por defecto**, como los canales y las
+    # notas: una lista vacía parecería «este contacto no tiene nada pendiente», que es distinto de «no me
+    # lo han mandado».
+    tareas: list[TareaSalida]
     origen: str = "a_mano"
     # Los papeles que el agricultor le ha marcado.
     papeles: list[str] = []
