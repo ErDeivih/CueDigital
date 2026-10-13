@@ -195,7 +195,22 @@ def main() -> int:
             # --- 2 · La vista previa, con dos que SÍ se pueden juntar ---
             elegir(navegador, "fusion-origen", sin_notas_una[1]["id"])
             elegir(navegador, "fusion-destino", sin_notas_otra[1]["id"])
+            # **Qué ha quedado escrito en los dos desplegables ANTES de pulsar.** Si React los controla y devuelve su
+            # valor, aquí se ve, y deja de ser una sospecha. Y **qué dice la pantalla JUSTO DESPUÉS**: si el manejador
+            # se queja con «Elige una», ha leído los campos vacíos, y entonces el problema es de quien los llena.
+            print(
+                "  los desplegables dicen: "
+                + str(
+                    navegador.evaluar(
+                        "JSON.stringify([(document.getElementById('fusion-origen')||{}).value,"
+                        " (document.getElementById('fusion-destino')||{}).value])"
+                    )
+                )
+            )
             navegador.evaluar("document.querySelector('[data-accion=fusion-ver]').click()")
+            justo_despues = lo_que_se_ve(navegador)
+            print(f"  después de pulsar VER -> titulares: {justo_despues.get('principales')!r}")
+            print(f"                          y el texto empieza: {(justo_despues.get('texto') or '')[:220]!r}")
             navegador.esperar("document.body.textContent.includes('Esto es lo que va a pasar')", segundos=15)
             visto = lo_que_se_ve(navegador)
             comprobar("la vista previa se enseña", "Esto es lo que va a pasar" in (visto.get("texto") or ""), "")

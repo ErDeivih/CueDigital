@@ -1010,6 +1010,16 @@ function parametrosDeLaPantalla(clave) {
   // no miraba: el filtro se borraba solo y la lista no se podía enlazar ni recargar. Medido en el recorrido
   // andado: pulsar «Vencidas» dejaba `#/tareas?campana=2026&finca=2`, y al recargar volvían las 6 filas.
   if (clave === "tareas") {
+  if (clave === "fusion") {
+    // **Los dos identificadores van EN LA DIRECCIÓN** (14/10/2026): sin esto la aplicación reescribe la dirección
+    // **sin ellos**, y la pantalla se vuelve a abrir sin saber qué fichas — que es exactamente lo que pasaba: los
+    // desplegables salían vacíos (`["",""]`, medido) y la vista previa no se pedía nunca. Se escriben desde el
+    // **estado**, que es donde el cargador los deja: es el mismo cuidado que el filtro de las tareas, dos líneas
+    // más abajo, y el mismo fallo que allí se arregló.
+    const suyo = estadoDeLaFusion ? estadoDeLaFusion() : null;
+    if (suyo && suyo.origen_id) parametros.origen = suyo.origen_id;
+    if (suyo && suyo.destino_id) parametros.destino = suyo.destino_id;
+  }
     if (estado.filtroTareas) parametros.vencimiento = estado.filtroTareas;
   }
   // **La pantalla de las tierras de T06** (03/10/2026): lo que el agricultor tenga puesto viaja en la
@@ -1348,6 +1358,15 @@ function abrirLaPantalla(clave, parametros = {}) {
   }
   if (clave === "fusion") {
     // **La fusión** (Entrega 5): la vista previa la hace el servidor, así que se pide a su puerta.
+    // **Los dos identificadores se copian al ESTADO antes de abrir** (14/10/2026), y esto es lo que faltaba.
+    // La aplicación **reescribe la dirección desde el estado** al pintar, así que lo que venga en la dirección hay
+    // que dejarlo en el estado **antes** de pintar: si no, la dirección pierde `origen` y `destino` y la pantalla se
+    // vuelve a abrir sin saber qué fichas — medido: los desplegables salían `["",""]` y la vista previa no se pedía
+    // nunca. Es **el mismo cuidado** que el filtro de las tareas, unas líneas más arriba, y el mismo fallo que allí
+    // se arregló.
+    const suyo = estadoDeLaFusion();
+    suyo.origen_id = parametros.origen || suyo.origen_id || "";
+    suyo.destino_id = parametros.destino || suyo.destino_id || "";
     return abrirLaFusion(parametros);
   }
   if (clave === "contacto") {
@@ -17729,7 +17748,12 @@ async function abrirLaFusion(parametros = {}) {
   pantallaLaFusion();
   try {
     const agenda = await apiJson("/api/contactos");
-    suyo.contactos = agenda.contactos || [];
+    // **La lista de contactos es una LISTA, no un diccionario** (14/10/2026): `GET /api/contactos` contesta
+    // `list[ContactoSalida]` (`contactos_api.py:738`). Leer `agenda.contactos` sobre un array da `undefined`,
+    // y el `|| []` se lo traga SIN DECIR NADA: los desplegables salían vacíos --medido: `["",""]`-- y la
+    // pantalla no tenía a quién elegir. Es el mismo pecado de siempre en esta casa: dar por buena la FORMA de
+    // lo que vuelve. Se aceptan las dos formas, que es lo que no se puede romper.
+    suyo.contactos = Array.isArray(agenda) ? agenda : agenda.contactos || [];
   } catch (fallo) {
     // **Si no se puede leer, se dice**: una lista vacía sin explicación parecería que no hay ninguno.
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
@@ -17785,7 +17809,12 @@ async function abrirLosTrabajosATerceros() {
     const trabajos = await apiJson("/api/trabajos-a-terceros");
     suyo.lista = trabajos.trabajos || [];
     const agenda = await apiJson("/api/contactos");
-    suyo.contactos = agenda.contactos || [];
+    // **La lista de contactos es una LISTA, no un diccionario** (14/10/2026): `GET /api/contactos` contesta
+    // `list[ContactoSalida]` (`contactos_api.py:738`). Leer `agenda.contactos` sobre un array da `undefined`,
+    // y el `|| []` se lo traga SIN DECIR NADA: los desplegables salían vacíos --medido: `["",""]`-- y la
+    // pantalla no tenía a quién elegir. Es el mismo pecado de siempre en esta casa: dar por buena la FORMA de
+    // lo que vuelve. Se aceptan las dos formas, que es lo que no se puede romper.
+    suyo.contactos = Array.isArray(agenda) ? agenda : agenda.contactos || [];
   } catch (fallo) {
     // **Si no se puede leer, se dice**: una lista vacia sin explicacion pareceria que no hay ninguno, y es lo
     // contrario de lo que pasa.

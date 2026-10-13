@@ -3723,6 +3723,10 @@ class ListaDeTareas(BaseModel):
 
 
 class ContactoSalida(SalidaBase):
+    # **A quién remite esta ficha si se fusionó** (Entrega 5, 14/10/2026). Estaba en el MODELO pero no
+    # aquí, así que el remitir **no se podía leer por la puerta**: la ficha de la que desapareció dice a
+    # dónde fue, y sin este campo el cliente no tenía forma de saberlo. Lo midió la andadura de la fusión.
+    fusionado_con_id: int | None = None
     """Un contacto con sus papeles y lo que se sabe de él.
 
     `enlaces` es **el número de enlaces que siguen vivos** (los que apuntan a un documento que todavía
@@ -3773,6 +3777,10 @@ class ContactoSalida(SalidaBase):
 
 
 class FichaDelContacto(ContactoSalida):
+    # **A quién remite esta ficha si se fusionó** (Entrega 5, 14/10/2026). Estaba en el MODELO pero no
+    # aquí, así que el remitir **no se podía leer por la puerta**: la ficha de la que desapareció dice a
+    # dónde fue, y sin este campo el cliente no tenía forma de saberlo. Lo midió la andadura de la fusión.
+    fusionado_con_id: int | None = None
     """La ficha con sus vínculos uno por uno, que es lo que se mira al abrirla."""
 
     vivos: list[EnlaceDeUnContacto] = []
