@@ -3396,6 +3396,66 @@ class Contacto(Base):
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class CanalDeUnContacto(Base):
+    """**Un teléfono, un correo o una dirección de una ficha, con su etiqueta** (Entrega 2, 13/10/2026).
+
+    POR QUÉ. Hasta hoy la ficha tenía **un teléfono, un correo y una dirección** y nada más, y eso no es lo que
+    pasa de verdad: una cooperativa tiene el teléfono de administración y el del almacén, la persona de contacto
+    tiene su móvil, y la dirección de entrega no es la de la sede. Con un solo hueco, el agricultor apunta uno y
+    **pierde los otros** —y lo que se apunta en el hueco se pisa al corregir—.
+
+    LO QUE NO SE HACE AQUÍ, y es a propósito:
+
+      · **No se inventa país, ni prefijo, ni formato**: el teléfono se guarda **tal y como se escribe**. Un
+        programa que «arregla» un número puede dejar un número que no es el que hay que marcar.
+      · **No se valida de más**: hay teléfonos que son «preguntar por Juan» y correos que son «el del pueblo». Lo
+        que se exige es que haya **algo escrito** y que la clase sea una de las que hay; nada más, porque impedir
+        guardar un dato legítimo es peor que guardarlo feo.
+      · **No se tocan los documentos**: lo que un papel dice se queda como está. Esto es de la ficha, y solo de la
+        ficha.
+      · Los cuatro campos de siempre en `Contacto` **se quedan**: los leen cinco sitios (la exportación, la
+        búsqueda, la ficha, la tabla y la corrección) y **lo que ya estaba apuntado no se mueve de sitio**.
+
+    **Un principal por clase y ficha**, y lo garantiza la base con un índice único parcial: dos «principal» en el
+    mismo teléfono es una contradicción que no puede existir, y no vale con que la pantalla se porte bien.
+    """
+
+    __tablename__ = "canales_de_un_contacto"
+    __table_args__ = (
+        Index("ix_canal_de_contacto", "contacto_id", "clase"),
+        # **Un solo principal de cada clase por ficha.** Parcial (`WHERE principal = 1`) para que los que no son
+        # principales no cuenten: si no, solo se podría tener uno en total.
+        # **Con los dos dialectos**, como el resto de la casa (`uq_linea_de_factura_por_entrega`): SQLite escribe
+        # los booleanos como 1/0 y PostgreSQL como true/false, y un índice parcial que solo valga en uno deja la
+        # regla sin proteger en el otro.
+        Index(
+            "uq_canal_principal_del_contacto",
+            "contacto_id",
+            "clase",
+            unique=True,
+            sqlite_where=text("principal = 1"),
+            postgresql_where=text("principal = true"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    contacto_id: Mapped[int] = mapped_column(ForeignKey("contactos.id"), index=True)
+    # `telefono`, `correo` o `direccion`. Es una lista cerrada **de verdad**: se comprueba contra la tupla de
+    # abajo, y una clase que no esté **no se guarda**.
+    clase: Mapped[str] = mapped_column(String(20))
+    # **La etiqueta la escribe el agricultor**: «administración», «almacén», «el de siempre»… No hay una lista
+    # cerrada porque la vida no la tiene, y una etiqueta libre no rompe nada.
+    etiqueta: Mapped[str | None] = mapped_column(String(80))
+    # El valor, **tal cual**. Para una dirección, los mismos cuatro trozos que ya tiene la ficha.
+    telefono: Mapped[str | None] = mapped_column(String(40))
+    correo: Mapped[str | None] = mapped_column(String(200))
+    direccion: Mapped[str | None] = mapped_column(String(200))
+    localidad: Mapped[str | None] = mapped_column(String(120))
+    principal: Mapped[bool] = mapped_column(Boolean, default=False)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class NotaDeUnContacto(Base):
     """Una nota sobre una ficha, **con quién la escribió y cuándo** (CRM-03, criterio (f), 11/10/2026).
 
