@@ -89,6 +89,10 @@ def lo_que_se_ve(navegador: NavegadorDeVerdad) -> dict:
     crudo = navegador.evaluar(
         "JSON.stringify({"
         "  h1: (document.querySelector('h1')||{}).textContent || '',"
+        # **La dirección y el titular, que es lo que dice QUÉ pantalla se ha pintado**: el armazón tiene su propio
+        # `h1`, así que sin esto un «hay título» puede estar pasando por el título de otra pantalla.
+        "  hash: location.hash,"
+        "  principales: Array.from(document.querySelectorAll('h1, h2')).map((e)=>(e.textContent||'').trim()),"
         "  botones: Array.from(document.querySelectorAll('button')).map((b)=>(b.textContent||'').trim()),"
         "  filas: document.querySelectorAll('table tbody tr').length,"
         "  texto: document.body.textContent || ''"
@@ -153,7 +157,26 @@ def main() -> int:
 
         with NavegadorDeVerdad() as navegador:
             entrar(navegador, token)
+            # **EL VIGILANTE DE ERRORES, DELANTE DE TODO** (14/10/2026). Y esto es lo que me faltó durante cuatro
+            # rondas: el cargador de esta pantalla es `async`, así que **una excepción suya no la recoge nadie** —la
+            # promesa se rechaza, la aplicación se queda donde estaba y el recorrido ve **el armazón**. Una pantalla
+            # que revienta al abrirse **se ve igual que una que no existe**, y por eso estuve arreglando el enrutado
+            # (la llave, el ancla, el envoltorio, los nombres) sin que ninguno fuera el problema.
+            #
+            # La forma es **la de la casa** (`verificar_el_recorrido_de_las_tareas.py:543`): se apuntan los `error` y
+            # también las **promesas rechazadas** (`unhandledrejection`), que es justo el caso de un `async`.
+            # Va **después de entrar** (que recarga el documento, y al recargar se pierden los oyentes) y **antes de
+            # navegar** a la dirección de esta pantalla.
+            navegador.evaluar(
+                "window.__los_errores = [];"
+                "window.addEventListener('error', (e) => window.__los_errores.push('error: ' + String(e.message || e)));"
+                "window.addEventListener('unhandledrejection', (r) => window.__los_errores.push("
+                "'promesa rechazada: ' + String((r && r.reason && r.reason.message) || (r && r.reason) || r)));"
+            )
             navegador.abrir(f"http://127.0.0.1:{PUERTO}/{LA_DIRECCION}", esperar=2.0)
+            # **Y se dice lo que ha saltado, en la primera línea**: sin esto, un fallo de JavaScript deja la pantalla a
+            # medias y el recorrido entero habla de otra cosa.
+            print(f"  errores de la página al abrir la pantalla: {navegador.evaluar('JSON.stringify(window.__los_errores || [])')}")
 
             # --- 1 · Que la pantalla NO salga muda ---
             visto = lo_que_se_ve(navegador)
