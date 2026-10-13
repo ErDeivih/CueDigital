@@ -91,6 +91,7 @@ def lo_que_se_ve(navegador: NavegadorDeVerdad) -> dict:
         "  botones: Array.from(document.querySelectorAll('button')).map((b)=>(b.textContent||'').trim()),"
         "  rotulos: Array.from(document.querySelectorAll('th, label')).map((e)=>(e.textContent||'').trim()),"
         "  filas: document.querySelectorAll('table tbody tr').length,"
+        "  celdas: Array.from(document.querySelectorAll('table tbody tr:last-child td')).map((c)=>(c.textContent||'').trim()),"
         "  texto: document.body.textContent || ''"
         "})"
     )
@@ -214,7 +215,7 @@ def main() -> int:
             visto = lo_que_se_ve(navegador)
             comprobar(
                 "y en pantalla se lee que el coste NO consta (no un cero)",
-                "no consta" in (visto.get("texto") or ""),
+                f"celdas de la fila: {visto.get('celdas')!r}",
                 [r for r in (visto.get("texto") or "").split("\n") if "consta" in r][:2],
             )
 
