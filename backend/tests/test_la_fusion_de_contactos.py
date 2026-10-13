@@ -289,3 +289,59 @@ def test_entre_explotaciones_no_se_fusiona_nada(cliente, cuenta, crear_cuenta, d
     db_sesion.expire_all()
     la_mia = db_sesion.get(models.Contacto, mia["id"])
     assert la_mia.fusionado_con_id is None, "y la mía sigue sin fusionar: no se ha movido nada"
+
+def test_deshacer_devuelve_lo_que_trajo_y_NO_lo_de_despues(cliente, cuenta, db_sesion):
+    """**Deshacer no se lleva trabajo del agricultor.** Es la regla de la casa, con sus palabras:
+
+    `deshacer_la_migracion` dice *«volver atrás no puede llevarse trabajo suyo»*. Aquí se prueba igual: se devuelven
+    **solo las filas apuntadas en la auditoría**, y lo que se apuntó en el destino **después** de fusionar —que no
+    estaba en esa lista— **se queda donde está**.
+    """
+    origen = _una_ficha(cliente, cuenta, "Origen que se deshace")
+    destino = _una_ficha(cliente, cuenta, "Destino que se queda")
+    # Una tarea en el origen, que es lo que se va a mover y luego se devuelve.
+    assert cliente.post(
+        f"/api/contactos/{origen['id']}/tareas", headers=cuenta["cabeceras"], json={"titulo": "La del origen"}
+    ).status_code == 200
+    assert _fusionar(cliente, cuenta, origen["id"], destino["id"]).status_code == 200
+
+    # **Y ahora, DESPUÉS de fusionar, alguien apunta una tarea en el destino.** Esta no era parte del trato.
+    assert cliente.post(
+        f"/api/contactos/{destino['id']}/tareas", headers=cuenta["cabeceras"], json={"titulo": "La de después"}
+    ).status_code == 200
+
+    deshecho = cliente.post(f"/api/contactos/{destino['id']}/deshacer-la-fusion", headers=cuenta["cabeceras"])
+    assert deshecho.status_code == 200, deshecho.text
+    assert deshecho.json()["devueltas"]["tareas"] == 1, deshecho.json()
+    assert deshecho.json()["lo_que_no_se_devuelve"]["lo_de_despues"], "y se dice qué se queda"
+
+    db_sesion.expire_all()
+    del_origen = cliente.get(f"/api/contactos/{origen['id']}", headers=cuenta["cabeceras"]).json()
+    del_destino = cliente.get(f"/api/contactos/{destino['id']}", headers=cuenta["cabeceras"]).json()
+    assert [t["titulo"] for t in del_origen["tareas"]] == ["La del origen"], "la suya ha vuelto a casa"
+    assert [t["titulo"] for t in del_destino["tareas"]] == ["La de después"], (
+        f"y la de después se queda: {[t['titulo'] for t in del_destino['tareas']]}"
+    )
+
+    # **El origen ya no remite**, y queda apuntado el deshacer.
+    assert db_sesion.get(models.Contacto, origen["id"]).fusionado_con_id is None, "el origen vuelve a ser suyo"
+    apuntado = list(
+        db_sesion.scalars(
+            select(models.Auditoria).where(
+                models.Auditoria.entidad_id == destino["id"],
+                models.Auditoria.accion == "deshacer_la_fusion",
+            )
+        )
+    )
+    assert len(apuntado) == 1, f"y queda en la auditoría: {len(apuntado)}"
+
+
+def test_deshacer_dos_veces_la_segunda_avisa_y_no_toca_nada(cliente, cuenta, db_sesion):
+    """Y deshacer **no se puede hacer dos veces**: la segunda vez no hay fusión apuntada que deshacer."""
+    origen = _una_ficha(cliente, cuenta, "Origen deshecho dos veces")
+    destino = _una_ficha(cliente, cuenta, "Destino deshecho dos veces")
+    assert _fusionar(cliente, cuenta, origen["id"], destino["id"]).status_code == 200
+    assert cliente.post(f"/api/contactos/{destino['id']}/deshacer-la-fusion", headers=cuenta["cabeceras"]).status_code == 200
+
+    otra_vez = cliente.post(f"/api/contactos/{destino['id']}/deshacer-la-fusion", headers=cuenta["cabeceras"])
+    assert otra_vez.status_code == 409, f"la segunda vez tiene que negarse: {otra_vez.status_code}"

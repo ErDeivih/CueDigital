@@ -328,3 +328,116 @@ def fusionar_dos_fichas(
     else:
         respuesta["saldos"] = None
     return respuesta
+
+
+@router.post("/{destino_id}/deshacer-la-fusion")
+def deshacer_una_fusion(
+    destino_id: int,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    poder: PuedeModificar,
+) -> dict:
+    """**Deshace la última fusión de esa ficha**, devolviendo al origen **solo lo que trajo**.
+
+    LA REGLA, Y ES LA DE LA CASA. `deshacer_la_migracion` lo dice con estas palabras: *«volver atrás no puede
+    llevarse trabajo suyo»* — y *«una ficha que creó la migración se borra solo si no le queda ningún enlace y nadie
+    la ha editado»*. Aquí es lo mismo, con la lista de la auditoría: **se devuelven exactamente las filas cuyo
+    identificador está apuntado**, y **nada más**. Lo que se haya apuntado en el destino **después** de fusionar
+    —una nota, una tarea, un canal, un gasto— **no estaba en esa lista y se queda donde está**. Y si alguien apuntó
+    algo en el **origen** después de la fusión, tampoco se toca: no era parte del trato.
+
+    LO QUE NO SE PUEDE DEVOLVER, y se dice: los **papeles repetidos**, porque se dejaron una sola vez a propósito —
+    *y no se pierde nada, porque eran el mismo papel*—. El **pinchar** de los principales sí se puede devolver, pero
+    solo si el origen no tiene ya otro principal de esa clase: el índice parcial de la base no admite dos.
+    """
+    destino = _la_ficha(db, explotacion.id, destino_id)
+
+    # **La última fusión de esta ficha**, que es la que se deshace. Se lee de la auditoría, que es donde está la
+    # lista de lo que se movió: sin ella no habría forma de saber qué era de quién.
+    apuntado = db.scalar(
+        select(models.Auditoria)
+        .where(
+            models.Auditoria.entidad == "contacto",
+            models.Auditoria.entidad_id == destino.id,
+            models.Auditoria.accion == "fusion",
+        )
+        .order_by(models.Auditoria.id.desc())
+    )
+    if apuntado is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Esa ficha no tiene ninguna fusión apuntada, así que no hay nada que deshacer.",
+        )
+
+    origen_id = int(apuntado.datos["origen_id"])
+    origen = _la_ficha(db, explotacion.id, origen_id)
+    if origen.fusionado_con_id != destino.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ese origen ya no remite a esta ficha: se ha vuelto a fusionar con otra, y deshacer esto "
+            "dejaría las cosas peor que antes.",
+        )
+
+    # **Se devuelven SOLO las filas apuntadas.** Es la regla: lo de después no era parte del trato.
+    from sqlalchemy import update  # noqa: PLC0415
+
+    devueltas: dict[str, int] = {}
+    for nombre, modelo in LAS_DEL_DINERO + LAS_QUE_CUELGAN:
+        ids = list(apuntado.datos.get("movidas", {}).get(nombre) or [])
+        if not ids:
+            continue
+        hechas = db.execute(
+            update(modelo)
+            .where(modelo.id.in_(ids), modelo.contacto_id == destino.id)  # **y que siga siendo suyo**
+            .values(contacto_id=origen.id)
+        ).rowcount
+        if hechas:
+            devueltas[nombre] = hechas
+
+    # **Y los principales apartados**, que sí se pueden devolver si el origen no tiene ya otro de esa clase.
+    devueltos_principales: list[str] = []
+    for clase in apuntado.datos.get("principales_apartados") or []:
+        ya_tiene = db.scalar(
+            select(models.CanalDeUnContacto).where(
+                models.CanalDeUnContacto.contacto_id == origen.id,
+                models.CanalDeUnContacto.clase == clase,
+                models.CanalDeUnContacto.principal.is_(True),
+            )
+        )
+        if ya_tiene is None:
+            apartado = db.scalar(
+                select(models.CanalDeUnContacto).where(
+                    models.CanalDeUnContacto.contacto_id == origen.id,
+                    models.CanalDeUnContacto.clase == clase,
+                    models.CanalDeUnContacto.principal.is_(False),
+                )
+            )
+            if apartado is not None:
+                apartado.principal = True
+                devueltos_principales.append(clase)
+
+    origen.fusionado_con_id = None
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=destino.id,
+        accion="deshacer_la_fusion",
+        datos={"origen_id": origen.id, "destino_id": destino.id, "devueltas": devueltas},
+    )
+    db.commit()
+
+    return {
+        "deshecho": {"origen_id": origen.id, "destino_id": destino.id},
+        "devueltas": devueltas,
+        "principales_devueltos": sorted(devueltos_principales),
+        # **Lo que NO se puede devolver, dicho**: los papeles repetidos se dejaron una sola vez a propósito, y no se
+        # pierde nada porque eran el mismo papel. Y lo que se apuntó después de fusionar se queda donde está.
+        "lo_que_no_se_devuelve": {
+            "papeles_repetidos": apuntado.datos.get("papeles_repetidos") or [],
+            "por_que": "eran el mismo papel en las dos fichas, así que se dejaron una sola vez: no se pierde nada",
+            "lo_de_despues": "lo que se apuntó en el destino después de fusionar no estaba en la lista y se queda",
+        },
+    }
