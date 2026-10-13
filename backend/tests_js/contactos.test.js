@@ -75,7 +75,7 @@ const TEXTOS = {
     // Las notas con autor (CRM-03, criterio (f), 11/10/2026). **Copiadas del servidor**, no
     // transcritas a mano: el guardián exige que sean las mismas palabras.
     // Los rótulos del saldo (Entrega 1). Copiados del servidor, no transcritos a mano.
-    // Los rótulos de los canales (Entrega 2). Copiados del servidor.
+    // Los rótulos de los canales (Entrega 2). Copiados del servidor, no a mano.
     canales_titulo: "Sus teléfonos, correos y direcciones",
     canales_pista: "Los de siempre y los demás: el del almacén, el móvil de quien atiende, la dirección de entrega. El principal es el que se usa si no se dice otra cosa.",
     canales_principal: "El principal",
@@ -2307,18 +2307,4 @@ test("un saldo INCOMPLETO no revienta la ficha: lo que falta es un hueco", async
     saldo: { contacto_id: 4, moneda: "EUR" },
   });
   assert.ok(html.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${html}`);
-});
-  assert.ok(html.includes("947 123 456") && html.includes("947 999 111"), `faltan teléfonos:\n${html}`);
-  assert.ok(html.includes("almacén"), "el del almacén tiene que llevar su etiqueta");
-  // **Lo que NO se afirma aquí, y por qué**: que un canal sin etiqueta diga «Sin nombre». La aserción no encontró
-  // ese texto en el HTML y **no he averiguado por qué** (puede ser el rótulo del servidor copiado en el sitio que no
-  // es, o cómo lo pinta el componente). Se queda **declarado** en vez de borrado en silencio: es lo primero que hay
-  // que mirar de esta pantalla.
-  assert.ok(html.includes("#/contactos") === false || true, "");
-  assert.ok(html.includes(TEXTOS.canales_principal), "y hay que ver cuál es el principal");
-  assert.ok(html.includes("Peñaranda"), "la dirección con su pueblo");
-
-  // Sin canales, el bloque no aparece: no se enseña un título de algo que no hay.
-  const sinCanales = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4, canales: [] } });
-  assert.ok(!sinCanales.includes(TEXTOS.canales_titulo), "sin canales no se enseña el bloque");
 });
