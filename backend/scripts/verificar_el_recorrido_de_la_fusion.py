@@ -175,8 +175,13 @@ def main() -> int:
             )
             navegador.abrir(f"http://127.0.0.1:{PUERTO}/{LA_DIRECCION}", esperar=2.0)
             # **Y se dice lo que ha saltado, en la primera línea**: sin esto, un fallo de JavaScript deja la pantalla a
-            # medias y el recorrido entero habla de otra cosa.
+            # medias y el recorrido entero habla de otra cosa. Y se dice **qué pantalla se ha pintado** (la dirección
+            # y los titulares), porque el armazón tiene su propio `h1` y un «hay título» puede estar pasando por el de
+            # otra pantalla.
+            visto_al_abrir = lo_que_se_ve(navegador)
             print(f"  errores de la página al abrir la pantalla: {navegador.evaluar('JSON.stringify(window.__los_errores || [])')}")
+            print(f"  QUÉ SE HA PINTADO -> hash: {visto_al_abrir.get('hash')!r}")
+            print(f"                       titulares: {visto_al_abrir.get('principales')!r}")
 
             # --- 1 · Que la pantalla NO salga muda ---
             visto = lo_que_se_ve(navegador)
