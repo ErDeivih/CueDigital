@@ -220,3 +220,87 @@ def test_los_canales_de_otra_finca_no_se_tocan(cliente, cuenta, crear_cuenta):
         json={"clase": "telefono", "telefono": "600 000 000"},
     )
     assert respuesta.status_code == 404, f"tiene que dar 404 y ha dado {respuesta.status_code}"
+
+def test_corregir_un_canal_no_pierde_lo_que_no_se_manda(cliente, cuenta, db_sesion):
+    """**Corrección parcial**: se cambia el número y la etiqueta se queda.
+
+    Es el encargo con sus palabras: *«evitar […] pérdida de datos al corregir»*. En la práctica es la diferencia
+    entre arreglar un número y borrar de paso cómo se llamaba ese número.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    creado = _apuntar_un_canal(
+        cliente, cuenta, ficha["id"], clase="telefono", etiqueta="almacén", telefono="947 999 111"
+    ).json()["canales"]
+    suyo = next(canal for canal in creado if canal["etiqueta"] == "almacén")
+
+    corregido = cliente.put(
+        f"/api/contactos/{ficha['id']}/canales/{suyo['id']}",
+        headers=cuenta["cabeceras"],
+        json={"clase": "telefono", "telefono": "947 999 222"},
+    )
+    assert corregido.status_code == 200, corregido.text
+    el_mismo = next(canal for canal in corregido.json()["canales"] if canal["id"] == suyo["id"])
+    assert el_mismo["telefono"] == "947 999 222", f"el número tiene que cambiar: {el_mismo}"
+    assert el_mismo["etiqueta"] == "almacén", (
+        f"y la etiqueta quedarse: no se mandó, así que no se toca: {el_mismo}"
+    )
+
+
+def test_quitar_un_canal_deja_el_rastro_y_no_toca_los_demas(cliente, cuenta, db_sesion):
+    """**Quitar** borra el canal pero **deja el rastro** en la auditoría, y no toca los otros.
+
+    El encargo pide «conservar los registros antiguos»: el dato en sí no vale, el rastro sí. Y un teléfono que ya no
+    es de nadie no tiene nada que conservar —**no es un documento**—.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    database.llevar_los_canales_de_los_contactos_a_su_tabla()
+    creado = _apuntar_un_canal(cliente, cuenta, ficha["id"], clase="telefono", etiqueta="el viejo", telefono="111")
+    suyo = next(canal for canal in creado.json()["canales"] if canal["etiqueta"] == "el viejo")
+
+    quitado = cliente.delete(
+        f"/api/contactos/{ficha['id']}/canales/{suyo['id']}", headers=cuenta["cabeceras"]
+    )
+    assert quitado.status_code == 200, quitado.text
+    assert all(canal["id"] != suyo["id"] for canal in quitado.json()["canales"]), "ya no está"
+    # **Y los demás siguen**: el de siempre no se ha tocado.
+    assert any(canal["telefono"] == "947 123 456" for canal in quitado.json()["canales"]), "el de siempre sigue"
+
+    # El rastro, en la auditoría.
+    db_sesion.expire_all()
+    rastro = list(
+        db_sesion.scalars(
+            select(models.Auditoria).where(
+                models.Auditoria.entidad == "contacto",
+                models.Auditoria.entidad_id == ficha["id"],
+                models.Auditoria.accion == "canal_quitar",
+            )
+        )
+    )
+    assert len(rastro) == 1, f"tiene que quedar el rastro de lo que se quitó: {len(rastro)}"
+    assert rastro[0].datos["valor"] == ["111", None], f"con su valor, para poder saber qué había: {rastro[0].datos}"
+
+
+def test_al_quitar_el_principal_otro_de_su_clase_lo_sustituye(cliente, cuenta, db_sesion):
+    """**Una clase con valores no se queda sin principal**: al quitar el que lo era, lo es el más antiguo.
+
+    Si no, la pantalla enseñaría los teléfonos **sin decir cuál usar**, que es justo lo que el principal evita.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    database.llevar_los_canales_de_los_contactos_a_su_tabla()
+    # El de siempre es el principal; se apunta otro y se quita **el principal**.
+    creado = _apuntar_un_canal(cliente, cuenta, ficha["id"], clase="telefono", etiqueta="otro", telefono="222")
+    el_de_siempre = next(
+        canal
+        for canal in creado.json()["canales"]
+        if canal["clase"] == "telefono" and canal["principal"]
+    )
+    assert el_de_siempre["telefono"] == "947 123 456", el_de_siempre
+
+    quitado = cliente.delete(
+        f"/api/contactos/{ficha['id']}/canales/{el_de_siempre['id']}", headers=cuenta["cabeceras"]
+    )
+    assert quitado.status_code == 200, quitado.text
+    los_telefonos = [canal for canal in quitado.json()["canales"] if canal["clase"] == "telefono"]
+    principales = [canal for canal in los_telefonos if canal["principal"]]
+    assert len(principales) == 1, f"la clase no puede quedarse sin principal: {los_telefonos}"
+    assert principales[0]["telefono"] == "222", f"y lo es el que queda: {principales[0]}"

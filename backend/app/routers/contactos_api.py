@@ -328,6 +328,20 @@ def _los_canales(db, contacto: models.Contacto) -> list[dict]:
     ]
 
 
+def _el_canal_de_la_ficha(db, explotacion_id: int, contacto_id: int, canal_id: int):
+    """El canal **de esa ficha**, o 404. No se contesta «no es tuyo»: eso ya diría que existe."""
+    canal = db.scalar(
+        select(models.CanalDeUnContacto).where(
+            models.CanalDeUnContacto.explotacion_id == explotacion_id,
+            models.CanalDeUnContacto.contacto_id == contacto_id,
+            models.CanalDeUnContacto.id == canal_id,
+        )
+    )
+    if canal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=textos.mensaje("C7_no_existe"))
+    return canal
+
+
 def _apartar_el_principal_de_su_clase(db, contacto: models.Contacto, clase: str) -> None:
     """Quita de principal al que lo era **de esa clase**, para que el nuevo pueda serlo.
 
@@ -834,6 +848,118 @@ def el_canal_principal(
             datos={"clase": [None, canal.clase], "canal_id": [None, canal.id]},
         )
         db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.put("/{contacto_id}/canales/{canal_id}", response_model=ContactoSalida)
+def corregir_un_canal(
+    contacto_id: int,
+    canal_id: int,
+    datos: CanalDeUnContactoEntrada,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Corrige un canal sin perder lo que no se manda** (Entrega 2, 13/10/2026).
+
+    La corrección es **parcial**: si el formulario solo manda el teléfono, la etiqueta **se queda como estaba**. Es
+    lo que pide el encargo con estas palabras —*«evitar […] pérdida de datos al corregir»*— y en la práctica es la
+    diferencia entre arreglar un número y borrar de paso cómo se llamaba ese número.
+
+    **La clase no se cambia**: un teléfono no se convierte en una dirección. Si hay que cambiar de clase, se quita el
+    canal y se apunta el otro, y así las dos cosas quedan en la auditoría.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    canal = _el_canal_de_la_ficha(db, explotacion.id, contacto.id, canal_id)
+    antes = {
+        "etiqueta": canal.etiqueta,
+        "telefono": canal.telefono,
+        "correo": canal.correo,
+        "direccion": canal.direccion,
+        "localidad": canal.localidad,
+    }
+    # **Solo lo que viene.** `None` en la entrada es «no lo mandes», no «bórralo»: para dejar una etiqueta en blanco
+    # se manda vacía, y eso es una decisión del formulario, no un descuido de la puerta.
+    for campo in ("telefono", "correo", "direccion", "localidad", "etiqueta"):
+        if getattr(datos, campo) is not None:
+            setattr(canal, campo, logica.limpia(getattr(datos, campo)) or None)
+    if not any(getattr(canal, campo) for campo in ("telefono", "correo", "direccion")):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=textos.mensaje("C7_un_canal_necesita_algo_escrito"),
+        )
+    # Los cambios, para la auditoría. **Se arma aparte y no dentro de la llamada**: mezclar claves escritas a mano
+    # con una comprensión en el mismo diccionario **no es Python válido**, y rompió el fichero entero cuando lo
+    # intenté (lo cazó la comprobación de arranque, que es para lo que está).
+    los_cambios = {"etiqueta": [antes["etiqueta"], canal.etiqueta]}
+    for campo in ("telefono", "correo", "direccion", "localidad"):
+        if antes[campo] != getattr(canal, campo):
+            los_cambios[campo] = [antes[campo], getattr(canal, campo)]
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="canal_corregir",
+        datos=los_cambios,
+    )
+    db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.delete("/{contacto_id}/canales/{canal_id}", response_model=ContactoSalida)
+def quitar_un_canal(
+    contacto_id: int,
+    canal_id: int,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Quita un canal** (Entrega 2, 13/10/2026).
+
+    Se borra la fila —un teléfono que ya no es de nadie no tiene nada que conservar, y **no es un documento**—, pero
+    **la auditoría se queda**: se apunta qué se quitó, con su etiqueta y su valor, así que dentro de un año se puede
+    saber que existió. Eso es lo que pide el encargo al decir *«conservar los registros antiguos»*: el dato en sí no
+    vale, el rastro sí.
+
+    **Y si el que se quita era el principal, otro de su clase pasa a serlo** (el más antiguo de los que quedan),
+    porque una clase con valores no puede quedarse sin ninguno: la pantalla enseñaría el teléfono sin decir cuál
+    usar. Es la otra mitad de la regla del principal, y por eso está escrita aquí.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    canal = _el_canal_de_la_ficha(db, explotacion.id, contacto.id, canal_id)
+    era_principal = canal.principal
+    clase = canal.clase
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="canal_quitar",
+        datos={
+            "clase": [clase, None],
+            "etiqueta": [canal.etiqueta, None],
+            "valor": [canal.telefono or canal.correo or canal.direccion, None],
+        },
+    )
+    db.delete(canal)
+    db.flush()
+    if era_principal:
+        el_siguiente = db.scalar(
+            select(models.CanalDeUnContacto)
+            .where(
+                models.CanalDeUnContacto.explotacion_id == explotacion.id,
+                models.CanalDeUnContacto.contacto_id == contacto.id,
+                models.CanalDeUnContacto.clase == clase,
+            )
+            .order_by(models.CanalDeUnContacto.id)
+            .limit(1)
+        )
+        if el_siguiente is not None:
+            el_siguiente.principal = True
+    db.commit()
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
 
 
