@@ -14,11 +14,14 @@ Lo que se prueba aquí:
 
 from __future__ import annotations
 
+import datetime as dt
+from decimal import Decimal
+
 import pytest
 
 from sqlalchemy import select
 
-from app import models
+from app import models, saldos
 
 
 def _una_ficha(cliente, cuenta, nombre: str, **extra) -> dict:
@@ -384,3 +387,70 @@ def test_un_fallo_a_mitad_no_deja_cambios_parciales(cliente, cuenta, db_sesion, 
     assert list(db_sesion.scalars(select(models.Tarea).where(models.Tarea.contacto_id == destino["id"]))) == [], (
         "y en el destino no ha aparecido nada"
     )
+
+def test_el_saldo_se_conserva_con_documentos_de_verdad(cliente, cuenta, db_sesion, campana):
+    """**Saldo antes y después equivalente**, y esta vez con documentos: una venta y un gasto, uno en cada ficha.
+
+    Es la prueba que faltaba, y se hace con la receta de la casa (`tests/test_lo_que_no_se_apunta_dos_veces.py:59-69`
+    y la fixture `campana` de `conftest`): **no se inventan filas**, se montan como las monta la casa. Lo que se
+    afirma es lo que pide el encargo: que lo que se debía antes (las dos fichas por separado, **sin compensar**) es lo
+    que se debe después, en una sola.
+    """
+    origen = _una_ficha(cliente, cuenta, "Con la venta")
+    destino = _una_ficha(cliente, cuenta, "Con el gasto")
+
+    # **Una venta en el origen y un gasto en el destino**, con la forma de la casa.
+    db_sesion.add(
+        models.VentaDeCosecha(
+            explotacion_id=cuenta["explotacion_id"],
+            campana_id=campana["id"],   # la fixture devuelve un diccionario, no un objeto
+            contacto_id=origen["id"],
+            fecha=dt.date(2026, 7, 11),
+            producto="Trigo",
+            cantidad=1000.0,
+            unidad="kg",
+            clave_de_reenvio="la-venta-de-la-fusion",
+        )
+    )
+    db_sesion.add(
+        models.Gasto(
+            explotacion_id=cuenta["explotacion_id"],
+            contacto_id=destino["id"],
+            fecha=dt.date(2026, 7, 12),
+            concepto="El gasoil",
+            importe=Decimal("150.00"),
+            clave_de_reenvio="el-gasto-de-la-fusion",
+        )
+    )
+    db_sesion.commit()
+
+    # **Los dos saldos de ANTES, por separado** — que es lo que el encargo protege: no se compensan.
+    antes_origen = saldos.el_saldo_de_un_contacto(
+        db_sesion, explotacion_id=cuenta["explotacion_id"], contacto_id=origen["id"]
+    )
+    antes_destino = saldos.el_saldo_de_un_contacto(
+        db_sesion, explotacion_id=cuenta["explotacion_id"], contacto_id=destino["id"]
+    )
+
+    fusion = _fusionar(cliente, cuenta, origen["id"], destino["id"])
+    assert fusion.status_code == 200, fusion.text
+    # **La venta sí se mueve** (estaba en el origen) y **el gasto no** (ya estaba en el destino). Escribí lo
+    # contrario la primera vez y lo cazó la prueba: solo se mueve lo del origen, que es justo lo que se está
+    # probando — no se toca lo que ya estaba donde tiene que estar.
+    assert fusion.json()["movidas"]["ventas_de_cosecha"] == 1, fusion.json()["movidas"]
+    assert "gastos" not in fusion.json()["movidas"], f"el gasto ya estaba en el destino: {fusion.json()['movidas']}"
+
+    db_sesion.expire_all()
+    despues = saldos.el_saldo_de_un_contacto(
+        db_sesion, explotacion_id=cuenta["explotacion_id"], contacto_id=destino["id"]
+    )
+    # **Lo que nos deben y lo que debemos, cada cosa por su lado**, y la suma cuadra.
+    assert despues["nos_debe"]["total"] == antes_origen["nos_debe"]["total"] + antes_destino["nos_debe"]["total"], (
+        f"lo que nos deben tiene que ser la suma de los dos: {despues['nos_debe']}"
+    )
+    assert despues["le_debemos"]["total"] == antes_origen["le_debemos"]["total"] + antes_destino["le_debemos"]["total"], (
+        f"y lo que debemos, también: {despues['le_debemos']}"
+    )
+    # Y el documento se sigue pudiendo abrir desde la ficha que se queda.
+    la_ficha = cliente.get(f"/api/contactos/{destino['id']}", headers=cuenta["cabeceras"]).json()
+    assert la_ficha["id"] == destino["id"], "la ficha se abre"
