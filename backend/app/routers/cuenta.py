@@ -130,6 +130,18 @@ def yo(usuario: UsuarioActual, db: Db) -> dict:
         "nombre": usuario.nombre,
         "correo": usuario.correo,
         "es_titular": usuario.es_titular,
+        # **Las capacidades por materia** (Entrega 4, 13/10/2026). Van aquí —y no en `/api/interfaz`, que es público
+        # y va **antes de entrar**— porque son de **esta cuenta en esta finca**.
+        #
+        # **Para qué sirven en el front, y para qué NO**: para **no ofrecer** lo que no se puede hacer (esconder el
+        # botón, el bloque del dinero y el alta) y para no pedir a una puerta que va a contestar 403. Lo que **no**
+        # hacen es autorizar: el encargo lo dice con estas palabras, *«ocultar un botón no constituye autorización»*,
+        # y la autorización está en la puerta, que la comprueba **en el servidor** por mucho que alguien llegue a
+        # mano por la URL o por un identificador.
+        "puede_modificar": accesos.puede_modificar(db, usuario.id, usuario.explotacion_id),
+        # Y el dinero: si esto es `False`, el saldo **no viaja** —la puerta contesta 403— y la pantalla no tiene nada
+        # que esconder porque no lo recibe.
+        "puede_ver_lo_economico": accesos.puede_ver_lo_economico(db, usuario.id, usuario.explotacion_id),
         "explotacion": ExplotacionSalida.model_validate(explotacion).model_dump(),
     }
 

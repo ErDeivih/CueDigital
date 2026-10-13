@@ -141,3 +141,21 @@ def test_sin_poder_modificar_tampoco_se_cierra_una_tarea(cliente, cuenta, db_ses
     la_tarea = db_sesion.get(models.Tarea, suya["id"])
     assert la_tarea.estado == models.Tarea.PENDIENTE, f"y no puede quedar hecha: {la_tarea.estado}"
     assert la_tarea.completada_en is None and la_tarea.completada_por is None, "ni con quién ni cuándo"
+
+def test_la_cuenta_dice_lo_que_puede_hacer(cliente, cuenta, db_sesion):
+    """**`GET /api/cuenta/yo` dice las capacidades**, para que la pantalla no ofrezca lo que va a dar 403.
+
+    Y va aquí y no en `/api/interfaz` porque esa puerta es **pública** (va antes de entrar) y esto es de **esta cuenta
+    en esta finca**. Lo que la pantalla hace con esto es **no ofrecer**: esconder el botón, el bloque del dinero y el
+    alta. Lo que **no** hace es autorizar — eso lo comprueba la puerta, en el servidor, y lo prueba la prueba de
+    arriba llamándola por identificador.
+    """
+    yo = cliente.get("/api/cuenta/yo", headers=cuenta["cabeceras"])
+    assert yo.status_code == 200, yo.text
+    assert yo.json()["puede_modificar"] is True, f"de partida puede: {yo.json()}"
+    assert yo.json()["puede_ver_lo_economico"] is True, yo.json()
+
+    _sin_capacidad(db_sesion, cuenta, "puede_ver_lo_economico")
+    yo = cliente.get("/api/cuenta/yo", headers=cuenta["cabeceras"])
+    assert yo.json()["puede_ver_lo_economico"] is False, f"y deja de poder: {yo.json()}"
+    assert yo.json()["puede_modificar"] is True, "sin tocar la otra capacidad"

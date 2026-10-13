@@ -115,6 +115,9 @@ QUIEN = "Cuaderno de volumen"
 COMPROBACIONES = 0
 FALLOS = 0
 PANTALLA: dict = {}
+# La vuelta que se está andando, para que los pasos se numeren dentro de su vuelta y no se confundan los de una
+# con los de la otra: dos recorridos con los mismos números de paso no se pueden leer.
+VUELTA_ACTUAL = 0
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +135,8 @@ def comprobar(bien: bool, que: str) -> bool:
 
 
 def paso(numero: str, titulo: str) -> None:
-    print(f"\n{numero}) {titulo}")
+    delante = f"v{VUELTA_ACTUAL} " if VUELTA_ACTUAL else ""
+    print(f"\n{delante}{numero}) {titulo}")
 
 
 def decir(texto: str) -> None:
@@ -657,6 +661,11 @@ def medir_el_tecleo_de_una_fecha(nav, campo: str, fecha: dt.date) -> tuple[str |
     con suponerlo: se prueban **las tres órdenes** y se dice **cuál ha aceptado** y qué valor ha salido. Si ninguna
     funciona, se dice que no se puede teclear, y con qué se ha probado.
 
+    **Se prueba primero con el foco pedido y después con el clic de verdad**, y al revés que en los campos de
+    texto: pulsar un `date` con el ratón **abre el calendario del navegador**, y un calendario abierto encima de la
+    pantalla es una cosa más que puede estorbar a lo que viene después. El clic se prueba igual —porque es lo que
+    hace el agricultor— pero solo si el foco no basta, y luego se cierra el calendario con `Escape`.
+
     Devuelve `(manera, orden, intentos)`; `manera` y `orden` son `None` si el campo no acepta tecleo.
     """
     intentos: list[dict] = []
@@ -665,7 +674,8 @@ def medir_el_tecleo_de_una_fecha(nav, campo: str, fecha: dt.date) -> tuple[str |
         ("mes-día-año", f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}"),
         ("año-mes-día", f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}"),
     )
-    for con_clic in (True, False):
+    # **El foco primero** (sin abrir el calendario) y el clic después: al revés que en los campos de texto.
+    for con_clic in (False, True):
         for manera in LAS_MANERAS:
             for nombre_orden, digitos in ordenes:
                 _limpiar_el_campo(nav, campo)
@@ -684,6 +694,15 @@ def medir_el_tecleo_de_una_fecha(nav, campo: str, fecha: dt.date) -> tuple[str |
                     }
                 )
                 if leido == fecha.isoformat():
+                    if con_clic:
+                        # El calendario se ha abierto con el clic: se cierra y **se vuelve a leer**, porque si
+                        # cerrarlo borrara el día habría que saberlo.
+                        nav.tecla("Escape")
+                        time.sleep(0.3)
+                        decir(
+                            "       (se ha pulsado el campo, así que se cierra el calendario con Escape y se "
+                            f"vuelve a leer: {_leer_el_campo(nav, campo)!r})"
+                        )
                     return etiqueta, nombre_orden, intentos
     return None, None, intentos
 
@@ -786,74 +805,95 @@ def abrir_la_ficha(nav, contacto_id: int) -> dict:
 def el_alta_de_una_tarea(
     nav, contacto_id: int, titulo: str, fecha: dt.date | None, responsable: str, medido: dict
 ) -> dict:
-    """**Teclea de verdad los tres campos y apunta la tarea.** Devuelve lo medido, para el informe."""
+    """**Teclea de verdad los tres campos y apunta la tarea.** Devuelve lo medido, para el informe.
+
+    La **primera** tarea de la vuelta es la que mide: se barren todas las maneras, campo por campo, y se cuenta con
+    qué ha entrado cada uno. Las demás usan lo ya medido (que es lo que hace el recorrido rápido), y si aun así algo
+    no entrara, **se dice** y se sigue con el valor puesto por JavaScript, para que lo demás se pueda medir igual.
+    """
     dia = fecha.isoformat() if fecha is not None else ""
     decir(
         f"se teclea, campo por campo: #tarea-titulo={titulo!r} #tarea-fecha={dia!r} "
         f"#tarea-responsable={responsable!r}"
     )
-    # --- el título (un campo de texto) ---
-    if medido.get("titulo") is None:
-        manera, intentos = medir_el_tecleo(nav, "tarea-titulo", titulo)
-        medido["titulo"] = manera
-        medido["intentos_titulo"] = intentos
-        decir(f"       #tarea-titulo: ha entrado por {manera!r}")
-        for intento in intentos:
-            decir(
-                f"         probado {intento['manera']!r} → valor {intento['valor']!r} "
-                f"(foco en el campo: {intento['con_foco']})"
+
+    def un_campo_de_texto(cual: str, valor: str) -> None:
+        """Un campo de texto: se mide la primera vez y después se usa lo medido."""
+        if medido.get(cual) is None:
+            manera, intentos = medir_el_tecleo(nav, cual, valor)
+            medido[f"intentos_{cual}"] = intentos
+            for intento in intentos:
+                decir(
+                    f"         probado {intento['manera']!r} en #{cual} → valor "
+                    f"{intento['valor']!r} (el campo tenía el foco: {intento['con_foco']})"
+                )
+            if manera is None:
+                decir(
+                    f"       NO HA ENTRADO TECLEANDO en #{cual}: se han probado "
+                    f"{[i['manera'] for i in intentos]} y ninguna ha escrito {valor!r}. "
+                    "Se pone por JavaScript para poder seguir midiendo lo demás —y se dice."
+                )
+                manera = "javascript"
+            else:
+                decir(f"       #{cual}: ha entrado por {manera!r}")
+            medido[cual] = manera
+        if medido[cual] == "javascript":
+            nav.evaluar(
+                "(() => { const el = document.getElementById(%s); if (el) el.value = %s; return true; })()"
+                % (json.dumps(cual), json.dumps(valor))
             )
-    else:
-        manera = teclear_por_la_manera_que_ya_funciona(nav, "tarea-titulo", titulo, medido["titulo"])
-        decir(f"       #tarea-titulo: tecleado por {medido['titulo']!r} → {manera}")
-    # --- el responsable (un campo de texto) ---
-    if medido.get("responsable") is None:
-        manera, intentos = medir_el_tecleo(nav, "tarea-responsable", responsable)
-        medido["responsable"] = manera
-        medido["intentos_responsable"] = intentos
-        decir(f"       #tarea-responsable: ha entrado por {manera!r}")
-        for intento in intentos:
-            decir(
-                f"         probado {intento['manera']!r} → valor {intento['valor']!r} "
-                f"(foco en el campo: {intento['con_foco']})"
-            )
-    else:
-        manera = teclear_por_la_manera_que_ya_funciona(nav, "tarea-responsable", responsable, medido["responsable"])
-        decir(f"       #tarea-responsable: tecleado por {medido['responsable']!r} → {manera}")
+            return
+        como = teclear_por_la_manera_que_ya_funciona(nav, cual, valor, medido[cual])
+        decir(f"       #{cual}: tecleado por {medido[cual]!r} → {como}")
+
+    un_campo_de_texto("tarea-titulo", titulo)
+    un_campo_de_texto("tarea-responsable", responsable)
+
     # --- el día (un campo `date`) ---
     if fecha is None:
         decir("       #tarea-fecha: se deja EN BLANCO a propósito (una tarea sin fecha es una tarea)")
         _limpiar_el_campo(nav, "tarea-fecha")
-    elif medido.get("fecha") is None:
-        manera, orden, intentos = medir_el_tecleo_de_una_fecha(nav, "tarea-fecha", fecha)
-        medido["fecha"] = manera
-        medido["orden_de_la_fecha"] = orden
-        medido["intentos_fecha"] = intentos
-        decir(f"       #tarea-fecha: ha entrado por {manera!r} con los dígitos en orden {orden!r}")
-        vistos = {}
-        for intento in intentos:
-            clave = intento["manera"]
-            if clave not in vistos:
-                vistos[clave] = intento
-        for clave, intento in vistos.items():
-            decir(
-                f"         probado {clave!r} con los dígitos en orden {intento['orden']!r} "
-                f"({intento['digitos']}) → el campo quedó en {intento['valor']!r}"
-            )
-    elif medido.get("orden_de_la_fecha") is None:
-        decir("       #tarea-fecha: la manera medida no valía; se pone el día por JavaScript")
-        teclear_por_la_manera_que_ya_funciona(nav, "tarea-fecha", fecha.isoformat(), medido["fecha"] or "")
     else:
-        digitos = {
-            "día-mes-año": f"{fecha.day:02d}{fecha.month:02d}{fecha.year:04d}",
-            "mes-día-año": f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}",
-            "año-mes-día": f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}",
-        }[medido["orden_de_la_fecha"]]
-        manera = teclear_por_la_manera_que_ya_funciona(nav, "tarea-fecha", digitos, medido["fecha"])
-        decir(
-            f"       #tarea-fecha: tecleado por {medido['fecha']!r} en orden "
-            f"{medido['orden_de_la_fecha']!r} ({digitos}) → {manera}"
-        )
+        if medido.get("fecha") is None:
+            manera, orden, intentos = medir_el_tecleo_de_una_fecha(nav, "tarea-fecha", fecha)
+            medido["intentos_fecha"] = intentos
+            vistos: dict[str, dict] = {}
+            for intento in intentos:
+                vistos.setdefault(intento["manera"], intento)
+            for clave, intento in vistos.items():
+                decir(
+                    f"         probado {clave!r} en #tarea-fecha con los dígitos en orden "
+                    f"{intento['orden']!r} ({intento['digitos']}) → el campo quedó en {intento['valor']!r} "
+                    f"(el campo tenía el foco: {intento['con_foco']})"
+                )
+            if manera is None:
+                decir(
+                    "       NO HA ENTRADO TECLEANDO en #tarea-fecha: se han probado "
+                    f"{sorted({i['manera'] for i in intentos})} con los dígitos en las tres órdenes, y el campo "
+                    f"no ha llegado a {fecha.isoformat()!r}. Se pone por JavaScript para poder seguir midiendo."
+                )
+                manera = "javascript"
+                orden = None
+            else:
+                decir(f"       #tarea-fecha: ha entrado por {manera!r} con los dígitos en orden {orden!r}")
+            medido["fecha"] = manera
+            medido["orden_de_la_fecha"] = orden
+        if medido["fecha"] == "javascript":
+            nav.evaluar(
+                "(() => { const el = document.getElementById('tarea-fecha');"
+                " if (el) el.value = %s; return true; })()" % json.dumps(fecha.isoformat())
+            )
+        else:
+            digitos = {
+                "día-mes-año": f"{fecha.day:02d}{fecha.month:02d}{fecha.year:04d}",
+                "mes-día-año": f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}",
+                "año-mes-día": f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}",
+            }[medido["orden_de_la_fecha"]]
+            como = teclear_por_la_manera_que_ya_funciona(nav, "tarea-fecha", digitos, medido["fecha"])
+            decir(
+                f"       #tarea-fecha: tecleado por {medido['fecha']!r} en orden "
+                f"{medido['orden_de_la_fecha']!r} ({digitos}) → {como}"
+            )
     time.sleep(0.3)
     # **Lo que ha quedado en los campos, leído del DOM.** Un tecleo que no llega es un paso que no se ha dado.
     puestos = nav.evaluar(
@@ -939,26 +979,22 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 f"({fecha.isoformat() if fecha else 'sin fecha'}, {que_hacer}) ---"
             )
             antes = len(leer_la_ficha(nav).get("tareas") or [])
-            el_alta_de_una_tarea(nav, contacto_id, titulo, fecha, responsable, medido)
+            tecleado = el_alta_de_una_tarea(nav, contacto_id, titulo, fecha, responsable, medido)
             # **Y se comprueba que el texto ha ENTRADO en los tres campos**, que es lo que pide el encargo.
-            puestos = nav.evaluar(
-                "({ titulo: (document.getElementById('tarea-titulo') || {}).value,"
-                " fecha: (document.getElementById('tarea-fecha') || {}).value,"
-                " responsable: (document.getElementById('tarea-responsable') || {}).value })"
+            puestos = tecleado.get("puestos") or {}
+            comprobar(
+                puestos.get("titulo") == titulo,
+                f"el título ha entrado en #tarea-titulo ({puestos.get('titulo')!r} == {titulo!r})",
             )
             comprobar(
-                (puestos or {}).get("titulo") == titulo,
-                f"el título ha entrado en #tarea-titulo ({(puestos or {}).get('titulo')!r} == {titulo!r})",
-            )
-            comprobar(
-                (puestos or {}).get("fecha") == (fecha.isoformat() if fecha else ""),
-                f"el día ha entrado en #tarea-fecha ({(puestos or {}).get('fecha')!r} == "
+                puestos.get("fecha") == (fecha.isoformat() if fecha else ""),
+                f"el día ha entrado en #tarea-fecha ({puestos.get('fecha')!r} == "
                 f"{(fecha.isoformat() if fecha else '')!r})",
             )
             comprobar(
-                (puestos or {}).get("responsable") == responsable,
+                puestos.get("responsable") == responsable,
                 f"el responsable ha entrado en #tarea-responsable "
-                f"({(puestos or {}).get('responsable')!r} == {responsable!r})",
+                f"({puestos.get('responsable')!r} == {responsable!r})",
             )
             nav.pulsar('[data-accion="tarea-nueva"]')
             nav.esperar(
@@ -1071,7 +1107,8 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         )
         nav.pulsar(el_boton)
         nav.esperar(
-            f"Boolean(document.querySelector('ul.lista-de-tareas li strong'))", segundos=25
+            f"!document.querySelector('[data-accion=\"tarea-completar\"][data-tarea=\"{el_id}\"]')",
+            segundos=25,
         )
         time.sleep(1.0)
         tras_completar = leer_la_ficha(nav)
@@ -1147,6 +1184,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         _, ficha_ahora = _puerta(token, "GET", f"/api/contactos/{contacto_id}")
         suya = next((t for t in (ficha_ahora.get("tareas") or []) if t.get("id") == la_vencida_id), None)
         decir(f"la puerta de datos dice: {como_texto(suya)}")
+        resultado["vencida_por_la_puerta"] = suya
         comprobar(
             (suya or {}).get("estado") == "pendiente" and (suya or {}).get("vencida") is True,
             "la fecha vencida NO la ha cancelado: sigue pendiente y vencida "
@@ -1159,7 +1197,11 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             "la vencida trae su botón de completar en la pantalla",
         )
         nav.pulsar(el_boton)
-        time.sleep(1.5)
+        nav.esperar(
+            f"!document.querySelector('[data-accion=\"tarea-completar\"][data-tarea=\"{la_vencida_id}\"]')",
+            segundos=25,
+        )
+        time.sleep(1.0)
         tras_completar_la_vencida = leer_la_ficha(nav)
         decir_la_ficha(tras_completar_la_vencida)
         resultado["tras_completar_la_vencida"] = tras_completar_la_vencida
@@ -1167,6 +1209,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         _, ficha_ahora = _puerta(token, "GET", f"/api/contactos/{contacto_id}")
         suya = next((t for t in (ficha_ahora.get("tareas") or []) if t.get("id") == la_vencida_id), None)
         decir(f"y después de completarla: {como_texto(suya)}")
+        resultado["vencida_completada_por_la_puerta"] = suya
         comprobar(
             (suya or {}).get("estado") == "hecha",
             f"una tarea vencida SE PUEDE completar ({(suya or {}).get('estado')!r})",
@@ -1188,7 +1231,11 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             f"la tarea {la_cancelada_id} trae su botón de cancelar en la ficha",
         )
         nav.pulsar(el_boton)
-        time.sleep(1.5)
+        nav.esperar(
+            f"!document.querySelector('[data-accion=\"tarea-cancelar\"][data-tarea=\"{la_cancelada_id}\"]')",
+            segundos=25,
+        )
+        time.sleep(1.0)
         tras_cancelar = leer_la_ficha(nav)
         decir_la_ficha(tras_cancelar)
         resultado["tras_cancelar"] = tras_cancelar
@@ -1487,6 +1534,8 @@ def el_aislamiento(token: str, ajena: str, contacto_id: int, las_creadas: dict) 
 
 def una_vuelta(direccion: str, vuelta: int) -> dict:
     """El recorrido entero, con **su propia explotación** (una cuenta nueva en la misma base temporal)."""
+    global VUELTA_ACTUAL
+    VUELTA_ACTUAL = vuelta
     print("\n" + "=" * 78)
     print(f"  VUELTA {vuelta} — el recorrido de «Lo que hay que hacer»")
     print("=" * 78)
@@ -1522,41 +1571,44 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
     la_hecha_tras = la_tarea_por_su_titulo(
         recorrido.get("tras_recargar_la_hecha") or {}, "Llamar al del pienso"
     ) or {}
+    la_otra_vencida = la_tarea_por_su_titulo(
+        recorrido.get("tras_recargar_la_hecha") or {}, "Llamar al veterinario"
+    ) or {}
     tras_cancelar = recorrido.get("tras_cancelar") or {}
     la_cancelada = la_tarea_por_su_titulo(tras_cancelar, "Encargar las semillas") or {}
-    tras_vencida = recorrido.get("tras_completar_la_vencida") or {}
-    la_vencida = la_tarea_por_su_titulo(tras_vencida, "Pagar la factura del taller") or {}
+    la_vencida_por_la_puerta = recorrido.get("vencida_por_la_puerta") or {}
+    la_vencida_despues = recorrido.get("vencida_completada_por_la_puerta") or {}
 
     huella = {
-        # **Lo que se apunta**: la tarea queda en el bloque y en la puerta de datos.
+        # **Lo que se apunta**: las seis tareas quedan en el bloque y en la puerta de datos.
         "apunta": len(creadas) == len(LAS_TAREAS),
         # **El tecleo**: los tres campos, de teclado y no por JavaScript.
         "tecleo": bool(recorrido.get("tecleo")),
-        # **Hecha**, **quién**, **vencida**, **pendiente**, **cancela** y **no desaparece**.
+        # **Hecha**, y sigue hecha tras recargar la página entera.
         "hecha": la_hecha.get("sin_botones") is True and la_hecha_tras.get("sin_botones") is True,
+        # **Quién** la hizo, en pantalla y tras la recarga.
         "quien": HECHA_POR in (la_hecha.get("resto") or "")
         and QUIEN in (la_hecha.get("resto") or "")
         and QUIEN in (la_hecha_tras.get("resto") or ""),
-        "vencida": bool(
-            (la_tarea_por_su_titulo(recorrido.get("tras_recargar_la_hecha") or {}, "Llamar al veterinario") or {}).get(
-                "vencida_marcada"
-            )
-        ),
-        "pendiente": bool(
-            (la_tarea_por_su_titulo(recorrido.get("tras_recargar_la_hecha") or {}, "Llamar al veterinario") or {}).get(
-                "sin_botones"
-            )
-            is False
-        )
-        and la_vencida.get("vencida_marcada") is False,
-        "cancela": CANCELADA_POR in (la_cancelada.get("resto") or "")
+        # **Vencida**: lo de ayer sale marcado.
+        "vencida": la_vencida_por_la_puerta.get("vencida") is True
+        and la_otra_vencida.get("vencida_marcada") is True,
+        # **Pendiente**: sigue pendiente y de verdad se puede completar.
+        "pendiente": la_vencida_por_la_puerta.get("estado") == "pendiente"
+        and la_vencida_despues.get("estado") == "hecha",
+        # **Cancela**: cancelada, con quién, y sin desaparecer.
+        "cancela": la_cancelada.get("sin_botones") is True
+        and CANCELADA_POR in (la_cancelada.get("resto") or "")
         and QUIEN in (la_cancelada.get("resto") or ""),
-        "no_desaparece": la_cancelada is not None and bool(la_cancelada),
+        "no_desaparece": bool(la_cancelada)
+        and "Encargar las semillas" in (filtros.get("sin_fecha", {}).get("en_pantalla") or [])
+        and "Encargar las semillas" in (filtros.get("todas", {}).get("en_pantalla") or []),
+        # **La lista**: las seis, cerradas incluidas.
         "lista": bool(filtros.get("todas")) and len(filtros["todas"]["en_pantalla"]) == len(LAS_TAREAS),
+        # **Los filtros**: la dirección cambia, y lo que se ve es exactamente lo que devuelve el servidor.
         "filtros": all(
             filtros.get(nombre, {}).get("en_pantalla") == filtros.get(nombre, {}).get("de_la_puerta")
-            and filtros.get(nombre, {}).get("direccion")
-            == direccion_esperada
+            and filtros.get(nombre, {}).get("direccion") == direccion_esperada
             for nombre, direccion_esperada in (
                 ("hoy", "#/tareas?vencimiento=hoy"),
                 ("vencidas", "#/tareas?vencimiento=vencidas"),
@@ -1564,9 +1616,11 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
                 ("todas", "#/tareas"),
             )
         ),
+        # **La recarga** con el filtro puesto: misma dirección, mismo botón marcado.
         "recarga": recargada.get("direccion") == "#/tareas?vencimiento=hoy"
         and len(los_marcados) == 1
         and los_marcados[0].get("vencimiento") == "hoy",
+        # **El aislamiento**: la otra finca no ve las mías, y no puede cerrarlas.
         "aislamiento_lista": aislamiento.get("completar_ajena") == 404
         and aislamiento.get("cancelar_ajena") == 404,
         "404": aislamiento.get("completar_ajena") == 404,
