@@ -82,7 +82,7 @@ export function PantallaDeLosTrabajosATerceros({
                   ${frase(t.a_cuanto_la_hora)}
                   <input id="trabajo-tarifa" type="text" inputMode="decimal" defaultValue=${(a_medias || {}).tarifa_por_hora || ""} />
                 </label>
-                <button type="button" className="boton boton-principal" data-accion="trabajo-proponer">
+                <button type="button" className="boton boton-principal" data-accion="trabajos-terceros-proponer">
                   ${frase(t.proponer)}
                 </button>
                 <p className="pista">${frase(t.la_superficie_no_es_tuya)}</p>
@@ -147,21 +147,21 @@ export function PantallaDeLosTrabajosATerceros({
                         <td>
                           ${
                             trabajo.estado === "propuesto"
-                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajo-aceptar" data-id=${trabajo.id}>
+                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajos-terceros-aceptar" data-id=${trabajo.id}>
                                   ${frase(t.aceptar)}
                                 </button>`
                               : null
                           }
                           ${
                             trabajo.estado === "aceptado"
-                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajo-parte" data-id=${trabajo.id}>
+                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajos-terceros-parte" data-id=${trabajo.id}>
                                   ${frase(t.apuntar_el_parte)}
                                 </button>`
                               : null
                           }
                           ${
                             trabajo.estado === "propuesto" || trabajo.estado === "aceptado"
-                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajo-cancelar" data-id=${trabajo.id}>
+                              ? html`<button type="button" className="boton boton-claro" data-accion="trabajos-terceros-cancelar" data-id=${trabajo.id}>
                                   ${frase(t.cancelar)}
                                 </button>`
                               : null
