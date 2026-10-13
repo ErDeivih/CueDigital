@@ -38,9 +38,33 @@ def correr_la_suite() -> tuple[int, int, int, list[str]]:
     verde, así que el fallo era **intermitente y se quedó sin nombre**—. Un recuento que dice que algo falla y
     no dice **qué** es un instrumento a medias: la próxima vez el nombre queda escrito.
     """
+    # **El número sale de la COLECCIÓN, no del informe** (13/10/2026, encargo del dueño). Antes se contaban los
+    # casos del XML, que son **los que se ejecutaron**, y se corría `pytest tests`: eso dejaba fuera las
+    # comprobaciones que traen los propios guiones de `scripts/` —y el guardián de la casa, que pregunta a la
+    # sesión entera de pytest (`request.session.testscollected`), se quejaba **con razón** de que la
+    # documentación y la realidad no cuadraban—. Ahora se le pregunta a pytest por **su colección**, sin decirle
+    # un directorio, para que use **la misma configuración que la suite**. Y no se lleva ninguna cuenta
+    # alternativa: es la de él.
+    coleccion = subprocess.run(  # noqa: S603 — es el propio proyecto
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        cwd=str(RAIZ),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    # **Se cuentan los identificadores que pytest imprime al recoger**, y no una línea de resumen: la
+    # configuración de este proyecto ya trae `-q`, así que añadir otro `-q` deja la salida en **solo los
+    # identificadores**, sin ningún «NNNN tests collected». (Comprobado el 13/10/2026: la primera versión de este
+    # arreglo buscaba esa línea, no la encontraba, y habría escrito **0** —peor que el número viejo—. Que un
+    # instrumento no encuentre lo que busca tiene que **notarse**, no pasar por bueno: por eso, si no sale ninguno,
+    # se dice y se sigue con el del informe.)
+    recogidas_de_la_coleccion = sum(
+        1 for linea in (coleccion.stdout or "").splitlines() if "::" in linea
+    )
     informe = pathlib.Path(tempfile.gettempdir()) / "el-recuerdo.xml"
     suyo = subprocess.run(  # noqa: S603 — es el propio proyecto
-        [sys.executable, "-m", "pytest", "tests", "-q", f"--junit-xml={informe}"],
+        [sys.executable, "-m", "pytest", "-q", f"--junit-xml={informe}"],
         cwd=str(RAIZ),
         capture_output=True,
         text=True,
@@ -58,7 +82,7 @@ def correr_la_suite() -> tuple[int, int, int, list[str]]:
         if list(caso.iter("failure")) or list(caso.iter("error"))
     ]
     return (
-        int(suite.get("tests", 0)),
+        recogidas_de_la_coleccion or int(suite.get("tests", 0)),
         int(suite.get("failures", 0)),
         int(suite.get("errors", 0)),
         fallando,
