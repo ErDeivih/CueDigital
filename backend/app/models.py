@@ -145,6 +145,23 @@ class AccesoAFinca(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), index=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+
+    # **Las capacidades por MATERIA** (Entrega 4, 13/10/2026). El encargo pide distinguir **consultar**, **modificar**
+    # y **consultar lo económico**, y pide además **no crear un sistema de usuarios paralelo**: así que esto se
+    # apoya en lo que ya existe —**entrar en la finca** es «consultar»— y se le añaden las dos capacidades que
+    # faltaban.
+    #
+    # **Y las dos nacen en `True`**, que es lo que hace que **nada deje de funcionar** con las cuentas que ya
+    # existen (`asegurar_columnas` rellena las filas de antes con este valor). Poner en `False` una capacidad es
+    # una decisión del titular, y se puede deshacer; que un cambio de versión **cierre puertas que estaban
+    # abiertas**, no.
+    #
+    # OJO, y esto lo dice el encargo con estas palabras: *«no cerrar nuevas operaciones como plenamente
+    # autorizadas mientras solo exista aislamiento entre fincas»*. Es decir: estas dos capacidades **son** la
+    # Entrega 4, y mientras las puertas no las comprueben **una por una**, no se puede decir que el módulo esté
+    # autorizado. Están aquí para poder comprobarlas, no como adorno.
+    puede_modificar: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("1"))
+    puede_ver_lo_economico: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("1"))
     # «titular» (quien la creó) o «ayudante» (a quien le han dado acceso).
     papel: Mapped[str] = mapped_column(String(20), default="ayudante")
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
