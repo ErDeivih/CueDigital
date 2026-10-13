@@ -574,13 +574,16 @@ def para_el_papel(campos: dict | None) -> dict:
 # ya apunta a un papel, y sin esta clase el certificado de una ITEAF no se podía atar a su inspección
 # desde ningún sitio.
 COMPRA = "compra"
+# **Una tierra** (CRM-06, 14/10/2026): un papel tambien pertenece a un trozo del mapa —
+# una factura de esa parcela, un contrato de arrendamiento, una inspeccion. La lista estaba hecha para crecer.
+TIERRA = "tierra"
 GASTO = "gasto"
 VENTA = "venta"
 MAQUINA = "maquina"
 TRABAJO = "trabajo"
 INSPECCION = "inspeccion"
 
-CLASES_DE_VINCULO = (COMPRA, GASTO, VENTA, MAQUINA, TRABAJO, INSPECCION)
+CLASES_DE_VINCULO = (COMPRA, GASTO, VENTA, MAQUINA, TRABAJO, INSPECCION, TIERRA)
 
 # A qué suele ir un papel de cada tipo. **Es una sugerencia de pantalla, no una regla**: el programa
 # no puede saber que una factura de la cooperativa no va con una máquina (un apero comprado también
@@ -590,7 +593,7 @@ CLASES_SUGERIDAS = {
     "ticket": (GASTO, COMPRA),
     "albaran": (VENTA, COMPRA, TRABAJO),
     "albaran_sigfito": (GASTO,),
-    "contrato": (MAQUINA, TRABAJO, COMPRA),
+    "contrato": (MAQUINA, TRABAJO, COMPRA, TIERRA),
     "inspeccion": (INSPECCION, MAQUINA),
     "analitica": (TRABAJO,),
     "otros": (),

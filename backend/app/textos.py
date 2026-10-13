@@ -8926,6 +8926,7 @@ BANDEJA: dict = {
     "clase_venta": "Una venta de tu cosecha",
     "clase_maquina": "Una máquina",
     "clase_trabajo": "Un trabajo hecho",
+        "clase_tierra": "Un papel de una tierra: un contrato, una factura o una inspeccion",
     "clase_inspeccion": "Una inspección de una máquina",
     "clase_desconocida": "Algo de tu cuaderno",
 }

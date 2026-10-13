@@ -267,6 +267,7 @@ def _el_modelo_de_la_clase(clase: str):
         bandeja.VENTA: models.VentaDeCosecha,
         bandeja.MAQUINA: models.Maquina,
         bandeja.TRABAJO: models.Labor,
+        bandeja.TIERRA: models.Parcela,  # el papel de una tierra: se comprueba que sea de esta finca, como las demas
         bandeja.INSPECCION: models.InspeccionDeMaquina,
     }[clase]
 
