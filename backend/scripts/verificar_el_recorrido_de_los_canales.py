@@ -466,6 +466,11 @@ LA_SONDA_DEL_CAMPO = """
     valor: el ? el.value : null,
     valor_atributo: el ? el.getAttribute('value') : null,
     se_ve: el ? el.checkVisibility({ checkVisibilityCSS: true }) : null,
+    la_pagina_tiene_el_foco: document.hasFocus(),
+    es_solo_lectura: el ? el.readOnly : null,
+    esta_deshabilitado: el ? el.disabled : null,
+    tipo: el ? el.type : null,
+    atributos: el ? el.getAttributeNames() : null,
     repintados: window.__repintados,
   };
 })()
@@ -708,6 +713,16 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
         # una), así que si aquí no llega es por algo de esta pantalla. Se mira: dónde está el foco, cuántos
         # elementos hay con ese `id`, si el texto entra y desaparece, y cuántas veces se repinta la ficha.
         decir(f"se enciende el vigía de repintados: {nav.evaluar(VIGILAR_LOS_REPINTADOS)}")
+        # **Y se le vuelve a pedir el foco a la página justo antes de teclear.** En un navegador sin ventana
+        # el foco de la página se pierde con las navegaciones, y `Input.insertText` **no da error**: simple-
+        # mente no escribe en ningún sitio. Como eso se leería como «el campo está roto», se pide el foco
+        # aquí, se mide si la página lo tiene, y todo queda dicho.
+        nav.orden("Page.bringToFront")
+        try:
+            nav.orden("Emulation.setFocusEmulationEnabled", {"enabled": True})
+        except RuntimeError as fallo:
+            decir(f"(no se ha podido pedir el foco de la página: {fallo})")
+        time.sleep(0.3)
         antes = nav.evaluar(LA_SONDA_DEL_CAMPO)
         decir(f"el campo, antes de teclear: {como_texto(antes)}")
         nav.evaluar("document.getElementById('canal-valor').focus()")
@@ -737,6 +752,26 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             bool((un_poco_despues or {}).get("valor")),
             "lo tecleado en #canal-valor SE QUEDA en el campo (no lo borra un repintado)",
         )
+        # **Y si el campo acepta texto por la vía del propio navegador.** `document.execCommand('insertText')`
+        # es la maquinaria de edición del navegador sobre el elemento que tiene el foco. Si esto tampoco
+        # escribe, el que no acepta texto es **el campo** (un `readonly`, por ejemplo) y eso no es cosa del
+        # teclado del protocolo: es la pantalla.
+        lo_que_dice_el_navegador = nav.evaluar(
+            "(() => { const el = document.getElementById('canal-valor');"
+            " if (!el) return 'no hay campo';"
+            " el.focus();"
+            " let vale = null;"
+            " try { vale = document.execCommand('insertText', false, 'PRUEBA'); }"
+            " catch (fallo) { vale = 'reventó: ' + fallo.message; }"
+            " return {lo_ha_aceptado: vale, valor: el.value,"
+            " es_solo_lectura: el.readOnly, esta_deshabilitado: el.disabled}; })()"
+        )
+        decir(f"y el campo, con la maquinaria de edición del navegador: {como_texto(lo_que_dice_el_navegador)}")
+        comprobar(
+            bool((lo_que_dice_el_navegador or {}).get("valor")),
+            "el campo ACEPTA texto escrito (no es de solo lectura ni está deshabilitado)",
+        )
+        nav.evaluar("document.getElementById('canal-valor').value = ''")
 
         # Se teclea **en el campo**, no se pone el valor por JavaScript: `Input.insertText` es lo que hace
         # el navegador cuando el agricultor escribe. Y **se lee lo que ha quedado en el campo**, porque un

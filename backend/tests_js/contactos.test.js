@@ -82,6 +82,19 @@ const TEXTOS = {
     canales_cual: "¿Qué es?",
     canales_el_dato: "El teléfono, el correo o la dirección",
     canales_como_se_llama: "Cómo lo llamas tú (el almacén, el móvil de Ana…)",
+    // Los rótulos de las tareas (Entrega 3). Copiados del servidor, no a mano.
+    tareas_titulo: "Lo que hay que hacer",
+    tareas_pista: "Lo próximo con este contacto. Si una se pasa de fecha se queda vencida: el programa no la cancela por su cuenta, porque eso lo decides tú.",
+    tareas_apuntar: "Apuntar",
+    tareas_que_hacer: "¿Qué hay que hacer?",
+    tareas_cuando: "¿Para cuándo? Si no lo sabes, déjalo en blanco",
+    tareas_quien: "¿Quién lo hace?",
+    tareas_completar: "Hecha",
+    tareas_cancelar: "Cancelar",
+    tareas_vencida: "Vencida",
+    tareas_sin_nada: "No hay nada apuntado con este contacto.",
+    tareas_hecha_por: "Hecha por",
+    tareas_cancelada_por: "Cancelada por",
     canales_titulo: "Sus teléfonos, correos y direcciones",
     canales_pista: "Los de siempre y los demás: el del almacén, el móvil de quien atiende, la dirección de entrega. El principal es el que se usa si no se dice otra cosa.",
     canales_principal: "El principal",
@@ -2400,4 +2413,53 @@ test("cada canal trae sus botones, y el que ya es principal no ofrece usarlo", a
     assert.ok(html.includes(`id="${id}"`), `falta el control ${id}`);
   }
   assert.ok(html.includes("Peñaranda") === false || true, "");
+});
+
+test("la ficha enseña lo que hay que hacer, marca lo vencido y no cancela nada sola", async () => {
+  // **POR QUÉ** (Entrega 3, 13/10/2026). Una tarea de la que no se ve el día no sirve, y **lo vencido hay que verlo**
+  // —es lo primero que se ha pasado de fecha—, pero marcado, **no cancelado**: el encargo lo dice con estas palabras,
+  // «la fecha vencida no transforma automáticamente una tarea en cancelada». Y una tarea cerrada **no lleva botones**:
+  // enseña quién la hizo, porque un botón para volver a hacer lo hecho es una trampa.
+  const c = TEXTOS.contactos;
+  const html = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 4,
+      tareas: [
+        { id: 1, titulo: "Llevar la factura", fecha_texto: "12/10/2026", vencida: true, estado: "pendiente", responsable: "Ana" },
+        { id: 2, titulo: "Llamar por el pienso", fecha_texto: "Sin fecha", vencida: false, estado: "pendiente" },
+        { id: 3, titulo: "Ya hecha", fecha_texto: "Sin fecha", vencida: false, estado: "hecha", completada_por: "Luis" },
+        { id: 4, titulo: "Ya no hace falta", fecha_texto: "Sin fecha", vencida: false, estado: "cancelada", cancelada_por: "Ana" },
+      ],
+    },
+  });
+  assert.ok(html.includes(c.tareas_titulo), `tiene que salir el título del bloque:\n${html}`);
+  assert.ok(html.includes("Llevar la factura") && html.includes("12/10/2026"), "la tarea y su día");
+  assert.ok(html.includes(c.tareas_vencida), "y lo que se ha pasado de fecha, marcado como vencido");
+  assert.ok(html.includes("Sin fecha"), "una sin fecha lo dice, y no se le inventa un día");
+  assert.ok(html.includes(c.tareas_hecha_por) && html.includes("Luis"), "una hecha dice quién la hizo");
+  assert.ok(html.includes(c.tareas_cancelada_por), "y una cancelada, quién la canceló");
+
+  // **Los pares botón/tarea**, como en los canales: solo lo pendiente lleva botones.
+  const pares = [...html.matchAll(/data-accion="(tarea-[a-z]+)"[^>]*data-tarea="(\d+)"/g)].map((caza) => [caza[1], caza[2]]);
+  assert.deepEqual(
+    pares.sort(),
+    [
+      ["tarea-cancelar", "1"],
+      ["tarea-cancelar", "2"],
+      ["tarea-completar", "1"],
+      ["tarea-completar", "2"],
+    ],
+    `solo lo pendiente puede cerrarse:\n${html}`,
+  );
+  assert.ok(html.includes('data-accion="tarea-nueva"'), "y hay que poder apuntar una");
+  for (const id of ["tarea-titulo", "tarea-fecha", "tarea-responsable"]) {
+    assert.ok(html.includes(`id="${id}"`), `falta el control ${id}`);
+  }
+  // El campo del día es un **día**, no una hora: es la decisión de la Entrega 3, y se ve en el tipo del control.
+  assert.ok(html.includes('id="tarea-fecha" type="date"'), "el día se pide como día, no como instante");
+
+  // Sin tareas, se dice que no hay nada (y no se enseña una lista vacía).
+  const sinTareas = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4, tareas: [] } });
+  assert.ok(sinTareas.includes(c.tareas_sin_nada), "sin tareas se dice");
 });

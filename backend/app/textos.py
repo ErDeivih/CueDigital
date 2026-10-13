@@ -6618,6 +6618,21 @@ CONTACTOS: dict[str, object] = {
     "canales_cual": "¿Qué es?",
     "canales_el_dato": "El teléfono, el correo o la dirección",
     "canales_como_se_llama": "Cómo lo llamas tú (el almacén, el móvil de Ana…)",
+    # **Las próximas acciones** (Entrega 3, 13/10/2026): lo que queda por hacer con este contacto.
+    "tareas_titulo": "Lo que hay que hacer",
+    "tareas_pista": (
+        "Lo próximo con este contacto. Si una se pasa de fecha se queda vencida: el programa no la cancela por su cuenta, porque eso lo decides tú."
+    ),
+    "tareas_apuntar": "Apuntar",
+    "tareas_que_hacer": "¿Qué hay que hacer?",
+    "tareas_cuando": "¿Para cuándo? Si no lo sabes, déjalo en blanco",
+    "tareas_quien": "¿Quién lo hace?",
+    "tareas_completar": "Hecha",
+    "tareas_cancelar": "Cancelar",
+    "tareas_vencida": "Vencida",
+    "tareas_sin_nada": "No hay nada apuntado con este contacto.",
+    "tareas_hecha_por": "Hecha por",
+    "tareas_cancelada_por": "Cancelada por",
     # **El saldo del contacto** (Entrega 1, 13/10/2026). Se dicen los dos sentidos por separado y con
     # sus palabras, porque la pantalla es donde se entiende que no se restan.
     "saldo_titulo": "Lo que hay con este contacto",

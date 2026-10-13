@@ -336,6 +336,8 @@ export function PantallaDeUnContacto({
   corrigiendo = false,
   // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
   canal_a_medias = null,
+  // Lo que se estaba apuntando en el alta de una tarea, para no perderlo si el servidor dice que no.
+  tarea_a_medias = null,
   borrando = false,
   guardando = false,
   error = "",
@@ -642,6 +644,84 @@ export function PantallaDeUnContacto({
         : null
     }
 
+    ${
+      // **Lo que hay que hacer con este contacto** (Entrega 3, 13/10/2026). Cada tarea con su día **dicho con
+      // palabras** (lo manda el servidor ya escrito, para que la pantalla no tenga que formatear fechas) y **marcada
+      // como vencida** cuando se ha pasado: lo vencido se dice, **no se cancela solo**, que es lo que pide el
+      // encargo con estas palabras —«la fecha vencida no transforma automáticamente una tarea en cancelada»—.
+      //
+      // Y una tarea cerrada **no lleva botones**: enseña **quién** la hizo o la canceló, y ya está. Un botón para
+      // volver a hacer lo que ya está hecho no es una opción, es una trampa.
+      corrigiendo
+        ? html`
+            <h2>${frase(c.tareas_titulo)}</h2>
+            <p className="pista">${frase(c.tareas_pista)}</p>
+            ${
+              (borrador.tareas || []).length
+                ? html`
+                    <ul className="lista lista-de-tareas">
+                      ${borrador.tareas.map(
+                        (tarea) => html`
+                          <li key=${String(tarea.id)} className=${tarea.vencida ? "tarea-vencida" : ""}>
+                            <strong>${frase(tarea.titulo)}</strong>
+                            ${" · "}${frase(tarea.fecha_texto)}
+                            ${tarea.vencida ? html` · <strong>${frase(c.tareas_vencida)}</strong>` : null}
+                            ${tarea.responsable ? html` · ${frase(tarea.responsable)}` : null}
+                            ${
+                              tarea.estado === "pendiente"
+                                ? html`
+                                    <${BotonSencillo}
+                                      etiqueta=${c.tareas_completar}
+                                      accion="tarea-completar"
+                                      datos=${{ id: borrador.id, tarea: tarea.id }}
+                                    />
+                                    <${BotonSencillo}
+                                      etiqueta=${c.tareas_cancelar}
+                                      accion="tarea-cancelar"
+                                      datos=${{ id: borrador.id, tarea: tarea.id }}
+                                    />
+                                  `
+                                : html` · ${frase(
+                                    tarea.estado === "hecha" ? c.tareas_hecha_por : c.tareas_cancelada_por,
+                                  )} ${frase(tarea.completada_por || tarea.cancelada_por || "")}`
+                            }
+                          </li>
+                        `,
+                      )}
+                    </ul>
+                  `
+                : html`<p className="pista">${frase(c.tareas_sin_nada)}</p>`
+            }
+            ${
+              // **El alta rápida**: qué hay que hacer, para cuándo y quién. El día es un `date` de verdad (un día, no
+              // una hora, como el campo del servidor) y **se puede dejar en blanco**: una tarea sin fecha es una
+              // tarea, y obligarla a tener fecha sería inventarla.
+              html`
+                <div className="alta-rapida-de-tarea">
+                  <label>
+                    ${frase(c.tareas_que_hacer)}
+                    <input id="tarea-titulo" type="text" value=${(tarea_a_medias || {}).titulo || ""} />
+                  </label>
+                  <label>
+                    ${frase(c.tareas_cuando)}
+                    <input id="tarea-fecha" type="date" value=${(tarea_a_medias || {}).fecha || ""} />
+                  </label>
+                  <label>
+                    ${frase(c.tareas_quien)}
+                    <input id="tarea-responsable" type="text" value=${(tarea_a_medias || {}).responsable || ""} />
+                  </label>
+                  <${BotonSencillo}
+                    etiqueta=${c.tareas_apuntar}
+                    accion="tarea-nueva"
+                    datos=${{ id: borrador.id }}
+                  />
+                </div>
+              `
+            }
+          `
+        : null
+    }
+
     <div className="barra-acciones">
       <button
         type="button"
@@ -806,6 +886,7 @@ export function pantallaDeUnContacto(propiedades) {
       error=${propiedades.error}
       saldo=${propiedades.saldo}
     canal_a_medias=${propiedades.canal_a_medias || null}
+    tarea_a_medias=${propiedades.tarea_a_medias || null}
     />
   `;
 }

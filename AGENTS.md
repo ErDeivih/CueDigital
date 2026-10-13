@@ -49,7 +49,7 @@ cd backend
 # las semillas y las siembras (T10), los contactos (T11) y la maquinaria (T14)
 ../.venv/Scripts/python.exe -m pytest
 
-# JavaScript (1102 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
+# JavaScript (1103 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"
 
 # Recorrido completo contra un servidor de verdad (hay que tenerlo levantado)

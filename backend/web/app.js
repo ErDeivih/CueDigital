@@ -17415,6 +17415,7 @@ function pantallaFichaDeContacto() {
       saldo: suyo.saldo || null,
     // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
     canal_a_medias: suyo.canal_a_medias || null,
+    tarea_a_medias: suyo.tarea_a_medias || null,
       puedeDesenlazar: true,
       corrigiendo: Boolean(suyo.corrigiendo),
       borrando: suyo.borrando,
@@ -17508,6 +17509,52 @@ async function guardarElContacto() {
  * Si el campo está vacío no se llama a la puerta: se dice con palabras. El servidor también lo comprueba —una
  * nota vacía no es una nota—, pero así el agricultor lo lee sin esperar a la vuelta.
  */
+async function apuntarUnaTarea(id) {
+  // **Apuntar lo que hay que hacer** (Entrega 3, 13/10/2026). Misma forma que los canales: se valida con palabras, se
+  // manda, y si el servidor dice que no, **no se pierde lo escrito**.
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const elDelCampo = (nombre) => {
+    const campo = document.getElementById(nombre);
+    return campo ? campo.value.trim() : "";
+  };
+  const titulo = elDelCampo("tarea-titulo");
+  if (!titulo) {
+    suyo.error = t("mensajes.C7_una_tarea_necesita_titulo", "");
+    return pantallaFichaDeContacto();
+  }
+  const dia = elDelCampo("tarea-fecha");
+  const cuerpo = {
+    titulo,
+    responsable: elDelCampo("tarea-responsable") || null,
+    // **El día va como día**, y vacío es «sin fecha»: no se inventa hoy, que es lo que pasaría si se mandara una
+    // fecha por defecto. El campo ya viene en `AAAA-MM-DD`, que es lo que espera la puerta.
+    fecha_prevista: dia || null,
+    clave_de_reenvio: claveDeReenvio("tarea"),
+  };
+  const resultado = await mandarCambio(`/api/contactos/${id}/tareas`, "POST", cuerpo);
+  if (resultado.error) {
+    suyo.tarea_a_medias = { titulo, fecha: dia, responsable: cuerpo.responsable || "" };
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  suyo.tarea_a_medias = null;
+  return abrirLaFichaDeUnContacto(id);
+}
+
+async function cerrarUnaTarea(id, tareaId, como) {
+  // **Completarla o cancelarla** (Entrega 3): dos puertas parecidas y una diferencia que importa — completar es «ya
+  // está hecho» y cancelar es «ya no hace falta»—, y el servidor apunta **quién y cuándo** en cada caso.
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const resultado = await mandarCambio(`/api/tareas/${tareaId}/${como}`, "POST", {});
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  return abrirLaFichaDeUnContacto(id);
+}
+
 async function apuntarUnCanal(id) {
   // **Apuntar un teléfono, un correo o una dirección más** (Entrega 2, 13/10/2026). Misma forma que la nota: se
   // valida con palabras, se manda, y si el servidor dice que no, **no se pierde lo escrito**.
@@ -19428,6 +19475,14 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     // **Los canales** (Entrega 2, 13/10/2026): apuntar uno más, elegir cuál es el principal y quitar. Tres
     // acciones y ninguna pantalla nueva: se vuelve a abrir la ficha por su puerta, que la lee entera.
     if (nombre === "canal-nuevo") return apuntarUnCanal(Number(elemento.dataset.id));
+    // **Las próximas acciones** (Entrega 3): apuntar una, completarla y cancelarla.
+    if (nombre === "tarea-nueva") return apuntarUnaTarea(Number(elemento.dataset.id));
+    if (nombre === "tarea-completar") {
+      return cerrarUnaTarea(Number(elemento.dataset.id), Number(elemento.dataset.tarea), "completar");
+    }
+    if (nombre === "tarea-cancelar") {
+      return cerrarUnaTarea(Number(elemento.dataset.id), Number(elemento.dataset.tarea), "cancelar");
+    }
     if (nombre === "canal-principal") {
       return elCanalPrincipal(Number(elemento.dataset.id), Number(elemento.dataset.canal));
     }
