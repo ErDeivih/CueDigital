@@ -3408,7 +3408,17 @@ class NotaDeUnContacto(Base):
     """
 
     __tablename__ = "notas_de_un_contacto"
-    __table_args__ = (Index("ix_nota_de_contacto", "contacto_id", "creado_en"),)
+    __table_args__ = (
+        Index("ix_nota_de_contacto", "contacto_id", "creado_en"),
+        # **La clave de reenvío, única por finca** (13/10/2026). Es la misma pieza que llevan las ventas, las
+        # facturas y los cobros: el navegador manda una clave por **acción** —no por clic— y el servidor, si le
+        # llega dos veces la misma, contesta lo que ya había en vez de apuntar dos notas.
+        #
+        # Hace falta porque el agricultor toca dos veces con los guantes, porque la respuesta se puede perder por
+        # el camino y porque el móvil reintenta cuando no hay cobertura. Y **dos acciones voluntarias con el mismo
+        # texto son dos notas**: lo que se protege es la acción, no el texto.
+        UniqueConstraint("explotacion_id", "clave_de_reenvio", name="uq_nota_de_un_contacto_reenvio"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
@@ -3417,6 +3427,10 @@ class NotaDeUnContacto(Base):
     # persona». Inventarle un autor sería peor que no tenerlo.
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     texto: Mapped[str] = mapped_column(Text)
+    # La clave de la acción que creó esta nota (13/10/2026). Puede faltar: las notas que escriba el
+    # programa no vienen de un formulario. Es `None` y **no un texto inventado**, como todo lo que no se
+    # sabe en esta casa.
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 

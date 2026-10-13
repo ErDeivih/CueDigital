@@ -6614,6 +6614,9 @@ CONTACTOS: dict[str, object] = {
     "apuntar_la_nota": "APUNTAR LA NOTA",
     "nota_la_escribio": "La escribió",
     "nota_lo_escribio_el_programa": "Lo apuntó el programa",
+    # **Y el autor que ya no se puede nombrar** (13/10/2026, revision): la escribio una persona, pero su
+    # nombre no esta. Se dice eso, que es lo que se sabe, en vez de culpar al programa.
+    "nota_autor_sin_nombre": "alguien cuyo nombre ya no está",
     "titulo": "Las personas y las empresas",
     "explica": (
         "Aquí apuntas una vez a quien te vende, a quien te compra, a quien te asesora o a quien te "

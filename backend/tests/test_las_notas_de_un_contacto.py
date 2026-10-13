@@ -109,3 +109,144 @@ def test_una_nota_no_se_puede_corregir_ni_borrar(cliente, cuenta, db_sesion):
         assert respuesta.status_code in (404, 405), (
             f"no puede haber puerta para {metodo.upper()} una nota: contesta {respuesta.status_code}"
         )
+
+def test_reenviar_la_misma_accion_apunta_una_sola_nota(cliente, cuenta, db_sesion):
+    """**El reenvío seguro** (13/10/2026, revisión): una acción, una nota.
+
+    Tres casos que pasan de verdad y que hay que cubrir con la misma pieza: **el doble clic** (el agricultor toca
+    dos veces con los guantes), **la respuesta que se pierde** por el camino y **el reintento del móvil** cuando
+    no hay cobertura. Los tres llegan al servidor como la **misma acción**, con la misma clave.
+    """
+    ficha = _una_ficha(cliente, cuenta, "Cooperativa de Peñaranda")
+    clave = "nota-1712345678-abc123"
+    primera = cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Se le apuntó el teléfono nuevo.", "clave_de_reenvio": clave},
+    )
+    assert primera.status_code == 200, primera.text
+    # Y ahora el reenvío: **la misma acción**, otra vez.
+    segunda = cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "Se le apuntó el teléfono nuevo.", "clave_de_reenvio": clave},
+    )
+    assert segunda.status_code == 200, segunda.text
+
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 1, f"la misma acción no puede apuntar dos notas: hay {len(suyas)}"
+    assert len(segunda.json()["notas_con_autor"]) == 1, "y la ficha contesta con una sola"
+    # La segunda contesta **lo que ya había**, no una copia nueva.
+    assert segunda.json()["notas_con_autor"][0]["id"] == primera.json()["notas_con_autor"][0]["id"], (
+        "el reenvío tiene que contestar la nota que ya estaba"
+    )
+
+
+def test_dos_acciones_voluntarias_con_el_mismo_texto_son_dos_notas(cliente, cuenta, db_sesion):
+    """Y **lo que se protege es la acción, no el texto** (13/10/2026, revisión).
+
+    Dos veces que el agricultor apunta lo mismo **a propósito** son dos notas: puede querer dejar constancia dos
+    veces —una por cada visita— y el programa no es quién para decidir que sobra una. Sin clave de reenvío, cada
+    llamada es una acción nueva.
+    """
+    ficha = _una_ficha(cliente, cuenta, "Taller de prueba")
+    for _ in range(2):
+        respuesta = cliente.post(
+            f"/api/contactos/{ficha['id']}/notas",
+            headers=cuenta["cabeceras"],
+            json={"texto": "Le volví a llamar."},
+        )
+        assert respuesta.status_code == 200, respuesta.text
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 2, f"dos acciones voluntarias son dos notas: hay {len(suyas)}"
+
+
+def test_la_nota_del_programa_se_distingue_de_la_de_una_persona_sin_nombre(cliente, cuenta, db_sesion):
+    """**No se inventa el autor** (13/10/2026, revisión), y los tres estados se distinguen.
+
+    Antes, si el nombre del autor no aparecía, la pantalla decía «Lo apuntó el programa» —y eso es **afirmar algo
+    que no se sabe**: una nota escrita por una persona cuyo nombre ya no está no es una nota del programa. Ahora
+    se dice lo que se sabe en cada caso.
+    """
+    ficha = _una_ficha(cliente, cuenta, "Recambios del Páramo")
+
+    # 1. Una persona, con su nombre: se sabe quién la escribió.
+    cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "La escribió una persona de la casa."},
+    )
+    # 2. Una nota del programa: sin autor y se dice así.
+    db_sesion.add(
+        models.NotaDeUnContacto(
+            explotacion_id=cuenta["explotacion_id"],
+            contacto_id=ficha["id"],
+            usuario_id=None,
+            texto="La apuntó el programa al migrar los papeles.",
+        )
+    )
+    # 3. Una persona **cuyo nombre ya no está**: el usuario existe, pero su nombre se quedó sin poner. Se hace así
+    #    —y no con un `usuario_id` inventado— porque la clave ajena **no deja** apuntar a un usuario que no
+    #    existe: el programa lo impide, y la prueba tiene que respetarlo. Lo que sí ocurre es que el nombre no se
+    #    pueda enseñar, y eso es lo que se comprueba.
+    sin_nombre = models.Usuario(
+        explotacion_id=cuenta["explotacion_id"],
+        nombre="",
+        correo="sin-nombre@ejemplo.test",
+        clave_hash="no-hace-falta",
+    )
+    db_sesion.add(sin_nombre)
+    db_sesion.flush()
+    db_sesion.add(
+        models.NotaDeUnContacto(
+            explotacion_id=cuenta["explotacion_id"],
+            contacto_id=ficha["id"],
+            usuario_id=sin_nombre.id,
+            texto="La escribió alguien que ya no está en la casa.",
+        )
+    )
+    db_sesion.commit()
+
+    notas = cliente.get(f"/api/contactos/{ficha['id']}", headers=cuenta["cabeceras"]).json()["notas_con_autor"]
+    por_texto = {nota["texto"]: nota for nota in notas}
+    assert len(por_texto) == 3, f"las tres notas tienen que estar: {list(por_texto)}"
+
+    la_de_la_persona = por_texto["La escribió una persona de la casa."]
+    assert la_de_la_persona["autor_estado"] == "persona", la_de_la_persona
+    assert la_de_la_persona["autor"], "y con su nombre"
+
+    la_del_programa = por_texto["La apuntó el programa al migrar los papeles."]
+    assert la_del_programa["autor_estado"] == "el_programa", la_del_programa
+    assert la_del_programa["autor"] is None
+
+    la_sin_nombre = por_texto["La escribió alguien que ya no está en la casa."]
+    assert la_sin_nombre["autor_estado"] == "sin_nombre", (
+        f"una persona cuyo nombre ya no está **no** es el programa: {la_sin_nombre}"
+    )
+    assert la_sin_nombre["autor"] is None, "y no se le inventa un nombre"
+
+
+def test_una_nota_no_se_puede_apuntar_en_un_contacto_de_otra_finca(cliente, cuenta, crear_cuenta):
+    """**Aislamiento entre explotaciones** (13/10/2026, revisión): 404, y no se filtra si existe en otra finca.
+
+    La misma regla que en todo el programa: no se contesta «no es tuya» (eso ya diría que existe), se contesta que
+    no está.
+    """
+    mia = _una_ficha(cliente, cuenta, "Mi proveedor")
+    otra = crear_cuenta("otro-agricultor@ejemplo.test")
+    respuesta = cliente.post(
+        f"/api/contactos/{mia['id']}/notas",
+        headers=otra["cabeceras"],
+        json={"texto": "Esta nota no debería entrar."},
+    )
+    assert respuesta.status_code == 404, (
+        f"un contacto de otra finca tiene que dar 404, y ha dado {respuesta.status_code}: {respuesta.text}"
+    )

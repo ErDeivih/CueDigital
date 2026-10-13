@@ -82,6 +82,7 @@ const TEXTOS = {
     apuntar_la_nota: "APUNTAR LA NOTA",
     nota_la_escribio: "La escribió",
     nota_lo_escribio_el_programa: "Lo apuntó el programa",
+    nota_autor_sin_nombre: "alguien cuyo nombre ya no está",
     cuantos_escritos_uno: "Su nombre está escrito en 1 papel.",
     // El estado y sus botones (CRM-03, criterio (e), 11/10/2026). El guardián los exige copiados aquí: las
     // pruebas de las pantallas solo ven lo que hay en este fichero.
@@ -1675,5 +1676,325 @@ test("la lista de contactos, en el ordenador, va en tabla con sus columnas", asy
   assert.ok(
     html.includes("contacto-abrir"),
     "y el nombre es un botón que abre la ficha: en una tabla no se toca la fila entera",
+  );
+});
+
+// ===========================================================================
+// El diario de la ficha: las notas, con su autor y su fecha (CRM-03, criterio (f))
+//
+// **POR QUÉ ESTA SECCIÓN EXISTE.** La ficha tiene, desde el 13/10/2026, un diario: debajo de sus datos se
+// leen las notas que se le han ido apuntando —de la más nueva a la más vieja, con quién la escribió y
+// cuándo— y hay un campo con su botón para apuntar otra. Hasta hoy, ninguna de las 48 pruebas de este
+// fichero miraba nada de eso: se podía cambiar el nombre de la acción, la ruta o el estado del autor y no
+// se enteraba nadie. Lo pidió la revisión del dueño: **escribir, guardar, recargar, comprobar autor y
+// fecha, y conservar el texto si falla el envío**.
+//
+// Lo que se comprueba, y por qué esas cosas:
+//
+//   1. **Lo que se ve**: dos notas con sus textos, el nombre de quien las escribió y su fecha. Y los
+//      **tres estados del autor** —una persona con nombre, una persona **cuyo nombre ya no está** y el
+//      programa— tienen que verse distintos: decirle «lo apuntó el programa» a una nota que escribió una
+//      persona cuyo nombre ya no se puede poner es afirmar algo que no se sabe (por eso son tres estados y
+//      no dos, desde la revisión del 13/10/2026).
+//   2. **Que el botón mande la acción de verdad**: el texto escrito y su `clave_de_reenvio` llegan a
+//      `POST /api/contactos/{id}/notas`, y después la ficha se recarga para que la nota salga con su autor
+//      y su fecha. El **autor no viaja**: lo pone el servidor de su vale, porque aceptarlo del navegador
+//      sería poder firmar cosas que no ha escrito uno.
+//   3. **Que reintentar reutilice la clave**: es lo que protege del doble toque y del móvil sin cobertura
+//      (dos pulsaciones de la misma nota son **una** acción, no dos notas).
+//   4. **Que lo escrito no se pierda si el envío falla.**
+// ===========================================================================
+
+/** Una nota como la devuelve el servidor, dentro de `notas_con_autor` de la ficha. */
+function unaNota(cambios = {}) {
+  return {
+    id: 21,
+    texto: "Pasa los martes por la mañana.",
+    autor: "Marta",
+    autor_estado: "persona",
+    creado_en: "2026-10-13T09:12:00",
+    clave_de_reenvio: null,
+    ...cambios,
+  };
+}
+
+/**
+ * El campo de escribir la nota, tal y como sale en el HTML, para poder mirarle el `value`.
+ *
+ * Se mira así —y no con un `includes` suelto— porque el `value` que hay que leer es el de **ese** campo:
+ * buscarlo en toda la página daría verde aunque el texto estuviera en otro sitio.
+ */
+function elCampoDeLaNota(html) {
+  const campo = html.match(/<input[^>]*id="contacto-nota-texto"[^>]*>/);
+  assert.ok(campo, `la ficha no tiene campo para escribir la nota:\n${html}`);
+  return campo[0];
+}
+
+test("la ficha enseña sus notas con el autor y la fecha, y los tres autores se ven distintos", async () => {
+  // **Sin esto, el diario no sirve para acordarse de nada**: una nota sin quién la escribió ni cuándo es un
+  // texto suelto. Y los tres estados del autor tienen que distinguirse, porque el caso raro —una persona
+  // cuyo nombre ya no está— es justo el que antes se contaba mal.
+  const html = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 3,
+      notas_con_autor: [
+        unaNota(),
+        unaNota({
+          id: 22,
+          texto: "El del pienso le subió el precio en marzo.",
+          creado_en: "2026-10-02T08:00:00",
+        }),
+      ],
+    },
+  });
+  assert.match(html, /Pasa los martes por la mañana\./, "no se lee el texto de la nota");
+  assert.match(html, /El del pienso le subió el precio en marzo\./, "falta una de las dos notas");
+  assert.match(html, /La escribió: Marta/, "no se lee quién la escribió");
+  assert.match(html, /2026-10-13/, "no se lee cuándo se escribió la nota");
+  // El campo para apuntar otra, con su botón: es la puerta que las otras tres pruebas pulsan. Y sale **vacío**:
+  // el texto de una nota que ya está apuntada no se cuela en la casilla de la siguiente.
+  assert.ok(accionesDe(html).includes("contacto-nota"), "no hay botón para apuntar una nota");
+  assert.ok(
+    !elCampoDeLaNota(html).includes('value="Pasa los martes'),
+    "el campo de escribir la nota trae el texto de una nota ya apuntada",
+  );
+
+  // Los tres estados del autor, cada uno con lo que se sabe. **El `sin_nombre` se mira también solo**, porque
+  // lo que hay que comprobar de él es lo que **no** dice: que no se le eche la culpa al programa.
+  const losTres = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 3,
+      notas_con_autor: [
+        unaNota({ id: 31, texto: "Me lo dijo Marta.", autor: "Marta", autor_estado: "persona" }),
+        unaNota({
+          id: 32,
+          texto: "Se lo oí a alguien que ya no está en la casa.",
+          autor: null,
+          autor_estado: "sin_nombre",
+        }),
+        unaNota({
+          id: 33,
+          texto: "Lo apuntó el programa al traer los papeles.",
+          autor: null,
+          autor_estado: "el_programa",
+        }),
+      ],
+    },
+  });
+  assert.match(losTres, /La escribió: Marta/, "no se lee el nombre de quien la escribió");
+  assert.match(
+    losTres,
+    /La escribió: alguien cuyo nombre ya no está/,
+    "no se dice que la escribió una persona cuyo nombre ya no está",
+  );
+  assert.match(losTres, /Lo apuntó el programa/, "no se dice que esa la apuntó el programa");
+
+  const soloSinNombre = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 3,
+      notas_con_autor: [
+        unaNota({
+          id: 32,
+          texto: "Se lo oí a alguien que ya no está en la casa.",
+          autor: null,
+          autor_estado: "sin_nombre",
+        }),
+      ],
+    },
+  });
+  assert.ok(
+    soloSinNombre.includes(TEXTOS.contactos.nota_autor_sin_nombre),
+    "una nota de una persona sin nombre no dice que el nombre ya no está",
+  );
+  assert.ok(
+    !soloSinNombre.includes(TEXTOS.contactos.nota_lo_escribio_el_programa),
+    "una nota de una persona cuyo nombre ya no está se está diciendo que la apuntó el programa",
+  );
+
+  // Y una ficha sin ninguna nota lo dice, en vez de dejar un hueco que parezca un fallo.
+  const sinNotas = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 3 } });
+  assert.match(sinNotas, /Todavía no hay ninguna nota\./, "una ficha sin notas no lo dice");
+});
+
+test("APUNTAR LA NOTA manda el texto y su clave de reenvío, y recarga la ficha con la nota", async () => {
+  // Lo que hace que la nota llegue al diario: se escribe, se pulsa y **se manda**. Y después la ficha se
+  // vuelve a leer, que es lo que hace que la nota salga con su autor y su fecha (si no se recargara, la
+  // pantalla seguiría enseñando el diario de antes).
+  const respuestas = lasRespuestasDeArranque({
+    "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+    "POST /api/contactos/4/notas": unaFicha({ notas_con_autor: [unaNota()] }),
+  });
+  const { entorno, servidor } = await arrancarCon(respuestas);
+  await pulsar(entorno, "contactos-ver");
+  await pulsar(entorno, "contacto-abrir", { id: 4 });
+  assert.equal(
+    ultimoMontaje().props.borrador.notas_con_autor.length,
+    0,
+    "la ficha tiene notas antes de apuntar ninguna",
+  );
+  // **El servidor apunta la nota al recibirla**, así que la ficha que se lee después ya la trae: se cambia
+  // aquí para que el servidor de mentira se comporte como el de verdad (el de la tabla se lee en cada
+  // llamada, no se copia al arrancar). Lo que se comprueba es que la pantalla **vuelve a leer** la ficha.
+  respuestas["/api/contactos/4"] = unaFicha({ notas_con_autor: [unaNota()] });
+  escribir(entorno, "contacto-nota-texto", "Pasa los martes por la mañana.");
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+
+  assert.equal(cuantasVeces(servidor, "POST /api/contactos/4/notas"), 1, "el botón no manda la nota");
+  const cuerpo = loMandado(servidor, "/api/contactos/4/notas").cuerpo;
+  assert.equal(cuerpo.texto, "Pasa los martes por la mañana.", "el texto escrito no viaja");
+  assert.ok(
+    typeof cuerpo.clave_de_reenvio === "string" && cuerpo.clave_de_reenvio.length > 0,
+    "la nota viaja sin clave de reenvío: un reintento apuntaría la nota dos veces",
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(cuerpo, "autor"),
+    false,
+    "el navegador está firmando la nota: el autor lo pone el servidor",
+  );
+
+  // Y la nota vuelve a la pantalla, con lo que la hace útil: quién y cuándo.
+  assert.equal(
+    cuantasVeces(servidor, "GET /api/contactos/4"),
+    2,
+    "después de apuntar la nota no se recarga la ficha: la nota no saldría",
+  );
+  const notas = ultimoMontaje().props.borrador.notas_con_autor;
+  assert.equal(notas.length, 1, "la nota recién apuntada no sale en la ficha");
+  assert.equal(notas[0].texto, "Pasa los martes por la mañana.");
+  assert.equal(notas[0].autor, "Marta", "la nota vuelve sin su autor");
+});
+
+test("reintentar la misma nota reutiliza la clave de reenvío, también cuando la primera ha fallado", async () => {
+  // **La clave es de la ACCIÓN, no del clic** (13/10/2026, revisión), y esto es lo que protege del doble
+  // toque y del móvil sin cobertura: dos pulsaciones de la misma nota son **una** acción, así que las dos
+  // llamadas llevan la misma clave y el servidor reconoce la segunda y no apunta otra nota. Se prueba de las
+  // dos formas que pasan de verdad: con la primera todavía en el aire (el doble toque) y con la primera
+  // contestando que no (el reintento después de un fallo).
+  const primero = await arrancarCon(
+    lasRespuestasDeArranque({
+      "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+      "POST /api/contactos/4/notas": unaFicha({ notas_con_autor: [unaNota()] }),
+    }),
+    // La respuesta se queda en el aire: es la única forma de que el segundo toque llegue antes que la
+    // primera contestación, que es cuando el doble clic pasa de verdad.
+    { retener: ["POST /api/contactos/4/notas"] },
+  );
+  await pulsar(primero.entorno, "contactos-ver");
+  await pulsar(primero.entorno, "contacto-abrir", { id: 4 });
+  escribir(primero.entorno, "contacto-nota-texto", "Pasa los martes por la mañana.");
+  const elDeSiempre = pulsar(primero.entorno, "contacto-nota", { id: "4" });
+  const elDeLosGuantes = pulsar(primero.entorno, "contacto-nota", { id: "4" });
+  await new Promise((resolver) => setTimeout(resolver, 20));
+  primero.servidor.suelta();
+  await Promise.all([elDeSiempre, elDeLosGuantes]);
+
+  const lasDelDobleToque = primero.servidor.enviados
+    .filter((uno) => uno.metodo === "POST" && uno.ruta === "/api/contactos/4/notas")
+    .map((uno) => uno.cuerpo.clave_de_reenvio);
+  assert.equal(lasDelDobleToque.length, 2, "los dos toques tienen que llegar al servidor");
+  assert.ok(lasDelDobleToque[0], "el primer envío no lleva clave de reenvío");
+  assert.equal(
+    lasDelDobleToque[1],
+    lasDelDobleToque[0],
+    "el segundo toque trae una clave nueva: apuntaría la nota dos veces",
+  );
+
+  // Y ahora el reintento de verdad: la primera contesta que no (sin cobertura, el servidor de mal humor…).
+  const segundo = await arrancarCon(
+    lasRespuestasDeArranque({
+      "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+      "POST /api/contactos/4/notas": falla("No se ha podido guardar la nota."),
+    }),
+  );
+  await pulsar(segundo.entorno, "contactos-ver");
+  await pulsar(segundo.entorno, "contacto-abrir", { id: 4 });
+  escribir(segundo.entorno, "contacto-nota-texto", "Pasa los martes por la mañana.");
+  await pulsar(segundo.entorno, "contacto-nota", { id: "4" });
+  await pulsar(segundo.entorno, "contacto-nota", { id: "4" });
+
+  const lasDelReintento = segundo.servidor.enviados
+    .filter((uno) => uno.metodo === "POST" && uno.ruta === "/api/contactos/4/notas")
+    .map((uno) => uno.cuerpo.clave_de_reenvio);
+  assert.equal(lasDelReintento.length, 2, "el reintento no vuelve a intentarlo");
+  assert.ok(lasDelReintento[1], "el reintento no lleva clave de reenvío");
+  assert.equal(
+    lasDelReintento[1],
+    lasDelReintento[0],
+    "el reintento trae una clave nueva: apuntaría la nota dos veces",
+  );
+});
+
+test("lo escrito sigue estando si el envío de la nota falla", async () => {
+  // **Lo que la revisión pidió comprobar**: si el envío falla —un móvil sin cobertura, el servidor de mal
+  // humor— el agricultor **no puede perder lo escrito**, porque lo escribió con guantes y volver a teclearlo
+  // es exactamente lo que este programa no puede pedirle. Se mira por los dos lados que se pueden mirar hoy:
+  //
+  //   · **Por el camino de verdad**: se escribe, se hace fallar el POST, se pulsa, y el texto sigue ahí —el
+  //     reintento lo vuelve a mandar entero, que es lo que solo puede pasar si no se ha borrado—.
+  //   · **En la pantalla**: una ficha repintada con lo que se quedó a medias (`nota_a_medias`, que es donde
+  //     `app.js` lo deja) lo lleva al campo, en vez de salir vacía.
+  //
+  // **HUECO CONOCIDO, Y SE DICE EN VEZ DE TAPARLO** (13/10/2026). `apuntarLaNota` (`web/app.js`) guarda el
+  // texto en `suyo.nota_a_medias`, pero `pantallaFichaDeContacto` **no lo mete en el `borrador` que le pasa a
+  // la pantalla**: el estado se guarda y no se usa, así que de punta a punta ese texto no llega al campo (solo
+  // se salva lo que el agricultor ya tenía escrito en la casilla del navegador). Por eso la comprobación de la
+  // pantalla se hace aquí sobre el componente, que sí lo pinta, y **no** sobre los `props` del último montaje.
+  // El día que se cablee, esta prueba tiene que cerrar el círculo con
+  // `assert.equal(ultimoMontaje().props.borrador.nota_a_medias, texto)`.
+  const texto = "Pasa los martes por la mañana.";
+  const { entorno, servidor } = await arrancarCon(
+    lasRespuestasDeArranque({
+      "/api/contactos/4": unaFicha({ notas_con_autor: [] }),
+      "POST /api/contactos/4/notas": falla("No se ha podido guardar la nota."),
+    }),
+  );
+  await pulsar(entorno, "contactos-ver");
+  await pulsar(entorno, "contacto-abrir", { id: 4 });
+  escribir(entorno, "contacto-nota-texto", texto);
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+
+  assert.equal(
+    cuantasVeces(servidor, "POST /api/contactos/4/notas"),
+    1,
+    "no se ha intentado guardar la nota",
+  );
+  assert.equal(
+    ultimoMontaje().props.error,
+    "No se ha podido guardar la nota.",
+    "no se dice que la nota no se ha podido guardar",
+  );
+
+  await pulsar(entorno, "contacto-nota", { id: "4" });
+  assert.equal(
+    cuantasVeces(servidor, "POST /api/contactos/4/notas"),
+    2,
+    "el texto se ha perdido: el reintento no manda nada",
+  );
+  assert.equal(loMandado(servidor, "/api/contactos/4/notas").cuerpo.texto, texto);
+
+  // La mitad que se ve: el campo lleva lo que se quedó a medias… y **no** lo lleva cuando nadie lo ha escrito.
+  // Las dos direcciones, porque una prueba que solo mira el `includes` da verde aunque el campo pinte de más.
+  const html = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4, nota_a_medias: texto } });
+  assert.ok(
+    elCampoDeLaNota(html).includes(`value="${texto}"`),
+    `la ficha repintada deja el campo vacío y se pierde lo escrito:\n${html}`,
+  );
+  const sinNada = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4 } });
+  assert.ok(
+    !elCampoDeLaNota(sinNada).includes(`value="${texto}"`),
+    "el campo de la nota sale con un texto que no ha escrito nadie",
+  );
+
+  // **Y el círculo cerrado de punta a punta** (13/10/2026): lo que el agricultor escribió tiene que **llegar
+  // hasta la pantalla**, no quedarse en el estado. Esta aserción estaba escrita aquí esperando a que se cableara
+  // `nota_a_medias` en el `borrador` de la ficha, y **daba `undefined`** —lo encontró el subagente de pruebas
+  // ejecutándola—. Ahora ya se cableó, así que se exige: si vuelve a faltar, esta prueba se pone roja.
+  assert.equal(
+    ultimoMontaje().props.borrador.nota_a_medias,
+    texto,
+    "lo escrito no llega a la pantalla: se queda en el estado y el agricultor lo pierde",
   );
 });

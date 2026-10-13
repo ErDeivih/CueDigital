@@ -3553,6 +3553,10 @@ class NotaDeUnContactoEntrada(EntradaBase):
     """
 
     texto: str
+    # **La clave de la acción** (13/10/2026). El navegador manda una por **acción** —no por clic— y el servidor la
+    # usa para no apuntar dos veces la misma nota si la petición se reenvía: doble clic, respuesta perdida o
+    # reintento del móvil sin cobertura. Es opcional para que el camino de siempre siga funcionando.
+    clave_de_reenvio: str | None = None
 
 
 class BajaDeUnContacto(EntradaBase):
@@ -3575,7 +3579,13 @@ class NotaDeUnContactoSalida(BaseModel):
     id: int
     texto: str
     autor: str | None = None
+    # **De quién es la nota, en tres estados** (13/10/2026): `persona` (se sabe quién), `sin_nombre` (la escribió
+    # una persona y su nombre ya no está) o `el_programa` (no la escribió una persona). Sin este campo, «no hay
+    # autor» se contaba como «lo apuntó el programa», y eso es afirmar algo que no se sabe.
+    autor_estado: str
     creado_en: dt.datetime
+    # La clave de la acción que la creó, para que el navegador pueda reconocer la suya si reintenta.
+    clave_de_reenvio: str | None = None
 
 
 class ContactoSalida(SalidaBase):

@@ -317,15 +317,36 @@ def _las_notas(db, contacto: models.Contacto) -> list[dict]:
         if los_autores
         else {}
     )
+    # **Tres estados y no dos** (13/10/2026). Antes, si el nombre del autor no aparecía, la pantalla decía «Lo
+    # apuntó el programa» —y eso es **afirmar algo que no se sabe**: una nota escrita por una persona cuyo nombre
+    # ya no está no es una nota del programa. Se distinguen:
+    #
+    #   - `el_programa`: la nota no tiene autor porque la escribió el programa.
+    #   - `sin_nombre`: **la escribió una persona, pero su nombre ya no se puede poner** (el usuario se borró, o su
+    #     ficha ya no está). Se dice eso, que es lo que se sabe, en vez de inventar un autor o culpar al programa.
+    #   - `persona`: se sabe quién la escribió, y se dice su nombre.
     return [
         {
             "id": nota.id,
             "texto": nota.texto,
-            "autor": nombres.get(nota.usuario_id) if nota.usuario_id else None,
+            # **Un nombre vacío no es un nombre**: si el nombre del autor se quedó sin poner, se contesta `None`
+            # —que es «no se sabe» en esta casa— y el estado lo explica. Devolver `""` sería enseñar un hueco en
+            # la pantalla y dejar creer que el autor es alguien sin nombre. (Lo cazó la prueba de los tres
+            # estados, 13/10/2026.)
+            "autor": (nombres.get(nota.usuario_id) or None) if nota.usuario_id else None,
+            "autor_estado": _el_estado_del_autor(nota, nombres),
             "creado_en": nota.creado_en,
+            "clave_de_reenvio": nota.clave_de_reenvio,
         }
         for nota in suyas
     ]
+
+
+def _el_estado_del_autor(nota, nombres: dict) -> str:
+    """De quién es la nota, con los tres estados de arriba. **No se inventa un autor y no se culpa al programa.**"""
+    if not nota.usuario_id:
+        return "el_programa"
+    return "persona" if nombres.get(nota.usuario_id) else "sin_nombre"
 
 
 
@@ -627,6 +648,21 @@ def apuntar_una_nota(
     escrito uno.
     """
     contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    # **El reenvío seguro, lo primero** (13/10/2026): si esta acción ya se guardó, se contesta la ficha tal cual
+    # y **no se apunta otra nota**. Cubre el doble clic, la respuesta que se perdió por el camino y el reintento
+    # del móvil sin cobertura. Es la misma pieza que llevan las ventas, las facturas, los cobros y las
+    # recepciones; dos acciones **voluntarias** con el mismo texto sí son dos notas, porque la clave es de la
+    # acción y no del texto.
+    clave = (datos.clave_de_reenvio or "").strip()
+    if clave:
+        ya = db.scalar(
+            select(models.NotaDeUnContacto).where(
+                models.NotaDeUnContacto.explotacion_id == explotacion.id,
+                models.NotaDeUnContacto.clave_de_reenvio == clave,
+            )
+        )
+        if ya is not None:
+            return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
     texto = logica.limpia(datos.texto)
     if not texto:
         raise HTTPException(
@@ -639,6 +675,7 @@ def apuntar_una_nota(
             contacto_id=contacto.id,
             usuario_id=usuario.id,
             texto=texto,
+            clave_de_reenvio=clave or None,
         )
     )
     db.commit()

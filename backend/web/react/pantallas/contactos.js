@@ -405,8 +405,17 @@ export function PantallaDeUnContacto({
                         <li key=${String(nota.id)}>
                           <p className="nota-texto">${frase(nota.texto)}</p>
                           <p className="pista-campo">
-                            ${frase(c.nota_la_escribio)}:
-                            ${frase(nota.autor || c.nota_lo_escribio_el_programa)}
+                            ${
+                              // **Los tres estados del autor, y no dos** (13/10/2026, revisión). Antes, cualquier
+                              // nota sin nombre decía «Lo apuntó el programa», y eso es afirmar algo que no se
+                              // sabe: una nota escrita por una persona cuyo nombre ya no está **no** es una nota
+                              // del programa. Se dice lo que se sabe en cada caso.
+                              nota.autor_estado === "el_programa"
+                                ? frase(c.nota_lo_escribio_el_programa)
+                                : nota.autor_estado === "sin_nombre"
+                                  ? `${frase(c.nota_la_escribio)}: ${frase(c.nota_autor_sin_nombre)}`
+                                  : `${frase(c.nota_la_escribio)}: ${frase(nota.autor)}`
+                            }
                             ${nota.creado_en ? html`· ${frase(String(nota.creado_en).slice(0, 10))}` : null}
                           </p>
                         </li>
@@ -418,7 +427,7 @@ export function PantallaDeUnContacto({
               id="contacto-nota-texto"
               etiqueta=${c.nota_nueva}
               pista=${c.nota_nueva_pista}
-              valor=""
+              valor=${borrador.nota_a_medias || ""}
             />
             <div className="barra-acciones">
               <button

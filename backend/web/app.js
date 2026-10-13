@@ -17378,6 +17378,12 @@ function pantallaFichaDeContacto() {
       textos: textosDeLosContactos(),
       borrador: {
         ...ficha,
+        // **Lo que el agricultor había escrito y no se llegó a guardar** (13/10/2026). Se quedaba en el estado y
+        // **no llegaba hasta aquí**, así que la pantalla no lo podía poner en el campo: al fallar el envío, el
+        // texto se perdía al repintar y había que escribirlo otra vez —con guantes—. Lo encontró el subagente de
+        // pruebas **ejecutando** la aserción (`undefined`), no leyendo el código, y es justo lo que la revisión
+        // del dueño pidió comprobar: «conservar el texto si falla el envío».
+        nota_a_medias: suyo.nota_a_medias || "",
         papeles: ficha.papeles || [],
         papeles_segun_lo_escrito_texto: segunLoEscrito,
       },
@@ -17485,11 +17491,26 @@ async function apuntarLaNota(id) {
     suyo.error = t("mensajes.C7_una_nota_necesita_texto", "");
     return pantallaFichaDeContacto();
   }
-  const resultado = await mandarCambio(`/api/contactos/${id}/notas`, "POST", { texto });
+  // **La clave es de la ACCIÓN, no del clic** (13/10/2026, revisión). Se crea una vez y se reutiliza mientras la
+  // nota no quede guardada, así que un reintento —porque falló la red, porque el agricultor volvió a pulsar con
+  // los guantes— **no apunta dos notas**: el servidor reconoce la acción y contesta la que ya había. Y se renueva
+  // solo al guardarla, para que la siguiente nota sea una acción nueva (dos notas a propósito con el mismo texto
+  // son dos notas).
+  const clave = suyo.clave_de_la_nota || (suyo.clave_de_la_nota = claveDeReenvio("nota"));
+  const resultado = await mandarCambio(`/api/contactos/${id}/notas`, "POST", {
+    texto,
+    clave_de_reenvio: clave,
+  });
   if (resultado.error) {
+    // **Y no se pierde lo escrito**: el texto se queda en el estado y la pantalla lo vuelve a poner en el campo.
+    // Antes se repintaba con el campo vacío y el agricultor tenía que escribirlo otra vez —con guantes— después de
+    // un fallo de red. Es lo que la revisión pidió comprobar.
+    suyo.nota_a_medias = texto;
     suyo.error = resultado.error;
     return pantallaFichaDeContacto();
   }
+  suyo.nota_a_medias = "";
+  suyo.clave_de_la_nota = null;
   if (campo) campo.value = "";
   // **Se vuelve a abrir la ficha por su puerta**, que es la que sabe leerla entera (y la que rellena lo que la
   // pantalla necesita). Antes lo hacía a mano con `mandarCambio(..., "GET", null)` y **no traía la nota**: la
