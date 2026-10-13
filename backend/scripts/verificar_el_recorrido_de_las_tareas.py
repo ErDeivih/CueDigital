@@ -1767,35 +1767,54 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         )
 
         # ---- extra: ¿y si la dirección CON el filtro se abre desde fuera? -------------
-        # **Esto separa dos averías que se arreglan en sitios distintos** (y que hasta ahora iban juntas): que el
-        # filtro **no se escriba** en la dirección, o que la dirección **no se lea** al abrirla. Se navega de
-        # verdad a `#/tareas?vencimiento=vencidas` —como si fuera un enlace mandado— y se mira qué sale.
-        decir("")
-        decir("  --- extra: se abre `#/tareas?vencimiento=vencidas` desde fuera (como un enlace) ---")
-        nav.abrir(f"http://127.0.0.1:{PUERTO}/#/tareas?vencimiento=vencidas", esperar=3.5)
-        nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=30)
-        time.sleep(1.2)
-        por_el_enlace = leer_la_lista(nav)
-        decir(
-            f"dirección tras abrirla: {por_el_enlace.get('direccion')!r}   "
-            f"filas: {por_el_enlace.get('cuantas')}   "
-            f"marcado: {[f.get('vencimiento') for f in (por_el_enlace.get('filtros') or []) if f.get('marcado')]}"
-        )
-        decir(f"lo que se ve: {(por_el_enlace.get('texto') or '')[:400]!r}")
-        resultado["abrir_el_enlace_del_filtro"] = {
-            "direccion": por_el_enlace.get("direccion"),
-            "titulos": [f.get("titulo") for f in (por_el_enlace.get("filas") or [])],
-        }
-        comprobar(
-            sorted(f.get("titulo") for f in (por_el_enlace.get("filas") or []))
-            == sorted(medidos["vencidas"]["de_la_puerta"]),
-            "el enlace CON el filtro sí filtra al abrirlo desde fuera "
-            f"({[f.get('titulo') for f in (por_el_enlace.get('filas') or [])]})",
-        )
-        comprobar(
-            lleva_el_filtro(por_el_enlace.get("direccion"), "vencidas"),
-            "pero la aplicación reescribe la dirección sin el filtro, nada más pintar la lista "
-            f"({por_el_enlace.get('direccion')!r})",
+        # **Esto separa dos averías que se arreglan en sitios distintos**: que el filtro **se escriba** en la
+        # dirección (que es lo que mide el bucle de arriba) y que la dirección **se lea y se conserve** al
+        # abrirla. Se navega de verdad a `#/tareas?vencimiento=vencidas` —como si fuera un enlace mandado— y se
+        # mira qué sale.
+        #
+        # **Y se mide DOS veces, porque son dos caminos distintos del navegador** (medido, 14/10/2026):
+        #   · **pegando el enlace** con la lista ya abierta: solo cambia el fragmento, así que el documento NO
+        #     se recarga y el estado de la página sigue vivo;
+        #   · **abriendo el enlace desde fuera**, con un documento nuevo por medio (el enlace mandado, el
+        #     marcador, la pestaña nueva), que es lo que dice el encargo con «desde fuera».
+        # Los dos tienen que conservar el filtro: si uno lo conserva y el otro no, la lista se puede enlazar solo
+        # a medias, y eso hay que decirlo con las dos medidas delante.
+        for como, de_cero in (
+            ("pegando el enlace, sin recargar el documento", False),
+            ("abriendo el enlace desde fuera, con un documento nuevo", True),
+        ):
+            decir("")
+            decir(f"  --- extra: `#/tareas?vencimiento=vencidas` {como} ---")
+            if de_cero:
+                nav.abrir("about:blank", esperar=1.0)
+            nav.abrir(f"http://127.0.0.1:{PUERTO}/#/tareas?vencimiento=vencidas", esperar=3.5)
+            nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=30)
+            time.sleep(1.2)
+            por_el_enlace = leer_la_lista(nav)
+            decir(
+                f"dirección tras abrirla: {por_el_enlace.get('direccion')!r}   "
+                f"filas: {por_el_enlace.get('cuantas')}   "
+                f"marcado: {[f.get('vencimiento') for f in (por_el_enlace.get('filtros') or []) if f.get('marcado')]}"
+            )
+            decir(f"lo que se ve: {(por_el_enlace.get('texto') or '')[:400]!r}")
+            resultado.setdefault("abrir_el_enlace_del_filtro", {})[como] = {
+                "direccion": por_el_enlace.get("direccion"),
+                "titulos": [f.get("titulo") for f in (por_el_enlace.get("filas") or [])],
+            }
+            comprobar(
+                sorted(f.get("titulo") for f in (por_el_enlace.get("filas") or []))
+                == sorted(medidos["vencidas"]["de_la_puerta"]),
+                f"el enlace CON el filtro sí filtra al abrirlo ({como}) "
+                f"({[f.get('titulo') for f in (por_el_enlace.get('filas') or [])]})",
+            )
+            comprobar(
+                lleva_el_filtro(por_el_enlace.get("direccion"), "vencidas"),
+                f"y la dirección NO se reescribe sin el filtro: sigue puesto ({como}) "
+                f"({por_el_enlace.get('direccion')!r})",
+            )
+        resultado["enlace_con_filtro_en_la_direccion"] = all(
+            lleva_el_filtro(medido.get("direccion"), "vencidas")
+            for medido in (resultado.get("abrir_el_enlace_del_filtro") or {}).values()
         )
         # **El cierre desde la propia lista**, que es otra puerta distinta de la de la ficha (`data-id` es el
         # contacto, `data-tarea` la tarea). Se anda porque un botón que no hace nada en una lista es de las cosas
@@ -2047,6 +2066,12 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
         and lleva_el_filtro(recargada.get("direccion"), "hoy")
         and len(los_marcados) == 1
         and los_marcados[0].get("vencimiento") == "hoy",
+        # **La recarga y el enlace, dichos con el filtro del encargo** («vencidas», que deja unas pocas de seis).
+        # Van con nombre propio porque son averías distintas de la de arriba: una es que el filtro **no se
+        # escriba** en la dirección, otra que la dirección **no se conserve** al recargar y otra que no se
+        # respete al **abrirla desde fuera**. Un solo dato para las tres escondería cuál falla.
+        "recarga_vencidas": bool(recorrido.get("recarga_vencidas")),
+        "enlace_con_filtro": bool(recorrido.get("enlace_con_filtro_en_la_direccion")),
         # **Los rótulos de la pantalla** (medido): la lista de `#/tareas` sale con su título y con los nombres de
         # sus cuatro botones. Sin esto, la pantalla se abre **muda**: se puede usar, pero no se sabe qué es nada.
         "rotulos": bool(recorrido.get("rotulos_de_la_lista")),

@@ -27,7 +27,8 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func, select
 
 from .. import accesos, models, saldos, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual
+from .. import correcciones
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
 
 router = APIRouter(prefix="/api/contactos", tags=["contactos"])
 
@@ -197,4 +198,130 @@ def la_vista_previa_de_una_fusion(
             "Tu cuenta no puede ver las cuentas de esta finca, así que la vista previa no lleva importes."
         )
 
+    return respuesta
+
+
+@router.post("/{contacto_id}/fusion/{destino_id}")
+def fusionar_dos_fichas(
+    contacto_id: int,
+    destino_id: int,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    poder: PuedeModificar,
+) -> dict:
+    """**Junta dos fichas**, moviendo lo que cuelga de una a la otra. Todo dentro de una transacción.
+
+    EL ORDEN IMPORTA, Y ES EL QUE MANDA EL INVENTARIO:
+
+      1. **La fila de auditoría va PRIMERO**, con la lista `(tabla, id)` de cada fila que se va a mover. Es lo único
+         que hace la operación **reversible sin restaurar la base**: `papeles_de_un_contacto` y
+         `enlaces_de_contacto` no tienen columna de anulación, así que sin esa lista no habría forma de saber qué
+         era de quién.
+      2. Se resuelven las dos colisiones **duras** —el papel repetido y el principal repetido por clase—, que son
+         fallos de la base y no avisos.
+      3. Se repuntan las once columnas.
+      4. El origen **no se borra**: se queda con su nombre y `fusionado_con_id` apuntando al destino.
+
+    Y lo que NO se toca: el texto de los documentos (solo cambia de qué ficha cuelgan), el autor y la fecha de cada
+    nota, el nombre que decía cada papel, y los importes —que no se compensan entre sentidos distintos—.
+    """
+    if contacto_id == destino_id:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Una ficha no se puede fusionar consigo misma.")
+    origen = _la_ficha(db, explotacion.id, contacto_id)
+    destino = _la_ficha(db, explotacion.id, destino_id)
+    if origen.fusionado_con_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Esa ficha ya se fusionó con otra. Una fusión repetida no se hace dos veces.",
+        )
+
+    # **Qué se va a mover, contado antes de tocarlo** (y con los identificadores, para la auditoría).
+    movidas: dict[str, list[int]] = {}
+    for nombre, modelo in LAS_DEL_DINERO + LAS_QUE_CUELGAN:
+        ids = list(db.scalars(select(modelo.id).where(modelo.contacto_id == origen.id)))
+        if ids:
+            movidas[nombre] = ids
+
+    # **Los saldos, ANTES**, para poder exigir después que la suma es la misma.
+    saldo_origen = saldos.el_saldo_de_un_contacto(db, explotacion_id=explotacion.id, contacto_id=origen.id)
+    saldo_destino = saldos.el_saldo_de_un_contacto(db, explotacion_id=explotacion.id, contacto_id=destino.id)
+
+    # **1. La auditoría, primero.** Con el origen, el destino, qué se movió y qué se decidió.
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=destino.id,
+        accion="fusion",
+        datos={
+            "origen_id": origen.id,
+            "origen_nombre": origen.nombre,
+            "destino_id": destino.id,
+            "movidas": movidas,
+            "saldo_origen_antes": saldo_origen,
+            "saldo_destino_antes": saldo_destino,
+        },
+    )
+
+    # **2. Las dos colisiones duras.** `uq_papel_del_contacto` y `uq_canal_principal_del_contacto`.
+    papeles_del_destino = {
+        papel.papel
+        for papel in db.scalars(select(models.PapelDeUnContacto).where(models.PapelDeUnContacto.contacto_id == destino.id))
+    }
+    papeles_repetidos: list[str] = []
+    for papel in list(db.scalars(select(models.PapelDeUnContacto).where(models.PapelDeUnContacto.contacto_id == origen.id))):
+        if papel.papel in papeles_del_destino:
+            papeles_repetidos.append(papel.papel)
+            db.delete(papel)
+    db.flush()
+
+    principales_del_destino = {
+        canal.clase
+        for canal in db.scalars(
+            select(models.CanalDeUnContacto).where(
+                models.CanalDeUnContacto.contacto_id == destino.id,
+                models.CanalDeUnContacto.principal.is_(True),
+            )
+        )
+    }
+    apartados: list[str] = []
+    for canal in db.scalars(
+        select(models.CanalDeUnContacto).where(
+            models.CanalDeUnContacto.contacto_id == origen.id,
+            models.CanalDeUnContacto.principal.is_(True),
+        )
+    ):
+        if canal.clase in principales_del_destino:
+            apartados.append(canal.clase)
+            canal.principal = False  # **El canal no se pierde**: solo deja de mandar, porque el del destino manda.
+    db.flush()
+
+    # **3. Y se repuntan las once columnas.** `update()` masivo: es una sola sentencia por tabla y no inventa filas.
+    from sqlalchemy import update  # noqa: PLC0415
+
+    for nombre, modelo in LAS_DEL_DINERO + LAS_QUE_CUELGAN:
+        db.execute(update(modelo).where(modelo.contacto_id == origen.id).values(contacto_id=destino.id))
+
+    # **4. El origen no se borra**: se queda y remite. Y el destino queda marcado como tocado a mano.
+    origen.fusionado_con_id = destino.id
+    destino.editado_a_mano = True
+    db.commit()
+    db.refresh(destino)
+
+    # **Y la comprobación que el encargo pide**: la suma de los dos saldos de antes tiene que ser la de ahora.
+    saldo_despues = saldos.el_saldo_de_un_contacto(db, explotacion_id=explotacion.id, contacto_id=destino.id)
+    respuesta = {
+        "fusionado": {"origen_id": origen.id, "destino_id": destino.id},
+        "movidas": {nombre: len(ids) for nombre, ids in movidas.items()},
+        "decisiones": {"papeles_repetidos": sorted(papeles_repetidos), "principales_apartados": sorted(apartados)},
+    }
+    # **Los importes, solo con la capacidad económica** (el contrato: «sin permiso económico no aparecen importes»).
+    if accesos.puede_ver_lo_economico(db, usuario.id, explotacion.id):
+        respuesta["saldos"] = {
+            "origen_antes": saldo_origen, "destino_antes": saldo_destino, "destino_despues": saldo_despues,
+        }
+    else:
+        respuesta["saldos"] = None
     return respuesta

@@ -3410,6 +3410,14 @@ class Contacto(Base):
     # `editado_a_mano`, porque `database.asegurar_columnas` es quien traduce el valor por defecto a cada
     # dialecto cuando añade la columna a una tabla que ya existía.
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    # **A qué ficha se fusionó esta** (Entrega 5, 14/10/2026). El origen **no se borra**: se queda con su
+    # nombre y remite al destino, para que los enlaces y los papeles que apuntaban a él sigan siendo
+    # comprensibles. El encargo lo pide así: «el contacto fusionado debe remitir al destino» y «no borrar
+    # físicamente el origen como atajo».
+    #
+    # Nulo quiere decir «esta ficha no se ha fusionado con ninguna». Y **es lo que hace segura la fusión
+    # repetida**: si ya tiene destino, no se vuelve a fusionar (se contesta 409 y no se toca nada).
+    fusionado_con_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), nullable=True)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
