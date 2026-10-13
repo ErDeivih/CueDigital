@@ -160,6 +160,7 @@ Las tres últimas, por orden:
 | **Las semillas** (`backend/web/react/pantallas/semillas.js`) | ✅ En React (T10) |
 | **Sembrar una semilla y corregir la siembra** (`backend/web/react/pantallas/siembras.js`) | ✅ En React (T10) |
 | **Las personas y las empresas** (`backend/web/react/pantallas/contactos.js`) | ✅ En React (T11) |
+| **Lo que hay que hacer** (`backend/web/react/pantallas/tareas.js`) | ✅ En React (Entrega 3, 14/10/2026) |
 | **La revisión de los nombres escritos** (`backend/web/react/pantallas/revision_de_contactos.js`) | ✅ En React (T11) |
 | **El importe de una entrega** (`backend/web/react/pantallas/venta_importe.js`) | ✅ En React (T12) |
 | **Un ajuste de peso, humedad o calidad** (`backend/web/react/pantallas/venta_ajuste.js`) | ✅ En React (T12) |

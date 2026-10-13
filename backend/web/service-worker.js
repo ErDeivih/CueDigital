@@ -353,6 +353,10 @@ const FICHEROS = [
   // en la nave y en el despacho, y la revisión de los nombres escritos es una decisión sobre datos que
   // hay que poder mirar con calma: las dos son un hueco si faltan en la caché.
   "/react/pantallas/contactos.js",
+  // **La pantalla de las tareas** (Entrega 3, 14/10/2026). Va aquí porque sin este fichero en la caché el
+  // agricultor abre `#/tareas` **sin cobertura** y se encuentra una pantalla en blanco: es justo lo que la
+  // prueba `test_todo_el_javascript_de_react_se_guarda_para_el_campo` vigila, y por eso la cazó.
+  "/react/pantallas/tareas.js",
   "/react/pantallas/revision_de_contactos.js",
   // La maquinaria (T14, 03/10/2026): la lista y la ficha de una máquina.
   "/react/pantallas/maquinaria.js",
