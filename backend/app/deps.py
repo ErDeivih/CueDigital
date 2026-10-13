@@ -71,6 +71,43 @@ def explotacion_actual(usuario: UsuarioActual, db: Db) -> models.Explotacion:
 ExplotacionActual = Annotated[models.Explotacion, Depends(explotacion_actual)]
 
 
+def exigir_poder_modificar(usuario: UsuarioActual, db: Db) -> None:
+    """**403 si esta cuenta no puede modificar** lo de esta finca (Entrega 4, 13/10/2026).
+
+    POR QUÉ ESTO NO ES UN BOTÓN ESCONDIDO. El encargo lo dice con estas palabras: *«ocultar un botón no constituye
+    autorización»*. Esconder el botón está bien para no ofrecer lo que no se puede hacer, pero **la puerta es la que
+    autoriza**: se comprueba aquí, en el servidor, y da igual que se llegue por la pantalla, por la URL o por un
+    identificador a mano.
+
+    Y **sin fila de acceso no hay capacidad**: una cuenta de la que no se sabe nada **no puede** modificar. Es la
+    regla de la casa —lo que no se sabe no se convierte en un «sí»—.
+    """
+    if not accesos.puede_modificar(db, usuario.id, usuario.explotacion_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta puede mirar esta finca, pero no cambiarla.",
+        )
+
+
+PuedeModificar = Annotated[None, Depends(exigir_poder_modificar)]
+
+
+def exigir_ver_lo_economico(usuario: UsuarioActual, db: Db) -> None:
+    """**403 si esta cuenta no puede ver el dinero** (Entrega 4, 13/10/2026).
+
+    Y no es «esconder los importes»: la puerta **no los manda**. El contrato: *«sin permiso económico: no aparecen
+    importes ni documentos restringidos»*.
+    """
+    if not accesos.puede_ver_lo_economico(db, usuario.id, usuario.explotacion_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta no puede ver las cuentas de esta finca.",
+        )
+
+
+PuedeVerLoEconomico = Annotated[None, Depends(exigir_ver_lo_economico)]
+
+
 def obtener_de_la_explotacion(db: Session, modelo, objeto_id: int, explotacion_id: int):
     """Coge un objeto comprobando que es de esta finca.
 

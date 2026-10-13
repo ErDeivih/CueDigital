@@ -75,6 +75,37 @@ def puede_entrar(db: Session, usuario_id: int, explotacion_id: int) -> bool:
     return acceso(db, usuario_id, explotacion_id) is not None
 
 
+
+def _la_capacidad(db, usuario_id: int, explotacion_id: int, cual: str) -> bool:
+    """El valor de una capacidad, mirando el acceso. **Sin fila de acceso, no hay capacidad.**"""
+    acceso = db.scalar(
+        select(models.AccesoAFinca).where(
+            models.AccesoAFinca.usuario_id == usuario_id,
+            models.AccesoAFinca.explotacion_id == explotacion_id,
+        )
+    )
+    if acceso is None:
+        return False
+    return bool(getattr(acceso, cual))
+
+
+def puede_modificar(db, usuario_id: int, explotacion_id: int) -> bool:
+    """**Modificar** lo de esa finca (Entrega 4, 13/10/2026): apuntar, corregir y quitar.
+
+    Consultar ya lo da el propio acceso a la finca: esto es lo que se puede **cambiar**.
+    """
+    return _la_capacidad(db, usuario_id, explotacion_id, "puede_modificar")
+
+
+def puede_ver_lo_economico(db, usuario_id: int, explotacion_id: int) -> bool:
+    """**Consultar lo económico**: los saldos, los importes y los documentos con dinero.
+
+    El contrato lo dice con estas palabras: *«ocultar dinero también lo elimina de la respuesta»*. Por eso esto
+    no se comprueba en la pantalla, sino **en la puerta**: si no hay capacidad, la respuesta no lleva el dinero
+    —ni la pantalla puede enseñarlo aunque quiera—.
+    """
+    return _la_capacidad(db, usuario_id, explotacion_id, "puede_ver_lo_economico")
+
 def es_titular(db: Session, usuario_id: int, explotacion_id: int) -> bool:
     suyo = acceso(db, usuario_id, explotacion_id)
     return suyo is not None and suyo.papel == TITULAR
