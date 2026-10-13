@@ -949,6 +949,85 @@ def rellenar_la_huella_del_comando(destino_engine: Engine | None = None) -> tupl
     return soltadas, rellenadas, papeles
 
 
+def llevar_los_canales_de_los_contactos_a_su_tabla(destino_engine: Engine | None = None) -> int:
+    """Pasa a la tabla de canales **lo que ya estaba apuntado** en la ficha (Entrega 2, 13/10/2026).
+
+    **Por qué hace falta.** Hasta hoy la ficha tenía **un** teléfono, **un** correo y **una** dirección. A partir de
+    ahora puede tener varios, con su etiqueta y su principal. Si lo que ya estaba apuntado se quedara solo en las
+    columnas de siempre, la pantalla nueva saldría **vacía** para todas las fichas que ya existen —y el agricultor
+    creería que se ha perdido lo que tenía—.
+
+    **La regla, y es la que no pierde nada:** cada valor que haya en la ficha pasa a ser el canal **principal** de
+    su clase, **tal cual está guardado** —sin arreglar el teléfono, sin poner prefijos, sin tocar el texto—. La
+    dirección se lleva con su localidad, que es como se apunta en el campo. Un valor vacío **no** crea canal: no
+    hay nada que llevar.
+
+    **Los cuatro campos de `Contacto` se quedan como están**: los leen cinco sitios (la exportación, la búsqueda,
+    la ficha, la tabla y la corrección) y lo que ya estaba apuntado **no se mueve de sitio**. Esto **copia**, no
+    traslada.
+
+    Se puede correr dos veces: **solo mira las fichas que no tienen ningún canal todavía**.
+    """
+    from sqlalchemy import inspect, text
+
+    motor = destino_engine or engine
+    inspector = inspect(motor)
+    if not inspector.has_table("contactos") or not inspector.has_table("canales_de_un_contacto"):
+        return 0
+
+    with motor.begin() as conexion:
+        # Las fichas con algo que llevar **y sin ningún canal todavía**. Los paréntesis del `OR` no son adorno: sin
+        # ellos, el `AND` se comería las dos primeras condiciones y se llevarían canales de fichas ya hechas.
+        las_que_faltan = conexion.execute(
+            text(
+                """
+                SELECT id, explotacion_id, telefono, correo, direccion, localidad
+                  FROM contactos
+                 WHERE (
+                       (telefono IS NOT NULL AND TRIM(telefono) <> '')
+                    OR (correo IS NOT NULL AND TRIM(correo) <> '')
+                    OR (direccion IS NOT NULL AND TRIM(direccion) <> '')
+                       )
+                   AND id NOT IN (SELECT contacto_id FROM canales_de_un_contacto)
+                """
+            )
+        ).fetchall()
+
+        llevados = 0
+        for ficha in las_que_faltan:
+            # Una fila por clase con valor. El teléfono y el correo van tal cual; la dirección, con su localidad.
+            suyos = []
+            if ficha.telefono and ficha.telefono.strip():
+                suyos.append(("telefono", ficha.telefono, None, None, None))
+            if ficha.correo and ficha.correo.strip():
+                suyos.append(("correo", None, ficha.correo, None, None))
+            if ficha.direccion and ficha.direccion.strip():
+                suyos.append(("direccion", None, None, ficha.direccion, ficha.localidad))
+            for clase, telefono, correo, direccion, localidad in suyos:
+                conexion.execute(
+                    text(
+                        """
+                        INSERT INTO canales_de_un_contacto
+                            (explotacion_id, contacto_id, clase, etiqueta, telefono, correo, direccion,
+                             localidad, principal)
+                        VALUES (:explotacion_id, :contacto_id, :clase, NULL, :telefono, :correo, :direccion,
+                                :localidad, 1)
+                        """
+                    ),
+                    {
+                        "explotacion_id": ficha.explotacion_id,
+                        "contacto_id": ficha.id,
+                        "clase": clase,
+                        "telefono": telefono,
+                        "correo": correo,
+                        "direccion": direccion,
+                        "localidad": localidad,
+                    },
+                )
+                llevados += 1
+    return llevados
+
+
 def repartir_lo_cobrado_que_ya_estaba(destino_engine: Engine | None = None) -> int:
     """Pasa a la tabla de aplicaciones **lo que ya estaba imputado** en los cobros de antes (CRM-01).
 
@@ -1057,3 +1136,13 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
             f"sin tocar ningún dato): {', '.join(reconstruidas)}"
         )
     return anadidas, imposibles
+
+    # **Y los canales de las fichas que ya existían** (Entrega 2, 13/10/2026): va **después** de los
+    # índices, porque el índice parcial que garantiza un solo principal por clase tiene que existir ya
+    # cuando se escriben los principales que se llevan.
+    canales = llevar_los_canales_de_los_contactos_a_su_tabla(motor)
+    if canales:
+        print(
+            f"Canales de las fichas que ya existían: {canales} llevados a la tabla de canales "
+            "(el principal de cada clase, tal cual estaban apuntados; no se toca ni un texto)."
+        )
