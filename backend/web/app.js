@@ -266,6 +266,7 @@ const PANTALLAS_EN_REACT = new Set([
   // guardan para abrir sin cobertura y el agricultor se queda sin pantalla cuando no hay señal.
   "tareas",
   "trabajos_a_terceros",
+  "fusion",
   "revision_de_contactos",
   // T12 (03/10/2026): el dinero de lo que se vende. Son siete pantallas en tres ficheros
   // (`ventas.js`, `facturas_emitidas.js` y `cobros.js`): la lista con su tabla, la factura nuestra (la

@@ -162,6 +162,7 @@ Las tres últimas, por orden:
 | **Las personas y las empresas** (`backend/web/react/pantallas/contactos.js`) | ✅ En React (T11) |
 | **Lo que hay que hacer** (`backend/web/react/pantallas/tareas.js`) | ✅ En React (Entrega 3, 14/10/2026) |
 | **Los servicios a terceros** (`backend/web/react/pantallas/trabajos_a_terceros.js`) | ✅ En React (CRM-04, 14/10/2026) |
+| **La fusión de dos fichas** (`backend/web/react/pantallas/fusion.js`) | ✅ En React (Entrega 5, 14/10/2026) |
 | **La revisión de los nombres escritos** (`backend/web/react/pantallas/revision_de_contactos.js`) | ✅ En React (T11) |
 | **El importe de una entrega** (`backend/web/react/pantallas/venta_importe.js`) | ✅ En React (T12) |
 | **Un ajuste de peso, humedad o calidad** (`backend/web/react/pantallas/venta_ajuste.js`) | ✅ En React (T12) |
