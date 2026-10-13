@@ -635,6 +635,11 @@ def _la_ficha(db, contacto: models.Contacto, escritos: list[dict]) -> dict:
         )
     }
     return {
+        # **A quién remite esta ficha si se fusionó** (Entrega 5, 14/10/2026). La fusión lo escribe desde el
+        # principio (`fusion_api.py:332`), pero **este diccionario se hace a mano** y no lo tenía: el esquema
+        # rellenaba su valor por defecto, así que el remitir **nunca salía por la puerta** y el cliente no podía
+        # saber a dónde fue la ficha que desapareció. Lo midió la andadura de la fusión.
+        "fusionado_con_id": contacto.fusionado_con_id,
         **_pintar_contacto(
             contacto,
             papeles=_los_papeles(db, contacto),

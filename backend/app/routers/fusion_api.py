@@ -135,6 +135,11 @@ def _las_colisiones(uno: dict, otro: dict) -> list[dict]:
     if uno["tiene_sus_notas_escritas"] and otro["tiene_sus_notas_escritas"]:
         colisiones.append(
             {
+            # **Y se dice que HAY QUE PARAR** (14/10/2026). La vista previa avisaba de la colisión pero no decía
+            # esto, así que la pantalla —que busca esta señal para no ofrecer el botón— no podía parar: medido, la
+            # andadura encontró que la pantalla seguía ofreciendo juntarlas. El servidor **sí** se niega (409), y
+            # eso es lo que de verdad impide perder la nota; esto es para que la pantalla lo diga ANTES.
+            "para_la_fusion": True,
                 "que": "las_dos_tienen_notas_escritas",
                 "detalle": None,
                 "por_que": "`Contacto.notas` es **un campo de texto único**, no la tabla de notas: "
