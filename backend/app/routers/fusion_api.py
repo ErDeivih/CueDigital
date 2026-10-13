@@ -24,6 +24,7 @@ restringidos».
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func, select
 
 from .. import accesos, models, saldos, textos
@@ -260,8 +261,10 @@ def fusionar_dos_fichas(
             "origen_nombre": origen.nombre,
             "destino_id": destino.id,
             "movidas": movidas,
-            "saldo_origen_antes": saldo_origen,
-            "saldo_destino_antes": saldo_destino,
+            # **Codificados**: los saldos llevan `Decimal` y esta columna es JSON. Lo cazó la prueba
+            # («Object of type Decimal is not JSON serializable»), no yo.
+            "saldo_origen_antes": jsonable_encoder(saldo_origen),
+            "saldo_destino_antes": jsonable_encoder(saldo_destino),
         },
     )
 
