@@ -327,7 +327,12 @@ def test_la_migracion_de_los_canales_CORRE_AL_ARRANCAR(cliente, cuenta, db_sesio
     está. Si alguien vuelve a mover la llamada detrás de un `return`, esto se pone rojo.
     """
     ficha = _un_contacto_con_todo(cliente, cuenta)
-    assert _los_canales_de(db_sesion, ficha["id"]) == [], "de partida no hay canales: son nuevos"
+    # **La ficha se pone como una de antes de que el alta creara canales** (se le quitan los que creó), que es el
+    # estado en el que esta prueba tiene sentido: lo que se comprueba es que **el arranque** los lleva.
+    for canal in _los_canales_de(db_sesion, ficha["id"]):
+        db_sesion.delete(canal)
+    db_sesion.commit()
+    assert _los_canales_de(db_sesion, ficha["id"]) == [], "se deja la ficha como una de antes: sin canales"
 
     database.crear_tablas()
 
