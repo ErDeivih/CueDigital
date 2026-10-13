@@ -1,12 +1,13 @@
 """Mi finca y las campañas."""
 
 from __future__ import annotations
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from .. import certificados, correcciones, models, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import PuedeVerLoEconomico, Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import CampanaCorreccion, CampanaEntrada, CampanaSalida, ExplotacionSalida
 
 router = APIRouter(prefix="/api", tags=["finca"])
@@ -140,6 +141,113 @@ def crear_campana(
     db.add(campana)
     db.commit()
     return campana
+
+
+@router.get("/campanas/comparar")
+def comparar_dos_campanas(
+    una_id: int,
+    otra_id: int,
+    db: Db,
+    usuario: UsuarioActual,
+    explotacion: ExplotacionActual,
+    _: PuedeVerLoEconomico,
+):
+    """**Comparar dos campañas, y decir si NO se pueden comparar** (CRM-05, 14/10/2026).
+
+    El contrato lo pide así: *«comparar campañas declara áreas y cobertura distintas»*. Y la tentación es
+    poner dos márgenes uno al lado del otro y dejarlos restar — que es exactamente lo que **no** se puede
+    hacer si una campaña se trabajó sobre 40 hectáreas y la otra sobre 12, o si de parte de las parcelas no
+    consta la superficie.
+
+    LAS ÁREAS DE UNA CAMPAÑA. `Parcela` **no** lleva `campana_id`: la tierra es la tierra y la campaña es el
+    año. Así que lo que una campaña trabajó son **las parcelas que tocan sus apuntes**, y para eso se usan
+    **las tres tablas que la casa ya usa en el cuaderno** (`cuaderno.py`: tratamientos, fertilizaciones y
+    labores). La superficie es `Parcela.superficie_oficial`, la del SIGPAC: *«la oficial manda»*, dice su
+    modelo.
+
+    LA COBERTURA, COMO LA CASA LA DECLARA. Aquí se copia el patrón que ya está escrito en
+    `cuaderno_cyl.py:372`: **una cifra parcial no se rellena con ceros, se declara parcial**. Se suman solo
+    las parcelas que traen superficie y se dice **cuántas no la traen**, *«para que quien lea sepa que esa
+    cifra es parcial»*. Y si alguna de las dos tiene parcelas sin superficie, **no son comparables**: la
+    diferencia que se vería podría ser un agujero en los datos, no una diferencia de verdad.
+    """
+    def _la_mia(campana_id: int) -> models.Campana:
+        # **De esta finca, o 404** — sin distinguir «no existe» de «no es tuya», como en el resto.
+        campana = db.get(models.Campana, campana_id)
+        if campana is None or campana.explotacion_id != explotacion.id:
+            raise HTTPException(status_code=404, detail="Esa campaña no es de esta finca.")
+        return campana
+
+    def _lo_que_trabajo(campana: models.Campana) -> dict:
+        tocadas: set[int] = set()
+        apuntes = 0
+        for modelo in (models.TratamientoFitosanitario, models.RegistroFertilizacion, models.Labor):
+            filas = db.execute(
+                select(modelo.parcela_id).where(
+                    modelo.explotacion_id == explotacion.id,
+                    modelo.campana_id == campana.id,
+                )
+            ).scalars().all()
+            apuntes += len(filas)
+            tocadas.update(pid for pid in filas if pid is not None)
+        parcelas = (
+            db.execute(
+                select(models.Parcela).where(
+                    models.Parcela.explotacion_id == explotacion.id,
+                    models.Parcela.id.in_(tocadas),
+                )
+            ).scalars().all()
+            if tocadas
+            else []
+        )
+        hectareas = sum(
+            (Decimal(str(p.superficie_oficial)) for p in parcelas if p.superficie_oficial is not None),
+            Decimal("0"),
+        )
+        sin_superficie = sum(1 for p in parcelas if p.superficie_oficial is None)
+        return {
+            "campana_id": campana.id,
+            "anio": campana.anio,
+            "fecha_inicio": campana.fecha_inicio.isoformat() if campana.fecha_inicio else None,
+            "fecha_fin": campana.fecha_fin.isoformat() if campana.fecha_fin else None,
+            "cerrada": bool(campana.cerrada),
+            "apuntes": apuntes,
+            "parcelas": len(parcelas),
+            # **La cifra con su cobertura al lado**: nunca se calla que es parcial.
+            "hectareas": float(hectareas),
+            "parcelas_sin_superficie": sin_superficie,
+            "la_superficie_es_parcial": sin_superficie > 0,
+        }
+
+    una = _la_mia(una_id)
+    otra = _la_mia(otra_id)
+    suya = _lo_que_trabajo(una)
+    ajena = _lo_que_trabajo(otra)
+
+    # **Por qué no se pueden comparar, en palabras** — nunca un «no» seco, y cada motivo dicho como es:
+    # no es lo mismo medir mal que no haber medido.
+    motivos: list[str] = []
+    if una.anio == otra.anio:
+        motivos.append(f"las dos son del año {una.anio}: esto compara años distintos")
+    if suya["la_superficie_es_parcial"] or ajena["la_superficie_es_parcial"]:
+        motivos.append(
+            "de algunas parcelas no consta la superficie oficial "
+            f"({suya['parcelas_sin_superficie']} en {una.anio} y {ajena['parcelas_sin_superficie']} en {otra.anio}): "
+            "la diferencia que se ve podría ser un hueco en los datos"
+        )
+    if suya["cerrada"] != ajena["cerrada"]:
+        motivos.append("una está cerrada y la otra no: la que sigue abierta todavía va a recibir apuntes")
+    if not suya["parcelas"] or not ajena["parcelas"]:
+        motivos.append("alguna de las dos no tiene ni una parcela trabajada apuntada")
+
+    return {
+        "una": suya,
+        "otra": ajena,
+        "comparables": not motivos,
+        "y_por_que_no": motivos,
+        # Lo que sí se puede restar cuando se puede — y **nada** cuando no.
+        "diferencia_de_hectareas": (round(suya["hectareas"] - ajena["hectareas"], 4) if not motivos else None),
+    }
 
 
 @router.get("/campanas/actual", response_model=CampanaSalida)
