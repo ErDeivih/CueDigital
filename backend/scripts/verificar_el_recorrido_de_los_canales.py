@@ -229,15 +229,25 @@ def _esperar_al_servidor(segundos: float = 90.0) -> bool:
     return False
 
 
-def levantar_el_servidor(temporal: pathlib.Path) -> tuple[subprocess.Popen, str, pathlib.Path, str]:
-    """Arranca uvicorn contra una base temporal y devuelve el proceso, su dirección y su bitácora."""
+def levantar_el_servidor(
+    temporal: pathlib.Path, *, sufijo: str = ""
+) -> tuple[subprocess.Popen, str, pathlib.Path, str]:
+    """Arranca uvicorn contra una base temporal y devuelve el proceso, su dirección y su bitácora.
+
+    `sufijo` distingue la bitácora de un arranque del de otro: este guion **reinicia** el servidor contra la
+    misma base para medir la migración de arranque, y las dos bitácoras tienen que poder leerse.
+    """
     base = temporal / f"cd-canales-{os.getpid()}.db"
-    bitacora = temporal / "servidor.log"
+    bitacora = temporal / f"servidor{sufijo}.log"
     entorno = dict(os.environ)
     # **La base es la de la prueba**, nunca la del agricultor. Y en UTF-8, que si no la consola de
     # Windows se atraganta con las tildes de los textos.
     entorno["CUEDIGITAL_DATABASE_URL"] = f"sqlite:///{base}"
     entorno["PYTHONIOENCODING"] = "utf-8"
+    # **El secreto, fijo y de la prueba.** Sin esto cada arranque se inventa uno (`security.py`) y el vale
+    # de la primera vuelta dejaría de valer en la segunda, que es justo lo que hace falta para medir la
+    # migración: apagar, volver a arrancar contra la misma base y preguntar con el mismo vale.
+    entorno["CUEDIGITAL_SECRETO"] = "el-secreto-de-la-prueba-de-los-canales"
     with open(bitacora, "wb") as suyo:
         proceso = subprocess.Popen(  # noqa: S603 - es el propio proyecto
             [PYTHON, "-m", "uvicorn", "app.main:app", "--port", str(PUERTO)],
@@ -403,6 +413,29 @@ def la_regla_del_principal(suyos: list[dict]) -> bool:
     return bool(suyos) and all(cuenta == 1 for cuenta in por_clase.values()) and clases == set(por_clase)
 
 
+def escribir_en_un_campo(nav, campo: str, valor: str) -> str:
+    """Escribe en un campo **con el teclado del navegador**, y dice **cómo lo ha conseguido**.
+
+    Devuelve `"teclado"` si el texto ha llegado tecleándolo, y `"javascript"` si ha habido que ponerlo por
+    JavaScript. **Se dice y no se disimula**: un tecleo que no llega es un paso que no se ha dado, y quien
+    lea el informe tiene que poder distinguir «lo escribí» de «se lo puse».
+    """
+    nav.evaluar(f"document.getElementById({json.dumps(campo)}).focus()")
+    nav.escribir(valor)
+    if nav.evaluar(f"document.getElementById({json.dumps(campo)}).value") == valor:
+        return "teclado"
+    # **El navegador sin ventana a veces no tiene el foco de la página**, y entonces `Input.insertText` no
+    # llega a ningún sitio (no da error: simplemente no escribe). Se prueban las teclas de verdad, una a una.
+    nav.evaluar(f"document.getElementById({json.dumps(campo)}).focus()")
+    for letra in valor:
+        nav.orden("Input.dispatchKeyEvent", {"type": "keyDown", "text": letra, "unmodifiedText": letra})
+        nav.orden("Input.dispatchKeyEvent", {"type": "keyUp"})
+    if nav.evaluar(f"document.getElementById({json.dumps(campo)}).value") == valor:
+        return "teclado"
+    nav.evaluar(f"document.getElementById({json.dumps(campo)}).value = {json.dumps(valor)}")
+    return "javascript"
+
+
 def pulsar_sin_reventar(nav, selector: str) -> str | None:
     """Pulsa, y **si no se puede, lo dice**: un paso que no se puede dar no puede tumbar el recorrido."""
     try:
@@ -506,6 +539,17 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
                 + VIGILAR_LOS_ERRORES
             },
         )
+
+        # **El foco de la página, pedido a propósito.** Un navegador sin ventana arranca **sin el foco** y
+        # entonces `Input.insertText` no llega a ningún campo: no falla, simplemente no escribe. Se pide el
+        # foco antes de teclear nada, y si este navegador no sabe darlo, se dice.
+        nav.orden("Page.enable")
+        nav.orden("Page.bringToFront")
+        try:
+            nav.orden("Emulation.setFocusEmulationEnabled", {"enabled": True})
+            decir("se le pide el foco a la página (`Emulation.setFocusEmulationEnabled`), para poder teclear")
+        except RuntimeError as fallo:
+            decir(f"(este navegador no sabe dar el foco a la página: {fallo})")
 
         paso("4", "Abrir la lista de contactos en un navegador de verdad y abrir ESA ficha")
         nav.abrir(f"http://127.0.0.1:{PUERTO}/#/contactos", esperar=3.0)
@@ -627,42 +671,30 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
         # el navegador cuando el agricultor escribe. Y **se lee lo que ha quedado en el campo**, porque un
         # tecleo que no llega es un paso que no se ha dado.
         for campo, valor in (("canal-valor", SEGUNDO_TELEFONO), ("canal-etiqueta", ETIQUETA)):
-            nav.evaluar(f"document.getElementById({json.dumps(campo)}).focus()")
-            nav.escribir(valor)
+            como = escribir_en_un_campo(nav, campo, valor)
+            resultado[f"como_se_escribio_{campo}"] = como
+            decir(f"en #{campo} el texto ha llegado por: {como}")
         tecleado = nav.evaluar(
             "({valor: document.getElementById('canal-valor').value,"
             " etiqueta: document.getElementById('canal-etiqueta').value,"
             " clase: document.getElementById('canal-clase').value})"
         )
         decir(f"lo que ha quedado en los campos, leído del DOM: {como_texto(tecleado)}")
-        if (tecleado or {}).get("valor") != SEGUNDO_TELEFONO or (tecleado or {}).get(
-            "etiqueta"
-        ) != ETIQUETA:
-            decir(
-                "el tecleo de verdad NO ha llegado entero al campo: se pone el valor por JavaScript y se "
-                "dice aquí, para que nadie lea esta parte como un tecleo comprobado"
-            )
-            nav.evaluar(
-                "(() => { document.getElementById('canal-valor').value = "
-                + json.dumps(SEGUNDO_TELEFONO)
-                + "; document.getElementById('canal-etiqueta').value = "
-                + json.dumps(ETIQUETA)
-                + "; return true; })()"
-            )
-            tecleado = nav.evaluar(
-                "({valor: document.getElementById('canal-valor').value,"
-                " etiqueta: document.getElementById('canal-etiqueta').value,"
-                " clase: document.getElementById('canal-clase').value})"
-            )
-            decir(f"y ahora en los campos hay: {como_texto(tecleado)}")
-        comprobar(
-            (tecleado or {}).get("clase") == "telefono",
-            f"la clase elegida es «teléfono» ({(tecleado or {}).get('clase')!r})",
-        )
         comprobar(
             (tecleado or {}).get("valor") == SEGUNDO_TELEFONO
             and (tecleado or {}).get("etiqueta") == ETIQUETA,
-            f"y los campos llevan el dato y la etiqueta ({como_texto(tecleado)})",
+            "los campos llevan lo que se ha escrito, leído del DOM",
+        )
+        comprobar(
+            resultado.get("como_se_escribio_canal-valor") == "teclado"
+            and resultado.get("como_se_escribio_canal-etiqueta") == "teclado",
+            "y ha llegado escribiéndolo con el teclado, no poniéndolo por JavaScript "
+            f"({resultado.get('como_se_escribio_canal-valor')!r}, "
+            f"{resultado.get('como_se_escribio_canal-etiqueta')!r})",
+        )
+        comprobar(
+            (tecleado or {}).get("clase") == "telefono",
+            f"la clase elegida es «teléfono» ({(tecleado or {}).get('clase')!r})",
         )
         aviso = pulsar_sin_reventar(nav, '[data-accion="canal-nuevo"]')
         comprobar(aviso is None, "el botón «Apuntar otro» se ha podido pulsar")
@@ -1049,7 +1081,64 @@ def main() -> int:
         recorrido = el_recorrido_en_el_navegador(token, contacto_id, ficha, ajena)
         las_puertas = las_puertas_y_sus_422(token, contacto_id)
 
-        paso("12", "El resumen")
+        paso("12", "La migración DE ARRANQUE, medida reiniciando el servidor contra la MISMA base")
+        # **Esto es lo que convierte «lo he leído en el código» en «lo he medido».** La migración de los
+        # canales es de arranque: solo puede tocar las fichas que ya existen cuando el servidor se levanta.
+        # Con el servidor ya en marcha, una ficha creada después **nunca pasa por ella**, así que la única
+        # forma de comprobarla es apagar, volver a arrancar contra la misma base y preguntar por esa ficha.
+        decir(
+            "se crea una ficha con los cuatro datos y se reinicia el servidor contra la misma base temporal: "
+            "ese es el momento en el que sus cuatro datos tendrían que pasar a ser canales principales."
+        )
+        codigo, otra_ficha = la_puerta(
+            token,
+            "POST",
+            "/api/contactos",
+            {
+                "nombre": NOMBRE + " (para el reinicio)",
+                "es_empresa": True,
+                "telefono": TELEFONO,
+                "correo": CORREO,
+                "direccion": DIRECCION,
+                "localidad": LOCALIDAD,
+            },
+            que="sí",
+        )
+        comprobar(codigo == 201, f"la ficha del reinicio se crea ({codigo})")
+        otro_id = int(otra_ficha["id"])
+        decir(
+            f"la ficha del reinicio es la {otro_id} y nace con "
+            f"{len(otra_ficha.get('canales') or [])} canal(es)"
+        )
+        decir(f"se apaga el servidor: {apagar_el_servidor(servidor)}")
+        servidor = None
+        servidor, direccion, base, bitacora_del_reinicio = levantar_el_servidor(temporal, sufijo="-reinicio")
+        comprobar(_esperar_al_servidor(), "el servidor vuelve a contestar tras el reinicio")
+        codigo, despues_del_reinicio = la_puerta(token, "GET", f"/api/contactos/{otro_id}", que="sí")
+        comprobar(codigo == 200, f"la ficha del reinicio se vuelve a leer ({codigo})")
+        canales_tras_arrancar = (despues_del_reinicio or {}).get("canales") or []
+        comprobar(
+            len(canales_tras_arrancar) >= 3,
+            "tras arrancar, los cuatro datos de esa ficha son canales principales "
+            f"({len(canales_tras_arrancar)} canal/es)",
+        )
+        lo_que_dice_el_arranque = [
+            renglon.strip()
+            for renglon in pathlib.Path(bitacora_del_reinicio)
+            .read_text(encoding="utf-8", errors="replace")
+            .splitlines()
+            if "canal" in renglon.lower()
+        ]
+        decir(
+            "y lo que el arranque dice de los canales, en su bitácora: "
+            f"{lo_que_dice_el_arranque or '(no dice nada de canales)'}"
+        )
+        comprobar(
+            bool(lo_que_dice_el_arranque),
+            "el arranque deja dicho en su bitácora lo que ha llevado a la tabla de canales",
+        )
+
+        paso("13", "El resumen")
         ficha_en_pantalla = recorrido.get("ficha_recien_creada") or {}
         despues_de_recargar = recorrido.get("tras_recargar") or {}
         despues_de_quitar = recorrido.get("tras_quitar") or {}
@@ -1065,13 +1154,18 @@ def main() -> int:
         decir(f"el aislamiento (404 al tocar la ficha de otro):             {recorrido.get('aislamiento')}")
         decir(f"las dos negativas, con su texto:                            {como_texto(las_puertas)}")
         decir(f"errores de la página:                                       {como_texto(recorrido.get('errores_de_la_pagina'))}")
+        decir(
+            "canales de la ficha del reinicio, tras arrancar el servidor: "
+            f"{len(canales_tras_arrancar)}"
+        )
 
         los_dos = los_del_telefono((recorrido.get("tras_apuntar") or {}).get("canales") or [])
         de_telefono_tras_quitar = los_del_telefono(despues_de_quitar.get("canales") or [])
         print(
             "\nHUELLA"
             f" canales={(recorrido.get('tras_apuntar') or {}).get('cuantos_canales')}"
-            f" migracion={not recorrido.get('a_mano')}"
+            f" migracion_arranque={len(canales_tras_arrancar) >= 3}"
+            f" en_el_alta={len(ficha.get('canales') or []) >= 3}"
             f" bloque={ficha_en_pantalla.get('hay_bloque')}"
             f" alta={bool((ficha_en_pantalla.get('alta') or {}).get('hay_boton'))}"
             f" dos_telefonos={len(los_dos) == 2}"

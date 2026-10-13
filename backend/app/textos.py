@@ -6912,6 +6912,11 @@ MENSAJES_DE_LOS_CONTACTOS: dict[str, str] = {
     "C7_un_canal_necesita_algo_escrito": "Escribe el teléfono, el correo o la dirección.",
     # Lo único que se le exige a una próxima acción (Entrega 3, 13/10/2026): que se sepa qué hay que hacer.
     "C7_una_tarea_necesita_titulo": "Escribe qué hay que hacer.",
+    # **El 404 de este módulo** (13/10/2026). Faltaba: se usaba en tres sitios y **no existía en ningún
+    # diccionario**, así que en vez de contestar 404 el programa **reventaba con un KeyError** —un 500
+    # donde tiene que haber un 404—. Lo encontró una prueba de aislamiento, no una lectura. Y las palabras
+    # no confirman que exista: lo mismo que en el resto de la casa, no se contesta «no es tuyo».
+    "C7_no_existe": "Eso no está en tu cuaderno.",
     # La accion ya se guardo, pero con otro texto o en otro contacto (13/10/2026, revision). Se dice
     # lo que pasa y que NO se ha cambiado nada, para que el agricultor no crea que su texto nuevo esta
     # guardado: lo que escribio sigue en la pantalla, y volver a pulsar lo apunta como nota nueva.
