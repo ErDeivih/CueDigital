@@ -2512,3 +2512,30 @@ test("sin poder modificar, la ficha no ofrece los botones que cambian nada", asy
   // **Y la ficha sigue entera**: se puede mirar, que es lo que sí puede hacer.
   assert.ok(sinPermiso.includes("contacto-nombre"), `la ficha tiene que seguir viéndose:\n${sinPermiso}`);
 });
+
+test("sin poder modificar tampoco se ofrecen los botones de cada canal", async () => {
+  // **POR QUÉ** (Entrega 4, 13/10/2026). «Usar este» y «quitar» **son escribir**: cambian la ficha. Con
+  // `puede_modificar` en falso no se ofrecen, y con permiso **sí** (la mitad que se olvida). La autorización, en
+  // todo caso, la da la puerta: si alguien llega a mano, contesta 403.
+  const canales = [
+    { id: 1, clase: "telefono", telefono: "947 123 456", principal: true },
+    { id: 2, clase: "telefono", etiqueta: "almacén", telefono: "947 999 111", principal: false },
+  ];
+  const conPermiso = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: { id: 4, canales },
+    puede_modificar: true,
+  });
+  assert.ok(conPermiso.includes('accion="canal-principal"'), `con permiso tiene que estar:\n${conPermiso}`);
+  assert.ok(conPermiso.includes('accion="canal-quitar"'), "y el de quitar");
+
+  const sinPermiso = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: { id: 4, canales },
+    puede_modificar: false,
+  });
+  assert.ok(!sinPermiso.includes('accion="canal-principal"'), "sin permiso no se ofrece usarlo");
+  assert.ok(!sinPermiso.includes('accion="canal-quitar"'), "ni quitarlo");
+  // **Pero sus datos se siguen viendo**: mirar sí puede.
+  assert.ok(sinPermiso.includes("947 999 111"), `los canales se tienen que seguir viendo:\n${sinPermiso}`);
+});

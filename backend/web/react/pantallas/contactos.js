@@ -596,21 +596,31 @@ export function PantallaDeUnContacto({
                     ${canal.principal ? html` · <strong>${frase(c.canales_principal)}</strong>` : null}
                     ${" "}
                     ${
-                      // **Y qué se puede hacer con él** (Entrega 2): usarlo como principal o quitarlo. El que ya es
+                      // **Qué se puede hacer con él** (Entrega 2): usarlo como principal o quitarlo. El que ya es
                       // principal no lleva el botón de usarlo: un botón que no hace nada es peor que no tenerlo.
-                      canal.principal
-                        ? null
-                        : html`<${BotonSencillo}
-                            etiqueta=${c.canales_hacer_principal}
-                            accion="canal-principal"
-                            datos=${{ id: borrador.id, canal: canal.id }}
-                          />`
+                      //
+                      // **Y si esta cuenta no puede modificar, no se ofrece ninguno** (Entrega 4). Las dos cosas son
+                      // escribir. Y si alguien llega a mano por la URL o por un identificador, **la puerta contesta
+                      // 403 igual**: esto es no ofrecer, no autorizar.
+                      puede_modificar
+                        ? html`
+                            ${
+                              canal.principal
+                                ? null
+                                : html`<${BotonSencillo}
+                                    etiqueta=${c.canales_hacer_principal}
+                                    accion="canal-principal"
+                                    datos=${{ id: borrador.id, canal: canal.id }}
+                                  />`
+                            }
+                            <${BotonSencillo}
+                              etiqueta=${c.canales_quitar}
+                              accion="canal-quitar"
+                              datos=${{ id: borrador.id, canal: canal.id }}
+                            />
+                          `
+                        : null
                     }
-                    <${BotonSencillo}
-                      etiqueta=${c.canales_quitar}
-                      accion="canal-quitar"
-                      datos=${{ id: borrador.id, canal: canal.id }}
-                    />
                   </li>
                 `,
               )}

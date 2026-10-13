@@ -1047,6 +1047,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
     CARPETA.mkdir(parents=True, exist_ok=True)
     hoy = dt.date.today()
     medido: dict = {}
+    empezaron_las_capturas = len(CAPTURAS)
 
     with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
         nav.medir(1440, 1000, movil=False)
@@ -1442,6 +1443,9 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             "y los cuatro botones de filtro llevan su rótulo "
             f"({[(f.get('vencimiento'), f.get('texto')) for f in (lista.get('filtros') or [])]})",
         )
+        resultado["rotulos_de_la_lista"] = bool(lista.get("titulo")) and all(
+            (f.get("texto") or "").strip() for f in (lista.get("filtros") or [])
+        )
         comprobar(
             lista.get("hay_tabla") is True and lista.get("cuantas") == len(LAS_TAREAS),
             f"la lista enseña las {len(LAS_TAREAS)} tareas sin filtro ({lista.get('cuantas')})",
@@ -1510,7 +1514,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 f"marcado: {[f.get('vencimiento') for f in (filtrada.get('filtros') or []) if f.get('marcado')]}"
             )
             decir(f"direcciones por las que ha pasado la página: {la_historia}")
-            resultado["filtros_medidos"][nombre + "__historia"] = la_historia
+            resultado.setdefault("historias_de_la_direccion", {})[nombre] = la_historia
             for fila in filtrada.get("filas") or []:
                 decir(
                     f"             {fila['titulo']!r} vencida={fila['vencida_marcada']} "
@@ -1653,11 +1657,50 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         )
         resultado["la_lista_lleva_a_la_ficha"] = tras_cerrar_en_la_lista.get("direccion")
 
+        # ---- extra: y sin ratón, ¿se puede teclear el día? ---------------------------
+        # **Esto se mide porque la primera medición decía que no** (sonda del 14/10/2026) y luego resultó estar
+        # confundida: el fallo era del guion —vaciaba el campo sin quitarle el foco— y no del campo. Se comprueba
+        # aquí, con un `Tab` de verdad, porque es la diferencia entre «hay que pulsar con el ratón» y «se puede
+        # escribir con el teclado», y eso decide si esta pantalla la puede usar quien no usa ratón.
+        decir("")
+        decir("  --- extra: el día, tecleado SOLO con el teclado (Tab, sin tocar el ratón) ---")
+        nav.evaluar("(() => { const e = document.getElementById('tarea-titulo'); if (e) e.focus(); return 1; })()")
+        time.sleep(0.2)
+        nav.tecla("Tab")
+        time.sleep(0.3)
+        en_el_foco = nav.evaluar(
+            "document.activeElement ? (document.activeElement.id || document.activeElement.tagName) : null"
+        )
+        decir(f"después de un `Tab` desde #tarea-titulo, tiene el foco: {en_el_foco!r}")
+        resultado["el_tab_llega_al_dia"] = en_el_foco == "tarea-fecha"
+        comprobar(
+            resultado["el_tab_llega_al_dia"],
+            f"con `Tab` se llega al campo del día ({en_el_foco!r})",
+        )
+        digitos_del_dia = los_digitos_de_una_fecha(
+            hoy + dt.timedelta(days=2), medido.get("orden_de_la_fecha") or "día-mes-año"
+        )
+        antes_del_tab = _leer_el_campo(nav, "tarea-fecha")
+        _teclear_con(nav, "tarea-fecha", digitos_del_dia, "keyDown")
+        despues_del_tab = _leer_el_campo(nav, "tarea-fecha")
+        decir(
+            f"se teclean {digitos_del_dia} con el teclado: antes {antes_del_tab!r} → después "
+            f"{despues_del_tab!r} (se esperaba "
+            f"{(hoy + dt.timedelta(days=2)).isoformat()!r})"
+        )
+        resultado["el_dia_se_teclea_sin_raton"] = despues_del_tab == (hoy + dt.timedelta(days=2)).isoformat()
+        comprobar(
+            resultado["el_dia_se_teclea_sin_raton"],
+            "y el día SE TECLEA sin ratón, solo con el teclado "
+            f"({despues_del_tab!r}); el campo no hay que pulsarlo con el ratón para poder escribirlo",
+        )
+
         resultado["errores_de_la_pagina"] = nav.evaluar("window.__los_errores || []")
         decir(
             f"errores de la página en todo el recorrido: "
             f"{como_texto(resultado['errores_de_la_pagina'])}"
         )
+    resultado["capturas"] = CAPTURAS[empezaron_las_capturas:]
     return resultado
 
 
@@ -1795,10 +1838,17 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
         and "Encargar las semillas" in (filtros.get("todas", {}).get("en_pantalla") or []),
         # **La lista**: las seis, cerradas incluidas.
         "lista": bool(filtros.get("todas")) and len(filtros["todas"]["en_pantalla"]) == len(LAS_TAREAS),
-        # **Los filtros**: la dirección cambia, y lo que se ve es exactamente lo que devuelve el servidor.
+        # **Los filtros**: cada uno deja ver lo que tiene que dejar ver, y lo que se ve es **exactamente** lo que
+        # devuelve el servidor para ese mismo filtro. (Esto es aparte de si el filtro queda escrito en la
+        # dirección, que es otra cosa y se mide con su propio nombre.)
         "filtros": all(
             filtros.get(nombre, {}).get("en_pantalla") == filtros.get(nombre, {}).get("de_la_puerta")
-            and el_camino_de_la_direccion(filtros.get(nombre, {}).get("direccion")) == "#/tareas"
+            for nombre in ("hoy", "vencidas", "sin_fecha", "todas")
+        )
+        and bool(filtros.get("todas")),
+        # **El filtro, en la dirección**: es lo que hace que la lista se pueda enlazar.
+        "filtro_en_la_direccion": all(
+            el_camino_de_la_direccion(filtros.get(nombre, {}).get("direccion")) == "#/tareas"
             and lleva_el_filtro(filtros.get(nombre, {}).get("direccion"), valor)
             for nombre, valor in (
                 ("hoy", "hoy"),
@@ -1812,6 +1862,12 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
         and lleva_el_filtro(recargada.get("direccion"), "hoy")
         and len(los_marcados) == 1
         and los_marcados[0].get("vencimiento") == "hoy",
+        # **Los rótulos de la pantalla** (medido): la lista de `#/tareas` sale con su título y con los nombres de
+        # sus cuatro botones. Sin esto, la pantalla se abre **muda**: se puede usar, pero no se sabe qué es nada.
+        "rotulos": bool(recorrido.get("rotulos_de_la_lista")),
+        # **El día, sin ratón**: se llega con `Tab` y se teclea.
+        "dia_sin_raton": bool(recorrido.get("el_tab_llega_al_dia"))
+        and bool(recorrido.get("el_dia_se_teclea_sin_raton")),
         # **El aislamiento**: la otra finca no ve las mías, y no puede cerrarlas.
         "aislamiento_lista": aislamiento.get("completar_ajena") == 404
         and aislamiento.get("cancelar_ajena") == 404,
@@ -1885,6 +1941,14 @@ def main() -> int:
                     f"{len(medido.get('en_pantalla') or [])} en pantalla · "
                     f"{len(medido.get('de_la_puerta') or [])} en la puerta"
                 )
+            decir(
+                "direcciones por las que pasa la página al pulsar cada filtro: "
+                f"{como_texto(recorrido.get('historias_de_la_direccion'))}"
+            )
+            decir(
+                "los rótulos de la lista de tareas: "
+                f"{como_texto(recorrido.get('los_textos_de_la_lista'))}"
+            )
             decir(
                 f"la lista lleva a la ficha: {recorrido.get('la_lista_lleva_a_la_ficha')!r}   "
                 f"completar desde la lista: {recorrido.get('cierra_desde_la_lista')}"
