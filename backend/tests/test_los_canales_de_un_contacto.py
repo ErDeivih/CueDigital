@@ -304,3 +304,28 @@ def test_al_quitar_el_principal_otro_de_su_clase_lo_sustituye(cliente, cuenta, d
     principales = [canal for canal in los_telefonos if canal["principal"]]
     assert len(principales) == 1, f"la clase no puede quedarse sin principal: {los_telefonos}"
     assert principales[0]["telefono"] == "222", f"y lo es el que queda: {principales[0]}"
+
+def test_la_migracion_de_los_canales_CORRE_AL_ARRANCAR(cliente, cuenta, db_sesion):
+    """**La prueba que faltaba: pasa por `crear_tablas`, no llama a la migración a mano.**
+
+    POR QUÉ IMPORTA, y es una lección que costó un defecto real. Todas las demás pruebas de este fichero llamaban a
+    `llevar_los_canales_de_los_contactos_a_su_tabla()` **directamente**, así que comprobaban que la migración
+    *funciona* pero **no que esté cableada** —y el cableado es la mitad del trabajo—. Y pasó lo que tenía que pasar:
+    la llamada dentro de `crear_tablas` quedó **detrás de un `return`**, o sea **código muerto**, y las fichas que ya
+    existían se quedaban **sin canales** al arrancar (y sin bloque en la pantalla, porque el bloque solo sale si hay
+    alguno). **Lo encontró la verificación en navegador, no una prueba.**
+
+    Así que esta prueba hace lo que hace el programa al arrancar: **llama a `crear_tablas`** y mira a ver si el canal
+    está. Si alguien vuelve a mover la llamada detrás de un `return`, esto se pone rojo.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    assert _los_canales_de(db_sesion, ficha["id"]) == [], "de partida no hay canales: son nuevos"
+
+    database.crear_tablas()
+
+    suyos = _los_canales_de(db_sesion, ficha["id"])
+    assert sorted(canal.clase for canal in suyos) == ["correo", "direccion", "telefono"], (
+        "el arranque tiene que llevar lo que ya estaba a su canal, y ha llevado "
+        f"{[(canal.clase, canal.telefono, canal.correo) for canal in suyos]}"
+    )
+    assert all(canal.principal for canal in suyos), "y como principal de su clase, que es como estaban apuntados"

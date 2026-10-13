@@ -1135,8 +1135,6 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
             "Columnas que ahora pueden decir «no se sabe» (se han reconstruido sus tablas, "
             f"sin tocar ningún dato): {', '.join(reconstruidas)}"
         )
-    return anadidas, imposibles
-
     # **Y los canales de las fichas que ya existían** (Entrega 2, 13/10/2026): va **después** de los
     # índices, porque el índice parcial que garantiza un solo principal por clase tiene que existir ya
     # cuando se escriben los principales que se llevan.
@@ -1145,4 +1143,5 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(
             f"Canales de las fichas que ya existían: {canales} llevados a la tabla de canales "
             "(el principal de cada clase, tal cual estaban apuntados; no se toca ni un texto)."
-        )
+        )
+    return anadidas, imposibles

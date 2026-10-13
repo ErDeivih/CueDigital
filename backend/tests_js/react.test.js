@@ -8251,4 +8251,101 @@ test("la ficha de un gasto lleva a la de su proveedor, y no lo enseña si no sab
     !sinProveedor.includes("#/contactos/"),
     `sin contacto no puede haber enlace a ninguna ficha:\n${sinProveedor}`,
   );
+});
+
+// ---------------------------------------------------------------------------
+// La lista de lo que hay que hacer (Entrega 3): cargador y diagnostico
+// ---------------------------------------------------------------------------
+
+async function cargarLasTareas() {
+  return import(`../web/react/pantallas/tareas.js?prueba=${Math.random()}`);
+}
+
+async function htmlDeLasTareas(cambios = {}) {
+  const { PantallaDeLasTareas } = await cargarLasTareas();
+  return globalThis.ReactDOMServer.renderToStaticMarkup(
+    React.createElement(PantallaDeLasTareas, {
+      textos: {
+        tareas: {
+          titulo: "Lo que hay que hacer",
+          pista: "Lo próximo, de todos tus contactos.",
+          todas: "Todas",
+          de_hoy: "Para hoy",
+          vencidas: "Vencidas",
+          sin_fecha: "Sin fecha",
+          cargando: "Mirando lo que tienes…",
+          que: "Qué hay que hacer",
+          cuando: "Para cuándo",
+          quien: "Quién",
+          con_quien: "Con quién",
+          vencida: "Vencida",
+          ver_la_ficha: "Ver la ficha",
+          hecha: "Hecha",
+          cancelar: "Cancelar",
+          ya_hecha: "Ya hecha",
+          ya_cancelada: "Cancelada",
+          no_hay_ninguna: "No hay nada apuntado.",
+        },
+        acciones: { volver: "VOLVER" },
+      },
+      tareas: [
+        { id: 1, contacto_id: 7, titulo: "Llevar la factura", fecha_texto: "12/10/2026", vencida: true, estado: "pendiente", responsable: "Ana" },
+        { id: 2, contacto_id: 8, titulo: "Llamar por el pienso", fecha_texto: "14/10/2026", vencida: false, estado: "pendiente" },
+        { id: 3, contacto_id: 7, titulo: "Ya hecha", fecha_texto: "Sin fecha", vencida: false, estado: "hecha" },
+      ],
+      filtros: { vencimiento: "vencidas" },
+      contactos: { 7: "Cooperativa de Peñaranda" },
+      cargando: false,
+      error: "",
+      aviso: "",
+      ...cambios,
+    }),
+  );
+}
+
+
+test("la lista enseña lo que hay que hacer, marca lo vencido y solo deja cerrar lo pendiente", async () => {
+  // **POR QUÉ** (Entrega 3, 13/10/2026). Esta es la pantalla donde el agricultor pregunta «¿qué tengo que hacer
+  // hoy?», y tiene que decir tres cosas de un vistazo: **qué**, **para cuándo** y **con quién**. Lo vencido va
+  // marcado (y **no** cancelado: eso lo decide él), y una tarea cerrada **no lleva botones**.
+  //
+  // **Y está escrita sobre lo que se ve**, no sobre lo que yo creía: antes de escribirla imprimí el HTML de verdad.
+  const html = await htmlDeLasTareas();
+
+  assert.ok(html.includes("Lo que hay que hacer"), `falta el título:\n${html}`);
+  // Los cuatro filtros, y **el elegido marcado**: el que está puesto pierde la clase clara, así que se ve cuál manda.
+  const filtros = [...html.matchAll(/data-accion="tareas-ver"[^>]*?(?:data-vencimiento="([a-z_]+)")?>/g)].map((c) => c[1] || "");
+  assert.deepEqual(filtros.sort(), ["", "hoy", "sin_fecha", "vencidas"], `faltan filtros:\n${html}`);
+  assert.ok(
+    /data-accion="tareas-ver" data-vencimiento="vencidas">/.test(html),
+    "el filtro puesto tiene que verse como el puesto (sin la clase clara)",
+  );
+
+  // La fila vencida: su día, la marca y la fila señalada.
+  assert.ok(html.includes("12/10/2026"), "el día de la tarea");
+  assert.ok(html.includes("fila-vencida"), "y la fila señalada como vencida");
+  assert.ok(html.includes(">Vencida<"), "con su palabra");
+
+  // **El enlace a la ficha del contacto**: con el nombre cuando se sabe, y con «Ver la ficha» cuando no.
+  assert.ok(html.includes('href="#/contactos/7"') && html.includes("Cooperativa de Peñaranda"), "el enlace con su nombre");
+  assert.ok(html.includes('href="#/contactos/8"') && html.includes("Ver la ficha"), "y sin nombre, un enlace que sirve igual");
+
+  // **Los pares botón/tarea**: solo lo pendiente puede cerrarse, y cada botón dice qué tarea.
+  const pares = [...html.matchAll(/data-accion="(tarea-[a-z]+)"[^>]*data-tarea="(\d+)"/g)].map((c) => [c[1], c[2]]);
+  assert.deepEqual(
+    pares.sort(),
+    [
+      ["tarea-cancelar", "1"],
+      ["tarea-cancelar", "2"],
+      ["tarea-completar", "1"],
+      ["tarea-completar", "2"],
+    ],
+    `solo las pendientes pueden cerrarse:\n${html}`,
+  );
+
+  // Sin nada, se dice; y mientras se mira, también.
+  const vacia = await htmlDeLasTareas({ tareas: [] });
+  assert.ok(vacia.includes("No hay nada apuntado"), "sin tareas se dice, no se enseña una tabla vacía");
+  const cargando = await htmlDeLasTareas({ tareas: [], cargando: true });
+  assert.ok(cargando.includes("Mirando lo que tienes"), "y mientras se mira, se dice que se está mirando");
 });
