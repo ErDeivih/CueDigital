@@ -477,6 +477,39 @@ LA_SONDA_DEL_CAMPO = """
 """
 
 
+# **¿Es el mismo elemento el que se enfoca y el que se lee?** Si la pantalla sustituye el campo por otro entre
+# el foco y la lectura, el texto entra en un elemento que ya no está y se lee otro vacío. Se apunta el
+# elemento en una variable global y se compara después, y se vigila **el cuerpo entero** (no `#pantalla`,
+# que también puede ser sustituido) para ver si la pantalla se repinta por debajo.
+LA_PRUEBA_DEL_MISMO_CAMPO = """
+(() => {
+  window.__el_campo = document.getElementById('canal-valor');
+  window.__repintados_del_cuerpo = 0;
+  window.__vigia_del_cuerpo = new MutationObserver((cambios) => {
+    window.__repintados_del_cuerpo += cambios.length;
+  });
+  window.__vigia_del_cuerpo.observe(document.body, {
+    childList: true, subtree: true, characterData: true, attributes: true,
+  });
+  return window.__el_campo ? 'apuntado' : 'no hay campo';
+})()
+"""
+
+LA_COMPARACION_DEL_CAMPO = """
+(() => {
+  const ahora = document.getElementById('canal-valor');
+  const antes = window.__el_campo;
+  return {
+    el_de_antes_sigue_conectado: antes ? antes.isConnected : null,
+    el_de_antes_es_el_de_ahora: antes ? (antes === ahora) : null,
+    valor_del_de_antes: antes ? antes.value : null,
+    valor_del_de_ahora: ahora ? ahora.value : null,
+    repintados_del_cuerpo: window.__repintados_del_cuerpo,
+  };
+})()
+"""
+
+
 def pulsar_sin_reventar(nav, selector: str) -> str | None:
     """Pulsa, y **si no se puede, lo dice**: un paso que no se puede dar no puede tumbar el recorrido."""
     try:
@@ -735,6 +768,17 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
         comprobar(
             (con_foco or {}).get("cuantos_con_ese_id") == 1,
             f"y hay UN solo campo con ese id ({(con_foco or {}).get('cuantos_con_ese_id')})",
+        )
+        # **¿Es el mismo elemento el que se enfoca y el que se lee?** Si la pantalla sustituye el campo por
+        # otro entre el foco y la lectura, el texto entra en un elemento que ya no está y se lee otro vacío.
+        decir(f"se apunta el elemento del campo: {nav.evaluar(LA_PRUEBA_DEL_MISMO_CAMPO)}")
+        nav.evaluar("document.getElementById('canal-valor').focus()")
+        nav.escribir(SEGUNDO_TELEFONO)
+        la_comparacion = nav.evaluar(LA_COMPARACION_DEL_CAMPO)
+        decir(f"¿es el mismo elemento el que se enfoca y el que se lee?: {como_texto(la_comparacion)}")
+        comprobar(
+            bool((la_comparacion or {}).get("el_de_antes_es_el_de_ahora")),
+            "el campo no se sustituye entre enfocarlo y leerlo (es el mismo elemento)",
         )
         nav.escribir(SEGUNDO_TELEFONO)
         justo_despues = nav.evaluar(LA_SONDA_DEL_CAMPO)
