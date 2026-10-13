@@ -18,9 +18,10 @@ import httpx
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import case, func, select
 
+from .. import schemas
 from .. import catalogos, correcciones, geo, models, servicios, sigpac, textos
 from .. import versiones_de_recinto as versiones_de_recinto
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, obtener_de_la_explotacion
 from ..schemas import (
     BuscarRecintosEntrada,
     CajaDelMapa,
@@ -1696,3 +1697,49 @@ def estado_zonas_vulnerables() -> dict:
             "cargado" if catalogos.hay_datos_zonas_vulnerables() else "sin_datos"
         ],
     }
+
+
+@router.put("/parcelas/{parcela_id}/forma")
+def decirle_la_forma_a_una_tierra(
+    parcela_id: int,
+    datos: schemas.LoQueDijoElAgricultor,
+    db: Db,
+    usuario: UsuarioActual,
+    explotacion: ExplotacionActual,
+    poder: PuedeModificar,
+):
+    """**Darle la forma a una tierra que no la tiene** (CRM-06, 14/10/2026).
+
+    POR QUE ESTA PUERTA. El mapa, cuando no hay ninguna tierra con forma, dice: *«Se le puede decir la forma a una
+    tierra desde su ficha»*. **Y esa acción no existía**: `Parcela.geometria` solo se escribe al **crear** la
+    tierra, y `PUT /api/parcelas/{id}` la protege **a propósito** — porque el formulario de corregir no la lleva,
+    y sin esa protección ponerle el nombre bueno a una tierra **le borraba el dibujo**. La pantalla prometía algo
+    que no se podía hacer.
+
+    Y la casa dejó escrito el camino (`parcelas.py`, en la cuenta de lo que se protege): *«El día que la forma del
+    trozo tenga que poder corregirse, lo que hay que hacer es devolver `geometria` en `ParcelaSalida` (o **hacer
+    una ruta propia para el dibujo**)»*. Esto es la ruta propia, que no toca la protección.
+
+    NO SE ESCRIBE NADA A MANO. Se construye **un lote de un solo recinto** que apunta a la tierra que ya existe
+    (`RecintoDelLote.parcela_id`) y se le pasa a `aplicar_importacion`, que es quien ya sabe: la unicidad de
+    tierra+campaña+**fuente**, la prioridad de fuentes, la auditoría y las hectáreas. Aquí no se duplica nada.
+
+    Y `fuente="agricultor"` **no es un detalle**: por la tabla de prioridad de la casa, lo que dice el agricultor
+    **manda sobre el SIGPAC** y **pierde contra una medición en el campo**. *Lo que el agricultor corrige no puede
+    quedar tapado por lo que trajo la administración.*
+    """
+    parcela = db.get(models.Parcela, parcela_id)
+    if parcela is None or parcela.explotacion_id != explotacion.id:
+        # **404 sin distinguir «no existe» de «no es tuya»**, como en el resto de la casa.
+        raise HTTPException(status_code=404, detail="Esa tierra no es de esta finca.")
+    forma = (datos.geometria or "").strip()
+    if not forma:
+        # **Un polígono no se inventa.** Si no trae forma, no hay nada que apuntar.
+        raise HTTPException(status_code=400, detail="Sin forma no hay nada que apuntar.")
+    lote = schemas.LoteDeRecintosEntrada(
+        fuente="agricultor",
+        campana_id=datos.campana_id,
+        # **`fecha_consulta` se queda en blanco**: esto no es una consulta a ninguna fuente.
+        recintos=[schemas.RecintoDelLote(parcela_id=parcela.id, geometria=forma)],
+    )
+    return versiones_de_recinto.aplicar_importacion(db, explotacion, lote, usuario_id=usuario.id)

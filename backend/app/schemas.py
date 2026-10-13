@@ -3075,6 +3075,20 @@ class RecintoDelLote(EntradaBase):
     estado_revision: str | None = None
 
 
+class LoQueDijoElAgricultor(EntradaBase):
+    """**La forma de una tierra, dicha por el agricultor** (CRM-06, 14/10/2026).
+
+    No es una consulta a ninguna fuente: es lo que el agricultor dice que es su tierra. Por eso el lote que se
+    construye con esto lleva `fuente="agricultor"` y **`fecha_consulta` en blanco** — que es lo que manda el
+    propio `LoteDeRecintosEntrada`: *poner la fecha de hoy afirmaría una consulta que quizá se hizo en marzo*.
+
+    Y la `geometria` es obligatoria: esta puerta existe **para darle forma a una tierra que no la tiene**, así
+    que sin forma no hay nada que hacer. *Un polígono no se inventa* (regla del módulo de versiones).
+    """
+
+    geometria: str
+    campana_id: int | None = None
+
 class LoteDeRecintosEntrada(EntradaBase):
     """Un lote de recintos de una campaña y de una fuente: lo que se importa de una vez.
 
