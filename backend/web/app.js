@@ -1337,7 +1337,7 @@ function abrirLaPantalla(clave, parametros = {}) {
     // (la dirección mentía: copiarla daba la lista SIN filtrar).
     estado.filtroTareas = parametros.vencimiento || null;
     return abrirLasTareas(parametros);
-    }
+  }
   if (clave === "trabajos_a_terceros") {
     // **Los servicios a terceros** (CRM-04): se piden a su puerta, que es la que trae el cliente
     // ya resuelto y el estado de cada trabajo.
