@@ -17685,13 +17685,24 @@ function estadoDeLosTrabajosATerceros() {
   return estado.pantallas.trabajos_a_terceros;
 }
 
+function textosDeLosTrabajosATerceros() {
+  // **Envuelto, como TODAS las demás pantallas.** Aquí es donde se rompió la de tareas: pasarle a la pantalla YA el
+  // vocabulario la deja MUDA (hace `textos.trabajos_a_terceros`, que entonces es `undefined`).
+  return { trabajos_a_terceros: t("trabajos_a_terceros", {}) };
+}
+
+/** Pinta la pantalla tal y como está el estado ahora mismo. **Con `montar`, que es la forma de la casa.** */
 function pantallaLosTrabajosATerceros() {
-  return pintar(pantallaDeLosTrabajosATerceros, {
-    trabajos: estadoDeLosTrabajosATerceros().lista,
-    contactos: estadoDeLosTrabajosATerceros().contactos,
-    cargando: estadoDeLosTrabajosATerceros().cargando,
-    textos: { trabajos_a_terceros: t("trabajos_a_terceros", {}) },
-  });
+  const suyo = estadoDeLosTrabajosATerceros();
+  return montar(() =>
+    pantallaDeLosTrabajosATerceros({
+      textos: textosDeLosTrabajosATerceros(),
+      trabajos: suyo.lista || [],
+      contactos: suyo.contactos || [],
+      cargando: suyo.cargando,
+      error: suyo.error,
+    }),
+  );
 }
 
 async function abrirLosTrabajosATerceros() {
