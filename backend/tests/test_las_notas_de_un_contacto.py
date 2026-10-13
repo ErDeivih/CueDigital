@@ -378,3 +378,64 @@ def test_dos_claves_distintas_con_el_mismo_texto_son_dos_notas(cliente, cuenta, 
         )
     )
     assert len(suyas) == 2, f"dos claves distintas son dos acciones: hay {len(suyas)}"
+
+def test_la_colision_del_indice_se_recoge_y_se_recupera(cliente, cuenta, db_sesion, monkeypatch):
+    """**La colisión, reproducida a voluntad** (13/10/2026, revisión).
+
+    Dos hilos dan concurrencia, pero **no garantizan** que los dos lleguen a encontrar la clave libre: casi siempre
+    uno termina antes de que el otro consulte. Para saber que el camino del choque funciona hay que **obligarle a
+    pasar por él**, y eso se hace quitándole a la puerta la ventaja de la consulta previa: se sustituye el ayudante
+    que busca la acción ya guardada por uno que **la primera vez dice que no hay nada** (que es exactamente lo que
+    ve una petición que llega justo antes de que la otra guarde) y después usa el de verdad, que es el que lee el
+    resultado tras deshacer.
+
+    Con eso, el guardado **choca con el índice único de verdad** y lo que se comprueba es:
+      1. que la puerta **no revienta** (nada de error del servidor: el agricultor tiene que saber qué ha pasado);
+      2. que **deshace lo intentado y vuelve a leer**, y contesta la ficha con la nota que ya estaba;
+      3. que queda **una sola nota**, no dos.
+
+    Si alguien quitara el `except IntegrityError` de la puerta, esta prueba se pone roja.
+    """
+    from app.routers import contactos_api
+
+    ficha = _una_ficha(cliente, cuenta, "Taller de la colisión")
+    clave = "nota-1712345678-colision"
+    # La primera acción se guarda por el camino normal.
+    assert cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "La nota que ya estaba.", "clave_de_reenvio": clave},
+    ).status_code == 200
+
+    # Y ahora se le quita la ventaja a la consulta previa: la primera vez dirá que no hay nada.
+    el_de_verdad = contactos_api._la_nota_de_esta_accion
+    veces = {"consultas": 0}
+
+    def el_que_no_ve_la_primera(db, explotacion_id, la_clave):
+        veces["consultas"] += 1
+        if veces["consultas"] == 1:
+            return None
+        return el_de_verdad(db, explotacion_id, la_clave)
+
+    monkeypatch.setattr(contactos_api, "_la_nota_de_esta_accion", el_que_no_ve_la_primera)
+
+    respuesta = cliente.post(
+        f"/api/contactos/{ficha['id']}/notas",
+        headers=cuenta["cabeceras"],
+        json={"texto": "La nota que ya estaba.", "clave_de_reenvio": clave},
+    )
+    assert respuesta.status_code == 200, (
+        f"el choque con el índice tiene que recogerse, y ha contestado {respuesta.status_code}: {respuesta.text}"
+    )
+    assert veces["consultas"] >= 2, (
+        "después del choque hay que **volver a leer** lo que quedó, y no se ha leído: "
+        f"solo {veces['consultas']} consulta(s)"
+    )
+    suyas = list(
+        db_sesion.scalars(
+            select(models.NotaDeUnContacto).where(models.NotaDeUnContacto.contacto_id == ficha["id"])
+        )
+    )
+    assert len(suyas) == 1, f"y tiene que quedar una sola nota: hay {len(suyas)}"
+    assert suyas[0].texto == "La nota que ya estaba."
+    assert len(respuesta.json()["notas_con_autor"]) == 1
