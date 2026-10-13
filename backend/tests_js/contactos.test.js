@@ -2539,3 +2539,29 @@ test("sin poder modificar tampoco se ofrecen los botones de cada canal", async (
   // **Pero sus datos se siguen viendo**: mirar sí puede.
   assert.ok(sinPermiso.includes("947 999 111"), `los canales se tienen que seguir viendo:\n${sinPermiso}`);
 });
+
+test("sin poder modificar tampoco se ofrecen los botones de cada tarea ni las altas", async () => {
+  // **POR QUÉ** (Entrega 4, 13/10/2026). Cerrar una tarea, cancelarla y **apuntar** (una tarea o un canal) son
+  // escribir. Con `puede_modificar` en falso no se ofrecen; con permiso **sí** (la mitad que se olvida). Y la
+  // autorización sigue estando en la puerta: si alguien llega a mano, contesta 403.
+  const conTareas = {
+    corrigiendo: true,
+    borrador: {
+      id: 4,
+      tareas: [{ id: 1, titulo: "Llamar", fecha_texto: "Sin fecha", vencida: false, estado: "pendiente" }],
+      canales: [{ id: 1, clase: "telefono", telefono: "947 123 456", principal: true }],
+    },
+  };
+  const conPermiso = await htmlDeUnContacto({ ...conTareas, puede_modificar: true });
+  for (const accion of ["tarea-completar", "tarea-cancelar", "tarea-nueva", "canal-nuevo"]) {
+    assert.ok(conPermiso.includes(`accion="${accion}"`), `con permiso falta ${accion}:\n${conPermiso}`);
+  }
+
+  const sinPermiso = await htmlDeUnContacto({ ...conTareas, puede_modificar: false });
+  for (const accion of ["tarea-completar", "tarea-cancelar", "tarea-nueva", "canal-nuevo"]) {
+    assert.ok(!sinPermiso.includes(`accion="${accion}"`), `sin permiso no puede ofrecerse ${accion}`);
+  }
+  // **Y mirar sí puede**: la tarea y el canal se siguen viendo.
+  assert.ok(sinPermiso.includes("Llamar"), "la tarea se sigue viendo");
+  assert.ok(sinPermiso.includes("947 123 456"), "y el canal");
+});

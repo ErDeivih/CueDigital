@@ -629,7 +629,8 @@ export function PantallaDeUnContacto({
               // **El alta rápida** (Entrega 2). Tres controles y un botón: qué es, cómo lo llamas tú y el dato. La
               // clase va en una lista porque son tres y no hay más; la etiqueta no, porque la escribe el agricultor
               // con sus palabras («el del almacén») y una lista cerrada le obligaría a mentir.
-              html`
+              puede_modificar
+                ? html`
                 <div className="alta-rapida-de-canal">
                   <label>
                     ${frase(c.canales_cual)}
@@ -654,6 +655,7 @@ export function PantallaDeUnContacto({
                   />
                 </div>
               `
+                : null
             }
           `
         : null
@@ -685,16 +687,22 @@ export function PantallaDeUnContacto({
                             ${
                               tarea.estado === "pendiente"
                                 ? html`
-                                    <${BotonSencillo}
-                                      etiqueta=${c.tareas_completar}
-                                      accion="tarea-completar"
-                                      datos=${{ id: borrador.id, tarea: tarea.id }}
-                                    />
-                                    <${BotonSencillo}
-                                      etiqueta=${c.tareas_cancelar}
-                                      accion="tarea-cancelar"
-                                      datos=${{ id: borrador.id, tarea: tarea.id }}
-                                    />
+                                    ${
+                                      // **Cerrar una tarea es escribir** (Entrega 4): si esta cuenta no puede modificar,
+                                      // no se ofrecen. Y si alguien llega a mano, la puerta contesta 403 igual.
+                                      puede_modificar
+                                        ? html`<${BotonSencillo}
+                                            etiqueta=${c.tareas_completar}
+                                            accion="tarea-completar"
+                                            datos=${{ id: borrador.id, tarea: tarea.id }}
+                                          />
+                                          <${BotonSencillo}
+                                            etiqueta=${c.tareas_cancelar}
+                                            accion="tarea-cancelar"
+                                            datos=${{ id: borrador.id, tarea: tarea.id }}
+                                          />`
+                                        : null
+                                    }
                                   `
                                 : html` · ${frase(
                                     tarea.estado === "hecha" ? c.tareas_hecha_por : c.tareas_cancelada_por,
@@ -711,7 +719,8 @@ export function PantallaDeUnContacto({
               // **El alta rápida**: qué hay que hacer, para cuándo y quién. El día es un `date` de verdad (un día, no
               // una hora, como el campo del servidor) y **se puede dejar en blanco**: una tarea sin fecha es una
               // tarea, y obligarla a tener fecha sería inventarla.
-              html`
+              puede_modificar
+                ? html`
                 <div className="alta-rapida-de-tarea">
                   <label>
                     ${frase(c.tareas_que_hacer)}
@@ -732,6 +741,7 @@ export function PantallaDeUnContacto({
                   />
                 </div>
               `
+                : null
             }
           `
         : null

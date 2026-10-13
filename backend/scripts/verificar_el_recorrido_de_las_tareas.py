@@ -838,13 +838,20 @@ def medir_el_tecleo_de_una_fecha(nav, campo: str, fecha: dt.date) -> tuple[str |
     return None, None, intentos
 
 
-def teclear_por_la_manera_que_ya_funciona(nav, campo: str, valor: str, manera: str, *, es_fecha: bool = False) -> str:
+def teclear_por_la_manera_que_ya_funciona(
+    nav, campo: str, valor: str, manera: str, *, esperado: str | None = None
+) -> str:
     """Vuelve a teclear con la manera que ya se midió, y devuelve lo que ha quedado en el campo.
 
     **No se vuelve a barrer** todas las maneras en cada tarea: la primera tarea es la que mide (y se cuenta), y las
     demás usan lo medido. Si aun así no entrara, se dice y se sigue —con el valor puesto por JavaScript— para que
     el resto del recorrido se pueda medir.
+
+    `esperado` es **lo que tiene que quedar en el campo**, que en un `date` no es lo que se teclea: se teclean los
+    dígitos (`13102026`) y el campo queda en `2026-10-13`. Comparar los dígitos con el valor del campo daría un
+    fallo falso —y lo dio, en la primera vuelta de este guion.
     """
+    lo_que_tiene_que_quedar = esperado if esperado is not None else valor
     con_clic = manera.startswith("clic+")
     _limpiar_el_campo(nav, campo)
     _enfocar_el_campo(nav, campo, con_clic=con_clic)
@@ -853,16 +860,17 @@ def teclear_por_la_manera_que_ya_funciona(nav, campo: str, valor: str, manera: s
             _teclear_con(nav, campo, valor, nombre)
             break
     leido = _leer_el_campo(nav, campo)
-    if leido == valor:
+    if leido == lo_que_tiene_que_quedar:
         return "teclado"
     # Último recurso, y **dicho**: se pone el valor por JavaScript para poder seguir midiendo lo demás.
     nav.evaluar(
         "(() => { const el = document.getElementById(%s); if (el) el.value = %s; return true; })()"
-        % (json.dumps(campo), json.dumps(valor))
+        % (json.dumps(campo), json.dumps(lo_que_tiene_que_quedar))
     )
     decir(
         f"       NO HA ENTRADO por la manera medida ({manera!r}) en #{campo}: "
-        f"se esperaba {valor!r} y se ha leído {leido!r}. Se pone por JavaScript para poder seguir."
+        f"se tecleó {valor!r}, se esperaba {lo_que_tiene_que_quedar!r} y se ha leído {leido!r}. "
+        "Se pone por JavaScript para poder seguir."
     )
     return "javascript"
 
@@ -1024,7 +1032,9 @@ def el_alta_de_una_tarea(
             )
         else:
             digitos = los_digitos_de_una_fecha(fecha, medido["orden_de_la_fecha"])
-            como = teclear_por_la_manera_que_ya_funciona(nav, "tarea-fecha", digitos, medido["fecha"])
+            como = teclear_por_la_manera_que_ya_funciona(
+                nav, "tarea-fecha", digitos, medido["fecha"], esperado=fecha.isoformat()
+            )
             decir(
                 f"       #tarea-fecha: tecleado por {medido['fecha']!r} en orden "
                 f"{medido['orden_de_la_fecha']!r} ({digitos}) → {como}"
