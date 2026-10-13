@@ -2139,3 +2139,118 @@ test("la respuesta perdida y la edición después: el reintento lleva la misma c
     "la respuesta perdida pudo haber guardado la nota: el reintento tiene que llevar la MISMA clave o la apuntaría dos veces",
   );
 });
+
+// ---------------------------------------------------------------------------
+// El saldo del contacto (Entrega 1, 13/10/2026)
+// ---------------------------------------------------------------------------
+
+function unSaldo(cambios = {}) {
+  return {
+    contacto_id: 4,
+    moneda: "EUR",
+    nos_debe: {
+      total: "810.00",
+      total_texto: "810,00 €",
+      documentos: [
+        {
+          clase: "factura_emitida",
+          id: 1,
+          referencia: "F-2026-1",
+          fecha: "2026-07-10",
+          importe: "1210",
+          importe_texto: "1.210,00 €",
+          cobrado: "400",
+          cobrado_texto: "400,00 €",
+          pendiente: "810",
+          pendiente_texto: "810,00 €",
+          exceso: null,
+        },
+      ],
+      sin_importe: 0,
+    },
+    le_debemos: {
+      total: "450.00",
+      total_texto: "450,00 €",
+      documentos: [
+        {
+          clase: "gasto",
+          id: 9,
+          referencia: "Abono",
+          fecha: "2026-06-01",
+          importe: "600",
+          importe_texto: "600,00 €",
+          pagado: "150",
+          pagado_texto: "150,00 €",
+          pendiente: "450",
+          pendiente_texto: "450,00 €",
+          exceso: null,
+        },
+      ],
+      sin_importe: 0,
+    },
+    sin_asignar: { cobros: [], pagos: [], nota: "sin_asignar_no_es_un_anticipo" },
+    para_revisar: [],
+    cobertura: {
+      se_adjudica_por: "contacto_id",
+      no_se_adjudica_por_nombre: true,
+      hay_facturas_de_compra_sin_contacto: false,
+      nota: "las_facturas_de_compra_sin_gasto_con_contacto_no_entran_en_ningun_saldo",
+    },
+    ...cambios,
+  };
+}
+
+test("el saldo va en la ficha con los dos sentidos SEPARADOS y sus documentos", async () => {
+  // Lo que exige el encargo: **810 y 450 separadas** (no 360) y **cada cifra abre lo que la explica**.
+  const html = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4 }, saldo: unSaldo() });
+  assert.ok(html.includes("810,00 €"), `no se ve lo que nos debe:\n${html}`);
+  assert.ok(html.includes("450,00 €"), `no se ve lo que le debemos:\n${html}`);
+  assert.ok(!html.includes("360,00 €"), "las dos deudas no se restan: eso escondería las dos");
+  // Los documentos, con su fecha, su importe y lo que queda.
+  assert.ok(html.includes("F-2026-1"), "la cifra tiene que abrir su factura");
+  assert.ok(html.includes("Abono"), "y la suya su gasto");
+  assert.ok(html.includes("1.210,00 €") && html.includes("400,00 €"), "con su importe y lo cobrado");
+  // Y el enlace lleva **solo adonde hay pantalla**: el gasto tiene la suya.
+  assert.ok(html.includes("#/cuentas/9"), `el gasto tiene que llevar a su ficha:\n${html}`);
+});
+
+test("un importe que no se sabe se dice con palabras, nunca con un cero", async () => {
+  // La regla de la casa: un importe que no consta se enseña con la palabra que lo dice. Un `0,00 €` afirmaría que
+  // el papel pone cero, que es justo lo contrario de «no se sabe».
+  const html = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: { id: 4 },
+    saldo: unSaldo({
+      le_debemos: {
+        total: "0",
+        total_texto: "0,00 €",
+        documentos: [
+          {
+            clase: "gasto",
+            id: 11,
+            referencia: "Reparación sin factura",
+            fecha: "2026-06-01",
+            importe: null,
+            importe_texto: "No se sabe cuánto",
+            pagado: "0",
+            pagado_texto: "0,00 €",
+            pendiente: null,
+            pendiente_texto: "No se sabe cuánto",
+            exceso: null,
+          },
+        ],
+        sin_importe: 1,
+      },
+    }),
+  });
+  assert.ok(html.includes("No se sabe cuánto"), `tiene que decirlo con palabras:\n${html}`);
+  assert.ok(html.includes("Reparación sin factura"), "y el documento tiene que aparecer para revisarlo");
+});
+
+test("sin saldo, la ficha se sigue viendo y el bloque del saldo no aparece", async () => {
+  // **Y esto importa**: el saldo es un agregado de dinero, y un agregado que falla **no puede** impedir ver los
+  // datos del contacto. Con `saldo: null` la ficha se pinta entera y el bloque no está.
+  const html = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4 }, saldo: null });
+  assert.ok(html.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${html}`);
+  assert.ok(!html.includes(TEXTOS.saldo_titulo), "y el bloque del saldo, sin datos, no se enseña");
+});
