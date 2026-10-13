@@ -598,6 +598,35 @@ def _los_papeles_de_la_bandeja(
     return papeles
 
 
+def _los_papeles_que_cuelgan_de(db: Db, explotacion, papeles: list, clase: str | None, entidad_id: int | None) -> list:
+    """**Los papeles enlazados con algo concreto** (CRM-06, 14/10/2026).
+
+    POR QUE EXISTE. La bandeja filtraba por estado, por tipo de papel y por texto, y **por nada de aquello con
+    lo que un papel esta enlazado**. Para ver los papeles de una tierra habia que traerse la bandeja entera y
+    cruzarla en la pantalla — que es justo lo contrario de lo que este proyecto hace: **lo que el servidor
+    puede decir, no lo cruza la pantalla**.
+
+    Y se dice **de esta finca**: `clase`/`entidad_id` **no son una clave ajena a proposito** (apuntan a varias
+    tablas), asi que quien comprueba que la entidad sea de la finca es esto, como en la puerta de vincular.
+
+    Si la clase no existe, se devuelve **la lista vacia** en vez de inventarse nada: quien pregunta por una
+    clase que no hay no tiene papeles, y el aviso con la lista de las que hay lo da la puerta al vincular.
+    """
+    if not clase and entidad_id is None:
+        return papeles
+    if clase and not bandeja.es_una_clase_de_vinculo(clase):
+        return []
+    suyos = db.execute(
+        select(models.VinculoDeDocumento.documento_id).where(
+            models.VinculoDeDocumento.explotacion_id == explotacion.id,
+            *( [models.VinculoDeDocumento.clase == clase] if clase else [] ),
+            *( [models.VinculoDeDocumento.entidad_id == entidad_id] if entidad_id is not None else [] ),
+        )
+    ).scalars().all()
+    enlazados = set(suyos)
+    return [papel for papel in papeles if getattr(papel, "id", None) in enlazados]
+
+
 @router.get("/bandeja", response_model=LaBandejaSalida)
 def la_bandeja(
     explotacion: ExplotacionActual,
@@ -605,6 +634,8 @@ def la_bandeja(
     estado: str = "sin_revisar",
     tipo: str | None = None,
     texto: str | None = None,
+    clase: str | None = None,
+    entidad_id: int | None = None,
 ) -> LaBandejaSalida:
     """La bandeja entera, **reconstruida al abrirla**: es lo que hace que su dirección se pueda
     enlazar y recargar.
@@ -618,6 +649,7 @@ def la_bandeja(
     """
     b = textos.BANDEJA
     papeles = _los_papeles_de_la_bandeja(db, explotacion, estado=estado, tipo=tipo, texto=texto)
+    papeles = _los_papeles_que_cuelgan_de(db, explotacion, papeles, clase, entidad_id)
     cuantos_candidatos = _cuantos_candidatos(db, explotacion)
     salida = [
         _como_sale_un_papel(db, explotacion, papel, cuantos_candidatos) for papel in papeles

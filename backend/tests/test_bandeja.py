@@ -1702,6 +1702,54 @@ class TestElRecorridoPorLaApi:
 # `bandeja_api._como_sale_un_papel` lo trata como `CLASIFICADO`.
 
 
+    def test_los_papeles_de_una_tierra_se_piden_por_la_tierra(self, cliente, cuenta, crear_parcela):
+        """**CRM-06**: la ficha de una tierra tiene que poder enseñar SUS papeles.
+
+        Y para eso hacia falta lo que se prueba aqui: que la bandeja se pueda pedir **por aquello con lo que
+        un papel esta enlazado**. Antes solo filtraba por estado, tipo y texto, asi que para ver los papeles de
+        una tierra habia que traerse la bandeja entera y cruzarla en la pantalla — lo contrario de lo que este
+        proyecto hace.
+
+        Y **de esta finca**: `clase`/`entidad_id` no son una clave ajena a proposito (apuntan a varias tablas),
+        asi que quien comprueba que la entidad sea de la finca es esto. De ahi la segunda mitad de la prueba.
+        """
+        tierra = crear_parcela()
+        subido = self._subir(cliente, cuenta, tipo="factura")
+        assert subido.status_code in (200, 201), subido.text
+        # **El papel va DENTRO de «papel»**, como en las demas pruebas de esta casa.
+        papel = subido.json()["papel"]
+
+        # Se enlaza el papel con la tierra — la clase nueva del CRM-06.
+        enlace = cliente.post(
+            f"/api/bandeja/{papel['id']}/vincular",
+            headers=cuenta["cabeceras"],
+            json={"clase": "tierra", "entidad_id": tierra["id"]},
+        )
+        assert enlace.status_code == 200, f"la tierra tiene que poder enlazarse: {enlace.text}"
+
+        # Y pidiendo ESA tierra, sale.
+        suyos = cliente.get(
+            f"/api/bandeja?estado=todos&clase=tierra&entidad_id={tierra['id']}", headers=cuenta["cabeceras"]
+        )
+        assert suyos.status_code == 200, suyos.text
+        ids = [cada_uno["id"] for cada_uno in suyos.json()["papeles"]]
+        assert papel["id"] in ids, f"el papel de la tierra no sale al pedirla: {ids}"
+
+        # **Y pidiendo OTRA tierra, no sale** — que es lo que hace util el filtro.
+        otra = crear_parcela()
+        ajenos = cliente.get(
+            f"/api/bandeja?estado=todos&clase=tierra&entidad_id={otra['id']}", headers=cuenta["cabeceras"]
+        )
+        assert ajenos.status_code == 200, ajenos.text
+        assert papel["id"] not in [cada_uno["id"] for cada_uno in ajenos.json()["papeles"]], (
+            "el papel de una tierra no puede salir al pedir otra"
+        )
+
+        # Y **sin el filtro, sigue saliendo** — que es lo que el contrato prohibe romper.
+        todos = cliente.get("/api/bandeja?estado=todos", headers=cuenta["cabeceras"])
+        assert papel["id"] in [cada_uno["id"] for cada_uno in todos.json()["papeles"]]
+
+
 class TestElEstadoDeRevisionLoPoneLaBandeja:
     def test_un_papel_guardado_a_mano_no_espera_en_la_bandeja(self, cliente, cuenta):
         """El que se apunta en «los papeles» **ya está clasificado**: no tiene nada que revisar."""
