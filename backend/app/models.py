@@ -3456,6 +3456,70 @@ class CanalDeUnContacto(Base):
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class Tarea(Base):
+    """**Una próxima acción: lo que hay que hacer, cuándo y quién** (Entrega 3, 13/10/2026).
+
+    POR QUÉ. El cuaderno sabe lo que **ha pasado** —ventas, gastos, tratamientos— y no sabe lo que **queda por
+    hacer**: llamar al del pienso, llevar la factura, mirar si ha llegado la semilla. Eso hoy vive en la cabeza del
+    agricultor o en un papel, y por eso se olvida.
+
+    **LA DECISIÓN QUE EL ENCARGO PIDE DEFINIR: fecha local, no instante.** `fecha_prevista` es un **día**
+    («el martes», «el día 15»), no un momento con hora, y se guarda como fecha **sin zona horaria**. Los motivos:
+
+      · Una acción se piensa por días, no por minutos. Poner una hora obliga a **inventarla**, y una hora inventada
+        es peor que ninguna: nadie llama a las 09:00 porque el programa lo diga.
+      · Un instante **cambia de día** al mirarlo desde otro sitio (o al cambiar el horario de verano), y una tarea
+        del «martes» no puede pasar a ser del lunes por eso.
+      · Para lo que sí es un momento —**cuándo se completó o se canceló**— hay campos aparte, y esos sí son
+        instantes, porque ahí la hora importa y no se inventa: es la del reloj cuando se hizo.
+
+    **Y «sin fecha» es `None`, no una fecha por defecto.** Un valor inventado aquí es una tarea que aparece vencida
+    o que se cuela en la lista de hoy sin que nadie lo haya dicho. Sin fecha se dice «sin fecha», que es una de las
+    tres cosas que hay que poder distinguir (las otras dos: **vencida** y **finalizada**).
+
+    **`vencida` NO es un estado guardado**: se calcula al leer (fecha anterior a hoy **y** todavía pendiente), porque
+    el encargo lo dice con estas palabras —*«la fecha vencida no transforma automáticamente una tarea en
+    cancelada»*—. Un estado guardado obligaría a que algo fuera pasando por las filas cada noche, y lo que no se
+    ejecuta no se puede prometer.
+    """
+
+    __tablename__ = "tareas"
+    __table_args__ = (
+        Index("ix_tarea_de_la_ficha", "explotacion_id", "contacto_id"),
+        Index("ix_tarea_pendiente", "explotacion_id", "estado"),
+        # **Reenviar no duplica** (el mismo patrón que las notas y los cobros): la clave la manda el formulario y
+        # repetir la misma acción devuelve la que ya había en vez de apuntar otra.
+        UniqueConstraint("explotacion_id", "clave_de_reenvio", name="uq_tarea_reenvio"),
+    )
+
+    # Los tres estados, y son estos tres: no hay «en curso» ni «aplazada» porque no los ha pedido nadie.
+    PENDIENTE = "pendiente"
+    HECHA = "hecha"
+    CANCELADA = "cancelada"
+    ESTADOS = (PENDIENTE, HECHA, CANCELADA)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    # De quién es la acción. Una tarea **siempre** es de un contacto: es una próxima acción **con** alguien.
+    contacto_id: Mapped[int] = mapped_column(ForeignKey("contactos.id"), index=True)
+    # Y, cuando exista, del trabajo del que sale (una labor apalabrada, un servicio a un tercero…).
+    trabajo_id: Mapped[int | None] = mapped_column(ForeignKey("trabajos.id"), nullable=True)
+    titulo: Mapped[str] = mapped_column(String(200))
+    descripcion: Mapped[str | None] = mapped_column(Text)
+    # Quién la tiene que hacer. Es el nombre del usuario del sistema (ver la Entrega 4: los permisos por materia).
+    responsable: Mapped[str | None] = mapped_column(String(120))
+    # **El día**, sin hora. `None` es «sin fecha», que es distinto de «hoy».
+    fecha_prevista: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(20), default=PENDIENTE)
+    # **Quién y cuándo** la completó o la canceló: el encargo lo pide, y son instantes porque aquí la hora es un dato.
+    completada_en: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
+    completada_por: Mapped[str | None] = mapped_column(String(120))
+    cancelada_en: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
+    cancelada_por: Mapped[str | None] = mapped_column(String(120))
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class NotaDeUnContacto(Base):
     """Una nota sobre una ficha, **con quién la escribió y cuándo** (CRM-03, criterio (f), 11/10/2026).
 
