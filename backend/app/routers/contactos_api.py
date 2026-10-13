@@ -1835,6 +1835,13 @@ def marcar_un_papel(
         papeles.remove(datos.papel)
     _guardar_los_papeles(db, contacto, papeles)
     contacto.editado_a_mano = True
+    # **Y queda dicho** (14/10/2026). Este camino ponía `editado_a_mano` y **no dejaba rastro**: lo midió el
+    # inventario de la fusión (`CRM-04-FUSION-INVENTARIO.md`) y el encargo pide «historial y auditoría». Se guarda
+    # la lista **tal cual**, para que la auditoría diga QUÉ se marcó y no un «algo cambió».
+    correcciones.apuntar(
+        db, explotacion_id=explotacion.id, usuario_id=usuario.id, entidad="contacto",
+        entidad_id=contacto.id, accion="papeles", datos={"papeles": sorted(papeles)},
+    )
     db.commit()
     db.refresh(contacto)
     return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
