@@ -237,6 +237,22 @@ def fusionar_dos_fichas(
             detail="Esa ficha ya se fusionó con otra. Una fusión repetida no se hace dos veces.",
         )
 
+    # **Y la colisión que NO puede decidir nadie** (14/10/2026). Si las DOS fichas tienen el campo de notas
+    # escrito, juntarlas perdería una: `Contacto.notas` es un **campo de texto único**, no la tabla de notas —esa
+    # sí se mueve entera—, así que no hay sitio para las dos. La vista previa ya lo avisa y dice «el humano
+    # decide»; lo que faltaba es que la PUERTA lo impusiera: **ocultar un botón no constituye autorización**, que
+    # es un criterio de este mismo encargo. Por la puerta, la fusión se hacía y el campo de una de las dos se
+    # perdía. Lo encontró el recorrido andado; y mi primera prueba lo midió mal —llenaba la TABLA, no el campo—,
+    # así que primero pareció que no había defecto. Ahora está medido con el campo, que es lo que la previa mira.
+    if (origen.notas or "").strip() and (destino.notas or "").strip():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Las dos fichas tienen notas escritas, y la nota es un sitio único: juntarlas perdería una. Hay "
+                "que decidir antes qué se hace con ellas."
+            ),
+        )
+
     # **Qué se va a mover, contado antes de tocarlo** (y con los identificadores, para la auditoría).
     movidas: dict[str, list[int]] = {}
     for nombre, modelo in LAS_DEL_DINERO + LAS_QUE_CUELGAN:
