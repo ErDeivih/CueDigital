@@ -52,16 +52,39 @@ print("MAPA ->", por_linea(
     ['  PantallaDeLaFusion: "fusion",'],
 ))
 
-# --- 4 · La rama del router, después de la de los terceros ---
-print("rama ->", por_linea(
-    "web/app.js",
-    "return abrirLosTrabajosATerceros(parametros);",
-    [
+# --- 4 · La rama del router: **contando**, no anclando ---
+#
+# Y esto me costó dos rondas, las dos midiendo:
+#   · anclando en `return abrirLosTrabajosATerceros(parametros);` la rama se colaba **entre el return y su llave**
+#     (ese return es la ÚLTIMA línea de la rama, y su `}` es la siguiente);
+#   · anclando en la rama siguiente, `if (clave === "contacto") {` **aparece dos veces** en el fichero.
+# Así que no se ancla: se cuenta. Se busca el return de los terceros, se comprueba que su llave es la de después, y la
+# rama entra **detrás de esa llave**.
+def la_rama_del_router():
+    ruta = RAIZ / "web/app.js"
+    lineas = ruta.read_bytes().decode("utf-8").split("\n")
+    dentro = [k for k, l in enumerate(lineas) if l.strip() == "return abrirLosTrabajosATerceros(parametros);"]
+    if len(dentro) != 1:
+        raise SystemExit(f"ABORTO: el return de los terceros aparece {len(dentro)} veces")
+    k = dentro[0]
+    if lineas[k + 1].strip() != "}":
+        raise SystemExit("ABORTO: detrás del return de los terceros no está su llave; no toco nada")
+    if any('if (clave === "fusion")' in l for l in lineas):
+        return "ya estaba"
+    punto = k + 2
+    s = "\r" if lineas[punto - 1].endswith("\r") else ""
+    nuevas = [
         '  if (clave === "fusion") {',
         "    // **La fusión** (Entrega 5): la vista previa la hace el servidor, así que se pide a su puerta.",
         "    return abrirLaFusion(parametros);",
-    ],
-))
+        "  }",
+    ]
+    lineas[punto:punto] = [(x + s) if s else x for x in nuevas]
+    ruta.write_bytes("\n".join(lineas).encode("utf-8"))
+    return punto
+
+
+print("rama ->", la_rama_del_router())
 
 # --- 5 · Los textos y el cargador, antes de la función del estado de los terceros ---
 TEXTOS_FUSION = '''

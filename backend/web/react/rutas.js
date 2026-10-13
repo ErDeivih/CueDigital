@@ -119,6 +119,9 @@ export const PANTALLAS = [
   // sitio y sus hectareas NO son de la finca. Va despues de las tareas a proposito: son lo mismo
   // (cosas que hay que hacer) pero de otro.
   { clave: "trabajos_a_terceros", patron: ["trabajos-a-terceros"] },
+  // **La fusión de dos fichas** (Entrega 5, 14/10/2026): juntar dos contactos que son el mismo. No es una
+  // pantalla de la ficha, así que tiene su propia dirección.
+  { clave: "fusion", patron: ["fusion"] },
   // Firmar el cuaderno: un tramo de texto fijo, y va **antes** que el apunte (`:id`) porque los tramos
   // fijos van siempre delante de los identificadores en esta tabla.
   { clave: "firmar", patron: ["cuaderno", "firmar"] },

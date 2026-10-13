@@ -130,6 +130,7 @@ import {
 } from "./react/pantallas/contactos.js";
 import { pantallaDeLasTareas } from "./react/pantallas/tareas.js";
 import { pantallaDeLosTrabajosATerceros } from "./react/pantallas/trabajos_a_terceros.js";
+import { pantallaDeLaFusion } from "./react/pantallas/fusion.js";
 import { pantallaDeLaRevisionDeLosNombres } from "./react/pantallas/revision_de_contactos.js";
 import { pantallaDeCuadernoDeLaJunta } from "./react/pantallas/cuaderno_de_la_junta.js";
 import { pantallaDeCampanas } from "./react/pantallas/campanas.js";
@@ -852,6 +853,7 @@ const DIRECCION_PROPIA = {
   PantallaDeUnContacto: "contacto",
 PantallaDeLasTareas: "tareas",
   PantallaDeLosTrabajosATerceros: "trabajos_a_terceros",
+  PantallaDeLaFusion: "fusion",
   // Las dos de T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra.
   // Las dos se reconstruyen enteras al abrir su dirección.
   PantallaTierrasDeLaExplotacion: "tierras_mapa",
@@ -1343,6 +1345,10 @@ function abrirLaPantalla(clave, parametros = {}) {
     // **Los servicios a terceros** (CRM-04): se piden a su puerta, que es la que trae el cliente
     // ya resuelto y el estado de cada trabajo.
     return abrirLosTrabajosATerceros(parametros);
+  }
+  if (clave === "fusion") {
+    // **La fusión** (Entrega 5): la vista previa la hace el servidor, así que se pide a su puerta.
+    return abrirLaFusion(parametros);
   }
   if (clave === "contacto") {
     // Se abre **por su puerta**, que es la que la pide al servidor: recargar tiene que dejar la ficha entera,
@@ -17670,6 +17676,67 @@ async function abrirLasTareas(parametros = {}) {
   }
   suyo.cargando = false;
   return pantallaLasTareas();
+}
+
+function estadoDeLaFusion() {
+  // **El estado de esta pantalla**, como el de las demás: lo cargado, si se está cargando, y el error.
+  estado.pantallas = estado.pantallas || {};
+  estado.pantallas.fusion = estado.pantallas.fusion || {
+    contactos: [],
+    origen_id: "",
+    destino_id: "",
+    previa: null,
+    resultado: null,
+    cargando: false,
+    error: "",
+    aviso: "",
+  };
+  return estado.pantallas.fusion;
+}
+
+function textosDeLaFusion() {
+  // **Envuelto, como TODAS las demás pantallas.** Pasarle a la pantalla YA el vocabulario la deja MUDA: es el
+  // fallo que ya ha aparecido tres veces aquí.
+  return { fusion: t("fusion", {}) };
+}
+
+/** Pinta la fusión tal y como está el estado ahora mismo. */
+function pantallaLaFusion() {
+  const suyo = estadoDeLaFusion();
+  return montar(() =>
+    pantallaDeLaFusion({
+      textos: textosDeLaFusion(),
+      contactos: suyo.contactos || [],
+      origen_id: suyo.origen_id,
+      destino_id: suyo.destino_id,
+      previa: suyo.previa,
+      resultado: suyo.resultado,
+      cargando: suyo.cargando,
+      error: suyo.error,
+      aviso: suyo.aviso,
+    }),
+  );
+}
+
+async function abrirLaFusion(parametros = {}) {
+  // **La fusión** (Entrega 5, 14/10/2026). Se piden los contactos, porque la pantalla necesita elegir dos.
+  const suyo = estadoDeLaFusion();
+  suyo.origen_id = parametros.origen || suyo.origen_id || "";
+  suyo.destino_id = parametros.destino || suyo.destino_id || "";
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.cargando = true;
+  pantallaLaFusion();
+  try {
+    const agenda = await apiJson("/api/contactos");
+    suyo.contactos = agenda.contactos || [];
+  } catch (fallo) {
+    // **Si no se puede leer, se dice**: una lista vacía sin explicación parecería que no hay ninguno.
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    suyo.contactos = [];
+  }
+  suyo.cargando = false;
+  return pantallaLaFusion();
 }
 
 function estadoDeLosTrabajosATerceros() {

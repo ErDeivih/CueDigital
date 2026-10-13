@@ -316,6 +316,7 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     // **Lo que hay que hacer** (Entrega 3, 13/10/2026): `#/tareas`, con los filtros en la dirección.
     "tareas",
   "trabajos_a_terceros",
+  "fusion",
     "firmar",
     "apunte",
     "almacen",

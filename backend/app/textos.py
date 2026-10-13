@@ -9006,4 +9006,41 @@ TRABAJOS_A_TERCEROS: dict[str, str] = {
     "hecho": "Hecho",
     "cancelado": "Cancelado",
 }
+# **La fusión de dos fichas** (Entrega 5, 14/10/2026). Se definen UNA vez y los sirve `interfaz.py`, como todo lo
+# demás: dentro de la pantalla saldría MUDA, que es el fallo que ya ha aparecido tres veces en esta casa.
+FUSION: dict[str, str] = {
+    "titulo": "Juntar dos fichas que son la misma",
+    "pista": (
+        "Cuando el mismo cliente o el mismo proveedor está apuntado dos veces, se juntan en una. Primero se ve lo "
+        "que va a pasar; no se junta nada hasta que tú lo digas."
+    ),
+    "cargando": "Mirando las dos fichas…",
+    "la_que_desaparece": "La que desaparece (la que está de más)",
+    "la_que_se_queda": "La que se queda (la buena)",
+    "elije_una": "Elige una",
+    "ver_lo_que_pasa": "Ver lo que va a pasar",
+    "esto_es_lo_que_pasa": "Esto es lo que va a pasar",
+    "que": "Qué",
+    "de_la_que_desaparece": "De la que desaparece",
+    "de_la_que_se_queda": "De la que se queda",
+    "los_saldos_no_se_compensan": "Los saldos NO se compensan",
+    "nos_debe": "nos debe",
+    "le_debemos": "le debemos",
+    "no_choca_nada": "No choca nada: se puede juntar tal cual.",
+    "lo_que_choca": "Lo que choca, y qué hacer",
+    "esto_no_lo_puede_decidir_la_pantalla": (
+        "Esto NO lo puede decidir la pantalla: las dos fichas tienen notas escritas y la nota es un sitio único. "
+        "Hay que decidir antes qué se hace con ellas."
+    ),
+    "fusionarlas": "Juntarlas",
+    "el_origen_no_se_borra": (
+        "La que desaparece NO se borra: se queda apuntando a la que se queda, para que sus enlaces de siempre sigan "
+        "teniendo sentido. Y se puede deshacer."
+    ),
+    "hecho": "Hecho",
+    "deshacer": "Deshacer la fusión",
+    "deshacer_devuelve_solo_lo_que_trajo": (
+        "Deshacer devuelve lo que trajo la fusión. Lo que se haya apuntado después a la ficha que se queda NO se toca."
+    ),
+}
 
