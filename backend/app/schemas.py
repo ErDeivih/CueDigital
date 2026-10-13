@@ -3588,6 +3588,28 @@ class NotaDeUnContactoSalida(BaseModel):
     clave_de_reenvio: str | None = None
 
 
+class CanalDeUnContactoEntrada(EntradaBase):
+    """Un teléfono, un correo o una dirección de una ficha (Entrega 2, 13/10/2026).
+
+    **Lo que NO se valida, y es a propósito**: el teléfono no se trocea ni se le pone prefijo —se guarda
+    tal y como se escribe, porque un programa que «arregla» un número puede dejar un número que no es el
+    que hay que marcar— y la etiqueta es libre («administración», «el del almacén», «preguntar por
+    Juan»), porque la vida no trae una lista cerrada y una etiqueta no rompe nada.
+
+    **Lo que sí se exige**: que la clase sea una de las tres que hay y que venga **algo escrito**. Nada
+    más: impedir guardar un dato legítimo es peor que guardarlo feo.
+    """
+
+    clase: str
+    etiqueta: str | None = None
+    telefono: str | None = None
+    correo: str | None = None
+    direccion: str | None = None
+    localidad: str | None = None
+    # Si nace o se pone como principal. El de su clase, que es lo que garantiza el índice parcial.
+    principal: bool = False
+
+
 class SaldoDeUnContacto(BaseModel):
     """Cuánto nos debe y cuánto le debemos, **separados y sin compensar** (13/10/2026).
 
@@ -3610,6 +3632,23 @@ class SaldoDeUnContacto(BaseModel):
     sin_asignar: dict
     para_revisar: list[dict]
     cobertura: dict
+
+
+class CanalDeUnContactoSalida(BaseModel):
+    """Un teléfono, un correo o una dirección de una ficha, con su etiqueta y su principal.
+
+    Los valores van **tal cual se guardaron**: sin arreglar el teléfono y sin tocar el texto. `etiqueta`
+    puede faltar —hay canales que nadie etiquetó— y entonces se dice con `None`.
+    """
+
+    id: int
+    clase: str
+    etiqueta: str | None = None
+    telefono: str | None = None
+    correo: str | None = None
+    direccion: str | None = None
+    localidad: str | None = None
+    principal: bool
 
 
 class ContactoSalida(SalidaBase):
@@ -3644,6 +3683,9 @@ class ContactoSalida(SalidaBase):
     # pasó con `activo`—, y una ficha sin notas y una ficha con las notas olvidadas no son lo
     # mismo.
     notas_con_autor: list[NotaDeUnContactoSalida]
+    # Los canales de la ficha (Entrega 2): sus teléfonos, correos y direcciones, con etiqueta y
+    # principal. Va **sin valor por defecto**, por el mismo motivo que las notas.
+    canales: list[CanalDeUnContactoSalida]
     origen: str = "a_mano"
     # Los papeles que el agricultor le ha marcado.
     papeles: list[str] = []

@@ -52,6 +52,7 @@ from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotaci
 from ..schemas import (
     ConfirmacionDeLaMigracion,
     BajaDeUnContacto,
+    CanalDeUnContactoEntrada,
     SaldoDeUnContacto,
     NotaDeUnContactoEntrada,
     ContactoEntrada,
@@ -273,6 +274,7 @@ def _pintar_contacto(
         # vacía —y se manda— porque el esquema la exige: una ficha sin notas y una ficha a la que se le han
         # olvidado no pueden leerse igual.
         "notas_con_autor": [],
+        "canales": [],
         "es_empresa": contacto.es_empresa,
         "nif": contacto.nif,
         "telefono": contacto.telefono,
@@ -291,6 +293,91 @@ def _pintar_contacto(
         ],
         "enlaces": len(suyos),
         "nombres_escritos": sorted({uno["texto"] for uno in suyos}),
+    }
+
+
+CLASES_DE_CANAL = ("telefono", "correo", "direccion")
+
+
+def _los_canales(db, contacto: models.Contacto) -> list[dict]:
+    """Los canales de una ficha, **el principal de cada clase primero** y luego los demás por etiqueta.
+
+    Se ordena así porque es como se lee: lo que hay que usar, arriba.
+    """
+    suyos = list(
+        db.scalars(
+            select(models.CanalDeUnContacto).where(
+                models.CanalDeUnContacto.explotacion_id == contacto.explotacion_id,
+                models.CanalDeUnContacto.contacto_id == contacto.id,
+            )
+        )
+    )
+    suyos.sort(key=lambda canal: (canal.clase, not canal.principal, (canal.etiqueta or "").lower(), canal.id))
+    return [
+        {
+            "id": canal.id,
+            "clase": canal.clase,
+            "etiqueta": canal.etiqueta,
+            "telefono": canal.telefono,
+            "correo": canal.correo,
+            "direccion": canal.direccion,
+            "localidad": canal.localidad,
+            "principal": canal.principal,
+        }
+        for canal in suyos
+    ]
+
+
+def _apartar_el_principal_de_su_clase(db, contacto: models.Contacto, clase: str) -> None:
+    """Quita de principal al que lo era **de esa clase**, para que el nuevo pueda serlo.
+
+    **Va antes de poner el nuevo, y no es un detalle de estilo**: el índice parcial de la base garantiza **un solo
+    principal por clase y ficha**, así que si se pusiera primero el nuevo, la base rechazaría el cambio. Se hace en
+    la misma transacción que el alta, de modo que **nunca hay dos principales ni ninguno**.
+    """
+    el_que_era = db.scalar(
+        select(models.CanalDeUnContacto).where(
+            models.CanalDeUnContacto.explotacion_id == contacto.explotacion_id,
+            models.CanalDeUnContacto.contacto_id == contacto.id,
+            models.CanalDeUnContacto.clase == clase,
+            models.CanalDeUnContacto.principal.is_(True),
+        )
+    )
+    if el_que_era is not None:
+        el_que_era.principal = False
+
+
+def _un_canal_guardable(datos) -> dict:
+    """Lo que se guarda de un canal, **comprobando solo lo que hay que comprobar**.
+
+    La clase tiene que ser una de las tres y tiene que venir **algo escrito**; y de lo que venga, se guarda lo que
+    corresponda a su clase. **No se valida el formato**: un teléfono se guarda tal cual (ver el modelo).
+    """
+    clase = (datos.clase or "").strip()
+    if clase not in CLASES_DE_CANAL:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=textos.mensaje("C7_esa_clase_de_canal_no_existe"),
+        )
+    suyos = {
+        "telefono": logica.limpia(datos.telefono) or None,
+        "correo": logica.limpia(datos.correo) or None,
+        "direccion": logica.limpia(datos.direccion) or None,
+        "localidad": logica.limpia(datos.localidad) or None,
+    }
+    if not any(suyos[clase] for clase in (clase,) if suyos.get(clase)):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=textos.mensaje("C7_un_canal_necesita_algo_escrito"),
+        )
+    # Lo que no es de su clase **no se guarda**, aunque venga: un teléfono con dirección dentro es un dato cruzado.
+    return {
+        "clase": clase,
+        "etiqueta": logica.limpia(datos.etiqueta) or None,
+        "telefono": suyos["telefono"] if clase == "telefono" else None,
+        "correo": suyos["correo"] if clase == "correo" else None,
+        "direccion": suyos["direccion"] if clase == "direccion" else None,
+        "localidad": suyos["localidad"] if clase == "direccion" else None,
     }
 
 
@@ -376,6 +463,9 @@ def _la_ficha(db, contacto: models.Contacto, escritos: list[dict]) -> dict:
         # **Las notas, con su autor** (CRM-03, criterio (f)): la lista entera, de la más nueva a la más vieja.
         # El campo `notas` de siempre se queda como está —es el texto libre de la ficha— y esto es el diario.
         "notas_con_autor": _las_notas(db, contacto),
+        # **Y sus canales** (Entrega 2): con su etiqueta y su principal. La lista de contactos manda
+        # la lista vacía, igual que con las notas: se miran al abrir la ficha.
+        "canales": _los_canales(db, contacto),
         "vivos": [
             {
                 "id": identificador,
@@ -669,6 +759,82 @@ def _lo_que_contesta_una_accion_ya_guardada(ya, contacto, texto: str, db, explot
         status_code=status.HTTP_409_CONFLICT,
         detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
     )
+
+
+@router.post("/{contacto_id}/canales", response_model=ContactoSalida)
+def apuntar_un_canal(
+    contacto_id: int,
+    datos: CanalDeUnContactoEntrada,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Apunta un teléfono, un correo o una dirección más** (Entrega 2, 13/10/2026).
+
+    Los cuatro campos de siempre en la ficha **no se tocan**: esto es para los demás (el del almacén, el móvil de
+    quien atiende, la dirección de entrega). Si nace como principal, el que lo era de su clase **deja de serlo en
+    la misma transacción**.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    lo_suyo = _un_canal_guardable(datos)
+    if datos.principal:
+        _apartar_el_principal_de_su_clase(db, contacto, lo_suyo["clase"])
+    canal = models.CanalDeUnContacto(
+        explotacion_id=explotacion.id, contacto_id=contacto.id, principal=bool(datos.principal), **lo_suyo
+    )
+    db.add(canal)
+    db.flush()
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="contacto",
+        entidad_id=contacto.id,
+        accion="canal_crear",
+        datos={"clase": [None, canal.clase], "etiqueta": [None, canal.etiqueta]},
+    )
+    db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
+
+
+@router.post("/{contacto_id}/canales/{canal_id}/principal", response_model=ContactoSalida)
+def el_canal_principal(
+    contacto_id: int,
+    canal_id: int,
+    db: Db,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+) -> dict:
+    """**Elige cuál es el principal de su clase** (Entrega 2, 13/10/2026).
+
+    Uno y solo uno por clase, y eso lo garantiza la base con un índice parcial: aquí se **aparta** al que lo era
+    antes de poner al nuevo, en la misma transacción. Si ya era el principal, no se apunta nada —el agricultor toca
+    dos veces con los guantes y el programa no puede contar dos cambios donde hubo uno—.
+    """
+    contacto = _el_contacto_de_la_finca(db, explotacion.id, contacto_id)
+    canal = db.scalar(
+        select(models.CanalDeUnContacto).where(
+            models.CanalDeUnContacto.explotacion_id == explotacion.id,
+            models.CanalDeUnContacto.contacto_id == contacto.id,
+            models.CanalDeUnContacto.id == canal_id,
+        )
+    )
+    if canal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=textos.mensaje("C7_no_existe"))
+    if not canal.principal:
+        _apartar_el_principal_de_su_clase(db, contacto, canal.clase)
+        canal.principal = True
+        correcciones.apuntar(
+            db,
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            entidad="contacto",
+            entidad_id=contacto.id,
+            accion="canal_principal",
+            datos={"clase": [None, canal.clase], "canal_id": [None, canal.id]},
+        )
+        db.commit()
+    return _la_ficha(db, contacto, _los_escritos(db, explotacion.id))
 
 
 @router.get("/{contacto_id}/saldo", response_model=SaldoDeUnContacto)

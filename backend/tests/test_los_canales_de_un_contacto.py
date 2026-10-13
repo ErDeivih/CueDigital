@@ -108,3 +108,115 @@ def test_la_migracion_no_toca_los_campos_de_siempre(cliente, cuenta, db_sesion):
     assert la_ficha.correo == "administracion@cooperativa.test", la_ficha.correo
     assert la_ficha.direccion == "Calle Mayor 3", la_ficha.direccion
     assert la_ficha.localidad == "Peñaranda de Bracamonte", la_ficha.localidad
+
+# ---------------------------------------------------------------------------
+# Las puertas: crear, elegir principal y lo que se exige
+# ---------------------------------------------------------------------------
+
+
+def _apuntar_un_canal(cliente, cuenta, contacto_id: int, **canal):
+    return cliente.post(
+        f"/api/contactos/{contacto_id}/canales", headers=cuenta["cabeceras"], json=canal
+    )
+
+
+def test_se_pueden_apuntar_varios_canales_de_la_misma_clase(cliente, cuenta, db_sesion):
+    """**Varios teléfonos con su etiqueta**, que es lo que no se podía hasta hoy.
+
+    El de siempre sigue siendo el principal —no se toca— y el nuevo se apunta con su etiqueta. La ficha devuelve
+    los dos, y los cuatro campos de siempre **no se han movido**.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    database.llevar_los_canales_de_los_contactos_a_su_tabla()
+
+    nuevo = _apuntar_un_canal(
+        cliente, cuenta, ficha["id"], clase="telefono", etiqueta="almacén", telefono="947 999 111"
+    )
+    assert nuevo.status_code == 200, nuevo.text
+
+    canales = nuevo.json()["canales"]
+    telefonos = [canal for canal in canales if canal["clase"] == "telefono"]
+    assert len(telefonos) == 2, f"los dos teléfonos tienen que estar: {canales}"
+    el_principal = [canal for canal in telefonos if canal["principal"]]
+    assert len(el_principal) == 1, f"y uno solo principal: {telefonos}"
+    assert el_principal[0]["telefono"] == "947 123 456", (
+        f"el principal sigue siendo el de siempre: {el_principal[0]}"
+    )
+    assert any(canal["etiqueta"] == "almacén" for canal in telefonos), "y el nuevo con su etiqueta"
+
+
+def test_elegir_principal_aparta_al_que_lo_era(cliente, cuenta, db_sesion):
+    """**Un principal por clase**: al elegir uno nuevo, el anterior deja de serlo.
+
+    Y lo garantiza **la base**, con un índice parcial: si la puerta pusiera primero el nuevo, la base rechazaría el
+    cambio. Por eso se aparta al anterior antes, en la misma transacción.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    database.llevar_los_canales_de_los_contactos_a_su_tabla()
+    _apuntar_un_canal(cliente, cuenta, ficha["id"], clase="correo", etiqueta="almacén", correo="almacen@coop.test")
+
+    suyos = _los_canales_de(db_sesion, ficha["id"])
+    el_nuevo = next(canal for canal in suyos if canal.etiqueta == "almacén")
+
+    elegido = cliente.post(
+        f"/api/contactos/{ficha['id']}/canales/{el_nuevo.id}/principal", headers=cuenta["cabeceras"], json={}
+    )
+    assert elegido.status_code == 200, elegido.text
+
+    los_correos = [canal for canal in elegido.json()["canales"] if canal["clase"] == "correo"]
+    principales = [canal for canal in los_correos if canal["principal"]]
+    assert len(principales) == 1, f"no puede haber dos principales del correo: {los_correos}"
+    assert principales[0]["id"] == el_nuevo.id, f"y el principal tiene que ser el elegido: {principales[0]}"
+
+
+def test_un_canal_nuevo_puede_nacer_principal(cliente, cuenta, db_sesion):
+    """Y si nace principal, el que lo era **deja de serlo en la misma transacción** (nunca hay dos ni ninguno)."""
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    database.llevar_los_canales_de_los_contactos_a_su_tabla()
+
+    nacido = _apuntar_un_canal(
+        cliente, cuenta, ficha["id"], clase="telefono", etiqueta="el móvil", telefono="600 111 222", principal=True
+    )
+    assert nacido.status_code == 200, nacido.text
+    los_telefonos = [canal for canal in nacido.json()["canales"] if canal["clase"] == "telefono"]
+    principales = [canal for canal in los_telefonos if canal["principal"]]
+    assert len(principales) == 1, f"uno solo: {los_telefonos}"
+    assert principales[0]["telefono"] == "600 111 222", f"y es el nuevo: {principales[0]}"
+
+
+def test_lo_que_se_exige_a_un_canal_y_lo_que_no(cliente, cuenta):
+    """**Se exige la clase y que haya algo escrito. No se exige formato.**
+
+    Es la decisión del encargo con estas palabras: *«Validar sin impedir guardar información legítima»*. Un teléfono
+    que es «preguntar por Juan» **se guarda**: es lo que hay apuntado en el papel.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+
+    mala_clase = _apuntar_un_canal(cliente, cuenta, ficha["id"], clase="whatsapp", telefono="600")
+    assert mala_clase.status_code == 422, mala_clase.status_code
+    assert "no es un teléfono" in mala_clase.text, mala_clase.text
+
+    vacio = _apuntar_un_canal(cliente, cuenta, ficha["id"], clase="telefono", etiqueta="sin número")
+    assert vacio.status_code == 422, vacio.status_code
+    assert "Escribe el teléfono" in vacio.text, vacio.text
+
+    # Y lo legítimo entra **tal cual**, aunque no parezca un teléfono.
+    raro = _apuntar_un_canal(
+        cliente, cuenta, ficha["id"], clase="telefono", etiqueta="el del bar", telefono="preguntar por Juan"
+    )
+    assert raro.status_code == 200, raro.text
+    assert any(
+        canal["telefono"] == "preguntar por Juan" for canal in raro.json()["canales"]
+    ), "lo que está apuntado en el papel se guarda tal cual"
+
+
+def test_los_canales_de_otra_finca_no_se_tocan(cliente, cuenta, crear_cuenta):
+    """**Aislamiento**: 404, como la ficha."""
+    mio = _un_contacto_con_todo(cliente, cuenta)
+    otro = crear_cuenta("otro-canal@ejemplo.test")
+    respuesta = cliente.post(
+        f"/api/contactos/{mio['id']}/canales",
+        headers=otro["cabeceras"],
+        json={"clase": "telefono", "telefono": "600 000 000"},
+    )
+    assert respuesta.status_code == 404, f"tiene que dar 404 y ha dado {respuesta.status_code}"
