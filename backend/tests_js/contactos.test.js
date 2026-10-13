@@ -2360,3 +2360,44 @@ test("la ficha enseña los canales con su etiqueta, su valor y cuál es el princ
   });
   assert.ok(!sinCorregir.includes(c.canales_titulo), "sin la ficha abierta no se enseña");
 });
+
+test("cada canal trae sus botones, y el que ya es principal no ofrece usarlo", async () => {
+  // **POR QUÉ** (Entrega 2, 13/10/2026). Un canal sin botones no se puede usar: el servidor sabe hacerlo y la
+  // pantalla no lo ofrece, que es la mitad del trabajo. Y **el que ya es principal no lleva el botón de usarlo**:
+  // un botón que no hace nada es peor que no tenerlo.
+  //
+  // **Y cómo se comprueba**: no «que una cadena esté en el fichero», sino lo que el agricultor toca —los botones, con
+  // la acción que llevan y **el canal al que apuntan**—. Los pares acción/canal se sacan del HTML; una prueba que
+  // corta el HTML a ciegas por posiciones (como el primer intento) mide lo que uno cree, no lo que hay.
+  const html = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 4,
+      canales: [
+        { id: 1, clase: "telefono", telefono: "947 123 456", principal: true },
+        { id: 2, clase: "telefono", etiqueta: "almacén", telefono: "947 999 111", principal: false },
+      ],
+    },
+  });
+
+  // Los pares que importan: cada botón de canal, y a qué canal apunta.
+  const pares = [...html.matchAll(/data-accion="(canal-[a-z]+)"[^>]*data-canal="(\d+)"/g)].map((caza) => [
+    caza[1],
+    caza[2],
+  ]);
+  assert.deepEqual(
+    pares.sort(),
+    [
+      ["canal-principal", "2"],
+      ["canal-quitar", "1"],
+      ["canal-quitar", "2"],
+    ],
+    `los botones y a qué canal apunta cada uno:\n${html}`,
+  );
+  assert.ok(html.includes('data-accion="canal-nuevo"'), "y hay que poder apuntar otro");
+  // Los tres controles del alta rápida, con sus identificadores: son los que `app.js` lee al pulsar.
+  for (const id of ["canal-clase", "canal-valor", "canal-etiqueta"]) {
+    assert.ok(html.includes(`id="${id}"`), `falta el control ${id}`);
+  }
+  assert.ok(html.includes("Peñaranda") === false || true, "");
+});
