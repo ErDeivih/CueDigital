@@ -27,6 +27,7 @@ import re
 
 import pytest
 
+from sqlalchemy import select
 from app import contactos as logica
 from app import models, textos
 
@@ -1704,3 +1705,82 @@ class TestLaMigracionDejaRastro:
         assert apunte.datos["textos_tocados"] == [None, 0], (
             "y con que **no se tocó ni una letra** de los textos históricos, que es la promesa del ticket"
         )
+
+# ---------------------------------------------------------------------------
+# Lo que queda en la auditoría al enlazar y al quitar el enlace (14/10/2026)
+#
+# POR QUÉ. El inventario de la fusión midió que estos dos caminos ponían `editado_a_mano = True` y **no** llamaban a
+# `correcciones.apuntar`. Y `enlaces_de_contacto` **no tiene columna de anulación**: esas filas de auditoría son lo
+# único que puede reconstruir un enlace quitado. Van en ESTE fichero porque la puerta de enlazar **valida el texto**
+# y hacen falta facturas de verdad, que aquí ya se preparan.
+# ---------------------------------------------------------------------------
+
+
+def test_enlazar_queda_en_la_auditoria(cliente, cuenta, db_sesion, una_factura):
+    """**Enlazar deja su fila**, con la tabla, el campo y el registro — y con quién lo hizo."""
+    factura = una_factura()
+    creada = cliente.post(
+        "/api/contactos", headers=cuenta["cabeceras"], json={"nombre": "Cooperativa de la Auditoría"}
+    )
+    assert creada.status_code == 201, creada.text
+    enlazado = cliente.post(
+        f"/api/contactos/{creada.json()['id']}/enlaces",
+        headers=cuenta["cabeceras"],
+        json={"tabla": "facturas", "campo": "proveedor", "registro_id": factura},
+    )
+    assert enlazado.status_code == 200, enlazado.text
+
+    db_sesion.expire_all()
+    apuntado = list(
+        db_sesion.scalars(
+            select(models.Auditoria).where(
+                models.Auditoria.entidad == "contacto",
+                models.Auditoria.entidad_id == creada.json()["id"],
+                models.Auditoria.accion == "enlazar",
+            )
+        )
+    )
+    assert len(apuntado) == 1, f"tiene que quedar una fila: {len(apuntado)}"
+    datos = str(apuntado[0].datos)
+    assert "facturas" in datos and "proveedor" in datos, f"con la tabla y el campo: {datos}"
+    assert str(factura) in datos, f"y con el registro: {datos}"
+    assert apuntado[0].usuario_id is not None, "y con quién lo enlazó"
+
+
+def test_quitar_el_enlace_deja_SU_fila_sin_borrar_la_de_haberlo_puesto(
+    cliente, cuenta, db_sesion, una_factura
+):
+    """**Quitar añade su fila; no pisa la de haberlo puesto.** Es lo que hace falta para poder deshacer."""
+    factura = una_factura()
+    creada = cliente.post(
+        "/api/contactos", headers=cuenta["cabeceras"], json={"nombre": "Cooperativa de la Auditoría"}
+    )
+    ficha_id = creada.json()["id"]
+    assert cliente.post(
+        f"/api/contactos/{ficha_id}/enlaces",
+        headers=cuenta["cabeceras"],
+        json={"tabla": "facturas", "campo": "proveedor", "registro_id": factura},
+    ).status_code == 200
+
+    la_ficha = cliente.get(f"/api/contactos/{ficha_id}", headers=cuenta["cabeceras"]).json()
+    el_enlace = la_ficha["vivos"][0]["id"]
+    assert cliente.delete(
+        f"/api/contactos/{ficha_id}/enlaces/{el_enlace}", headers=cuenta["cabeceras"]
+    ).status_code == 200
+
+    db_sesion.expire_all()
+    def _las_de(accion):
+        return list(
+            db_sesion.scalars(
+                select(models.Auditoria).where(
+                    models.Auditoria.entidad == "contacto",
+                    models.Auditoria.entidad_id == ficha_id,
+                    models.Auditoria.accion == accion,
+                )
+            )
+        )
+    assert len(_las_de("enlazar")) == 1, "la de haberlo puesto sigue ahí"
+    los_quites = _las_de("quitar_el_enlace")
+    assert len(los_quites) == 1, f"y quitar deja la suya: {len(los_quites)}"
+    assert str(el_enlace) in str(los_quites[0].datos), f"con el enlace dentro: {los_quites[0].datos}"
+    assert los_quites[0].usuario_id is not None, "y con quién lo quitó"
