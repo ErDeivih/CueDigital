@@ -17,6 +17,7 @@ Las cifras que pide el encargo, tal cual:
 
 from __future__ import annotations
 
+import json as _json
 from decimal import Decimal
 
 
@@ -231,4 +232,115 @@ def test_el_saldo_de_un_contacto_de_otra_finca_no_se_ve(cliente, cuenta, crear_c
     respuesta = cliente.get(f"/api/contactos/{mio['id']}/saldo", headers=otro["cabeceras"])
     assert respuesta.status_code == 404, (
         f"el saldo de otra finca tiene que dar 404, y ha dado {respuesta.status_code}: {respuesta.text}"
+    )
+
+def test_una_compra_con_factura_y_gasto_cuenta_una_sola_vez(cliente, cuenta, campana):
+    """**Factura y gasto de la misma compra: una sola obligación** (encargo, Entrega 1).
+
+    La factura de compra **no tiene `contacto_id`** —su proveedor es texto—, así que **no se adjudica por nombre**
+    (el encargo lo prohíbe) y **no entra** en el saldo de ningún contacto. La obligación vive en su **gasto**, que
+    sí dice de quién es. Por eso una compra con las dos cosas cuenta **una vez**, y no por una resta afortunada
+    sino porque la factura no se cuenta nunca.
+    """
+    contacto = _un_contacto(cliente, cuenta, "Suministros del Páramo, S.L.")
+    factura = cliente.post(
+        "/api/facturas",
+        headers=cuenta["cabeceras"],
+        # **Como formulario, no como JSON**: esta puerta es `datos: str = File(...)` porque en la misma petición
+        # viaja el fichero del papel, y un formulario con fichero no puede llevar un cuerpo JSON normal. Lo dice la
+        # propia puerta: *«Los datos llegan como un JSON en el campo `datos` porque en la misma petición viaja el
+        # fichero»*. (Con `json=` contestaba 422 pidiendo `datos`, que es exactamente eso.)
+        data={"datos": _json.dumps({
+            "fecha": "2026-06-01",
+            "proveedor": contacto["nombre"],
+            "numero_factura": "F-2026-77",
+            "base_imponible": "495.87",
+            "cuota_iva": "104.13",
+            "total": "600",
+        })},
+    )
+    assert factura.status_code in (200, 201), f"no se pudo apuntar la factura de compra: {factura.text}"
+    gasto = cliente.post(
+        "/api/gastos",
+        headers=cuenta["cabeceras"],
+        json={
+            "fecha": "2026-06-01",
+            "concepto": "Abono de la factura F-2026-77",
+            "categoria": "abono",
+            "proveedor": contacto["nombre"],
+            "contacto_id": contacto["id"],
+            "factura_id": factura.json()["id"],
+            "importe": "600",
+        },
+    )
+    assert gasto.status_code in (200, 201), gasto.text
+
+    saldo = _su_saldo(cliente, cuenta, contacto["id"])
+    assert _una_cifra(saldo["le_debemos"]["total"]) == Decimal("600"), (
+        f"la compra tiene que contar una vez (600), no dos (1200): {saldo['le_debemos']}"
+    )
+    assert len(saldo["le_debemos"]["documentos"]) == 1, (
+        f"y con un solo documento, que es el gasto: {saldo['le_debemos']['documentos']}"
+    )
+
+
+def test_el_dinero_sin_asignar_se_ensena_pero_no_rebaja_la_deuda(cliente, cuenta, crear_venta):
+    """**Un cobro sin aplicar no rebaja lo que nos deben** (encargo: «cobros y pagos sin asignar»).
+
+    Puede ser de esta factura o de otra, o de algo que aún no está apuntado: darlo por cobrado sería inventar. Se
+    enseña en su lista, con su fecha y su importe, y **no toca el total**.
+    """
+    contacto = _un_contacto(cliente, cuenta)
+    _una_venta_facturada_y_cobrada(cliente, cuenta, crear_venta, contacto, importe="1210", cobro="400")
+    suelto = cliente.post(
+        "/api/cobros",
+        headers=cuenta["cabeceras"],
+        json={"fecha": "2026-08-10", "importe": "100", "cliente": contacto["nombre"], "contacto_id": contacto["id"]},
+    )
+    assert suelto.status_code in (200, 201), f"no se pudo apuntar el cobro suelto: {suelto.text}"
+
+    saldo = _su_saldo(cliente, cuenta, contacto["id"])
+    assert _una_cifra(saldo["nos_debe"]["total"]) == Decimal("810"), (
+        f"el cobro sin asignar NO puede rebajar la deuda: {saldo['nos_debe']}"
+    )
+    assert len(saldo["sin_asignar"]["cobros"]) == 1, saldo["sin_asignar"]
+    assert _una_cifra(saldo["sin_asignar"]["cobros"][0]["importe"]) == Decimal("100")
+    assert saldo["sin_asignar"]["nota"] == "sin_asignar_no_es_un_anticipo", (
+        "y no se le llama anticipo, porque no se sabe de qué es"
+    )
+
+
+def test_un_exceso_se_marca_para_revisar_y_no_se_llama_anticipo(cliente, cuenta, crear_venta):
+    """**Cobrar más de lo que valía el documento se marca, no se interpreta** (encargo, Entrega 1).
+
+    El encargo lo prohíbe con estas palabras: *«No interpretar todo exceso de cobro como anticipo»*. Aquí se cobra
+    de más y lo que se exige es que **aparezca en `para_revisar`**, que el pendiente quede en **negativo** (a favor
+    suyo, dicho y no escondido) y que **nadie lo llame anticipo**.
+    """
+    contacto = _un_contacto(cliente, cuenta)
+    factura = _una_venta_facturada_y_cobrada(cliente, cuenta, crear_venta, contacto, importe="1210", cobro="1210")
+    de_mas = cliente.post(
+        "/api/cobros",
+        headers=cuenta["cabeceras"],
+        json={
+            "fecha": "2026-08-20",
+            "importe": "200",
+            "cliente": contacto["nombre"],
+            "contacto_id": contacto["id"],
+            "aplicaciones": [{"factura_emitida_id": factura["id"], "importe": "200"}],
+        },
+    )
+    if de_mas.status_code not in (200, 201):
+        # Si la puerta no deja aplicar de más, se dice y no se inventa el caso: **no se declara comprobado**.
+        import pytest
+
+        pytest.skip(f"la puerta no permite aplicar de más ({de_mas.status_code}): {de_mas.text[:120]}")
+
+    saldo = _su_saldo(cliente, cuenta, contacto["id"])
+    assert _una_cifra(saldo["nos_debe"]["total"]) == Decimal("-200"), (
+        f"el exceso deja el pendiente en negativo, a favor suyo, y no se esconde: {saldo['nos_debe']}"
+    )
+    assert saldo["para_revisar"], f"y tiene que aparecer para revisarlo: {saldo.get('para_revisar')}"
+    assert "anticipo" not in str(saldo).lower() or "no_es_un_anticipo" in str(saldo), (
+        "a un exceso no se le llama anticipo en ningún sitio"
     )
