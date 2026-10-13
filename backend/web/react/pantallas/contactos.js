@@ -271,7 +271,47 @@ function LosPapeles({ rotulo, pista, papeles = [], marcados = [] }) {
  *  - `borrando`: se ha pedido borrar y hay que confirmarlo. **Borrar no se hace de un toque**: lo que
  *    desaparece es la ficha, y el agricultor tiene que poder echarse atrás.
  */
+/**
+ * **Un lado del saldo**: su cifra y, debajo, los documentos que la explican.
+ *
+ * POR QUÉ ASÍ. El encargo pide que *«cada cifra abra los documentos que la explican, con fecha, importe, cobrado
+ * o pagado y pendiente»*. Se enseñan debajo y no en otra pantalla porque un total sin sus papeles no se puede
+ * comprobar, y aquí se comprueba de un vistazo. Cada documento lleva su enlace **solo si tiene dirección**: para
+ * un gasto es `#/cuentas/<id>` y para una compra `#/facturas/<id>`; las entregas y las facturas emitidas van a la
+ * lista de ventas, porque **no se inventa una dirección que no existe**.
+ */
+function unLadoDelSaldo(titulo, lado, c, verbo) {
+  const suyos = (lado && lado.documentos) || [];
+  return html`
+    <h3>${frase(titulo)}: ${frase(lado && lado.total_texto ? lado.total_texto : c.saldo_nada)}</h3>
+    ${
+      suyos.length === 0
+        ? html`<p className="pista">${frase(c.saldo_sin_documentos)}</p>`
+        : html`<ul className="lista lista-del-saldo">
+            ${suyos.map((uno) => {
+              const suDireccion = uno.clase === "gasto" ? `#/cuentas/${uno.id}` : "#/ventas";
+              return html`
+                <li key=${uno.clase + uno.id}>
+                  <a href=${suDireccion}>
+                    ${frase(uno.fecha)} · ${frase(uno.referencia)} · ${frase(uno.importe_texto)}
+                  </a>
+                  <span className="pista-campo">
+                    ${frase(verbo)}: ${frase(uno.cobrado_texto || uno.pagado_texto || "")} ·
+                    ${frase(c.saldo_pendiente)}: ${frase(uno.pendiente_texto)}
+                  </span>
+                </li>
+              `;
+            })}
+          </ul>`
+    }
+    ${lado && lado.sin_importe ? html`<p className="pista">${frase(c.saldo_sin_importe)}: ${lado.sin_importe}</p>` : null}
+  `;
+}
+
+
 export function PantallaDeUnContacto({
+  saldo,
+
   textos = {},
   borrador = {},
   papeles = [],
@@ -440,6 +480,60 @@ export function PantallaDeUnContacto({
                 ${frase(c.apuntar_la_nota)}
               </button>
             </div>
+          `
+        : null
+    }
+
+    ${
+      // **El saldo** (Entrega 1, 13/10/2026). Solo en una ficha que ya existe, y **los dos sentidos por
+      // separado**: lo que nos debe y lo que le debemos no se restan, porque que a la misma persona se le venda
+      // y se le compre es lo normal y juntarlo escondería las dos.
+      //
+      // El dinero llega **ya escrito** del servidor (`total_texto`, `importe_texto`…), y con la palabra cuando no
+      // se sabe («No se sabe cuánto»): **nunca un `0,00 €`** que afirmaría que el papel pone cero. La pantalla no
+      // decide cómo se escribe el dinero; eso se decide en un solo sitio.
+      corrigiendo && saldo
+        ? html`
+            <h2>${frase(c.saldo_titulo)}</h2>
+            <p className="pista">${frase(c.saldo_explica)}</p>
+            ${unLadoDelSaldo(c.saldo_nos_debe, saldo.nos_debe, c, c.saldo_cobrado)}
+            ${unLadoDelSaldo(c.saldo_le_debemos, saldo.le_debemos, c, c.saldo_pagado)}
+            ${
+              (saldo.sin_asignar.cobros || []).length || (saldo.sin_asignar.pagos || []).length
+                ? html`
+                    <h3>${frase(c.saldo_sin_asignar)}</h3>
+                    <p className="pista">${frase(c.saldo_sin_asignar_pista)}</p>
+                    <ul className="lista">
+                      ${(saldo.sin_asignar.cobros || []).map(
+                        (uno) => html`<li key=${"c" + uno.id}>
+                          ${frase(uno.fecha)} · ${frase(String(uno.importe))}
+                        </li>`,
+                      )}
+                      ${(saldo.sin_asignar.pagos || []).map(
+                        (uno) => html`<li key=${"p" + uno.id}>
+                          ${frase(uno.fecha)} · ${frase(String(uno.importe))}
+                        </li>`,
+                      )}
+                    </ul>
+                  `
+                : null
+            }
+            ${
+              (saldo.para_revisar || []).length
+                ? html`
+                    <h3>${frase(c.saldo_para_revisar)}</h3>
+                    <p className="pista">${frase(c.saldo_para_revisar_pista)}</p>
+                    <ul className="lista">
+                      ${saldo.para_revisar.map(
+                        (uno) => html`<li key=${"r" + uno.clase + uno.id}>${frase(uno.referencia)}</li>`,
+                      )}
+                    </ul>
+                  `
+                : null
+            }
+            <p className="pista">
+              ${frase(c.saldo_cobertura)}: ${frase(c.saldo_en_euros)}. ${frase(c.saldo_cobertura_pista)}
+            </p>
           `
         : null
     }

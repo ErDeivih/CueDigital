@@ -17340,6 +17340,15 @@ async function abrirLaFichaDeUnContacto(id) {
       es_empresa_texto:
         ficha.es_empresa === true ? "si" : ficha.es_empresa === false ? "no" : "no_se",
     };
+    // **Y su saldo** (Entrega 1, 13/10/2026): se pide con la ficha porque es lo primero que se mira
+    // antes de llamar a alguien. Si el saldo falla, la ficha **sigue abriéndose** —lo que no puede pasar
+    // es que un agregado de dinero impida ver los datos del contacto— y el hueco se queda sin cifras,
+    // que es distinto de un cero.
+    try {
+      suyo.saldo = await apiJson(`/api/contactos/${id}/saldo`);
+    } catch (error) {
+      suyo.saldo = null;
+    }
     suyo.vivos = (ficha.vivos || []).map((vivo) => ({
       id: vivo.id,
       origen: vivo.origen,
@@ -17389,6 +17398,9 @@ function pantallaFichaDeContacto() {
       },
       papeles: suyo.papeles,
       vivos: suyo.vivos,
+      // El saldo, tal cual llegó del servidor (con el dinero ya escrito). `null` mientras no se sabe
+      // es un hueco, **no un cero**.
+      saldo: suyo.saldo || null,
       puedeDesenlazar: true,
       corrigiendo: Boolean(suyo.corrigiendo),
       borrando: suyo.borrando,

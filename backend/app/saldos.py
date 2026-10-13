@@ -62,6 +62,16 @@ def el_saldo_de_un_contacto(db: Session, *, explotacion_id: int, contacto_id: in
     }
 
 
+def _el_dinero_escrito(valor) -> str:
+    """El dinero **ya escrito**, y **con palabras cuando no se sabe**.
+
+    Es la regla de la casa, y está escrita en el front (`bandeja.js`): un importe que no consta se enseña con la
+    palabra que lo dice, **nunca un `0,00 €`** que afirmaría que el papel pone cero. Se manda escrito desde aquí
+    para que la pantalla no tenga que decidir cómo se escribe el dinero —eso se decide en un solo sitio—.
+    """
+    return dinero.formatea(valor) if valor is not None else "No se sabe cuánto"
+
+
 def _lo_que_nos_debe(db: Session, *, explotacion_id: int, contacto_id: int) -> dict:
     """Las facturas que le hemos hecho y las entregas que aún no están facturadas."""
     facturas = list(
@@ -93,6 +103,9 @@ def _lo_que_nos_debe(db: Session, *, explotacion_id: int, contacto_id: int) -> d
                 "importe": factura.importe_total,
                 "cobrado": cobrado,
                 "pendiente": pendiente,
+                "importe_texto": _el_dinero_escrito(factura.importe_total),
+                "cobrado_texto": _el_dinero_escrito(cobrado),
+                "pendiente_texto": _el_dinero_escrito(pendiente),
                 # Lo que excede del importe: **para revisar**, no para llamarlo anticipo.
                 "exceso": (cobrado - factura.importe_total)
                 if (factura.importe_total is not None and cobrado > factura.importe_total)
@@ -145,11 +158,16 @@ def _lo_que_nos_debe(db: Session, *, explotacion_id: int, contacto_id: int) -> d
                 "importe": su_importe,
                 "cobrado": Decimal("0"),
                 "pendiente": su_importe,
+                "importe_texto": _el_dinero_escrito(su_importe),
+                "cobrado_texto": _el_dinero_escrito(Decimal("0")),
+                "pendiente_texto": _el_dinero_escrito(su_importe),
                 "exceso": None,
             }
         )
+    total = dinero.suma(*(documento["pendiente"] for documento in documentos))
     return {
-        "total": dinero.suma(*(documento["pendiente"] for documento in documentos)),
+        "total": total,
+        "total_texto": _el_dinero_escrito(total),
         "documentos": documentos,
         "sin_importe": sin_importe,
     }
@@ -184,13 +202,18 @@ def _lo_que_le_debemos(db: Session, *, explotacion_id: int, contacto_id: int) ->
                 "importe": gasto.importe,
                 "pagado": pagado,
                 "pendiente": pendiente,
+                "importe_texto": _el_dinero_escrito(gasto.importe),
+                "pagado_texto": _el_dinero_escrito(pagado),
+                "pendiente_texto": _el_dinero_escrito(pendiente),
                 "exceso": (pagado - gasto.importe)
                 if (gasto.importe is not None and pagado > gasto.importe)
                 else None,
             }
         )
+    total = dinero.suma(*(documento["pendiente"] for documento in documentos))
     return {
-        "total": dinero.suma(*(documento["pendiente"] for documento in documentos)),
+        "total": total,
+        "total_texto": _el_dinero_escrito(total),
         "documentos": documentos,
         "sin_importe": sin_importe,
     }

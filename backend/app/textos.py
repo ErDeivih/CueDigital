@@ -6603,6 +6603,36 @@ MENSAJES.update(MENSAJES_DE_LAS_SEMILLAS)
 #  4. **Ningún texto lleva marcas de ningún tipo** (ni asteriscos ni almohadillas): lo que se lee en
 #     pantalla es exactamente lo que hay escrito aquí, letra a letra.
 CONTACTOS: dict[str, object] = {
+    # **El saldo del contacto** (Entrega 1, 13/10/2026). Se dicen los dos sentidos por separado y con
+    # sus palabras, porque la pantalla es donde se entiende que no se restan.
+    "saldo_titulo": "Lo que hay con este contacto",
+    "saldo_explica": (
+        "Lo que nos debe y lo que le debemos, cada cosa por su lado. No se restan: que a la misma persona se le venda y se le compre es lo normal, y juntarlo escondería las dos."
+    ),
+    "saldo_nos_debe": "Nos debe",
+    "saldo_le_debemos": "Le debemos",
+    "saldo_nada": "Nada",
+    "saldo_importe": "Importe",
+    "saldo_cobrado": "Cobrado",
+    "saldo_pagado": "Pagado",
+    "saldo_pendiente": "Queda",
+    "saldo_sin_importe": "No se sabe cuánto",
+    "saldo_sin_documentos": "No hay ningún documento apuntado a este contacto.",
+    "saldo_sin_asignar": "Dinero sin asignar",
+    "saldo_sin_asignar_pista": (
+        "Está apuntado y no se sabe de qué es, así que no rebaja ninguna deuda. No es un anticipo."
+    ),
+    "saldo_para_revisar": "Para revisar",
+    "saldo_para_revisar_pista": (
+        "Se ha cobrado o pagado más de lo que valía el documento. Puede ser un tecleo, un pago de otra cosa o una devolución pendiente."
+    ),
+    "saldo_cobertura": "Hasta dónde llega",
+    "saldo_cobertura_pista": (
+        "Solo cuenta lo que está apuntado a este contacto. Las facturas de compra no llevan contacto, así que no se adjudican por el nombre."
+    ),
+    "saldo_en_euros": "En euros",
+    "saldo_no_se_adjudica_por_nombre": "No se adjudica nada por el nombre.",
+    "saldo_abrir": "Ver los documentos",
     # **Las notas con autor** (CRM-03, criterio (f), 11/10/2026). El rótulo de la lista, el del campo
     # donde se escribe y el de la fecha. El autor de cada nota lo pone el servidor; aquí solo se dice
     # cómo se lee («la escribió …»).
