@@ -62,6 +62,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -205,6 +206,41 @@ def la_puerta(token: str, metodo: str, camino: str, cuerpo: dict | None = None, 
             decir(f"se manda:  {como_texto(cuerpo)}")
         decir(f"contesta:  {codigo}  {como_texto(devuelto)}")
     return codigo, devuelto
+
+
+# ---------------------------------------------------------------------------
+# La dirección, leída como la lee el enrutador
+# ---------------------------------------------------------------------------
+#
+# **Medido, y por eso no se escribe una dirección a mano**: la aplicación reescribe la dirección en cada pantalla
+# que pinta (`apuntarLaDireccion`, en `app.js`) y le añade **el contexto** —la campaña y la finca
+# (`elContextoDeLaDireccion`)—, así que la dirección de la lista de tareas no es `#/tareas?vencimiento=hoy` sino,
+# medido, `#/tareas?campana=2026&finca=1&vencimiento=hoy`. Comprobar la cadena literal habría dado un fallo que no
+# existe: lo que hay que comprobar es **el camino y el filtro**, y decir la dirección entera tal cual salió.
+
+
+def el_camino_de_la_direccion(direccion: str) -> str:
+    """El trozo de delante de la interrogación (`#/tareas`, `#/contactos/7`)."""
+    return str(direccion or "").split("?", 1)[0]
+
+
+def los_parametros_de_la_direccion(direccion: str) -> dict:
+    """Los parámetros de la dirección, leídos como los lee el enrutador: **lo que no está, no está**."""
+    texto = str(direccion or "")
+    if "?" not in texto:
+        return {}
+    salida: dict[str, str] = {}
+    for trozo in texto.split("?", 1)[1].split("&"):
+        if not trozo:
+            continue
+        nombre, _, valor = trozo.partition("=")
+        salida[urllib.parse.unquote_plus(nombre).strip().lower()] = urllib.parse.unquote_plus(valor)
+    return salida
+
+
+def lleva_el_filtro(direccion: str, vencimiento: str | None) -> bool:
+    """¿La dirección lleva **ese** filtro de vencimiento? `None` es «sin filtro»."""
+    return los_parametros_de_la_direccion(direccion).get("vencimiento", "") == (vencimiento or "")
 
 
 # ---------------------------------------------------------------------------
@@ -653,57 +689,99 @@ def medir_el_tecleo(nav, campo: str, valor: str) -> tuple[str | None, list[dict]
     return None, intentos
 
 
+# Cómo se escriben los dígitos de un día en cada uno de los tres órdenes que puede pedir un campo `date`.
+LOS_ORDENES_DE_LA_FECHA = {
+    "día-mes-año": lambda fecha: f"{fecha.day:02d}{fecha.month:02d}{fecha.year:04d}",
+    "mes-día-año": lambda fecha: f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}",
+    "año-mes-día": lambda fecha: f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}",
+}
+
+
+def los_digitos_de_una_fecha(fecha: dt.date, orden: str) -> str:
+    """Los dígitos que hay que teclear para un día, en el orden que pida el campo."""
+    return LOS_ORDENES_DE_LA_FECHA[orden](fecha)
+
+
 def medir_el_tecleo_de_una_fecha(nav, campo: str, fecha: dt.date) -> tuple[str | None, str | None, list[dict]]:
     """**¿Se puede teclear un día en el campo `date`, y en qué orden pide los dígitos?**
 
     El campo `date` no es un campo de texto: el navegador lo pinta por **trozos** (día, mes, año) y el orden en el
-    que los pide depende del idioma del navegador (en España, día-mes-año; en inglés, mes-día-año). Así que no vale
-    con suponerlo: se prueban **las tres órdenes** y se dice **cuál ha aceptado** y qué valor ha salido. Si ninguna
-    funciona, se dice que no se puede teclear, y con qué se ha probado.
+    que los pide depende del idioma del navegador. Así que no vale con suponerlo: se mide.
 
-    **Se prueba primero con el foco pedido y después con el clic de verdad**, y al revés que en los campos de
-    texto: pulsar un `date` con el ratón **abre el calendario del navegador**, y un calendario abierto encima de la
-    pantalla es una cosa más que puede estorbar a lo que viene después. El clic se prueba igual —porque es lo que
-    hace el agricultor— pero solo si el foco no basta, y luego se cierra el calendario con `Escape`.
+    **Y se mide con una fecha que no se puede confundir** (25/12/2026): el 25 no cabe en un mes, así que los dígitos
+    `25122026` **solo** encajan en un campo que pida día-mes-año, `12252026` solo en uno que pida mes-día-año, y
+    `20261225` solo en uno que pida año-mes-día. Con el día de verdad no se puede averiguar —el 10 y el 12 valen
+    para las dos casillas, y entonces el orden que se apunte puede ser el equivocado—, y esa trampa ya se ha comido
+    una vuelta en esta casa.
+
+    Después **se confirma con el día de verdad**, y si la confirmación no sale se dice que no se puede teclear.
+
+    **Lo que se ha medido y por qué el código es así** (sonda aparte, 14/10/2026):
+      · en este navegador el campo pide los dígitos en orden **día-mes-año**;
+      · `.focus()` **no basta**: el campo necesita un **clic de verdad** para entrar en modo edición (con el foco
+        pedido por JavaScript, `Input.insertText` y las teclas no escriben nada, y no dan error);
+      · `Input.insertText` **no escribe** en un `date` (no es un campo de texto para el navegador), y
+        `rawKeyDown` + `char` tampoco: lo que funciona es `keyDown` **con el texto** y tras un clic;
+      · pulsar el campo **abre el calendario del navegador**, y eso **no estorba** para nada de lo que viene
+        después (medido: se apuntaron tres tareas con el calendario abierto).
+      · **`Escape` NO se pulsa aquí**: en esta aplicación Escape es «cierra lo que esté abierto» y pulsa el primer
+        botón de cierre que encuentre (`LO_QUE_CIERRA_ESCAPE`, en `app.js`), así que en la ficha **se sale de la
+        pantalla** y los campos desaparecen. Costó una sonda verlo.
 
     Devuelve `(manera, orden, intentos)`; `manera` y `orden` son `None` si el campo no acepta tecleo.
     """
     intentos: list[dict] = []
-    ordenes = (
-        ("día-mes-año", f"{fecha.day:02d}{fecha.month:02d}{fecha.year:04d}"),
-        ("mes-día-año", f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}"),
-        ("año-mes-día", f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}"),
+    # La sonda: una fecha en la que el día no cabe en un mes, así que cada orden solo puede dar UN resultado.
+    la_sonda = dt.date(2026, 12, 25)
+    las_ordenes = (
+        ("día-mes-año", "25122026"),
+        ("mes-día-año", "12252026"),
+        ("año-mes-día", "20261225"),
     )
-    # **El foco primero** (sin abrir el calendario) y el clic después: al revés que en los campos de texto.
+
+    def un_intento(con_clic: bool, manera: str, nombre_orden: str, digitos: str) -> tuple[str, str | None, bool]:
+        etiqueta = f"{'clic+' if con_clic else 'foco+'}{NOMBRE_DE_LA_MANERA[manera]}"
+        _limpiar_el_campo(nav, campo)
+        enfocado = _enfocar_el_campo(nav, campo, con_clic=con_clic)
+        _teclear_con(nav, campo, digitos, manera)
+        return etiqueta, _leer_el_campo(nav, campo), bool(enfocado)
+
+    # **El foco primero** y el clic después: el clic abre el calendario, y aunque está medido que no estorba, no
+    # hace falta abrirlo para averiguar el orden si el foco bastara.
     for con_clic in (False, True):
         for manera in LAS_MANERAS:
-            for nombre_orden, digitos in ordenes:
-                _limpiar_el_campo(nav, campo)
-                enfocado = _enfocar_el_campo(nav, campo, con_clic=con_clic)
-                _teclear_con(nav, campo, digitos, manera)
-                leido = _leer_el_campo(nav, campo)
-                etiqueta = f"{'clic+' if con_clic else 'foco+'}{NOMBRE_DE_LA_MANERA[manera]}"
+            for nombre_orden, digitos in las_ordenes:
+                etiqueta, leido, enfocado = un_intento(con_clic, manera, nombre_orden, digitos)
                 intentos.append(
                     {
                         "manera": etiqueta,
                         "orden": nombre_orden,
                         "digitos": digitos,
                         "valor": leido,
-                        "llego": leido == fecha.isoformat(),
+                        "llego": leido == la_sonda.isoformat(),
                         "con_foco": enfocado,
+                        "sonda": True,
                     }
                 )
-                if leido == fecha.isoformat():
-                    if con_clic:
-                        # El calendario se ha abierto con el clic: se cierra y **se vuelve a leer**, porque si
-                        # cerrarlo borrara el día habría que saberlo.
-                        nav.tecla("Escape")
-                        time.sleep(0.3)
-                        decir(
-                            "       (se ha pulsado el campo, así que se cierra el calendario con Escape y se "
-                            f"vuelve a leer: {_leer_el_campo(nav, campo)!r})"
-                        )
-                    return etiqueta, nombre_orden, intentos
+                if leido == la_sonda.isoformat():
+                    # El orden está averiguado. Ahora **se confirma con el día de verdad**, que es el que hace
+                    # falta de verdad: si esto fallara, el orden apuntado no serviría para el recorrido.
+                    los_digitos = los_digitos_de_una_fecha(fecha, nombre_orden)
+                    etiqueta, leido, enfocado = un_intento(con_clic, manera, nombre_orden, los_digitos)
+                    intentos.append(
+                        {
+                            "manera": etiqueta,
+                            "orden": nombre_orden,
+                            "digitos": los_digitos,
+                            "valor": leido,
+                            "llego": leido == fecha.isoformat(),
+                            "con_foco": enfocado,
+                            "confirmacion": True,
+                        }
+                    )
+                    if leido == fecha.isoformat():
+                        return etiqueta, nombre_orden, intentos
+                    return None, None, intentos
     return None, None, intentos
 
 
@@ -786,12 +864,13 @@ def abrir_la_ficha(nav, contacto_id: int) -> dict:
         tras_el_boton = nav.evaluar("window.location.hash")
         decir(
             f"tras pulsar la fila de la lista, la dirección es {tras_el_boton!r} "
-            "(se dice: el botón de abrir no escribe la dirección de la ficha)"
+            "(y no `#/contactos`: el botón de abrir sí escribe la dirección de la ficha, con el contexto detrás)"
         )
         comprobar(
-            tras_el_boton == f"#/contactos/{contacto_id}",
-            f"el botón de abrir deja la dirección de la ficha ({tras_el_boton!r}) "
-            f"—se esperaba {('#/contactos/%d' % contacto_id)!r}—",
+            el_camino_de_la_direccion(tras_el_boton) == f"#/contactos/{contacto_id}",
+            f"el botón de abrir deja la ficha en su dirección ({tras_el_boton!r}; el camino es "
+            f"{el_camino_de_la_direccion(tras_el_boton)!r} —la aplicación le añade la campaña y la finca, "
+            f"medido: {como_texto(los_parametros_de_la_direccion(tras_el_boton))})",
         )
     else:
         decir("no hay fila que pulsar: se va a la dirección de la ficha, y se dice")
@@ -884,11 +963,7 @@ def el_alta_de_una_tarea(
                 " if (el) el.value = %s; return true; })()" % json.dumps(fecha.isoformat())
             )
         else:
-            digitos = {
-                "día-mes-año": f"{fecha.day:02d}{fecha.month:02d}{fecha.year:04d}",
-                "mes-día-año": f"{fecha.month:02d}{fecha.day:02d}{fecha.year:04d}",
-                "año-mes-día": f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}",
-            }[medido["orden_de_la_fecha"]]
+            digitos = los_digitos_de_una_fecha(fecha, medido["orden_de_la_fecha"])
             como = teclear_por_la_manera_que_ya_funciona(nav, "tarea-fecha", digitos, medido["fecha"])
             decir(
                 f"       #tarea-fecha: tecleado por {medido['fecha']!r} en orden "
@@ -1289,8 +1364,9 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             f"la lista enseña las {len(LAS_TAREAS)} tareas sin filtro ({lista.get('cuantas')})",
         )
         comprobar(
-            lista.get("direccion") == "#/tareas",
-            f"y su dirección es la de la lista ({lista.get('direccion')!r})",
+            el_camino_de_la_direccion(lista.get("direccion")) == "#/tareas"
+            and lleva_el_filtro(lista.get("direccion"), None),
+            f"y su dirección es la de la lista, sin filtro puesto ({lista.get('direccion')!r})",
         )
         comprobar(
             sorted((f.get("vencimiento") or "") for f in (lista.get("filtros") or []))
@@ -1309,12 +1385,12 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         # distintas, el que se equivoca es uno de los dos y hay que saberlo.
         resultado["filtros_medidos"] = {}
         las_pruebas = (
-            ("hoy", "hoy", "#/tareas?vencimiento=hoy"),
-            ("vencidas", "vencidas", "#/tareas?vencimiento=vencidas"),
-            ("sin_fecha", "sin_fecha", "#/tareas?vencimiento=sin_fecha"),
-            ("todas", None, "#/tareas"),
+            ("hoy", "hoy"),
+            ("vencidas", "vencidas"),
+            ("sin_fecha", "sin_fecha"),
+            ("todas", None),
         )
-        for nombre, valor, direccion_esperada in las_pruebas:
+        for nombre, valor in las_pruebas:
             selector = (
                 '[data-accion="tareas-ver"]:not([data-vencimiento])'
                 if valor is None
@@ -1326,11 +1402,22 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 bool(nav.evaluar(f"Boolean(document.querySelector({json.dumps(selector)}))")),
                 f"el botón del filtro «{nombre}» existe en la pantalla",
             )
+            # **Primero lo que dice el servidor, y después se espera a que la pantalla diga lo mismo**: así no se
+            # lee una pantalla a medio pintar y no se confunde «todavía cargando» con «el filtro no filtra».
+            camino = "/api/tareas" + (f"?vencimiento={valor}" if valor else "")
+            codigo, suyas = la_puerta(token, "GET", camino, que="sí")
+            comprobar(codigo == 200, f"la puerta {camino} contesta ({codigo})")
+            de_la_puerta = sorted(t.get("titulo") or "" for t in (suyas or {}).get("tareas", []))
             nav.pulsar(selector)
-            time.sleep(1.5)
-            nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=20)
+            llego = nav.esperar(
+                "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
+                f"{len(de_la_puerta)}",
+                segundos=25,
+            )
+            time.sleep(0.6)
             filtrada = leer_la_lista(nav)
             decir(
+                f"la pantalla se ha puesto al día tras pulsar: {llego}   "
                 f"dirección: {filtrada.get('direccion')!r}   filas: {filtrada.get('cuantas')}   "
                 f"marcado: {[f.get('texto') for f in (filtrada.get('filtros') or []) if f.get('marcado')]}"
             )
@@ -1341,9 +1428,10 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                     f"con_quien={fila['con_quien']!r} cierre={fila['cierre']!r}"
                 )
             comprobar(
-                filtrada.get("direccion") == direccion_esperada,
-                f"la dirección cambia al filtro «{nombre}» ({filtrada.get('direccion')!r} == "
-                f"{direccion_esperada!r})",
+                el_camino_de_la_direccion(filtrada.get("direccion")) == "#/tareas"
+                and lleva_el_filtro(filtrada.get("direccion"), valor),
+                f"la dirección cambia al filtro «{nombre}» ({filtrada.get('direccion')!r}; se esperaba el "
+                f"camino #/tareas con vencimiento={valor!r})",
             )
             los_marcados = [f for f in (filtrada.get("filtros") or []) if f.get("marcado")]
             comprobar(
@@ -1351,10 +1439,6 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 f"y el filtro puesto queda marcado, y solo él "
                 f"({[(f.get('texto'), f.get('vencimiento')) for f in los_marcados]})",
             )
-            camino = "/api/tareas" + (f"?vencimiento={valor}" if valor else "")
-            codigo, suyas = la_puerta(token, "GET", camino, que="sí")
-            comprobar(codigo == 200, f"la puerta {camino} contesta ({codigo})")
-            de_la_puerta = sorted(t.get("titulo") or "" for t in (suyas or {}).get("tareas", []))
             en_pantalla = sorted(f.get("titulo") or "" for f in (filtrada.get("filas") or []))
             decir(f"la puerta dice: {de_la_puerta}")
             decir(f"la pantalla dice: {en_pantalla}")
@@ -1398,12 +1482,22 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         decir("")
         decir("  --- y con el filtro «hoy» puesto, se recarga la página entera ---")
         nav.pulsar('[data-accion="tareas-ver"][data-vencimiento="hoy"]')
-        time.sleep(1.5)
+        nav.esperar(
+            "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
+            f"{len(medidos['hoy']['de_la_puerta'])}",
+            segundos=25,
+        )
+        time.sleep(0.6)
         antes_de_recargar = leer_la_lista(nav)
         decir(f"antes de recargar: {antes_de_recargar.get('direccion')!r}")
         nav.orden("Page.reload", {"ignoreCache": True})
         time.sleep(3.5)
         nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=30)
+        nav.esperar(
+            "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
+            f"{len(medidos['hoy']['de_la_puerta'])}",
+            segundos=30,
+        )
         time.sleep(1.0)
         tras_recargar = leer_la_lista(nav)
         decir(
@@ -1414,7 +1508,8 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         resultado["lista_tras_recargar"] = tras_recargar
         guardar_captura(nav, CARPETA / f"tareas-v{vuelta}-lista-hoy-tras-recargar.png")
         comprobar(
-            tras_recargar.get("direccion") == "#/tareas?vencimiento=hoy",
+            el_camino_de_la_direccion(tras_recargar.get("direccion")) == "#/tareas"
+            and lleva_el_filtro(tras_recargar.get("direccion"), "hoy"),
             f"tras recargar sigue el mismo filtro en la dirección ({tras_recargar.get('direccion')!r})",
         )
         los_marcados = [f for f in (tras_recargar.get("filtros") or []) if f.get("marcado")]
@@ -1434,8 +1529,12 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         decir("")
         decir("  --- extra: completar una tarea DESDE LA LISTA (la puerta de la lista, no la de la ficha) ---")
         nav.abrir(f"http://127.0.0.1:{PUERTO}/#/tareas", esperar=3.0)
-        nav.esperar("document.querySelector('[data-tabla=\"tareas\"]') !== null", segundos=25)
-        time.sleep(1.0)
+        nav.esperar(
+            "document.querySelectorAll('[data-tabla=\"tareas\"] tbody tr').length === "
+            f"{len(LAS_TAREAS)}",
+            segundos=30,
+        )
+        time.sleep(0.8)
         la_de_manana_id = las_creadas.get("Revisar el riego")
         boton_de_la_lista = (
             f'[data-accion="tarea-completar"][data-tarea="{la_de_manana_id}"]'
@@ -1445,6 +1544,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             "la tarea de mañana trae su botón de completar en la lista",
         )
         nav.pulsar(boton_de_la_lista)
+        nav.esperar("document.querySelector('#pantalla h1') !== null", segundos=25)
         time.sleep(2.0)
         tras_cerrar_en_la_lista = leer_la_ficha(nav)
         decir(
@@ -1608,16 +1708,18 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
         # **Los filtros**: la dirección cambia, y lo que se ve es exactamente lo que devuelve el servidor.
         "filtros": all(
             filtros.get(nombre, {}).get("en_pantalla") == filtros.get(nombre, {}).get("de_la_puerta")
-            and filtros.get(nombre, {}).get("direccion") == direccion_esperada
-            for nombre, direccion_esperada in (
-                ("hoy", "#/tareas?vencimiento=hoy"),
-                ("vencidas", "#/tareas?vencimiento=vencidas"),
-                ("sin_fecha", "#/tareas?vencimiento=sin_fecha"),
-                ("todas", "#/tareas"),
+            and el_camino_de_la_direccion(filtros.get(nombre, {}).get("direccion")) == "#/tareas"
+            and lleva_el_filtro(filtros.get(nombre, {}).get("direccion"), valor)
+            for nombre, valor in (
+                ("hoy", "hoy"),
+                ("vencidas", "vencidas"),
+                ("sin_fecha", "sin_fecha"),
+                ("todas", None),
             )
         ),
-        # **La recarga** con el filtro puesto: misma dirección, mismo botón marcado.
-        "recarga": recargada.get("direccion") == "#/tareas?vencimiento=hoy"
+        # **La recarga** con el filtro puesto: misma dirección, mismo botón marcado, misma lista.
+        "recarga": el_camino_de_la_direccion(recargada.get("direccion")) == "#/tareas"
+        and lleva_el_filtro(recargada.get("direccion"), "hoy")
         and len(los_marcados) == 1
         and los_marcados[0].get("vencimiento") == "hoy",
         # **El aislamiento**: la otra finca no ve las mías, y no puede cerrarlas.

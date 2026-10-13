@@ -2463,3 +2463,33 @@ test("la ficha enseña lo que hay que hacer, marca lo vencido y no cancela nada 
   const sinTareas = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4, tareas: [] } });
   assert.ok(sinTareas.includes(c.tareas_sin_nada), "sin tareas se dice");
 });
+
+test("sin permiso económico no se enseña el bloque del dinero (y con permiso, sí)", async () => {
+  // **POR QUÉ** (Entrega 4, 13/10/2026). El encargo lo dice con estas palabras: «sin permiso económico: no aparecen
+  // importes ni documentos restringidos». Y **la autorización no está aquí**: la puerta del saldo contesta **403** y
+  // el dinero **no viaja** (hay una prueba de servidor que lo fija). Lo que se prueba aquí es lo otro, lo que se ve:
+  // que la pantalla **no ofrezca** lo que no puede enseñar, y que **con permiso siga enseñándolo** —que es la mitad
+  // que se olvida y deja la pantalla vacía para todo el mundo—.
+  //
+  // Y por defecto **sí**: si la pantalla no sabe nada de permisos (una versión vieja del servidor), no se esconde
+  // nada. Esconder de más deja al agricultor sin botones que sí puede usar.
+  const conPermiso = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: { id: 4 },
+    saldo: unSaldo(),
+    puede_ver_lo_economico: true,
+  });
+  assert.ok(conPermiso.includes("810,00 €"), `con permiso tiene que verse:\n${conPermiso}`);
+
+  const sinPermiso = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: { id: 4 },
+    saldo: unSaldo(),
+    puede_ver_lo_economico: false,
+  });
+  assert.ok(!sinPermiso.includes("810,00 €"), "sin permiso no puede verse el dinero");
+  assert.ok(!sinPermiso.includes("450,00 €"), "ni el del otro sentido");
+  assert.ok(!sinPermiso.includes("Nos debe"), "ni siquiera el título del bloque");
+  // **Y la ficha sigue estando**: no se ha roto nada más.
+  assert.ok(sinPermiso.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${sinPermiso}`);
+});

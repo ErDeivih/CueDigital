@@ -338,6 +338,11 @@ export function PantallaDeUnContacto({
   canal_a_medias = null,
   // Lo que se estaba apuntando en el alta de una tarea, para no perderlo si el servidor dice que no.
   tarea_a_medias = null,
+  // **Lo que esta cuenta puede hacer** (Entrega 4). Por defecto, **sí**: la pantalla no parpadea, y
+  // esconder de más dejaría al agricultor sin botones que sí puede usar. La autorización, en todo
+  // caso, la da la puerta.
+  puede_modificar = true,
+  puede_ver_lo_economico = true,
   borrando = false,
   guardando = false,
   error = "",
@@ -517,7 +522,7 @@ export function PantallaDeUnContacto({
       // El dinero llega **ya escrito** del servidor (`total_texto`, `importe_texto`…), y con la palabra cuando no
       // se sabe («No se sabe cuánto»): **nunca un `0,00 €`** que afirmaría que el papel pone cero. La pantalla no
       // decide cómo se escribe el dinero; eso se decide en un solo sitio.
-      corrigiendo && saldo
+      corrigiendo && saldo && puede_ver_lo_economico
         ? html`
             <h2>${frase(c.saldo_titulo)}</h2>
             <p className="pista">${frase(c.saldo_explica)}</p>
@@ -887,6 +892,10 @@ export function pantallaDeUnContacto(propiedades) {
       saldo=${propiedades.saldo}
     canal_a_medias=${propiedades.canal_a_medias || null}
     tarea_a_medias=${propiedades.tarea_a_medias || null}
+    puede_modificar=${propiedades.puedo_modificar}
+    puede_ver_lo_economico=${propiedades.puede_ver_lo_economico}
+    puede_modificar=${propiedades.puedo_modificar}
+    puede_ver_lo_economico=${propiedades.puedo_ver_lo_economico}
     />
   `;
 }

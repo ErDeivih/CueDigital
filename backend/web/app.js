@@ -2175,6 +2175,8 @@ async function entrarConCertificado() {
   try {
     const datos = await apiJson("/api/cuenta/entrar-con-certificado", { method: "POST" });
     estado.token = datos.token;
+  // **Y lo que puede hacer esta cuenta**, antes de pintar nada: la pantalla no ofrece lo que no se puede.
+  await pedirLoQuePuedoHacer();
     estado.nombre = datos.nombre;
     ALMACEN.setItem(CLAVE_TOKEN, datos.token);
     guardar(CLAVE_NOMBRE, datos.nombre);
@@ -3345,6 +3347,8 @@ async function entrarEnLaFinca(explotacionId) {
       body: JSON.stringify({ explotacion_id: explotacionId }),
     });
     estado.token = datos.token;
+  // **Y lo que puede hacer esta cuenta**, antes de pintar nada: la pantalla no ofrece lo que no se puede.
+  await pedirLoQuePuedoHacer();
     ALMACEN.setItem(CLAVE_TOKEN, datos.token);
     estado.ultimo = null;
     ALMACEN.removeItem(CLAVE_ULTIMO);
@@ -5225,6 +5229,8 @@ async function entrar(modo) {
       });
     }
     estado.token = datos.token;
+  // **Y lo que puede hacer esta cuenta**, antes de pintar nada: la pantalla no ofrece lo que no se puede.
+  await pedirLoQuePuedoHacer();
     estado.nombre = datos.nombre;
     ALMACEN.setItem(CLAVE_TOKEN, datos.token);
     guardar(CLAVE_NOMBRE, datos.nombre);
@@ -5259,6 +5265,8 @@ function pintarPie() {
 }
 
 async function arrancarSesion() {
+  // **Lo que puede hacer esta cuenta**, al arrancar con el vale guardado (recargar la página incluido).
+  await pedirLoQuePuedoHacer();
   cabeceraTexto.textContent = t("aviso.cargando", "");
   try {
     await cargarInterfaz();
@@ -17419,6 +17427,13 @@ function pantallaFichaDeContacto() {
       // El saldo, tal cual llegó del servidor (con el dinero ya escrito). `null` mientras no se sabe
       // es un hueco, **no un cero**.
       saldo: suyo.saldo || null,
+      // **Lo que esta cuenta puede hacer** (Entrega 4): la pantalla lo usa para NO OFRECER, nunca para autorizar.
+      puede_modificar: loQuePuedoHacer().modificar,
+      puede_ver_lo_economico: loQuePuedoHacer().economico,
+    // **Lo que esta cuenta puede hacer** (Entrega 4): la pantalla lo usa para NO OFRECER, nunca para
+    // autorizar —eso lo hace la puerta en el servidor—.
+    puede_modificar: loQuePuedoHacer().modificar,
+    puede_ver_lo_economico: loQuePuedoHacer().economico,
     // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
     canal_a_medias: suyo.canal_a_medias || null,
     tarea_a_medias: suyo.tarea_a_medias || null,
@@ -17562,6 +17577,34 @@ function irALasTareas(vencimiento) {
   const consulta = vencimiento ? `?vencimiento=${encodeURIComponent(vencimiento)}` : "";
   window.location.hash = `#/tareas${consulta}`;
   return abrirLasTareas({ vencimiento });
+}
+
+async function pedirLoQuePuedoHacer() {
+  // **Lo que esta cuenta puede hacer** (Entrega 4, 13/10/2026). Se pregunta al entrar y se guarda, para que la
+  // pantalla **no ofrezca** lo que va a dar 403: los botones de apuntar y corregir, el alta rápida, y el bloque del
+  // dinero.
+  //
+  // **Y esto NO autoriza nada**, que es lo que dice el encargo con estas palabras: «ocultar un botón no constituye
+  // autorización». La autorización está en la puerta, que la comprueba en el servidor. Si alguien llega a mano por la
+  // URL o por un identificador, se encuentra el 403 igual.
+  //
+  // Si no se puede preguntar (red caída, servidor viejo), **se deja lo más restrictivo**: no ofrecer de más es
+  // molesto; ofrecer lo que no se puede hacer es peor, porque el agricultor lo intenta y se lleva un error.
+  try {
+    const yo = await apiJson("/api/cuenta/yo");
+    estado.puedo = {
+      modificar: yo.puede_modificar !== false,
+      economico: yo.puede_ver_lo_economico !== false,
+    };
+  } catch (fallo) {
+    estado.puedo = { modificar: false, economico: false };
+  }
+  return estado.puedo;
+}
+
+/** Lo que puede hacer esta cuenta. **Antes de preguntarlo, se supone que sí**: así la pantalla no parpadea. */
+function loQuePuedoHacer() {
+  return estado.puedo || { modificar: true, economico: true };
 }
 
 async function abrirLasTareas(parametros = {}) {
