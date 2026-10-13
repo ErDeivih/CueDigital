@@ -6603,6 +6603,17 @@ MENSAJES.update(MENSAJES_DE_LAS_SEMILLAS)
 #  4. **Ningún texto lleva marcas de ningún tipo** (ni asteriscos ni almohadillas): lo que se lee en
 #     pantalla es exactamente lo que hay escrito aquí, letra a letra.
 CONTACTOS: dict[str, object] = {
+    # **Las notas con autor** (CRM-03, criterio (f), 11/10/2026). El rótulo de la lista, el del campo
+    # donde se escribe y el de la fecha. El autor de cada nota lo pone el servidor; aquí solo se dice
+    # cómo se lee («la escribió …»).
+    "notas_titulo": "Lo que se sabe de esta ficha",
+    "notas_pista": "Lo que se va apuntando, con quién lo apuntó y cuándo. No se corrige: si algo cambia, se apunta otra nota.",
+    "sin_notas": "Todavía no hay ninguna nota.",
+    "nota_nueva": "Apuntar una nota",
+    "nota_nueva_pista": "Lo que quieras acordarte de esta ficha.",
+    "apuntar_la_nota": "APUNTAR LA NOTA",
+    "nota_la_escribio": "La escribió",
+    "nota_lo_escribio_el_programa": "Lo apuntó el programa",
     "titulo": "Las personas y las empresas",
     "explica": (
         "Aquí apuntas una vez a quien te vende, a quien te compra, a quien te asesora o a quien te "

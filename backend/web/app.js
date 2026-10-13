@@ -17465,6 +17465,39 @@ async function guardarElContacto() {
  * con el mismo botón sería estorbar. **Y recarga la lista** después, porque el estado se ve en el rótulo —que es
  * la columna «Qué es» de la tabla— y ese rótulo lo monta la lista.
  */
+/**
+ * **Apunta una nota en la ficha** (CRM-03, criterio (f), 11/10/2026).
+ *
+ * El texto se lee del campo por su `id`, como todos los formularios de este programa (los campos no son
+ * controlados a propósito: es la decisión que sostiene toda la aplicación). El autor **no se manda**: lo pone el
+ * servidor de su vale. Y después se **recarga la ficha** para que la nota salga con su autor y su fecha, que es
+ * lo que la hace útil.
+ *
+ * Si el campo está vacío no se llama a la puerta: se dice con palabras. El servidor también lo comprueba —una
+ * nota vacía no es una nota—, pero así el agricultor lo lee sin esperar a la vuelta.
+ */
+async function apuntarLaNota(id) {
+  const suyo = estadoDeLosContactos();
+  suyo.error = "";
+  const campo = document.getElementById("contacto-nota-texto");
+  const texto = campo ? campo.value.trim() : "";
+  if (!texto) {
+    suyo.error = t("mensajes.C7_una_nota_necesita_texto", "");
+    return pantallaFichaDeContacto();
+  }
+  const resultado = await mandarCambio(`/api/contactos/${id}/notas`, "POST", { texto });
+  if (resultado.error) {
+    suyo.error = resultado.error;
+    return pantallaFichaDeContacto();
+  }
+  if (campo) campo.value = "";
+  // **Se vuelve a abrir la ficha por su puerta**, que es la que sabe leerla entera (y la que rellena lo que la
+  // pantalla necesita). Antes lo hacía a mano con `mandarCambio(..., "GET", null)` y **no traía la nota**: la
+  // casa lee las fichas con `apiJson`, y con un cuerpo «null» en un GET la lectura no llegaba. Lo cazó la
+  // comprobación en el navegador (el campo se vaciaba —o sea, la nota se apuntaba— y la lista seguía vacía).
+  return abrirLaFichaDeUnContacto(id);
+}
+
 async function cambiarElUsoDelContacto(id, activo) {
   const suyo = estadoDeLosContactos();
   suyo.error = "";
@@ -19268,6 +19301,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     const suyo = estadoDeLosContactos();
     suyo.borrando = false;
     return pantallaFichaDeContacto();
+  }
+  if (nombre === "contacto-nota") {
+    return apuntarLaNota(Number(elemento.dataset.id));
   }
   if (nombre === "contacto-baja") {
     return cambiarElUsoDelContacto(Number(elemento.dataset.id), false);

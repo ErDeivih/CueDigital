@@ -384,6 +384,57 @@ export function PantallaDeUnContacto({
           `
     }
 
+    ${
+      // **Las notas, con su autor y su fecha** (CRM-03, criterio (f), 11/10/2026). Solo en una ficha que ya
+      // existe: una nota necesita una ficha de la que colgar.
+      //
+      // **Y no hay botón de corregir ni de borrar, a propósito**: las notas no se corrigen, se apuntan. Si algo
+      // cambió, se apunta otra nota diciéndolo —y así queda lo de antes, que es lo que hace que un diario sirva
+      // para acordarse de lo que pasó—. El servidor tampoco tiene puerta para tocarlas, y hay una prueba que lo
+      // impide.
+      corrigiendo
+        ? html`
+            <h2>${frase(c.notas_titulo)}</h2>
+            <p className="pista">${frase(c.notas_pista)}</p>
+            ${
+              (borrador.notas_con_autor || []).length === 0
+                ? html`<p className="aviso">${frase(c.sin_notas)}</p>`
+                : html`<ul className="lista lista-de-notas">
+                    ${borrador.notas_con_autor.map(
+                      (nota) => html`
+                        <li key=${String(nota.id)}>
+                          <p className="nota-texto">${frase(nota.texto)}</p>
+                          <p className="pista-campo">
+                            ${frase(c.nota_la_escribio)}:
+                            ${frase(nota.autor || c.nota_lo_escribio_el_programa)}
+                            ${nota.creado_en ? html`· ${frase(String(nota.creado_en).slice(0, 10))}` : null}
+                          </p>
+                        </li>
+                      `,
+                    )}
+                  </ul>`
+            }
+            <${Campo}
+              id="contacto-nota-texto"
+              etiqueta=${c.nota_nueva}
+              pista=${c.nota_nueva_pista}
+              valor=""
+            />
+            <div className="barra-acciones">
+              <button
+                type="button"
+                className="boton"
+                data-accion="contacto-nota"
+                data-id=${String(valor("id") || "")}
+                disabled=${guardando}
+              >
+                ${frase(c.apuntar_la_nota)}
+              </button>
+            </div>
+          `
+        : null
+    }
+
     <div className="barra-acciones">
       <button
         type="button"

@@ -72,6 +72,16 @@ const TEXTOS = {
     cuantas: "Tienes {cuantas} fichas apuntadas.",
     cuantas_una: "Tienes 1 ficha apuntada.",
     cuantos_escritos: "Su nombre está escrito en {cuantas} papeles.",
+    // Las notas con autor (CRM-03, criterio (f), 11/10/2026). **Copiadas del servidor**, no
+    // transcritas a mano: el guardián exige que sean las mismas palabras.
+    notas_titulo: "Lo que se sabe de esta ficha",
+    notas_pista: "Por ejemplo: el del pienso, o que pasa los martes.",
+    sin_notas: "Todavía no hay ninguna nota.",
+    nota_nueva: "Apuntar una nota",
+    nota_nueva_pista: "Lo que quieras acordarte de esta ficha.",
+    apuntar_la_nota: "APUNTAR LA NOTA",
+    nota_la_escribio: "La escribió",
+    nota_lo_escribio_el_programa: "Lo apuntó el programa",
     cuantos_escritos_uno: "Su nombre está escrito en 1 papel.",
     // El estado y sus botones (CRM-03, criterio (e), 11/10/2026). El guardián los exige copiados aquí: las
     // pruebas de las pantallas solo ven lo que hay en este fichero.
