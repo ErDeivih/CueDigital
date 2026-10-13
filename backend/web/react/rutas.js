@@ -111,6 +111,10 @@ export const PANTALLAS = [
   // cuál de sus 51 tierras era (que es el mismo motivo por el que la ficha de una tierra tiene dirección).
   { clave: "decir_cultivo", patron: ["tierras", ":id", "cultivo"] },
   { clave: "cuaderno", patron: ["cuaderno"] },
+  // **Lo que hay que hacer** (Entrega 3, 13/10/2026): la lista de próximas acciones, cruzando fichas.
+  // Tiene dirección propia porque **se enlaza y se recarga**, y porque es un sitio al que se vuelve
+  // todas las mañanas: los filtros (hoy, vencidas…) viajan en la dirección.
+  { clave: "tareas", patron: ["tareas"] },
   // Firmar el cuaderno: un tramo de texto fijo, y va **antes** que el apunte (`:id`) porque los tramos
   // fijos van siempre delante de los identificadores en esta tabla.
   { clave: "firmar", patron: ["cuaderno", "firmar"] },

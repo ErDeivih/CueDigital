@@ -128,6 +128,7 @@ import {
   pantallaDeUnContacto,
   pantallaDeLosNombresEscritos,
 } from "./react/pantallas/contactos.js";
+import { pantallaDeLasTareas } from "./react/pantallas/tareas.js";
 import { pantallaDeLaRevisionDeLosNombres } from "./react/pantallas/revision_de_contactos.js";
 import { pantallaDeCuadernoDeLaJunta } from "./react/pantallas/cuaderno_de_la_junta.js";
 import { pantallaDeCampanas } from "./react/pantallas/campanas.js";
@@ -843,6 +844,7 @@ const DIRECCION_PROPIA = {
   // reconstruyen enteras al abrirla (los datos se piden a su puerta).
   PantallaCompra: "compra",
   PantallaDeUnContacto: "contacto",
+PantallaDeLasTareas: "tareas",
   // Las dos de T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra.
   // Las dos se reconstruyen enteras al abrir su dirección.
   PantallaTierrasDeLaExplotacion: "tierras_mapa",
@@ -1313,6 +1315,10 @@ function abrirLaPantalla(clave, parametros = {}) {
   // **La ficha de una compra** (S11, 09/10/2026): sus datos **no están descargados** —la ficha los pide
   // a `/api/compras/<id>` al abrirla—, así que se pregunta al servidor y se decide con lo que conteste:
   // se abre, «eso no está en tu cuaderno» (404) o «no lo he podido comprobar» (sin cobertura).
+  if (clave === "tareas") {
+    // **Lo que hay que hacer** (Entrega 3): la lista, con los filtros que vengan en la dirección.
+    return abrirLasTareas(parametros);
+  }
   if (clave === "contacto") {
     // Se abre **por su puerta**, que es la que la pide al servidor: recargar tiene que dejar la ficha entera,
     // con sus notas y su saldo.
@@ -17509,6 +17515,86 @@ async function guardarElContacto() {
  * Si el campo está vacío no se llama a la puerta: se dice con palabras. El servidor también lo comprueba —una
  * nota vacía no es una nota—, pero así el agricultor lo lee sin esperar a la vuelta.
  */
+/** El estado de la lista de tareas (Entrega 3, 13/10/2026). */
+function estadoDeLasTareas() {
+  if (!estado.tareas) {
+    estado.tareas = {
+      // Lo que devolvió `GET /api/tareas`: la lista ya filtrada por el servidor.
+      lista: null,
+      // **Los filtros, tal y como vienen en la dirección**: son lo que hace que la lista se pueda enlazar y
+      // recargar, y que volver a ella deje al agricultor donde estaba.
+      filtros: {},
+      cargando: true,
+      error: "",
+      aviso: "",
+    };
+  }
+  return estado.tareas;
+}
+
+/** Los textos de esta pantalla. */
+function textosDeLasTareas() {
+  return t("tareas", {});
+}
+
+/** Pinta la lista tal y como está el estado ahora mismo. */
+function pantallaLasTareas() {
+  const suyo = estadoDeLasTareas();
+  return montar(() =>
+    pantallaDeLasTareas({
+      textos: textosDeLasTareas(),
+      tareas: suyo.lista || [],
+      filtros: suyo.filtros || {},
+      // **Los nombres de los contactos**, si se saben. El servidor manda el identificador, y el enlace a la ficha
+      // funciona igual sin el nombre; cuando el nombre está, se enseña, porque mirar «Llamar por el pienso» y ver
+      // **con quién** es media tarea.
+      contactos: suyo.contactos || {},
+      cargando: suyo.cargando,
+      error: suyo.error,
+      aviso: suyo.aviso,
+    }),
+  );
+}
+
+function irALasTareas(vencimiento) {
+  // **Se cambia la dirección y se deja que el router abra la lista**: así los filtros **viven en la dirección**
+  // —que es lo que hace que la lista se pueda enlazar y recargar— y no en un estado que se pierde al refrescar.
+  const consulta = vencimiento ? `?vencimiento=${encodeURIComponent(vencimiento)}` : "";
+  window.location.hash = `#/tareas${consulta}`;
+  return abrirLasTareas({ vencimiento });
+}
+
+async function abrirLasTareas(parametros = {}) {
+  // **La lista de lo que hay que hacer**, con los filtros que vengan en la dirección. Se piden al servidor **ya
+  // filtrados** y no se filtra en la pantalla: las comparaciones de fechas en dos sitios acaban diciendo cosas
+  // distintas, y el agricultor se fía de lo que ve.
+  const suyo = estadoDeLasTareas();
+  suyo.filtros = {
+    vencimiento: parametros.vencimiento || "",
+    estado: parametros.estado || "",
+    responsable: parametros.responsable || "",
+  };
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.cargando = true;
+  pantallaLasTareas();
+  const consulta = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(suyo.filtros)) {
+    if (valor) consulta.set(clave, valor);
+  }
+  try {
+    const datos = await apiJson(`/api/tareas${consulta.toString() ? `?${consulta}` : ""}`);
+    suyo.lista = datos.tareas || [];
+  } catch (fallo) {
+    // **Si no se puede leer, se dice**: una lista vacía sin explicación parecería «no tienes nada que hacer», que
+    // es lo contrario de lo que pasa.
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    suyo.lista = [];
+  }
+  suyo.cargando = false;
+  return pantallaLasTareas();
+}
+
 async function apuntarUnaTarea(id) {
   // **Apuntar lo que hay que hacer** (Entrega 3, 13/10/2026). Misma forma que los canales: se valida con palabras, se
   // manda, y si el servidor dice que no, **no se pierde lo escrito**.
@@ -19477,6 +19563,10 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     if (nombre === "canal-nuevo") return apuntarUnCanal(Number(elemento.dataset.id));
     // **Las próximas acciones** (Entrega 3): apuntar una, completarla y cancelarla.
     if (nombre === "tarea-nueva") return apuntarUnaTarea(Number(elemento.dataset.id));
+    // **Ver la lista con un filtro** (Entrega 3): se cambia el trozo de la dirección y se vuelve a pedir.
+    if (nombre === "tareas-ver") {
+      return irALasTareas(elemento.dataset.vencimiento || "");
+    }
     if (nombre === "tarea-completar") {
       return cerrarUnaTarea(Number(elemento.dataset.id), Number(elemento.dataset.tarea), "completar");
     }

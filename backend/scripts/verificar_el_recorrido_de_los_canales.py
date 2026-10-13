@@ -816,6 +816,27 @@ def el_recorrido_en_el_navegador(token: str, contacto_id: int, ficha_de_la_puert
             "el campo ACEPTA texto escrito (no es de solo lectura ni está deshabilitado)",
         )
         nav.evaluar("document.getElementById('canal-valor').value = ''")
+        # **El contraste, que es lo que hace que esto sea una medida y no una queja.** El MISMO tecleo, en
+        # otro campo de la MISMA pantalla (el nombre de la ficha). Si aquí sí entra y en el alta rápida no,
+        # el problema está en esos tres campos; si tampoco entra, está en la pantalla entera.
+        nav.evaluar(
+            "(() => { const c = document.getElementById('contacto-nombre');"
+            " if (!c) return false; c.value = ''; c.focus(); return true; })()"
+        )
+        nav.escribir("PRUEBA")
+        el_contraste = nav.evaluar(
+            "({valor: (document.getElementById('contacto-nombre') || {}).value,"
+            " tiene_el_foco: document.activeElement === document.getElementById('contacto-nombre')})"
+        )
+        decir(
+            "el mismo tecleo, en otro campo de la misma pantalla (#contacto-nombre): "
+            f"{como_texto(el_contraste)}"
+        )
+        comprobar(
+            bool((el_contraste or {}).get("valor")),
+            "el teclado del protocolo llega a los campos de esta pantalla "
+            f"(no es cosa solo del alta rápida: {como_texto(el_contraste)})",
+        )
 
         # Se teclea **en el campo**, no se pone el valor por JavaScript: `Input.insertText` es lo que hace
         # el navegador cuando el agricultor escribe. Y **se lee lo que ha quedado en el campo**, porque un

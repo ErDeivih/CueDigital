@@ -313,6 +313,8 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     "normativa",
     "decir_cultivo",
     "cuaderno",
+    // **Lo que hay que hacer** (Entrega 3, 13/10/2026): `#/tareas`, con los filtros en la dirección.
+    "tareas",
     "firmar",
     "apunte",
     "almacen",

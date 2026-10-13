@@ -7511,6 +7511,32 @@ MENSAJES.update(MENSAJES_DE_LA_MAQUINARIA)
 # orden y su nombre**, y el orden no se saca de las claves del diccionario: unos botones que cambian
 # de sitio se pulsan mal.
 
+# ---------------------------------------------------------------------------
+# **Lo que hay que hacer** (Entrega 3, 13/10/2026): la lista de próximas acciones, cruzando fichas.
+# ---------------------------------------------------------------------------
+TAREAS: dict = {
+    "titulo": "Lo que hay que hacer",
+    "pista": (
+        "Lo próximo, de todos tus contactos. Lo vencido se queda vencido: el programa no lo cancela por su cuenta."
+    ),
+    "todas": "Todas",
+    "de_hoy": "Para hoy",
+    "vencidas": "Vencidas",
+    "sin_fecha": "Sin fecha",
+    "cargando": "Mirando lo que tienes…",
+    "que": "Qué hay que hacer",
+    "cuando": "Para cuándo",
+    "quien": "Quién",
+    "con_quien": "Con quién",
+    "vencida": "Vencida",
+    "ver_la_ficha": "Ver la ficha",
+    "hecha": "Hecha",
+    "cancelar": "Cancelar",
+    "ya_hecha": "Ya hecha",
+    "ya_cancelada": "Cancelada",
+    "no_hay_ninguna": "No hay nada apuntado. Cuando apuntes algo, sale aquí.",
+}
+
 GASTOS: dict = {
     # **El camino de vuelta a la ficha del proveedor** (Entrega 1, 13/10/2026).
     "ficha_del_proveedor": "Ver la ficha de su proveedor",

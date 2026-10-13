@@ -21,6 +21,8 @@ def interfaz() -> dict:
         "pantalla_inicio": textos.PANTALLA_INICIO,
         "pantalla_entrar": textos.PANTALLA_ENTRAR,
         "trabajos": list(textos.TRABAJOS),
+        # **Lo que hay que hacer** (Entrega 3): la lista de próximas acciones.
+        "tareas": list(textos.TAREAS),
         "cuaderno": textos.PANTALLA_CUADERNO,
         # El mapa: sus botones, sus avisos y las cuatro formas de contar la zona de nitratos.
         # Sin esto la pantalla sale con los botones en blanco: los textos viven aquí, y el
