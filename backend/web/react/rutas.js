@@ -115,6 +115,10 @@ export const PANTALLAS = [
   // Tiene dirección propia porque **se enlaza y se recarga**, y porque es un sitio al que se vuelve
   // todas las mañanas: los filtros (hoy, vencidas…) viajan en la dirección.
   { clave: "tareas", patron: ["tareas"] },
+  // **Los servicios a terceros** (CRM-04, 14/10/2026): se le hacen a otra persona, asi que su
+  // sitio y sus hectareas NO son de la finca. Va despues de las tareas a proposito: son lo mismo
+  // (cosas que hay que hacer) pero de otro.
+  { clave: "trabajos_a_terceros", patron: ["trabajos-a-terceros"] },
   // Firmar el cuaderno: un tramo de texto fijo, y va **antes** que el apunte (`:id`) porque los tramos
   // fijos van siempre delante de los identificadores en esta tabla.
   { clave: "firmar", patron: ["cuaderno", "firmar"] },

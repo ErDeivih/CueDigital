@@ -129,6 +129,7 @@ import {
   pantallaDeLosNombresEscritos,
 } from "./react/pantallas/contactos.js";
 import { pantallaDeLasTareas } from "./react/pantallas/tareas.js";
+import { pantallaDeLosTrabajosATerceros } from "./react/pantallas/trabajos_a_terceros.js";
 import { pantallaDeLaRevisionDeLosNombres } from "./react/pantallas/revision_de_contactos.js";
 import { pantallaDeCuadernoDeLaJunta } from "./react/pantallas/cuaderno_de_la_junta.js";
 import { pantallaDeCampanas } from "./react/pantallas/campanas.js";
@@ -849,6 +850,7 @@ const DIRECCION_PROPIA = {
   PantallaCompra: "compra",
   PantallaDeUnContacto: "contacto",
 PantallaDeLasTareas: "tareas",
+  PantallaDeLosTrabajosATerceros: "trabajos_a_terceros",
   // Las dos de T06 (03/10/2026): las tierras en el mapa y en la tabla, y lo que ha sido una tierra.
   // Las dos se reconstruyen enteras al abrir su dirección.
   PantallaTierrasDeLaExplotacion: "tierras_mapa",
@@ -1335,6 +1337,11 @@ function abrirLaPantalla(clave, parametros = {}) {
     // (la dirección mentía: copiarla daba la lista SIN filtrar).
     estado.filtroTareas = parametros.vencimiento || null;
     return abrirLasTareas(parametros);
+    }
+  if (clave === "trabajos_a_terceros") {
+    // **Los servicios a terceros** (CRM-04): se piden a su puerta, que es la que trae el cliente
+    // ya resuelto y el estado de cada trabajo.
+    return abrirLosTrabajosATerceros(parametros);
   }
   if (clave === "contacto") {
     // Se abre **por su puerta**, que es la que la pide al servidor: recargar tiene que dejar la ficha entera,
@@ -17662,6 +17669,52 @@ async function abrirLasTareas(parametros = {}) {
   }
   suyo.cargando = false;
   return pantallaLasTareas();
+}
+
+function estadoDeLosTrabajosATerceros() {
+  // **El estado de esta pantalla**, como el de las tareas: lo que se ha cargado, si se esta cargando, y el error.
+  // Se guarda en `estado` para que recargar o volver atras no pierda lo que ya se sabe.
+  estado.pantallas = estado.pantallas || {};
+  estado.pantallas.trabajos_a_terceros = estado.pantallas.trabajos_a_terceros || {
+    lista: [],
+    contactos: [],
+    cargando: false,
+    error: "",
+    aviso: "",
+  };
+  return estado.pantallas.trabajos_a_terceros;
+}
+
+function pantallaLosTrabajosATerceros() {
+  return pintar(pantallaDeLosTrabajosATerceros, {
+    trabajos: estadoDeLosTrabajosATerceros().lista,
+    contactos: estadoDeLosTrabajosATerceros().contactos,
+    cargando: estadoDeLosTrabajosATerceros().cargando,
+    textos: { trabajos_a_terceros: t("trabajos_a_terceros", {}) },
+  });
+}
+
+async function abrirLosTrabajosATerceros() {
+  // **Los servicios a terceros** (CRM-04, 14/10/2026). Se piden los trabajos Y los contactos, porque la pantalla
+  // necesita los dos: sin los contactos no puede ofrecer a quien elegir.
+  const suyo = estadoDeLosTrabajosATerceros();
+  suyo.error = "";
+  suyo.aviso = "";
+  suyo.cargando = true;
+  pantallaLosTrabajosATerceros();
+  try {
+    const trabajos = await apiJson("/api/trabajos-a-terceros");
+    suyo.lista = trabajos.trabajos || [];
+    const agenda = await apiJson("/api/contactos");
+    suyo.contactos = agenda.contactos || [];
+  } catch (fallo) {
+    // **Si no se puede leer, se dice**: una lista vacia sin explicacion pareceria que no hay ninguno, y es lo
+    // contrario de lo que pasa.
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+    suyo.lista = [];
+  }
+  suyo.cargando = false;
+  return pantallaLosTrabajosATerceros();
 }
 
 async function apuntarUnaTarea(id) {
