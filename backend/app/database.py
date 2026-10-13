@@ -1181,6 +1181,7 @@ def crear_tablas(destino_engine: Engine | None = None) -> tuple[list[str], list[
         print(f"Índices de la base de datos ({'; '.join(partes)}).")
     # Y después de añadir lo que falte, se quita la obligación de decir «sí o no» donde el tercer
     # estado («no se sabe») es la respuesta buena. Ver `COLUMNAS_QUE_DEJARON_DE_SER_OBLIGATORIAS`.
+    reconstruidas = reconstruir_para_poder_decir_no_se(motor)
     if reconstruidas:
         print(
             "Columnas que ahora pueden decir «no se sabe» (se han reconstruido sus tablas, "
