@@ -48,7 +48,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import contactos as logica
 from .. import saldos
 from .. import correcciones, models, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion, PuedeModificar, PuedeVerLoEconomico
 from ..schemas import (
     ConfirmacionDeLaMigracion,
     BajaDeUnContacto,
@@ -772,7 +772,8 @@ def listar(
 
 @router.post("", response_model=ContactoSalida, status_code=status.HTTP_201_CREATED)
 def crear(
-    datos: ContactoEntrada, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual
+    datos: ContactoEntrada, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """Da de alta una ficha.
 
@@ -849,6 +850,7 @@ def dar_de_baja(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Deja de usarse, sin borrarlo**: el criterio (e) de CRM-03 (11/10/2026).
 
@@ -888,6 +890,7 @@ def volver_a_usarlo(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Vuelve a usarse** (11/10/2026): la misma puerta al revés, con su traza.
 
@@ -956,6 +959,7 @@ def apuntar_un_canal(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Apunta un teléfono, un correo o una dirección más** (Entrega 2, 13/10/2026).
 
@@ -992,6 +996,7 @@ def el_canal_principal(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Elige cuál es el principal de su clase** (Entrega 2, 13/10/2026).
 
@@ -1033,6 +1038,7 @@ def corregir_un_canal(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Corrige un canal sin perder lo que no se manda** (Entrega 2, 13/10/2026).
 
@@ -1089,6 +1095,7 @@ def quitar_un_canal(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Quita un canal** (Entrega 2, 13/10/2026).
 
@@ -1144,6 +1151,7 @@ def apuntar_una_tarea(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Apunta una próxima acción con este contacto** (Entrega 3, 13/10/2026).
 
@@ -1202,6 +1210,7 @@ def el_saldo(
     db: Db,
     explotacion: ExplotacionActual,
     _usuario: UsuarioActual,
+    ver_el_dinero: PuedeVerLoEconomico,
 ) -> dict:
     """**Cuánto nos debe y cuánto le debemos**, con los documentos que lo explican (13/10/2026).
 
@@ -1691,6 +1700,7 @@ def corregir(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """Corrige la ficha, **dejando en la auditoría lo que decía antes**.
 
@@ -1757,7 +1767,8 @@ def corregir(
 
 @router.delete("/{contacto_id}", status_code=status.HTTP_200_OK)
 def borrar(
-    contacto_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual
+    contacto_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """Borra la ficha, con sus papeles y sus enlaces, y **sin tocar ningún texto escrito**.
 

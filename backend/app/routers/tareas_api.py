@@ -25,7 +25,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 
 from .. import correcciones, models, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual
+from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, PuedeVerLoEconomico
 from ..schemas import CorreccionDeUnaTarea, EntradaDeUnaTarea, ListaDeTareas
 # El ayudante que cuenta una tarea (con lo que **se calcula**: `vencida` y la fecha dicha con palabras). Vive hoy en
 # el router de contactos porque el primer sitio donde hizo falta fue la ficha; **cuando haya un tercer sitio que lo
@@ -115,6 +115,7 @@ def reprogramar_una_tarea(
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Reprogramar**: cambiarle el día, el responsable o lo que hay que hacer.
 
@@ -154,7 +155,8 @@ def reprogramar_una_tarea(
 
 @router.post("/{tarea_id}/completar", response_model=ListaDeTareas)
 def completar_una_tarea(
-    tarea_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual
+    tarea_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Completarla**, apuntando **quién y cuándo** (lo pide el encargo).
 
@@ -182,7 +184,8 @@ def completar_una_tarea(
 
 @router.post("/{tarea_id}/cancelar", response_model=ListaDeTareas)
 def cancelar_una_tarea(
-    tarea_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual
+    tarea_id: int, db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual,
+    poder: PuedeModificar,
 ) -> dict:
     """**Cancelarla**, que es distinto de hacerla: se apunta **quién y cuándo** y **no se borra**.
 
