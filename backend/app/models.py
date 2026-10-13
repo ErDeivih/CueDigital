@@ -36,6 +36,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Table,
     Text,
@@ -4025,3 +4026,74 @@ class Subvencion(Base):
     anulada: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+class TrabajoParaUnTercero(Base):
+    """**Un servicio que se le hace a un tercero** (CRM-04, 14/10/2026).
+
+    QUÉ ES, CON LAS PALABRAS DEL CONTRATO. Su recorrido es: *cliente → propuesta de trabajo → aceptación → parte
+    realizado → venta/documento → cobro*. Y es **trabajo externo**, con **ubicación y superficie separadas** de las
+    tierras y de la PAC propias: **10 ha de un tercero no suman superficie propia**. Por eso la ubicación y la
+    superficie viven **aquí**, no en `parcelas`: meterlas allí sería decir que son del agricultor.
+
+    LAS DOS DECISIONES QUE MÁS IMPORTAN, y van escritas porque son las que un cambio futuro rompería sin querer:
+
+      1. **El insumo del cliente no descuenta almacén propio; el propio sí.** Se dice con `de_quien_es_el_insumo`,
+         que se copia en el parte **en el momento de apuntarlo**: si después alguien cambia de quién era, el parte
+         que ya está firmado no puede cambiar de significado.
+      2. **Cambiar la tarifa no reescribe los partes aceptados anteriores.** Por eso el parte lleva su **copia** de
+         la tarifa, las horas, la máquina, el operario y el desplazamiento: el precio de un trabajo aceptado es el
+         que se aceptó, no el que la casa tenga hoy en la lista.
+    """
+
+    __tablename__ = "trabajos_para_terceros"
+
+    # **Los tres estados del recorrido**, y ninguno más: lo que se propone no es un trabajo, lo que se acepta sí, y
+    # el parte es lo que de verdad se hizo. (El cobro no se guarda aquí: vive en el saldo del contacto, que es donde
+    # está el dinero de todos los documentos.)
+    PROPUESTO = "propuesto"
+    ACEPTADO = "aceptado"
+    HECHO = "hecho"
+    CANCELADO = "cancelado"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    # **El cliente**: el tercero al que se le hace el trabajo. Es un contacto, como todo lo demás.
+    contacto_id: Mapped[int] = mapped_column(ForeignKey("contactos.id"), index=True)
+    estado: Mapped[str] = mapped_column(String(20), default=PROPUESTO, index=True)
+    titulo: Mapped[str] = mapped_column(String(200))
+
+    # **El sitio, y es del tercero.** No es una `parcela` a propósito: si estuviera allí, cualquier suma de
+    # superficie del agricultor (y el volcado de la PAC) contaría tierras que no son suyas.
+    ubicacion: Mapped[str | None] = mapped_column(String(300))
+    superficie_ha: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
+    # Y **de quién es el insumo**, que es lo que decide si descuenta el almacén propio o no.
+    de_quien_es_el_insumo: Mapped[str] = mapped_column(String(10), default="propio")
+
+    # **Lo que se propuso**, y hasta aquí se puede cambiar: la tarifa y lo que se previó.
+    tarifa_por_hora: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
+    horas_previstas: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+
+    # **Lo que se ACEPTÓ y lo que de verdad se hizo**, copiado en el parte: a partir de que se acepta, esto ya no
+    # se reescribe aunque cambie la tarifa de la casa.
+    aceptado_en: Mapped[dt.datetime | None] = mapped_column(DateTime)
+    aceptado_por: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    tarifa_aceptada: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
+    horas_hechas: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    maquina: Mapped[str | None] = mapped_column(String(120))
+    operario: Mapped[str | None] = mapped_column(String(120))
+    desplazamiento_km: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    # **El coste, y puede no saberse.** El contrato pide que el margen **marque los costes desconocidos**: por eso
+    # esto es anulable, y quien sume tiene que decir «hay costes que no constan» en vez de contar un cero.
+    coste_conocido: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
+    hecho_en: Mapped[dt.date | None] = mapped_column(Date)
+    notas: Mapped[str | None] = mapped_column(Text)
+
+    # **Y la clave de reenvío, como en todo lo demás de esta casa**: apuntar dos veces el mismo parte (un doble
+    # clic, la cola del móvil) **no puede duplicarlo**. Lo pide el contrato: «ejecución repetida no duplica».
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("explotacion_id", "clave_de_reenvio", name="uq_trabajo_a_tercero_reenvio"),
+    )
+
