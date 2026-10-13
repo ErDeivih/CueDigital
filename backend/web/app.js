@@ -996,6 +996,13 @@ function parametrosDeLaPantalla(clave) {
     if (suyo.q) parametros.q = suyo.q;
     if (suyo.solo) parametros.solo = suyo.solo;
   }
+  // **Los filtros de las tareas viajan en la dirección** (14/10/2026), como los de las ventas y las tierras.
+  // `irALasTareas` ya los escribe en la dirección, pero al pintar se **reescribe desde el estado** y este bloque
+  // no miraba: el filtro se borraba solo y la lista no se podía enlazar ni recargar. Medido en el recorrido
+  // andado: pulsar «Vencidas» dejaba `#/tareas?campana=2026&finca=2`, y al recargar volvían las 6 filas.
+  if (clave === "tareas") {
+    if (estado.filtroTareas) parametros.vencimiento = estado.filtroTareas;
+  }
   // **La pantalla de las tierras de T06** (03/10/2026): lo que el agricultor tenga puesto viaja en la
   // dirección, como en cualquier lista de este programa. Es lo que hace que se pueda recargar y
   // mandar a quien le ayuda («mira las tierras sin forma») y que volver de una ficha no pierda nada.
@@ -17572,6 +17579,10 @@ function pantallaLasTareas() {
 }
 
 function irALasTareas(vencimiento) {
+  // **El filtro se guarda también en el estado** (14/10/2026). Antes solo se escribía en la dirección, y al
+  // pintar se reescribe la dirección DESDE EL ESTADO: el filtro se borraba solo. Medido en el recorrido andado:
+  // pulsar «Vencidas» dejaba `#/tareas?campana=2026&finca=2`, y al recargar volvían las 6 filas.
+  estado.filtroTareas = vencimiento || null;
   // **Se cambia la dirección y se deja que el router abra la lista**: así los filtros **viven en la dirección**
   // —que es lo que hace que la lista se pueda enlazar y recargar— y no en un estado que se pierde al refrescar.
   const consulta = vencimiento ? `?vencimiento=${encodeURIComponent(vencimiento)}` : "";

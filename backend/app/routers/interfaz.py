@@ -22,7 +22,11 @@ def interfaz() -> dict:
         "pantalla_entrar": textos.PANTALLA_ENTRAR,
         "trabajos": list(textos.TRABAJOS),
         # **Lo que hay que hacer** (Entrega 3): la lista de próximas acciones.
-        "tareas": list(textos.TAREAS),
+        # **El diccionario ENTERO, no sus claves** (14/10/2026). Aquí ponía `list(textos.TAREAS)`, y
+    # `list()` de un diccionario devuelve **sus claves** —`["titulo","pista",…]`—, así que la pantalla de
+    # las tareas salía **muda**: el título vacío y los botones sin texto. Lo cazó el recorrido andado en
+    # navegador, no las pruebas: las demás pantallas pasan el diccionario entero y esta no.
+    "tareas": textos.TAREAS,
         "cuaderno": textos.PANTALLA_CUADERNO,
         # El mapa: sus botones, sus avisos y las cuatro formas de contar la zona de nitratos.
         # Sin esto la pantalla sale con los botones en blanco: los textos viven aquí, y el

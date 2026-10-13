@@ -313,6 +313,10 @@ def lo_que_ha_quedado_vivo() -> list[str]:
     """**Lo que este guion ha dejado vivo, si ha dejado algo.** Se pregunta a Windows por la línea de órdenes de
     los procesos y se buscan las tres marcas de esta prueba: la carpeta temporal, el perfil del navegador y el
     uvicorn del puerto. Si no se puede preguntar, se dice: una limpieza que no se comprueba no está hecha.
+
+    **Se filtra por nombre de programa** (`python`, `chrome`, `msedge`, `node`): sin eso, la propia consulta
+    —que lleva las marcas escritas dentro— sale en su propio resultado y el informe acaba diciendo que ha quedado
+    vivo un `powershell.exe` que solo estaba mirando.
     """
     consulta = (
         "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -ne $null -and "
@@ -334,6 +338,60 @@ def lo_que_ha_quedado_vivo() -> list[str]:
     if salida.returncode != 0:
         return [f"(no se ha podido comprobar: {salida.stderr.strip()[:200]})"]
     return [renglon.strip() for renglon in salida.stdout.splitlines() if renglon.strip()]
+
+
+def rematar_el_navegador(pid: int | None, perfil: str | None) -> str:
+    """**Remata el navegador que ha abierto este guion, y su árbol de hijos.**
+
+    POR QUÉ HACE FALTA, medido (14/10/2026): cerrar el navegador termina el proceso principal, pero Chrome deja
+    vivos a sus hijos —el `crashpad-handler`, el proceso de la GPU y los `renderer`—, y esos siguen agarrados a la
+    carpeta del perfil. En una de las vueltas quedaron **nueve** procesos de Chrome y la carpeta del perfil sin
+    borrar. Un guion de comprobación que deja nueve navegadores abiertos no está limpio, y la limpieza que no se
+    comprueba no está hecha: aquí se remata **por el identificador del proceso y por la ruta del perfil**, que son
+    de este navegador y de ningún otro (por eso no se toca ningún Chrome que no sea el de esta prueba).
+
+    Es `taskkill /T` (el árbol entero) y, después, la barredora por el perfil para los hijos que se hayan
+    descolgado. Lo que no se pueda rematar o borrar **se dice**.
+    """
+    dicho: list[str] = []
+    if pid:
+        try:
+            salida = subprocess.run(  # noqa: S603
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            dicho.append(f"taskkill del {pid}: {salida.returncode}")
+        except Exception as fallo:  # noqa: BLE001
+            dicho.append(f"taskkill del {pid} no se ha podido: {fallo}")
+    if perfil:
+        consulta = (
+            "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -ne $null -and "
+            "$_.CommandLine -like '*%s*' -and $_.Name -eq 'chrome.exe' } | "
+            "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; "
+            "\"matado $($_.ProcessId)\" }" % perfil
+        )
+        try:
+            salida = subprocess.run(  # noqa: S603
+                ["powershell", "-NoProfile", "-Command", consulta],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            matados = [r.strip() for r in salida.stdout.splitlines() if r.strip()]
+            dicho.append(f"hijos del perfil rematados: {matados or 'ninguno'}")
+        except Exception as fallo:  # noqa: BLE001
+            dicho.append(f"la barredora del perfil no se ha podido: {fallo}")
+        for _intento in range(12):
+            shutil.rmtree(perfil, ignore_errors=True)
+            if not pathlib.Path(perfil).exists():
+                dicho.append("la carpeta del perfil se ha borrado")
+                break
+            time.sleep(0.5)
+        else:
+            dicho.append(f"AVISO: la carpeta del perfil NO se ha podido borrar: {perfil}")
+    return " · ".join(dicho)
 
 
 # ---------------------------------------------------------------------------
@@ -428,16 +486,19 @@ LEER_LA_LISTA = (
   const filas = tabla
     ? [...tabla.querySelectorAll('tbody tr')].map((tr) => {
         const celdas = [...tr.querySelectorAll('td')];
-        let titulo = '', vencida = false;
+        let titulo = '', vencida = false, strongs = [];
         if (celdas[0]) {
           const clon = celdas[0].cloneNode(true);
-          const strongs = [...clon.querySelectorAll('strong')];
-          vencida = strongs.some((s) => s.textContent.trim() === VENCIDA);
-          strongs.forEach((s) => s.remove());
+          strongs = [...clon.querySelectorAll('strong')].map((s) => s.textContent.trim());
+          vencida = strongs.some((s) => s === VENCIDA);
+          [...clon.querySelectorAll('strong')].forEach((s) => s.remove());
           titulo = clon.textContent.replace(/\\s+/g, ' ').trim();
         }
         return {
           titulo: titulo,
+          strongs: strongs,
+          // **Una marca que se pinta vacía es una marca que no dice nada**: el `strong` está, pero sin palabra.
+          marcas_vacias: strongs.filter((s) => s === '').length,
           vencida_marcada: vencida,
           fecha: celdas[1] ? texto(celdas[1]) : '',
           responsable: celdas[2] ? texto(celdas[2]) : '',
@@ -512,7 +573,9 @@ LA_SONDA_DE_LOS_TEXTOS = """
       claves_o_elementos: esLista
         ? suyo.slice(0, 8)
         : (suyo && typeof suyo === 'object' ? Object.keys(suyo).slice(0, 8) : null),
-      sabe_decir_el_titulo: esLista ? suyo.indexOf('titulo') >= 0 : Boolean(suyo && suyo.titulo),
+      // **¿Trae los rótulos o solo sus nombres?** Un diccionario trae `titulo` con su frase dentro; una lista de
+      // nombres trae la palabra «titulo», que no sirve para pintar nada.
+      trae_los_rotulos: esLista ? false : Boolean(suyo && suyo.titulo !== undefined),
       contactos_es_objeto: Boolean(interfaz.contactos && typeof interfaz.contactos === 'object'
         && !Array.isArray(interfaz.contactos)),
       trabajos_es_lista: Array.isArray(interfaz.trabajos),
@@ -957,37 +1020,41 @@ def el_alta_de_una_tarea(
         f"#tarea-responsable={responsable!r}"
     )
 
-    def un_campo_de_texto(cual: str, valor: str) -> None:
-        """Un campo de texto: se mide la primera vez y después se usa lo medido."""
-        if medido.get(cual) is None:
-            manera, intentos = medir_el_tecleo(nav, cual, valor)
-            medido[f"intentos_{cual}"] = intentos
+    def un_campo_de_texto(campo: str, clave: str, valor: str) -> None:
+        """Un campo de texto: se mide la primera vez y después se usa lo medido.
+
+        `campo` es el `id` del control y `clave` el nombre corto con el que se apunta lo medido (`titulo`,
+        `responsable`): confundir los dos hizo que el resumen dijera «título=None» con el título tecleado.
+        """
+        if medido.get(clave) is None:
+            manera, intentos = medir_el_tecleo(nav, campo, valor)
+            medido[f"intentos_{clave}"] = intentos
             for intento in intentos:
                 decir(
-                    f"         probado {intento['manera']!r} en #{cual} → valor "
+                    f"         probado {intento['manera']!r} en #{campo} → valor "
                     f"{intento['valor']!r} (el campo tenía el foco: {intento['con_foco']})"
                 )
             if manera is None:
                 decir(
-                    f"       NO HA ENTRADO TECLEANDO en #{cual}: se han probado "
+                    f"       NO HA ENTRADO TECLEANDO en #{campo}: se han probado "
                     f"{[i['manera'] for i in intentos]} y ninguna ha escrito {valor!r}. "
                     "Se pone por JavaScript para poder seguir midiendo lo demás —y se dice."
                 )
                 manera = "javascript"
             else:
-                decir(f"       #{cual}: ha entrado por {manera!r}")
-            medido[cual] = manera
-        if medido[cual] == "javascript":
+                decir(f"       #{campo}: ha entrado por {manera!r}")
+            medido[clave] = manera
+        if medido[clave] == "javascript":
             nav.evaluar(
                 "(() => { const el = document.getElementById(%s); if (el) el.value = %s; return true; })()"
-                % (json.dumps(cual), json.dumps(valor))
+                % (json.dumps(campo), json.dumps(valor))
             )
             return
-        como = teclear_por_la_manera_que_ya_funciona(nav, cual, valor, medido[cual])
-        decir(f"       #{cual}: tecleado por {medido[cual]!r} → {como}")
+        como = teclear_por_la_manera_que_ya_funciona(nav, campo, valor, medido[clave])
+        decir(f"       #{campo}: tecleado por {medido[clave]!r} → {como}")
 
-    un_campo_de_texto("tarea-titulo", titulo)
-    un_campo_de_texto("tarea-responsable", responsable)
+    un_campo_de_texto("tarea-titulo", "titulo", titulo)
+    un_campo_de_texto("tarea-responsable", "responsable", responsable)
 
     # --- el día (un campo `date`) ---
     if fecha is None:
@@ -1058,8 +1125,12 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
     hoy = dt.date.today()
     medido: dict = {}
     empezaron_las_capturas = len(CAPTURAS)
+    el_pid_del_navegador: int | None = None
+    el_perfil_del_navegador: str | None = None
 
     with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
+        el_pid_del_navegador = nav.proceso.pid if nav.proceso else None
+        el_perfil_del_navegador = nav.perfil
         nav.medir(1440, 1000, movil=False)
         nav.orden(
             "Page.addScriptToEvaluateOnNewDocument",
@@ -1439,10 +1510,11 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         resultado["los_textos_de_la_lista"] = los_textos
         en_el_movil = (los_textos or {}).get("en_el_movil") or {}
         comprobar(
-            en_el_movil.get("es_lista") is False and en_el_movil.get("sabe_decir_el_titulo") is True,
-            "lo que la puerta manda en `tareas` es un diccionario con sus rótulos, no una lista de nombres "
+            en_el_movil.get("es_lista") is False and en_el_movil.get("trae_los_rotulos") is True,
+            "lo que la puerta manda en `tareas` trae los rótulos con sus frases, y no una lista con sus nombres "
             f"(tipo {en_el_movil.get('tipo')!r}, es_lista={en_el_movil.get('es_lista')}, "
-            f"sabe_decir_el_titulo={en_el_movil.get('sabe_decir_el_titulo')})",
+            f"trae_los_rotulos={en_el_movil.get('trae_los_rotulos')}, "
+            f"lo que trae={como_texto(en_el_movil.get('claves_o_elementos'))})",
         )
         comprobar(
             bool(lista.get("titulo")),
@@ -1527,9 +1599,9 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             resultado.setdefault("historias_de_la_direccion", {})[nombre] = la_historia
             for fila in filtrada.get("filas") or []:
                 decir(
-                    f"             {fila['titulo']!r} vencida={fila['vencida_marcada']} "
-                    f"fecha={fila['fecha']!r} responsable={fila['responsable']!r} "
-                    f"con_quien={fila['con_quien']!r} cierre={fila['cierre']!r}"
+                    f"             {fila['titulo']!r} marcada_vencida={fila['vencida_marcada']} "
+                    f"marcas={fila['strongs']} fecha={fila['fecha']!r} responsable={fila['responsable']!r} "
+                    f"con_quien={fila['con_quien']!r} enlace={fila['enlace_ficha']!r} cierre={fila['cierre']!r}"
                 )
             comprobar(
                 el_camino_de_la_direccion(filtrada.get("direccion")) == "#/tareas"
@@ -1556,6 +1628,7 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
                 "en_pantalla": en_pantalla,
                 "de_la_puerta": de_la_puerta,
             }
+            resultado.setdefault("filas_medidas", {})[nombre] = filtrada.get("filas") or []
         # **Lo que cada filtro tiene que dejar dentro y fuera**, dicho por su nombre.
         medidos = resultado["filtros_medidos"]
         comprobar(
@@ -1570,6 +1643,22 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             and "Llamar al del pienso" not in medidos["vencidas"]["en_pantalla"],
             "«vencidas» trae lo de ayer y deja fuera lo de hoy "
             f"({medidos['vencidas']['en_pantalla']})",
+        )
+        # **Y la marca de vencida, en la propia lista.** Se mide porque en la lista hay una tarea vencida y
+        # pendiente de verdad, y lo que se ve al lado de su título es un `<strong>` **vacío**: la marca está
+        # pintada, pero no dice nada. Es la misma avería que deja la pantalla sin rótulos, vista desde otro lado.
+        las_vencidas_filas = list((resultado.get("filas_medidas") or {}).get("vencidas") or [])
+        resultado["marcas_vacias_en_la_lista"] = sum(
+            fila.get("marcas_vacias", 0) for fila in las_vencidas_filas
+        )
+        decir(
+            "las filas del filtro «vencidas», tal cual salen de la lista: "
+            f"{como_texto(las_vencidas_filas)}"
+        )
+        comprobar(
+            resultado["marcas_vacias_en_la_lista"] == 0,
+            "en la lista, la marca «Vencida» de una tarea vencida dice «Vencida» y no sale vacía "
+            f"({resultado['marcas_vacias_en_la_lista']} marca(s) vacía(s))",
         )
         comprobar(
             sorted(medidos["sin_fecha"]["en_pantalla"])
@@ -1619,13 +1708,45 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
         los_marcados = [f for f in (tras_recargar.get("filtros") or []) if f.get("marcado")]
         comprobar(
             len(los_marcados) == 1 and los_marcados[0].get("vencimiento") == "hoy",
-            f"y sigue marcado el mismo botón ({[f.get('texto') for f in los_marcados]})",
+            f"y sigue marcado el mismo botón ({[f.get('vencimiento') for f in los_marcados]})",
         )
         comprobar(
             sorted(f.get("titulo") for f in (tras_recargar.get("filas") or []))
             == sorted(antes_de_recargar.get("filas") and [f.get("titulo") for f in antes_de_recargar["filas"]] or []),
             "y la misma lista que antes de recargar "
             f"({[f.get('titulo') for f in (tras_recargar.get('filas') or [])]})",
+        )
+
+        # ---- extra: ¿y si la dirección CON el filtro se abre desde fuera? -------------
+        # **Esto separa dos averías que se arreglan en sitios distintos** (y que hasta ahora iban juntas): que el
+        # filtro **no se escriba** en la dirección, o que la dirección **no se lea** al abrirla. Se navega de
+        # verdad a `#/tareas?vencimiento=vencidas` —como si fuera un enlace mandado— y se mira qué sale.
+        decir("")
+        decir("  --- extra: se abre `#/tareas?vencimiento=vencidas` desde fuera (como un enlace) ---")
+        nav.abrir(f"http://127.0.0.1:{PUERTO}/#/tareas?vencimiento=vencidas", esperar=3.5)
+        nav.esperar("document.querySelectorAll('#pantalla *').length > 0", segundos=30)
+        time.sleep(1.2)
+        por_el_enlace = leer_la_lista(nav)
+        decir(
+            f"dirección tras abrirla: {por_el_enlace.get('direccion')!r}   "
+            f"filas: {por_el_enlace.get('cuantas')}   "
+            f"marcado: {[f.get('vencimiento') for f in (por_el_enlace.get('filtros') or []) if f.get('marcado')]}"
+        )
+        decir(f"lo que se ve: {(por_el_enlace.get('texto') or '')[:400]!r}")
+        resultado["abrir_el_enlace_del_filtro"] = {
+            "direccion": por_el_enlace.get("direccion"),
+            "titulos": [f.get("titulo") for f in (por_el_enlace.get("filas") or [])],
+        }
+        comprobar(
+            sorted(f.get("titulo") for f in (por_el_enlace.get("filas") or []))
+            == sorted(medidos["vencidas"]["de_la_puerta"]),
+            "el enlace CON el filtro sí filtra al abrirlo desde fuera "
+            f"({[f.get('titulo') for f in (por_el_enlace.get('filas') or [])]})",
+        )
+        comprobar(
+            lleva_el_filtro(por_el_enlace.get("direccion"), "vencidas"),
+            "pero la aplicación reescribe la dirección sin el filtro, nada más pintar la lista "
+            f"({por_el_enlace.get('direccion')!r})",
         )
         # **El cierre desde la propia lista**, que es otra puerta distinta de la de la ficha (`data-id` es el
         # contacto, `data-tarea` la tarea). Se anda porque un botón que no hace nada en una lista es de las cosas
@@ -1711,6 +1832,11 @@ def el_recorrido_en_el_navegador(direccion: str, token: str, ajena: str, vuelta:
             f"{como_texto(resultado['errores_de_la_pagina'])}"
         )
     resultado["capturas"] = CAPTURAS[empezaron_las_capturas:]
+    # **Y se remata el navegador de esta vuelta**, con su árbol de hijos y su perfil: cerrarlo no basta.
+    resultado["limpieza_del_navegador"] = rematar_el_navegador(
+        el_pid_del_navegador, el_perfil_del_navegador
+    )
+    decir(f"limpieza del navegador: {resultado['limpieza_del_navegador']}")
     return resultado
 
 
@@ -1875,6 +2001,9 @@ def una_vuelta(direccion: str, vuelta: int) -> dict:
         # **Los rótulos de la pantalla** (medido): la lista de `#/tareas` sale con su título y con los nombres de
         # sus cuatro botones. Sin esto, la pantalla se abre **muda**: se puede usar, pero no se sabe qué es nada.
         "rotulos": bool(recorrido.get("rotulos_de_la_lista")),
+        # **La marca de vencida, en la lista**: una tarea vencida lleva al lado de su título la palabra «Vencida».
+        "marca_vencida_en_la_lista": (recorrido.get("marcas_vacias_en_la_lista") or 0) == 0
+        and any(fila.get("vencida_marcada") for fila in ((recorrido.get("filas_medidas") or {}).get("vencidas") or [])),
         # **El día, sin ratón**: se llega con `Tab` y se teclea.
         "dia_sin_raton": bool(recorrido.get("el_tab_llega_al_dia"))
         and bool(recorrido.get("el_dia_se_teclea_sin_raton")),
@@ -1963,6 +2092,7 @@ def main() -> int:
                 f"la lista lleva a la ficha: {recorrido.get('la_lista_lleva_a_la_ficha')!r}   "
                 f"completar desde la lista: {recorrido.get('cierra_desde_la_lista')}"
             )
+            decir(f"limpieza del navegador: {recorrido.get('limpieza_del_navegador')}")
             decir(f"errores de la página: {como_texto(recorrido.get('errores_de_la_pagina'))}")
             decir(f"capturas: {len(recorrido.get('capturas') or [])}")
 
