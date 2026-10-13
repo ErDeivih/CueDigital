@@ -2308,3 +2308,49 @@ test("un saldo INCOMPLETO no revienta la ficha: lo que falta es un hueco", async
   });
   assert.ok(html.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${html}`);
 });
+
+test("la ficha enseña los canales con su etiqueta, su valor y cuál es el principal", async () => {
+  // **POR QUÉ** (Entrega 2, 13/10/2026). Varios teléfonos no sirven de nada si no se ve **cuál es el principal**:
+  // con dos números apuntados hay que saber cuál se marca. Y un canal sin etiqueta lo dice con su palabra, porque un
+  // hueco en blanco parecería un descuido de la pantalla en vez de un dato que nadie apuntó.
+  //
+  // **Y una trampa que me costó dos intentos**: los rótulos viven en `TEXTOS.contactos`, no en `TEXTOS` —leerlos del
+  // sitio que no es da `undefined`, y `html.includes(undefined)` busca la palabra «undefined», así que la prueba
+  // falla por un motivo que no tiene nada que ver con lo que se está probando—. Se leen de donde están.
+  const c = TEXTOS.contactos;
+  const html = await htmlDeUnContacto({
+    corrigiendo: true,
+    borrador: {
+      id: 4,
+      canales: [
+        { id: 1, clase: "telefono", etiqueta: null, telefono: "947 123 456", principal: true },
+        { id: 2, clase: "telefono", etiqueta: "almacén", telefono: "947 999 111", principal: false },
+        {
+          id: 3,
+          clase: "direccion",
+          etiqueta: "entrega",
+          direccion: "Calle Mayor 3",
+          localidad: "Peñaranda",
+          principal: true,
+        },
+      ],
+    },
+  });
+  assert.ok(html.includes(c.canales_titulo), `tiene que salir el título de los canales:\n${html}`);
+  assert.ok(html.includes("947 123 456") && html.includes("947 999 111"), "los dos teléfonos");
+  assert.ok(html.includes("almacén"), "el del almacén, con su etiqueta");
+  assert.ok(html.includes(c.canales_sin_etiqueta), "y el que no tiene etiqueta tiene que decirlo con su palabra");
+  assert.ok(html.includes(c.canales_principal), "y hay que ver cuál es el principal");
+  assert.ok(html.includes("Peñaranda"), "la dirección, con su pueblo");
+
+  // Sin canales, el bloque no aparece: no se enseña el título de algo que no hay.
+  const sinCanales = await htmlDeUnContacto({ corrigiendo: true, borrador: { id: 4, canales: [] } });
+  assert.ok(!sinCanales.includes(c.canales_titulo), "sin canales no se enseña el bloque");
+
+  // Y sin estar corrigiendo tampoco: el bloque es de la ficha que se está mirando.
+  const sinCorregir = await htmlDeUnContacto({
+    corrigiendo: false,
+    borrador: { id: 4, canales: [{ id: 1, clase: "telefono", telefono: "947 123 456", principal: true }] },
+  });
+  assert.ok(!sinCorregir.includes(c.canales_titulo), "sin la ficha abierta no se enseña");
+});
