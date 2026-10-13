@@ -280,6 +280,23 @@ function LosPapeles({ rotulo, pista, papeles = [], marcados = [] }) {
  * un gasto es `#/cuentas/<id>` y para una compra `#/facturas/<id>`; las entregas y las facturas emitidas van a la
  * lista de ventas, porque **no se inventa una dirección que no existe**.
  */
+/**
+ * **Lo que el saldo trae, con el hueco por defecto** (13/10/2026).
+ *
+ * POR QUÉ. La primera versión leía `saldo.sin_asignar.cobros` directamente, y **con un saldo incompleto la ficha
+ * entera reventaba**: `TypeError: Cannot read properties of undefined (reading 'cobros')`. Lo encontró la prueba
+ * del 409 de las notas —que responde al saldo con una carga que no es la esperada— en cuanto el envoltorio empezó
+ * a reenviar el saldo. Es la regla de la casa aplicada a la pantalla: lo que no viene **es un hueco, no un
+ * reventón**, y un agregado de dinero no puede impedir ver los datos del contacto. Se lee una vez aquí y ya no hay
+ * ningún acceso sin comprobar.
+ */
+function loQueTraeElSaldo(saldo) {
+  return {
+    sinAsignar: (saldo && saldo.sin_asignar) || { cobros: [], pagos: [] },
+    paraRevisar: (saldo && saldo.para_revisar) || [],
+  };
+}
+
 function unLadoDelSaldo(titulo, lado, c, verbo) {
   const suyos = (lado && lado.documentos) || [];
   return html`
@@ -321,6 +338,10 @@ export function PantallaDeUnContacto({
   guardando = false,
   error = "",
 }) {
+  // **Lo que el saldo trae, leído una vez y con el hueco por defecto**: si viene incompleto, se enseña lo
+  // que hay y lo que falta es un hueco, no un reventón (ver `loQueTraeElSaldo`).
+  const { sinAsignar, paraRevisar } = loQueTraeElSaldo(saldo);
+
   const c = textos.contactos || {};
   const valor = (clave) => (borrador[clave] == null ? "" : borrador[clave]);
   const marcados = borrador.papeles || [];
@@ -499,17 +520,17 @@ export function PantallaDeUnContacto({
             ${unLadoDelSaldo(c.saldo_nos_debe, saldo.nos_debe, c, c.saldo_cobrado)}
             ${unLadoDelSaldo(c.saldo_le_debemos, saldo.le_debemos, c, c.saldo_pagado)}
             ${
-              (saldo.sin_asignar.cobros || []).length || (saldo.sin_asignar.pagos || []).length
+              (sinAsignar.cobros || []).length || (sinAsignar.pagos || []).length
                 ? html`
                     <h3>${frase(c.saldo_sin_asignar)}</h3>
                     <p className="pista">${frase(c.saldo_sin_asignar_pista)}</p>
                     <ul className="lista">
-                      ${(saldo.sin_asignar.cobros || []).map(
+                      ${(sinAsignar.cobros || []).map(
                         (uno) => html`<li key=${"c" + uno.id}>
                           ${frase(uno.fecha)} · ${frase(String(uno.importe))}
                         </li>`,
                       )}
-                      ${(saldo.sin_asignar.pagos || []).map(
+                      ${(sinAsignar.pagos || []).map(
                         (uno) => html`<li key=${"p" + uno.id}>
                           ${frase(uno.fecha)} · ${frase(String(uno.importe))}
                         </li>`,
@@ -519,12 +540,12 @@ export function PantallaDeUnContacto({
                 : null
             }
             ${
-              (saldo.para_revisar || []).length
+              paraRevisar.length
                 ? html`
                     <h3>${frase(c.saldo_para_revisar)}</h3>
                     <p className="pista">${frase(c.saldo_para_revisar_pista)}</p>
                     <ul className="lista">
-                      ${saldo.para_revisar.map(
+                      ${paraRevisar.map(
                         (uno) => html`<li key=${"r" + uno.clase + uno.id}>${frase(uno.referencia)}</li>`,
                       )}
                     </ul>

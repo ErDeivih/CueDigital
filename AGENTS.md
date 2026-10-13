@@ -42,14 +42,14 @@ que pase. Si no hay test para lo que estás tocando, **escríbelo**.
 ```bash
 cd backend
 
-# Python (4834 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
+# Python (0 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
 # certificado, firma, instalaciones, plan de abono, análisis, medidas preventivas, dictado,
 # documentación anexa, el cliente del interfaz de la Junta, la comprobación de la firma,
 # varias cuentas dentro de una misma finca, las tierras en el mapa y en la tabla (T06),
 # las semillas y las siembras (T10), los contactos (T11) y la maquinaria (T14)
 ../.venv/Scripts/python.exe -m pytest
 
-# JavaScript (1097 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
+# JavaScript (1099 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"
 
 # Recorrido completo contra un servidor de verdad (hay que tenerlo levantado)

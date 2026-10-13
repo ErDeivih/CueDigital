@@ -2254,3 +2254,51 @@ test("sin saldo, la ficha se sigue viendo y el bloque del saldo no aparece", asy
   assert.ok(html.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${html}`);
   assert.ok(!html.includes(TEXTOS.saldo_titulo), "y el bloque del saldo, sin datos, no se enseña");
 });
+
+test("el ENVOLTORIO de la ficha reenvía el saldo (la prueba que faltaba)", async () => {
+  // **POR QUÉ MONTA ASÍ** (13/10/2026). Lo que usa la aplicación es `pantallaDeUnContacto(props)`, **no** el
+  // componente: una propiedad que no se reenvíe en ese envoltorio **no llega nunca a la pantalla**, por mucho que
+  // `app.js` la mande y el componente sepa pintarla.
+  //
+  // Pasó con el saldo: la pantalla se abría entera **menos el saldo** —y lo encontró la verificación en navegador
+  // (13 fallos de 34 comprobaciones), **no** las pruebas, porque montaban `PantallaDeUnContacto` directamente y
+  // nunca pasaban por aquí—. Es el mismo error que tuvo `tabla`. Esta prueba monta **por el envoltorio**, que es
+  // el camino de verdad, y cierra ese hueco.
+  //
+  // Y de paso: la primera vez que se escribió, esta prueba **falló por un defecto de verdad** —con un saldo
+  // incompleto la ficha reventaba con `Cannot read properties of undefined (reading 'cobros')`—, que es
+  // exactamente lo que tiene que pasar cuando una prueba mira donde no miraban las demás.
+  const html = await htmlDe("contactos", "pantallaDeUnContacto", {
+    textos: textosDePrueba(),
+    borrador: { id: 4 },
+    papeles: PAPELES,
+    vivos: [],
+    corrigiendo: true,
+    borrando: false,
+    guardando: false,
+    error: "",
+    saldo: unSaldo(),
+  });
+  assert.ok(
+    html.includes("810,00 €") && html.includes("450,00 €"),
+    `el saldo no atraviesa el envoltorio de la ficha:\n${html}`,
+  );
+  assert.ok(html.includes("F-2026-1"), "y sus documentos tampoco");
+});
+
+test("un saldo INCOMPLETO no revienta la ficha: lo que falta es un hueco", async () => {
+  // El defecto que encontró la prueba anterior: con un saldo al que le falta un trozo, la ficha **entera**
+  // reventaba. Un agregado de dinero **no puede** impedir ver los datos del contacto.
+  const html = await htmlDe("contactos", "pantallaDeUnContacto", {
+    textos: textosDePrueba(),
+    borrador: { id: 4 },
+    papeles: PAPELES,
+    vivos: [],
+    corrigiendo: true,
+    borrando: false,
+    guardando: false,
+    error: "",
+    saldo: { contacto_id: 4, moneda: "EUR" },
+  });
+  assert.ok(html.includes("contacto-nombre"), `la ficha tiene que seguir pintándose:\n${html}`);
+});
