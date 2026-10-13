@@ -193,8 +193,22 @@ def main() -> int:
             )
 
             # --- 2 · La vista previa, con dos que SÍ se pueden juntar ---
-            elegir(navegador, "fusion-origen", sin_notas_una[1]["id"])
-            elegir(navegador, "fusion-destino", sin_notas_otra[1]["id"])
+            # **Se abren los dos desplegables y se escriben CON EL `setter` NATIVO.** Poner `.value` a mano **no
+            # escribe** en un campo que React controla —medido: se quedan en `["",""]`— porque React engancha su propio
+            # descriptor; el truco es usar el de `HTMLSelectElement.prototype` y luego avisar con un `change` de
+            # verdad. Y **no se pasa por la dirección**: también está medido que la aplicación **reescribe la
+            # dirección al arrancar**, antes de que el router la lea, así que los parámetros de la URL se pierden.
+            navegador.abrir(f"http://127.0.0.1:{PUERTO}/{LA_DIRECCION}", esperar=2.0)
+            for nombre_del_campo, cual in (("fusion-origen", sin_notas_una[1]["id"]), ("fusion-destino", sin_notas_otra[1]["id"])):
+                navegador.evaluar(
+                    "(() => {"
+                    f" const c = document.getElementById('{nombre_del_campo}');"
+                    " if (!c) return 'no está el campo';"
+                    " const poner = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;"
+                    f" poner.call(c, '{cual}');"
+                    " c.dispatchEvent(new Event('change', { bubbles: true }));"
+                    " return c.value; })()"
+                )
             # **Qué ha quedado escrito en los dos desplegables ANTES de pulsar.** Si React los controla y devuelve su
             # valor, aquí se ve, y deja de ser una sospecha. Y **qué dice la pantalla JUSTO DESPUÉS**: si el manejador
             # se queja con «Elige una», ha leído los campos vacíos, y entonces el problema es de quien los llena.
@@ -231,9 +245,32 @@ def main() -> int:
                 "",
             )
 
-            # --- 3 · **LO QUE MÁS IMPORTA**: dos con notas escritas → la pantalla PARA ---
-            elegir(navegador, "fusion-origen", con_notas_una[1]["id"])
-            elegir(navegador, "fusion-destino", con_notas_otra[1]["id"])
+            # --- 3 · **LO QUE MÁS IMPORTA**: dos con el campo de notas escrito → la pantalla PARA ---
+            #
+            # **Y aquí se llena EL CAMPO DE LA FICHA**, por su puerta de corregir: la primera vez llené la **tabla**
+            # `notas_de_un_contacto` —que se mueve entera y no se pierde nada— y medí otra cosa. Lo que la vista previa
+            # avisa, y lo que la puerta tiene que imponer, es **el campo de texto único**.
+            for ficha, texto in (
+                (con_notas_una, "Le gusta que le llamen por la mañana."),
+                (con_notas_otra, "Tiene dos naves."),
+            ):
+                puesta = puerta(
+                    token, "PUT", f"/api/contactos/{ficha[1]['id']}",
+                    {"nombre": ficha[1]["nombre"], "notas": texto},
+                )
+                comprobar(f"se le escribe el campo de notas a la ficha {ficha[1]['id']}", puesta[0] == 200, str(puesta[0]))
+
+            # **Se escriben los dos desplegables con el `setter` nativo** (que es lo que sí escribe un campo de React).
+            for nombre_del_campo, cual in (("fusion-origen", con_notas_una[1]["id"]), ("fusion-destino", con_notas_otra[1]["id"])):
+                navegador.evaluar(
+                    "(() => {"
+                    f" const c = document.getElementById('{nombre_del_campo}');"
+                    " if (!c) return 'no está el campo';"
+                    " const poner = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;"
+                    f" poner.call(c, '{cual}');"
+                    " c.dispatchEvent(new Event('change', { bubbles: true }));"
+                    " return c.value; })()"
+                )
             navegador.evaluar("document.querySelector('[data-accion=fusion-ver]').click()")
             navegador.esperar("document.body.textContent.includes('Esto es lo que va a pasar')", segundos=15)
             visto = lo_que_se_ve(navegador)
@@ -247,11 +284,13 @@ def main() -> int:
                 "NO lo puede decidir" in (visto.get("texto") or ""),
                 [l for l in (visto.get("texto") or "").split("\n") if "decidir" in l][:2],
             )
-            # **Y el servidor tampoco las junta**: se comprueba que la puerta lo impide, no solo la pantalla.
+            # **Y el servidor tampoco las junta**: esto sí es un criterio del encargo («resolver conflictos
+            # explícitamente», «no perder notas») y **no** basta con que la pantalla esconda el botón — «ocultar un
+            # botón no constituye autorización».
             intento = puerta(token, "POST", f"/api/contactos/{con_notas_una[1]['id']}/fusion/{con_notas_otra[1]['id']}")
             comprobar(
                 "y el servidor tampoco las junta (no es solo que la pantalla no enseñe el botón)",
-                intento[0] != 200,
+                intento[0] == 409,
                 f"contestó {intento[0]}: {str(intento[1])[:120]}",
             )
 
