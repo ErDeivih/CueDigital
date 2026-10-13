@@ -1666,6 +1666,17 @@ def corregir(
     # `correcciones.corregir` copia campo a campo y apunta en la auditoría los que cambian. Se le pasa
     # el estado de la migración ya puesto para que **corregir no convierta una ficha de la migración en
     # una suya**: eso lo decide `editado_a_mano`, que va a `True`.
+    # **La corrección es PARCIAL, y esto es lo que lo hace** (13/10/2026). `correcciones.corregir` copia campo
+    # a campo desde `preparado`, así que un campo que no venga en la petición llegaría **vacío** y borraría lo
+    # que había. Medido antes de arreglarlo: corregir **solo el teléfono** dejaba la ficha **sin correo, sin
+    # dirección y sin pueblo** (`{'correo': None, 'direccion': None, 'localidad': None}`). Es exactamente lo que
+    # el encargo prohíbe con estas palabras: «evitar […] pérdida de datos al corregir».
+    #
+    # **Lo que no se manda, se queda como estaba.** Y si de verdad se quiere vaciar un campo, se manda vacío, que
+    # es una decisión del formulario y no un descuido de la puerta.
+    for campo in ("nif", "telefono", "correo", "direccion", "localidad", "notas"):
+        if campo not in datos.model_fields_set:
+            setattr(preparado, campo, getattr(contacto, campo))
     correcciones.corregir(
         db,
         guardado=contacto,

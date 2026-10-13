@@ -375,3 +375,51 @@ def test_una_ficha_nueva_ya_trae_sus_canales(cliente, cuenta, db_sesion):
     # **Tal cual se escribió**: ni el teléfono se arregla ni se le inventa etiqueta.
     el_telefono = next(canal for canal in suyos if canal.clase == "telefono")
     assert el_telefono.telefono == "947 123 456" and el_telefono.etiqueta is None, el_telefono
+
+def test_corregir_un_campo_NO_borra_los_demas(cliente, cuenta, db_sesion):
+    """**La corrección es parcial**: cambiar el teléfono no puede llevarse el correo ni la dirección.
+
+    Lo medí antes de arreglarlo, y era grave: corregir **solo el teléfono** dejaba la ficha **sin correo, sin
+    dirección y sin pueblo** (`{'correo': None, 'direccion': None, 'localidad': None}`). Es exactamente lo que el
+    encargo prohíbe con estas palabras: *«evitar […] pérdida de datos al corregir»*. La causa: la corrección copia
+    **campo a campo** desde un modelo nuevo, así que lo que no venía en la petición llegaba **vacío** y borraba.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+
+    corregida = cliente.put(
+        f"/api/contactos/{ficha['id']}",
+        headers=cuenta["cabeceras"],
+        json={"nombre": "Cooperativa con otro teléfono", "telefono": "600 000 000"},
+    )
+    assert corregida.status_code == 200, corregida.text
+    devuelta = corregida.json()
+    assert devuelta["telefono"] == "600 000 000", "lo que se manda, se cambia"
+    assert devuelta["correo"] == "administracion@cooperativa.test", (
+        f"y lo que NO se manda, se queda: {devuelta['correo']}"
+    )
+    assert devuelta["direccion"] == "Calle Mayor 3" and devuelta["localidad"] == "Peñaranda de Bracamonte", (
+        f"la dirección y su pueblo también: {devuelta['direccion']} / {devuelta['localidad']}"
+    )
+
+    # Y en la base, que es lo que de verdad importa.
+    db_sesion.expire_all()
+    la_ficha = db_sesion.get(models.Contacto, ficha["id"])
+    assert la_ficha.correo == "administracion@cooperativa.test", la_ficha.correo
+    assert la_ficha.localidad == "Peñaranda de Bracamonte", la_ficha.localidad
+
+
+def test_vaciar_un_campo_a_proposito_SI_lo_vacia(cliente, cuenta, db_sesion):
+    """La otra cara: mandar el campo **vacío** es una decisión, y se obedece.
+
+    Es la diferencia entre «no lo mando» (se queda) y «lo mando vacío» (se borra), y sin las dos no se puede ni
+    corregir sin perder ni quitar un dato que ya no vale.
+    """
+    ficha = _un_contacto_con_todo(cliente, cuenta)
+    corregida = cliente.put(
+        f"/api/contactos/{ficha['id']}",
+        headers=cuenta["cabeceras"],
+        json={"nombre": "Cooperativa", "correo": ""},
+    )
+    assert corregida.status_code == 200, corregida.text
+    assert corregida.json()["correo"] is None, f"mandarlo vacío sí lo borra: {corregida.json()['correo']}"
+    assert corregida.json()["telefono"] == "947 123 456", "y lo demás sigue donde estaba"
