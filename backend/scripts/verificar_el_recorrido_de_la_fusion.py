@@ -273,7 +273,58 @@ def main() -> int:
                 )
             navegador.evaluar("document.querySelector('[data-accion=fusion-ver]').click()")
             navegador.esperar("document.body.textContent.includes('Esto es lo que va a pasar')", segundos=15)
+            # **Y se dice qué enseña la pantalla AQUÍ** (14/10/2026). En el bloque anterior puse este volcado y **en
+            # este no**, así que llevo dos vueltas **deduciendo** lo que enseña en vez de leerlo: si sale «Juntarlas»
+            # es que `colisiones` llegó vacío a la pantalla, y si sale «No choca nada» es que la previa que tiene es
+            # **la de la pareja anterior**. Son dos causas distintas y no se pueden distinguir a ojo.
+            aqui = lo_que_se_ve(navegador)
+            print(f"  TRAS PULSAR VER CON LAS NOTAS -> titulares: {aqui.get('principales')!r}")
+            print(f"     ¿ofrece juntarlas? {'Juntarlas' in ' '.join(aqui.get('botones') or [])}")
+            print(f"     ¿dice que no choca? {'No choca nada' in (aqui.get('texto') or '')}")
+            print(f"     ¿dice que hay que decidir? {'NO lo puede decidir' in (aqui.get('texto') or '')}")
+            # **Y LO QUE SEPARA LAS DOS CAUSAS, de un golpe**: los dos desplegables elegidos y **el nombre de la
+            # primera columna de la tabla**. La pareja de este bloque es «Hermanos Pérez…» y la del bloque anterior
+            # era «El del prado…», así que si la tabla sigue enseñando la del bloque anterior, es que **el clic no ha
+            # vuelto a pedir la previa**; y si enseña la de este bloque, entonces la previa nueva llegó **sin las
+            # colisiones** y el problema estará en cómo se lee el JSON.
+            print(
+                "     los desplegables ahora: "
+                + str(
+                    navegador.evaluar(
+                        "JSON.stringify([(document.getElementById('fusion-origen')||{}).value,"
+                        " (document.getElementById('fusion-destino')||{}).value])"
+                    )
+                )
+            )
+            # **Y una TAREA en una de las dos, para que su vista previa dé NÚMEROS DISTINTOS.** Los dos pares daban
+            # todo ceros, así que la tabla era idéntica y no había forma de saber si la pantalla había refrescado:
+            # con un `1` en `cuelgan.tareas`, la fila lo dice.
+            puesta_la_tarea = puerta(
+                token, "POST", f"/api/contactos/{con_notas_una[1]['id']}/tareas", {"titulo": "Para distinguir"}
+            )
+            comprobar("se le apunta una tarea, para que los números no sean todos ceros", puesta_la_tarea[0] == 200, str(puesta_la_tarea[0]))
+            print(
+                "     LA FILA DE LA TABLA, celda a celda: "
+                + str(
+                    navegador.evaluar(
+                        "JSON.stringify(Array.from(document.querySelectorAll('table tbody tr'))[0]"
+                        " ? Array.from(document.querySelectorAll('table tbody tr')[0].cells).map((c)=>(c.textContent||'').trim())"
+                        " : [])"
+                    )
+                )
+            )
             visto = lo_que_se_ve(navegador)
+            # **Y SE VUELCA LO QUE HACE FALTA, no los primeros 600 caracteres de todo** (14/10/2026). La vuelta
+            # anterior corté la salida «para que no ocupara» y me dejé fuera justo `colisiones`, que era el dato que
+            # estaba buscando. Ahora se pide **el campo por su nombre**.
+            print(
+                "  LAS COLISIONES que ve la pantalla: "
+                + str(
+                    puerta(token, "GET", f"/api/contactos/{con_notas_una[1]['id']}/fusion/{con_notas_otra[1]['id']}")[1].get(
+                        "colisiones"
+                    )
+                )
+            )
             comprobar(
                 "con las dos fichas con notas, la pantalla NO ofrece juntarlas",
                 not any("Juntarlas" in b for b in visto.get("botones") or []),
