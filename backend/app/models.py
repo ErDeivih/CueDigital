@@ -3230,10 +3230,14 @@ class Semilla(Base):
     # contrato la pide junto a la especie y la variedad, y **no existia**. Las categorias son
     # `catalogos.CATEGORIAS_DE_SEMILLA`.
     #
-    # **Y el defecto es «no certificada», no «no consta»** — al contrario que la regla del abono.
-    # Aqui no tener certificado **es** una categoria: es lo que dice la ley de una semilla sin
-    # papeles. Poner `None` diria que no se sabe, y lo que pasa es que no esta certificada.
-    categoria_semilla: Mapped[str | None] = mapped_column(String(40), default="no_certificada")
+    # **Sin defecto, y a proposito** (corregido el 14/10/2026, tras la revision del dueno):
+    # **no haber registrado la etiqueta NO demuestra que el lote carezca de certificacion**, y
+    # la normativa distingue categorias y remite a reglamentos tecnicos por especie. Ausencia es
+    # «no consta» (`None`), no una categoria. «No certificada» sigue siendo **una de las que se
+    # pueden declarar** (`catalogos.CATEGORIAS_DE_SEMILLA`) cuando el agricultor lo sabe.
+    #
+    # **Y no se reclasifican las filas antiguas**: lo que ya esta guardado se queda como esta.
+    categoria_semilla: Mapped[str | None] = mapped_column(String(40))
     # Y **de donde salio**: comprada o guardada de la cosecha propia (`catalogos.PROCEDENCIAS`).
     procedencia: Mapped[str | None] = mapped_column(String(20))
 

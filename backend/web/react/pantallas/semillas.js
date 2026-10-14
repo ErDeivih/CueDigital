@@ -316,6 +316,33 @@ export function PantallaDeUnaSemilla({
       elegido=${valor("tratada")}
     />
 
+    <${Elegir}
+      id="semilla-categoria"
+      etiqueta=${s.categoria_semilla}
+      pista=${s.categoria_semilla_pista}
+      opciones=${[
+        { valor: "", texto: s.categoria_semilla_no_consta },
+        { valor: "no_certificada", texto: s.categoria_semilla_no_certificada },
+        { valor: "base", texto: s.categoria_semilla_base },
+        { valor: "certificada", texto: s.categoria_semilla_certificada },
+        { valor: "r1", texto: s.categoria_semilla_r1 },
+        { valor: "r2", texto: s.categoria_semilla_r2 },
+      ]}
+      elegido=${valor("categoria_semilla")}
+    />
+
+    <${Elegir}
+      id="semilla-procedencia"
+      etiqueta=${s.procedencia}
+      pista=${s.procedencia_pista}
+      opciones=${[
+        { valor: "", texto: s.procedencia_no_consta },
+        { valor: "comprada", texto: s.procedencia_comprada },
+        { valor: "propia", texto: s.procedencia_propia },
+      ]}
+      elegido=${valor("procedencia")}
+    />
+
     ${
       // **La foto se lee aquí y no guarda nada**: se sube, el programa dice lo que ha entendido y los
       // campos de arriba se rellenan con eso para que el agricultor los revise. Hasta que no pulse

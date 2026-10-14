@@ -6307,6 +6307,30 @@ SEMILLAS: dict[str, str] = {
     "tratada_si": "Sí viene tratada",
     "tratada_no": "No viene tratada",
     "tratada_no_se": "No lo sé",
+    # --- La categoria y de donde salio (CRM-07 #2, 14/10/2026, tras la revision del dueno) ---
+    # **La opcion vacia dice «No consta», y NO es «No certificada»**: *no haber mirado la etiqueta no
+    # demuestra que el lote no este certificado*. Y **el proyecto ya lo tenia escrito**, en el aviso
+    # N07: «Una semilla comprada sin etiqueta no queda certificada por eso». Lo que faltaba era el
+    # codigo que lo cumpliera.
+    #
+    # La validacion de verdad esta en el servidor
+    # (`semillas_api._la_categoria_y_la_procedencia_se_comprueban`), no en este desplegable.
+    "categoria_semilla": "Categoria de la semilla",
+    "categoria_semilla_pista": (
+    "Lo que dice la etiqueta oficial: base, certificada, R1, R2… Si no lo has mirado, dejalo en "
+    "«No consta»: no es lo mismo que no estar certificada."
+    ),
+    "categoria_semilla_no_consta": "No consta",
+    "categoria_semilla_no_certificada": "No certificada",
+    "categoria_semilla_base": "Base",
+    "categoria_semilla_certificada": "Certificada",
+    "categoria_semilla_r1": "R1",
+    "categoria_semilla_r2": "R2",
+    "procedencia": "¿De donde salio?",
+    "procedencia_pista": "Si la compraste, o si la guardaste de tu propia cosecha.",
+    "procedencia_no_consta": "No consta",
+    "procedencia_comprada": "Comprada",
+    "procedencia_propia": "Guardada de la cosecha propia",
     "guardar": "GUARDAR LA SEMILLA",
     "guardando": "Guardando…",
     "guardada": "Semilla guardada",

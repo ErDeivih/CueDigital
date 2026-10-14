@@ -16518,6 +16518,13 @@ function borradorDeUnaSemilla(semilla) {
     pureza_pct: semilla.pureza_pct === null ? "" : String(semilla.pureza_pct),
     // Tres estados, y el «no lo sé» es el que viene puesto cuando el servidor no lo sabe.
     tratada: semilla.tratada === true ? "si" : semilla.tratada === false ? "no" : "no_se",
+    // **CRM-07 #2, 14/10/2026 — y estas dos son las que faltaban.** `abrirLaSemilla` usa ESTE
+    // borrador (no `fichaDeUnaSemillaVacia`), así que sin ellas el desplegable enseñaba «No consta»
+    // al CORREGIR y, como `datos` manda siempre las claves con `|| null`, el servidor lo tomaba por
+    // un vacío explícito y **borraba lo guardado**. Es el fallo que encontró el dueño, en su otra
+    // cara: la cadena vacía de aquí es «No consta», y `recogeLaSemilla` la convierte en `null`.
+    categoria_semilla: semilla.categoria_semilla || "",
+    procedencia: semilla.procedencia || "",
   };
 }
 
@@ -16538,6 +16545,11 @@ function fichaDeUnaSemillaVacia() {
     poder_germinativo_pct: "",
     pureza_pct: "",
     tratada: "no_se",
+// **Los dos, como `tratada`: la opcion vacia es «No consta»** (CRM-07 #2, 14/10/2026). Si no
+// estuvieran aqui, al CORREGIR el desplegable ensenaria «No consta» aunque la fila tuviera
+// categoria, y al guardar la borraria. Es el fallo que encontro el dueno, en su otra cara.
+categoria_semilla: "",
+procedencia: "",
   };
 }
 
@@ -16624,6 +16636,10 @@ function recogeLaSemilla() {
     // **Tres estados**: «no lo sé» viaja como `null` y no como un «no», que es lo que afirmaría que
     // nadie ha mirado la etiqueta cuando a lo mejor sí lo dice y no se ha visto.
     tratada: cual === "si" ? true : cual === "no" ? false : null,
+// **De tres estados, como `tratada`**: la opcion vacia viaja como `null` (= «no consta»), y no
+// como una cadena vacia, que el servidor no reconoceria como categoria.
+categoria_semilla: valor("semilla-categoria") || null,
+procedencia: valor("semilla-procedencia") || null,
   };
 }
 
@@ -16666,6 +16682,8 @@ async function guardarLaSemilla() {
     unidad: (suyo.ficha || {}).unidad || null,
     especie: escrita.especie || null,
     variedad: escrita.variedad || null,
+categoria_semilla: escrita.categoria_semilla || null,
+procedencia: escrita.procedencia || null,
     casa_comercial: escrita.casa_comercial || null,
     proveedor: escrita.proveedor || null,
     numero_lote_proveedor: escrita.numero_lote_proveedor || null,

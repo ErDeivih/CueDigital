@@ -67,7 +67,7 @@ PROCEDENCIAS: dict[str, str] = {
 def etiqueta_de_categoria(valor: str | None) -> str:
     """El texto de una categoria de semilla. Lo que no se conoce se dice, no se inventa."""
     if not valor:
-        return CATEGORIAS_DE_SEMILLA["no_certificada"]
+        return "No consta"
     return CATEGORIAS_DE_SEMILLA.get(valor, valor)
 
 

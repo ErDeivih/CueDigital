@@ -1438,16 +1438,33 @@ def test_la_semilla_guarda_su_categoria_y_de_donde_salio(cliente, cuenta, almace
     assert la_suya["procedencia"] == "comprada"
 
 
-def test_sin_categoria_la_semilla_es_no_certificada(cliente, cuenta, almacen_con_semilla):
-    # **El defecto del contrato**, y no es «no consta»: no tener papeles ES una categoria.
+def test_sin_categoria_la_semilla_no_consta_y_no_se_inventa_una(cliente, cuenta, almacen_con_semilla):
+    """**CORREGIDO el 14/10/2026, y el motivo importa.**
+
+    *Antes* esta prueba exigia `"no_certificada"` cuando no se mandaba categoria. **Estaba mal**: *no
+    haber registrado la etiqueta **no demuestra** que el lote carezca de certificacion*, y el
+    reglamento de semillas distingue categorias y remite a reglamentos tecnicos por especie. Ausencia
+    es **«no consta»** (`None`), no una categoria. *«No certificada» sigue siendo una de las que se
+    pueden declarar* — y eso lo prueba la prueba de al lado.
+    """
     respuesta = _una_semilla_con_categoria(
         cliente, cuenta, almacen_con_semilla, categoria_semilla=None, procedencia=None
     )
     assert respuesta.status_code == 201, respuesta.text
     suya = respuesta.json()
-    assert suya["categoria_semilla"] == "no_certificada", (
-        f"una semilla sin papeles es «no certificada», no «no consta»: vino {suya.get('categoria_semilla')!r}"
+    assert suya["categoria_semilla"] is None, (
+        f"sin categoria, la semilla dice «no consta»: vino {suya.get('categoria_semilla')!r}"
     )
+    assert suya["procedencia"] is None
+
+
+def test_la_categoria_declarada_se_guarda_tal_cual(cliente, cuenta, almacen_con_semilla):
+    # Y cuando el agricultor **sabe** que no esta certificada, lo dice él: es una categoria, no un hueco.
+    respuesta = _una_semilla_con_categoria(
+        cliente, cuenta, almacen_con_semilla, categoria_semilla="no_certificada"
+    )
+    assert respuesta.status_code == 201, respuesta.text
+    assert respuesta.json()["categoria_semilla"] == "no_certificada"
 
 
 def test_la_categoria_del_articulo_no_se_confunde_con_la_de_la_semilla(
@@ -1461,3 +1478,94 @@ def test_la_categoria_del_articulo_no_se_confunde_con_la_de_la_semilla(
     assert suya["categoria"] != "r1", (
         "la categoria de la semilla ha pisado la del articulo: son dos campos distintos"
     )
+
+
+# --------------------------------------------------------------------------
+# Las cuatro pruebas de aceptacion de la revision (14/10/2026)
+# --------------------------------------------------------------------------
+#
+# *El fallo que encontró el dueño*: **corregir solo la variedad borraba los dos campos**. La causa
+# era que la corrección construye la fila con una lista blanca (`lo_que_hay`) en la que no estaban.
+# *Y estos cuatro casos son los que la revision exige, uno por uno.*
+
+
+def _corregir(cliente, cuenta, semilla, **cambios):
+    return cliente.put(
+        f"/api/semillas/{semilla['id']}", headers=cuenta["cabeceras"], json=cambios
+    )
+
+
+def _la_ficha(cliente, cuenta, semilla_id) -> dict:
+    listado = cliente.get("/api/semillas", headers=cuenta["cabeceras"])
+    assert listado.status_code == 200, listado.text
+    return next(s for s in listado.json() if s["id"] == semilla_id)
+
+
+def test_corregir_la_variedad_conserva_la_categoria_y_la_procedencia(
+    cliente, cuenta, almacen_con_semilla
+):
+    """**El fallo que encontró el dueño, con su caso exacto.**
+
+    Antes: la corrección construía la fila con `lo_que_hay`, que no incluía los dos campos → **la
+    variedad sola los ponía a `null`**. Es el defecto A1 de `docs/T02_VALORES_POR_DEFECTO.md`:
+    **«lo que la petición no manda, no se borra»**.
+    """
+    alta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla)
+    assert alta.status_code == 201, alta.text
+    suya = alta.json()
+    assert (suya["categoria_semilla"], suya["procedencia"]) == ("certificada", "comprada")
+
+    corregida = _corregir(cliente, cuenta, suya, variedad="Otra variedad")
+    assert corregida.status_code == 200, corregida.text
+    despues = _la_ficha(cliente, cuenta, suya["id"])
+
+    assert despues["variedad"] == "Otra variedad", "la variedad no se corrigio"
+    assert despues["categoria_semilla"] == "certificada", (
+        f"corregir la variedad ha BORRADO la categoria: {despues['categoria_semilla']!r}"
+    )
+    assert despues["procedencia"] == "comprada", (
+        f"corregir la variedad ha BORRADO la procedencia: {despues['procedencia']!r}"
+    )
+
+
+def test_corregir_los_dos_campos_si_los_cambia_y_deja_rastro(cliente, cuenta, almacen_con_semilla):
+    # Y mandandolos, se guardan: era el segundo caso que no funcionaba.
+    alta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla)
+    assert alta.status_code == 201, alta.text
+    suya = alta.json()
+
+    corregida = _corregir(cliente, cuenta, suya, categoria_semilla="r2", procedencia="propia")
+    assert corregida.status_code == 200, corregida.text
+    despues = _la_ficha(cliente, cuenta, suya["id"])
+    assert despues["categoria_semilla"] == "r2", despues["categoria_semilla"]
+    assert despues["procedencia"] == "propia", despues["procedencia"]
+
+
+def test_el_vacio_explicito_conserva_su_significado(cliente, cuenta, almacen_con_semilla):
+    # **Vacío explícito ≠ no enviado**: mandar `None` a propósito dice «no consta», y se guarda así.
+    alta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla)
+    suya = alta.json()
+
+    corregida = _corregir(cliente, cuenta, suya, categoria_semilla=None)
+    assert corregida.status_code == 200, corregida.text
+    despues = _la_ficha(cliente, cuenta, suya["id"])
+    assert despues["categoria_semilla"] is None, (
+        "el vacio explicito tiene que dejar «no consta», no conservar lo de antes"
+    )
+    assert despues["procedencia"] == "comprada", "y lo que NO se mando, se conserva"
+
+
+def test_una_categoria_inventada_se_rechaza_sin_escribir(cliente, cuenta, almacen_con_semilla):
+    # **Valor inválido: error claro y NINGUNA escritura.** Es el criterio literal de la revision.
+    alta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla)
+    suya = alta.json()
+
+    respuesta = _corregir(cliente, cuenta, suya, categoria_semilla="lo_que_sea")
+    assert respuesta.status_code == 422, respuesta.text
+    assert "categoria" in respuesta.text.lower(), respuesta.text
+
+    despues = _la_ficha(cliente, cuenta, suya["id"])
+    assert despues["categoria_semilla"] == "certificada", (
+        "un valor invalido NO puede escribir nada: la semilla se ha quedado tocada"
+    )
+    assert despues["variedad"] == "Villalobos"

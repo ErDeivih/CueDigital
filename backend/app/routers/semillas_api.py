@@ -43,6 +43,7 @@ from sqlalchemy import select
 
 from .. import (
     adjuntos,
+    catalogos,
     correcciones,
     models,
     ocr,
@@ -223,6 +224,36 @@ def _texto_o_nada(valor: str | None, largo: int) -> str | None:
     return limpio[:largo] or None
 
 
+
+
+def _la_categoria_y_la_procedencia_se_comprueban(datos: SemillaEntrada) -> None:
+    """La categoria y la procedencia tienen que estar en el catalogo, o no venir.
+
+    **No se admite cualquier cadena** (revision del dueno, 14/10/2026): un valor que no este en
+    el catalogo se rechaza **con la lista delante y sin escribir nada**, como se hace con los
+    tipos de papel o con los tipos de abonado. *El catalogo no es universal* — el reglamento de
+    semillas remite a reglamentos tecnicos por especie — asi que **lo que no consta se dice que
+    no consta** (`None`), y no se inventa una categoria.
+    """
+    if (
+        datos.categoria_semilla is not None
+        and datos.categoria_semilla not in catalogos.CATEGORIAS_DE_SEMILLA
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                f"«{datos.categoria_semilla}» no es una categoria de semilla. "
+                f"Las que hay: {', '.join(sorted(catalogos.CATEGORIAS_DE_SEMILLA))}."
+            ),
+        )
+    if datos.procedencia is not None and datos.procedencia not in catalogos.PROCEDENCIAS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                f"«{datos.procedencia}» no es una procedencia. "
+                f"Las que hay: {', '.join(sorted(catalogos.PROCEDENCIAS))}."
+            ),
+        )
 def _la_dosis_necesita_unidad(datos: SemillaEntrada) -> None:
     """Una dosis sin unidad no dice nada: se dice, en vez de apuntar un número suelto."""
     if datos.dosis_recomendada_por_ha is not None and not (datos.unidad_dosis or "").strip():
@@ -251,6 +282,7 @@ def dar_de_alta_una_semilla(
     albarán, sale por una salida), y lo único que añade esta tabla es lo que pone el papel.
     """
     _la_dosis_necesita_unidad(datos)
+    _la_categoria_y_la_procedencia_se_comprueban(datos)
     nombre = (datos.nombre or "").strip()[:200]
     if datos.articulo_id is None and not nombre:
         raise HTTPException(
@@ -335,6 +367,12 @@ def dar_de_alta_una_semilla(
                 "especie": semilla.especie,
                 "variedad": semilla.variedad,
                 "leida_de": semilla.leida_de,
+                # **CRM-07 #2, 14/10/2026.** Faltaban, y el recorrido de verdad lo enseño: la fila
+                # tenia «certificada»/«comprada» pero **el rastro del alta decia `None`**. La
+                # revision pide que el cambio de estos dos campos **deje auditoria**, y el alta es
+                # el primer sitio donde hay que poder leerlos.
+                "categoria_semilla": semilla.categoria_semilla,
+                "procedencia": semilla.procedencia,
             },
         )
     )
@@ -439,6 +477,7 @@ def corregir_una_semilla(
     ya pasó: las siembras y los movimientos del almacén son hechos y siguen como estaban.
     """
     _la_dosis_necesita_unidad(datos)
+    _la_categoria_y_la_procedencia_se_comprueban(datos)
     semilla = obtener_de_la_explotacion(db, models.Semilla, semilla_id, explotacion.id)
     articulo = db.get(models.Articulo, semilla.articulo_id)
     # **Lo que la petición no manda, se queda como estaba** (la misma regla que en la siembra y que el
@@ -483,6 +522,17 @@ def corregir_una_semilla(
         ),
         "pureza_pct": datos.pureza_pct if "pureza_pct" in enviados else semilla.pureza_pct,
         "tratada": datos.tratada if "tratada" in enviados else semilla.tratada,
+        # **Estos dos van con el mismo patron que los de arriba, y es lo que arregla la perdida de
+        # datos** (14/10/2026): sin ellos, corregir la variedad ponia los dos a nulo y los valores
+        # enviados se ignoraban. «Lo que la peticion no manda, no se borra» (A1).
+        "categoria_semilla": (
+            datos.categoria_semilla
+            if "categoria_semilla" in enviados
+            else semilla.categoria_semilla
+        ),
+        "procedencia": (
+            datos.procedencia if "procedencia" in enviados else semilla.procedencia
+        ),
     }
 
     preparada = models.Semilla(

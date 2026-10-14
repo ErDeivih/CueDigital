@@ -379,6 +379,9 @@ test("la ficha pide los datos de la etiqueta, cada uno con su id", async () => {
     "semilla-germinativo",
     "semilla-pureza",
     "semilla-tratada",
+    // CRM-07 #2 (14/10/2026): la categoria y de donde salio, con su opcion «No consta» la primera.
+    "semilla-categoria",
+    "semilla-procedencia",
   ]);
 });
 
