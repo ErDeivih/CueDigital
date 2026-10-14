@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from .. import (
+    adjuntos,
     catalogos,
     correcciones,
     legal,
@@ -26,6 +28,7 @@ from .. import (
     servicios,
     textos,
 )
+from .semillas_api import TIPOS_DE_ETIQUETA
 from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AplicadorEntrada,
@@ -1240,3 +1243,81 @@ def avisos(explotacion: ExplotacionActual, db: Db) -> dict:
 
     salida.sort(key=lambda aviso: not aviso["urgente"])
     return {"avisos": salida}
+
+# --------------------------------------------------------------------------
+# La foto de la etiqueta del producto (CRM-07 #10, 14/10/2026)
+# --------------------------------------------------------------------------
+#
+# **La columna existia desde el principio y no la usaba nadie** (`models.py:439`,
+# `ProductoFitosanitario.foto_etiqueta`): se daba de alta, se leia y ningun router la escribia. El
+# contrato pide «fotos de etiqueta/justificante **como evidencia**», asi que aqui estan las dos
+# puertas, **copiando la forma de la de la semilla** (`semillas_api.py:533`), que ya esta probada:
+#
+#   * **el fichero va al disco y en la base queda solo la ruta** (`app/adjuntos.py`): una foto de un
+#     movil son cuatro megas y meterla en una columna haria que la copia de seguridad del agricultor
+#     dejase de poderse manejar.
+#   * **el nombre que manda el navegador no se usa como ruta**: la pone el programa, con la carpeta
+#     de la finca y un identificador aleatorio.
+#   * **el fichero viejo se borra DESPUES de guardar el nuevo**: si se borrara antes y fallara el
+#     guardado, el agricultor se quedaria sin el papel que acababa de subir.
+#   * y se sirve **solo si es de esta finca**.
+
+
+@router.post("/productos/{producto_id}/etiqueta", response_model=ProductoSalida)
+async def subir_la_foto_de_la_etiqueta(
+    producto_id: int,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    fichero: UploadFile = File(...),
+) -> models.ProductoFitosanitario:
+    """Guardar la foto de la etiqueta con el producto."""
+    producto = obtener_de_la_explotacion(
+        db, models.ProductoFitosanitario, producto_id, explotacion.id
+    )
+    contenido, _tipo = await adjuntos.leer_el_fichero(fichero, TIPOS_DE_ETIQUETA)
+    nombre, ruta, tipo, tamano = adjuntos.guardar_en_disco(
+        explotacion_id=explotacion.id,
+        prefijo="etiqueta-producto",
+        fichero=fichero,
+        contenido=contenido,
+        permitidos=TIPOS_DE_ETIQUETA,
+    )
+    anterior = producto.foto_etiqueta
+    producto.foto_etiqueta = ruta
+    db.add(
+        models.Auditoria(
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            entidad="producto",
+            entidad_id=producto.id,
+            accion="subir_etiqueta",
+            datos={"fichero": nombre, "tipo": tipo, "bytes": tamano},
+        )
+    )
+    db.commit()
+    db.refresh(producto)
+    # **El fichero viejo se borra despues**, no antes: ver la cabecera de esta seccion.
+    if anterior and anterior != ruta:
+        adjuntos.borrar_del_disco(anterior)
+    return producto
+
+
+@router.get("/productos/{producto_id}/etiqueta")
+def ver_la_foto_de_la_etiqueta(
+    producto_id: int, explotacion: ExplotacionActual, db: Db
+) -> FileResponse:
+    """La foto de la etiqueta. La sirve el programa, y **solo si es de esta finca**."""
+    producto = obtener_de_la_explotacion(
+        db, models.ProductoFitosanitario, producto_id, explotacion.id
+    )
+    if not producto.foto_etiqueta:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Este producto no tiene la foto de la etiqueta.",
+        )
+    return FileResponse(
+        adjuntos.ruta_segura(producto.foto_etiqueta),
+        media_type="application/octet-stream",
+        filename="etiqueta",
+    )
