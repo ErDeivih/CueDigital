@@ -27,7 +27,7 @@ import datetime as dt
 import pytest
 from sqlalchemy import inspect, text
 
-from app import database
+from app import database, models
 
 
 def _producto(cliente, cabeceras, **cambios) -> dict:
@@ -670,3 +670,73 @@ class TestLaRevisionAManoDelCatalogo:
         with sqlite3.connect(motor.url.database) as conexion:
             self._el_guion()._revision_de_los_productos(conexion)
         assert "no hay ningún producto" in capsys.readouterr().out
+
+
+class TestCambiarLaEtiquetaNoCambiaElApunteFirmado:
+    """**CRM-07: «Cambio de etiqueta no cambia apunte firmado».**
+
+    **Por que existe, y por que se mira la COLUMNA.** El contrato pide que el apunte guarde lo que decia
+    la etiqueta **aquel dia**: si el fabricante cambia la dosis maxima, o el agricultor corrige el
+    catalogo, **lo apuntado y firmado no se puede mover**. El mecanismo existe (`servicios.py:104` copia
+    `dosis_maxima_etiqueta` al crear el apunte, y `models.py:810` dice que esa columna es **una copia a
+    proposito**) y **no lo defendia ninguna prueba**.
+
+    Y se mira **la columna, no la respuesta de la puerta**: esa puerta **guarda el dato pero no lo
+    devuelve** —comprobado a la primera, con un `KeyError`— y lo que hay que probar es **lo que se
+    escribio**, que es lo que queda firmado. Se lee con la misma forma que ya usa este fichero
+    (`text("SELECT …")` sobre un motor), pero sobre **el motor de la aplicacion**, que es la base donde
+    escribe la puerta.
+    """
+
+    def _la_columna(self, apunte_id: int):
+        tabla = models.TratamientoFitosanitario.__tablename__
+        with database.engine.begin() as conexion:
+            return conexion.execute(
+                text(f"SELECT dosis_maxima_etiqueta FROM {tabla} WHERE id = :id"), {"id": apunte_id}
+            ).scalar_one()
+
+    def test_lo_que_decia_la_etiqueta_aquel_dia_se_queda_en_el_apunte(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        producto = _producto(cliente, cuenta["cabeceras"], dosis_maxima=2.0)
+        parcela = crear_parcela()
+
+        creado = _tratamiento(cliente, cuenta["cabeceras"], campana, parcela, producto)
+        assert creado.status_code == 201, creado.text
+        apunte_id = creado.json()["id"]
+        assert self._la_columna(apunte_id) == 2.0, "el apunte no copio la dosis de la etiqueta"
+
+        # **Se cambia la etiqueta del catalogo** (el fabricante la baja, o el agricultor corrige el dato).
+        cambiado = cliente.put(
+            f"/api/productos/{producto['id']}",
+            headers=cuenta["cabeceras"],
+            json={
+                "nombre_comercial": "Ejemplo 25 EC",
+                "numero_registro": "24.123",
+                "dosis_maxima": 1.5,
+                "unidad_dosis": "L/ha",
+            },
+        )
+        assert cambiado.status_code == 200, cambiado.text
+
+        # **Y el apunte sigue diciendo lo que decia**: eso es lo que estaba firmado aquel dia.
+        assert self._la_columna(apunte_id) == 2.0, (
+            "cambiar la etiqueta del catalogo ha movido un apunte firmado"
+        )
+
+    def test_un_producto_sin_dosis_deja_la_etiqueta_en_no_consta(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        # **La regla de la casa**: si el producto no dice su dosis maxima, el apunte guarda «no consta»
+        # (`None`) y **no un cero** — un cero diria que la etiqueta permite cero, que es otra cosa.
+        #
+        # Nota: **el tratamiento siempre apunta a un producto del catalogo** —la puerta lo exige, con su
+        # codigo `V1_sin_registro`—, asi que el caso «no consta» es *un producto sin dosis*, no la
+        # ausencia de producto.
+        producto = _producto(cliente, cuenta["cabeceras"], dosis_maxima=None)
+        parcela = crear_parcela()
+        creado = _tratamiento(cliente, cuenta["cabeceras"], campana, parcela, producto)
+        assert creado.status_code == 201, creado.text
+        assert self._la_columna(creado.json()["id"]) is None, (
+            "sin dosis en la etiqueta, el apunte no puede inventarse un cero"
+        )
