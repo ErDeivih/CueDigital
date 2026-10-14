@@ -162,7 +162,16 @@ def preparar_fertilizacion(
     riqueza_p = fertilizante.riqueza_p if fertilizante else None
     riqueza_k = fertilizante.riqueza_k if fertilizante else None
 
-    cantidad_total_kg = round(datos.kg_ha_producto * datos.superficie_ha, 4)
+    # **La cuenta del contrato** (CRM-07, 14/10/2026): «600 kg en 3 ha -> 200 kg/ha».
+    # Si el agricultor dice los KILOS que echo (que es lo que sabe: los sacos) y la superficie, el
+    # kg/ha **se deduce** — y los nutrientes de abajo salen de ese numero deducido, no de uno escrito
+    # a mano. El camino de siempre (kg/ha a mano) se queda igual: **lo ya guardado no se toca**.
+    if datos.cantidad_total_kg is not None and datos.superficie_ha:
+        kg_ha = round(datos.cantidad_total_kg / datos.superficie_ha, 4)
+        cantidad_total_kg = datos.cantidad_total_kg
+    else:
+        kg_ha = datos.kg_ha_producto
+        cantidad_total_kg = round(kg_ha * datos.superficie_ha, 4)
 
     return models.RegistroFertilizacion(
         explotacion_id=explotacion_id,
@@ -177,11 +186,11 @@ def preparar_fertilizacion(
         riqueza_n=riqueza_n,
         riqueza_p=riqueza_p,
         riqueza_k=riqueza_k,
-        kg_ha_producto=datos.kg_ha_producto,
+        kg_ha_producto=kg_ha,
         cantidad_total_kg=cantidad_total_kg,
-        uf_n_ha=legal.uf_por_hectarea(datos.kg_ha_producto, riqueza_n),
-        uf_p_ha=legal.uf_por_hectarea(datos.kg_ha_producto, riqueza_p),
-        uf_k_ha=legal.uf_por_hectarea(datos.kg_ha_producto, riqueza_k),
+        uf_n_ha=legal.uf_por_hectarea(kg_ha, riqueza_n),
+        uf_p_ha=legal.uf_por_hectarea(kg_ha, riqueza_p),
+        uf_k_ha=legal.uf_por_hectarea(kg_ha, riqueza_k),
         uf_n_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_n),
         uf_p_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_p),
         uf_k_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_k),

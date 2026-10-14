@@ -4325,6 +4325,9 @@ function cargaFertilizacion() {
     superficie_ha: aNumero(b.superficie_ha) ?? (parcela ? parcela.superficie_ha : 0),
     fertilizante_id: Number(b.fertilizante_id),
     kg_ha_producto: aNumero(b.kg_ha_producto),
+    // **Los kilos que se echaron** (CRM-07, 14/10/2026): es lo que el agricultor sabe —los sacos— y de
+    // aqui sale el kg/ha, que ya no hay que escribir a mano. Si viene vacio, la puerta usa el kg/ha.
+    cantidad_total_kg: aNumero(b.cantidad_total_kg),
     observaciones: b.observaciones || null,
     // Lo mismo que en los tratamientos: lo que el asistente no pregunta se manda tal cual venía.
     // Estos seis campos son de la hoja 6 del cuaderno de la Junta (el nº de albarán, el tipo de
@@ -4737,6 +4740,23 @@ function pasosAbonar() {
       pista: t("etiquetas.fertilizacion.fertilizante_id.pista", ""),
       montar: montarAbonos,
       recoger: () => exige("fertilizante_id"),
+    },
+    {
+      // **Los kilos que se echaron** (CRM-07, 14/10/2026). Va ANTES del kg/ha a proposito: es lo
+      // que el agricultor tiene delante —los sacos— y de aqui **se deduce** el kg/ha. Se puede
+      // dejar vacio si prefiere escribir el kg/ha; y si no viene ninguno, la puerta lo dice.
+      titulo: t("etiquetas.fertilizacion.cantidad_total_kg.pregunta", ""),
+      pista: t("etiquetas.fertilizacion.cantidad_total_kg.pista", ""),
+      montar: () =>
+        montarNumero(
+          "cantidad_total_kg",
+          t("rotulos.unidad_kilos", ""),
+          "fertilizacion.cantidad_total_kg",
+          "fertilizacion.cantidad_total_kg",
+        ),
+      recoger: () => {
+        recogeCampos(["cantidad_total_kg"])();
+      },
     },
     {
       titulo: t("etiquetas.fertilizacion.kg_ha_producto.pregunta", ""),

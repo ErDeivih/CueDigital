@@ -234,6 +234,15 @@ AYUDA: dict[str, dict[str, str]] = {
         "ejemplo": "0,8 L/ha",
         "si_falta": "No se puede comprobar si has respetado lo que permite la etiqueta.",
     },
+    "fertilizacion.cantidad_total_kg": {
+        "titulo": "Cuántos kilos de abono has echado",
+        "que_es": "Los kilos que echaste en total, los que salen de los sacos.",
+        "por_que": "Con esto y la superficie se calcula el kg por hectárea, y no hay que escribirlo a mano.",
+        "ejemplo": "600 kg",
+        "si_falta": "Sin los kilos no se puede calcular el abono por hectárea ni sus nutrientes.",
+        "pregunta": "¿Cuántos kilos de abono has echado?",
+        "pista": "Los que salen de los sacos. De aquí sale el kg por hectárea.",
+    },
     "fertilizacion.kg_ha_producto": {
         "titulo": "Cuántos kilos por hectárea",
         "que_es": "Los kilos de abono que has echado en cada hectárea.",
@@ -562,7 +571,7 @@ MENSAJES: dict[str, str] = {
     ),
 # --- abonos ---
     "F1_sin_cantidad": (
-        "Pon cuántos kilos de abono has echado por hectárea."
+        "Dinos cuánto abono has echado: los kilos en total (600) o los kilos por hectárea (200)."
     ),
     "F2_superficie_excedida": (
         "La parcela tiene {parcela} hectáreas y has puesto {usada}. Corrige la superficie."
@@ -1822,6 +1831,10 @@ ETIQUETAS: dict[str, dict[str, str]] = {
     "fertilizacion.fertilizante_id": {
         "pregunta": "¿Qué abono has echado?",
         "pista": "El nombre que viene en el saco",
+    },
+    "fertilizacion.cantidad_total_kg": {
+        "pregunta": "¿Cuántos kilos de abono has echado?",
+        "pista": "Los que salen de los sacos. De aquí sale el kg por hectárea",
     },
     "fertilizacion.kg_ha_producto": {
         "pregunta": "¿Cuántos kilos por hectárea?",

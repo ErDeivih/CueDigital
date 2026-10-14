@@ -1030,7 +1030,12 @@ class FertilizacionEntrada(EntradaBase):
     grupo_id: int | None = None
     superficie_ha: float = Field(gt=0)
     fertilizante_id: int | None = None
-    kg_ha_producto: float = Field(gt=0)
+    # **Los kilos que se echaron** (CRM-07, 14/10/2026): es lo que el agricultor tiene delante
+    # —los sacos— y lo que el contrato llama «600 kg en 3 ha». Si vienen, **el kg/ha se deduce**
+    # y no se escribe a mano: *un numero escrito a mano es una cuenta que puede estar mal*.
+    cantidad_total_kg: float | None = Field(default=None, gt=0)
+    # Y el kg/ha sigue admitiendose: es el camino de siempre, y **lo ya guardado no se toca**.
+    kg_ha_producto: float | None = Field(default=None, gt=0)
     modo_aplicacion: str | None = None
     momento: str | None = None
     plan_id: int | None = None

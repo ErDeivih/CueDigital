@@ -508,8 +508,14 @@ def validar_fertilizacion(
         avisos.append(_aviso("V18_sin_parcela", "parcela_id", True))
         return avisos
 
-    if datos.kg_ha_producto is None or datos.kg_ha_producto <= 0:
-        avisos.append(_aviso("F1_sin_cantidad", "kg_ha_producto", True))
+    # **Vale cualquiera de las dos formas** (CRM-07, 14/10/2026): los kilos que se echaron en total
+    # —que es lo que el agricultor tiene delante, los sacos— o los kilos por hectarea. Con una de las
+    # dos, el kg/ha se calcula; con ninguna, no hay nada que apuntar. Y el aviso se pone **en el campo
+    # que falta**, para que la pantalla lleve ahi.
+    tiene_total = datos.cantidad_total_kg is not None and datos.cantidad_total_kg > 0
+    tiene_por_hectarea = datos.kg_ha_producto is not None and datos.kg_ha_producto > 0
+    if not tiene_total and not tiene_por_hectarea:
+        avisos.append(_aviso("F1_sin_cantidad", "cantidad_total_kg", True))
 
     # **Si de la tierra no se sabe la superficie, no se puede comprobar que se pase** (A7): antes
     # esa tierra valía `0,0` y cualquier superficie la superaba, así que no se podía abonar. El

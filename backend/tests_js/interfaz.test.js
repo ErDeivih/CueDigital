@@ -1401,6 +1401,7 @@ const RESPUESTAS = {
       "labor.datos_propios": { pregunta: "¿Algún dato propio de este trabajo?", pista: "Las preguntas cambian según el trabajo que elegiste" },
       "plan.herramienta": { pregunta: "¿Has usado un programa o una herramienta para hacerlo?", pista: "Si lo has calculado tú de cabeza, contesta que no" },
       "fertilizacion.fertilizante_id": { pregunta: "¿Qué abono has echado?", pista: "El nombre que viene en el saco" },
+      "fertilizacion.cantidad_total_kg": { pregunta: "¿Cuántos kilos de abono has echado?", pista: "Los que salen de los sacos. De aquí sale el kg por hectárea." },
       "fertilizacion.kg_ha_producto": { pregunta: "¿Cuántos kilos por hectárea?", pista: "Los kilos de abono que has echado en cada hectárea" },
       "fertilizacion.resumen": { pregunta: "Mira si está bien", pista: "Si algo no cuadra, pulsa VOLVER y lo cambias" },
     },
