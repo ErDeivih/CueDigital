@@ -2159,15 +2159,15 @@ ETIQUETAS_MAESTRO: dict[str, dict[str, str]] = {
     },
     "abono.riqueza_n": {
         "pregunta": "Nitrógeno (el primer número)",
-        "pista": "Si el saco no lo trae, pon 0",
+        "pista": "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"",
     },
     "abono.riqueza_p": {
         "pregunta": "Fósforo (el segundo número)",
-        "pista": "Si el saco no lo trae, pon 0",
+        "pista": "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"",
     },
     "abono.riqueza_k": {
         "pregunta": "Potasio (el tercer número)",
-        "pista": "Si el saco no lo trae, pon 0",
+        "pista": "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"",
     },
     "abono.tipo": {
         "pregunta": "¿Es mineral o ecológico?",
@@ -2272,15 +2272,15 @@ ETIQUETAS_MAESTRO: dict[str, dict[str, str]] = {
     },
     "plan.necesidad_n": {
         "pregunta": "Nitrógeno (N)",
-        "pista": "Lo que se va a llevar el cultivo. Si no lo sabes, pon 0",
+        "pista": "Lo que se va a llevar el cultivo. Si no lo sabes, dejalo en blanco",
     },
     "plan.necesidad_p": {
         "pregunta": "Fósforo (P)",
-        "pista": "Si no lo sabes, pon 0",
+        "pista": "Si no lo sabes, dejalo en blanco",
     },
     "plan.necesidad_k": {
         "pregunta": "Potasio (K)",
-        "pista": "Si no lo sabes, pon 0",
+        "pista": "Si no lo sabes, dejalo en blanco",
     },
     "plan.produccion_esperada_kg_ha": {
         "pregunta": "¿Cuánto esperas sacar?",

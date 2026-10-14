@@ -19,7 +19,7 @@ sacadas del documento `03_CastillaYLeon_CUECyL_instrucciones.pdf`) y contra lo q
 > agricultor sin cuaderno**. Lo comprobado artículo por artículo está en
 > [`LO_QUE_OBLIGA_LA_LEY.md`](LO_QUE_OBLIGA_LA_LEY.md).
 
-Última revisión: cuando el proyecto tenía 4963 tests de Python y 1112 de JavaScript.
+Última revisión: cuando el proyecto tenía 4986 tests de Python y 1117 de JavaScript.
 
 **Cómo leer la columna «Estado»:**
 

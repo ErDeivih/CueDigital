@@ -995,6 +995,7 @@ export function pantallaDeLaTierra(propiedades) {
       textos=${propiedades.textos}
       tierra=${propiedades.tierra}
       historial=${propiedades.historial}
+      papeles=${propiedades.papeles}
       estado=${propiedades.estado}
       costes=${propiedades.costes}
       no_consta=${propiedades.no_consta}

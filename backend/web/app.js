@@ -7908,9 +7908,15 @@ const CAMPOS = {
   "producto.autorizacion_hasta": { campo: "autorizacion_hasta", tipo: "fecha" },
 
   "abono.nombre": { campo: "nombre", tipo: "texto", obligatorio: true },
-  "abono.riqueza_n": { campo: "riqueza_n", tipo: "numero", obligatorio: true },
-  "abono.riqueza_p": { campo: "riqueza_p", tipo: "numero", obligatorio: true },
-  "abono.riqueza_k": { campo: "riqueza_k", tipo: "numero", obligatorio: true },
+  // **No es obligatorio a proposito** (CRM-07, 14/10/2026): el saco puede no traer la riqueza, y
+  // *«lo que no se sabe no es 0»*. En blanco = no consta, y el calculo devuelve `None`, no un cero.
+  "abono.riqueza_n": { campo: "riqueza_n", tipo: "numero" },
+  // **No es obligatorio a proposito** (CRM-07, 14/10/2026): el saco puede no traer la riqueza, y
+  // *«lo que no se sabe no es 0»*. En blanco = no consta, y el calculo devuelve `None`, no un cero.
+  "abono.riqueza_p": { campo: "riqueza_p", tipo: "numero" },
+  // **No es obligatorio a proposito** (CRM-07, 14/10/2026): el saco puede no traer la riqueza, y
+  // *«lo que no se sabe no es 0»*. En blanco = no consta, y el calculo devuelve `None`, no un cero.
+  "abono.riqueza_k": { campo: "riqueza_k", tipo: "numero" },
   "abono.tipo": { campo: "tipo", tipo: "opciones", opciones: "tipos_abono" },
 
   "aplicador.nombre": { campo: "nombre", tipo: "texto", obligatorio: true },
@@ -22876,12 +22882,12 @@ function pantallaLaHistoria() {
         // comentario de arriba con la referencia: *antes de quitar el panel, la ficha tiene que tener todo lo
         // que el panel daba*. El dato viene ya en la tierra (`dibujo`, de `/api/parcelas`).
         dibujo: tierra.dibujo || "",
-        // **Y los papeles que cuelgan de ella** (CRM-06, 14/10/2026): un contrato de arrendamiento,
-        // la factura de esa parcela, una inspeccion. Estaban en la bandeja y la ficha no los tenia: es la
-        // misma regla que la referencia y el dibujo — antes de dejar la ficha como pantalla unica, tiene
-        // que tener lo que daban las otras.
-        papeles: suyo.papelesDeLaTierra || [],
       },
+      // **Los papeles que cuelgan de esta tierra** (CRM-06, 14/10/2026), donde SE LEE: al lado de
+      // `historial`, no dentro de `tierra`. Es la trampa del envoltorio que esta casa ya pago —*se
+      // escribe donde se lee, no donde parece*— y **yo volvi a caer en ella**: puesto dentro de
+      // `tierra`, la pantalla leia `papeles` de fuera y salia siempre vacia.
+      papeles: suyo.papelesDeLaTierra || [],
       historial: ((datos.historial || {}).lineas || []).map((linea) => {
         const trabajo = linea.trabajo || {};
         return {

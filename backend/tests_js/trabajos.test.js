@@ -892,3 +892,86 @@ test("la pantalla no toca el navegador: ni fetch, ni localStorage, ni document",
   }
   assert.ok(codigo.includes("export function PantallaDeLosTrabajos"), "el quitador se ha comido el fichero");
 });
+
+
+test("los papeles de una tierra salen en su ficha, y el vacio se dice", async () => {
+  // CRM-06 (14/10/2026): la ficha de una tierra tiene una seccion con SUS papeles — un contrato de
+  // arrendamiento, la factura de esa parcela, una inspeccion. Se piden al servidor **por la clase `tierra`
+  // de los vinculos**, que es lo que hubo que anadir en la bandeja. Y si no hay ninguno, **el vacio se
+  // dice**: un hueco en blanco no explica nada.
+  const conPapeles = await htmlDe("PantallaDeLaTierra", {
+    textos: TEXTOS,
+    tierra: { nombre: "El Prado" },
+    historial: [],
+    estado: null,
+    costes: null,
+    no_consta: [],
+    error: "",
+    papeles: [
+      {
+        titulo: "Contrato de arrendamiento",
+        etiqueta_tipo: "Contrato",
+        fecha: "2026-10-01",
+        quien: "Ferreteria del Paramo",
+        etiqueta_estado: "Confirmado",
+      },
+    ],
+  });
+  assert.match(conPapeles, /Los papeles de esta tierra/, "la ficha no tiene su seccion de papeles");
+  assert.match(conPapeles, /Contrato de arrendamiento/, "el papel no sale en su seccion");
+  assert.match(conPapeles, /2026-10-01/, "no sale la fecha del papel");
+  assert.match(conPapeles, /Ferreteria del Paramo/, "no sale quien lo trajo");
+  assert.match(conPapeles, /Confirmado/, "no sale en que estado esta");
+
+  const sinPapeles = await htmlDe("PantallaDeLaTierra", {
+    textos: TEXTOS,
+    tierra: { nombre: "El Prado" },
+    historial: [],
+    estado: null,
+    costes: null,
+    no_consta: [],
+    error: "",
+    papeles: [],
+  });
+  assert.match(sinPapeles, /No tiene ningun papel enlazado/, "sin papeles no se dice nada");
+});
+
+
+test("el envoltorio de la ficha no se deja ninguna propiedad por el camino", async () => {
+  // **CRM-06 (14/10/2026): el defecto que ninguna prueba veía.**
+  //
+  // `pantallaDeLaTierra` (el envoltorio) **enumera a mano** las propiedades que le pasa al componente
+  // `PantallaDeLaTierra`. Al añadir los papeles, el cargador los traía, el componente los declaraba… y el
+  // envoltorio **no los pasaba**: la ficha salía vacía en el navegador.
+  //
+  // Y la prueba que había montaba **el componente**, no el envoltorio — así que **no podía verlo**: el
+  // envoltorio no estaba en ese camino. Esta monta el envoltorio, que es lo que monta `app.js`.
+  const porElEnvoltorio = await htmlDe("pantallaDeLaTierra", {
+    textos: TEXTOS,
+    tierra: { nombre: "El Prado" },
+    historial: [],
+    estado: null,
+    costes: null,
+    no_consta: [],
+    error: "",
+    papeles: [
+      {
+        titulo: "Contrato de arrendamiento",
+        etiqueta_tipo: "Contrato",
+        fecha: "2026-10-01",
+        quien: "Ferreteria del Paramo",
+        etiqueta_estado: "Confirmado",
+      },
+    ],
+  });
+  assert.match(
+    porElEnvoltorio,
+    /Contrato de arrendamiento/,
+    "el envoltorio se deja `papeles` por el camino: la ficha sale vacía en el navegador",
+  );
+  assert.doesNotMatch(
+    porElEnvoltorio,
+    /No tiene ningun papel enlazado/,
+    "el envoltorio no pasa los papeles, así que la pantalla dice que no hay ninguno",
+  );
+});
