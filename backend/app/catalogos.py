@@ -45,6 +45,32 @@ class MedidaPreventiva:
     etiqueta: str
 
 
+# --- semilla (CRM-07 #2, 14/10/2026) ---
+# **Las categorias de una semilla**, que es lo que la etiqueta oficial dice de ella. El
+# defecto de una semilla sin papeles es **«No certificada»**: no es que no se sepa, es que no
+# lleva certificado — y por eso el defecto del apunte no es `None`.
+CATEGORIAS_DE_SEMILLA: dict[str, str] = {
+    "no_certificada": "No certificada",
+    "base": "Base",
+    "certificada": "Certificada",
+    "r1": "R1",
+    "r2": "R2",
+}
+
+# Y **de donde salio la semilla**: se compra, o se guarda de la cosecha propia.
+PROCEDENCIAS: dict[str, str] = {
+    "comprada": "Comprada",
+    "propia": "Guardada de la cosecha propia",
+}
+
+
+def etiqueta_de_categoria(valor: str | None) -> str:
+    """El texto de una categoria de semilla. Lo que no se conoce se dice, no se inventa."""
+    if not valor:
+        return CATEGORIAS_DE_SEMILLA["no_certificada"]
+    return CATEGORIAS_DE_SEMILLA.get(valor, valor)
+
+
 MEDIDAS_PREVENTIVAS: tuple[MedidaPreventiva, ...] = (
     MedidaPreventiva("rotacion", "¿Cambias de cultivo de un año a otro?", "Rotación de cultivos"),
     MedidaPreventiva(

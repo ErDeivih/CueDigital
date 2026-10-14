@@ -1391,3 +1391,73 @@ class TestLaCopiaDeLosTextosNoSeQuedaVieja:
             assert textos.MENSAJES[codigo_mensaje] in codigo, (
                 f"la copia de los mensajes no lleva {codigo_mensaje}"
             )
+
+
+
+# --------------------------------------------------------------------------
+# La categoria de la semilla y de donde salio (CRM-07 #2, 14/10/2026)
+# --------------------------------------------------------------------------
+#
+# **Lo que pide el contrato**: «Semilla: especie, variedad, **categoria** y evidencia,
+# **comprada/propia**; **no certificada por defecto**». Y faltaban las dos columnas.
+#
+# **Ojo con la trampa**: `SemillaSalida` **ya tenia** un campo `categoria` — y es la del **ARTICULO**,
+# no la de la semilla. Por eso estas columnas se llaman `categoria_semilla` y `procedencia`.
+
+
+def _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla, **cambios):
+    # **La fabrica se llama UNA vez**: cada llamada da de alta un articulo, y la segunda daria 200
+    # en vez de 201 (que es lo que su propio ayudante exige).
+    el_almacen = almacen_con_semilla()
+    datos = {
+        "articulo_id": el_almacen["articulo_id"],
+        "unidad": el_almacen["unidad"],
+        "especie": "Veza comun",
+        "variedad": "Villalobos",
+        "casa_comercial": "Semillas del Duero",
+        "categoria_semilla": "certificada",
+        "procedencia": "comprada",
+    }
+    datos.update(cambios)
+    return cliente.post("/api/semillas", headers=cuenta["cabeceras"], json=datos)
+
+
+def test_la_semilla_guarda_su_categoria_y_de_donde_salio(cliente, cuenta, almacen_con_semilla):
+    respuesta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla)
+    assert respuesta.status_code == 201, respuesta.text
+    suya = respuesta.json()
+    assert suya["categoria_semilla"] == "certificada", suya.get("categoria_semilla")
+    assert suya["procedencia"] == "comprada"
+
+    # Y se lee del listado, no solo del alta: un dato que se guarda y no se devuelve no llega a
+    # ninguna pantalla.
+    listado = cliente.get("/api/semillas", headers=cuenta["cabeceras"])
+    assert listado.status_code == 200, listado.text
+    la_suya = next(s for s in listado.json() if s["id"] == suya["id"])
+    assert la_suya["categoria_semilla"] == "certificada"
+    assert la_suya["procedencia"] == "comprada"
+
+
+def test_sin_categoria_la_semilla_es_no_certificada(cliente, cuenta, almacen_con_semilla):
+    # **El defecto del contrato**, y no es «no consta»: no tener papeles ES una categoria.
+    respuesta = _una_semilla_con_categoria(
+        cliente, cuenta, almacen_con_semilla, categoria_semilla=None, procedencia=None
+    )
+    assert respuesta.status_code == 201, respuesta.text
+    suya = respuesta.json()
+    assert suya["categoria_semilla"] == "no_certificada", (
+        f"una semilla sin papeles es «no certificada», no «no consta»: vino {suya.get('categoria_semilla')!r}"
+    )
+
+
+def test_la_categoria_del_articulo_no_se_confunde_con_la_de_la_semilla(
+    cliente, cuenta, almacen_con_semilla
+):
+    # La trampa medida: `categoria` (la del articulo) y `categoria_semilla` son **dos cosas**.
+    respuesta = _una_semilla_con_categoria(cliente, cuenta, almacen_con_semilla, categoria_semilla="r1")
+    assert respuesta.status_code == 201, respuesta.text
+    suya = respuesta.json()
+    assert suya["categoria_semilla"] == "r1"
+    assert suya["categoria"] != "r1", (
+        "la categoria de la semilla ha pisado la del articulo: son dos campos distintos"
+    )

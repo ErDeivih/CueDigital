@@ -3226,6 +3226,16 @@ class Semilla(Base):
     pureza_pct: Mapped[float | None] = mapped_column(Float)
     # Tres estados: sí viene tratada, no viene, y no se sabe. Ver la cabecera.
     tratada: Mapped[bool | None] = mapped_column(Boolean)
+    # **La categoria de la semilla** (CRM-07 #2, 14/10/2026): base, certificada, R1, R2. El
+    # contrato la pide junto a la especie y la variedad, y **no existia**. Las categorias son
+    # `catalogos.CATEGORIAS_DE_SEMILLA`.
+    #
+    # **Y el defecto es «no certificada», no «no consta»** — al contrario que la regla del abono.
+    # Aqui no tener certificado **es** una categoria: es lo que dice la ley de una semilla sin
+    # papeles. Poner `None` diria que no se sabe, y lo que pasa es que no esta certificada.
+    categoria_semilla: Mapped[str | None] = mapped_column(String(40), default="no_certificada")
+    # Y **de donde salio**: comprada o guardada de la cosecha propia (`catalogos.PROCEDENCIAS`).
+    procedencia: Mapped[str | None] = mapped_column(String(20))
 
     # La foto de la etiqueta: en la base de datos solo la referencia (nombre, ruta relativa, tipo y
     # tamaño), como en todo lo que sube el agricultor (`app/adjuntos.py` y AGENTS.md §3.10).

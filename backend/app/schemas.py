@@ -2890,6 +2890,12 @@ class SemillaEntrada(EntradaBase):
     poder_germinativo_pct: float | None = Field(default=None, ge=0, le=100)
     pureza_pct: float | None = Field(default=None, ge=0, le=100)
     tratada: bool | None = None
+    # **La categoria de la semilla** (CRM-07 #2, 14/10/2026): base, certificada, R1, R2… Ojo:
+    # `categoria` (en la SALIDA) es la del ARTICULO, no esta. El catalogo es
+    # `catalogos.CATEGORIAS_DE_SEMILLA`, y el defecto del modelo es «no certificada».
+    categoria_semilla: str | None = None
+    # Y **de donde salio**: comprada o guardada de la cosecha propia.
+    procedencia: str | None = None
 
     # De dónde salieron los datos. `mano` es «los ha escrito una persona», que es lo que es una ficha
     # tecleada; los demás los pone el servidor al leer una etiqueta y **no se aceptan de fuera** para
@@ -2916,6 +2922,8 @@ class SemillaSalida(SalidaBase):
     poder_germinativo_pct: float | None
     pureza_pct: float | None
     tratada: bool | None
+    categoria_semilla: str | None
+    procedencia: str | None
     leida_de: str
     idioma_del_lector: str | None
     tiene_foto: bool = False

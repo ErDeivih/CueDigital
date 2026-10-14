@@ -174,6 +174,10 @@ def _la_semilla(
         "fecha_caducidad": semilla.fecha_caducidad,
         "poder_germinativo_pct": semilla.poder_germinativo_pct,
         "pureza_pct": semilla.pureza_pct,
+        # CRM-07 #2 (14/10/2026): la categoria de la semilla (la del ARTICULO va aparte, en
+        # `categoria`) y de donde salio. Si no salen aqui, no llegan a ninguna pantalla.
+        "categoria_semilla": semilla.categoria_semilla,
+        "procedencia": semilla.procedencia,
         "tratada": semilla.tratada,
         "leida_de": semilla.leida_de,
         "idioma_del_lector": semilla.idioma_del_lector,
@@ -207,6 +211,11 @@ def _los_campos_de_la_etiqueta(datos: SemillaEntrada, semilla: models.Semilla) -
     semilla.poder_germinativo_pct = datos.poder_germinativo_pct
     semilla.pureza_pct = datos.pureza_pct
     semilla.tratada = datos.tratada
+    # CRM-07 #2 (14/10/2026): **lo que dice el papel**. La `categoria` del ARTICULO es otra
+    # cosa (siempre «semilla», porque es un insumo del almacen); estas dos son de la etiqueta.
+    # Y el defecto de la columna es «no certificada»: no tener papeles ES una categoria.
+    semilla.categoria_semilla = datos.categoria_semilla
+    semilla.procedencia = datos.procedencia
 
 
 def _texto_o_nada(valor: str | None, largo: int) -> str | None:
