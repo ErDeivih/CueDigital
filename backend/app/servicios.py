@@ -102,6 +102,11 @@ def preparar_tratamiento(
         dosis=datos.dosis,
         unidad_dosis=datos.unidad_dosis,
         dosis_maxima_etiqueta=producto.dosis_maxima if producto else None,
+        # Y **que autorizacion estaba vigente aquel dia**, por el mismo motivo (CRM-07 #4):
+        # un tratamiento con una autorizacion excepcional que despues caduco no puede parecer
+        # hecho sin permiso. Se copia, no se referencia.
+        autorizacion_excepcional=producto.autorizacion_excepcional if producto else None,
+        autorizacion_hasta=producto.autorizacion_hasta if producto else None,
         cantidad_total=cantidad_total,
         unidad_cantidad_aplicada=datos.unidad_cantidad_aplicada,
         volumen_caldo_l_ha=datos.volumen_caldo_l_ha,

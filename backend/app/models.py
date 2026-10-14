@@ -859,6 +859,12 @@ class TratamientoFitosanitario(Base):
     dosis: Mapped[float | None] = mapped_column(Float)
     unidad_dosis: Mapped[str] = mapped_column(String(10), default="L/ha")
     dosis_maxima_etiqueta: Mapped[float | None] = mapped_column(Float)
+    # **La autorizacion que estaba vigente cuando se hizo el tratamiento** (CRM-07 #4,
+    # 14/10/2026): una copia a proposito, como `dosis_maxima_etiqueta`. Si el fabricante la
+    # cambia o caduca despues, **lo ya apuntado y firmado no se mueve**: lo que decia la
+    # etiqueta aquel dia es lo que se declara. El apunte lo copia en `servicios.py`.
+    autorizacion_excepcional: Mapped[str | None] = mapped_column(String(120))
+    autorizacion_hasta: Mapped[dt.date | None] = mapped_column(Date)
     cantidad_total: Mapped[float | None] = mapped_column(Float)
     unidad_cantidad_aplicada: Mapped[str | None] = mapped_column(String(20))
     volumen_caldo_l_ha: Mapped[float | None] = mapped_column(Float)

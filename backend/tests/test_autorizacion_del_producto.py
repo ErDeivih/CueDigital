@@ -740,3 +740,90 @@ class TestCambiarLaEtiquetaNoCambiaElApunteFirmado:
         assert self._la_columna(creado.json()["id"]) is None, (
             "sin dosis en la etiqueta, el apunte no puede inventarse un cero"
         )
+
+
+class TestLaAutorizacionVigenteSeQuedaEnElApunte:
+    """**CRM-07 #4: «la autorizacion del producto no se guarda en el apunte».**
+
+    **Que pide el contrato**: que el tratamiento diga **con que autorizacion se hizo**. Y no es un
+    adorno: la autorizacion excepcional (art. 53 RD 1311/2012) es el permiso temporal para usar un
+    producto que no esta autorizado con caracter general, y **caduca**. Un tratamiento apuntado con
+    ese permiso tiene que poder enseñarlo **despues**, aunque el permiso ya no valga — *si no, parece
+    hecho sin autorizacion*.
+
+    **Y por eso es una copia y no una referencia** (como `dosis_maxima_etiqueta`, prueba de al lado):
+    si el fabricante cambia la autorizacion o el agricultor corrige el catalogo, **lo ya apuntado y
+    firmado no se puede mover**. Lo que decia la etiqueta **aquel dia** es lo que se declara.
+    """
+
+    def _la_columna(self, apunte_id: int, columna: str):
+        tabla = models.TratamientoFitosanitario.__tablename__
+        with database.engine.begin() as conexion:
+            return conexion.execute(
+                text(f"SELECT {columna} FROM {tabla} WHERE id = :id"), {"id": apunte_id}
+            ).scalar_one()
+
+    def test_la_autorizacion_vigente_se_copia_al_apunte(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        producto = _producto(
+            cliente,
+            cuenta["cabeceras"],
+            autorizacion_excepcional="AUT-2026-0417",
+            autorizacion_hasta="2026-07-31",
+        )
+        parcela = crear_parcela()
+        creado = _tratamiento(cliente, cuenta["cabeceras"], campana, parcela, producto)
+        assert creado.status_code == 201, creado.text
+        apunte_id = creado.json()["id"]
+
+        assert self._la_columna(apunte_id, "autorizacion_excepcional") == "AUT-2026-0417"
+        assert str(self._la_columna(apunte_id, "autorizacion_hasta")) == "2026-07-31"
+
+    def test_cambiar_la_autorizacion_del_catalogo_no_mueve_el_apunte(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        producto = _producto(
+            cliente,
+            cuenta["cabeceras"],
+            autorizacion_excepcional="AUT-2026-0417",
+            autorizacion_hasta="2026-07-31",
+        )
+        parcela = crear_parcela()
+        creado = _tratamiento(cliente, cuenta["cabeceras"], campana, parcela, producto)
+        assert creado.status_code == 201, creado.text
+        apunte_id = creado.json()["id"]
+
+        # **El permiso caduca y el catalogo se corrige**: el apunte de aquel dia no se toca.
+        cambiado = cliente.put(
+            f"/api/productos/{producto['id']}",
+            headers=cuenta["cabeceras"],
+            json={
+                "nombre_comercial": "Ejemplo 25 EC",
+                "numero_registro": "24.123",
+                "dosis_maxima": 2.0,
+                "unidad_dosis": "L/ha",
+                "autorizacion_excepcional": "AUT-2027-9999",
+                "autorizacion_hasta": "2027-01-31",
+            },
+        )
+        assert cambiado.status_code == 200, cambiado.text
+
+        assert self._la_columna(apunte_id, "autorizacion_excepcional") == "AUT-2026-0417", (
+            "cambiar la autorizacion del catalogo ha movido un apunte firmado"
+        )
+        assert str(self._la_columna(apunte_id, "autorizacion_hasta")) == "2026-07-31"
+
+    def test_un_producto_sin_autorizacion_deja_el_apunte_en_no_consta(
+        self, cliente, cuenta, campana, crear_parcela
+    ):
+        # **La regla de la casa**: si el producto no trae autorizacion excepcional, el apunte dice
+        # «no consta» (`None`) y **no** una cadena vacia ni un texto inventado.
+        producto = _producto(cliente, cuenta["cabeceras"])
+        parcela = crear_parcela()
+        creado = _tratamiento(cliente, cuenta["cabeceras"], campana, parcela, producto)
+        assert creado.status_code == 201, creado.text
+        apunte_id = creado.json()["id"]
+
+        assert self._la_columna(apunte_id, "autorizacion_excepcional") is None
+        assert self._la_columna(apunte_id, "autorizacion_hasta") is None
