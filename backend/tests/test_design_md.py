@@ -401,6 +401,51 @@ class TestContratoYCodigo:
             + "; ".join(problemas)
         )
 
+    def test_la_densidad_del_escritorio_es_la_que_declara_el_contrato(self):
+        """**La densidad del escritorio, atada a SU tabla** (14/10/2026).
+
+        `DESIGN.md` tiene una sección —«La densidad del escritorio, y de dónde salen sus números»— con
+        una **tabla que declara valor por valor y la fuente de cada uno** (Odoo 17, Frappe 15, el
+        escritorio que Stitch ya dibujó), y el CSS tiene esos mismos números dentro de su
+        `@media (min-width: 64rem)`. **Estaban en los dos sitios y sin atar**: el mismo caso que la
+        escala de separación y que las esquinas.
+
+        **Y por qué esta prueba lee la tabla en vez de fiarse de un comentario**: *me costó **tres**
+        conclusiones falsas el mismo día*. Leí el contrato a trozos y las tres veces dije «esto no está
+        en el contrato» —la densidad del escritorio, el radio 14 → 8 y los botones a 40— **y las tres
+        estaba**. Es el mismo error que «volcarlo, no filtrarlo». Aquí se busca **en el documento**.
+        """
+        _, texto = leer_design_md()
+        css = CSS.read_text(encoding="utf-8")
+        bloque = re.search(r"@media\s*\(min-width:\s*64rem\)\s*\{(.*?)\n\}", css, re.S)
+        assert bloque, "el CSS no tiene el bloque del escritorio (`@media (min-width: 64rem)`)"
+        dentro = bloque.group(1)
+
+        problemas: list[str] = []
+        # Cada fila de la tabla del contrato que se corresponde con una variable del bloque del CSS.
+        for rotulo, variable in (("cuerpo", "--letra"), ("radio de control", "--radio")):
+            fila = re.search(r"\|\s*" + re.escape(rotulo) + r"\s*\|[^|]*\|\s*\*\*(\d+)[^*]*\*\*", texto)
+            en_css = re.search(re.escape(variable) + r":\s*(\d+)px", dentro)
+            if not fila:
+                problemas.append(f"la tabla de densidad del contrato no declara `{rotulo}`")
+            elif not en_css:
+                problemas.append(f"el bloque del escritorio no tiene {variable}")
+            elif en_css.group(1) != fila.group(1):
+                problemas.append(
+                    f"{rotulo}: el contrato dice {fila.group(1)} y el CSS {en_css.group(1)}"
+                )
+
+        # **Y el suelo de los botones**, que el contrato protege con una frase explicita: «un suelo con
+        # motivo de accesibilidad **no lo rompe el agente por su cuenta**, lo rompe el dueño del
+        # producto si quiere». Si alguien cambia esa frase, esta prueba lo dice — y su altura real se
+        # mide en el navegador, que es donde se ve (`.boton` mide **40** en el escritorio, medido).
+        assert re.search(r"devuelto a\s*\**\s*40", texto), (
+            "el contrato ya no dice que los botones del escritorio se han devuelto a 40: si el dueño ha "
+            "cambiado ese suelo, hay que cambiarlo aqui Y en el CSS"
+        )
+
+        assert not problemas, "La densidad del escritorio se ha separado del contrato: " + "; ".join(problemas)
+
     def test_ningun_boton_baja_de_64_pixeles_de_alto(self):
         frontmatter, _ = leer_design_md()
         # Los bordes no son botones: son líneas, y miden 2 o 3 px a propósito. El
