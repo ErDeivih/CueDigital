@@ -7463,6 +7463,23 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     "campo_taller": "¿En qué taller está?",
     "campo_taller_pista": "Si lo sabes. Puede quedarse sin decir.",
     "taller_de_la_averia": "Taller",
+    # **Lo que ha costado** (CRM-07 #7, 14/10/2026). Tres cosas distintas y las tres se pueden decir:
+    # el total, **que no haya ningún gasto** (que no es lo mismo que costar cero), y **cuántos gastos no
+    # tienen importe** -porque un total que solo suma la mitad parecería el total entero-.
+    "coste_de_la_maquina": "Lo que ha costado tenerla parada",
+    # **Y si el coste no se puede traer, se dice** (14/10/2026). Antes esto se callaba: el `catch` dejaba
+    # la cifra en blanco y **no dejaba rastro**, asi que la ficha parecia no tener coste cuando lo que
+    # pasaba es que no se habia podido pedir. Callar un fallo es peor que un fallo.
+    "coste_no_se_pudo": (
+        "No se ha podido traer lo que ha costado. Vuelve a abrir la ficha y, si sigue, avisa."
+    ),
+    "coste_de_la_maquina_sin_gastos": (
+        "De sus averías no hay ningún gasto apuntado, así que no se sabe lo que ha costado."
+    ),
+    "coste_de_una_averia": "Costó",
+    "coste_de_una_averia_sin_constar": "No consta lo que costó",
+    "coste_sin_importe_uno": "y 1 de esos gastos no tiene importe",
+    "coste_sin_importe_varios": "y {cuantos} de esos gastos no tienen importe",
     # ── La calculadora de «¿puedo cogerla hoy?», que es el aviso al planificar un trabajo ──
     "avisos_titulo": "Antes de contar con ella",
     "sin_avisos": "De esta máquina no hay nada que mirar ahora mismo.",
@@ -8073,6 +8090,13 @@ MENSAJES.update(
         ),
         "G52_esa_maquina_no_esta_en_tu_cuaderno": (
             "Una de las máquinas a las que repartes no está en tu cuaderno. Míralas y vuelve a repartirlo."
+        ),
+        # **La avería tiene que ser de la máquina que se dice** (CRM-07 #7, 14/10/2026). El mensaje dice
+        # qué pasa **y cómo se arregla**, que es la regla de esta casa: un error que no dice qué hacer
+        # deja al agricultor mirando una pantalla sin saber por dónde salir.
+        "G53_la_averia_no_es_de_esa_maquina": (
+            "La avería que has elegido es de otra máquina. Elige una avería de esta máquina, o quita la "
+            "máquina y deja solo la avería, que ya dice de cuál es."
         ),
     }
 )

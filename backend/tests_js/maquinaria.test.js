@@ -61,6 +61,22 @@ const MAQUINARIA = {
   buscar_pista: "Escribe las primeras letras de su nombre",
   ver_todas: "VER TODAS",
   sin_decir: "Falta decirlo",
+  // *** Si anades una palabra al servidor, ANADELA AQUI ***: este objeto es lo que el guardian
+  // («ni una frase escrita a mano») usa para saber que un texto viene del servidor. Si falta, el
+  // guardian **no puede** distinguir una palabra de verdad de una inventada, y deja pasar las dos.
+  taller_de_la_averia: "Taller",
+  coste_de_la_maquina: "Lo que ha costado tenerla parada",
+  coste_no_se_pudo:
+    "No se ha podido traer lo que ha costado. Vuelve a abrir la ficha y, si sigue, avisa.",
+  // ***LAS FRASES DEL SERVIDOR, LITERALES***: este objeto es una COPIA de lo que sirve `/api/interfaz`,
+  // y `tests/test_revision_t14.py` compara las dos cosas palabra por palabra. Acortarlas aqui hace que
+  // el guardian de «ni una frase escrita a mano» deje de valer: el compara contra ESTA copia.
+  coste_de_la_maquina_sin_gastos:
+    "De sus averías no hay ningún gasto apuntado, así que no se sabe lo que ha costado.",
+  coste_de_una_averia: "Costó",
+  coste_de_una_averia_sin_constar: "No consta lo que costó",
+  coste_sin_importe_uno: "y 1 de esos gastos no tiene importe",
+  coste_sin_importe_varios: "y {cuantos} de esos gastos no tienen importe",
   sin_resultados: "Ninguna de tus máquinas se llama así. Prueba con otras letras o pulsa VER TODAS para verlas todas otra vez.",
   abrir: "VER ESTA MÁQUINA",
   situacion: "Cómo está:",
@@ -367,6 +383,16 @@ function fichaConCosas() {
       },
     };
   });
+  // **Lo que ha costado tenerla parada** (CRM-07 #7). Con **un gasto sin importe**, que es el caso que
+  // importa: el total tiene que salir y el aviso tambien, porque un total que solo suma la mitad y no lo
+  // dice parece el total entero.
+  ficha.coste = {
+    texto: "1.100,00 €",
+    gastos: 2,
+    sin_importe: 1,
+    completo: false,
+    frase: "Lo que ha costado tenerla parada: 1.100,00 € y 1 de esos gastos no tiene importe",
+  };
   ficha.avisos = [
     { texto: "La ITEAF de «El Landini» venció el 12/05/2026. Pide cita antes de usarla.", urgente: true, tipo: "iteaf" },
     { texto: "De «El Landini» no has dicho si puedes contar con ella.", urgente: false, tipo: "disponibilidad" },
@@ -402,6 +428,13 @@ function fichaConCosas() {
       fecha_texto: "Se rompió el eje del ventilador",
       resuelta_texto: "Sigue sin arreglar",
       notas: "",
+      // **El taller y el coste** (CRM-07 #7): los dos campos que la ficha ya sabe ensenar. Faltaban en el
+      // fixture porque es **anterior** a las dos entregas, y sin ellos el guardian no puede distinguir
+      // sus frases compuestas («Taller: …», «Costo: …») de una escrita a mano: se queda ciego.
+      taller: "Talleres El Camino",
+      taller_texto: "Taller: Talleres El Camino",
+      coste_texto: "900,00 €",
+      coste_frase: "Costó: 900,00 €",
       anulado: false,
     },
   ];

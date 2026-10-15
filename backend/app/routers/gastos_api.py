@@ -872,14 +872,23 @@ def los_avisos(explotacion: ExplotacionActual, db: Db) -> list[dict]:
 
 
 @router.get("/gastos/averias")
-def el_coste_de_las_averias(explotacion: ExplotacionActual, db: Db) -> dict:
+def el_coste_de_las_averias(
+    explotacion: ExplotacionActual, db: Db, maquina_id: int | None = None
+) -> dict:
     """El coste de las averías de la finca, **avería por avería** (lo que el T14 dejó para el T13).
 
     Se calcula sumando los gastos que **dicen de qué avería salen** (`gastos.averia_id`), que es la
     única forma de que un importe no esté en dos sitios: la avería no guarda su coste, lo guarda el
     gasto. Y lo que no cuelga de ninguna avería se dice aparte, para que nadie crea que el coste de
     las averías es todo lo que se ha gastado en reparar.
+
+    **Y con `?maquina_id=` se puede pedir SOLO las de una máquina** (CRM-07 #7, 14/10/2026), con su
+    `total`: es lo que enseña la ficha de una máquina, que es donde el agricultor mira lo que le ha
+    costado tenerla parada. Se filtra **aquí** y no en la pantalla porque las cifras las calcula el
+    servidor, y porque sumar en la pantalla sería calcular lo mismo en dos sitios.
     """
+    if maquina_id is not None:
+        obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
     apuntados = list(
         db.scalars(
             select(models.Gasto).where(
@@ -890,6 +899,9 @@ def el_coste_de_las_averias(explotacion: ExplotacionActual, db: Db) -> dict:
     filas = [
         {
             "averia_id": gasto.averia_id,
+            # De qué máquina es el gasto: hace falta para contar bien las reparaciones que **no** cuelgan
+            # de ninguna avería cuando se pide una máquina sola.
+            "maquina_id": gasto.maquina_id,
             "importe": gasto.importe,
             "clase": gastos.SIN_ASIGNAR_CLASE
             if not _sus_repartos(db, explotacion.id, gasto.id)
@@ -912,6 +924,10 @@ def el_coste_de_las_averias(explotacion: ExplotacionActual, db: Db) -> dict:
         if averia_id == -1:
             continue
         averia = averias.get(averia_id)
+        # **Si se pide una máquina, solo las suyas** (CRM-07 #7): la ficha de una máquina no tiene por
+        # qué enseñar lo que se ha roto la del vecino.
+        if maquina_id is not None and (averia is None or averia.maquina_id != maquina_id):
+            continue
         suyo = coste.como_dict()
         suyo["que_paso"] = averia.que_paso if averia else ""
         suyo["fecha"] = averia.fecha.isoformat() if averia and averia.fecha else None
@@ -919,13 +935,52 @@ def el_coste_de_las_averias(explotacion: ExplotacionActual, db: Db) -> dict:
         suyo["sigue_sin_arreglar"] = (averia.resuelta is False) if averia else None
         suyo["texto_coste"] = dinero.formatea(coste.coste)
         salida.append(suyo)
-    return {
-        "averias": salida,
-        # Los gastos de reparación que no dicen de qué avería salen: existen y no se esconden.
-        "reparaciones_sin_averia": {
+    # **El total de lo que se está enseñando**, y con dos avisos que no se pueden callar:
+    #   · cuántos gastos lo forman, y
+    #   · **cuántos de ellos NO tienen importe**. Un total que solo suma la mitad y no lo dice parece el
+    #     total entero, y eso es lo que este módulo no hace en ningún sitio.
+    total = gastos.CosteDeUnaAveria()
+    for averia_id, coste in sorted(por_averia.items()):
+        if averia_id == -1:
+            continue
+        averia = averias.get(averia_id)
+        if maquina_id is not None and (averia is None or averia.maquina_id != maquina_id):
+            continue
+        total.gastos += coste.gastos
+        total.sin_importe += coste.sin_importe
+        total.coste = dinero.suma(total.coste, coste.coste)
+    if maquina_id is not None:
+        # Las reparaciones **de esa máquina** que no cuelgan de ninguna avería: también son suyas, y
+        # también hay que contarlas y decirlo.
+        suyas_sin_averia = [
+            fila for fila in filas if fila["averia_id"] is None and fila["maquina_id"] == maquina_id
+        ]
+        sin_averia = gastos.coste_de_una_averia(suyas_sin_averia)
+        total.gastos += sin_averia.gastos
+        total.sin_importe += sin_averia.sin_importe
+        total.coste = dinero.suma(total.coste, sin_averia.coste)
+        reparaciones_sin_averia = {
+            "cuantos": sin_averia.gastos,
+            "importe": dinero.a_texto(sin_averia.coste),
+        }
+    else:
+        reparaciones_sin_averia = {
             "cuantos": por_averia[-1].gastos if -1 in por_averia else 0,
             "importe": dinero.a_texto(por_averia[-1].coste) if -1 in por_averia else None,
+        }
+    return {
+        "averias": salida,
+        "total": {
+            "coste": dinero.a_texto(total.coste),
+            "texto_coste": dinero.formatea(total.coste),
+            "gastos": total.gastos,
+            "sin_importe": total.sin_importe,
+            # `completo` es falso mientras haya algún gasto sin importe: la pantalla tiene que poder
+            # decir «esto es lo que se sabe», no «esto es todo».
+            "completo": total.sin_importe == 0,
         },
+        # Los gastos de reparación que no dicen de qué avería salen: existen y no se esconden.
+        "reparaciones_sin_averia": reparaciones_sin_averia,
     }
 
 
@@ -981,6 +1036,20 @@ def _datos_comprobados_del_gasto(db: Db, explotacion, datos) -> dict:
         if identificador is not None:
             obtener_de_la_explotacion(db, modelo, identificador, explotacion.id)
         del nombre
+    # **Y la avería tiene que ser de ESA máquina** (CRM-07 #7, 14/10/2026). El bucle de arriba comprueba
+    # cada identificador **por separado** contra la finca, y eso deja pasar un gasto que dice «máquina A»
+    # y cuelga de una avería de la **B**: el mismo coste saldria en **las dos fichas** —la de A por su
+    # `maquina_id` y la de B porque la avería es suya— y en las cuentas como coste directo de una máquina
+    # que no lo ha tenido. No se puede comprobar «por separado» algo que tiene que encajar **entre sí**.
+    if datos.averia_id is not None and datos.maquina_id is not None:
+        la_averia = obtener_de_la_explotacion(
+            db, models.AveriaDeMaquina, datos.averia_id, explotacion.id
+        )
+        if la_averia.maquina_id != datos.maquina_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=textos.mensaje("G53_la_averia_no_es_de_esa_maquina"),
+            )
     importe, cuadre = _los_importes_del_gasto(datos)
     if importe is not None and importe == 0:
         # Un gasto de cero euros conocido no es un gasto: es un hueco con un número dentro. Y lo que

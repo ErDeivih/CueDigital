@@ -255,7 +255,51 @@ class NavegadorDeVerdad:
 
     def abrir(self, url: str, *, esperar: float = 0.8) -> None:
         self.orden("Page.enable")
+        # **Antes de navegar se barre el SERVICE WORKER y sus cache** (14/10/2026). La aplicacion registra
+        # un `service-worker.js` que sirve el armazon **desde su propia cache**, asi que el navegador puede
+        # estar ejecutando un `app.js` VIEJO aunque:
+        #   · el fichero este al dia, y
+        #   · `fetch('/app.js')` devuelva el nuevo, y
+        #   · `Network.setBypassServiceWorker` (que se pone en `medir`) **no basta**, y
+        #   · la puerta conteste exactamente lo que tiene que contestar.
+        # El sintoma es de los peores: ***una linea que no se pinta y todo lo demas en orden***.
+        # Se limpian SOLO `service_workers` y `cache_storage`: el vale del `localStorage` **no** se toca,
+        # que si no cada navegacion empezaria pidiendo entrar otra vez.
+        trozos = url.split("/")
+        if len(trozos) >= 3 and trozos[0] in ("http:", "https:"):
+            self.orden(
+                "Storage.clearDataForOrigin",
+                {
+                    "origin": "/".join(trozos[:3]),
+                    "storageTypes": "service_workers,cache_storage",
+                },
+            )
+        # **Si solo cambia el FRAGMENTO, `Page.navigate` NO recarga el documento** (14/10/2026). Lo que
+        # hace es disparar `popstate` -y la aplicacion enruta por ahi, asi que **la pantalla cambia**-,
+        # pero **los modulos ya cargados siguen siendo los del primer documento**. Lo midio una sonda de
+        # CDP hace dias y estaba escrito; lo que no estaba era atado a esto.
+        # El sintoma es de los peores: **un recorrido que anda tres pantallas mide el codigo de la
+        # primera en las tres**, y la «recarga» de un paso no recarga nada. Es la CUARTA averia de este
+        # arnes y de la misma familia que las otras tres (la cache HTTP, los Chrome sin matar y el
+        # service worker): ***el navegador ensenando algo que no es el codigo de ahora***.
+        solo_el_fragmento = (
+            getattr(self, "_ultima_url", None) is not None
+            and url.split("#")[0] == self._ultima_url.split("#")[0]
+        )
+        self._ultima_url = url
         self.orden("Page.navigate", {"url": url})
+        if solo_el_fragmento:
+            # …y se recarga **de verdad y sin cache**, para que los modulos sean los de AHORA.
+            # ***PERO HAY QUE ESPERAR A QUE EL FRAGMENTO CAMBIE*** (14/10/2026): `Page.navigate` es
+            # asincrono y volver con `Page.reload` en la linea siguiente **recarga la URL VIEJA**. La
+            # primera version de esto lo hacia asi, y el sintoma era peor que el mal que arreglaba: un
+            # recorrido de tres pantallas **media la primera en las tres**, y parecia que el navegador
+            # servia codigo viejo. No lo servia: **yo iba con prisa**.
+            for _ in range(50):
+                if (self.evaluar("String(document.location.hash || '')") or "") in url:
+                    break
+                time.sleep(0.05)
+            self.orden("Page.reload", {"ignoreCache": True})
         time.sleep(esperar)
 
     def evaluar(self, expresion: str):
@@ -439,6 +483,17 @@ class NavegadorDeVerdad:
         # nada: asi lo arreglan todos, y no solo el que se dio cuenta.
         self.orden("Network.enable")
         self.orden("Network.setCacheDisabled", {"cacheDisabled": True})
+        # **Y se SALTA EL SERVICE WORKER** (14/10/2026). Es la TERCERA averia de este arnes y de la misma
+        # familia que las otras dos -la cache HTTP que no se apagaba y los Chrome que no se mataban-:
+        # la aplicacion registra un `service-worker.js` que sirve el armazon **desde su propia cache**, asi
+        # que el navegador puede estar ejecutando un `app.js` VIEJO aunque el fichero este al dia, un
+        # `fetch('/app.js')` devuelva el nuevo y la puerta conteste lo que tiene que contestar.
+        # El sintoma es de los peores: **una linea que no se pinta y todo lo demas en orden**.
+        try:
+            self.orden("Network.setBypassServiceWorker", {"bypass": True})
+        except RuntimeError:
+            # La orden es experimental: si este Chrome no la tiene, se sigue, pero se dice en voz alta.
+            print("  (aviso: este Chrome no admite `Network.setBypassServiceWorker`: puede servir codigo viejo)")
         self.orden(
             "Emulation.setDeviceMetricsOverride",
             {

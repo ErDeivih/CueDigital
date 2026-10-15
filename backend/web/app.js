@@ -18436,6 +18436,11 @@ function estadoDeLaMaquinaria() {
       // avería: el formulario se rellena con los datos tal y como los devolvió el servidor, no con los
       // textos ya montados.
       maquinaCruda: null,
+      // **Lo que ha costado tenerla parada** (CRM-07 #7): la respuesta de `GET /gastos/averias?maquina_id=`
+      // y, si no se pudo traer, por qué. Se declaran aquí como los demás: un campo que existe y no está en
+      // esta lista es un campo que el siguiente que lea esto no sabe que está.
+      costes: null,
+      costeError: "",
       // Lo que se está rellenando: la máquina, una inspección o una avería. Vive aquí y no dentro del
       // componente por lo de siempre: el componente se vuelve a montar entero cada vez, así que lo escrito
       // tiene que sobrevivir a un repintado (y un formulario que se vacía solo es un formulario que se
@@ -18761,7 +18766,14 @@ function elPapelPorSuId(documento_id) {
  * fuente de la obligación. Y cuando falta la **clasificación técnica** se dice: es el dato del que depende
  * todo, y el programa lo pide en vez de deducirlo.
  */
-function unaMaquinaPreparada(ficha) {
+function unaMaquinaPreparada(ficha, losCostes = {}) {
+  // **El coste de cada avería, por su identificador**: la puerta del coste devuelve una lista avería por
+  // avería, y aquí se indexa para poder enseñar el de cada una sin recorrerla entera por cada fila.
+  const costePorAveria = {};
+  for (const cada of (losCostes || {}).averias || []) {
+    costePorAveria[String(cada.averia_id)] = cada;
+  }
+  const elTotal = (losCostes || {}).total || null;
   const m = t("maquinaria", {});
   const maquina = (ficha || {}).maquina || {};
   const obligaciones = ((ficha || {}).obligaciones || []).map((obligacion) => ({
@@ -18935,8 +18947,47 @@ function unaMaquinaPreparada(ficha) {
       // servidor: sin esta linea, la ficha diria «No consta» aunque la puerta lo sepa. Vacio se deja
       // vacio, y el componente ya sabe decirlo con la palabra de la casa (`sin_decir`).
       taller: averia.taller || "",
+      // **Las frases compuestas se montan AQUI** (`docs/REACT.md`), y no es un capricho de estilo: el
+      // componente no puede escribir «Taller: » + el nombre, porque entonces la ficha tendria frases que
+      // **no vienen del servidor**, y el guardian de «ni una frase escrita a mano» no podria distinguir
+      // una compuesta de una inventada. (La linea del taller se entrego asi y solo pasaba porque sus dos
+      // mitades caian al mismo «Falta decirlo»; lo cazo la linea del coste al ponerse al lado.)
+      taller_texto: `${t("maquinaria.taller_de_la_averia", "")}: ${averia.taller || m.sin_decir}`,
+      // **Lo que ha costado ESTA avería.** Vacío es **«no consta»**, y por eso NO se pone «0,00 €»: una
+      // avería sin ningún gasto apuntado no ha costado cero, es que no se sabe. Y la puerta no inventa
+      // una fila con cero para las que no tienen gastos (hay una prueba que lo fija).
+      coste_texto: (costePorAveria[String(averia.id)] || {}).texto_coste || "",
+      coste_frase: (costePorAveria[String(averia.id)] || {}).texto_coste
+        ? `${t("maquinaria.coste_de_una_averia", "")}: ${(costePorAveria[String(averia.id)] || {}).texto_coste}`
+        : t("maquinaria.coste_de_una_averia_sin_constar", ""),
       anulado: Boolean(averia.anulado),
     })),
+    // **Y el total de la máquina**, con sus dos avisos: cuántos gastos lo forman y **cuántos no tienen
+    // importe**. Sin eso, un total que solo suma la mitad parecería el total entero.
+    coste: elTotal
+      ? {
+          texto: elTotal.texto_coste || "",
+          gastos: elTotal.gastos || 0,
+          sin_importe: elTotal.sin_importe || 0,
+          completo: elTotal.completo === true,
+          // **La frase entera se monta AQUI**, no en el componente (`docs/REACT.md`), y **con su aviso
+          // dentro**: el total y el aviso de cuantos gastos no tienen importe son **una sola frase** para
+          // el guardian, y partirlas en el componente dejaria trozos que no vienen del servidor.
+          frase:
+            `${t("maquinaria.coste_de_la_maquina", "")}: ${elTotal.texto_coste || ""}` +
+            ((elTotal.sin_importe || 0) > 0
+              ? ` ${rellena(
+                  t(
+                    elTotal.sin_importe === 1
+                      ? "maquinaria.coste_sin_importe_uno"
+                      : "maquinaria.coste_sin_importe_varios",
+                    "",
+                  ),
+                  { cuantos: String(elTotal.sin_importe) },
+                )}`
+              : ""),
+        }
+      : null,
   };
 }
 
@@ -19026,6 +19077,41 @@ function pantallaMaquinaria() {
  * está en tu cuaderno» (404, que es lo que contesta el servidor también cuando la máquina es de otra
  * finca, para no contar si existe) o, sin cobertura, «no lo he podido comprobar».
  */
+/**
+ * **Lo que ha costado tener una máquina parada** (CRM-07 #7, 14/10/2026).
+ *
+ * El informe del dueño pide «**el coste en la ficha de la máquina**». Y **no se calcula aquí**: la puerta
+ * (`GET /gastos/averias?maquina_id=`) ya suma los gastos que **dicen de qué avería salen**, con su total y
+ * con **cuántos de esos gastos no tienen importe**. Sumar en la pantalla sería calcular lo mismo en dos
+ * sitios, y en esta casa las cifras las calcula el servidor.
+ *
+ * **Y si esto falla, la ficha se abre igual**: lo que no puede pasar es que un agregado de dinero impida
+ * ver los datos de la máquina —la misma regla que el saldo de un contacto, escrita al lado de aquel—. Lo
+ * que se pierde es la cifra, y la pantalla lo dice en vez de enseñar un cero.
+ */
+async function cargarElCosteDeLasAverias(id) {
+  const suyo = estadoDeLaMaquinaria();
+  suyo.costes = null;
+  suyo.costeError = "";
+  try {
+    suyo.costes = await apiJson(`/api/gastos/averias?maquina_id=${id}`);
+    // **Y no basta con que la peticion no falle** (14/10/2026): si la respuesta **viene sin el total**,
+    // la ficha tampoco puede callarse. Es lo mismo que un fallo -no hay cifra- y se dice igual. Y de paso
+    // esto distingue «el navegador ejecuta codigo viejo» de «la respuesta no traia el total», que son dos
+    // cosas muy distintas y desde fuera se parecen mucho.
+    if (!suyo.costes || !suyo.costes.total) {
+      suyo.costeError = "la respuesta no traia el total";
+    }
+  } catch (fallo) {
+    // **Se guarda POR QUE fallo** (14/10/2026). Antes esto se tragaba el motivo y dejaba `costes` en
+    // null, sin mas: ***una tolerancia que no deja rastro es una ceguera***, y me costo tres rondas de
+    // medidas por fuera descubrir lo que el navegador sabia desde el primer momento. Ahora la ficha dice
+    // que no se pudo traer, y el motivo queda en un `data-motivo` que se puede leer.
+    suyo.costes = null;
+    suyo.costeError = mensajeDeFallo(fallo);
+  }
+}
+
 /** Abre la ficha de una máquina. */
 async function abrirUnaMaquina(id) {
   const suyo = estadoDeLaMaquinaria();
@@ -19052,7 +19138,8 @@ async function abrirUnaMaquina(id) {
     return;
   }
   suyo.maquinaCruda = await respuesta.json();
-  suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda);
+  await cargarElCosteDeLasAverias(id);
+  suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda, suyo.costes);
   // Y los avisos de todas las máquinas, que son los mismos que enseña la lista: se piden aquí para que la
   // ficha y la lista no puedan decir cosas distintas de la misma máquina.
   await recargarLaMaquinaria();
@@ -19071,6 +19158,8 @@ function pantallaUnaMaquina() {
       obligaciones: ficha.obligaciones || [],
       inspecciones: ficha.inspecciones || [],
       averias: ficha.averias || [],
+      coste: ficha.coste || null,
+      costeError: suyo.costeError || "",
       formulario: elFormularioDeLaMaquinaria(suyo.formulario),
       anulando: suyo.anulando,
       guardando: suyo.guardando,
@@ -19087,7 +19176,8 @@ async function recargarLaFichaDeLaMaquina() {
   if (!id) return;
   try {
     suyo.maquinaCruda = await apiJson(`/api/maquinaria/${id}`);
-    suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda);
+    await cargarElCosteDeLasAverias(id);
+    suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda, suyo.costes);
   } catch (fallo) {
     suyo.error = mensajeDeFallo(fallo);
   }

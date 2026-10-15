@@ -537,9 +537,13 @@ function Averia({ averia, textos }) {
         // **El taller** (CRM-07 #7, 14/10/2026). Se ensena **siempre**, tambien cuando no consta: una
         // averia sin taller es lo mas normal del mundo, y callarlo dejaria al agricultor sin saber si
         // el programa no lo sabe o si se lo esta guardando. La palabra es la de la casa (`sin_decir`).
-        html`<div className="apunte-detalle">
-          ${frase(textos.taller_de_la_averia)}: ${frase(averia.taller || textos.sin_decir)}
-        </div>`
+        html`<div className="apunte-detalle">${frase(averia.taller_texto)}</div>`
+      }
+      ${
+        // **Y lo que costo esta averia** (CRM-07 #7). Tambien se dice cuando no consta, por lo mismo:
+        // una averia sin ningun gasto apuntado **no ha costado cero**, y el agricultor tiene que poder
+        // distinguir «no lo se» de «fue gratis».
+        html`<div className="apunte-detalle">${frase(averia.coste_frase)}</div>`
       }
       ${averia.notas ? html`<div className="apunte-detalle">${frase(averia.notas)}</div>` : null}
       ${
@@ -581,6 +585,14 @@ export function PantallaDeUnaMaquina({
   obligaciones = [],
   inspecciones = [],
   averias = [],
+  // **Lo que ha costado tenerla parada** (CRM-07 #7, 14/10/2026): lo calcula el servidor y lo trae
+  // `app.js`. `null` es «no se pudo traer», y entonces no se ensena ninguna cifra en vez de un cero:
+  // no saberlo y ser cero no son lo mismo.
+  coste = null,
+  // **Si el coste no se pudo traer** (CRM-07 #7): la ficha lo dice en vez de dejar el hueco en blanco.
+  // Se recibe aqui **y** en el que llama: cambiar solo uno de los dos es el fallo de manual de esta
+  // misma entrega (`ReferenceError: coste is not defined`).
+  costeError = "",
   formulario = null,
   anulando = null,
   guardando = false,
@@ -666,6 +678,24 @@ export function PantallaDeUnaMaquina({
 
     <h2>${frase(m.seccion_averias)}</h2>
     ${
+      // **Y si no se pudo traer, se dice.** El motivo tecnico va en un `data-motivo` para poder medirlo;
+      // el agricultor lee la frase que le dice que hacer.
+      costeError
+        ? html`<p className="pista-campo" data-motivo=${costeError}>${frase(m.coste_no_se_pudo)}</p>`
+        : null
+    }
+    ${
+      // **Lo que ha costado tenerla parada** (CRM-07 #7, 14/10/2026), que es lo que pide el informe.
+      // Tres avisos distintos y ninguno se calla: si no hay ningun gasto apuntado se dice eso -y no
+      // «0,00 €», porque no saberlo y ser cero no son lo mismo-, el total lo calcula el servidor, y si
+      // algun gasto no tiene importe se dice cuantos (esa frase la monta `app.js`, no este fichero).
+      !coste
+        ? null
+        : !coste.gastos
+          ? html`<p className="pista-campo">${frase(m.coste_de_la_maquina_sin_gastos)}</p>`
+          : html`<p className="apunte-detalle"><strong>${frase(coste.frase)}</strong></p>`
+    }
+    ${
       averias.length
         ? html`<ul className="lista">
             ${averias.map(
@@ -732,20 +762,15 @@ export function pantallaDeLaMaquinaria(propiedades) {
 
 /** Y el de la ficha de una máquina. */
 export function pantallaDeUnaMaquina(propiedades) {
+  // **Se pasan TODAS las props de una vez, con reparto** (14/10/2026). Antes este envoltorio las
+  // reconstruia **una por una**, y eso significa que ***cualquier prop que no se nombre aqui se pierde
+  // aunque el que llama la mande***: sin aviso, sin error y sin rastro.
+  // Costo SEIS rondas: la averia si ensenaba su coste -`averias` estaba en la lista- y la linea del total
+  // no salia, y desde fuera las dos cosas parecian lo mismo. Se probaron la cache, el service worker, la
+  // navegacion por fragmento y el propio fichero, y el fallo estaba en **una lista escrita a mano**.
+  // Con el reparto, este envoltorio **no puede** perder una prop: pasa lo que le den.
   return html`
-    <${PantallaDeUnaMaquina}
-      textos=${propiedades.textos}
-      maquina=${propiedades.maquina}
-      avisos=${propiedades.avisos}
-      obligaciones=${propiedades.obligaciones}
-      inspecciones=${propiedades.inspecciones}
-      averias=${propiedades.averias}
-      formulario=${propiedades.formulario}
-      anulando=${propiedades.anulando}
-      guardando=${propiedades.guardando}
-      error=${propiedades.error}
-      aviso=${propiedades.aviso}
-    />
+    <${PantallaDeUnaMaquina} ...${propiedades} />
   `;
 }
 
