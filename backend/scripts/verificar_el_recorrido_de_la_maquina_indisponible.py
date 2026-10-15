@@ -282,9 +282,19 @@ def leer_el_reparto_de_un_gasto(nav: NavegadorDeVerdad) -> dict:
         # el contrato-. Sin filtrar, **cada maquina sale DOS VECES** y la lista parece el doble de larga.
         # Se copia el filtro que ya usa `leer_la_lista_de_la_maquinaria`, que es el mismo problema.
         " const seVe = (el) => Boolean(el) && el.checkVisibility({checkVisibilityCSS: true});"
-        " const botones = Array.from(p.querySelectorAll("
+        # **Se lee UN contenedor, no todos** (14/10/2026): la pantalla de una ficha pinta **la lista** y,
+        # al lado, **el panel de la fila elegida**, y a 1440 px **los dos se ven**. El formulario del
+        # reparto esta, por tanto, DOS VECES -9 botones en cada sitio, con las mismas claves-, y leer
+        # `#pantalla` entero devuelve 18. **No es un defecto del producto: son los dos sitios donde el
+        # agricultor lo ve.** Se coge el primero que tenga botones de marcar, que es el formulario.
+        # (La vez anterior agrupe por `className` y los dos contenedores se llaman `barra-acciones`: se
+        # fundieron en un cubo y la cuenta parecia «18 en un padre». El error estaba en la medicion.)
+        " const contenedores = Array.from(p.querySelectorAll('.barra-acciones'))"
+        "   .filter((c) => c.querySelector(" + json.dumps(LA_MARCA_DE_UNA_MAQUINA) + "));"
+        " const contenedor = contenedores[0] || null;"
+        " const botones = (contenedor ? Array.from(contenedor.querySelectorAll("
         + json.dumps(LA_MARCA_DE_UNA_MAQUINA)
-        + ")).filter(seVe).map((b) => ({ clave: String(b.dataset.clave || ''),"
+        + ")) : []).filter(seVe).map((b) => ({ clave: String(b.dataset.clave || ''),"
         "                   texto: (b.innerText || '').replace(/\\s+/g, ' ').trim() }));"
         " const destinos = Array.from(p.querySelectorAll("
         + json.dumps('#pantalla button[data-accion="gasto-elegir"][data-campo="destino_tipo"]')
@@ -815,21 +825,6 @@ def main() -> int:
                 print("  >> sin la lista de maquinas no se puede comprobar lo que ofrece el reparto")
                 return 1
             el_reparto = leer_el_reparto_de_un_gasto(nav)
-            # La medicion, pedida por la ronda anterior: de cuantos padres cuelgan los botones y
-            # cuantos no se ven. Va aqui y no dentro de la asercion porque **aqui es una sentencia
-            # entera**, y la vez anterior el ancla cayo dentro de una llamada de varias lineas.
-            print("  (medicion del reparto: " + json.dumps(
-                nav.evaluar(
-                    "(() => { const p = document.getElementById('pantalla');"
-                    " const bs = Array.from(p.querySelectorAll(" + json.dumps(LA_MARCA_DE_UNA_MAQUINA) + "));"
-                    " const seVe = (el) => Boolean(el) && el.checkVisibility({checkVisibilityCSS: true});"
-                    " const padres = {};"
-                    " bs.forEach((b) => { const c = (b.parentElement && b.parentElement.className) || '?';"
-                    "   padres[c] = (padres[c] || 0) + 1; });"
-                    " return { botones: bs.length, visibles: bs.filter(seVe).length, padres: padres }; })()"
-                ),
-                ensure_ascii=False,
-            ) + ")")
             botones = el_reparto.get("botones") or []
             claves = [str(uno.get("clave")) for uno in botones]
             textos = [str(uno.get("texto")) for uno in botones]
