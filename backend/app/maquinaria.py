@@ -295,6 +295,9 @@ def estado_de_una_obligacion(
       · `situacion` — el estado, en un código que `textos.py` convierte en palabras.
       · `dias` — los días que quedan hasta la próxima fecha apuntada, o `None` si no hay fecha.
       · `fuente` — de dónde sale la obligación (la norma que tenemos, o lo que falta).
+      · `decidido_por_usuario_id` y `decidido_en` — **quién lo decidió y cuándo**, tal cual salen de
+        la fila. **El nombre no se resuelve aquí**: esta función es pura y no tiene base de datos, así
+        que el nombre lo pone el router (CRM-07 #6, 14/10/2026).
 
     La `situacion` se decide **solo con lo que está apuntado**: la aplicabilidad, el resultado y la
     fecha del papel. Ni el nombre de la máquina, ni su clase, ni su marca entran aquí — y hay una
@@ -367,6 +370,13 @@ def estado_de_una_obligacion(
         "la_aplicabilidad_trae_papel": getattr(obligacion, "documento_id", None) is not None,
         # **De cuándo es esa evidencia**, que no es cuándo se apuntó (eso es `creado_en`, y no sale).
         "fecha_de_la_evidencia": getattr(obligacion, "fecha_de_la_evidencia", None),
+        # **Quién lo decidió y el día que lo dijo** (CRM-07 #6, 14/10/2026). Salen **tal cual están
+        # en la fila**: aquí se devuelve el identificador y **no se resuelve el nombre**, porque esta
+        # función es pura y no tiene base de datos; el nombre lo pone el router, que es quien puede
+        # leer `Usuario` (ver `_quien_lo_decidio` en `routers/maquinaria_api.py`). Y `decidido_en` no
+        # es `creado_en`: esa es cuándo se apuntó esto; esta, el día en que se decidió.
+        "decidido_por_usuario_id": getattr(obligacion, "decidido_por_usuario_id", None),
+        "decidido_en": getattr(obligacion, "decidido_en", None),
         # **Una fecha que ya pasó es un hecho, y se dice aunque nadie haya declarado si le toca.** Si el
         # agricultor escribió «próxima: 12/05/2024» y esa fecha pasó, esconderlo porque falta por
         # contestar otra pregunta es dejarle comparar fechas de cabeza (lo encontró la revisión del

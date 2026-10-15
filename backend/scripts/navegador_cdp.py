@@ -387,6 +387,21 @@ class NavegadorDeVerdad:
 
     def medir(self, ancho: int, alto: int, *, escala: float = 1.0, movil: bool = False) -> None:
         """Pone la página en un tamaño y una escala concretos (para medir anchos sin abrir otra ventana)."""
+        # **Y se apaga la cache del navegador, que es la mitad que no se ve** (14/10/2026). El servidor
+        # sirve los ficheros de `web/` tal cual -`main.py` monta `StaticFiles`-, y el navegador se los
+        # guarda: cuando un fichero de JavaScript cambia **entre dos vueltas** -y en esta casa los cambian
+        # hasta tres agentes a la vez-, `abrir` puede estar sirviendo **el de antes**.
+        #
+        # **Se descubrio midiendo, no suponiendo**: el recorrido de la aplicabilidad fallo en un campo que
+        # no encontraba, y al preguntarle **al servidor** por el fichero result que lo servia **nuevo**
+        # mientras el navegador tenia el **viejo**. Lo peor de esto no es que un recorrido falle: es que
+        # **puede pasar midiendo codigo viejo** y dar por bueno algo que ya no esta, que es la peor clase
+        # de verde.
+        #
+        # Va aqui, en `medir`, porque es **lo primero que hace todo recorrido** y siempre antes de abrir
+        # nada: asi lo arreglan todos, y no solo el que se dio cuenta.
+        self.orden("Network.enable")
+        self.orden("Network.setCacheDisabled", {"cacheDisabled": True})
         self.orden(
             "Emulation.setDeviceMetricsOverride",
             {

@@ -693,6 +693,12 @@ class ObligacionEntrada(EntradaBase):
     documento_id: int | None = None
     # Y **no es `creado_en`**: esa es cuándo se apuntó esto; esta, de cuándo es el papel.
     fecha_de_la_evidencia: dt.date | None = None
+    # **Cuándo se decidió** (CRM-07 #6, 14/10/2026). Lo manda el cliente porque **solo él sabe cuándo
+    # lo decidió**; **quién** lo decidió no viene por aquí, y es a propósito: eso lo pone el servidor,
+    # que es el único que sabe qué cuenta está usando el programa (ver `declarar_una_obligacion`).
+    # Preguntárselo al navegador sería dejar que el agricultor dijera que decidió otro. Y no es
+    # `creado_en`: esa es cuándo se apuntó, que puede ser mucho después del día en que se decidió.
+    decidido_en: dt.date | None = None
     notas: str | None = None
 
 
@@ -703,6 +709,13 @@ class ObligacionSalida(SalidaBase):
     origen: str
     documento_id: int | None
     fecha_de_la_evidencia: dt.date | None
+    # **Quién lo decidió y el día que lo dijo** (CRM-07 #6, 14/10/2026). Aquí se devuelve el
+    # **nombre**, no el identificador: la fila guarda `decidido_por_usuario_id` y el nombre se
+    # resuelve al leerlo, que es la convención de la casa —la bandeja hace lo mismo con
+    # `confirmado_por_usuario_id`, que se enseña como `Usuario.nombre`—. Y no se confunde con
+    # `fecha_de_la_evidencia`, que es de cuándo es el papel: esta es de cuándo se decidió.
+    decidido_por: str | None = None
+    decidido_en: dt.date | None = None
     # Se dice **en el dato**, no solo en la pantalla: una obligación sin papel lo dice al leerla, para
     # que ninguna pantalla pueda callarlo por olvido. Es el mismo trato que la inspección.
     trae_papel: bool = False
@@ -830,6 +843,14 @@ class EstadoDeUnaObligacionSalida(BaseModel):
     documento_de_la_aplicabilidad_id: int | None = None
     la_aplicabilidad_trae_papel: bool = False
     fecha_de_la_evidencia: dt.date | None = None
+    # **Y quién lo decidió y cuándo, que es lo que lee la ficha** (CRM-07 #6, 14/10/2026). Van en
+    # **este** esquema y no solo en `ObligacionSalida`, y ese es justo el detalle que se aprendió a
+    # golpes en este mismo ticket: el que la pantalla lee es este (`GET /api/maquinaria/{id}` →
+    # `_la_ficha`), así que un campo que falte aquí **no llega a la ficha** aunque la tabla y la
+    # puerta lo tengan. El **nombre** lo resuelve el router: `app/maquinaria.py` es puro y no tiene
+    # base de datos, así que de allí sale el identificador y de aquí, el nombre.
+    decidido_por: str | None = None
+    decidido_en: dt.date | None = None
     fuente: FuenteDeLaObligacionSalida
 
 

@@ -1172,6 +1172,136 @@ def main() -> int:
         ),
     )
 
+    # --------------------------------------------------------------------------------------------
+    # **Con su propio navegador**: el guion abre **uno por bloque**, y este paso se escribio primero
+    # fuera del `with` de los pasos 1 a 7 -que es lo que dijo el `RuntimeError`: «el navegador no esta
+    # abierto: se usa dentro de un `with`»-. Se repite aqui la misma apertura: medir, meter el vale en
+    # cada documento nuevo -para que recargar siga dentro de la sesion- y abrir la ficha.
+    try:
+        with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
+            nav.medir(1440, 1000)
+            nav.orden(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {"source": "window.localStorage.setItem('cuedigital.token', " + json.dumps(token) + ");"},
+            )
+            la_direccion = LA_PANTALLA_DE_UNA_MAQUINA.format(id=maquina_id)
+            nav.abrir(f"{DIRECCION}/{la_direccion}", esperar=3.0)
+            # 8. QUIEN LO DECIDIO Y CUANDO (revision del dueño, 14/10/2026)
+            #
+            # La revision pide, ademas del documento y su fecha, «**autor** y **fecha de decision**». Y aqui hay
+            # **una decision de diseño que la prueba tiene que fijar**: *el autor lo pone el SERVIDOR, nunca la
+            # peticion* —preguntarselo al cliente seria dejar que el agricultor dijera que decidio otro—, y la
+            # fecha si la manda el cliente, porque solo el sabe cuando lo decidio.
+            # --------------------------------------------------------------------------------------------
+            print("\n8. QUIEN LO DECIDIO Y CUANDO: la fecha se escribe en su hueco, y el autor lo pone el servidor")
+            el_identificador_de_la_decision = f"obligacion-decidido-en-{tipo}"
+            FECHA_DE_LA_DECISION = "2026-04-02"
+
+            # La fecha, escrita **en la pantalla**, en su campo (que tiene que existir: si no, el agricultor no
+            # puede decir cuando lo decidio y el dato se quedaria en «no consta» para siempre).
+            escrito = nav.evaluar(
+                "(() => { const c = document.getElementById(" + json.dumps(el_identificador_de_la_decision) + ");"
+                " if (!c) return null;"
+                " const pon = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
+                " pon.call(c, " + json.dumps(FECHA_DE_LA_DECISION) + ");"
+                " c.dispatchEvent(new Event('input', { bubbles: true }));"
+                " return c.value; })()"
+            )
+            if not comprobar(
+                escrito == FECHA_DE_LA_DECISION,
+                "y la fecha de la decision se escribe en SU campo, en la pantalla",
+                esperaba=f"un campo #{el_identificador_de_la_decision} que acepte {FECHA_DE_LA_DECISION!r}",
+                encontre=repr(escrito),
+            ):
+                print("  >> sin ese campo no se puede decir cuando se decidio")
+                return 1
+
+            # Y se declara otra vez la aplicabilidad (la misma respuesta) **para que salga la peticion**: la
+            # pantalla guarda al pulsar, asi que el clic es lo que manda la fecha que se acaba de escribir.
+            el_selector_de_la_misma = "#pantalla " + el_selector_de_una_opcion(
+                EL_CAMPO_DE_LA_APLICABILIDAD, tipo, APLICABILIDAD_PRIMERA
+            )
+            if not comprobar(
+                pulsar(nav, el_selector_de_la_misma),
+                "y se declara otra vez para que la fecha salga en la peticion",
+                esperaba=el_selector_de_la_misma,
+                encontre="pulsado",
+            ):
+                return 1
+
+            llego_la_decision = esperar_a_que_la_puerta_lo_diga(
+                token, maquina_id, tipo, "decidido_en", FECHA_DE_LA_DECISION
+            )
+            la_obligacion_de_ahora = la_obligacion(
+                _api(f"/api/maquinaria/{maquina_id}", token, metodo="GET") or {}, tipo
+            )
+            comprobar(
+                llego_la_decision,
+                "y la fecha de la decision llega a la puerta y se guarda",
+                esperaba=f"decidido_en={FECHA_DE_LA_DECISION!r} en la puerta",
+                encontre=f"decidido_en={la_obligacion_de_ahora.get('decidido_en')!r}",
+            )
+
+            # **Y EL AUTOR, que es lo que la peticion NO manda.** Se comprueban las dos mitades: que la puerta
+            # dice quien lo decidio, y que **no lo dijo la pantalla** -la peticion solo llevaba la fecha-.
+            quien = la_obligacion_de_ahora.get("decidido_por")
+            comprobar(
+                bool(quien),
+                "y la puerta dice QUIEN lo decidio, que es lo que el agricultor va a poder ensenar",
+                esperaba="un nombre (lo pone el servidor, que es quien sabe quien esta usando el programa)",
+                encontre=repr(quien),
+            )
+            # Si el escenario trae el nombre de la cuenta, se exige **el suyo**: el autor es quien decidio, no
+            # cualquiera. Si no lo trae, se deja dicho en vez de dar por bueno un nombre cualquiera.
+            el_nombre_de_la_cuenta = getattr(escenario, "nombre", None) or getattr(
+                getattr(escenario, "cuenta", None), "nombre", None
+            )
+            if el_nombre_de_la_cuenta:
+                comprobar(
+                    str(quien) == str(el_nombre_de_la_cuenta),
+                    "y el autor es EL DE LA CUENTA que ha decidido, no otro nombre cualquiera",
+                    esperaba=repr(str(el_nombre_de_la_cuenta)),
+                    encontre=repr(quien),
+                )
+            else:
+                print(f"  (el escenario no trae el nombre de la cuenta: se comprueba que hay autor, no cual)")
+
+            # Y **tras recargar de verdad**, la ficha lo ensena: es la mitad que se ve.
+            recargada = recargar(
+                nav,
+                f"{DIRECCION}/{la_direccion}",
+                "document.getElementById(" + json.dumps(el_identificador_de_la_decision) + ") !== null",
+            )
+            comprobar(recargada, "se recarga antes de leer lo decidido (documento nuevo)")
+            # **Y que la ficha lo ensene tras recargar**, que es la mitad que se ve. Se lee **del campo**, que es
+            # donde el agricultor lo va a encontrar: si el guardado funcionara y la ficha no lo pintara, el dato
+            # estaria en la base y **no se podria ver**, que es la mitad que se olvida.
+            lo_que_ensena = nav.evaluar(
+                "(() => { const c = document.getElementById(" + json.dumps(el_identificador_de_la_decision) + ");"
+                " return c ? c.value : null; })()"
+            )
+            comprobar(
+                lo_que_ensena == FECHA_DE_LA_DECISION,
+                "y tras recargar, la ficha ENSENA la fecha de la decision (no solo la guarda)",
+                esperaba=f"el campo #{el_identificador_de_la_decision} con {FECHA_DE_LA_DECISION!r}",
+                encontre=repr(lo_que_ensena),
+            )
+
+            # **Y el rastro de la auditoria**: aqui NO se comprueba, y se dice por que. El paso 7 ya lee la
+            # auditoria **en linea** -el guion no tiene ningun ayudante para eso-, y el rastro de una correccion
+            # lo escribe `correcciones` con **los campos que cambian**: el paso 7 ya exige que la misma entrada
+            # nombre `documento_id` y `fecha_de_la_evidencia`, y `decidido_en` viaja por ese mismo camino. Lo que
+            # falta es comprobarlo **aqui**, con el mismo codigo del paso 7; se deja dicho en vez de escribir un
+            # ayudante a ojo, que es como se cuelan las pruebas que miden otra cosa.
+            print(
+                "  (la auditoria de la decision queda PENDIENTE de comprobar aqui: el paso 7 lee la auditoria en"
+                " linea, y este paso no la repite. El rastro lo escribe `correcciones` con los campos que cambian.)"
+            )
+    except RuntimeError as fallo:
+        print(f"  >> el navegador no ha podido: {fallo}")
+        FALLOS.append(f"paso 8: el navegador no ha podido ({fallo})")
+        return 1
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     for fallo in FALLOS:
         print(f"  - {fallo}")

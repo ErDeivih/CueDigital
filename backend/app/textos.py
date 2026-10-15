@@ -7357,6 +7357,14 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     "origen_el_agricultor": "Lo digo yo",
     "origen_no_se": "No lo sé",
     "lo_que_dice_la_norma": "De dónde sale esta obligación",
+    # **Y la VIGENCIA de esa norma, que el programa NO conoce y lo dice** (revision del dueño,
+    # 14/10/2026). El informe pide «fuente normativa **y vigencia**», y la casa ya tiene su respuesta a
+    # esa pregunta, escrita en `normativa.py`: «*la matriz define los cinco tipos y los cinco estados,
+    # pero no dice cual es cada regla, y **rellenarlos a ojo seria inventar una clasificacion legal**»*.
+    # Asi que aqui **no se inventa**: se dice que no consta, con las MISMAS palabras que ya usa la
+    # pantalla de la normativa (`sin_estado`). Es lo que separa «la norma esta localizada» de «la norma
+    # esta en vigor», que no son lo mismo y es justo lo que el dueño pide poder distinguir.
+    "lo_que_dice_la_norma_vigencia": "Todavía no se ha revisado si esta regla está en vigor",
     "guarda_el_papel": (
         "Los papeles de las inspecciones hay que poder enseñarlos tres años. Si los guardas en «los "
         "papeles», deja aquí apuntado cuál es."
@@ -7401,6 +7409,16 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     "fecha_de_la_evidencia_pista": (
         "Vacío es «no consta», y no se pone la de hoy. Se guarda al elegir el papel."
     ),
+    # --- Quién decidió y cuándo (CRM-07 #6) ---
+    # **La convención es la de la bandeja**, que es el único sitio del proyecto que ya enseña un par
+    # «autor + fecha» (`confirmado_por` / `confirmado_en`): dos rótulos, uno para el nombre y otro para el
+    # día, y el tono en segunda persona porque el cuaderno lo lleva el agricultor. **El autor lo pone el
+    # servidor** —es quien está usando el programa—, así que aquí solo se lee: la pantalla no lo manda.
+    "decidido_por": "Lo decidiste tú",
+    "decidido_en": "Cuándo lo decidiste",
+    # Y vacío es «no consta», nunca «hoy»: la fecha la sabe el agricultor, no el programa. Se escribe en su
+    # hueco y **se manda solo si tiene valor**, para que la que hubiera no se borre sola (la regla A1).
+    "decidido_en_pista": "Vacío es «no consta», y no se pone la de hoy",
     # **El papel, con su nombre y su botón para abrirlo.** La ficha decía solo «Con su papel»: no decía
     # **cuál** era ni dejaba verlo, y el papel es justo lo que se enseña en una inspección (lo encontró la
     # revisión del ticket). Con esto, el agricultor lee el nombre del papel que demuestra la inspección y

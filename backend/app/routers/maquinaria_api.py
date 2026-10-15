@@ -566,6 +566,26 @@ def traer_un_equipo_del_cuaderno(
     return maquina
 
 
+def _quien_lo_decidio(db: Db, explotacion, usuario_id: int | None) -> str | None:
+    """El **nombre** de la cuenta que decidió, o `None` si no consta.
+
+    **Por qué se resuelve al leer y no al escribir** (CRM-07 #6, 14/10/2026): la fila guarda el
+    identificador y la ficha enseña el nombre, que es la convención de la casa —la bandeja guarda
+    `confirmado_por_usuario_id` y enseña `Usuario.nombre`—. Es el mismo camino, escrito aquí porque
+    el ayudante de la bandeja es suyo y privado.
+
+    Y es **tolerante a propósito**, igual que aquel: una cuenta que ya no está, o que es de otra
+    finca, **no puede tumbar la ficha entera con un error del servidor**. Lo que se dice es que no
+    consta quién lo decidió, que es la verdad y además se puede arreglar volviendo a declararlo.
+    """
+    if not usuario_id:
+        return None
+    quien = db.get(models.Usuario, int(usuario_id))
+    if quien is None or getattr(quien, "explotacion_id", None) != explotacion.id:
+        return None
+    return quien.nombre
+
+
 def _la_ficha(db: Db, explotacion, maquina) -> dict:
     obligaciones = _obligaciones_de(db, explotacion, maquina.id)
     inspecciones = _inspecciones_de(db, explotacion, maquina.id)
@@ -573,6 +593,14 @@ def _la_ficha(db: Db, explotacion, maquina) -> dict:
     estados = maquinaria.estado_de_todas_las_obligaciones(
         obligaciones=obligaciones, inspecciones=inspecciones
     )
+    # **El nombre de quien decidió se resuelve aquí, y solo aquí** (CRM-07 #6, 14/10/2026): de
+    # `app/maquinaria.py` sale el identificador —esa función es pura y no tiene base de datos— y el
+    # nombre se pone en este mismo estado que lee la ficha, para que la pantalla no tenga que volver
+    # a buscar a nadie. Si la cuenta ya no está o es de otra finca, queda en `None` y no revienta.
+    for estado in estados.values():
+        estado["decidido_por"] = _quien_lo_decidio(
+            db, explotacion, estado.get("decidido_por_usuario_id")
+        )
     return {
         "maquina": maquina,
         # En el orden de la ficha (ITV, ITEAF, mantenimiento, seguro y ROMA), **las cinco siempre**:
@@ -789,6 +817,14 @@ def declarar_una_obligacion(
             origen=origen,
             documento_id=datos.documento_id,
             fecha_de_la_evidencia=datos.fecha_de_la_evidencia,
+            # **Quién lo declara lo pone el servidor, y la fecha la manda el cliente** (CRM-07 #6,
+            # 14/10/2026). El autor es **quien está usando el programa**, y eso lo sabe `usuario`;
+            # preguntárselo al navegador sería dejar que el agricultor dijera que decidió otro. La
+            # fecha sí viene en la petición: **solo él sabe cuándo lo decidió**. Y **cada declaración
+            # es una decisión nueva de quien la hace**, así que el autor se reescribe siempre, tanto
+            # al dar de alta como al corregir.
+            decidido_por_usuario_id=usuario.id,
+            decidido_en=datos.decidido_en,
             notas=datos.notas,
         )
         db.add(obligacion)
@@ -809,7 +845,23 @@ def declarar_una_obligacion(
                     "aplicabilidad": obligacion.aplicabilidad,
                     "origen_de_la_aplicabilidad": obligacion.origen,
                     "documento_id": obligacion.documento_id,
-                    "fecha_de_la_evidencia": obligacion.fecha_de_la_evidencia,
+                    # **Las fechas van como texto, y no es un detalle de estilo**: `datos` es una
+                    # columna JSON y **una `date` no se puede escribir tal cual** —revienta al guardar
+                    # y la declaración entera se pierde con un 500—. En las correcciones lo resuelve
+                    # `correcciones._como_se_guarda`; aquí, que el diccionario se escribe a mano, se
+                    # deja escrito al escribirlo, como en la auditoría de ventas y de gastos.
+                    "fecha_de_la_evidencia": (
+                        obligacion.fecha_de_la_evidencia.isoformat()
+                        if obligacion.fecha_de_la_evidencia
+                        else None
+                    ),
+                    # **Y quién lo decidió y cuándo, también en el rastro del alta** (CRM-07 #6): el
+                    # contrato pide poder leer **quién afirmó qué y el día que lo dijo**, y el alta de
+                    # una obligación es justo donde se afirma por primera vez.
+                    "decidido_por_usuario_id": obligacion.decidido_por_usuario_id,
+                    "decidido_en": (
+                        obligacion.decidido_en.isoformat() if obligacion.decidido_en else None
+                    ),
                     "notas": obligacion.notas,
                 },
             )
@@ -837,6 +889,16 @@ def declarar_una_obligacion(
             datos.fecha_de_la_evidencia
             if "fecha_de_la_evidencia" in datos.model_fields_set
             else obligacion.fecha_de_la_evidencia
+        ),
+        # **Cada declaración es una decisión nueva de quien la hace** (CRM-07 #6, 14/10/2026): el
+        # autor se reescribe **siempre**, aunque la petición no lo nombre, porque el autor no lo pone
+        # el cliente sino el servidor. Y la fecha va con la **regla A1** de la casa («lo que la
+        # petición no manda, no se borra»), igual que el papel y su fecha de aquí arriba.
+        decidido_por_usuario_id=usuario.id,
+        decidido_en=(
+            datos.decidido_en
+            if "decidido_en" in datos.model_fields_set
+            else obligacion.decidido_en
         ),
         notas=datos.notas,
     )

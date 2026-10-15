@@ -392,6 +392,28 @@ function Obligacion({ obligacion, textos }) {
         />
         <p className="pista-campo">${frase(m.fecha_de_la_evidencia_pista)}</p>
       </div>
+      ${
+        // **Y QUIÉN LO DECIDIÓ, Y CUÁNDO** (CRM-07 #6): la ficha decía qué le toca y de dónde sale, pero
+        // **no decía quién lo había decidido**. Se enseña con las palabras de siempre —«falta decirlo»,
+        // como los demás huecos de esta ficha—, nunca con un renglón en blanco ni con un `null` a la vista,
+        // que es lo que parece un fallo del programa. **El autor lo pone el servidor**: aquí solo se lee.
+        html`<${Dato} rotulo=${m.decidido_por} valor=${obligacion.decidido_por} vacio=${m.sin_decir} />`
+      }
+      <${Dato} rotulo=${m.decidido_en} valor=${obligacion.decidido_en_texto} vacio=${m.sin_fecha_apuntada} />
+      ${
+        // **Y la fecha se escribe en su hueco**, igual que la del papel: vacío es «no consta» y **no se
+        // manda**, así que la que hubiera se queda en vez de borrarse sola por no volver a escribirla.
+        html`<div className="campo">
+          <label htmlFor=${`obligacion-decidido-en-${obligacion.tipo}`}>${frase(m.decidido_en)}</label>
+          <input
+            id=${`obligacion-decidido-en-${obligacion.tipo}`}
+            type="date"
+            data-campo="decidido_en"
+            defaultValue=${obligacion.decidido_en_iso}
+          />
+          <p className="pista-campo">${frase(m.decidido_en_pista)}</p>
+        </div>`
+      }
       ${obligacion.ultima_texto ? html`<div className="apunte-detalle">${frase(obligacion.ultima_texto)}</div>` : null}
       <${Dato} rotulo=${m.resultado} valor=${obligacion.resultado_texto} vacio=${m.resultado_no_consta} />
       <${Dato} rotulo=${m.proxima_fecha} valor=${obligacion.proxima_texto} vacio=${m.sin_fecha_apuntada} />
@@ -420,6 +442,17 @@ function Obligacion({ obligacion, textos }) {
           ? html`<div className="apunte-detalle">
               <strong>${frase(m.lo_que_dice_la_norma)}</strong>
               ${obligacion.fuente.norma ? ` ${frase(obligacion.fuente.norma)}` : ` ${frase(obligacion.fuente.que_falta)}`}
+              ${
+                // **Y la VIGENCIA, que el programa NO conoce y lo dice** (revision del dueño, 14/10/2026).
+                // El informe pide «fuente normativa **y vigencia**», y la casa ya decidio que esa
+                // clasificacion **no se rellena a ojo** -seria inventar una clasificacion legal-. Aqui no
+                // se inventa: se dice que no consta. Y solo se dice cuando **hay norma localizada**,
+                // porque decir «no se ha revisado si esta en vigor» de algo que no tenemos transcrito
+                // seria hablar de una norma que no se ha ensenado.
+                obligacion.fuente.norma
+                  ? html` <span className="pista-campo">${frase(m.lo_que_dice_la_norma_vigencia)}</span>`
+                  : null
+              }
               ${
                 obligacion.fuente.url
                   ? html` <a href=${obligacion.fuente.url} target="_blank" rel="noopener">${frase(obligacion.fuente.url)}</a>`

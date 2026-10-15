@@ -18790,6 +18790,13 @@ function unaMaquinaPreparada(ficha) {
       ? formateaFecha(obligacion.fecha_de_la_evidencia)
       : "",
     fecha_de_la_evidencia_iso: obligacion.fecha_de_la_evidencia || "",
+    // **Y QUIEN LO DECIDIO, Y CUANDO** (CRM-07 #6). El autor **lo pone el servidor** —es quien esta usando
+    // el programa—, asi que aqui solo se lee tal cual y **nunca se manda**. La fecha va en texto para
+    // leerla —con el mismo ayudante que las demas (`formateaFecha`)— y en ISO para el campo, que es lo que
+    // espera un `<input type=date>`. Vacio es «no consta», nunca hoy.
+    decidido_por: obligacion.decidido_por || "",
+    decidido_en_texto: obligacion.decidido_en ? formateaFecha(obligacion.decidido_en) : "",
+    decidido_en_iso: obligacion.decidido_en || "",
     // **Y el papel se puede ELEGIR**, que es la mitad que faltaba del contrato: antes la obligacion
     // decia salir de un documento y no habia forma de decir cual. Se elige como los demas datos de
     // esta ficha —en linea, y guarda al elegir—, con los papeles que ya tiene guardados.
@@ -20496,6 +20503,12 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     // regla A1 —la del #2 de semillas— y aquí es la misma trampa: un `null` explícito borra.
     const elCampoDeLaFecha = document.getElementById(`obligacion-fecha-${tipo}`);
     const fecha_escrita = elCampoDeLaFecha ? String(elCampoDeLaFecha.value || "").trim() : "";
+    // **Y la fecha de la decision, que se escribe en su hueco** (CRM-07 #6). Misma regla que la del papel:
+    // si el campo esta vacio **no se manda**, para que la que hubiera se quede en vez de borrarse porque
+    // el agricultor no la ha vuelto a escribir. **El autor no se manda nunca**: lo pone el servidor, que
+    // es quien esta usando el programa.
+    const elCampoDeLaDecision = document.getElementById(`obligacion-decidido-en-${tipo}`);
+    const decision_escrita = elCampoDeLaDecision ? String(elCampoDeLaDecision.value || "").trim() : "";
     suyo.error = "";
     const resultado = await mandarCambio(
       `/api/maquinaria/${maquina.id}/obligaciones/${tipo}`,
@@ -20505,6 +20518,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
         origen,
         documento_id,
         ...(fecha_escrita ? { fecha_de_la_evidencia: fecha_escrita } : {}),
+        // La fecha de la decision, con la misma regla: **solo si tiene valor**. Y el autor, nunca: lo
+        // pone el servidor (CRM-07 #6).
+        ...(decision_escrita ? { decidido_en: decision_escrita } : {}),
         notas: null,
       },
     );

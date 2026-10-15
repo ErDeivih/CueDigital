@@ -712,6 +712,21 @@ class ObligacionDeMaquina(Base):
     # el programa; esta es de cuándo es el papel (o cuándo lo dijo el agricultor). Son dos cosas
     # distintas, y confundirlas hace que un dato parezca firmado cuando nadie lo ha firmado.
     fecha_de_la_evidencia: Mapped[dt.date | None] = mapped_column(Date)
+    # **Quién lo decidió y cuándo** (revisión del dueño, 14/10/2026). El informe pide, además del
+    # documento y su fecha: «**autor**, **fecha de decisión** … **fuente normativa y vigencia**». Y son
+    # cosas **distintas** de las que ya había: `origen` dice de dónde sale, `fecha_de_la_evidencia` de
+    # cuándo es el papel, y esto **quién lo afirmó y el día que lo dijo**.
+    #
+    # **`creado_en` no vale** para la fecha de decisión: esa es cuándo se apuntó en el programa, y puede
+    # ser meses después de haberse decidido.
+    #
+    # **Y se copia la convención DOMINANTE, que no es la que parece**: el proyecto guarda «quién hizo
+    # algo» en **nueve** sitios como `*_por_usuario_id` (ForeignKey a `usuarios`) y **resuelve el nombre
+    # al leerlo** —así lo hace la bandeja: `confirmado_por_usuario_id` + `confirmado_en`, y el nombre
+    # sale de `Usuario.nombre` para enseñarlo como texto—. Solo `Tarea` copia el nombre en texto
+    # (`completada_por`, `String(120)`). Aquí se guarda el **id** y la ficha enseña el **nombre**.
+    decidido_por_usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    decidido_en: Mapped[dt.date | None] = mapped_column(Date)
     # **La fecha de la próxima, cuando se sabe y NO hay ninguna inspección apuntada de la que sacarla.**
     # Es el caso del equipo de echar producto que trae el cuaderno: su hoja 1.3 admite la fecha de la
     # próxima ITEAF sin la de la última, y las dos se preguntan por separado. Sin esta columna, traer ese
