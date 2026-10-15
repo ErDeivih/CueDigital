@@ -779,7 +779,11 @@ class AveriaEntrada(EntradaBase):
     """
 
     fecha: dt.date
-    que_paso: str = Field(min_length=1)
+    # ***SIN `min_length`*** (14/10/2026): lo comprueba la puerta, y no es un capricho. Con
+    # `min_length=1`, Pydantic salta **antes** y contesta `String should have at least 1 character`,
+    # que en la pantalla es «No se ha podido»: el agricultor no sabe que le falta escribir. Lo que hay
+    # que decir es **que escribir** -con un ejemplo-, y eso lo dice `maquinaria_api` con su frase (G54).
+    que_paso: str
     resuelta: bool | None
     fecha_resuelta: dt.date | None = None
     horas: float | None = Field(default=None, ge=0)

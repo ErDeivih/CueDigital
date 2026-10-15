@@ -1205,6 +1205,11 @@ def apuntar_una_averia(
     # `correcciones.tablas_que_apuntan_a`, que descubre esta tabla **por el nombre de la columna**: no hay
     # que apuntarla en ninguna lista, y una prueba avisa el dia que aparezca una tabla nueva.
     _el_papel_es_de_esta_finca(db, explotacion, datos.documento_id)
+    # **Y hay que decir QUE PASO.** El esquema lo exige (`min_length=1`), pero el **422 de FastAPI no se
+    # puede leer**: la pantalla ensenaba «No se ha podido» y el agricultor no podia saber que le faltaba
+    # escribir. Se comprueba aqui para poder decirlo con una frase que diga **como arreglarlo**.
+    if not (datos.que_paso or "").strip():
+        raise HTTPException(status_code=422, detail=textos.mensaje("G54_la_averia_sin_decir_que_paso"))
     clave = (datos.clave_de_reenvio or "").strip() or None
     if clave:
         # Por máquina, por el mismo motivo que en una inspección: ver `apuntar_una_inspeccion`.
@@ -1257,6 +1262,11 @@ def corregir_una_averia(
     if datos.taller_contacto_id is not None:
         obtener_de_la_explotacion(db, models.Contacto, datos.taller_contacto_id, explotacion.id)
     _el_papel_es_de_esta_finca(db, explotacion, datos.documento_id)
+    # **Y hay que decir QUE PASO.** El esquema lo exige (`min_length=1`), pero el **422 de FastAPI no se
+    # puede leer**: la pantalla ensenaba «No se ha podido» y el agricultor no podia saber que le faltaba
+    # escribir. Se comprueba aqui para poder decirlo con una frase que diga **como arreglarlo**.
+    if not (datos.que_paso or "").strip():
+        raise HTTPException(status_code=422, detail=textos.mensaje("G54_la_averia_sin_decir_que_paso"))
     preparada = models.AveriaDeMaquina(
         explotacion_id=explotacion.id,
         maquina_id=maquina_id,

@@ -8108,6 +8108,15 @@ MENSAJES.update(
             "La avería que has elegido es de otra máquina. Elige una avería de esta máquina, o quita la "
             "máquina y deja solo la avería, que ya dice de cuál es."
         ),
+    # **Y hay que decir QUE PASO** (CRM-07 #7, 14/10/2026). El esquema comprobaba `min_length=1`, pero
+    # Pydantic salta **antes** y contesta `String should have at least 1 character`: en la pantalla eso es
+    # «No se ha podido», y el agricultor **no sabe que le falta escribir**. La regla se comprueba en la
+    # puerta para poder decir **que escribir**, con un ejemplo. (Los codigos `G…` viven AQUI, en `MENSAJES`,
+    # no en el bloque de las palabras de cada pantalla: `textos.mensaje()` solo mira este.)
+    "G54_la_averia_sin_decir_que_paso": (
+        "Falta decir qué pasó: sin eso la avería no dice nada. Ponlo en dos palabras, como «se rompió el "
+        "eje del ventilador»."
+    ),
     }
 )
 
