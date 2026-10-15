@@ -312,6 +312,95 @@ class TestContratoYCodigo:
                 problemas.append(f"{nombre} es {en_css} en el CSS y {en_contrato} en el contrato")
         assert not problemas, "La escala de separación se ha separado del contrato: " + "; ".join(problemas)
 
+    def test_las_cuatro_esquinas_del_contrato_son_las_del_css(self):
+        """**Las esquinas, atadas al contrato** (14/10/2026).
+
+        Es el mismo caso que la separación de arriba, y esta vez el contrato **nombra las piezas** que
+        estaban mal: `paso` —la barra del asistente, que tenía **6 px** donde el contrato dice **4**— y
+        `ayuda-campo`. Las cuatro vivían como **números sueltos** en el CSS —`10px`, `8px`, `4px`—
+        mientras el contrato las llama `{rounded.lg}`, `{rounded.md}`, `{rounded.sm}` y `{rounded.xl}`:
+        la medida estaba en los dos sitios y **sin atar**. Con nombre, añadir una nueva obliga a
+        escribirla en los dos.
+        """
+        frontmatter, _ = leer_design_md()
+        variables = leer_variables_css()
+        problemas: list[str] = []
+        for nombre, token in (
+            ("--radio-xl", "xl"),
+            ("--radio-lg", "lg"),
+            ("--radio-md", "md"),
+            ("--radio-sm", "sm"),
+        ):
+            en_css = variables.get(nombre)
+            en_contrato = (frontmatter.get("rounded") or {}).get(token)
+            if en_css is None:
+                problemas.append(f"{nombre} no está en el CSS")
+            elif en_contrato is None:
+                problemas.append(f"rounded.{token} no está en DESIGN.md")
+            elif str(en_css) != str(en_contrato):
+                problemas.append(f"{nombre} es {en_css} en el CSS y {en_contrato} en el contrato")
+        assert not problemas, "Las esquinas se han separado del contrato: " + "; ".join(problemas)
+
+    def test_ninguna_esquina_del_css_es_una_que_el_contrato_no_tenga(self):
+        """**Y la otra mitad**: que no haya una esquina suelta por ahí.
+
+        Atar las cuatro variables no basta: alguien puede escribir `border-radius: 6px` en una pieza
+        nueva y las cuatro seguirían cuadrando. Esto es lo que **encontró** las dos `6px` —una de ellas
+        en la barra del asistente—, porque el contrato es explícito: «**No hay esquinas cuadradas**», y
+        las que hay son las suyas.
+
+        Se admiten `50 %` (los círculos) y el `0` de una tarjeta a la que solo se redondean dos
+        esquinas: **ninguno de los dos es una esquina nueva**.
+        """
+        fuente = CSS.read_text(encoding="utf-8")
+        permitidos = {
+            "var(--radio)",
+            "var(--radio-xl)",
+            "var(--radio-lg)",
+            "var(--radio-md)",
+            "var(--radio-sm)",
+            "50%",
+        }
+        problemas: list[str] = []
+        for numero, linea in enumerate(fuente.splitlines(), start=1):
+            encontrado = re.search(r"border-radius:\s*([^;]+);", linea)
+            if not encontrado:
+                continue
+            # El `0` de «solo estas dos esquinas» no es una esquina: se quita para mirar el resto.
+            trozos = [t for t in encontrado.group(1).split() if t and t != "0"]
+            for trozo in trozos:
+                if trozo not in permitidos:
+                    problemas.append(f"línea {numero}: `{trozo}` no es una esquina del contrato")
+        assert not problemas, "Hay esquinas fuera del contrato: " + "; ".join(problemas)
+
+    def test_el_css_no_declara_sombras_ni_degradados_ni_desenfoques(self):
+        """**La regla más deliberada del contrato, y la que no tenía guardián** (14/10/2026).
+
+        El contrato lo dice con su motivo: «**Este sistema no usa sombras. Ni una**… Al sol, una sombra
+        del 10 % de negro es **literalmente invisible**: el agricultor no ve el relieve, solo ve **un
+        borde sucio que parece un defecto de la pantalla**. Y en un móvil barato, cada sombra es trabajo
+        de dibujo **en cada fotograma**».
+
+        El CSS tenía **una**: `box-shadow: 0 0 0 2px …`, que con desplazamiento y desenfoque cero **no
+        es una sombra** —es un anillo— pero **se lee como una**. Ahora es `outline`, que dibuja en el
+        mismo sitio, y esto impide que vuelva a colarse ninguna.
+
+        Se buscan **declaraciones**, no la palabra suelta: los comentarios que explican la regla la
+        nombran, y **eso es bueno** (el primer intento de esta prueba falló justo por eso).
+        """
+        fuente = CSS.read_text(encoding="utf-8")
+        prohibidas = ("box-shadow", "text-shadow", "backdrop-filter")
+        problemas: list[str] = [
+            f"línea {numero}: {linea.strip()}"
+            for numero, linea in enumerate(fuente.splitlines(), start=1)
+            if linea.strip().startswith(prohibidas)
+            or re.match(r"^\s*background-image:\s*(linear|radial)-gradient", linea)
+        ]
+        assert not problemas, (
+            "El contrato dice «nada de sombras, degradados ni animaciones», y su motivo es el sol: "
+            + "; ".join(problemas)
+        )
+
     def test_ningun_boton_baja_de_64_pixeles_de_alto(self):
         frontmatter, _ = leer_design_md()
         # Los bordes no son botones: son líneas, y miden 2 o 3 px a propósito. El

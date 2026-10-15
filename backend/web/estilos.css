@@ -68,6 +68,14 @@
   --fila-par: rgba(0, 0, 0, 0.01);
 
   --toque: 64px;
+  /* **Las cuatro esquinas del contrato, con su nombre** (14/10/2026). Estaban como numeros
+     sueltos -`10px`, `8px`, `4px`- mientras el contrato las llama `{rounded.lg/md/sm/xl}`: la
+     medida estaba en los dos sitios y **sin atar**, que es el mismo defecto que tuvo el espaciado.
+     Con nombre, la prueba las compara y anadir una nueva obliga a escribirla en los dos sitios. */
+  --radio-xl: 14px;   /* lo que se toca: botones, campos, avisos, elementos de lista */
+  --radio-lg: 10px;   /* los botones pequenos de la cabecera */
+  --radio-md: 8px;    /* los bloques de ayuda, que no se tocan */
+  --radio-sm: 4px;    /* las barras de progreso del asistente: indicadores, no botones */
   --radio: 14px;
   --letra: 18px;
 
@@ -257,7 +265,7 @@ body {
   background: var(--sobre-verde-tenue);
   border: 2px solid var(--sobre-verde-borde);
   color: var(--sobre-verde);
-  border-radius: 10px;
+  border-radius: var(--radio-lg);
   min-height: 48px;
   min-width: 56px;
   padding: 0 0.6rem;
@@ -423,7 +431,7 @@ textarea:focus {
   width: 46px;
   height: 46px;
   border: 2px solid var(--borde);
-  border-radius: 10px;
+  border-radius: var(--radio-lg);
   background: var(--fondo-suave);
   font-size: 1.5rem;
   line-height: 1;
@@ -778,7 +786,7 @@ textarea {
   padding: 0.7rem 0.9rem;
   background: var(--fondo-suave);
   border-left: 6px solid var(--verde-medio);
-  border-radius: 8px;
+  border-radius: var(--radio-md);
 }
 
 .ayuda-campo h3 {
@@ -1008,7 +1016,10 @@ textarea {
   pointer-events: none;
   border: 3px solid var(--sobre-verde);
   border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--verde-oscuro);
+  /* **Y esto era un `box-shadow` con desplazamiento y desenfoque CERO**: no es una sombra
+     —es un anillo—, pero **se lee como una** y el contrato dice «ni una». `outline` dibuja en el
+     mismo sitio (fuera del borde) y deja la regla **absoluta y comprobable** (14/10/2026). */
+  outline: 2px solid var(--verde-oscuro);
 }
 
 .mapa-cargando {
@@ -1105,7 +1116,7 @@ textarea {
   font-size: 0.85rem;
   font-weight: 700;
   border: 2px solid var(--borde);
-  border-radius: 8px;
+  border-radius: var(--radio-md);
   background: var(--fondo-suave);
   color: var(--tinta);
 }
@@ -1162,7 +1173,7 @@ textarea {
 .numeros li {
   padding: 0.5rem 0.6rem;
   border: 2px solid var(--borde);
-  border-radius: 10px;
+  border-radius: var(--radio-lg);
   background: var(--fondo-suave);
 }
 
@@ -1194,7 +1205,7 @@ textarea {
   height: 12px;
   flex: 1;
   border: 2px solid var(--borde);
-  border-radius: 6px;
+  border-radius: var(--radio-sm);
   background: var(--fondo-suave);
 }
 
@@ -1292,7 +1303,7 @@ div.tarjeta:active {
   height: 48px;
   padding: 3px;
   border: 2px solid var(--borde);
-  border-radius: 10px;
+  border-radius: var(--radio-lg);
   background: var(--fondo-suave);
 }
 
@@ -1328,7 +1339,7 @@ div.tarjeta:active {
   letter-spacing: 0.04em;
   color: var(--sobre-verde);
   background: var(--verde-medio);
-  border-radius: 6px;
+  border-radius: var(--radio-md);
 }
 
 .tarjeta-linea {
@@ -1349,7 +1360,7 @@ div.tarjeta:active {
   color: var(--aviso-tinta);
   background: var(--aviso-fondo);
   border: 2px solid var(--aviso-borde);
-  border-radius: 8px;
+  border-radius: var(--radio-md);
 }
 
 .tarjeta-aviso-icono {
