@@ -784,6 +784,10 @@ class AveriaEntrada(EntradaBase):
     fecha_resuelta: dt.date | None = None
     horas: float | None = Field(default=None, ge=0)
     notas: str | None = None
+    # El taller donde esta la maquina, si se sabe. Vacio = «no consta»: la malloria de las
+    # averias se arreglan uno mismo, y obligar a decir un taller inventaria un dato que nadie
+    # ha dicho.
+    taller_contacto_id: int | None = None
     clave_de_reenvio: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.AveriaDeMaquina, "clave_de_reenvio")
     )
@@ -799,6 +803,12 @@ class AveriaSalida(SalidaBase):
     notas: str | None
     anulado: bool
     motivo_anulacion: str | None
+    # **El taller, con su nombre resuelto al leer** (`maquinaria.py`), como `decidido_por` en las
+    # obligaciones: la pantalla no tiene que ir a buscar un contacto para poder ensenarlo. El
+    # `id` va tambien, porque el formulario necesita saber **cual** esta puesto para ofrecerlo
+    # marcado.
+    taller_contacto_id: int | None = None
+    taller: str | None = None
 
 
 class FuenteDeLaObligacionSalida(BaseModel):

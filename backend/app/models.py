@@ -822,6 +822,15 @@ class AveriaDeMaquina(Base):
     # máquina va por mantenimiento o por kilómetros. `None` es «no lo miré».
     horas: Mapped[float | None] = mapped_column(Float)
     notas: Mapped[str | None] = mapped_column(Text)
+    # **Donde esta la maquina** (CRM-07 #7, 14/10/2026). El informe del dueno lo pide asi: «**taller de
+    # la averia**». Y es un **papel de `Contacto`**, no una tabla nueva: el taller ya vive ahi
+    # (`contactos.py` tiene el papel `taller`), y lo que faltaba era **el enlace**.
+    #
+    # Es **nullable** y vacio significa **«no consta»**, no «ninguno»: la malloria de las averias se
+    # arreglan uno mismo, y obligar a decir un taller inventaria un dato que nadie ha dicho.
+    # Y responde a lo que la cabecera de esta clase pide a gritos: «la maquina se queda en el taller y
+    # a la semana nadie se acuerda de por que».
+    taller_contacto_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), index=True)
     clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)

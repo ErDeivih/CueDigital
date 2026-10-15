@@ -283,7 +283,7 @@ def _inspecciones_de(db: Db, explotacion, maquina_id: int) -> list[models.Inspec
 
 
 def _averias_de(db: Db, explotacion, maquina_id: int) -> list[models.AveriaDeMaquina]:
-    return list(
+    las_suyas = list(
         db.scalars(
             select(models.AveriaDeMaquina)
             .where(
@@ -293,6 +293,13 @@ def _averias_de(db: Db, explotacion, maquina_id: int) -> list[models.AveriaDeMaq
             .order_by(models.AveriaDeMaquina.fecha.desc(), models.AveriaDeMaquina.id.desc())
         )
     )
+    # **El nombre del taller, colgado aquí y no en cada salida** (CRM-07 #7, 14/10/2026): por esta
+    # función pasan los CUATRO sitios que enseñan averías —la tabla (`_fila_de_la_tabla`), los equipos
+    # sin ficha, la ficha de la máquina y su aviso—. Resolviéndolo una vez lo heredan todos, y **no hay
+    # forma de olvidarse de uno**: que es exactamente el fallo que tendría hacerlo en cada sitio.
+    for averia in las_suyas:
+        averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
+    return las_suyas
 
 
 def _los_avisos(maquina, obligaciones, inspecciones, averias) -> list[dict]:
@@ -584,6 +591,25 @@ def _quien_lo_decidio(db: Db, explotacion, usuario_id: int | None) -> str | None
     if quien is None or getattr(quien, "explotacion_id", None) != explotacion.id:
         return None
     return quien.nombre
+
+
+def _el_nombre_del_taller(db: Db, explotacion, contacto_id: int | None) -> str | None:
+    """El **nombre** del taller, o `None` si no consta.
+
+    **Por qué se resuelve al leer y no al escribir** (CRM-07 #7, 14/10/2026): la fila guarda el
+    identificador y la ficha enseña el nombre, que es la convención de la casa —igual que
+    `_quien_lo_decidio` aquí al lado, y que la bandeja con `confirmado_por_usuario_id`—.
+
+    Y es **tolerante a propósito**, por lo mismo que aquel: un contacto que ya no está, o que es de
+    otra finca, **no puede tumbar la ficha de la máquina con un error del servidor**. Lo que se dice es
+    que **no consta** el taller, que es la verdad y además se puede arreglar volviendo a apuntarlo.
+    """
+    if not contacto_id:
+        return None
+    taller = db.get(models.Contacto, int(contacto_id))
+    if taller is None or getattr(taller, "explotacion_id", None) != explotacion.id:
+        return None
+    return getattr(taller, "nombre", None)
 
 
 def _la_ficha(db: Db, explotacion, maquina) -> dict:
@@ -1128,6 +1154,9 @@ def _la_averia_de_esta_maquina(db: Db, explotacion, maquina_id: int, averia_id: 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Eso no está en tu cuaderno."
         )
+    # El nombre del taller, igual que en `_averias_de`: por aquí pasan el PUT y el anular, y el POST lo
+    # necesita también al devolver la que acaba de apuntar.
+    averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
     return averia
 
 
@@ -1147,6 +1176,11 @@ def apuntar_una_averia(
     sabe si se puede contar con ella es el agricultor. La pantalla los enseña juntos, sin mezclarlos.
     """
     obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
+    # **El taller tiene que ser de ESTA finca** (CRM-07 #7, 14/10/2026), con el mismo ayudante que usa
+    # un gasto para su contacto (`gastos_api.py`): sin esto, una averia podria apuntar al taller de
+    # otra finca y el nombre saldria en la ficha como si fuera suyo.
+    if datos.taller_contacto_id is not None:
+        obtener_de_la_explotacion(db, models.Contacto, datos.taller_contacto_id, explotacion.id)
     clave = (datos.clave_de_reenvio or "").strip() or None
     if clave:
         # Por máquina, por el mismo motivo que en una inspección: ver `apuntar_una_inspeccion`.
@@ -1168,10 +1202,15 @@ def apuntar_una_averia(
         fecha_resuelta=datos.fecha_resuelta,
         horas=datos.horas,
         notas=datos.notas,
+        taller_contacto_id=datos.taller_contacto_id,
         clave_de_reenvio=clave,
     )
     db.add(averia)
     db.commit()
+    # El POST devuelve la que acaba de apuntar, que **no** pasa por `_la_averia_de_esta_maquina`: sin
+    # esto, la respuesta diria el identificador del taller y **no su nombre**, que es lo que la pantalla
+    # pinta al guardar. (Lo vi al escribir el enganche de arriba, mirando quien devuelve una averia.)
+    averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
     return averia
 
 
@@ -1186,6 +1225,11 @@ def corregir_una_averia(
 ) -> models.AveriaDeMaquina:
     """Corrige una avería: lo normal es volver para decir que **ya está arreglada**."""
     averia = _la_averia_de_esta_maquina(db, explotacion, maquina_id, averia_id)
+    # **El taller tiene que ser de ESTA finca** (CRM-07 #7, 14/10/2026), con el mismo ayudante que usa
+    # un gasto para su contacto (`gastos_api.py`): sin esto, una averia podria apuntar al taller de
+    # otra finca y el nombre saldria en la ficha como si fuera suyo.
+    if datos.taller_contacto_id is not None:
+        obtener_de_la_explotacion(db, models.Contacto, datos.taller_contacto_id, explotacion.id)
     preparada = models.AveriaDeMaquina(
         explotacion_id=explotacion.id,
         maquina_id=maquina_id,
@@ -1195,6 +1239,7 @@ def corregir_una_averia(
         fecha_resuelta=datos.fecha_resuelta,
         horas=datos.horas,
         notas=datos.notas,
+        taller_contacto_id=datos.taller_contacto_id,
         clave_de_reenvio=averia.clave_de_reenvio,
     )
     correcciones.corregir(
@@ -1205,6 +1250,10 @@ def corregir_una_averia(
         explotacion_id=explotacion.id,
         usuario_id=usuario.id,
     )
+    # **Y se vuelve a resolver DESPUES de corregir** (CRM-07 #7, 14/10/2026): el enganche del cargador
+    # corre antes, con el taller que habia, asi que si se acaba de cambiar de taller el nombre que
+    # viajaria en la respuesta seria el **viejo**. Se resuelve otra vez y se dice el de ahora.
+    averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
     return averia
 
 

@@ -7457,6 +7457,12 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     ),
     "fecha_resuelta": "¿Cuándo se arregló?",
     "horas_de_la_averia": "Horas del cuenta-horas cuando pasó",
+    # **El taller** (CRM-07 #7, 14/10/2026). El informe lo pide: «taller de la avería». Es un contacto
+    # de la finca con su papel de taller, y puede quedarse **sin decir**: la mayoría de las averías se
+    # arreglan uno mismo, así que lo que no se sabe se dice «no consta», no se deja en blanco.
+    "campo_taller": "¿En qué taller está?",
+    "campo_taller_pista": "Si lo sabes. Puede quedarse sin decir.",
+    "taller_de_la_averia": "Taller",
     # ── La calculadora de «¿puedo cogerla hoy?», que es el aviso al planificar un trabajo ──
     "avisos_titulo": "Antes de contar con ella",
     "sin_avisos": "De esta máquina no hay nada que mirar ahora mismo.",

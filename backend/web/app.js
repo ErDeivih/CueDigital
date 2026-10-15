@@ -17220,6 +17220,26 @@ async function anularLaSiembra() {
 //     arman en este bloque con `t(...)` y `rellena(...)`.
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * **Los talleres de la finca**: los contactos que tienen el papel `taller`.
+ *
+ * (CRM-07 #7, 14/10/2026.) El informe del dueño pide «**taller de la avería**», y el taller **ya vive
+ * aquí**: es un **papel de `Contacto`**, no una tabla nueva. Así que esto no pide nada al servidor
+ * —`recargarLosContactos()` ya trae la lista, y su propio comentario lo dice: «lo miran las pantallas
+ * del dinero, que necesitan los contactos y no tienen por qué volver a pedirlos»—: **solo la mira**.
+ *
+ * El papel se acepta escrito **de las dos formas** (el texto suelto o el objeto con su `clave`) porque
+ * quien manda esa lista es el servidor y no siempre la manda igual; lo que no puede pasar es que el
+ * desplegable salga **vacío** por una diferencia de forma.
+ */
+function losTalleresDeLaFinca() {
+  return (estadoDeLosContactos().lista || []).filter((uno) =>
+    (uno.papeles || []).some(
+      (papel) => (typeof papel === "string" ? papel : papel && papel.clave) === "taller",
+    ),
+  );
+}
+
 /** El estado de los contactos, creado la primera vez que hace falta. */
 function estadoDeLosContactos() {
   if (!estado.contactos) {
@@ -18910,6 +18930,11 @@ function unaMaquinaPreparada(ficha) {
             ? t("maquinaria.sigue_sin_arreglar", "")
             : t("maquinaria.no_se_si_arreglada", ""),
       notas: averia.notas || "",
+      // **El taller** (CRM-07 #7, 14/10/2026). Se copia AQUI porque el componente de la averia
+      // (`maquinaria.js`) lee `averia.taller` **de este objeto preparado**, no de lo que manda el
+      // servidor: sin esta linea, la ficha diria «No consta» aunque la puerta lo sepa. Vacio se deja
+      // vacio, y el componente ya sabe decirlo con la palabra de la casa (`sin_decir`).
+      taller: averia.taller || "",
       anulado: Boolean(averia.anulado),
     })),
   };
@@ -19355,6 +19380,34 @@ function formularioDeUnaAveria({ corrigiendo = null } = {}) {
         valor: puesto("averia-horas", "horas"),
       },
       {
+        // **El taller** (CRM-07 #7, 14/10/2026). Es un desplegable con los contactos que tienen el
+        // papel de taller, y **«No consta» va primero y es una opción de verdad**: la mayoria de las
+        // averias se arreglan uno mismo, y poder decir «no lo se» es la mitad de este programa. Vacio
+        // viaja como cadena vacia, que el servidor lee como «sin taller».
+        tipo: "opciones",
+        // **`id` ademas de `campo`** (14/10/2026): `puesto(id, campo)` —el que rellena el formulario con
+        // lo que ya habia— busca la casilla **por su `id`**, asi que sin esto el taller no se
+        // preseleccionaria al corregir una averia. El `campo` es el nombre con el que el borrador
+        // guarda lo que se elige.
+        id: "averia-taller",
+        campo: "taller_contacto_id",
+        etiqueta: m.campo_taller,
+        pista: m.campo_taller_pista,
+        elegido: puesto("averia-taller", "taller_contacto_id"),
+        opciones: [
+          {
+            valor: "",
+            texto: m.sin_decir,
+            elegido: !puesto("averia-taller", "taller_contacto_id"),
+          },
+          ...losTalleresDeLaFinca().map((uno) => ({
+            valor: String(uno.id),
+            texto: uno.nombre,
+            elegido: String(uno.id) === String(puesto("averia-taller", "taller_contacto_id")),
+          })),
+        ],
+      },
+      {
         tipo: "area",
         id: "averia-notas",
         etiqueta: m.campo_notas,
@@ -19512,6 +19565,10 @@ async function guardarLoDeLaMaquinaria() {
       fecha_resuelta: valorDeLaCasilla("averia-fecha-resuelta") || null,
       horas: horas ? Number(horas.replace(",", ".")) : null,
       notas: valorDeLaCasilla("averia-notas") || null,
+      // **El taller** (CRM-07 #7, 14/10/2026). Se lee del **borrador**, como «¿ya esta arreglada?», y no
+      // de la casilla: los campos de tipo `opciones` escriben ahi. La opcion vacia es «No consta» y
+      // viaja como `null` —no como cadena vacia—, que es lo que el esquema entiende por «sin taller».
+      taller_contacto_id: b.taller_contacto_id ? Number(b.taller_contacto_id) : null,
       clave_de_reenvio: laClaveDeReenvio(),
     };
     ruta = id
@@ -20583,6 +20640,11 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     // La avería **no se contesta sola**: si sigue sin arreglar o no, lo dice el agricultor. `resuelta` se
     // queda sin poner para que la pregunta salga sin respuesta marcada.
     suyo.borrador = {};
+    // **Los talleres del desplegable salen de los contactos** (CRM-07 #7, 14/10/2026), asi que hay que
+    // tenerlos: sin esto la lista saldria **vacia** y pareceria que la finca no tiene ningun taller. Se
+    // mira `cargados` antes de pedirlos, que es para lo que esta ese testigo («lo miran las pantallas
+    // del dinero, que no tienen por que volver a pedirlos»).
+    if (!estadoDeLosContactos().cargados) await recargarLosContactos();
     suyo.formulario = { clase: "averia" };
     return pantallaUnaMaquina();
   }
@@ -20594,6 +20656,11 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     if (!cruda) return pantallaUnaMaquina();
     suyo.error = "";
     suyo.borrador = {};
+    // **Los talleres del desplegable salen de los contactos** (CRM-07 #7, 14/10/2026), asi que hay que
+    // tenerlos: sin esto la lista saldria **vacia** y pareceria que la finca no tiene ningun taller. Se
+    // mira `cargados` antes de pedirlos, que es para lo que esta ese testigo («lo miran las pantallas
+    // del dinero, que no tienen por que volver a pedirlos»).
+    if (!estadoDeLosContactos().cargados) await recargarLosContactos();
     suyo.formulario = { clase: "averia", corrigiendo: cruda };
     return pantallaUnaMaquina();
   }

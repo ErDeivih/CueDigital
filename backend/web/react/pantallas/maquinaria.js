@@ -533,6 +533,14 @@ function Averia({ averia, textos }) {
       <strong>${frase(averia.titulo)}</strong>
       <div className="apunte-detalle">${frase(averia.fecha_texto)}</div>
       <div className="apunte-detalle">${frase(averia.resuelta_texto)}</div>
+      ${
+        // **El taller** (CRM-07 #7, 14/10/2026). Se ensena **siempre**, tambien cuando no consta: una
+        // averia sin taller es lo mas normal del mundo, y callarlo dejaria al agricultor sin saber si
+        // el programa no lo sabe o si se lo esta guardando. La palabra es la de la casa (`sin_decir`).
+        html`<div className="apunte-detalle">
+          ${frase(textos.taller_de_la_averia)}: ${frase(averia.taller || textos.sin_decir)}
+        </div>`
+      }
       ${averia.notas ? html`<div className="apunte-detalle">${frase(averia.notas)}</div>` : null}
       ${
         averia.anulado
