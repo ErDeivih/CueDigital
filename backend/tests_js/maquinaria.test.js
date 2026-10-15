@@ -901,4 +901,46 @@ test("la ficha no lleva ni una frase escrita a mano", async () => {
   for (const frase of frasesVisibles(html)) {
     assert.ok(delServidor.has(frase), `frase escrita a mano: «${frase}»`);
   }
+});
+
+test("las máquinas que se pueden elegir: fuera la que no se puede contar, dentro la que no se sabe", async () => {
+  /*
+   * CRM-07 #7, 14/10/2026. El informe del dueño lo pide así: «**máquina indisponible no se ofrece como
+   * disponible**». Y la casa tiene TRES estados, no dos (`app/maquinaria.py`):
+   *
+   *   «Si se puede contar con ella para trabajar. Tres estados otra vez, y `NO_SE` de partida: una máquina
+   *    de la que nadie ha dicho nada **no está "disponible", está "sin decir"**.»
+   *
+   * Así que esta prueba fija **las dos mitades**, y la segunda es la que se rompería por hacer lo obvio:
+   *
+   *  1. La que está apuntada como que **no puedes contar con ella** (o su avería) **no se ofrece**.
+   *  2. Y la que **nadie ha dicho nada de ella** (`no_se`) **sí se ofrece**: quitarla sería convertir «sin
+   *     decir» en «no», que es lo que este programa no hace en ningún sitio.
+   *
+   * Se prueba la función **del módulo** (`maquinaria.js`) y no la pantalla: es una regla de qué máquinas
+   * se pueden elegir, no de cómo se pinta. Y vive ahí, con `export`, **para poder probarse** —`app.js`
+   * necesita un DOM y no tiene pruebas—.
+   */
+  const { lasMaquinasParaElegir } = await cargarLaPantalla();
+  const tabla = {
+    maquinas: [
+      { id: 1, nombre: "El tractor", disponibilidad: "disponible" },
+      { id: 2, nombre: "La sulfatadora", disponibilidad: "no_disponible" },
+      { id: 3, nombre: "La empacadora", disponibilidad: "no_se" },
+    ],
+  };
+  const salen = lasMaquinasParaElegir(tabla);
+
+  assert.deepEqual(
+    salen.map((una) => una.texto),
+    ["El tractor", "La empacadora"],
+    "la que no se puede contar no se ofrece, y la que no se sabe SÍ (no es lo mismo «sin decir» que «no»)"
+  );
+  // Y salen **como las quiere el desplegable**: con su valor y su texto, y en el mismo orden.
+  assert.deepEqual(salen, [
+    { valor: 1, texto: "El tractor" },
+    { valor: 3, texto: "La empacadora" },
+  ]);
+  // Una finca sin máquinas no revienta: devuelve la lista vacía, que es lo que el desplegable espera.
+  assert.deepEqual(lasMaquinasParaElegir({}), []);
 });

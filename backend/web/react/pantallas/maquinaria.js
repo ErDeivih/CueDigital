@@ -740,3 +740,31 @@ export function pantallaDeUnaMaquina(propiedades) {
     />
   `;
 }
+
+/**
+ * **Las máquinas que se pueden ELEGIR para trabajar** (CRM-07 #7, 14/10/2026).
+ *
+ * El informe del dueño lo pide con estas palabras: «**máquina indisponible no se ofrece como
+ * disponible**». Y la casa ya tenía escrito qué hacer con los tres estados (`app/maquinaria.py`):
+ *
+ *   «Si se puede contar con ella para trabajar. Tres estados otra vez, y `NO_SE` de partida: una máquina
+ *    de la que nadie ha dicho nada **no está "disponible", está "sin decir"**.»
+ *
+ * Así que aquí **se quita solo `no_disponible`**, y `no_se` **se queda**: quitarla sería convertir «sin
+ * decir» en «no», que es justo lo que este programa no hace en ningún sitio —es la misma regla de
+ * `resuelta` (`True`/`False`/`None`) y de la aplicabilidad de una obligación—.
+ *
+ * **Dónde se usa y dónde no**: esto es para las listas donde se **elige una máquina para trabajar** —el
+ * formulario de un trabajo y el reparto de un gasto—, que son las dos que **comparten** esta lista y no
+ * dos que puedan decir cosas distintas. **La pantalla de maquinaria NO la usa**: allí tienen que estar
+ * todas, porque es donde el agricultor la ve **y la arregla**. Y el aviso `M1` sigue saliendo donde salía.
+ *
+ * **Y vive aquí, en el módulo de la pantalla, y no en `app.js`**: los componentes son **puros y con
+ * `export`**, así que `tests_js` los carga y los prueba; `app.js` necesita un DOM y **no tiene pruebas**.
+ * Una regla que se puede probar y otra que no: **la regla va donde se prueba**.
+ */
+export function lasMaquinasParaElegir(tabla) {
+  return (tabla.maquinas || [])
+    .filter((una) => una.disponibilidad !== "no_disponible")
+    .map((una) => ({ valor: una.id, texto: una.nombre }));
+}

@@ -149,7 +149,11 @@ import { camposDelMaestro } from "./react/piezas/campos_del_maestro.js";
 // la lista (`#/maquinaria`) y la ficha de una máquina (`#/maquinaria/<id>`). Es un solo fichero porque
 // son la misma cosa mirada de dos maneras —lo mismo que las semillas—, y va aquí, con las demás, para
 // que el import diga de un vistazo que esta pantalla ya está en React.
-import { pantallaDeLaMaquinaria, pantallaDeUnaMaquina } from "./react/pantallas/maquinaria.js";
+import {
+  lasMaquinasParaElegir,
+  pantallaDeLaMaquinaria,
+  pantallaDeUnaMaquina,
+} from "./react/pantallas/maquinaria.js";
 // **Las cuentas de la explotación (T13, E7, 05/10/2026).** Un fichero con las dos pantallas del
 // contrato: la lista (`#/cuentas`) y la ficha de un gasto (`#/cuentas/<id>`). Es un solo fichero
 // porque las dos comparten las mismas piezas —la tarjeta de cifras, el cuadre del reparto y los
@@ -22560,7 +22564,7 @@ async function cargarElVocabularioDeLosTrabajos() {
     }
     if (!suyo.maquinas) {
       const tabla = await apiJson("/api/maquinaria");
-      suyo.maquinas = (tabla.maquinas || []).map((una) => ({ valor: una.id, texto: una.nombre }));
+      suyo.maquinas = lasMaquinasParaElegir(tabla);
     }
   } catch (fallo) {
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
@@ -22581,7 +22585,7 @@ async function cargarLasMaquinasSiHacenFalta() {
   if (suyo.maquinas) return suyo.maquinas;
   try {
     const tabla = await apiJson("/api/maquinaria");
-    suyo.maquinas = (tabla.maquinas || []).map((una) => ({ valor: una.id, texto: una.nombre }));
+    suyo.maquinas = lasMaquinasParaElegir(tabla);
   } catch (fallo) {
     suyo.maquinas = [];
     suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
