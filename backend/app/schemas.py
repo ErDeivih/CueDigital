@@ -686,6 +686,13 @@ class ObligacionEntrada(EntradaBase):
 
     aplicabilidad: str = "no_se"
     origen: str = "no_se"
+    # **El papel que demuestra la aplicabilidad, y de cuándo es** (CRM-07, 14/10/2026). El contrato
+    # pide «aplicabilidad con **evidencia y fecha**»: `origen` decía que aquello salía de un documento
+    # y **no decía cuál**. Los dos pueden quedar vacíos, y eso es un caso normal —el agricultor lo
+    # sabe y no trae el papel—.
+    documento_id: int | None = None
+    # Y **no es `creado_en`**: esa es cuándo se apuntó esto; esta, de cuándo es el papel.
+    fecha_de_la_evidencia: dt.date | None = None
     notas: str | None = None
 
 
@@ -694,7 +701,17 @@ class ObligacionSalida(SalidaBase):
     tipo: str
     aplicabilidad: str
     origen: str
+    documento_id: int | None
+    fecha_de_la_evidencia: dt.date | None
+    # Se dice **en el dato**, no solo en la pantalla: una obligación sin papel lo dice al leerla, para
+    # que ninguna pantalla pueda callarlo por olvido. Es el mismo trato que la inspección.
+    trae_papel: bool = False
     notas: str | None
+
+    @model_validator(mode="after")
+    def _dice_si_trae_papel(self):
+        self.trae_papel = self.documento_id is not None
+        return self
 
 
 class InspeccionEntrada(EntradaBase):
@@ -798,8 +815,21 @@ class EstadoDeUnaObligacionSalida(BaseModel):
     # Tal cual venía del papel. Nunca una fecha sumada por el programa.
     proxima_fecha: dt.date | None = None
     dias: int | None = None
+    # **El papel de la última INSPECCIÓN** («cómo salió»). Ojo: **no** es el de la aplicabilidad.
     documento_id: int | None = None
     trae_papel: bool = False
+    # **Y el papel que demuestra QUE LE TOCA, con su fecha** (CRM-07, 14/10/2026). Van separados a
+    # propósito: comparten el nombre de columna en la base pero **no son el mismo papel** —uno dice por
+    # qué se sabe que la obligación le toca y el otro cómo salió la última—, y si se llamaran igual la
+    # ficha enseñaría uno creyendo que es el otro. **Los dos son creíbles, y por eso hay que separarlos.**
+    #
+    # Y este esquema importa: es **el que lee la pantalla** (`GET /api/maquinaria/{id}` →
+    # `_la_ficha`). Un campo que no esté aquí **no llega**, aunque la tabla y la puerta lo tengan: es
+    # el mismo mal que el rótulo que faltaba en `SEMILLAS`, pero al revés —el dato existe, la pantalla
+    # no lo ve, y **nadie se entera porque no da error**—.
+    documento_de_la_aplicabilidad_id: int | None = None
+    la_aplicabilidad_trae_papel: bool = False
+    fecha_de_la_evidencia: dt.date | None = None
     fuente: FuenteDeLaObligacionSalida
 
 
@@ -2892,7 +2922,9 @@ class SemillaEntrada(EntradaBase):
     tratada: bool | None = None
     # **La categoria de la semilla** (CRM-07 #2, 14/10/2026): base, certificada, R1, R2… Ojo:
     # `categoria` (en la SALIDA) es la del ARTICULO, no esta. El catalogo es
-    # `catalogos.CATEGORIAS_DE_SEMILLA`, y el defecto del modelo es «no certificada».
+    # `catalogos.CATEGORIAS_DE_SEMILLA`, que es quien la valida en la puerta, y **no hay valor por
+    # defecto**: la ausencia es «No consta» (`None`), **no** «no certificada» — no haber registrado
+    # la etiqueta no demuestra que el lote no este certificado.
     categoria_semilla: str | None = None
     # Y **de donde salio**: comprada o guardada de la cosecha propia.
     procedencia: str | None = None

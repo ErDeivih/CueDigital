@@ -776,6 +776,41 @@ def main() -> int:
             encontre=repr(escrito.get("procedencia")),
         )
 
+    # **Y la del ALTA, que es lo que faltaba** (revision del dueno, 14/10/2026). *Antes estas entradas
+    # solo se IMPRIMIAN*, y **imprimir no es comprobar**: si el alta dejara de guardar los dos campos,
+    # la lista de arriba ensenaria `None` y **el guion seguiria saliendo en verde** — que es justo el
+    # fallo que costo esta ronda. Aqui se exige, valor por valor.
+    del_alta: list[dict] = []
+    for entrada in suyas:
+        if str(entrada.get("accion")) != "crear":
+            continue
+        try:
+            escrito_del_alta = json.loads(entrada.get("datos") or "{}")
+        except ValueError:
+            escrito_del_alta = {}
+        if isinstance(escrito_del_alta, dict):
+            del_alta.append(escrito_del_alta)
+
+    comprobar(
+        bool(del_alta),
+        "hay una entrada de auditoria del ALTA de esta semilla",
+        esperaba="una entrada con accion «crear»",
+        encontre=f"{len(suyas)} entradas de esa semilla, y ninguna es la del alta",
+    )
+    if del_alta:
+        comprobar(
+            del_alta[0].get("categoria_semilla") == "certificada",
+            "la auditoria del ALTA guarda la CATEGORIA que se eligio (no `None`)",
+            esperaba="'certificada'",
+            encontre=repr(del_alta[0].get("categoria_semilla")),
+        )
+        comprobar(
+            del_alta[0].get("procedencia") == "comprada",
+            "y la PROCEDENCIA: el rastro del alta y la fila dicen lo mismo",
+            esperaba="'comprada'",
+            encontre=repr(del_alta[0].get("procedencia")),
+        )
+
     print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
     for fallo in FALLOS:
         print(f"  - {fallo}")

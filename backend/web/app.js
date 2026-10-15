@@ -18777,6 +18777,35 @@ function unaMaquinaPreparada(ficha) {
     // **Con su nombre, y con su identificador para poder abrirlo** (ver `elPapelPorSuId`).
     papel: obligacion.trae_papel ? elPapelPorSuId(obligacion.documento_id) : "",
     papel_id: obligacion.documento_id || null,
+    // **Y el papel de la APLICABILIDAD, que es otro** (CRM-07, 14/10/2026): el de arriba es el de la
+    // ultima inspeccion —como salio— y este dice **por que se sabe que le toca**. Van con nombres
+    // distintos a proposito: con el mismo, la ficha ensenaria uno creyendo que es el otro.
+    papel_de_la_aplicabilidad: obligacion.la_aplicabilidad_trae_papel
+      ? elPapelPorSuId(obligacion.documento_de_la_aplicabilidad_id)
+      : "",
+    papel_de_la_aplicabilidad_id: obligacion.documento_de_la_aplicabilidad_id || null,
+    // **De cuando es ese papel**, que no es cuando se apunto. Vacio es «no consta», nunca hoy.
+    // En texto para leerlo y en ISO para el campo de fecha, que es lo que espera un `<input type=date>`.
+    fecha_de_la_evidencia_texto: obligacion.fecha_de_la_evidencia
+      ? formateaFecha(obligacion.fecha_de_la_evidencia)
+      : "",
+    fecha_de_la_evidencia_iso: obligacion.fecha_de_la_evidencia || "",
+    // **Y el papel se puede ELEGIR**, que es la mitad que faltaba del contrato: antes la obligacion
+    // decia salir de un documento y no habia forma de decir cual. Se elige como los demas datos de
+    // esta ficha —en linea, y guarda al elegir—, con los papeles que ya tiene guardados.
+    opciones_documento: {
+      etiqueta: m.documento_de_la_aplicabilidad,
+      campo: "documento_id",
+      datos: { tipo: obligacion.tipo },
+      elegido: obligacion.documento_de_la_aplicabilidad_id || "",
+      opciones: [
+        ...papelesParaElegir().map((papel) => ({
+          ...papel,
+          elegido: String(papel.valor) === String(obligacion.documento_de_la_aplicabilidad_id || ""),
+        })),
+        { valor: "", texto: m.sin_papel, elegido: !obligacion.documento_de_la_aplicabilidad_id },
+      ],
+    },
     fuente: obligacion.fuente || null,
     // **Lo que el programa pide en vez de deducir**: si no se sabe la clasificación técnica, no se puede
     // decir qué le toca, y la ficha lo dice con estas palabras.
@@ -20447,11 +20476,37 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
         : la_suya.opciones_origen && la_suya.opciones_origen.opciones
           ? (la_suya.opciones_origen.opciones.find((una) => una.elegido) || {}).valor || "no_se"
           : "no_se";
+    // **El papel de la aplicabilidad se declara como todo lo demás de esta ficha: en línea, al elegir.**
+    // Va por el mismo `maquina-declarar` porque es la misma decisión —«de dónde sale esto»—, solo que
+    // esta dice **cuál** es el papel.
+    const documento_id =
+      campo === "documento_id"
+        ? valor === ""
+          ? null
+          : Number(valor)
+        // **Y AQUI ESTABA EL FALLO** (14/10/2026, lo encontro el recorrido a la primera): la obligacion que
+    // llega a este manejador esta **preparada** por `unaMaquinaPreparada`, y la preparada **cambia los
+    // nombres**: el papel de la aplicabilidad se llama alli `papel_de_la_aplicabilidad_id`. Leyendo la
+    // clave **cruda** salia `undefined`, el `|| null` la convertia en `null`, y el servidor lo tomaba por
+    // un vacio a proposito: **declarar la aplicabilidad otra vez borraba el papel**. La fecha sobrevivia
+    // porque no se manda si el campo esta vacio. Se leen las dos, por si algun dia vuelve sin preparar.
+        : la_suya.papel_de_la_aplicabilidad_id ?? la_suya.documento_de_la_aplicabilidad_id ?? null;
+    // **Y la fecha de ese papel, que se escribe al lado.** Si el campo está vacío **no se manda**: así,
+    // la que hubiera se queda en vez de borrarse porque el agricultor no la ha vuelto a escribir. Es la
+    // regla A1 —la del #2 de semillas— y aquí es la misma trampa: un `null` explícito borra.
+    const elCampoDeLaFecha = document.getElementById(`obligacion-fecha-${tipo}`);
+    const fecha_escrita = elCampoDeLaFecha ? String(elCampoDeLaFecha.value || "").trim() : "";
     suyo.error = "";
     const resultado = await mandarCambio(
       `/api/maquinaria/${maquina.id}/obligaciones/${tipo}`,
       "PUT",
-      { aplicabilidad, origen, notas: null },
+      {
+        aplicabilidad,
+        origen,
+        documento_id,
+        ...(fecha_escrita ? { fecha_de_la_evidencia: fecha_escrita } : {}),
+        notas: null,
+      },
     );
     if (resultado.error) {
       suyo.error = resultado.error;

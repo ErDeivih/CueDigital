@@ -311,8 +311,11 @@ def borrar(
     nombre como `../../main.py` no puede decidir qué fichero se borra.
 
     Antes de borrar se cuentan las cosas del cuaderno que apunten al papel, como en todo lo que se
-    puede borrar. Hoy **no hay ninguna** —un papel no lo usa ningún apunte—, pero la cuenta se hace
-    igual: el día que un apunte se enganche a un papel, esto lo dirá en vez de dejarlo sin él.
+    puede borrar. **Y no es una lista escrita a mano**: `correcciones.tablas_que_apuntan_a` las
+    descubre **por el nombre de la columna**, así que el día que una tabla nueva apunte a un papel
+    queda contada sola. Hoy son dos: la **inspección** de una máquina y la **aplicabilidad** de una
+    obligación, las dos con su `documento_id`. Por eso borrar un papel que alguna use contesta
+    **409** en vez de dejarlas apuntando a algo que ya no está.
     """
     documento = obtener_de_la_explotacion(
         db, models.DocumentoAnexo, documento_id, explotacion.id

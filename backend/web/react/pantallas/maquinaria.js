@@ -360,6 +360,38 @@ function Obligacion({ obligacion, textos }) {
           ? html`<${Opciones} bloque=${obligacion.opciones_origen} accion="maquina-declarar" />`
           : null
       }
+      <div className="apunte-detalle">
+        <strong>${frase(m.documento_de_la_aplicabilidad)}</strong>
+        ${
+          // **El papel que demuestra QUE LE TOCA, y de cuándo es** (CRM-07, 14/10/2026), pegado a la
+          // respuesta de «de dónde sale», porque es eso lo que demuestra. **No es el mismo papel que el
+          // de la última inspección**, que dice cómo salió y va más abajo: son dos cosas distintas y las
+          // dos son creíbles, así que se llaman distinto.
+          obligacion.papel_de_la_aplicabilidad
+            ? ` ${frase(obligacion.papel_de_la_aplicabilidad)}`
+            : ` ${frase(m.sin_papel)}`
+        }
+      </div>
+      ${
+        // **Y se puede decir CUÁL es y DE CUÁNDO**, que era la mitad que faltaba del contrato
+        // («aplicabilidad con evidencia y fecha»): antes la obligación afirmaba salir de un documento y
+        // **no había forma de decir cuál**. El papel se elige como los demás datos de esta ficha —**en
+        // línea, y guarda al elegir**—, y la fecha viaja con él: si el campo está vacío **no se manda**,
+        // así que la que hubiera se queda (la regla A1, la del #2 de semillas).
+        obligacion.opciones_documento
+          ? html`<${Opciones} bloque=${obligacion.opciones_documento} accion="maquina-declarar" />`
+          : null
+      }
+      <div className="campo">
+        <label htmlFor=${`obligacion-fecha-${obligacion.tipo}`}>${frase(m.fecha_de_la_evidencia)}</label>
+        <input
+          id=${`obligacion-fecha-${obligacion.tipo}`}
+          type="date"
+          data-campo="fecha_de_la_evidencia"
+          defaultValue=${obligacion.fecha_de_la_evidencia_iso}
+        />
+        <p className="pista-campo">${frase(m.fecha_de_la_evidencia_pista)}</p>
+      </div>
       ${obligacion.ultima_texto ? html`<div className="apunte-detalle">${frase(obligacion.ultima_texto)}</div>` : null}
       <${Dato} rotulo=${m.resultado} valor=${obligacion.resultado_texto} vacio=${m.resultado_no_consta} />
       <${Dato} rotulo=${m.proxima_fecha} valor=${obligacion.proxima_texto} vacio=${m.sin_fecha_apuntada} />

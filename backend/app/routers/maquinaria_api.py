@@ -768,6 +768,9 @@ def declarar_una_obligacion(
         maquinaria.ORIGENES_DE_LA_APLICABILIDAD,
         codigo="M13_eso_no_es_una_de_las_respuestas",
     )
+    # **El papel tiene que ser de esta finca**, y es el mismo ayudante que usa la inspección (arriba):
+    # sin esto, un `documento_id` de otra explotación se guardaría y la ficha enseñaría un papel ajeno.
+    _el_papel_es_de_esta_finca(db, explotacion, datos.documento_id)
     obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
 
     obligacion = db.scalar(
@@ -784,18 +787,57 @@ def declarar_una_obligacion(
             tipo=obligacion_tipo,
             aplicabilidad=aplicabilidad,
             origen=origen,
+            documento_id=datos.documento_id,
+            fecha_de_la_evidencia=datos.fecha_de_la_evidencia,
             notas=datos.notas,
         )
         db.add(obligacion)
+        db.flush()
+        # **El alta TAMBIEN deja rastro** (CRM-07 #6, 14/10/2026). Esta rama volvia sin pasar por
+        # `correcciones.corregir`, asi que **declarar una obligacion por primera vez no escribia ni una
+        # linea de auditoria** —y el contrato pide justo eso: poder leer **por que se sabe que le toca y
+        # de cuando es**. Lo encontro el recorrido, no las pruebas: las de modelo miraban la fila, y la
+        # fila estaba bien. Es el mismo hueco que tenia el alta de una semilla.
+        db.add(
+            models.Auditoria(
+                explotacion_id=explotacion.id,
+                usuario_id=usuario.id,
+                entidad="obligacion_de_maquina",
+                entidad_id=obligacion.id,
+                accion="crear",
+                datos={
+                    "aplicabilidad": obligacion.aplicabilidad,
+                    "origen_de_la_aplicabilidad": obligacion.origen,
+                    "documento_id": obligacion.documento_id,
+                    "fecha_de_la_evidencia": obligacion.fecha_de_la_evidencia,
+                    "notas": obligacion.notas,
+                },
+            )
+        )
         db.commit()
         return obligacion
 
+    # **El papel y su fecha van con la regla A1** («lo que la petición no manda, no se borra», y su
+    # gemela: lo que ya estaba, si no se manda, se queda). `aplicabilidad`, `origen` y `notas` siguen
+    # como estaban —este `PUT` es la declaración entera de la obligación, y ese es su contrato—, pero
+    # **estos dos son nuevos** y una llamada antigua que no los conozca **no puede borrarlos por no
+    # nombrarlos**: es exactamente el fallo que costó la ronda del #2 de semillas.
     preparada = models.ObligacionDeMaquina(
         explotacion_id=explotacion.id,
         maquina_id=maquina_id,
         tipo=obligacion_tipo,
         aplicabilidad=aplicabilidad,
         origen=origen,
+        documento_id=(
+            datos.documento_id
+            if "documento_id" in datos.model_fields_set
+            else obligacion.documento_id
+        ),
+        fecha_de_la_evidencia=(
+            datos.fecha_de_la_evidencia
+            if "fecha_de_la_evidencia" in datos.model_fields_set
+            else obligacion.fecha_de_la_evidencia
+        ),
         notas=datos.notas,
     )
     correcciones.corregir(

@@ -358,6 +358,15 @@ def estado_de_una_obligacion(
         "dias": (proxima - referencia).days if proxima else None,
         "documento_id": documento,
         "trae_papel": documento is not None,
+        # **Y el papel de la APLICABILIDAD, que es otra cosa que el de la última inspección**
+        # (CRM-07, 14/10/2026). Este dice **por qué se sabe que la obligación le toca** —la ficha del
+        # ITV, el papel que trajo el agricultor—; el `documento_id` de arriba es el de la **última
+        # inspección**, que dice **cómo salió**. Se llaman distinto a propósito: si compartieran nombre,
+        # la ficha enseñaría un papel creyendo que es el otro, y los dos son plausibles.
+        "documento_de_la_aplicabilidad_id": getattr(obligacion, "documento_id", None),
+        "la_aplicabilidad_trae_papel": getattr(obligacion, "documento_id", None) is not None,
+        # **De cuándo es esa evidencia**, que no es cuándo se apuntó (eso es `creado_en`, y no sale).
+        "fecha_de_la_evidencia": getattr(obligacion, "fecha_de_la_evidencia", None),
         # **Una fecha que ya pasó es un hecho, y se dice aunque nadie haya declarado si le toca.** Si el
         # agricultor escribió «próxima: 12/05/2024» y esa fecha pasó, esconderlo porque falta por
         # contestar otra pregunta es dejarle comparar fechas de cabeza (lo encontró la revisión del

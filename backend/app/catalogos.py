@@ -46,9 +46,15 @@ class MedidaPreventiva:
 
 
 # --- semilla (CRM-07 #2, 14/10/2026) ---
-# **Las categorias de una semilla**, que es lo que la etiqueta oficial dice de ella. El
-# defecto de una semilla sin papeles es **«No certificada»**: no es que no se sepa, es que no
-# lleva certificado — y por eso el defecto del apunte no es `None`.
+# **Las categorias de una semilla**, que es lo que la etiqueta oficial dice de ella. **Y aqui NO hay
+# categoria por defecto**: *no haber registrado la etiqueta **no demuestra** que el lote no este
+# certificado*, y el reglamento de semillas distingue categorias y remite a reglamentos tecnicos por
+# especie. La ausencia es **«No consta»** (`None`), y **«No certificada» es una de las que se
+# declaran** cuando el agricultor lo sabe.
+#
+# *(Corregido el 14/10/2026: este comentario decia lo contrario — que «el defecto de una semilla sin
+# papeles es "No certificada"» — y la revision del dueno lo tumbó. El propio proyecto ya lo tenia
+# escrito en el aviso N07: «Una semilla comprada sin etiqueta no queda certificada por eso».)*
 CATEGORIAS_DE_SEMILLA: dict[str, str] = {
     "no_certificada": "No certificada",
     "base": "Base",

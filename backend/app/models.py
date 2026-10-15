@@ -699,6 +699,19 @@ class ObligacionDeMaquina(Base):
     aplicabilidad: Mapped[str] = mapped_column(String(10), default="no_se")
     # documento | el_agricultor | no_se.
     origen: Mapped[str] = mapped_column(String(20), default="no_se")
+    # **El papel que demuestra la aplicabilidad, y de cuándo es** (CRM-07, 14/10/2026). El contrato
+    # pide «aplicabilidad con **evidencia y fecha**», y `origen` decía que aquello salía de un
+    # documento **sin decir cuál**: la fila afirmaba tener un papel y no se podía abrir.
+    #
+    # Es **el mismo patrón que la inspección** (`InspeccionDeMaquina.documento_id`): puede estar
+    # vacío y eso es un caso normal —el agricultor lo sabe y no trae el papel—, y cuando lo hay, el
+    # papel es un documento de «los papeles» (`DocumentoAnexo`), así que borrarlo se contesta con un
+    # 409 en vez de dejar la obligación apuntando a algo que ya no está.
+    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documentos_anexos.id"))
+    # **Y la fecha de esa evidencia, que NO es `creado_en`**: `creado_en` es cuándo se apuntó esto en
+    # el programa; esta es de cuándo es el papel (o cuándo lo dijo el agricultor). Son dos cosas
+    # distintas, y confundirlas hace que un dato parezca firmado cuando nadie lo ha firmado.
+    fecha_de_la_evidencia: Mapped[dt.date | None] = mapped_column(Date)
     # **La fecha de la próxima, cuando se sabe y NO hay ninguna inspección apuntada de la que sacarla.**
     # Es el caso del equipo de echar producto que trae el cuaderno: su hoja 1.3 admite la fecha de la
     # próxima ITEAF sin la de la última, y las dos se preguntan por separado. Sin esta columna, traer ese
@@ -3226,6 +3239,16 @@ class Semilla(Base):
     pureza_pct: Mapped[float | None] = mapped_column(Float)
     # Tres estados: sí viene tratada, no viene, y no se sabe. Ver la cabecera.
     tratada: Mapped[bool | None] = mapped_column(Boolean)
+    # **La categoria de la semilla** (CRM-07 #2, 14/10/2026): base, certificada, R1, R2. El
+    # contrato la pide junto a la especie y la variedad, y **no existia**. Las categorias son
+    # `catalogos.CATEGORIAS_DE_SEMILLA`.
+    #
+    # **Y el defecto es «no certificada», no «no consta»** — al contrario que la regla del abono.
+    # Aqui no tener certificado **es** una categoria: es lo que dice la ley de una semilla sin
+    # papeles. Poner `None` diria que no se sabe, y lo que pasa es que no esta certificada.
+    categoria_semilla: Mapped[str | None] = mapped_column(String(40), default="no_certificada")
+    # Y **de donde salio**: comprada o guardada de la cosecha propia (`catalogos.PROCEDENCIAS`).
+    procedencia: Mapped[str | None] = mapped_column(String(20))
     # **La categoria de la semilla** (CRM-07 #2, 14/10/2026): base, certificada, R1, R2. El
     # contrato la pide junto a la especie y la variedad, y **no existia**. Las categorias son
     # `catalogos.CATEGORIAS_DE_SEMILLA`.

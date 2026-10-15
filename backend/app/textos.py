@@ -7387,6 +7387,20 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     "documento": "¿Con qué papel lo apuntas?",
     "con_papel": "Con su papel",
     "sin_papel": "Sin papel apuntado",
+    # --- La aplicabilidad con su papel y su fecha (CRM-07, 14/10/2026) ---
+    # **Rótulos NUEVOS, y no se reutilizan los de la inspección aunque suenen igual**: `documento` es el
+    # papel de la **última inspección** («cómo salió») y estos son el de la **aplicabilidad** («por qué
+    # se sabe que le toca»). Con el mismo nombre, la ficha enseñaría uno creyendo que es el otro, y los
+    # dos son creíbles. El guardián `test_revision_t14.py` exige que toda clave que use la pantalla
+    # exista **y** que ninguna exista sin usarse, así que estas tres están usadas en `maquinaria.js`.
+    "documento_de_la_aplicabilidad": "El papel que lo demuestra",
+    "fecha_de_la_evidencia": "De cuándo es ese papel",
+    # Y vacío es «no consta», nunca «hoy»: la fecha del papel la sabe el agricultor, no el programa.
+    # **Y se dice cómo se guarda**, porque la fecha no tiene botón propio: viaja con el papel, que es lo
+    # que demuestra. Elegir el papel la guarda.
+    "fecha_de_la_evidencia_pista": (
+        "Vacío es «no consta», y no se pone la de hoy. Se guarda al elegir el papel."
+    ),
     # **El papel, con su nombre y su botón para abrirlo.** La ficha decía solo «Con su papel»: no decía
     # **cuál** era ni dejaba verlo, y el papel es justo lo que se enseña en una inspección (lo encontró la
     # revisión del ticket). Con esto, el agricultor lee el nombre del papel que demuestra la inspección y

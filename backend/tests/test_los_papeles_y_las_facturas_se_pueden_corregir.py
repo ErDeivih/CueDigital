@@ -1181,6 +1181,17 @@ class TestLoQueSeCuentaAntesDeBorrar:
         409, y lo que sí se puede hacer siempre es **anular el papel** (que lo deja con su motivo y con
         su fichero) o **deshacer la conciliación**, que es una puerta del propio T20 y deja todo como
         estaba.
+
+        **Y desde el CRM-07 (14/10/2026) hay una cuarta: `obligaciones_de_maquina`.** El contrato pedía
+        «aplicabilidad con **evidencia y fecha**», y `origen` decía que aquello salía de un documento
+        **sin decir cuál**: la ficha afirmaba tener un papel y no se podía abrir. Ahora la obligación
+        guarda **el papel que demuestra por qué le toca** (`documento_id`) y **de cuándo es**
+        (`fecha_de_la_evidencia`), y eso es una dependencia por el mismo motivo que la inspección:
+        borrar el papel dejaría la obligación diciendo «esto lo demuestra este papel» sin que exista.
+        **La decisión es la misma que con la inspección** —cuenta como dependencia y contesta 409—, y
+        por la misma razón se puede siempre **anular** el papel, que lo deja con su motivo y con su
+        fichero. Y ojo con lo que **no** cuenta: la obligación sigue sabiendo su `aplicabilidad` y su
+        `origen` por su cuenta, así que el papel no es lo que sostiene el dato.
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("documento_id")
@@ -1189,7 +1200,15 @@ class TestLoQueSeCuentaAntesDeBorrar:
         # vínculo apuntando a algo que ya no está; lo que sí se puede hacer siempre es **anular** el
         # papel (que lo deja con su motivo y con su fichero) o **desvincularlo**, que es una puerta de
         # la propia bandeja y deja el papel donde estaba.
-        ] == ["conciliaciones_de_movimiento", "inspecciones_de_maquina", "vinculos_de_documento"]
+        #
+        # Y la cuarta es `obligaciones_de_maquina`, por lo dicho arriba: el papel que demuestra que la
+        # obligación le toca.
+        ] == [
+            "conciliaciones_de_movimiento",
+            "inspecciones_de_maquina",
+            "obligaciones_de_maquina",
+            "vinculos_de_documento",
+        ]
 
     def test_lo_que_una_correccion_no_toca_es_lo_que_el_formulario_no_manda(self):
         """La regla de la corrección, escrita y con nombre, para el papel **y** para la factura.
