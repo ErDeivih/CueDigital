@@ -299,6 +299,7 @@ def _averias_de(db: Db, explotacion, maquina_id: int) -> list[models.AveriaDeMaq
     # forma de olvidarse de uno**: que es exactamente el fallo que tendría hacerlo en cada sitio.
     for averia in las_suyas:
         averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
+        averia.papel = _el_nombre_del_papel(db, explotacion, averia.documento_id)
     return las_suyas
 
 
@@ -610,6 +611,22 @@ def _el_nombre_del_taller(db: Db, explotacion, contacto_id: int | None) -> str |
     if taller is None or getattr(taller, "explotacion_id", None) != explotacion.id:
         return None
     return getattr(taller, "nombre", None)
+
+
+def _el_nombre_del_papel(db: Db, explotacion, documento_id: int | None) -> str | None:
+    """El **titulo** del papel de una averia, o `None` si no consta.
+
+    Se resuelve al leer, como el taller y como `decidido_por` en las obligaciones: la fila guarda el
+    `documento_id` y el agricultor lee el nombre. `None` es «no hay papel apuntado», que es un caso
+    normal -la mayoria de las averias se arreglan uno mismo y no hay papel-, y la respuesta ademas lo
+    dice con `trae_papel`, para que **ninguna pantalla pueda callarlo por olvido**.
+    """
+    if documento_id is None:
+        return None
+    papel = db.get(models.DocumentoAnexo, int(documento_id))
+    if papel is None or getattr(papel, "explotacion_id", None) != explotacion.id:
+        return None
+    return getattr(papel, "titulo", None)
 
 
 def _la_ficha(db: Db, explotacion, maquina) -> dict:
@@ -1154,9 +1171,10 @@ def _la_averia_de_esta_maquina(db: Db, explotacion, maquina_id: int, averia_id: 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Eso no está en tu cuaderno."
         )
-    # El nombre del taller, igual que en `_averias_de`: por aquí pasan el PUT y el anular, y el POST lo
-    # necesita también al devolver la que acaba de apuntar.
+    # El nombre del taller y el del papel, igual que en `_averias_de`: por aquí pasan el PUT y el anular,
+    # y el POST lo necesita también al devolver la que acaba de apuntar.
     averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
+    averia.papel = _el_nombre_del_papel(db, explotacion, averia.documento_id)
     return averia
 
 
@@ -1181,6 +1199,12 @@ def apuntar_una_averia(
     # otra finca y el nombre saldria en la ficha como si fuera suyo.
     if datos.taller_contacto_id is not None:
         obtener_de_la_explotacion(db, models.Contacto, datos.taller_contacto_id, explotacion.id)
+    # **Y el papel tiene que ser de ESTA finca** (CRM-07 #7, 14/10/2026): sin esto, una averia podria
+    # apuntar al papel de otra finca y su titulo saldria en la ficha como si fuera suyo. El ayudante ya
+    # existia, porque la obligacion lo usa. Y el **409** al borrar un papel en uso lo pone
+    # `correcciones.tablas_que_apuntan_a`, que descubre esta tabla **por el nombre de la columna**: no hay
+    # que apuntarla en ninguna lista, y una prueba avisa el dia que aparezca una tabla nueva.
+    _el_papel_es_de_esta_finca(db, explotacion, datos.documento_id)
     clave = (datos.clave_de_reenvio or "").strip() or None
     if clave:
         # Por máquina, por el mismo motivo que en una inspección: ver `apuntar_una_inspeccion`.
@@ -1203,6 +1227,7 @@ def apuntar_una_averia(
         horas=datos.horas,
         notas=datos.notas,
         taller_contacto_id=datos.taller_contacto_id,
+        documento_id=datos.documento_id,
         clave_de_reenvio=clave,
     )
     db.add(averia)
@@ -1211,6 +1236,7 @@ def apuntar_una_averia(
     # esto, la respuesta diria el identificador del taller y **no su nombre**, que es lo que la pantalla
     # pinta al guardar. (Lo vi al escribir el enganche de arriba, mirando quien devuelve una averia.)
     averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
+    averia.papel = _el_nombre_del_papel(db, explotacion, averia.documento_id)
     return averia
 
 
@@ -1230,6 +1256,7 @@ def corregir_una_averia(
     # otra finca y el nombre saldria en la ficha como si fuera suyo.
     if datos.taller_contacto_id is not None:
         obtener_de_la_explotacion(db, models.Contacto, datos.taller_contacto_id, explotacion.id)
+    _el_papel_es_de_esta_finca(db, explotacion, datos.documento_id)
     preparada = models.AveriaDeMaquina(
         explotacion_id=explotacion.id,
         maquina_id=maquina_id,
@@ -1239,7 +1266,20 @@ def corregir_una_averia(
         fecha_resuelta=datos.fecha_resuelta,
         horas=datos.horas,
         notas=datos.notas,
-        taller_contacto_id=datos.taller_contacto_id,
+        # ***LO QUE LA PETICION NO MANDA, NO SE BORRA*** (regla A1, `docs/T02_VALORES_POR_DEFECTO.md`).
+        # Antes esto era `datos.taller_contacto_id` a secas, y como el PUT **reemplaza la fila entera**,
+        # corregir una averia sin mandar el taller **lo borraba**. Lo vi al escribir el papel, que si lo
+        # hace bien desde el principio porque copie el patron de la obligacion. Ahora los dos igual.
+        taller_contacto_id=(
+            datos.taller_contacto_id
+            if "taller_contacto_id" in datos.model_fields_set
+            else averia.taller_contacto_id
+        ),
+        documento_id=(
+            datos.documento_id
+            if "documento_id" in datos.model_fields_set
+            else averia.documento_id
+        ),
         clave_de_reenvio=averia.clave_de_reenvio,
     )
     correcciones.corregir(
@@ -1254,6 +1294,7 @@ def corregir_una_averia(
     # corre antes, con el taller que habia, asi que si se acaba de cambiar de taller el nombre que
     # viajaria en la respuesta seria el **viejo**. Se resuelve otra vez y se dice el de ahora.
     averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
+    averia.papel = _el_nombre_del_papel(db, explotacion, averia.documento_id)
     return averia
 
 

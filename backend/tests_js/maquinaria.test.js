@@ -65,6 +65,14 @@ const MAQUINARIA = {
   // («ni una frase escrita a mano») usa para saber que un texto viene del servidor. Si falta, el
   // guardian **no puede** distinguir una palabra de verdad de una inventada, y deja pasar las dos.
   taller_de_la_averia: "Taller",
+  campo_papel: "¿Con qué papel lo apuntas?",
+  // ***LAS FRASES DEL SERVIDOR, LITERALES***: `tests/test_revision_t14.py` compara esta copia con lo
+  // que sirve `/api/interfaz`, palabra por palabra. Acortarlas aqui deja al guardian de «ni una frase
+  // escrita a mano» sin poder distinguir una palabra de verdad de una inventada.
+  campo_papel_pista:
+    "El parte del taller, la factura de la reparación o el presupuesto. Si no hay papel, déjalo como está.",
+  sin_papel: "Sin papel apuntado",
+  papel_de_la_averia: "Papel",
   coste_de_la_maquina: "Lo que ha costado tenerla parada",
   coste_no_se_pudo:
     "No se ha podido traer lo que ha costado. Vuelve a abrir la ficha y, si sigue, avisa.",
@@ -433,6 +441,7 @@ function fichaConCosas() {
       // sus frases compuestas («Taller: …», «Costo: …») de una escrita a mano: se queda ciego.
       taller: "Talleres El Camino",
       taller_texto: "Taller: Talleres El Camino",
+      papel_texto: "Papel: Factura del taller",
       coste_texto: "900,00 €",
       coste_frase: "Costó: 900,00 €",
       anulado: false,

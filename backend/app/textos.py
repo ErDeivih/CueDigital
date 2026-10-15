@@ -7463,6 +7463,16 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     "campo_taller": "¿En qué taller está?",
     "campo_taller_pista": "Si lo sabes. Puede quedarse sin decir.",
     "taller_de_la_averia": "Taller",
+    # **El papel de la averia** (CRM-07 #7, 14/10/2026). El informe pide «el documento de la averia» y el
+    # dueno contesto, al preguntarle por el presupuesto, que es «**un PAPEL que se engancha a la averia**»:
+    # las dos cosas del informe son **una**. Vacio = «sin papel», que es lo normal: la mayoria de las
+    # averias se arreglan uno mismo y no hay papel que guardar.
+    "campo_papel": "¿Con qué papel lo apuntas?",
+    "campo_papel_pista": (
+        "El parte del taller, la factura de la reparación o el presupuesto. Si no hay papel, déjalo como está."
+    ),
+    "sin_papel": "Sin papel apuntado",
+    "papel_de_la_averia": "Papel",
     # **Lo que ha costado** (CRM-07 #7, 14/10/2026). Tres cosas distintas y las tres se pueden decir:
     # el total, **que no haya ningún gasto** (que no es lo mismo que costar cero), y **cuántos gastos no
     # tienen importe** -porque un total que solo suma la mitad parecería el total entero-.

@@ -831,6 +831,16 @@ class AveriaDeMaquina(Base):
     # Y responde a lo que la cabecera de esta clase pide a gritos: «la maquina se queda en el taller y
     # a la semana nadie se acuerda de por que».
     taller_contacto_id: Mapped[int | None] = mapped_column(ForeignKey("contactos.id"), index=True)
+    # **El papel de esta averia** (CRM-07 #7, 14/10/2026). Es **el mismo patron que la inspeccion**
+    # (`InspeccionDeMaquina.documento_id`) y que la obligacion, y por eso no hace falta ninguna lista:
+    # `correcciones.tablas_que_apuntan_a("documento_id")` la descubre **por el nombre de la columna**, y
+    # borrar un papel que alguna averia use contesta **409** en vez de dejarla apuntando a nada.
+    #
+    # **Es tambien el PRESUPUESTO**, que es lo que el dueno contesto cuando se le pregunto: «un PAPEL que
+    # se engancha a la averia». Y **el importe NO se apunta aqui**: un importe en la averia y otro en el
+    # gasto acabarian diciendo dos cosas distintas, que es exactamente lo que la casa no hace. Si el papel
+    # trae una cifra, esa cifra vive en el papel.
+    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documentos_anexos.id"), index=True)
     clave_de_reenvio: Mapped[str | None] = mapped_column(String(120))
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)

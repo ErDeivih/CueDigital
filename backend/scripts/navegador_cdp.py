@@ -265,15 +265,13 @@ class NavegadorDeVerdad:
         # El sintoma es de los peores: ***una linea que no se pinta y todo lo demas en orden***.
         # Se limpian SOLO `service_workers` y `cache_storage`: el vale del `localStorage` **no** se toca,
         # que si no cada navegacion empezaria pidiendo entrar otra vez.
-        trozos = url.split("/")
-        if len(trozos) >= 3 and trozos[0] in ("http:", "https:"):
-            self.orden(
-                "Storage.clearDataForOrigin",
-                {
-                    "origin": "/".join(trozos[:3]),
-                    "storageTypes": "service_workers,cache_storage",
-                },
-            )
+        # ***OJO***: aqui estaba `Storage.clearDataForOrigin` con `service_workers,cache_storage`, y
+        # **rompia la aplicacion**: con el barrido en cada navegacion, el formulario de una averia dejaba
+        # de abrirse (el clic no llegaba a pintar nada) y el recorrido del taller -que pasaba 15/15-
+        # empezo a fallar con «el desplegable del taller tiene opciones: None». Se quito el 14/10/2026
+        # despues de comprobar que el MISMO sintoma salia en los dos recorridos, que es lo que delato que
+        # la causa era el arnes y no la pantalla. Lo que de verdad hacia falta -que cada pantalla se mida
+        # con el codigo de ahora- lo resuelve la RECARGA de mas abajo.
         # **Si solo cambia el FRAGMENTO, `Page.navigate` NO recarga el documento** (14/10/2026). Lo que
         # hace es disparar `popstate` -y la aplicacion enruta por ahi, asi que **la pantalla cambia**-,
         # pero **los modulos ya cargados siguen siendo los del primer documento**. Lo midio una sonda de
@@ -289,17 +287,15 @@ class NavegadorDeVerdad:
         self._ultima_url = url
         self.orden("Page.navigate", {"url": url})
         if solo_el_fragmento:
-            # …y se recarga **de verdad y sin cache**, para que los modulos sean los de AHORA.
-            # ***PERO HAY QUE ESPERAR A QUE EL FRAGMENTO CAMBIE*** (14/10/2026): `Page.navigate` es
-            # asincrono y volver con `Page.reload` en la linea siguiente **recarga la URL VIEJA**. La
-            # primera version de esto lo hacia asi, y el sintoma era peor que el mal que arreglaba: un
-            # recorrido de tres pantallas **media la primera en las tres**, y parecia que el navegador
-            # servia codigo viejo. No lo servia: **yo iba con prisa**.
-            for _ in range(50):
-                if (self.evaluar("String(document.location.hash || '')") or "") in url:
-                    break
-                time.sleep(0.05)
-            self.orden("Page.reload", {"ignoreCache": True})
+            # …y se pasa **por `about:blank`**, que es un documento nuevo y limpio.
+            # ***NO se usa `Page.reload`*** (14/10/2026): deja la aplicacion **a medio arrancar**, el clic
+            # que viene despues se pierde y el formulario no llega a abrirse. Lo delato que el recorrido
+            # del taller -que pasaba 15/15- empezo a fallar con **el mismo sintoma** que el del papel, y
+            # eso solo puede ser del arnes. ***Si dos recorridos distintos fallan igual, la causa no esta
+            # en ninguna de las dos pantallas.***
+            self.orden("Page.navigate", {"url": "about:blank"})
+            time.sleep(0.2)
+        self.orden("Page.navigate", {"url": url})
         time.sleep(esperar)
 
     def evaluar(self, expresion: str):

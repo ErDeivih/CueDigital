@@ -17240,6 +17240,57 @@ function losTalleresDeLaFinca() {
   );
 }
 
+/**
+ * **Los papeles de la finca, para poder elegir uno** (CRM-07 #7, 14/10/2026).
+ *
+ * El informe pedia «el documento de la averia» y el dueno contesto, al preguntarle por el presupuesto,
+ * que es «**un PAPEL que se engancha a la averia**»: las dos cosas del informe son **una**, y para
+ * apuntarlo hay que poder elegirlo.
+ *
+ * Se piden **una vez** y se guardan, como los contactos. Y si la peticion falla, la lista queda vacia y
+ * el desplegable ofrece solo «sin papel»: **lo que no puede pasar es que no se pueda apuntar una averia
+ * porque los papeles no contesten** -la misma regla que el saldo de un contacto y que el coste-.
+ */
+async function cargarLosPapelesDeLaFinca() {
+  const suyo = estadoDeLaMaquinaria();
+  suyo.papeles = null;
+  suyo.papelesError = "";
+  try {
+    const datos = await apiJson("/api/bandeja?estado=todos");
+    suyo.papeles = (datos && datos.papeles) || [];
+  } catch (fallo) {
+    suyo.papeles = [];
+    suyo.papelesError = mensajeDeFallo(fallo);
+  }
+}
+
+/**
+ * Los papeles ya cargados, en opciones. **No filtra**, y es a proposito: cual se puede usar lo decide el
+ * servidor (que contesta 404 si es de otra finca y 409 si esta en uso), y filtrar aqui seria calcular en
+ * el navegador algo que ya esta decidido donde estan los datos.
+ *
+ * ***`elPuesto` se lo dan hecho*** (14/10/2026): `puesto(id, campo)` es un ayudante **local del
+ * constructor de campos**, no del modulo, asi que llamarlo desde aqui reventaba con
+ * `ReferenceError: puesto is not defined` -y como eso pasa **al pintar**, el formulario de la averia
+ * entero dejaba de salir y **sin ningun error visible**. Se descubrio bisecando: una sonda con las
+ * opciones **en linea** hacia que el formulario se abriera, y eso solo puede ser de aqui.
+ */
+function lasOpcionesDeLosPapeles(elPuesto) {
+  const m = textosDeLaMaquinaria().maquinaria || {};
+  return [
+    {
+      valor: "",
+      texto: m.sin_papel,
+      elegido: !elPuesto,
+    },
+    ...((estadoDeLaMaquinaria().papeles || []).map((papel) => ({
+      valor: String(papel.id),
+      texto: [papel.titulo, papel.etiqueta_tipo].filter(Boolean).join(" · "),
+      elegido: String(papel.id) === String(elPuesto),
+    }))),
+  ];
+}
+
 /** El estado de los contactos, creado la primera vez que hace falta. */
 function estadoDeLosContactos() {
   if (!estado.contactos) {
@@ -18441,6 +18492,10 @@ function estadoDeLaMaquinaria() {
       // esta lista es un campo que el siguiente que lea esto no sabe que está.
       costes: null,
       costeError: "",
+      // **Los papeles de la finca** (CRM-07 #7, 14/10/2026), para el desplegable de la averia. Se piden
+      // una vez y se guardan aqui: `null` es «todavia no se han pedido» y `[]` es «no hay ninguno».
+      papeles: null,
+      papelesError: "",
       // Lo que se está rellenando: la máquina, una inspección o una avería. Vive aquí y no dentro del
       // componente por lo de siempre: el componente se vuelve a montar entero cada vez, así que lo escrito
       // tiene que sobrevivir a un repintado (y un formulario que se vacía solo es un formulario que se
@@ -18953,6 +19008,10 @@ function unaMaquinaPreparada(ficha, losCostes = {}) {
       // una compuesta de una inventada. (La linea del taller se entrego asi y solo pasaba porque sus dos
       // mitades caian al mismo «Falta decirlo»; lo cazo la linea del coste al ponerse al lado.)
       taller_texto: `${t("maquinaria.taller_de_la_averia", "")}: ${averia.taller || m.sin_decir}`,
+      // **El papel, con su frase hecha AQUI** (`docs/REACT.md`), como el taller: el componente no puede
+      // escribir «Papel: » + el titulo, porque entonces la ficha tendria frases que no vienen del
+      // servidor y el guardian de «ni una frase escrita a mano» no las podria reconocer.
+      papel_texto: `${t("maquinaria.papel_de_la_averia", "")}: ${averia.papel || m.sin_papel}`,
       // **Lo que ha costado ESTA avería.** Vacío es **«no consta»**, y por eso NO se pone «0,00 €»: una
       // avería sin ningún gasto apuntado no ha costado cero, es que no se sabe. Y la puerta no inventa
       // una fila con cero para las que no tienen gastos (hay una prueba que lo fija).
@@ -19498,6 +19557,19 @@ function formularioDeUnaAveria({ corrigiendo = null } = {}) {
         ],
       },
       {
+        tipo: "opciones",
+        // **`id` ademas de `campo`**, por lo mismo que el taller: `puesto(id, campo)` busca la casilla por
+        // su `id`, y sin esto el papel no se preseleccionaria al corregir una averia.
+        id: "averia-papel",
+        campo: "documento_id",
+        etiqueta: m.campo_papel,
+        pista: m.campo_papel_pista,
+        elegido: puesto("averia-papel", "documento_id"),
+        // **El valor se calcula AQUI**, dentro del constructor, que es donde vive `puesto`: pasarselo
+        // hecho al ayudante es lo que evita el `ReferenceError` que dejo el formulario sin salir.
+        opciones: lasOpcionesDeLosPapeles(puesto("averia-papel", "documento_id")),
+      },
+      {
         tipo: "area",
         id: "averia-notas",
         etiqueta: m.campo_notas,
@@ -19659,6 +19731,11 @@ async function guardarLoDeLaMaquinaria() {
       // de la casilla: los campos de tipo `opciones` escriben ahi. La opcion vacia es «No consta» y
       // viaja como `null` —no como cadena vacia—, que es lo que el esquema entiende por «sin taller».
       taller_contacto_id: b.taller_contacto_id ? Number(b.taller_contacto_id) : null,
+      // **El papel** (CRM-07 #7, 14/10/2026). Se lee del **borrador**, como el taller, porque los campos
+      // de tipo `opciones` escriben ahi. La opcion vacia es «sin papel» y viaja como `null`, que es lo que
+      // el esquema entiende. Y **mandarlo vacio SI lo quita**: eso es mandarlo, no dejarlo de mandar, y la
+      // regla A1 distingue las dos cosas (`model_fields_set`).
+      documento_id: b.documento_id ? Number(b.documento_id) : null,
       clave_de_reenvio: laClaveDeReenvio(),
     };
     ruta = id
@@ -20735,6 +20812,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     // mira `cargados` antes de pedirlos, que es para lo que esta ese testigo («lo miran las pantallas
     // del dinero, que no tienen por que volver a pedirlos»).
     if (!estadoDeLosContactos().cargados) await recargarLosContactos();
+    // **Y los papeles** (CRM-07 #7): los del desplegable, por el mismo motivo que los talleres. Se mira si
+    // ya estan antes de pedirlos, que es para lo que esta el `null`.
+    if (!suyo.papeles) await cargarLosPapelesDeLaFinca();
     suyo.formulario = { clase: "averia" };
     return pantallaUnaMaquina();
   }
@@ -20751,6 +20831,9 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     // mira `cargados` antes de pedirlos, que es para lo que esta ese testigo («lo miran las pantallas
     // del dinero, que no tienen por que volver a pedirlos»).
     if (!estadoDeLosContactos().cargados) await recargarLosContactos();
+    // **Y los papeles** (CRM-07 #7): los del desplegable, por el mismo motivo que los talleres. Se mira si
+    // ya estan antes de pedirlos, que es para lo que esta el `null`.
+    if (!suyo.papeles) await cargarLosPapelesDeLaFinca();
     suyo.formulario = { clase: "averia", corrigiendo: cruda };
     return pantallaUnaMaquina();
   }

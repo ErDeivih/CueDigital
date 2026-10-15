@@ -540,6 +540,12 @@ function Averia({ averia, textos }) {
         html`<div className="apunte-detalle">${frase(averia.taller_texto)}</div>`
       }
       ${
+        // **Y el papel de la averia** (CRM-07 #7): el parte, la factura o el presupuesto. Se dice tambien
+        // cuando no consta, por lo mismo que el taller: una averia sin papel es lo mas normal del mundo, y
+        // callarlo dejaria al agricultor sin saber si el programa no lo sabe o se lo esta guardando.
+        html`<div className="apunte-detalle">${frase(averia.papel_texto)}</div>`
+      }
+      ${
         // **Y lo que costo esta averia** (CRM-07 #7). Tambien se dice cuando no consta, por lo mismo:
         // una averia sin ningun gasto apuntado **no ha costado cero**, y el agricultor tiene que poder
         // distinguir «no lo se» de «fue gratis».

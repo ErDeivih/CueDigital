@@ -1155,7 +1155,7 @@ class TestLoQueSeCuentaAntesDeBorrar:
             for modelo in facturas_api._tablas_que_apuntan_a_una_factura()
         ] == ["fertilizaciones", "gastos", "inversiones_de_la_finca", "recepciones"]
 
-    def test_lo_que_apunta_a_un_papel_es_la_inspeccion_de_una_maquina(self):
+    def test_lo_que_apunta_a_un_papel_son_ESTAS_cinco_tablas_y_se_descubren_solas(self):
         """**Desde el T14 (03/10/2026) hay una tabla que apunta a un papel, y es la que había que decidir.**
 
         Esta prueba decía antes `assert correcciones.tablas_que_apuntan_a("documento_id") == []` y su
@@ -1192,6 +1192,17 @@ class TestLoQueSeCuentaAntesDeBorrar:
         por la misma razón se puede siempre **anular** el papel, que lo deja con su motivo y con su
         fichero. Y ojo con lo que **no** cuenta: la obligación sigue sabiendo su `aplicabilidad` y su
         `origen` por su cuenta, así que el papel no es lo que sostiene el dato.
+
+        **Y desde el CRM-07 #7 (14/10/2026) hay una quinta: `averias_de_maquina`.** El informe del dueño
+        pedía «el documento de la avería», y al preguntarle por el presupuesto contestó lo que ya estaba
+        escrito en este fichero sin que nadie lo hubiera juntado: «**un PAPEL que se engancha a la
+        avería**». Las dos cosas del informe son **una**: el parte del taller, la factura de la
+        reparación o el presupuesto son papeles, y la avería guarda **cuál**. Es una dependencia por el
+        mismo motivo que la inspección: la avería sabe su fecha, qué pasó y si está resuelta por su
+        cuenta —así que el papel no es lo que sostiene el dato—, pero borrar el papel dejaría la avería
+        diciendo «esto lo arregló este papel» sin que exista. **La decisión es la misma**: cuenta como
+        dependencia y contesta **409**, y lo que siempre se puede hacer es **anular** el papel, o
+        **quitarle el papel a la avería**, que no la borra.
         """
         assert [
             modelo.__tablename__ for modelo in correcciones.tablas_que_apuntan_a("documento_id")
@@ -1204,6 +1215,7 @@ class TestLoQueSeCuentaAntesDeBorrar:
         # Y la cuarta es `obligaciones_de_maquina`, por lo dicho arriba: el papel que demuestra que la
         # obligación le toca.
         ] == [
+            "averias_de_maquina",
             "conciliaciones_de_movimiento",
             "inspecciones_de_maquina",
             "obligaciones_de_maquina",

@@ -788,6 +788,10 @@ class AveriaEntrada(EntradaBase):
     # averias se arreglan uno mismo, y obligar a decir un taller inventaria un dato que nadie
     # ha dicho.
     taller_contacto_id: int | None = None
+    # **El papel de la averia** (CRM-07 #7): el parte, la factura del taller o el presupuesto. Vacio
+    # tambien es un caso normal -la mayoria de las averias se arreglan uno mismo y no hay papel-, y por
+    # eso es opcional y la respuesta lo dice con `trae_papel`, para que ninguna pantalla lo calle.
+    documento_id: int | None = None
     clave_de_reenvio: str | None = Field(
         default=None, max_length=_cabe_en_la_columna(models.AveriaDeMaquina, "clave_de_reenvio")
     )
@@ -809,6 +813,19 @@ class AveriaSalida(SalidaBase):
     # marcado.
     taller_contacto_id: int | None = None
     taller: str | None = None
+    # **El papel, con su titulo resuelto al leer** (`maquinaria_api`), como el taller: la pantalla no
+    # tiene que ir a buscar un papel para poder ensenar cual es. El `id` va tambien, porque el formulario
+    # necesita saber **cual** esta puesto para ofrecerlo marcado.
+    documento_id: int | None = None
+    papel: str | None = None
+    # **Se dice en el dato**, no solo en la pantalla: una averia sin papel lo dice al leerla, para que
+    # ninguna pantalla pueda callarlo por olvido. Es el mismo trato que la obligacion y la inspeccion.
+    trae_papel: bool = False
+
+    @model_validator(mode="after")
+    def _dice_si_trae_papel(self):
+        self.trae_papel = self.documento_id is not None
+        return self
 
 
 class FuenteDeLaObligacionSalida(BaseModel):
