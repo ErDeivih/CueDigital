@@ -50,6 +50,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.request
@@ -142,6 +143,41 @@ class NavegadorDeVerdad:
         self._bucle.run_until_complete(self._conectar())
         return self
 
+    def _matar_los_suyos(self) -> None:
+        """Mata los procesos del navegador **de esta instancia**, y solo esos.
+
+        **Por que hace falta, si `__exit__` ya termina el proceso** (14/10/2026): `subprocess.Popen`
+        lanza el **lanzador** de Chrome, y **Chrome se re-ejecuta a si mismo**: el lanzador muere solo y
+        `terminate()` se lleva al mensajero, mientras **el navegador sigue vivo**. Se acumularon **diez**
+        en una sesion, y eso hace fallar `tests/test_el_recorrido_se_anda.py`, que **lo dice en su propio
+        docstring**: «con otra sesion de navegador en marcha… dos navegadores a la vez se estorban».
+
+        **Se mata por el PERFIL** (`--user-data-dir`), que es unico de cada instancia: asi no se toca
+        ningun otro navegador de la maquina -y en particular **ninguno del dueno**-. Se eligio esto y no
+        matar por nombre de proceso justo por eso.
+        """
+        if not self.perfil:
+            return
+        try:
+            if sys.platform.startswith("win"):
+                guion = (
+                    "Get-CimInstance Win32_Process | "
+                    "Where-Object { $_.CommandLine -like '*" + str(self.perfil) + "*' } | "
+                    "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+                )
+                subprocess.run(
+                    ["powershell", "-NoProfile", "-NonInteractive", "-Command", guion],
+                    capture_output=True,
+                    check=False,
+                    timeout=30,
+                )
+            else:
+                subprocess.run(["pkill", "-f", str(self.perfil)], capture_output=True, check=False, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            # Que no se pueda limpiar **no puede tumbar un recorrido que ya termino bien**: se deja
+            # dicho y se sigue. Antes esto no existia y el resultado era peor: los navegadores vivos.
+            print("  (no se han podido cerrar los navegadores de esta instancia: se dejan)")
+
     def __exit__(self, *_excepcion) -> None:
         self.cerrar()
 
@@ -165,6 +201,7 @@ class NavegadorDeVerdad:
             except subprocess.TimeoutExpired:
                 self.proceso.kill()
             self.proceso = None
+        self._matar_los_suyos()
         shutil.rmtree(self.perfil, ignore_errors=True)
 
     def _esperar_al_puerto(self, segundos: float = 20.0) -> None:
