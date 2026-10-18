@@ -206,6 +206,12 @@ def _migrar(sesion, informe: dict) -> dict:
         # El parámetro se llamaba `_usuario` porque no se usaba; desde el 11/10/2026 la migración **sí** lo
         # usa: deja rastro con quién la hizo. El guion no corre con una cuenta, así que pasa esa misma.
         usuario=SinCuenta(),
+        # ***Y el permiso, en `None`*** (17/10/2026). *La puerta ahora exige `PuedeModificar` -que es lo
+        # correcto para la pantalla-, y este guion **no es una peticion de la pantalla**: corre desde la
+        # consola, en la maquina del que administra, y su propio comentario dice por que usa **la misma
+        # puerta** -para que la regla viva en un solo sitio-. Pasarle `None` es decir la verdad: **no hay
+        # una cuenta detras a la que preguntarle**.*
+        puede_modificar=None,
     )
     print(
         f"\n    apuntadas {_cuantos(resultado['fichas'], 'ficha')} y "
@@ -220,7 +226,15 @@ def _migrar(sesion, informe: dict) -> dict:
 def _deshacer(sesion, explotacion: models.Explotacion) -> dict:
     """Quita lo que apuntó la migración, por la misma puerta que la pantalla."""
     resultado = api.deshacer_la_migracion(
-        db=sesion, explotacion=explotacion, usuario=SinCuenta()
+        db=sesion,
+        explotacion=explotacion,
+        usuario=SinCuenta(),
+        # ***Y el permiso, en `None`*** (17/10/2026): *la puerta ahora exige `PuedeModificar`
+        # -que es lo correcto para la pantalla-, y este guion **no es una peticion de la
+        # pantalla**: corre desde la consola, y su propio comentario dice por que usa **la misma
+        # puerta** -para que la regla viva en un solo sitio-. Pasarle `None` es decir la verdad:
+        # **no hay una cuenta detras a la que preguntarle**.*
+        puede_modificar=None,
     )
     print(
         f"\n    quitadas {_cuantos(resultado['fichas'], 'ficha')} y "
