@@ -118,6 +118,7 @@ Las tres últimas, por orden:
 | Pantalla | Estado |
 |---|---|
 | **Inicio** (`backend/web/react/pantallas/inicio.js`) | ✅ En React |
+| **La preparación de la PAC** (`backend/web/react/pantallas/pac.js`) | ✅ En React |
 | **Confirmación, «Apuntado…»** (`backend/web/react/pantallas/hecho.js`) | ✅ En React |
 | **Mis cosas** (`backend/web/react/pantallas/mis_cosas.js`) | ✅ En React |
 | **Los papeles** (`backend/web/react/pantallas/documentos.js`) | ✅ En React |
