@@ -23,6 +23,7 @@ Uso:  python scripts/verificar_el_recorrido_de_la_pac.py <direccion>
 from __future__ import annotations
 
 import json
+import pathlib
 import sys
 
 sys.path.insert(0, "scripts")
@@ -92,7 +93,10 @@ def main() -> int:
             )
             # ***Y antes del resumen***: *decirlo despues de la tabla es decirlo tarde.*
             el_aviso = texto.lower().find("elegible")
-            el_resumen = texto.find(el_paquete["textos"]["resumen"])
+            # ***El ancla es «Lo que consta»*** (18/10/2026): *la pantalla se rehizo con el recorrido completo, y
+            # el resumen del paquete vive ahora en la capa de lo que consta. **La propiedad es la misma**: el aviso,
+            # antes que las cifras.*
+            el_resumen = texto.find("Lo que consta")
             comprobar(
                 el_resumen < 0 or (el_aviso >= 0 and el_aviso < el_resumen),
                 "***y se lee ANTES del resumen***",
@@ -164,6 +168,134 @@ def main() -> int:
                 bool(el_paquete.get("no_es_garantia")),
                 "***y viaja con el paquete, no solo en la pantalla***",
             )
+
+            # ============================================================================ la campaña y la hipótesis
+            print("\n3. LA CAMPANA OBJETIVO Y LA HIPOTESIS  -el recorrido del agricultor-")
+            nav.abrir(f"{DIRECCION}/#/pac", esperar=2.0)
+            nav.esperar("document.querySelector('#pac-anio') !== null", segundos=30)
+            el_anio = (el_paquete.get("campana_anio") or 2026) + 1
+            nav.evaluar(
+                "(() => { const c = document.querySelector('#pac-anio');"
+                f" c.value = '{el_anio}';"
+                " c.dispatchEvent(new Event('input', {bubbles: true})); return 'puesto'; })()"
+            )
+            nav.pulsar('[data-accion="pac-evaluar"]')
+            nav.esperar(
+                "document.querySelector('[data-capa=\"escenario\"]') !== null", segundos=40
+            )
+            comprobar(
+                "hipótesis" in elTexto(nav).lower() or "hipotesis" in elTexto(nav).lower(),
+                "***el escenario se pinta y dice que es una hipotesis***",
+                encontre=elTexto(nav)[:400],
+            )
+
+            # *Una hipotesis de verdad: se propone un cultivo en una tierra y se compara.*
+            el_primero = (el_paquete.get("las_tierras") or [{}])[0].get("parcela_id")
+            if el_primero:
+                nav.evaluar(
+                    "(() => { const s = document.getElementById('pac-cultivo-" + str(el_primero) + "');"
+                    " if (!s) return 'sin-select'; s.value = 'cebada';"
+                    " s.dispatchEvent(new Event('change', {bubbles: true})); return 'puesto'; })()"
+                )
+                nav.pulsar(f'[data-accion="pac-proponer"][data-parcela="{el_primero}"]')
+                nav.esperar("true", segundos=1.5)
+                nav.pulsar('[data-accion="pac-comparar"]')
+                nav.esperar(
+                    "document.querySelector('[data-paso=\"diferencias\"]') !== null", segundos=40
+                )
+                comprobar(
+                    "cebada" in elTexto(nav).lower(),
+                    "***y la comparacion ensena lo propuesto***",
+                    encontre=elTexto(nav)[:500],
+                )
+
+            # ============================================================================ guardar y el historial
+            print("\n4. GUARDAR LA VERSION Y VER EL HISTORIAL")
+            nav.pulsar('[data-accion="pac-guardar"]')
+            # ***Se espera al aviso DEL GUARDADO, no a «un aviso cualquiera»***: *la pantalla ya tenia el de
+            # «Escenario calculado», y conformarse con el leia el texto **antes** de que el guardado terminara.
+            # Es la misma trampa de siempre: una espera que se conforma con menos de lo que hay que esperar.*
+            nav.esperar(
+                "(() => { const a = document.querySelector('[data-aviso=\"aviso\"]');"
+                " return !!a && a.innerText.toLowerCase().includes('guardada'); })()",
+                segundos=40,
+            )
+            # ***QUE DICE LA PANTALLA, sin suponerlo***: *si esto falla, el diagnostico tiene que estar aqui y no
+            # en una suposicion.*
+            el_aviso = nav.evaluar(
+                "(() => { const a = document.querySelector('[data-aviso=\"aviso\"]');"
+                " return a ? a.innerText : '(ninguno)'; })()"
+            ) or ""
+            print(f"    el aviso del guardado: {str(el_aviso)[:200]!r}")
+            print(f"    la pantalla tiene {len(elTexto(nav))} letras")
+            comprobar(
+                "version 1" in elTexto(nav).lower() or "versión 1" in elTexto(nav).lower(),
+                "***la version 1 queda guardada y se dice***",
+                encontre=elTexto(nav)[:500],
+            )
+
+            nav.pulsar('[data-accion="pac-historial"]')
+            nav.esperar("document.querySelector('[data-foto]') !== null", segundos=40)
+            comprobar(True, "***y sale en el historial***")
+
+            # ============================================================================ la exportacion, de verdad
+            print("\n5. LA EXPORTACION: el fichero de ESA version")
+            import tempfile as _tempfile
+
+            with _tempfile.TemporaryDirectory(prefix="cd-pac-csv-") as la_carpeta:
+                nav.descargas_en(la_carpeta)
+                nav.esperar(
+                    "document.querySelector('[data-accion=\"pac-exportar\"]') !== null", segundos=30
+                )
+                nav.pulsar('[data-accion="pac-exportar"]')
+                el_fichero = nav.lo_descargado(segundos=25, nombre=".csv")
+                print(
+                    "    el historial en el DOM: "
+                    + str(
+                        nav.evaluar(
+                            "(() => { const h = document.querySelector('[data-capa=\"historial\"]');"
+                            " return h ? h.outerHTML.slice(0, 700) : '(sin historial)'; })()"
+                        )
+                    )[:700]
+                )
+                if el_fichero is None:
+                    comprobar(False, "***la exportacion tiene que descargar un fichero***")
+                else:
+                    el_contenido = pathlib.Path(el_fichero).read_text(encoding="utf-8-sig", errors="replace")
+                    comprobar(
+                        f"version 1" in el_contenido and str(el_anio) in el_contenido,
+                        "***y el fichero dice SU version y SU año***",
+                        esperaba=f"version 1 · {el_anio}",
+                        encontre=el_contenido[:260],
+                    )
+
+            # ============================================================================ el conflicto
+            print("\n6. LO QUE CAMBIA ENTRE EVALUAR Y GUARDAR: el conflicto")
+            # *Se evalua, se cambia la finca por la puerta y se guarda con la huella de lo evaluado: **el servidor
+            # tiene que decir que cambio, no sustituirlo**.*
+            el_de_antes = _api("/api/pac/escenario", token, cuerpo={"anio": el_anio}, metodo="POST")
+            la_huella = (el_de_antes or {}).get("escenario", {}).get("huella_de_la_fuente")
+            if la_huella and el_primero:
+                _api(
+                    f"/api/parcelas/{el_primero}", token,
+                    cuerpo={"alias": f"Cambiado {int(__import__('time').time())}"}, metodo="PUT",
+                )
+                el_guardado, el_cuerpo = _api(
+                    "/api/pac/foto", token,
+                    cuerpo={"anio": el_anio, "huella_de_la_fuente": la_huella}, metodo="POST",
+                )
+                comprobar(
+                    el_guardado == 409,
+                    "***guardar lo evaluado con la finca cambiada tiene que dar 409***",
+                    encontre=str(el_cuerpo)[:300],
+                )
+                comprobar(
+                    isinstance(el_cuerpo, dict)
+                    and (el_cuerpo.get("detail") or {}).get("se_puede_recalcular") is True,
+                    "***y decir que se puede recalcular***",
+                    encontre=str(el_cuerpo)[:300],
+                )
+
     except RuntimeError as fallo:
         print(f"  >> el navegador no ha podido: {fallo}")
         FALLOS.append(f"el navegador no ha podido ({fallo})")

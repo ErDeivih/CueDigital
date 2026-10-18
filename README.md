@@ -1,5 +1,7 @@
 # CUE Digital — el cuaderno de campo
 
+> **Trabajo PAC en curso:** leer [ESTADO_DE_ESTA_RAMA.md](ESTADO_DE_ESTA_RAMA.md), [CONTEXTO_PARA_EL_CHAT.md](CONTEXTO_PARA_EL_CHAT.md) y [DESARROLLO_EN_LA_NUBE.md](DESARROLLO_EN_LA_NUBE.md).
+
 > **Integración IUWS, 23/09/2026:** ya están localizados el descriptor oficial CUE
 > v3.11.4 y su esquema JSON, y se han corregido las rutas con `/api/`. El mapeo de los
 > 18 bloques está inventariado; la exportación oficial sigue pendiente de catálogos,
@@ -1375,7 +1377,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5524 tests
+../.venv/Scripts/python.exe -m pytest          # 5528 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1143 tests

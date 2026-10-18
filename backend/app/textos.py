@@ -9388,6 +9388,17 @@ LAS_METRICAS: dict[str, str] = {
 # ninguna competencia autoriza usar su interpretacion como norma»*. **Sin fuente cargada, esto no puede decir
 # si algo es elegible**, y lo dice en vez de callarse.
 PAC: dict[str, str] = {
+    # ***La PAC nueva*** (18/10/2026): *lo que se dice al guardar una foto, y lo que la pantalla necesita.*
+    "la_finca_cambio_al_guardar": (
+        "La finca ha cambiado desde que lo evaluaste. **No se ha guardado nada**: lo que ibas a guardar ya no "
+        "es lo que viste. Puedes recalcular con los datos de ahora y guardarlo asi."
+    ),
+    "no_se_ha_guardado_nada": "No se ha guardado nada.",
+    "otra_foto_a_la_vez": (
+        "Otra foto de este año se guardo a la vez. No se ha pisado ninguna: vuelve a intentarlo y tendras la "
+        "tuya con el numero siguiente."
+    ),
+    "esos_recintos_no_son_tuyos": "Esos recintos no son de esta finca, asi que no se pueden evaluar.",
     "titulo": "La preparación de la PAC",
     "explica": (
         "Lo que hay que llevar al asesor, tierra por tierra: la referencia, la superficie, lo que se siembra "

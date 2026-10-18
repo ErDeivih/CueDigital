@@ -1,0 +1,3 @@
+# El arranque en Linux necesita saltos LF, incluso desde un checkout Windows.
+.codex/*.sh text eol=lf
+.github/workflows/*.yml text eol=lf

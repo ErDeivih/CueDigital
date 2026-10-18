@@ -20,6 +20,8 @@ basta con «es de mi comunidad»: tiene que ser **de mi comunidad, de mi año, y
 
 from __future__ import annotations
 
+import hashlib
+import json
 import datetime as dt
 
 # ---------------------------------------------------------------------------
@@ -257,6 +259,23 @@ def el_escenario(el_paquete: dict, *, anio: int, cambios: dict | None = None) ->
         suyo["capa"] = "hipotesis"
         los_recintos.append(suyo)
 
+    # ***La huella de la FUENTE*** (18/10/2026): *de que datos se calculo esto.*
+    #
+    # *El contrato pide que **no cambie entre la vista previa y el guardado sin que se informe**. Para eso hace
+    # falta que la evaluacion se identifique: el cliente se lleva esta huella, y al guardar se compara con la de
+    # ahora. **Si no coincide, el servidor no sustituye nada en silencio: dice que la finca cambio y deja
+    # recalcular.***
+    #
+    # *Y **la calcula el servidor**, no el cliente: un contenido que manda el navegador no acredita nada.*
+    la_huella_de_la_fuente = hashlib.sha256(
+        json.dumps(
+            {"anio": anio, "las_tierras": el_paquete.get("las_tierras"), "cambios": los_cambios},
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+
     con_cultivo = sum(
         float((uno.get("cultivo") or {}).get("superficie_cultivada_ha") or 0) for uno in los_recintos
     )
@@ -272,6 +291,8 @@ def el_escenario(el_paquete: dict, *, anio: int, cambios: dict | None = None) ->
 
     return {
         "anio": anio,
+        # ***De que se calculo***: *es la identidad de la evaluacion, y viaja con ella.*
+        "huella_de_la_fuente": la_huella_de_la_fuente,
         "capa": "hipotesis",
         "es_hipotesis": True,
         "no_es_lo_declarado": True,

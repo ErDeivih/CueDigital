@@ -109,13 +109,15 @@ test("***las siete que la revision demostro*** estan en el inventario", async ()
 });
 
 test("y el inventario coincide con lo que dice el codigo", async () => {
-  const { LAS_QUE_ESCRIBEN, LAS_DE_SESION } = await import(
+  const { LAS_QUE_ESCRIBEN, LAS_DE_SESION, LAS_QUE_SOLO_CALCULAN } = await import(
     `../web/react/acciones.js?prueba=${Math.random()}`
   );
   const segunElCodigo = lasQueEscribenSegunElCodigo();
 
+  // ***Y las que solo calculan aunque manden un POST***: *`POST /api/pac/escenario` **calcula y se tira**, asi
+  // que no se le quita a nadie.* Se nombran en `acciones.js` con su motivo, y aqui se respetan.
   const sinApuntar = [...segunElCodigo].filter(
-    (a) => !LAS_QUE_ESCRIBEN.has(a) && !LAS_DE_SESION.has(a),
+    (a) => !LAS_QUE_ESCRIBEN.has(a) && !LAS_DE_SESION.has(a) && !LAS_QUE_SOLO_CALCULAN.has(a),
   );
   assert.deepEqual(
     sinApuntar.sort(),

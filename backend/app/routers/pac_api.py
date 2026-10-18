@@ -33,12 +33,14 @@ import json
 
 from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 
 from .. import models, pac, superficies, textos
 # ***`PuedeModificar` y `UsuarioActual` son DEPENDENCIAS, no parametros.*** *Con `from __future__ import
 # annotations` sus nombres son texto, asi que si no se importan FastAPI no los resuelve y **los trata como
 # parametros de consulta**: la puerta contestaba 422 pidiendo `usuario` y `puede_modificar` en la direccion.*
 from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
+from ..schemas import EscenarioDeLaPacEntrada, FotoDeLaPacEntrada
 
 router = APIRouter(prefix="/api/pac", tags=["pac"])
 
@@ -193,9 +195,40 @@ def el_paquete_de_la_pac(
 # -----------------------------------------------------------------------------------------------------------
 
 
+# -----------------------------------------------------------------------------------------------------------
+# ***La PAC: el escenario, las fotos y el historial*** (18/10/2026, segunda entrega)
+# -----------------------------------------------------------------------------------------------------------
+
+
+def _los_cambios(cambios) -> dict:
+    """*Los cambios, en la forma que entiende `pac.el_escenario`.* *Ya vienen validados por el esquema, asi que
+    aqui solo se quitan los `None`: **lo que no se manda no se cambia**.*"""
+    return {
+        int(la_parcela): el_cambio.model_dump(exclude_none=True)
+        for la_parcela, el_cambio in (cambios or {}).items()
+    }
+
+
+def _el_escenario_de_ahora(explotacion, db, *, anio: int, campana_id, cambios) -> dict:
+    """***El escenario que sale de la finca AHORA.*** *Con su huella de la fuente, que es lo que lo identifica.*"""
+    el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=campana_id)
+    las_suyas = {uno["parcela_id"] for uno in el_paquete.get("las_tierras") or []}
+    los_ajenos = sorted(set(cambios or {}) - las_suyas)
+    if los_ajenos:
+        # ***Se dice, no se ignora***: *evaluar un recinto que no es de la finca seria evaluar otra cosa.*
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "mensaje": textos.PAC["esos_recintos_no_son_tuyos"],
+                "los_que_no_son_suyos": los_ajenos,
+            },
+        )
+    return pac.el_escenario(el_paquete, anio=anio, cambios=cambios)
+
+
 @router.post("/escenario")
 def el_escenario_del_ano_que_viene(
-    datos: dict, explotacion: ExplotacionActual, db: Db, campana_id: int | None = None
+    datos: EscenarioDeLaPacEntrada, explotacion: ExplotacionActual, db: Db
 ) -> dict:
     """***Un escenario del año que viene***: *una **hipotesis**, separada de lo declarado y de lo realizado.*
 
@@ -203,125 +236,246 @@ def el_escenario_del_ano_que_viene(
     alternativas **sin consumir**».*
 
     ***Esta puerta no escribe nada***: *lee el paquete -que es lo que la finca tiene de verdad-, le aplica los
-    cambios que se le mandan **en memoria** y devuelve otra cosa, dicha con su capa. **Editar el escenario no
-    cambia el historial porque no hay historial que tocar**, y comparar dos alternativas no consume ninguna.*
+    cambios **en memoria** y devuelve otra cosa, dicha con su capa. **Editar el escenario no cambia el historial
+    porque no hay historial que tocar.***
 
-    *Es `POST` y no `GET` porque lo que se manda es **un juego de cambios por recinto**, que no cabe razonablemente
-    en una direccion; **no porque escriba**.*
+    ***Y devuelve `huella_de_la_fuente`***: *la identidad de lo que se ha evaluado. **Quien enseñe esto tiene que
+    mandarla al guardar**, y si la finca cambia mientras tanto, el servidor lo dira en vez de sustituirlo.*
 
-    *Y **no dice si es elegible**: un escenario no es una solicitud, y este programa **no envia nada**.*
+    *Es `POST` y no `GET` porque lo que se manda es **un juego de cambios por recinto**, que no cabe en una
+    direccion; **no porque escriba**.*
     """
-    el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=campana_id)
-    # *El año siguiente al de la campaña que se esta mirando. Si no hay campaña, se queda en el que digan.*
-    el_anio = datos.get("anio") or ((el_paquete.get("campana_anio") or 0) + 1)
-
-    el_suyo = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("cambios"))
-    la_contestacion = {
-        "escenario": el_suyo,
-        # *Las palabras de la casa, las mismas del paquete: el escenario no inventa un idioma nuevo.*
-        "textos": el_paquete.get("textos"),
-    }
-    if datos.get("contra") is not None:
-        el_otro = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("contra"))
+    los_cambios = _los_cambios(datos.cambios)
+    el_suyo = _el_escenario_de_ahora(
+        explotacion, db, anio=datos.anio, campana_id=datos.campana_id, cambios=los_cambios
+    )
+    la_contestacion = {"escenario": el_suyo, "textos": textos.PAC}
+    if datos.contra is not None:
+        el_otro = _el_escenario_de_ahora(
+            explotacion, db, anio=datos.anio, campana_id=datos.campana_id, cambios=_los_cambios(datos.contra)
+        )
         la_contestacion["contra"] = el_otro
         la_contestacion["comparacion"] = pac.comparar_alternativas(el_suyo, el_otro)
     return la_contestacion
 
 
-def _la_foto(db, explotacion, version: int) -> models.FotoDeLaPac:
-    """*La foto de esa version, o 404: **no se inventa una foto que no existe**.*"""
+def _la_identidad_de(la_foto) -> dict:
+    """***La identidad completa de una foto, y sus enlaces*** (18/10/2026).
+
+    *La revision demostro que **`GET /foto/{version}` no identificaba nada** con dos años: la version 1 de 2027 y
+    la de 2028 se contestaban la misma. **La direccion tiene que llevar el año** -o el id-, y aqui se devuelven
+    las dos, para que quien la guarde no tenga que componerlas.*
+    """
+    return {
+        "id": la_foto.id,
+        "anio": la_foto.anio,
+        "version": la_foto.version,
+        "huella": la_foto.huella,
+        "creada_en": la_foto.creada_en,
+        # ***Los enlaces, con el año dentro***: *una version sin su año no identifica nada.*
+        "el_detalle": f"/api/pac/foto/{la_foto.anio}/{la_foto.version}",
+        "el_fichero": f"/api/pac/foto/{la_foto.anio}/{la_foto.version}/exportar",
+        "por_id": f"/api/pac/foto/id/{la_foto.id}",
+        "es_hipotesis": True,
+        "no_es_garantia": True,
+    }
+
+
+def _la_foto_por_anio_y_version(db, explotacion, anio: int, version: int):
     la_foto = db.scalar(
         select(models.FotoDeLaPac).where(
             models.FotoDeLaPac.explotacion_id == explotacion.id,
+            models.FotoDeLaPac.anio == anio,
             models.FotoDeLaPac.version == version,
         )
     )
     if la_foto is None:
-        raise HTTPException(status_code=404, detail=textos.PAC["sin_fuente"])
+        raise HTTPException(
+            status_code=404,
+            detail=f"No hay ninguna foto de {anio} en la version {version}.",
+        )
+    return la_foto
+
+
+def _la_foto_por_id(db, explotacion, foto_id: int):
+    la_foto = db.scalar(
+        select(models.FotoDeLaPac).where(
+            models.FotoDeLaPac.explotacion_id == explotacion.id,
+            models.FotoDeLaPac.id == foto_id,
+        )
+    )
+    if la_foto is None:
+        raise HTTPException(status_code=404, detail="Esa foto no es de esta finca.")
     return la_foto
 
 
 @router.post("/foto")
 def guardar_la_foto_de_la_pac(
-    datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db,
+    datos: FotoDeLaPacEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
     puede_modificar: PuedeModificar,
 ) -> dict:
-    """***Guarda lo que se le ha ensenado al asesor***, con su version y su fecha.
+    """***Guarda lo que se le ha ensenado al asesor***, y **solo si sigue siendo lo mismo**.
 
-    *El escenario se calcula y se tira -que es lo correcto para **comparar**-, pero **ensenar** es otra cosa:
-    hace falta que lo que se enseno **siga siendo lo mismo** dentro de un año. Eso es esta foto.*
+    ### ***El defecto que esto cierra***
 
-    *Guarda **el contenido**, no la receta: si la finca cambia, la foto no. Y la `huella` dice cual es cual.*
+    *Antes se recalculaba al guardar: *el agricultor evaluaba una tierra, **cambiaba el alias de esa tierra
+    despues**, y guardaba. **La foto se llevaba el alias nuevo sin decir nada**, y lo que quedaba guardado **no era
+    lo que habia visto**.
+
+    ***Ahora se manda `huella_de_la_fuente`*** -la que devolvio el escenario que se mostro- y se compara con la de
+    ahora:
+
+      · **coincide**: se guarda **lo que el servidor calcula ahora**, que es exactamente lo que se le mostro;
+      · **no coincide**: **409**, con lo que se evaluo, lo que hay y **`se_puede_recalcular`**. *No se sustituye
+        nada en silencio.*
+      · **y sin huella** se guarda lo de ahora, que es lo que quieren los guiones; se dice en el docstring.
+
+    ***Y no se acepta el contenido del cliente***: *un navegador puede mandar cualquier cosa. Lo que se guarda lo
+    calcula **el servidor**, y la huella solo dice «esto es lo que te ensene».*
+
+    ### La numeracion
+
+    *`max+1` dentro del año. **Dos guardados a la vez** pueden pedir el mismo numero: el indice unico lo corta, se
+    reintenta con el siguiente y **no se pisa ninguna version**; si no cabe, **409 dicho**, nunca un 500.*
     """
-    el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=datos.get("campana_id"))
-    el_anio = int(datos.get("anio") or ((el_paquete.get("campana_anio") or 0) + 1))
-    el_suyo = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("cambios"))
+    los_cambios = _los_cambios(datos.cambios)
+    el_suyo = _el_escenario_de_ahora(
+        explotacion, db, anio=datos.anio, campana_id=datos.campana_id, cambios=los_cambios
+    )
+    la_huella_de_ahora = el_suyo["huella_de_la_fuente"]
+
+    if datos.huella_de_la_fuente and datos.huella_de_la_fuente != la_huella_de_ahora and not datos.recalcular:
+        # ***El conflicto, dicho***: *lo que se evaluo, lo que hay, y la salida.*
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "mensaje": textos.PAC["la_finca_cambio_al_guardar"],
+                "huella_que_se_evaluo": datos.huella_de_la_fuente,
+                "huella_de_ahora": la_huella_de_ahora,
+                "se_puede_recalcular": True,
+                "no_se_ha_guardado_nada": textos.PAC["no_se_ha_guardado_nada"],
+                "lo_que_hay_ahora": el_suyo,
+            },
+        )
+
     el_texto = json.dumps(el_suyo, ensure_ascii=False, sort_keys=True)
     la_huella = hashlib.sha256(el_texto.encode("utf-8")).hexdigest()
 
-    la_ultima = (
-        db.scalar(
-            select(func.max(models.FotoDeLaPac.version)).where(
-                models.FotoDeLaPac.explotacion_id == explotacion.id,
-                models.FotoDeLaPac.anio == el_anio,
+    for _intento in range(5):
+        la_ultima = (
+            db.scalar(
+                select(func.max(models.FotoDeLaPac.version)).where(
+                    models.FotoDeLaPac.explotacion_id == explotacion.id,
+                    models.FotoDeLaPac.anio == datos.anio,
+                )
+            )
+            or 0
+        )
+        la_foto = models.FotoDeLaPac(
+            explotacion_id=explotacion.id,
+            anio=datos.anio,
+            version=la_ultima + 1,
+            huella=la_huella,
+            el_contenido=el_texto,
+            usuario_id=usuario.id,
+        )
+        db.add(la_foto)
+        try:
+            db.commit()
+        except IntegrityError:
+            # ***Otra se guardo a la vez con el mismo numero***: *no es un error del programa, es una carrera; se
+            # reintenta con el siguiente. **Ninguna version se pisa**, porque el indice unico no deja.*
+            db.rollback()
+            continue
+        db.refresh(la_foto)
+        return _la_identidad_de(la_foto)
+
+    raise HTTPException(
+        status_code=409,
+        detail={
+            "mensaje": textos.PAC["otra_foto_a_la_vez"],
+            "no_se_ha_guardado_nada": textos.PAC["no_se_ha_guardado_nada"],
+        },
+    )
+
+
+@router.get("/foto/historial")
+def el_historial_de_las_fotos(
+    explotacion: ExplotacionActual, db: Db, anio: int | None = None
+) -> dict:
+    """***Las fotos guardadas, de la mas nueva a la mas vieja.*** *Es lo que la pantalla llama «historial».*
+
+    *Y no se puede borrar ni corregir una foto: **una version evaluada es un papel que se enseno**.*
+    """
+    consulta = select(models.FotoDeLaPac).where(
+        models.FotoDeLaPac.explotacion_id == explotacion.id
+    )
+    if anio is not None:
+        consulta = consulta.where(models.FotoDeLaPac.anio == anio)
+    las_fotos = list(
+        db.scalars(
+            consulta.order_by(
+                models.FotoDeLaPac.anio.desc(), models.FotoDeLaPac.version.desc()
             )
         )
-        or 0
     )
-    la_foto = models.FotoDeLaPac(
-        explotacion_id=explotacion.id,
-        anio=el_anio,
-        version=la_ultima + 1,
-        huella=la_huella,
-        el_contenido=el_texto,
-        usuario_id=usuario.id,
-    )
-    db.add(la_foto)
-    db.commit()
-    db.refresh(la_foto)
     return {
-        "version": la_foto.version,
-        "anio": la_foto.anio,
-        "huella": la_foto.huella,
-        "creada_en": la_foto.creada_en,
-        "cuantos_recintos": len(el_suyo.get("los_recintos") or []),
-        # ***Y lo que la foto NO es***, dicho con la misma claridad que el paquete.
+        "las_fotos": [_la_identidad_de(una) for una in las_fotos],
+        "cuantas": len(las_fotos),
         "es_hipotesis": True,
         "no_es_garantia": True,
-        "toca_lo_guardado": False,
     }
 
 
-@router.get("/foto/{version}")
-def la_foto_guardada(version: int, explotacion: ExplotacionActual, db: Db) -> dict:
-    """***El detalle de la foto***, *que es exactamente lo que se exporta.*"""
-    la_foto = _la_foto(db, explotacion, version)
-    return {
-        "version": la_foto.version,
-        "anio": la_foto.anio,
-        "huella": la_foto.huella,
-        "creada_en": la_foto.creada_en,
-        "el_escenario": json.loads(la_foto.el_contenido),
-    }
+@router.get("/foto/id/{foto_id}")
+def la_foto_por_su_id(foto_id: int, explotacion: ExplotacionActual, db: Db) -> dict:
+    """***Por su id***: *la identidad inmutable, que no depende de ningun año ni de contar versiones.*"""
+    la_foto = _la_foto_por_id(db, explotacion, foto_id)
+    return {**_la_identidad_de(la_foto), "el_escenario": json.loads(la_foto.el_contenido)}
 
 
-@router.get("/foto/{version}/exportar")
-def exportar_la_foto(version: int, explotacion: ExplotacionActual, db: Db) -> Response:
+@router.get("/foto/id/{foto_id}/exportar")
+def exportar_la_foto_por_su_id(foto_id: int, explotacion: ExplotacionActual, db: Db) -> Response:
+    """*El fichero de esa foto, por su id.*"""
+    return _el_fichero_de_la_foto(_la_foto_por_id(db, explotacion, foto_id))
+
+
+@router.get("/foto/{anio}/{version}")
+def la_foto_guardada(anio: int, version: int, explotacion: ExplotacionActual, db: Db) -> dict:
+    """***El detalle de la foto***, *identificada por **año y version**: una version sin su año no dice cual es.*"""
+    la_foto = _la_foto_por_anio_y_version(db, explotacion, anio, version)
+    return {**_la_identidad_de(la_foto), "el_escenario": json.loads(la_foto.el_contenido)}
+
+
+@router.get("/foto/{anio}/{version}/exportar")
+def exportar_la_foto(anio: int, version: int, explotacion: ExplotacionActual, db: Db) -> Response:
     """***El fichero, y es EXACTAMENTE la foto.***
 
-    *El contrato lo pide asi: «**la exportacion coincide con el detalle y conserva la version evaluada**».*
-    *Por eso **no se vuelve a calcular nada**: se lee el contenido guardado y se escribe. Si se recalculara, un
-    cambio en la finca haria que el fichero dijera una cosa y la foto otra.*
+    *El contrato lo pide asi: «**la exportacion coincide con el detalle y conserva la version evaluada**». **No se
+    vuelve a calcular nada**: se lee el contenido guardado y se escribe.*
 
-    *La cabecera lleva **la version, el año y la fecha**, para que el papel que se lleva al asesor diga de que
-    es; y **no lleva ninguna columna de elegibilidad**, porque este programa no la afirma.*
+    *La cabecera lleva **la version, el año y la fecha**; y **no lleva ninguna columna de elegibilidad**, porque
+    este programa no la afirma.*
     """
-    la_foto = _la_foto(db, explotacion, version)
-    el_escenario = json.loads(la_foto.el_contenido)
+    return _el_fichero_de_la_foto(_la_foto_por_anio_y_version(db, explotacion, anio, version))
 
+
+def _el_fichero_de_la_foto(la_foto) -> Response:
+    """*El CSV de una foto guardada. **Una sola forma de escribirlo**, para que el id y el año den lo mismo.*"""
+    el_escenario = json.loads(la_foto.el_contenido)
     salida = io.StringIO()
     escritor = csv.writer(salida, delimiter=";")
-    escritor.writerow([f"version {la_foto.version}", f"año {la_foto.anio}", f"hecha {la_foto.creada_en}"])
+    escritor.writerow(
+        [
+            f"version {la_foto.version}",
+            f"año {la_foto.anio}",
+            f"hecha {la_foto.creada_en}",
+            f"huella {la_foto.huella[:16]}",
+        ]
+    )
     escritor.writerow(
         [
             "referencia", "alias", "superficie_ha", "especie", "variedad", "ecorregimen",
@@ -348,7 +502,9 @@ def exportar_la_foto(version: int, explotacion: ExplotacionActual, db: Db) -> Re
         content=el_cuerpo.encode("utf-8"),
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": f'attachment; filename="pac-{la_foto.anio}-v{la_foto.version}.csv"'
+            "Content-Disposition": (
+                f'attachment; filename="pac-{la_foto.anio}-v{la_foto.version}.csv"'
+            )
         },
     )
 
