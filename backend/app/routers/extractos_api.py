@@ -50,7 +50,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
 from .. import adjuntos, dinero, extractos, models, servicios, textos, ventas
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import EntradaBase, SalidaBase, _un_importe_que_cabe
 
 router = APIRouter(prefix="/api/bancos", tags=["los extractos del banco"])
@@ -286,6 +286,14 @@ class ConciliacionEntrada(EntradaBase):
     """A qué papeles se apunta este movimiento. Vacío es «míralo tú y reparte lo que quepa»."""
 
     imputaciones: list[ImputacionEntrada] = Field(default_factory=list)
+    # ***Y por que se deshace*** (17/10/2026). *El docstring de `deshacer_la_conciliacion` prometia
+    # «con la fecha, quien lo deshizo **y el motivo**», y el motivo era **un texto fijo** -«Se deshizo a
+    # mano»-: el agricultor no podia decir el suyo.*
+    #
+    # ***Y aqui importa mas que en otros sitios***: deshacer una conciliacion **toca dinero** -suelta el
+    # vinculo entre un movimiento del banco y una factura-, y dentro de seis meses el unico que sabe por que
+    # se hizo es este campo. *Si no viene, se sigue poniendo el de siempre: la puerta no se rompe.*
+    motivo: str | None = Field(default=None, max_length=300)
 
 
 class ConciliacionHecha(BaseModel):
@@ -871,6 +879,7 @@ def crear_cuenta(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> CuentaBancariaSalida:
     """Da de alta una cuenta. **No se pide ninguna clave de banca, y no hay dónde ponerla.**"""
     if datos.clave_de_reenvio:
@@ -917,6 +926,7 @@ def corregir_cuenta(
     datos: CuentaBancariaEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> CuentaBancariaSalida:
     cuenta = _la_cuenta(db, explotacion, cuenta_id)
     cuenta.nombre = datos.nombre
@@ -965,7 +975,11 @@ def _como_perfil_como_sale(perfil) -> PerfilDeExtractoSalida:
 
 @router.post("/perfiles", response_model=PerfilDeExtractoSalida, status_code=status.HTTP_201_CREATED)
 def guardar_perfil(
-    datos: PerfilDeExtractoEntrada, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    datos: PerfilDeExtractoEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> PerfilDeExtractoSalida:
     """Guarda cómo escribe este banco, para no volver a preguntarlo (S14: «perfiles guardables»).
 
@@ -1007,6 +1021,7 @@ def corregir_perfil(
     datos: PerfilDeExtractoEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> PerfilDeExtractoSalida:
     fila = _el_perfil(db, explotacion, perfil_id)
     fila.nombre = datos.nombre
@@ -1161,6 +1176,7 @@ async def importar_el_extracto(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
     cuenta_id: int = Form(...),
     perfil_id: int | None = Form(default=None),
@@ -1447,6 +1463,7 @@ def corregir_un_movimiento(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> MovimientoSalida:
     """Corrige a mano un movimiento: el importe que no consta, el concepto, el día.
 
@@ -1651,6 +1668,7 @@ def conciliar_un_movimiento(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> ResultadoDeLaConciliacion:
     """Apunta este movimiento contra uno o varios papeles, por partes o agrupado.
 
@@ -1808,6 +1826,7 @@ def deshacer_la_conciliacion(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> ResultadoDeLaConciliacion:
     """Deshace lo apuntado. **El movimiento del banco no se toca, y queda el rastro.**
 
@@ -1852,7 +1871,11 @@ def deshacer_la_conciliacion(
         fila.anulada = True
         fila.deshecha_en = ahora
         fila.deshecha_por_usuario_id = usuario.id
-        fila.motivo_del_deshacer = textos.mensaje("T20_deshacer_a_mano")
+        # ***El motivo que ha dicho el agricultor***, y el de siempre si no ha dicho ninguno.
+        # *El texto fijo se queda como red: la puerta no se rompe por no mandar el motivo.*
+        fila.motivo_del_deshacer = (datos.motivo or "").strip() or textos.mensaje(
+            "T20_deshacer_a_mano"
+        )
         devueltas.append(
             ConciliacionHecha(
                 documento=f"{fila.clase}:{fila.documento_id}",
@@ -1894,6 +1917,7 @@ def marcar_o_quitar_un_traspaso(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> ResultadoDeLaConciliacion:
     """Ata (o desata) dos movimientos que son **el mismo dinero cambiando de cuenta**.
 

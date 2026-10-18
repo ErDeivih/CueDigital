@@ -18,7 +18,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import case, func, select
 
-from .. import schemas
+from .. import schemas, superficies
 from .. import catalogos, correcciones, geo, models, servicios, sigpac, textos
 from .. import versiones_de_recinto as versiones_de_recinto
 from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, obtener_de_la_explotacion
@@ -812,7 +812,10 @@ def _preparar_parcela_guardable(
 
 @router.post("/parcelas", response_model=ParcelaSalida, status_code=status.HTTP_201_CREATED)
 def crear_parcela(
-    datos: ParcelaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: ParcelaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Parcela:
     parcela = _preparar_parcela_guardable(datos, explotacion)
     db.add(parcela)
@@ -830,7 +833,10 @@ def crear_parcela(
 
 @router.post("/parcelas/desde-sigpac", response_model=ParcelaSalida, status_code=status.HTTP_201_CREATED)
 def crear_parcela_desde_el_sigpac(
-    datos: ParcelaDesdeSigpac, explotacion: ExplotacionActual, db: Db
+    datos: ParcelaDesdeSigpac,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Parcela:
     """Trae los datos de un recinto del SIGPAC y da de alta la parcela.
 
@@ -1005,7 +1011,10 @@ def buscar_los_trozos(datos: BuscarRecintosEntrada, _: UsuarioActual) -> dict:
 
 @router.post("/parcelas/desde-sigpac/varias")
 def crear_varias_parcelas_desde_el_sigpac(
-    datos: VariasParcelasDesdeSigpac, explotacion: ExplotacionActual, db: Db
+    datos: VariasParcelasDesdeSigpac,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Da de alta **de una vez** todos los trozos que el agricultor ha marcado o pegado.
 
@@ -1206,6 +1215,7 @@ def corregir_parcela(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Parcela:
     """Corrige una tierra ya apuntada. **No borra y no da de alta otra: cambia esa tierra.**
 
@@ -1278,6 +1288,7 @@ def borrar_parcela(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita una tierra del cuaderno, **si no tiene nada apuntado encima**.
 
@@ -1344,7 +1355,11 @@ def cultivos_de_parcela(parcela_id: int, explotacion: ExplotacionActual, db: Db)
 
 @router.post("/parcelas/{parcela_id}/cultivos", status_code=status.HTTP_201_CREATED)
 def asignar_cultivo(
-    parcela_id: int, datos: CultivoEntrada, explotacion: ExplotacionActual, db: Db
+    parcela_id: int,
+    datos: CultivoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     obtener_de_la_explotacion(db, models.Parcela, parcela_id, explotacion.id)
     campana = obtener_de_la_explotacion(db, models.Campana, datos.campana_id, explotacion.id)
@@ -1416,6 +1431,7 @@ def quitar_cultivo(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Deja una tierra **sin decir qué tiene sembrado** ese año.
 
@@ -1553,7 +1569,10 @@ def _grupo_como_salida(grupo: models.GrupoParcelas) -> GrupoSalida:
 
 @router.post("/grupos", response_model=GrupoSalida, status_code=status.HTTP_201_CREATED)
 def crear_grupo(
-    datos: GrupoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: GrupoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> GrupoSalida:
     grupo = _preparar_grupo_guardable(datos, explotacion, db)
     db.add(grupo)
@@ -1568,6 +1587,7 @@ def corregir_grupo(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> GrupoSalida:
     """Corrige un grupo: su nombre, su cultivo, su sistema y las tierras que lleva dentro.
 
@@ -1613,6 +1633,7 @@ def borrar_grupo(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Deshace un grupo: **las tierras no se tocan**, lo que desaparece es la agrupación.
 

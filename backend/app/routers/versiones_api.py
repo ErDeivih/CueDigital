@@ -37,7 +37,7 @@ from fastapi import APIRouter, HTTPException
 
 from .. import models, schemas
 from .. import versiones_de_recinto as versiones
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 
 router = APIRouter(prefix="/api/versiones", tags=["versiones"])
 
@@ -82,6 +82,7 @@ def aplicar(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> schemas.PlanDeImportacion:
     """Importa el lote. Aplicarlo dos veces con los mismos datos **no escribe nada la segunda vez**.
 

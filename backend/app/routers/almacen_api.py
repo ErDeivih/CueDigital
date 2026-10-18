@@ -47,7 +47,7 @@ from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
 
 from .. import existencias, models, servicios, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     ArticuloEntrada,
@@ -390,7 +390,11 @@ def _la_factura_comprobada(db, explotacion, factura_id: int | None):
 
 @router.post("/articulos", response_model=ArticuloSalida, status_code=status.HTTP_201_CREATED)
 def crear_articulo(
-    datos: ArticuloEntrada, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    datos: ArticuloEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Articulo:
     """Dar de alta lo que se guarda en el almacén.
 
@@ -466,6 +470,7 @@ def crear_lote(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> models.Lote:
     """Abrir un lote sin pasar por un albarán.
 
@@ -528,6 +533,7 @@ def crear_recepcion(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apuntar un albarán: sus líneas, sus lotes y las entradas del libro. **Una sola vez.**
 
@@ -719,6 +725,7 @@ def anular_recepcion(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> RecepcionSalida:
     """Anular un albarán que estaba mal.
 
@@ -761,6 +768,7 @@ def enganchar_la_factura(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> RecepcionSalida:
     """Decir de qué factura es un albarán que ya está apuntado (caso A15).
 
@@ -935,6 +943,7 @@ def apuntar_un_movimiento(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apuntar a mano lo que pasó: una entrada sin papel, una merma o un ajuste.
 
@@ -1215,6 +1224,7 @@ def anular_movimiento(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> MovimientoSalida:
     """Anular un movimiento del libro, con su motivo. Nada se borra.
 
@@ -1262,6 +1272,7 @@ def sacar_de_un_lote(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Sacar producto de un lote, **diciendo de qué trabajo sale**.
 

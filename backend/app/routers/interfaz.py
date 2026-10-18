@@ -358,6 +358,14 @@ def interfaz() -> dict:
             {"valor": valor, "texto": catalogos.ETIQUETA_TRATAMIENTO[valor]}
             for valor in catalogos.TIPOS_TRATAMIENTO
         ],
+        # ***LAS BASES DE LA RIQUEZA*** (CRM-07, 17/10/2026). El anexo II del BOE admite, para liquidos,
+        # **gramos por litro** y **kilos por hectolitro** ademas del **porcentaje en masa**. Sin elegir la
+        # base, un «15» no dice nada -y el «100» de un liquido se leeria como cien por cien-.
+        "bases_de_la_riqueza": [
+            {"valor": "porcentaje_masa", "texto": "% en masa"},
+            {"valor": "gramos_por_litro", "texto": "gramos por litro"},
+            {"valor": "kilogramos_por_hectolitro", "texto": "kilos por hectolitro"},
+        ],
         "tipos_abono": [
             {"valor": valor, "texto": catalogos.ETIQUETA_TIPO_ABONO[valor]}
             for valor in catalogos.TIPOS_FERTILIZANTE

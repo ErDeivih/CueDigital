@@ -42,7 +42,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .. import adjuntos, correcciones, dinero, facturas as lectura, legal, models, ocr, servicios, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     FacturaEntrada,
     FacturaLeidaSalida,
@@ -532,6 +532,7 @@ async def guardar_una_factura(
     explotacion: ExplotacionActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
     datos: str = File(...),
     fichero: UploadFile | None = File(default=None),
 ) -> FacturaSalida:
@@ -676,7 +677,24 @@ async def guardar_una_factura(
                     total=dinero.formatea(dinero.cantidad_a_decimal(la_otra.total)),
                 )
             )
-    return _con_nombres(db, factura).model_copy(update={"avisos": avisos})
+    # ***Y con su version*** (CRM-08, 17/10/2026): el formulario la necesita para **mandarla de vuelta** al
+    # corregir la factura. ***Una factura recien dada de alta ya tiene historia*** -el alta deja su fila en
+    # la auditoria-, asi que su version no es cero: es la de su alta.
+    #
+    # ***Y va en el mismo `update` que los avisos***, conservando `_con_nombres`, que es quien pone
+    # `tiene_fichero` y `nombre_del_fichero`: *la primera version de esto los perdio, y la prueba lo dijo
+    # con un `Field required` en los dos.*
+    return _con_nombres(db, factura).model_copy(
+        update={
+            # ***`avisos`, la que calculo la puerta*** -no `[]`-: aqui pone si la factura ya estaba, si no
+            # se pudo comprobar o si el mismo papel venia con otro total. *Poner `[]` los borra, y la
+            # prueba de la factura reenviada lo dijo con dos fallos.*
+            "avisos": avisos,
+            "version": correcciones.la_version_de(
+                db, entidad="factura", entidad_id=factura.id
+            ),
+        }
+    )
 
 
 def _la_del_mismo_numero_con_otro_total(db, explotacion, entrada: FacturaEntrada):
@@ -996,6 +1014,7 @@ async def subir_el_fichero(
     factura_id: int,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> FacturaSalida:
     """Sube (o cambia) la foto o el PDF de una factura ya guardada."""
@@ -1040,7 +1059,11 @@ def ver_el_fichero(factura_id: int, explotacion: ExplotacionActual, db: Db) -> F
 
 @router.post("/{factura_id}/anular", response_model=FacturaSalida)
 def anular_factura(
-    factura_id: int, datos: dict, explotacion: ExplotacionActual, db: Db
+    factura_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> FacturaSalida:
     """Anula la factura con su motivo. **No se borra nada**: el fichero y el apunte se quedan."""
     factura = obtener_de_la_explotacion(db, models.Factura, factura_id, explotacion.id)
@@ -1261,6 +1284,7 @@ def corregir_factura(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> FacturaSalida:
     """Corrige una factura ya guardada: el proveedor, el NIF, el número, la fecha, los totales **y
     sus líneas** (lo que se compró).
@@ -1315,14 +1339,22 @@ def corregir_factura(
         fecha=preparado.fecha,
         proveedor=preparado.proveedor,
     )
-    correcciones.corregir(
-        db,
-        guardado=factura,
-        preparado=preparado,
-        entidad="factura",
-        explotacion_id=explotacion.id,
-        usuario_id=usuario.id,
-    )
+    # ***El piloto de la edicion concurrente*** (CRM-08, 17/10/2026), igual que en el tratamiento. Si el
+    # formulario dice la version que tenia y otro la ha cambiado, **no se escribe nada** y se contesta 409.
+    try:
+        correcciones.corregir(
+            db,
+            guardado=factura,
+            preparado=preparado,
+            entidad="factura",
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            version_esperada=getattr(datos, "version_esperada", None),
+        )
+    except correcciones.VersionQueNoCuadra as choque:
+        raise HTTPException(
+            status_code=409, detail=correcciones.el_conflicto_del_apunte(choque)
+        ) from choque
     # **Las líneas se actualizan en su sitio**, conservando su identificador: ver el porqué, con la
     # medición del 500, en el docstring de `_casar_las_lineas`.
     parejas, sobran_viejas, por_poner = _casar_las_lineas(
@@ -1370,6 +1402,7 @@ def borrar_factura(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Borra una factura, **si con eso la cesta del almacén no empieza a decir cosas que no son**.
 

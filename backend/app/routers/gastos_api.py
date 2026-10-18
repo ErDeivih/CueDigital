@@ -57,9 +57,10 @@ from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
-from .. import correcciones, dinero, gastos, models, servicios, textos, ventas
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from .. import correcciones, dinero, gastos, models, reenvios, servicios, textos, ventas
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     ConciliacionDePagoEntrada,
@@ -1107,7 +1108,13 @@ def _los_avisos_del_gasto(cuadre: gastos.CuadreDeImportes, importe: Decimal | No
 
 
 @router.post("/gastos", status_code=status.HTTP_201_CREATED)
-def apuntar_un_gasto(datos: GastoEntrada, explotacion: ExplotacionActual, db: Db, usuario: UsuarioActual) -> dict:
+def apuntar_un_gasto(
+    datos: GastoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    usuario: UsuarioActual,
+    puede_modificar: PuedeModificar,
+) -> dict:
     """Apunta un gasto: lo que se consumió, cuánto costó y de qué papel sale.
 
     **Reenviar no duplica** (el móvil sin cobertura, un botón pulsado dos veces): si llega la misma
@@ -1167,7 +1174,11 @@ def apuntar_un_gasto(datos: GastoEntrada, explotacion: ExplotacionActual, db: Db
 
 @router.put("/gastos/{gasto_id}")
 def corregir_un_gasto(
-    gasto_id: int, datos: GastoEntrada, explotacion: ExplotacionActual, db: Db
+    gasto_id: int,
+    datos: GastoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Corrige un gasto **en su misma fila**, dejando en la auditoría lo que decía antes.
 
@@ -1200,7 +1211,11 @@ def corregir_un_gasto(
 
 @router.post("/gastos/{gasto_id}/anular")
 def anular_un_gasto(
-    gasto_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    gasto_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anula un gasto con su motivo y **revierte sus efectos**, sin borrar nada.
 
@@ -1291,6 +1306,8 @@ def repartir_un_gasto(
     gasto_id: int,
     datos: RepartoDeUnGastoEntrada,
     explotacion: ExplotacionActual,
+    # ***Esto es dinero***: *quien solo mira, no lo mueve.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Lleva un gasto a las tierras, los cultivos o las máquinas, con el método que diga el agricultor.
@@ -1555,7 +1572,11 @@ def _el_aviso_de_un_reparto_que_no_se_puede(porque: str, gasto: models.Gasto) ->
 
 @router.post("/gastos/{gasto_id}/sin-asignar")
 def dejarlo_sin_asignar(
-    gasto_id: int, datos: RepartoDeUnGastoEntrada, explotacion: ExplotacionActual, db: Db
+    gasto_id: int,
+    datos: RepartoDeUnGastoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Deja el gasto entero en «sin asignar», **diciéndolo**: es una respuesta, no un hueco.
 
@@ -1581,7 +1602,11 @@ def dejarlo_sin_asignar(
 
 @router.delete("/gastos/{gasto_id}/repartos/{reparto_id}")
 def quitar_un_reparto(
-    gasto_id: int, reparto_id: int, explotacion: ExplotacionActual, db: Db
+    gasto_id: int,
+    reparto_id: int,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita un trozo del reparto, **dejando el rastro entero** de lo que había.
 
@@ -1610,7 +1635,10 @@ def quitar_un_reparto(
 
 @router.post("/gastos/inversiones", status_code=status.HTTP_201_CREATED)
 def apuntar_una_inversion(
-    datos: InversionEntrada, explotacion: ExplotacionActual, db: Db
+    datos: InversionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apunta un bien que se compra para durar: el tractor, la sembradora, la nave.
 
@@ -1719,7 +1747,11 @@ def ver_las_inversiones(explotacion: ExplotacionActual, db: Db) -> dict:
 
 @router.post("/gastos/inversiones/{inversion_id}/anular")
 def anular_una_inversion(
-    inversion_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    inversion_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anula una inversión con su motivo, y sus repartos dejan de contar."""
     inversion = obtener_de_la_explotacion(db, models.InversionDeLaFinca, inversion_id, explotacion.id)
@@ -1761,7 +1793,12 @@ def anular_una_inversion(
 
 
 @router.post("/gastos/pagos", status_code=status.HTTP_201_CREATED)
-def apuntar_un_pago(datos: PagoEntrada, explotacion: ExplotacionActual, db: Db) -> dict:
+def apuntar_un_pago(
+    datos: PagoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
+) -> dict:
     """Apunta el dinero que sale, y opcionalmente contra qué gastos va.
 
     **Un pago no es un gasto.** Se puede apuntar el dinero que sale sin decir a qué va (lo normal
@@ -1981,7 +2018,11 @@ def ver_los_pagos(explotacion: ExplotacionActual, db: Db) -> dict:
 
 @router.post("/gastos/pagos/{pago_id}/conciliar")
 def conciliar_un_pago(
-    pago_id: int, datos: ConciliacionDePagoEntrada, explotacion: ExplotacionActual, db: Db
+    pago_id: int,
+    datos: ConciliacionDePagoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Dice contra qué gastos va un dinero que ya estaba apuntado. **No crea ningún gasto.**
 
@@ -2014,7 +2055,11 @@ def conciliar_un_pago(
 
 @router.delete("/gastos/pagos/{pago_id}/aplicaciones/{aplicacion_id}")
 def deshacer_una_conciliacion(
-    pago_id: int, aplicacion_id: int, explotacion: ExplotacionActual, db: Db
+    pago_id: int,
+    aplicacion_id: int,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Deshace una conciliación **sin borrar el movimiento original**.
 
@@ -2042,7 +2087,11 @@ def deshacer_una_conciliacion(
 
 @router.post("/gastos/pagos/{pago_id}/anular")
 def anular_un_pago(
-    pago_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    pago_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anula un pago con su motivo: el dinero no salió, y los gastos vuelven a estar pendientes.
 
@@ -2089,9 +2138,32 @@ def anular_un_pago(
 # --------------------------------------------------------------------------
 
 
+def _lo_que_se_contesta_de_una_subvencion(subvencion: models.Subvencion) -> dict:
+    """**La ayuda con su aviso**, tal y como la contesta la puerta.
+
+    ***Y esto se extrajo a un ayudante el 17/10/2026, por un defecto de verdad***: *el camino del reenvio
+    -el que devuelve la que ya estaba- contestaba **la subvencion a secas**, sin el envoltorio
+    `{"subvencion": ..., "avisos": [...]}` que espera la pantalla. **Un reintento del movil habria roto la
+    pantalla**, y no se habria notado hasta que pasara.*
+
+    *Con las dos formas escritas **una sola vez**, no pueden volver a divergir: es la misma regla que la
+    casa aplica a los textos y a las cuentas -una verdad, en un sitio-.*
+    """
+    vista = _como_se_ve_una_subvencion(subvencion)
+    avisos = []
+    if vista["estado"] == gastos.PREVISTA:
+        avisos.append(textos.mensaje("G43_una_ayuda_prevista_no_es_un_ingreso"))
+    return {"subvencion": vista, "avisos": avisos}
+
+
+
+
 @router.post("/gastos/subvenciones", status_code=status.HTTP_201_CREATED)
 def apuntar_una_subvencion(
-    datos: SubvencionEntrada, explotacion: ExplotacionActual, db: Db
+    datos: SubvencionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apunta una ayuda con **sus tres importes separados**: previsto, concedido y cobrado.
 
@@ -2110,6 +2182,20 @@ def apuntar_una_subvencion(
         )
     if datos.campana_id is not None:
         obtener_de_la_explotacion(db, models.Campana, datos.campana_id, explotacion.id)
+    # ***Y el reenvio, que aqui NO SE MIRABA*** (CRM-05, 17/10/2026): *esta era la unica de las cuatro
+    # puertas del reenvio sin la consulta de «¿ya esta?» **y sin el indice**.* *El movil que reintenta
+    # -o el agricultor que toca dos veces con los guantes- **apuntaba dos ayudas**, y una subvencion
+    # duplicada no se nota hasta que se suma el año.*
+    clave = (datos.clave_de_reenvio or "").strip() or None
+    if clave:
+        ya = db.scalar(
+            select(models.Subvencion).where(
+                models.Subvencion.explotacion_id == explotacion.id,
+                models.Subvencion.clave_de_reenvio == clave,
+            )
+        )
+        if ya is not None:
+            return _lo_que_se_contesta_de_una_subvencion(reenvios.lo_que_contesta(ya, datos))
     subvencion = models.Subvencion(
         explotacion_id=explotacion.id,
         campana_id=datos.campana_id,
@@ -2131,21 +2217,31 @@ def apuntar_una_subvencion(
         clave_de_reenvio=datos.clave_de_reenvio,
     )
     db.add(subvencion)
-    db.flush()
-    _el_rastro(
-        db,
-        explotacion.id,
-        entidad="subvencion",
-        entidad_id=subvencion.id,
-        accion="crear",
-        datos={"concepto": concepto},
-    )
-    db.commit()
-    vista = _como_se_ve_una_subvencion(subvencion)
-    avisos = []
-    if vista["estado"] == gastos.PREVISTA:
-        avisos.append(textos.mensaje("G43_una_ayuda_prevista_no_es_un_ingreso"))
-    return {"subvencion": vista, "avisos": avisos}
+    try:
+        # *El `flush` dentro del `try`, por lo mismo que en la maquina: **el choque del indice salta al
+        # escribir la fila**, no al confirmar.*
+        db.flush()
+        _el_rastro(
+            db,
+            explotacion.id,
+            entidad="subvencion",
+            entidad_id=subvencion.id,
+            accion="crear",
+            datos={"concepto": concepto},
+        )
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        ya = db.scalar(
+            select(models.Subvencion).where(
+                models.Subvencion.explotacion_id == explotacion.id,
+                models.Subvencion.clave_de_reenvio == clave,
+            )
+        )
+        if ya is None:
+            raise
+        return _lo_que_se_contesta_de_una_subvencion(reenvios.lo_que_contesta(ya, datos))
+    return _lo_que_se_contesta_de_una_subvencion(subvencion)
 
 
 @router.get("/gastos/subvenciones")
@@ -2180,7 +2276,11 @@ def ver_las_subvenciones(explotacion: ExplotacionActual, db: Db) -> dict:
 
 @router.post("/gastos/subvenciones/{subvencion_id}/anular")
 def anular_una_subvencion(
-    subvencion_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    subvencion_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anula una ayuda con su motivo: deja de contar como ingreso y se conserva el rastro."""
     subvencion = obtener_de_la_explotacion(db, models.Subvencion, subvencion_id, explotacion.id)
@@ -2214,7 +2314,10 @@ def anular_una_subvencion(
 
 @router.post("/gastos/traspaso")
 def un_traspaso_entre_cuentas_propias(
-    datos: dict, explotacion: ExplotacionActual, _usuario: UsuarioActual
+    datos: dict,
+    explotacion: ExplotacionActual,
+    _usuario: UsuarioActual,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Dos movimientos atados y **cero ingreso y cero gasto operativo** (caso A07 del contrato).
 

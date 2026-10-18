@@ -56,7 +56,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 
 from .. import adjuntos, bandeja, dinero, facturas, models, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
 from ..schemas import (
     DocumentoEntrada,
     ElFicheroComprobadoSalida,
@@ -732,6 +732,13 @@ async def subir_a_la_bandeja(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    # ***Subir un papel es escribir***: *crea la fila de la bandeja.*
+    #
+    # ***Y va AQUI, antes de los `File` y los `Form`, y no al final*** (17/10/2026): en Python
+    # un parametro **sin valor por defecto** no puede ir despues de uno que **si** lo tiene
+    # -`Form(default=None)` lo tiene-, y el interprete lo rechaza con «parameter without a
+    # default follows parameter with a default». *Es una regla del lenguaje, no de esta casa.*
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
     tipo: str | None = Form(default=None),
     titulo: str | None = Form(default=None),
@@ -792,12 +799,21 @@ async def subir_a_la_bandeja(
         ),
         explotacion,
         db,
+        # ***Llamada INTERNA*** (17/10/2026): *esta funcion **usa la misma puerta a proposito** -para que
+        # la regla viva en un solo sitio-, y quien llama es el propio programa, no una cuenta. `None` es
+        # decir la verdad: **no hay una cuenta detras**.*
+        puede_modificar=None,
     )
     # El fichero se rebobina porque se ha leído entero para calcular la huella: sin esto, la puerta de
     # subida leería cero bytes y guardaría un papel vacío.
     fichero.file.seek(0)
     await documentos_api.subir_fichero(
-        documento_id=guardado.id, explotacion=explotacion, db=db, fichero=fichero
+        documento_id=guardado.id,
+        explotacion=explotacion,
+        db=db,
+        fichero=fichero,
+        # ***Y aqui, lo mismo***.
+        puede_modificar=None,
     )
 
     papel = _el_papel(db, explotacion, guardado.id)
@@ -947,7 +963,12 @@ def la_ficha_de_un_papel(
 
 @router.post("/bandeja/{documento_id}/clasificar", response_model=LoQueHaPasadoSalida)
 def clasificar_el_papel(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Dice de qué es el papel. Es lo que saca un papel de «recién subido».
 
@@ -988,7 +1009,11 @@ def clasificar_el_papel(
 
 @router.post("/bandeja/{documento_id}/leer", response_model=LoQueHaPasadoSalida)
 async def leer_el_papel(
-    documento_id: int, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Lee el papel y guarda **la propuesta**. No confirma nada y **no cambia el estado**.
 
@@ -1068,7 +1093,12 @@ def _la_cesta_del_agricultor(db: Db, explotacion) -> list[dict]:
 
 @router.post("/bandeja/{documento_id}/revisar", response_model=LoQueHaPasadoSalida)
 def revisar_la_propuesta(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Guarda **lo que el agricultor acepta** de la lectura. Aquí es donde lo leído se vuelve suyo.
 
@@ -1104,7 +1134,12 @@ def revisar_la_propuesta(
 
 @router.post("/bandeja/{documento_id}/descartar", response_model=LoQueHaPasadoSalida)
 def descartar_la_propuesta(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Dice que la lectura no sirve. **No la borra**: queda guardada, con su motivo.
 
@@ -1140,7 +1175,11 @@ def descartar_la_propuesta(
 
 @router.post("/bandeja/{documento_id}/confirmar", response_model=LoQueHaPasadoSalida)
 def confirmar_el_papel(
-    documento_id: int, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Confirma el papel: **lo aceptado pasa al papel**, con quién y cuándo.
 
@@ -1186,7 +1225,12 @@ def confirmar_el_papel(
 
 @router.post("/bandeja/{documento_id}/vincular", response_model=LoQueHaPasadoSalida)
 def vincular_el_papel(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Enlaza el papel con algo que **ya existe**: una compra, un gasto, una venta, una máquina, un
     trabajo o una inspección.
@@ -1255,7 +1299,12 @@ def vincular_el_papel(
 
 @router.post("/bandeja/{documento_id}/desvincular", response_model=LoQueHaPasadoSalida)
 def desvincular_el_papel(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Quita un enlace. **No borra nada de lo enlazado**: ni el gasto, ni la factura, ni el papel.
 
@@ -1299,7 +1348,12 @@ def desvincular_el_papel(
 
 @router.post("/bandeja/{documento_id}/rectificar", response_model=LoQueHaPasadoSalida)
 def rectificar_a_otro_papel(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> LoQueHaPasadoSalida:
     """Dice a qué papel rectifica este (la factura corregida rectifica a la anterior).
 

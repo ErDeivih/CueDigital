@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from .. import catalogos, correcciones, legal, models, servicios, textos, validaciones
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     AvisoSalida,
@@ -219,7 +219,11 @@ def _preparar_tratamiento_guardable(datos: TratamientoEntrada, explotacion, db):
 
 @router.post("/tratamientos", response_model=TratamientoSalida, status_code=status.HTTP_201_CREATED)
 def crear_tratamiento(
-    datos: TratamientoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: TratamientoEntrada,
+    explotacion: ExplotacionActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.TratamientoFitosanitario:
     tratamiento = _preparar_tratamiento_guardable(datos, explotacion, db)
     db.add(tratamiento)
@@ -234,7 +238,18 @@ def crear_tratamiento(
         )
     )
     db.commit()
-    return tratamiento
+    # ***Y con su version*** (CRM-08, 17/10/2026): el formulario la necesita para **mandarla de vuelta** al
+    # corregir, y sin ella no hay edicion concurrente que valga.
+    #
+    # ***Un apunte recien creado YA tiene historia*** -el alta deja su fila de auditoria-, asi que su version
+    # no es cero: es la de su alta. *Y por eso la prueba que suponia un cero estaba mal, no el codigo.*
+    return TratamientoSalida.model_validate(tratamiento).model_copy(
+        update={
+            "version": correcciones.la_version_de(
+                db, entidad="tratamiento", entidad_id=tratamiento.id
+            )
+        }
+    )
 
 
 @router.get("/tratamientos", response_model=list[TratamientoSalida])
@@ -271,6 +286,8 @@ def anular_tratamiento(
     tratamiento_id: int,
     datos: AnulacionEntrada,
     explotacion: ExplotacionActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     tratamiento = obtener_de_la_explotacion(
@@ -286,6 +303,8 @@ def corregir_tratamiento(
     datos: TratamientoEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.TratamientoFitosanitario:
     """Corrige un tratamiento ya apuntado. **No borra y no duplica: cambia ese apunte.**
@@ -301,15 +320,35 @@ def corregir_tratamiento(
         db, models.TratamientoFitosanitario, tratamiento_id, explotacion.id
     )
     preparado = _preparar_tratamiento_guardable(datos, explotacion, db)
-    correcciones.corregir(
-        db,
-        guardado=tratamiento,
-        preparado=preparado,
-        entidad="tratamiento",
-        explotacion_id=explotacion.id,
-        usuario_id=usuario.id,
+    # ***El piloto de la edicion concurrente*** (CRM-08, 17/10/2026). Si el formulario dice **que version
+    # tenia** y el apunte ha cambiado desde entonces, `corregir` levanta `VersionQueNoCuadra` **sin escribir
+    # nada**, y aqui se contesta **409** diciendo quien lo cambio. *«No ultimo escritor silencioso»*.
+    try:
+        correcciones.corregir(
+            db,
+            guardado=tratamiento,
+            preparado=preparado,
+            entidad="tratamiento",
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            version_esperada=getattr(datos, "version_esperada", None),
+        )
+    except correcciones.VersionQueNoCuadra as choque:
+        raise HTTPException(
+            status_code=409, detail=correcciones.el_conflicto_del_apunte(choque)
+        ) from choque
+    # ***Y con su version*** (CRM-08, 17/10/2026): el formulario la necesita para **mandarla de vuelta** al
+    # corregir, y sin ella no hay edicion concurrente que valga.
+    #
+    # ***Un apunte recien creado YA tiene historia*** -el alta deja su fila de auditoria-, asi que su version
+    # no es cero: es la de su alta. *Y por eso la prueba que suponia un cero estaba mal, no el codigo.*
+    return TratamientoSalida.model_validate(tratamiento).model_copy(
+        update={
+            "version": correcciones.la_version_de(
+                db, entidad="tratamiento", entidad_id=tratamiento.id
+            )
+        }
     )
-    return tratamiento
 
 
 @router.delete("/tratamientos/{tratamiento_id}")
@@ -317,6 +356,8 @@ def borrar_tratamiento(
     tratamiento_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita un tratamiento del cuaderno. Se puede deshacer lo que uno se ha equivocado.
@@ -481,7 +522,11 @@ def _preparar_fertilizacion_guardable(datos: FertilizacionEntrada, explotacion, 
 
 @router.post("/fertilizaciones", response_model=FertilizacionSalida, status_code=status.HTTP_201_CREATED)
 def crear_fertilizacion(
-    datos: FertilizacionEntrada, explotacion: ExplotacionActual, db: Db
+    datos: FertilizacionEntrada,
+    explotacion: ExplotacionActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.RegistroFertilizacion:
     registro = _preparar_fertilizacion_guardable(datos, explotacion, db)
     db.add(registro)
@@ -519,7 +564,12 @@ def listar_fertilizaciones(
 
 @router.post("/fertilizaciones/{registro_id}/anular")
 def anular_fertilizacion(
-    registro_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    registro_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    # ***Anular tambien es escribir***: *deja el apunte tachado, y eso cambia el cuaderno.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> dict:
     registro = obtener_de_la_explotacion(
         db, models.RegistroFertilizacion, registro_id, explotacion.id
@@ -534,6 +584,8 @@ def corregir_fertilizacion(
     datos: FertilizacionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.RegistroFertilizacion:
     """Corrige un abono ya apuntado: se cambia ese apunte, no se apunta otro.
@@ -563,6 +615,8 @@ def borrar_fertilizacion(
     registro_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita un abono del cuaderno, dejando en la auditoría lo que había."""
@@ -619,7 +673,11 @@ def _preparar_labor_guardable(datos: LaborEntrada, explotacion, db) -> models.La
 
 @router.post("/labores", response_model=LaborSalida, status_code=status.HTTP_201_CREATED)
 def crear_labor(
-    datos: LaborEntrada, explotacion: ExplotacionActual, db: Db
+    datos: LaborEntrada,
+    explotacion: ExplotacionActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Labor:
     labor = _preparar_labor_guardable(datos, explotacion, db)
     db.add(labor)
@@ -633,6 +691,8 @@ def corregir_labor(
     datos: LaborEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Labor:
     """Corrige un trabajo ya apuntado, en la misma fila y con las mismas comprobaciones."""
@@ -654,6 +714,8 @@ def borrar_labor(
     labor_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita un trabajo del cuaderno, dejando en la auditoría lo que había."""
@@ -671,7 +733,12 @@ def borrar_labor(
 
 @router.post("/labores/{labor_id}/anular")
 def anular_labor(
-    labor_id: int, datos: AnulacionEntrada, explotacion: ExplotacionActual, db: Db
+    labor_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    # ***Anular tambien es escribir***: *deja el apunte tachado, y eso cambia el cuaderno.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> dict:
     """Anula un trabajo: se queda tachado, con su motivo (lo mismo que un tratamiento).
 
@@ -784,7 +851,11 @@ def _preparar_cosecha_guardable(datos: CosechaEntrada, explotacion, db):
 
 @router.post("/cosecha", status_code=status.HTTP_201_CREATED)
 def registrar_cosecha(
-    datos: CosechaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: CosechaEntrada,
+    explotacion: ExplotacionActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> dict:
     labor, resultado = _preparar_cosecha_guardable(datos, explotacion, db)
     db.add(labor)
@@ -798,6 +869,8 @@ def corregir_cosecha(
     datos: CosechaEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Corrige una cosecha ya apuntada: se cambia ese apunte, no se apunta otra."""
@@ -819,6 +892,8 @@ def borrar_cosecha(
     labor_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el cuaderno es escribir***: *quien solo mira, no apunta.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita una cosecha del cuaderno. Es la misma fila que la de las labores.

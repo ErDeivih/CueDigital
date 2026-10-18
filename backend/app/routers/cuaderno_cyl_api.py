@@ -46,7 +46,7 @@ from fastapi.responses import Response
 from sqlalchemy import select
 
 from .. import catalogos, cuaderno_cyl, cuaderno_cyl_exportar as exportar, models, textos
-from ..deps import Db, ExplotacionActual
+from ..deps import Db, ExplotacionActual, PuedeModificar
 from ..schemas import (
     CuadernoLeidoSalida,
     ImportacionDelCuadernoSalida,
@@ -352,7 +352,10 @@ def _apuntar_la_linea(db, explotacion, campana, linea, parcela: models.Parcela |
 
 @router.post("/importar", response_model=ImportacionDelCuadernoSalida)
 async def importar_el_cuaderno(
-    explotacion: ExplotacionActual, db: Db, fichero: UploadFile = File(...)
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
+    fichero: UploadFile = File(...),
 ) -> ImportacionDelCuadernoSalida:
     """Apunta las tierras del cuaderno. Se puede repetir: no duplica nada."""
     leido = await _leer_lo_que_han_subido(fichero)

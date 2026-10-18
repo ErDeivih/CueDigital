@@ -1233,6 +1233,8 @@ def el_saldo(
 def apuntar_una_nota(
     contacto_id: int,
     datos: NotaDeUnContactoEntrada,
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
@@ -1439,6 +1441,8 @@ def _la_clave(propuesta: logica.Propuesta) -> str:
 @router.post("/migracion/aplicar", response_model=ResultadoDeLaMigracion)
 def aplicar_la_migracion(
     datos: ConfirmacionDeLaMigracion,
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db,
     explotacion: ExplotacionActual,
     # Se llamaba `_usuario` porque **no se usaba**; desde el 11/10/2026 sí: la migración deja rastro con
@@ -1606,6 +1610,8 @@ def aplicar_la_migracion(
 
 @router.post("/migracion/deshacer", response_model=DeshacerLaMigracion)
 def deshacer_la_migracion(
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db, explotacion: ExplotacionActual, usuario: UsuarioActual
 ) -> dict:
     """**Vuelve atrás**: quita lo que creó la migración y **deja lo que el agricultor ha hecho suyo**.
@@ -1816,6 +1822,8 @@ def borrar(
 def marcar_un_papel(
     contacto_id: int,
     datos: PapelEntrada,
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db,
     explotacion: ExplotacionActual,
     _usuario: UsuarioActual,
@@ -1856,6 +1864,8 @@ def marcar_un_papel(
 def enlazar(
     contacto_id: int,
     datos: EnlaceEntrada,
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db,
     explotacion: ExplotacionActual,
     _usuario: UsuarioActual,
@@ -1932,6 +1942,8 @@ def enlazar(
 def quitar_el_enlace(
     contacto_id: int,
     enlace_id: int,
+    # ***Escribir es escribir***: *quien solo mira, no toca la ficha.*
+    puede_modificar: PuedeModificar,
     db: Db,
     explotacion: ExplotacionActual,
     _usuario: UsuarioActual,

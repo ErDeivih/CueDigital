@@ -63,7 +63,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .. import adjuntos, catalogos, correcciones, dinero, legal, models, servicios, textos, validaciones, ventas
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AjusteDeUnaEntrega,
     AjusteEntrada,
@@ -695,7 +695,10 @@ def validar_venta_endpoint(datos: VentaEntrada, explotacion: ExplotacionActual, 
 
 @router.post("/ventas", response_model=VentaConNombres, status_code=status.HTTP_201_CREATED)
 def crear_venta(
-    datos: VentaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: VentaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> VentaConNombres:
     """Apunta una entrega. **Reenviar la misma petición no la apunta dos veces.**
 
@@ -747,7 +750,11 @@ def crear_venta(
 
 @router.put("/ventas/{venta_id}", response_model=VentaConNombres)
 def corregir_venta(
-    venta_id: int, datos: VentaEntrada, explotacion: ExplotacionActual, db: Db
+    venta_id: int,
+    datos: VentaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> VentaConNombres:
     """Corrige una venta. Los avisos se calculan sin contar la venta que se está corrigiendo.
 
@@ -796,7 +803,11 @@ def corregir_venta(
 
 @router.post("/ventas/{venta_id}/anular", response_model=VentaSalida)
 def anular_venta(
-    venta_id: int, datos: dict, explotacion: ExplotacionActual, db: Db
+    venta_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.VentaDeCosecha:
     """Anula la venta. No se borra: queda con el motivo, como todo en el cuaderno.
 
@@ -880,6 +891,7 @@ def borrar_venta(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita una venta del cuaderno.
 
@@ -1329,6 +1341,7 @@ def apuntar_un_ajuste(
     datos: AjusteEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> AjusteDeUnaEntrega:
     """Apunta una devolución o un ajuste de peso, humedad o calidad sobre una entrega.
 
@@ -1430,6 +1443,7 @@ def anular_un_ajuste(
     datos: dict,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> AjusteDeUnaEntrega:
     """Quita un ajuste del importe, con su motivo y sin borrarlo.
 
@@ -1474,6 +1488,7 @@ async def subir_el_papel_de_un_ajuste(
     ajuste_id: int,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> AjusteDeUnaEntrega:
     """Sube el papel que demuestra el ajuste: la foto del básculero, el boletín del laboratorio.
@@ -1763,6 +1778,7 @@ def crear_factura_emitida(
     datos: FacturaEmitidaEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> FacturaEmitidaSalida:
     """Junta una o varias entregas en una factura nuestra. **Y no cuenta el dinero dos veces.**
 
@@ -1910,6 +1926,7 @@ def anular_factura_emitida(
     datos: dict,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> FacturaEmitidaSalida:
     """Quita la factura y **deja sus entregas libres** para volver a facturarlas.
 
@@ -2171,6 +2188,7 @@ def apuntar_un_cobro(
     datos: CobroEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> RespuestaDeUnCobro:
     """Apunta un cobro. **Puede ser una parte, y no crea ninguna factura** (caso A06).
 
@@ -2371,6 +2389,7 @@ def conciliar_un_cobro(
     datos: ConciliacionEntrada,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> RespuestaDeUnCobro:
     """Dice a qué factura salda un cobro, o le quita la asignación.
 
@@ -2453,6 +2472,7 @@ def anular_un_cobro(
     datos: dict,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> CobroDeUnaFactura:
     """Quita un cobro, con su motivo. La factura **vuelve a deber lo que debía**.
 

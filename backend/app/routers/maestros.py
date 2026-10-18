@@ -29,7 +29,7 @@ from .. import (
     textos,
 )
 from .semillas_api import TIPOS_DE_ETIQUETA
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AplicadorEntrada,
     AplicadorSalida,
@@ -194,7 +194,11 @@ def _preparar_producto_guardable(
 
 @router.post("/productos", response_model=ProductoSalida, status_code=status.HTTP_201_CREATED)
 def crear_producto(
-    datos: ProductoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: ProductoEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.ProductoFitosanitario:
     producto = _preparar_producto_guardable(datos, explotacion)
     db.add(producto)
@@ -208,6 +212,8 @@ def corregir_producto(
     datos: ProductoEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.ProductoFitosanitario:
     """Corrige un producto ya apuntado. **No da de alta otro: cambia esa ficha.**
@@ -246,6 +252,8 @@ def borrar_producto(
     producto_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita un producto de la cesta, **si no lo está usando ningún apunte**.
@@ -415,7 +423,11 @@ def _preparar_fertilizante_guardable(
 
 @router.post("/fertilizantes", response_model=FertilizanteSalida, status_code=status.HTTP_201_CREATED)
 def crear_fertilizante(
-    datos: FertilizanteEntrada, explotacion: ExplotacionActual, db: Db
+    datos: FertilizanteEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Fertilizante:
     fertilizante = _preparar_fertilizante_guardable(datos, explotacion)
     db.add(fertilizante)
@@ -429,6 +441,8 @@ def corregir_fertilizante(
     datos: FertilizanteEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Fertilizante:
     """Corrige un abono ya apuntado. **No da de alta otro: cambia esa ficha.**
@@ -489,6 +503,8 @@ def borrar_fertilizante(
     fertilizante_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita un abono de la lista, **si no lo está usando ningún apunte**.
@@ -578,7 +594,11 @@ def _preparar_aplicador_guardable(
 
 @router.post("/aplicadores", response_model=AplicadorSalida, status_code=status.HTTP_201_CREATED)
 def crear_aplicador(
-    datos: AplicadorEntrada, explotacion: ExplotacionActual, db: Db
+    datos: AplicadorEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Aplicador:
     aplicador = _preparar_aplicador_guardable(datos, explotacion)
     db.add(aplicador)
@@ -592,6 +612,8 @@ def corregir_aplicador(
     datos: AplicadorEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Aplicador:
     """Corrige quién aplica. **No da de alta otra ficha: cambia esa.**
@@ -625,6 +647,8 @@ def borrar_aplicador(
     aplicador_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita quién aplica de la lista, **si no lo está usando ningún apunte**.
@@ -700,7 +724,11 @@ def _preparar_asesor_guardable(
 
 @router.post("/asesores", response_model=AsesorSalida, status_code=status.HTTP_201_CREATED)
 def crear_asesor(
-    datos: AsesorEntrada, explotacion: ExplotacionActual, db: Db
+    datos: AsesorEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Asesor:
     asesor = _preparar_asesor_guardable(datos, explotacion)
     db.add(asesor)
@@ -722,6 +750,8 @@ def corregir_asesor(
     datos: AsesorEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Asesor:
     """Corrige quién asesora. **No da de alta otra ficha: cambia esa.**
@@ -757,6 +787,8 @@ def borrar_asesor(
     asesor_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita quién asesora de la lista, **si no lo está usando ningún apunte**.
@@ -824,7 +856,11 @@ def _preparar_equipo_guardable(
 
 @router.post("/equipos", response_model=EquipoSalida, status_code=status.HTTP_201_CREATED)
 def crear_equipo(
-    datos: EquipoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: EquipoEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.EquipoAplicacion:
     equipo = _preparar_equipo_guardable(datos, explotacion)
     db.add(equipo)
@@ -838,6 +874,8 @@ def corregir_equipo(
     datos: EquipoEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.EquipoAplicacion:
     """Corrige una máquina. **No da de alta otra: cambia esa ficha.**
@@ -873,6 +911,8 @@ def borrar_equipo(
     equipo_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita una máquina de la lista, **si no la está usando ningún apunte**.
@@ -965,7 +1005,11 @@ def _preparar_instalacion_guardable(
     "/instalaciones", response_model=InstalacionSalida, status_code=status.HTTP_201_CREATED
 )
 def crear_instalacion(
-    datos: InstalacionEntrada, explotacion: ExplotacionActual, db: Db
+    datos: InstalacionEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta en el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Instalacion:
     instalacion = _preparar_instalacion_guardable(datos, explotacion)
     db.add(instalacion)
@@ -994,6 +1038,8 @@ def corregir_instalacion(
     datos: InstalacionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Instalacion:
     """Corrige una nave o un almacén. **No da de alta otra: cambia esa ficha.**
@@ -1030,6 +1076,8 @@ def borrar_instalacion(
     instalacion_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir el catalogo es escribir***: *quien solo mira, no lo cambia.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Quita una nave de la lista, **si no la está usando ningún apunte**.
@@ -1269,6 +1317,7 @@ async def subir_la_foto_de_la_etiqueta(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> models.ProductoFitosanitario:
     """Guardar la foto de la etiqueta con el producto."""

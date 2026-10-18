@@ -37,9 +37,10 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
-from .. import correcciones, maquinaria, models, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from .. import correcciones, maquinaria, models, reenvios, reservas, textos
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     AveriaEntrada,
@@ -53,6 +54,10 @@ from ..schemas import (
     ObligacionEntrada,
     ObligacionSalida,
     TablaDeLaMaquinariaSalida,
+    LecturaDeContadorEntrada,
+    ReservaDeMaquinaEntrada,
+    ReservaDeMaquinaSalida,
+    LecturaDeContadorSalida,
 )
 
 router = APIRouter(prefix="/api", tags=["maquinaria"])
@@ -65,8 +70,9 @@ router = APIRouter(prefix="/api", tags=["maquinaria"])
 # Esto existe por un motivo concreto y se ve en los dos sitios donde se usa (borrar una máquina y
 # contar lo que la usa):
 #
-#   · Las **obligaciones**, las **inspecciones** y las **averías** de una máquina **no son otra cosa
-#     que la usa**: son la máquina. Decir «esa máquina no se puede quitar porque la usan 3 cosas»
+#   · Las **obligaciones**, las **inspecciones**, las **averías** y las **lecturas del cuenta-horas** de
+#     una máquina **no son otra cosa que la usa**: son la máquina. Decir «esa máquina no se puede quitar
+#     porque la usan 3 cosas»
 #     cuando las tres cosas son sus propias inspecciones sería absurdo, y es el mismo cuidado que
 #     tiene `facturas_api` con las líneas de una factura.
 #   · Cualquier otra tabla que mañana apunte a una máquina (una labor que diga con qué tractor se
@@ -78,6 +84,20 @@ TABLAS_QUE_SON_PARTE_DE_LA_MAQUINA: tuple[str, ...] = (
     "obligaciones_de_maquina",
     "inspecciones_de_maquina",
     "averias_de_maquina",
+    # **Y las lecturas del cuenta-horas** (CRM-07 #8, 14/10/2026): son la historia de lo que ha trabajado
+    # la máquina, que es lo que enseña su ficha. No es una dependencia: **son la máquina**, como sus
+    # averías. La prueba que lista estas tablas avisó sola al añadirla -«el día que aparezca la cuarta
+    # tabla, esa prueba avisa y obliga a decidir»-, que es exactamente para lo que está.
+    "lecturas_de_contador",
+    # **Y las reservas** (CRM-07 #9, 17/10/2026). ***Son parte de la maquina, no una dependencia***, y la
+    # prueba que lista estas tablas obligo a decidirlo -aviso sola: «hay una tabla nueva que usa una
+    # maquina: hay que decidir si es parte de ella o depende»-.
+    #
+    # El criterio es el que la propia prueba dejo escrito: *una dependencia es lo que **existe aunque la
+    # maquina se venda** -la reparacion, la factura de compra-, y esto no*. Una reserva es «**estas horas,
+    # esta maquina, para esta tarea**»: sin la maquina no hay reserva, y su ficha tiene que poder decir
+    # **cuando esta cogida**. Es la maquina, como las averias y como las lecturas.
+    "reservas_de_maquina",
 )
 
 
@@ -477,7 +497,11 @@ def avisos_de_la_maquinaria(
     status_code=status.HTTP_201_CREATED,
 )
 def traer_un_equipo_del_cuaderno(
-    equipo_id: int, explotacion: ExplotacionActual, db: Db
+    equipo_id: int,
+    explotacion: ExplotacionActual,
+    # ***Traer un equipo del cuaderno CREA una maquina***: *no es una lectura, escribe.*
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Maquina:
     """Trae a la lista de maquinaria un equipo de echar producto **que ya estaba en el cuaderno**.
 
@@ -629,10 +653,53 @@ def _el_nombre_del_papel(db: Db, explotacion, documento_id: int | None) -> str |
     return getattr(papel, "titulo", None)
 
 
+def _las_lecturas_de(db: Db, explotacion, maquina_id: int) -> list:
+    """Las lecturas del cuenta-horas, **de la mas vieja a la mas nueva**.
+
+    Se devuelven **todas, anuladas incluidas**: el agricultor tiene que poder ver que se anulo y por que.
+    Las anuladas **no cuentan** en la cuenta -de eso se encarga `maquinaria.lo_que_marca_el_contador`-,
+    que es el mismo trato que todo lo anulado de esta casa.
+    """
+    suyas = list(
+        db.scalars(
+            select(models.LecturaDeContador)
+            .where(
+                models.LecturaDeContador.explotacion_id == explotacion.id,
+                models.LecturaDeContador.maquina_id == maquina_id,
+            )
+            .order_by(models.LecturaDeContador.fecha, models.LecturaDeContador.id)
+        )
+    )
+    for lectura in suyas:
+        lectura.fecha_texto = maquinaria.formatea(lectura.fecha)
+    return suyas
+
+
+def _la_lectura_de_esta_maquina(db: Db, explotacion, maquina_id: int, lectura_id: int):
+    """Una lectura **de esta maquina y de esta finca**, o 404. Como todo lo demas."""
+    lectura = db.scalar(
+        select(models.LecturaDeContador).where(
+            models.LecturaDeContador.id == lectura_id,
+            models.LecturaDeContador.maquina_id == maquina_id,
+            models.LecturaDeContador.explotacion_id == explotacion.id,
+        )
+    )
+    if lectura is None:
+        raise HTTPException(status_code=404, detail=textos.mensaje("no_se_pudo"))
+    return lectura
+
+
+def _la_unidad_es_de_las_que_hay(unidad: str) -> None:
+    """La unidad del contador tiene que ser una de las que hay. Ver `maquinaria.UNIDADES_DEL_CONTADOR`."""
+    if (unidad or "").strip() not in maquinaria.UNIDADES_DEL_CONTADOR:
+        raise HTTPException(status_code=422, detail=textos.mensaje("G55_esa_unidad_de_contador_no_existe"))
+
+
 def _la_ficha(db: Db, explotacion, maquina) -> dict:
     obligaciones = _obligaciones_de(db, explotacion, maquina.id)
     inspecciones = _inspecciones_de(db, explotacion, maquina.id)
     averias = _averias_de(db, explotacion, maquina.id)
+    lecturas = _las_lecturas_de(db, explotacion, maquina.id)
     estados = maquinaria.estado_de_todas_las_obligaciones(
         obligaciones=obligaciones, inspecciones=inspecciones
     )
@@ -652,6 +719,24 @@ def _la_ficha(db: Db, explotacion, maquina) -> dict:
         "obligaciones": [estados[tipo] for tipo in maquinaria.OBLIGACIONES],
         "inspecciones": inspecciones,
         "averias": averias,
+        "lecturas": lecturas,
+        # **Y la cuenta del cuenta-horas.** La hace la funcion **pura** (`maquinaria.lo_que_marca_el_contador`),
+        # que es la que tiene las pruebas de la sustitucion y de los tramos sin lectura; aqui solo se le da
+        # la lista. Y `sin_decir` viaja con la cifra para que **ninguna pantalla pueda ensenar un «0 horas»
+        # que nadie ha dicho**, que es la regla del encargo.
+        "contador": maquinaria.lo_que_marca_el_contador(
+            [
+                {
+                    "id": lectura.id,
+                    "fecha": lectura.fecha,
+                    "valor": lectura.valor,
+                    "unidad": lectura.unidad,
+                    "es_sustitucion": lectura.es_sustitucion,
+                    "anulado": lectura.anulado,
+                }
+                for lectura in lecturas
+            ]
+        ),
         "avisos": _los_avisos(maquina, obligaciones, inspecciones, averias),
         "resumen": _el_resumen(maquina, obligaciones, inspecciones, averias),
         "que_falta": list(maquinaria.QUE_FALTA),
@@ -673,7 +758,11 @@ def ficha_de_una_maquina(maquina_id: int, explotacion: ExplotacionActual, db: Db
 
 @router.post("/maquinaria", response_model=MaquinaSalida, status_code=status.HTTP_201_CREATED)
 def crear_maquina(
-    datos: MaquinaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: MaquinaEntrada,
+    explotacion: ExplotacionActual,
+    # ***Dar de alta una maquina es escribir***, y ademas deja rastro en el equipo del cuaderno.
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.Maquina:
     """Da de alta una máquina. **No le supone ninguna obligación**: eso lo declara el agricultor.
 
@@ -692,13 +781,34 @@ def crear_maquina(
             )
         )
         if ya is not None:
-            return ya
+            # ***Y si la misma clave trae OTROS datos, 409*** (CRM-05, 17/10/2026): *devolver la que habia
+            # sin mirar seria dar por guardado algo que **no se guardo**.*
+            return reenvios.lo_que_contesta(ya, datos)
     maquina = _preparar_maquina_guardable(datos, explotacion)
     db.add(maquina)
-    db.flush()
-    # Y lo que se acaba de apuntar **llega al equipo del cuaderno**, si esta máquina es ese equipo.
-    _llevar_al_cuaderno(db, explotacion, maquina)
-    db.commit()
+    try:
+        # ***Y el `flush` va DENTRO del `try`*** (CRM-05, 17/10/2026): *el choque del indice **salta al
+        # escribir la fila**, y la fila se escribe en el `flush`, no en el `commit`. Con el `try` solo
+        # alrededor del `commit`, la excepcion se escapaba por delante y el agricultor veia un **500** en
+        # vez de la maquina que ya estaba. Es el mismo defecto que se cerro en las inspecciones, en las
+        # averias y en las lecturas del cuenta-horas.*
+        db.flush()
+        # Y lo que se acaba de apuntar **llega al equipo del cuaderno**, si esta máquina es ese equipo.
+        _llevar_al_cuaderno(db, explotacion, maquina)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        ya = db.scalar(
+            select(models.Maquina).where(
+                models.Maquina.explotacion_id == explotacion.id,
+                models.Maquina.clave_de_reenvio == clave,
+            )
+        )
+        if ya is None:
+            raise
+        # **El mismo 409, por el mismo camino**: *los dos sitios contestan lo mismo, o un reintento diria
+        # una cosa u otra segun quien llegara antes.*
+        return reenvios.lo_que_contesta(ya, datos)
     return maquina
 
 
@@ -708,6 +818,8 @@ def corregir_maquina(
     datos: MaquinaEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.Maquina:
     """Corrige una máquina. **No da de alta otra: cambia esa ficha.**
@@ -748,7 +860,11 @@ def corregir_maquina(
 
 @router.delete("/maquinaria/{maquina_id}")
 def quitar_maquina(
-    maquina_id: int, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    maquina_id: int,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> dict:
     """Quita una máquina de la lista, **si no la usa ningún apunte y no tiene nada dentro**.
 
@@ -814,6 +930,8 @@ def declarar_una_obligacion(
     datos: ObligacionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.ObligacionDeMaquina:
     """Dice si a esta máquina le toca una obligación, y de dónde sale eso.
@@ -995,6 +1113,89 @@ def _una_inspeccion_guardable(datos: InspeccionEntrada, explotacion, db: Db) -> 
     }
 
 
+def _la_inspeccion_de_esta_accion(db, explotacion_id: int, maquina_id: int, clave: str):
+    """La inspeccion que **ya se apunto con esa clave**, si la hay. **El alcance es la maquina.**
+
+    *No basta con la finca: la misma clave para otra maquina son dos acciones distintas, y cerrarla solo
+    por finca contestaba la inspeccion de la primera y **la segunda no se apuntaba**.*
+    """
+    return db.scalar(
+        select(models.InspeccionDeMaquina).where(
+            models.InspeccionDeMaquina.explotacion_id == explotacion_id,
+            models.InspeccionDeMaquina.maquina_id == maquina_id,
+            models.InspeccionDeMaquina.clave_de_reenvio == clave,
+        )
+    )
+
+
+def _lo_que_contesta_una_inspeccion_ya_apuntada(ya, datos_limpios) -> models.InspeccionDeMaquina:
+    """Lo que se contesta cuando esa inspeccion **ya se habia apuntado** (CRM-05, 17/10/2026).
+
+    ***Se compara LA ACCION ENTERA, y no solo la clave*** -que es como lo hace la casa con las notas y con
+    las lecturas del cuenta-horas-:
+
+      * **Coincide**: es un reenvio legitimo. *Se devuelve la que ya estaba y **no se apunta otra**.*
+      * **No coincide**: llego la misma clave con **otros datos**. Entonces **409** y no se toca nada.
+        ***Contestar «ya esta» aqui seria dar por guardado algo que NO se guardo*** *-perdida silenciosa,
+        y encima el agricultor se queda creyendo que su correccion entro-.*
+
+    *Hasta hoy esta puerta **devolvia la que habia sin mirar los datos**, asi que un reenvio con datos
+    distintos se perdia en silencio.*
+    """
+    lo_mismo = (
+        (ya.tipo or "") == (datos_limpios.get("tipo") or "")
+        and ya.fecha == datos_limpios.get("fecha")
+        and (ya.resultado or "") == (datos_limpios.get("resultado") or "")
+        and ya.proxima_fecha == datos_limpios.get("proxima_fecha")
+        and (ya.documento_id or None) == (datos_limpios.get("documento_id") or None)
+    )
+    if lo_mismo:
+        return ya
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
+    )
+
+
+def _la_averia_de_esta_accion(db, explotacion_id: int, maquina_id: int, clave: str):
+    """La averia que **ya se apunto con esa clave**, si la hay. **El alcance es la maquina.**"""
+    return db.scalar(
+        select(models.AveriaDeMaquina).where(
+            models.AveriaDeMaquina.explotacion_id == explotacion_id,
+            models.AveriaDeMaquina.maquina_id == maquina_id,
+            models.AveriaDeMaquina.clave_de_reenvio == clave,
+        )
+    )
+
+
+def _lo_que_contesta_una_averia_ya_apuntada(ya, datos) -> models.AveriaDeMaquina:
+    """Lo que se contesta cuando esa averia **ya se habia apuntado** (CRM-05, 17/10/2026).
+
+    *Misma regla que en las inspecciones y que en las lecturas del cuenta-horas*: **se compara la accion
+    entera** -que paso, cuando, si esta resuelta y con que papeles-, y **409 si los datos no coinciden**.
+    *Un «ya esta» con datos distintos es una perdida silenciosa.*
+    """
+    # *Esta puerta **no limpia los datos en un diccionario** -como hace la de la inspeccion-, asi que se
+    # compara contra la entrada tal cual llego. Se mira lo mismo: **la accion entera**.*
+    las_horas = datos.horas
+    lo_mismo = (
+        (ya.que_paso or "") == (datos.que_paso or "")
+        and ya.fecha == datos.fecha
+        and ya.resuelta == datos.resuelta
+        and ya.fecha_resuelta == datos.fecha_resuelta
+        and (ya.horas is None) == (las_horas is None)
+        and (ya.horas is None or float(ya.horas) == float(las_horas))
+        and (ya.taller_contacto_id or None) == (datos.taller_contacto_id or None)
+        and (ya.documento_id or None) == (datos.documento_id or None)
+    )
+    if lo_mismo:
+        return ya
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
+    )
+
+
 @router.post(
     "/maquinaria/{maquina_id}/inspecciones",
     response_model=InspeccionSalida,
@@ -1004,6 +1205,8 @@ def apuntar_una_inspeccion(
     maquina_id: int,
     datos: InspeccionEntrada,
     explotacion: ExplotacionActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.InspeccionDeMaquina:
     """Apunta una inspección, un mantenimiento o una renovación.
@@ -1028,15 +1231,9 @@ def apuntar_una_inspeccion(
         # contestaba **la inspección de la primera** y la segunda no se apuntaba. El agricultor cree que
         # la ha apuntado y no está. La clave la elige quien apunta, así que el programa no puede dar por
         # hecho que sea única entre máquinas.
-        ya = db.scalar(
-            select(models.InspeccionDeMaquina).where(
-                models.InspeccionDeMaquina.explotacion_id == explotacion.id,
-                models.InspeccionDeMaquina.maquina_id == maquina_id,
-                models.InspeccionDeMaquina.clave_de_reenvio == clave,
-            )
-        )
+        ya = _la_inspeccion_de_esta_accion(db, explotacion.id, maquina_id, clave)
         if ya is not None:
-            return ya
+            return _lo_que_contesta_una_inspeccion_ya_apuntada(ya, datos_limpios)
 
     inspeccion = models.InspeccionDeMaquina(
         explotacion_id=explotacion.id,
@@ -1045,14 +1242,30 @@ def apuntar_una_inspeccion(
         **datos_limpios,
     )
     db.add(inspeccion)
-    db.flush()
-    # **Y la ITEAF llega al cuaderno**: la hoja 1.3 del cuaderno de la Junta se compone del equipo, con su
-    # última fecha de inspección y la de la próxima. Si el agricultor las apunta donde el programa le dice
-    # —aquí—, el papel que se entrega tiene que llevarlas (ver `_llevar_al_cuaderno`).
-    _llevar_al_cuaderno(db, explotacion, _la_maquina_de(db, explotacion, maquina_id))
-    db.commit()
+    try:
+        # ***Y EL `flush` VA DENTRO DEL `try`, que es lo que estaba mal*** (CRM-05, 17/10/2026).
+        # *El choque del indice **salta al escribir la fila**, y la fila se escribe en el `flush`,
+        # no en el `commit`: con el `try` solo alrededor del `commit`, la excepcion se escapaba por
+        # delante y el agricultor veia un **500** en vez de la fila que ya estaba. Lo encontro la
+        # prueba de las dos peticiones a la vez -que es exactamente para lo que se escribe-.*
+        db.flush()
+        # **Y la ITEAF llega al cuaderno**: la hoja 1.3 del cuaderno de la Junta se compone del equipo, con su
+        # última fecha de inspección y la de la próxima. Si el agricultor las apunta donde el programa le dice
+        # —aquí—, el papel que se entrega tiene que llevarlas (ver `_llevar_al_cuaderno`).
+        _llevar_al_cuaderno(db, explotacion, _la_maquina_de(db, explotacion, maquina_id))
+        db.commit()
+    except IntegrityError:
+        # ***Y el choque, que es de verdad***: *la consulta de arriba y el guardado son dos
+        # operaciones, asi que dos peticiones **simultaneas** pueden encontrar la clave libre las
+        # dos. El indice unico impide la segunda fila, pero **alguien tiene que recoger el
+        # choque**: sin esto el agricultor veria un error del servidor (500) y no sabria si su
+        # apunte se guardo. Es el mismo camino que la casa usa en las lecturas del cuenta-horas.*
+        db.rollback()
+        ya = _la_inspeccion_de_esta_accion(db, explotacion.id, maquina_id, clave)
+        if ya is None:
+            raise
+        return _lo_que_contesta_una_inspeccion_ya_apuntada(ya, datos_limpios)
     return inspeccion
-
 
 @router.put(
     "/maquinaria/{maquina_id}/inspecciones/{inspeccion_id}", response_model=InspeccionSalida
@@ -1063,6 +1276,8 @@ def corregir_una_inspeccion(
     datos: InspeccionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.InspeccionDeMaquina:
     """Corrige una inspección: la fecha mal copiada, el resultado o la fecha de la próxima.
@@ -1102,6 +1317,8 @@ def anular_una_inspeccion(
     datos: AnulacionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.InspeccionDeMaquina:
     """Anula una inspección con su motivo: **se queda en el cuaderno, tachada, y deja de contar**.
@@ -1136,6 +1353,8 @@ def borrar_una_inspeccion(
     inspeccion_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Borra una inspección apuntada por error, dejando escrito lo que había en la auditoría.
@@ -1182,7 +1401,11 @@ def _la_averia_de_esta_maquina(db: Db, explotacion, maquina_id: int, averia_id: 
     "/maquinaria/{maquina_id}/averias", response_model=AveriaSalida, status_code=status.HTTP_201_CREATED
 )
 def apuntar_una_averia(
-    maquina_id: int, datos: AveriaEntrada, explotacion: ExplotacionActual, db: Db
+    maquina_id: int,
+    datos: AveriaEntrada,
+    explotacion: ExplotacionActual,
+    puede_modificar: PuedeModificar,
+    db: Db,
 ) -> models.AveriaDeMaquina:
     """Apunta una avería: qué pasó, cuándo y si ya está arreglada.
 
@@ -1213,15 +1436,9 @@ def apuntar_una_averia(
     clave = (datos.clave_de_reenvio or "").strip() or None
     if clave:
         # Por máquina, por el mismo motivo que en una inspección: ver `apuntar_una_inspeccion`.
-        ya = db.scalar(
-            select(models.AveriaDeMaquina).where(
-                models.AveriaDeMaquina.explotacion_id == explotacion.id,
-                models.AveriaDeMaquina.maquina_id == maquina_id,
-                models.AveriaDeMaquina.clave_de_reenvio == clave,
-            )
-        )
+        ya = _la_averia_de_esta_accion(db, explotacion.id, maquina_id, clave)
         if ya is not None:
-            return ya
+            return _lo_que_contesta_una_averia_ya_apuntada(ya, datos)
     averia = models.AveriaDeMaquina(
         explotacion_id=explotacion.id,
         maquina_id=maquina_id,
@@ -1236,14 +1453,25 @@ def apuntar_una_averia(
         clave_de_reenvio=clave,
     )
     db.add(averia)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # ***Y el choque, que es de verdad***: *la consulta de arriba y el guardado son dos
+        # operaciones, asi que dos peticiones **simultaneas** pueden encontrar la clave libre las
+        # dos. El indice unico impide la segunda fila, pero **alguien tiene que recoger el
+        # choque**: sin esto el agricultor veria un error del servidor (500) y no sabria si su
+        # apunte se guardo. Es el mismo camino que la casa usa en las lecturas del cuenta-horas.*
+        db.rollback()
+        ya = _la_averia_de_esta_accion(db, explotacion.id, maquina_id, clave)
+        if ya is None:
+            raise
+        return _lo_que_contesta_una_averia_ya_apuntada(ya, datos)
     # El POST devuelve la que acaba de apuntar, que **no** pasa por `_la_averia_de_esta_maquina`: sin
     # esto, la respuesta diria el identificador del taller y **no su nombre**, que es lo que la pantalla
     # pinta al guardar. (Lo vi al escribir el enganche de arriba, mirando quien devuelve una averia.)
     averia.taller = _el_nombre_del_taller(db, explotacion, averia.taller_contacto_id)
     averia.papel = _el_nombre_del_papel(db, explotacion, averia.documento_id)
     return averia
-
 
 @router.put("/maquinaria/{maquina_id}/averias/{averia_id}", response_model=AveriaSalida)
 def corregir_una_averia(
@@ -1252,6 +1480,8 @@ def corregir_una_averia(
     datos: AveriaEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.AveriaDeMaquina:
     """Corrige una avería: lo normal es volver para decir que **ya está arreglada**."""
@@ -1315,6 +1545,8 @@ def anular_una_averia(
     datos: AnulacionEntrada,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> models.AveriaDeMaquina:
     """Anula una avería con su motivo: se queda tachada y **deja de avisar**."""
@@ -1341,6 +1573,8 @@ def borrar_una_averia(
     averia_id: int,
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
     db: Db,
 ) -> dict:
     """Borra una avería apuntada por error, dejando el rastro en la auditoría."""
@@ -1353,3 +1587,616 @@ def borrar_una_averia(
         usuario_id=usuario.id,
     )
     return {"borrado": True, "id": averia_id}
+
+# --------------------------------------------------------------------------
+# El cuenta-horas: apuntar, corregir y anular una lectura (CRM-07 #8)
+# --------------------------------------------------------------------------
+
+
+def _la_lectura_de_esta_accion(db, explotacion_id: int, maquina_id: int, clave: str):
+    """La lectura que **ya se apunto con esa clave**, si la hay. El alcance es la maquina."""
+    return db.scalar(
+        select(models.LecturaDeContador).where(
+            models.LecturaDeContador.explotacion_id == explotacion_id,
+            models.LecturaDeContador.maquina_id == maquina_id,
+            models.LecturaDeContador.clave_de_reenvio == clave,
+        )
+    )
+
+
+def _lo_que_contesta_una_lectura_ya_apuntada(ya, datos) -> models.LecturaDeContador:
+    """Lo que se contesta cuando esa lectura **ya se habia apuntado** (CRM-07 #8, 17/10/2026).
+
+    Se compara **la accion entera** -la fecha, el valor, la unidad y la sustitucion-, y no solo la clave,
+    que es como lo hace la casa con las notas:
+
+      * **Coincide**: es un reenvio legitimo -doble toque con los guantes, respuesta perdida, reintento sin
+        cobertura-. Se devuelve la lectura que ya estaba y **no se apunta otra**.
+      * **No coincide**: llego la misma clave con **otros datos**. Entonces **409** y no se toca nada.
+        Contestar «ya esta» aqui seria dar por guardado algo que **no se guardo** -perdida silenciosa-.
+
+    ***Y es exactamente lo que distingue un reenvio de una lectura que se corrigio despues***: si alguien
+    la corrigio, sus datos ya no son los que trae el reenvio, y el agricultor tiene que enterarse en vez de
+    recibir en silencio una lectura que ya no dice lo que el mando.
+    """
+    lo_mismo = (
+        ya.fecha == datos.fecha
+        and float(ya.valor) == float(datos.valor)
+        and (ya.unidad or "") == (datos.unidad or "")
+        and bool(ya.es_sustitucion) == bool(datos.es_sustitucion)
+    )
+    if lo_mismo:
+        ya.fecha_texto = maquinaria.formatea(ya.fecha)
+        return ya
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=textos.mensaje("C7_la_accion_ya_se_guardo_de_otra_manera"),
+    )
+
+
+@router.post(
+    "/maquinaria/{maquina_id}/lecturas",
+    response_model=LecturaDeContadorSalida,
+    status_code=status.HTTP_201_CREATED,
+)
+
+def apuntar_una_lectura(
+    maquina_id: int,
+    datos: LecturaDeContadorEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Y quien solo mira, no apunta*** (17/10/2026): *la capacidad nace en `True`, asi que esto no
+    # cambia nada para las cuentas de siempre; lo que hace es que **una cuenta de solo lectura no pueda
+    # escribir por la URL** -la pantalla ya le escondia el boton, que no es lo mismo-.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+) -> models.LecturaDeContador:
+    """Apunta lo que marcaba el cuenta-horas un dia.
+
+    **La fecha y la unidad no son adorno**: «1.200» no dice nada -ni de cuando es, ni si son horas o
+    kilometros-, y por eso las tres cosas son obligatorias. Y `es_sustitucion` marca la lectura en la que
+    **se cambio el contador**: esa lectura ya es del contador nuevo, y asi el acumulado no baja al
+    cambiarlo (`maquinaria.lo_que_marca_el_contador`, que es pura y tiene sus pruebas).
+    """
+    obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
+    _la_unidad_es_de_las_que_hay(datos.unidad)
+    clave = (datos.clave_de_reenvio or "").strip() or None
+    if clave:
+        # Por maquina, por el mismo motivo que en una averia: dos toques del mismo boton no apuntan
+        # lecturas. **Y se compara la accion entera**, no solo la clave: ver el ayudante de abajo.
+        ya = _la_lectura_de_esta_accion(db, explotacion.id, maquina_id, clave)
+        if ya is not None:
+            return _lo_que_contesta_una_lectura_ya_apuntada(ya, datos)
+    lectura = models.LecturaDeContador(
+        explotacion_id=explotacion.id,
+        maquina_id=maquina_id,
+        fecha=datos.fecha,
+        valor=datos.valor,
+        unidad=datos.unidad,
+        es_sustitucion=datos.es_sustitucion,
+        notas=datos.notas,
+        clave_de_reenvio=clave,
+    )
+    db.add(lectura)
+    # ***EL `flush` NO ES ADORNO*** (17/10/2026). `lectura.id` **no existe** hasta que la fila va a la base,
+    # asi que sin esto la auditoria se escribia con `entidad_id = None`: un rastro **que no apunta a nada**,
+    # y la prueba lo caza porque **dice lo que encuentra** en vez de un `assert None is not None`.
+    # Es lo que hace la casa en el alta de un articulo (`db.add(...)` + `db.flush()` + la auditoria).
+    try:
+        # ***Y EL `flush` VA DENTRO DEL `try`, que es lo que estaba mal*** (CRM-05, 17/10/2026).
+        # *El choque del indice **salta al escribir la fila**, y la fila se escribe en el `flush`,
+        # no en el `commit`: con el `try` solo alrededor del `commit`, la excepcion se escapaba por
+        # delante y el agricultor veia un **500** en vez de la fila que ya estaba. Lo encontro la
+        # prueba de las dos peticiones a la vez -que es exactamente para lo que se escribe-.*
+        db.flush()
+        # ***EL ALTA TAMBIEN SE APUNTA*** (CRM-07 #8, 17/10/2026). `corregir` y `anular` ya dejaban su rastro
+        # -la casa tiene `correcciones` para eso-, pero **un alta no pasa por ninguno de los dos**, y eso es
+        # justo la carencia que `correcciones.apuntar` vino a tapar: su propio docstring lo cuenta. Sin esto,
+        # el cuaderno del cuenta-horas tendria correcciones con autor y altas **sin saber quien las apunto**,
+        # que es medio rastro.
+        #
+        # La fecha viaja **en texto ISO** porque acaba en una columna JSON, y un `date` no se serializa.
+        correcciones.apuntar(
+            db,
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            entidad="lectura_de_contador",
+            entidad_id=lectura.id,
+            accion="alta",
+            datos={
+                "fecha": lectura.fecha.isoformat(),
+                "valor": lectura.valor,
+                "unidad": lectura.unidad,
+                "es_sustitucion": lectura.es_sustitucion,
+            },
+        )
+        db.commit()
+    except IntegrityError:
+        # **Y la colision, que es de verdad**: la consulta de arriba y el guardado son dos operaciones, asi
+        # que dos peticiones **simultaneas** pueden encontrar la clave libre las dos. El indice unico impide
+        # duplicar la lectura, pero **alguien tiene que recoger el choque**: sin esto el agricultor veria un
+        # error del servidor (500) y no sabria si su lectura se guardo. Es el mismo camino que la casa usa
+        # con las notas, y el indice es **parcial** -solo entre las filas que traen clave-.
+        db.rollback()
+        ya = _la_lectura_de_esta_accion(db, explotacion.id, maquina_id, clave)
+        if ya is None:
+            raise
+        return _lo_que_contesta_una_lectura_ya_apuntada(ya, datos)
+    db.refresh(lectura)
+    lectura.fecha_texto = maquinaria.formatea(lectura.fecha)
+    return lectura
+
+
+@router.put(
+    "/maquinaria/{maquina_id}/lecturas/{lectura_id}", response_model=LecturaDeContadorSalida
+)
+def corregir_una_lectura(
+    maquina_id: int,
+    lectura_id: int,
+    datos: LecturaDeContadorEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Corregir tambien es escribir***: *una lectura corregida cambia el acumulado del cuenta-horas.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+) -> models.LecturaDeContador:
+    """Corrige una lectura, **dejando el rastro** (`correcciones`)."""
+    lectura = _la_lectura_de_esta_maquina(db, explotacion, maquina_id, lectura_id)
+    _la_unidad_es_de_las_que_hay(datos.unidad)
+    preparada = models.LecturaDeContador(
+        explotacion_id=explotacion.id,
+        maquina_id=maquina_id,
+        fecha=datos.fecha,
+        valor=datos.valor,
+        # ***LO QUE LA PETICION NO MANDA, NO SE BORRA*** (regla A1). `unidad` trae «horas» por defecto, asi
+        # que sin esto **corregir el valor de una lectura en kilometros la pasaria a horas** sin que nadie
+        # lo haya dicho. `es_sustitucion` y `notas` tienen el mismo problema.
+        unidad=(
+            datos.unidad if "unidad" in datos.model_fields_set else lectura.unidad
+        ),
+        es_sustitucion=(
+            datos.es_sustitucion
+            if "es_sustitucion" in datos.model_fields_set
+            else lectura.es_sustitucion
+        ),
+        notas=(datos.notas if "notas" in datos.model_fields_set else lectura.notas),
+        clave_de_reenvio=lectura.clave_de_reenvio,
+    )
+    correcciones.corregir(
+        db,
+        guardado=lectura,
+        preparado=preparada,
+        entidad="lectura_de_contador",
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+    )
+    lectura.fecha_texto = maquinaria.formatea(lectura.fecha)
+    return lectura
+
+
+@router.post(
+    "/maquinaria/{maquina_id}/lecturas/{lectura_id}/anular", response_model=LecturaDeContadorSalida
+)
+def anular_una_lectura(
+    maquina_id: int,
+    lectura_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Y anular tambien***: *una lectura anulada deja de contar, que es cambiar lo que dice el contador.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+) -> models.LecturaDeContador:
+    """Anula una lectura con su motivo: se queda tachada y **deja de contar** en el acumulado."""
+    lectura = _la_lectura_de_esta_maquina(db, explotacion, maquina_id, lectura_id)
+    lectura.anulado = True
+    lectura.motivo_anulacion = datos.motivo
+    db.add(
+        models.Auditoria(
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            entidad="lectura_de_contador",
+            entidad_id=lectura.id,
+            accion="anular",
+            datos={"motivo": datos.motivo},
+        )
+    )
+    db.commit()
+    lectura.fecha_texto = maquinaria.formatea(lectura.fecha)
+    return lectura
+
+
+# ------------------------------------------------------------------- las reservas (CRM-07 #9)
+#
+# ***UNA RESERVA ES UN APUNTE, NO UN CONSUMO***, y por eso vive aparte de las lecturas y de las averias:
+# reservar el tractor el martes no gasta nada, solo dice quien lo va a coger. El encargo pide *«reservas con
+# maquina, intervalo, responsable, trabajo y estado; conflictos de solape en servidor, anulaciones e
+# indisponibilidad por averia»*, y las reglas de que dos no se pisen **no** estan aqui: estan en
+# `app/reservas.py`, que es puro y tiene sus pruebas sin base de datos.
+
+
+def _una_reserva_en_datos(suya: models.ReservaDeMaquina) -> dict:
+    """La reserva **como datos**, que es lo que come la funcion pura de `app/reservas.py`."""
+    return {
+        "id": suya.id,
+        "maquina_id": suya.maquina_id,
+        "desde": suya.desde,
+        "hasta": suya.hasta,
+        "anulada": bool(suya.anulada),
+    }
+
+
+def _las_reservas_de_la_maquina(db, explotacion, maquina_id: int) -> list:
+    return list(
+        db.scalars(
+            select(models.ReservaDeMaquina)
+            .where(
+                models.ReservaDeMaquina.explotacion_id == explotacion.id,
+                models.ReservaDeMaquina.maquina_id == maquina_id,
+            )
+            .order_by(models.ReservaDeMaquina.desde)
+        )
+    )
+
+
+def _la_reserva_de_esta_maquina(db, explotacion, maquina_id: int, reserva_id: int):
+    """La reserva, **comprobando que es de esta finca y de esta maquina**.
+
+    Las dos cosas a la vez, como en las lecturas del contador: una reserva es de **su** maquina, y el camino
+    lo dice. Si no, dos puertas con el mismo identificador serian la misma puerta.
+    """
+    suya = db.scalar(
+        select(models.ReservaDeMaquina).where(
+            models.ReservaDeMaquina.id == reserva_id,
+            models.ReservaDeMaquina.maquina_id == maquina_id,
+            models.ReservaDeMaquina.explotacion_id == explotacion.id,
+        )
+    )
+    if suya is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            # **La misma clave que el 404 de una lectura** (17/10/2026): las dos puertas dicen lo mismo
+            # cuando el objeto no es de esta finca, y no se inventa una clave nueva por cada puerta.
+            detail=textos.mensaje("no_se_pudo"),
+        )
+    return suya
+
+
+def _las_averias_en_datos(db, explotacion, maquina_id: int) -> list[dict]:
+    """Las averias de la maquina **como datos**, para la funcion pura."""
+    suyas = db.scalars(
+        select(models.AveriaDeMaquina).where(
+            models.AveriaDeMaquina.explotacion_id == explotacion.id,
+            models.AveriaDeMaquina.maquina_id == maquina_id,
+        )
+    )
+    return [
+        {
+            "fecha": una.fecha,
+            "resuelta": una.resuelta,
+            "fecha_resuelta": una.fecha_resuelta,
+        }
+        for una in suyas
+    ]
+
+
+def _el_motivo_del_estado(estado: str) -> str:
+    """El estado tiene que ser uno de los de la casa. **Se dice cuales hay**, no solo que no vale."""
+    if estado not in reservas.LOS_ESTADOS_DE_UNA_RESERVA:
+        return textos.mensaje("reserva_motivo_estado")
+    return ""
+
+
+# ***Los estados de una reserva, con su texto, en un mapa EXPLICITO*** (17/10/2026). *Componer la clave con
+# `f"reserva_estado_{estado}"` deja los tres textos **sin nombrar en ningun sitio**, y el guardian de los
+# mensajes huerfanos los cuenta -con razon-. **Aqui se nombran**, que es lo que hace que el guardian pueda
+# distinguir «este texto no lo lee nadie» de «este texto se compone».-*
+_LOS_TEXTOS_DE_LOS_ESTADOS_DE_UNA_RESERVA = {
+    "pedida": "reserva_estado_pedida",
+    "en_curso": "reserva_estado_en_curso",
+    "hecha": "reserva_estado_hecha",
+}
+
+
+def _con_sus_textos(db, suya: models.ReservaDeMaquina) -> models.ReservaDeMaquina:
+    """La reserva con **lo que se puede afirmar de ella, ya en texto**.
+
+    *Los textos se montan aqui y no en la pantalla*, que es la regla de la casa para las fechas
+    (`desde_texto`) y vale igual para las otras dos: **el servidor es quien sabe el formato** y quien tiene
+    a mano los nombres del responsable y del trabajo. *Sin esto la pantalla tendria los **identificadores**
+    en vez de los nombres, o tendria que pedir dos listas mas solo para poder decir «la coge Juan».*
+
+    ***Y cuando no consta, lo dice con su palabra*** -«sin decir quien la coge»-: *un hueco en blanco
+    pareceria un descuido de la pantalla en vez de un dato que nadie apunto.*
+    """
+    suya.desde_texto = maquinaria.formatea_con_hora(suya.desde)
+    suya.hasta_texto = maquinaria.formatea_con_hora(suya.hasta)
+    # ***Los tres estados se leen del bloque de la PANTALLA, no de `MENSAJES`*** (17/10/2026): *son los
+    # mismos que el formulario pone en sus tres opciones, y con dos copias un dia dirian cosas distintas.*
+    suya.estado_texto = textos.MAQUINARIA_DE_LA_FINCA[
+        _LOS_TEXTOS_DE_LOS_ESTADOS_DE_UNA_RESERVA.get(suya.estado, "reserva_estado_pedida")
+    ]
+    # **El nombre, si el contacto sigue existiendo.** *Si se borro la ficha, vale mas decir «sin decir quien
+    # la coge» que enseñar un identificador que ya no lleva a ninguna parte.*
+    contacto = db.get(models.Contacto, suya.responsable_id) if suya.responsable_id else None
+    suya.responsable_texto = (
+        contacto.nombre if contacto is not None else textos.mensaje("reserva_sin_responsable")
+    )
+    tarea = db.get(models.Tarea, suya.tarea_id) if suya.tarea_id else None
+    suya.tarea_texto = tarea.titulo if tarea is not None else textos.mensaje("reserva_sin_tarea")
+    return suya
+
+
+@router.get(
+    "/maquinaria/{maquina_id}/reservas", response_model=list[ReservaDeMaquinaSalida]
+)
+def listar_las_reservas(
+    maquina_id: int,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+) -> list[models.ReservaDeMaquina]:
+    """Las reservas de una maquina, de la mas antigua a la mas nueva."""
+    obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
+    return [_con_sus_textos(db, una) for una in _las_reservas_de_la_maquina(db, explotacion, maquina_id)]
+
+
+def _apuntar_la_reserva_sin_pisar_a_otra(db, explotacion, usuario, maquina_id: int, datos):
+    """***Las dos capas contra la concurrencia, en un sitio*** (CRM-07 #9, 17/10/2026).
+
+    Esta sacado de la puerta **a proposito**, y no por gusto de partir funciones: la concurrencia no se
+    demuestra con un `sleep` ni con buena voluntad, se demuestra **leyendo dos sesiones antes de que ninguna
+    escriba** y viendo que la segunda se encuentra a la primera. Para poder hacer eso paso a paso -y que salga
+    igual todas las veces-, la comprobacion tiene que poder llamarse sola.
+
+    ***El solape NO se puede expresar como un indice unico*** -«estos dos intervalos no se pisan» no es una
+    restriccion de columna-, asi que hacen falta **dos capas** y ninguna basta sola en los dos motores:
+
+      1. **El candado va sobre LA MAQUINA**, no sobre las reservas: es la maquina la que esta en juego, y
+         bloquearla a ella serializa las reservas de **esa** maquina sin bloquear las de las demas. En
+         PostgreSQL `FOR UPDATE` bloquea la fila hasta el `commit`; **en SQLite no existe y se ignora**.
+      2. **Y se vuelve a comprobar DESPUES del `flush`**, que es lo que hace el trabajo en SQLite: alli la
+         escritura serializa, asi que cuando esta transaccion consigue escribir, la otra **ya esta escrita** y
+         la segunda mirada la ve. Si aparece un solape, se deshace **todo** y se contesta 409.
+    """
+    # ***Capa 1***: el candado, sobre la maquina.
+    db.scalar(select(models.Maquina.id).where(models.Maquina.id == maquina_id).with_for_update())
+    suya = models.ReservaDeMaquina(
+        explotacion_id=explotacion.id,
+        maquina_id=maquina_id,
+        desde=datos.desde,
+        hasta=datos.hasta,
+        responsable_id=datos.responsable_id,
+        tarea_id=datos.tarea_id,
+        estado=datos.estado,
+        notas=datos.notas,
+        clave_de_reenvio=(datos.clave_de_reenvio or "").strip() or None,
+    )
+    db.add(suya)
+    # `flush` y no `commit`: la fila ya esta escrita -con su id- pero **la transaccion sigue abierta**, que es
+    # lo que permite deshacerlo todo si al volver a mirar aparece un solape.
+    db.flush()
+    # ***Capa 2***: se vuelve a mirar, ahora que esta escrita. `saltando=suya.id` para no chocar consigo
+    # misma, que es exactamente el caso para el que existe ese parametro.
+    choca = reservas.la_que_choca(
+        [_una_reserva_en_datos(una) for una in _las_reservas_de_la_maquina(db, explotacion, maquina_id)],
+        desde=datos.desde,
+        hasta=datos.hasta,
+        maquina_id=maquina_id,
+        saltando=suya.id,
+    )
+    if choca is not None:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=textos.mensaje("esa_maquina_ya_esta_reservada_esas_horas"),
+        )
+    correcciones.apuntar(
+        db,
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+        entidad="reserva_de_maquina",
+        entidad_id=suya.id,
+        accion="alta",
+        datos={
+            "desde": suya.desde.isoformat(),
+            "hasta": suya.hasta.isoformat(),
+            "estado": suya.estado,
+        },
+    )
+    db.commit()
+    db.refresh(suya)
+    return suya
+
+
+@router.post(
+    "/maquinaria/{maquina_id}/reservas",
+    response_model=ReservaDeMaquinaSalida,
+    status_code=status.HTTP_201_CREATED,
+)
+def apuntar_una_reserva(
+    maquina_id: int,
+    datos: ReservaDeMaquinaEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+):
+    """Apunta que esa maquina esta reservada de tal hora a tal hora.
+
+    ***LAS DOS CAPAS CONTRA LA CONCURRENCIA***, porque el encargo pide que *«cambios concurrentes no
+    produzcan dos reservas incompatibles»* y el solape **no se puede expresar como un indice unico** -«estos
+    dos intervalos no se pisan» no es una restriccion de columna-:
+
+      1. **El candado va sobre LA MAQUINA**, no sobre las reservas: es la maquina la que esta en juego, y
+         bloquearla a ella serializa las reservas de esa maquina **sin** bloquear las de las demas. En
+         PostgreSQL `FOR UPDATE` bloquea la fila hasta el `commit`.
+      2. **Y se vuelve a comprobar DESPUES del `flush`**, que es lo que hace el trabajo en **SQLite**: alli
+         `FOR UPDATE` no existe y se ignora, pero la escritura serializa, asi que cuando esta transaccion
+         consigue escribir, la otra **ya esta escrita** y la segunda mirada la ve. Si aparece un solape, se
+         deshace todo y se contesta 409.
+
+    Ninguna de las dos basta sola en los dos motores; las dos juntas si, y estan probadas con dos sesiones.
+    """
+    obtener_de_la_explotacion(db, models.Maquina, maquina_id, explotacion.id)
+    motivo_del_estado = _el_motivo_del_estado(datos.estado)
+    if motivo_del_estado:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=motivo_del_estado)
+    # ***La clave de reenvio, antes de escribir*** (18/10/2026): *esta puerta **escribia** la clave y **no la
+    # consultaba**, asi que un reenvio chocaba con el indice unico -`reservas_de_maquina.explotacion_id,
+    # clave_de_reenvio`- y **el movil que reintenta sin cobertura se llevaba un 500** en vez de la reserva que ya
+    # tenia.*
+    #
+    # *La clave se cierra **por maquina**, como el indice: la misma clave en otra maquina es otra accion.*
+    clave = (datos.clave_de_reenvio or "").strip() or None
+    if clave is not None:
+        ya = db.scalar(
+            select(models.ReservaDeMaquina).where(
+                models.ReservaDeMaquina.explotacion_id == explotacion.id,
+                models.ReservaDeMaquina.maquina_id == maquina_id,
+                models.ReservaDeMaquina.clave_de_reenvio == clave,
+            )
+        )
+        if ya is not None:
+            # ***Y si es la misma clave con OTROS datos, 409***: *devolver la reserva que habia sin mirar seria
+            # dar por guardado algo que no se guardo.*
+            reenvios.lo_que_contesta(ya, datos)
+            return _con_sus_textos(db, ya)
+
+    # ***Y el solape, DESPUES de mirar la clave***: *si esto es un reenvio, la reserva que se pisa es la
+    # suya, y rechazarla por solape seria rechazar el reintento legitimo.*
+    reservas_suyas = [_una_reserva_en_datos(una) for una in _las_reservas_de_la_maquina(db, explotacion, maquina_id)]
+    motivo, choca = reservas.lo_que_impide(
+        reservas_suyas,
+        _las_averias_en_datos(db, explotacion, maquina_id),
+        desde=datos.desde,
+        hasta=datos.hasta,
+        maquina_id=maquina_id,
+    )
+    if motivo:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=textos.mensaje(motivo))
+
+    try:
+        return _con_sus_textos(
+            db, _apuntar_la_reserva_sin_pisar_a_otra(db, explotacion, usuario, maquina_id, datos)
+        )
+    except IntegrityError:
+        # **La carrera**: *dos peticiones con la misma clave a la vez. La que pierde no es un error: es la misma
+        # reserva, y se contesta lo que ya estaba.*
+        db.rollback()
+        ya = db.scalar(
+            select(models.ReservaDeMaquina).where(
+                models.ReservaDeMaquina.explotacion_id == explotacion.id,
+                models.ReservaDeMaquina.maquina_id == maquina_id,
+                models.ReservaDeMaquina.clave_de_reenvio == clave,
+            )
+        )
+        if ya is None:
+            raise
+        reenvios.lo_que_contesta(ya, datos)
+        return _con_sus_textos(db, ya)
+
+
+@router.put(
+    "/maquinaria/{maquina_id}/reservas/{reserva_id}", response_model=ReservaDeMaquinaSalida
+)
+def corregir_una_reserva(
+    maquina_id: int,
+    reserva_id: int,
+    datos: ReservaDeMaquinaEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+):
+    """Corrige una reserva **sin chocar consigo misma** y dejando el rastro del cambio."""
+    suya = _la_reserva_de_esta_maquina(db, explotacion, maquina_id, reserva_id)
+    motivo_del_estado = _el_motivo_del_estado(datos.estado)
+    if motivo_del_estado:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=motivo_del_estado)
+    motivo, choca = reservas.lo_que_impide(
+        [_una_reserva_en_datos(una) for una in _las_reservas_de_la_maquina(db, explotacion, maquina_id)],
+        _las_averias_en_datos(db, explotacion, maquina_id),
+        desde=datos.desde,
+        hasta=datos.hasta,
+        maquina_id=maquina_id,
+        saltando=reserva_id,
+    )
+    if motivo:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=textos.mensaje(motivo))
+    db.scalar(select(models.Maquina.id).where(models.Maquina.id == maquina_id).with_for_update())
+    preparada = models.ReservaDeMaquina(
+        explotacion_id=explotacion.id,
+        maquina_id=maquina_id,
+        desde=datos.desde,
+        hasta=datos.hasta,
+        # ***LO QUE LA PETICION NO MANDA, NO SE BORRA*** (regla A1), igual que en las lecturas.
+        responsable_id=(
+            datos.responsable_id if "responsable_id" in datos.model_fields_set else suya.responsable_id
+        ),
+        tarea_id=(datos.tarea_id if "tarea_id" in datos.model_fields_set else suya.tarea_id),
+        estado=datos.estado,
+        notas=(datos.notas if "notas" in datos.model_fields_set else suya.notas),
+        clave_de_reenvio=suya.clave_de_reenvio,
+        anulada=suya.anulada,
+        motivo_anulacion=suya.motivo_anulacion,
+    )
+    correcciones.corregir(
+        db,
+        guardado=suya,
+        preparado=preparada,
+        entidad="reserva_de_maquina",
+        explotacion_id=explotacion.id,
+        usuario_id=usuario.id,
+    )
+    db.flush()
+    choca = reservas.la_que_choca(
+        [_una_reserva_en_datos(una) for una in _las_reservas_de_la_maquina(db, explotacion, maquina_id)],
+        desde=suya.desde,
+        hasta=suya.hasta,
+        maquina_id=maquina_id,
+        saltando=suya.id,
+    )
+    if choca is not None:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=textos.mensaje("esa_maquina_ya_esta_reservada_esas_horas")
+        )
+    db.commit()
+    db.refresh(suya)
+    return _con_sus_textos(db, suya)
+
+
+@router.post(
+    "/maquinaria/{maquina_id}/reservas/{reserva_id}/anular",
+    response_model=ReservaDeMaquinaSalida,
+)
+def anular_una_reserva(
+    maquina_id: int,
+    reserva_id: int,
+    datos: AnulacionEntrada,
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    # ***Escribir es escribir***: *quien solo mira, no toca la maquina.*
+    puede_modificar: PuedeModificar,
+    db: Db,
+):
+    """Anula una reserva con su motivo: **se queda tachada y deja de ocupar** la maquina."""
+    suya = _la_reserva_de_esta_maquina(db, explotacion, maquina_id, reserva_id)
+    suya.anulada = True
+    suya.motivo_anulacion = datos.motivo
+    db.add(
+        models.Auditoria(
+            explotacion_id=explotacion.id,
+            usuario_id=usuario.id,
+            entidad="reserva_de_maquina",
+            entidad_id=suya.id,
+            accion="anular",
+            datos={"motivo": datos.motivo},
+        )
+    )
+    db.commit()
+    db.refresh(suya)
+    return _con_sus_textos(db, suya)

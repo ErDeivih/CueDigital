@@ -41,7 +41,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from .. import adjuntos, catalogos, correcciones, legal, models, servicios, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import DocumentoEntrada, DocumentoSalida
 
 router = APIRouter(prefix="/api", tags=["documentación"])
@@ -220,7 +220,10 @@ def _preparar_documento_guardable(
 
 @router.post("/documentos", response_model=DocumentoSalida, status_code=status.HTTP_201_CREATED)
 def crear(
-    datos: DocumentoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: DocumentoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> DocumentoSalida:
     """Apunta un papel, con o sin fichero.
 
@@ -252,6 +255,7 @@ def corregir(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> DocumentoSalida:
     """Corrige un papel ya apuntado: su título, su carpeta, su tipo, su fecha y sus notas.
 
@@ -289,6 +293,7 @@ def borrar(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Borra un papel del cuaderno **y su fichero del disco**.
 
@@ -347,6 +352,7 @@ async def subir_fichero(
     documento_id: int,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> DocumentoSalida:
     """Sube el papel: un PDF, una foto o el fichero de oficina que sea.
@@ -409,7 +415,11 @@ def descargar(
 
 @router.post("/documentos/{documento_id}/anular", response_model=DocumentoSalida)
 def anular(
-    documento_id: int, datos: dict, explotacion: ExplotacionActual, db: Db
+    documento_id: int,
+    datos: dict,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> DocumentoSalida:
     """Anula el apunte de un papel. El motivo es obligatorio y el fichero no se borra.
 

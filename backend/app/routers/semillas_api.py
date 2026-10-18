@@ -51,7 +51,7 @@ from .. import (
     servicios,
     textos,
 )
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     EtiquetaLeidaSalida,
@@ -269,6 +269,7 @@ def dar_de_alta_una_semilla(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Dar de alta una semilla: **el artículo del almacén y su etiqueta, de una vez**.
 
@@ -463,6 +464,7 @@ def corregir_una_semilla(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Corregir lo que pone la etiqueta.
 
@@ -595,6 +597,7 @@ async def subir_la_foto_de_la_etiqueta(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> dict:
     """Guardar la foto de la etiqueta con la semilla.
@@ -837,7 +840,12 @@ def _sacar_la_semilla_del_almacen(
         usuario=usuario,
         db=db,
         respuesta=Response(),
-    )
+            # ***Llamada INTERNA, no una peticion de la pantalla*** (17/10/2026): *esta funcion
+        # **usa la misma puerta a proposito** -para que la regla viva en un solo sitio-, y quien
+        # llama es el propio programa, no una cuenta. Pasarle `None` es decir la verdad: **no hay
+        # una cuenta detras a la que preguntarle**.*
+        puede_modificar=None,
+)
 
 
 def _datos_de_la_salida(
@@ -884,6 +892,7 @@ def sembrar_una_semilla(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apuntar que en una tierra se sembró una semilla, **y sacarla del almacén de una vez**.
 
@@ -1046,6 +1055,7 @@ def corregir_una_siembra(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Corregir una siembra **sin que queden dos descuentos**.
 
@@ -1197,6 +1207,7 @@ def anular_una_siembra(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anular una siembra, con su motivo. **Y lo que salió del almacén vuelve a contar.**
 

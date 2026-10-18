@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from .. import correcciones, legal, models, servicios, textos, validaciones
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..routers import analiticas_api
 from ..schemas import PlanAbonadoEntrada, PlanAbonadoSalida, PlanConLoAplicado
 
@@ -176,7 +176,10 @@ def validar_plan_endpoint(datos: PlanAbonadoEntrada, _: ExplotacionActual) -> di
 
 @router.post("/planes", response_model=PlanAbonadoSalida, status_code=status.HTTP_201_CREATED)
 def crear_plan(
-    datos: PlanAbonadoEntrada, explotacion: ExplotacionActual, db: Db
+    datos: PlanAbonadoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.PlanAbonado:
     _rechazar_si_bloquea(validaciones.validar_plan(datos=datos))
     obtener_de_la_explotacion(db, models.Campana, datos.campana_id, explotacion.id)
@@ -210,7 +213,11 @@ def ver_plan(plan_id: int, explotacion: ExplotacionActual, db: Db) -> PlanConLoA
 
 @router.put("/planes/{plan_id}", response_model=PlanAbonadoSalida)
 def corregir_plan(
-    plan_id: int, datos: PlanAbonadoEntrada, explotacion: ExplotacionActual, db: Db
+    plan_id: int,
+    datos: PlanAbonadoEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.PlanAbonado:
     """Corrige el plan. Los abonos ya apuntados NO se tocan."""
     _rechazar_si_bloquea(validaciones.validar_plan(datos=datos))
@@ -273,6 +280,7 @@ def borrar_plan(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita el plan de abono del año, **si no tiene abonos apuntados contra él**.
 

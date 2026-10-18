@@ -34,7 +34,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from .. import adjuntos, catalogos, correcciones, legal, models, servicios, textos, validaciones
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnaliticaConSitio,
     AnaliticaEntrada,
@@ -306,7 +306,10 @@ def validar_analitica_endpoint(datos: AnaliticaEntrada, _: ExplotacionActual) ->
 
 @router.post("/analiticas", response_model=AnaliticaConSitio, status_code=status.HTTP_201_CREATED)
 def crear_analitica(
-    datos: AnaliticaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: AnaliticaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> AnaliticaConSitio:
     limpios = servicios.limpia_parametros(datos.tipo, datos.parametros)
     _rechazar_si_bloquea(
@@ -346,7 +349,11 @@ def ver_analitica(
 
 @router.put("/analiticas/{analitica_id}", response_model=AnaliticaConSitio)
 def corregir_analitica(
-    analitica_id: int, datos: AnaliticaEntrada, explotacion: ExplotacionActual, db: Db
+    analitica_id: int,
+    datos: AnaliticaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> AnaliticaConSitio:
     """Corrige un análisis.
 
@@ -387,6 +394,7 @@ def anular_analitica(
     datos: dict,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Analitica:
     """Anula el análisis. No se borra: queda con el motivo, como todo en el cuaderno."""
     motivo = (datos or {}).get("motivo", "").strip()
@@ -424,6 +432,7 @@ async def subir_informe(
     analitica_id: int,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
     fichero: UploadFile = File(...),
 ) -> AnaliticaConSitio:
     """Sube el boletín del laboratorio: el PDF o la foto que hace el móvil."""
@@ -499,6 +508,7 @@ def borrar_analitica(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita un análisis del cuaderno, **si no está sosteniendo un plan de abono**.
 

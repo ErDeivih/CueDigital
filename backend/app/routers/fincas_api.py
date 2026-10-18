@@ -25,7 +25,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import case, func, select
 
 from .. import accesos, models, security, textos
-from ..deps import Db, ExplotacionActual, UsuarioActual
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
 from ..schemas import (
     CambiarDeFincaEntrada,
     FincaSalida,
@@ -172,6 +172,7 @@ def anadir_a_la_finca(
     usuario: UsuarioActual,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> QuienEntraSalida:
     """Le da acceso a otra cuenta que ya está dada de alta en el programa.
 
@@ -212,6 +213,7 @@ def quitar_de_la_finca(
     usuario: UsuarioActual,
     explotacion: ExplotacionActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> QuienEntraSalida:
     """Quita el acceso a una cuenta. El titular puede quitar a los demás; uno puede quitarse a sí mismo.
 

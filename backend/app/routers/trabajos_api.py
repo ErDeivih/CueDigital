@@ -54,9 +54,10 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
-from .. import correcciones, models, servicios, textos, trabajos as logica
-from ..deps import Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from .. import correcciones, models, reenvios, servicios, textos, trabajos as logica
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import (
     AnulacionEntrada,
     MarcarHechoEntrada,
@@ -93,6 +94,114 @@ ESTADOS_QUE_SE_PUEDEN_PEDIR = ("previsto", "en_curso", "realizado", "cancelado")
 # --------------------------------------------------------------------------
 # Leer las filas y contarlas con la lógica pura
 # --------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***Lo que no es una columna***: las filas hijas (18/10/2026, revision independiente)
+# -----------------------------------------------------------------------------------------------------------
+#
+# Un plan guarda sus **lineas** en otra tabla, y una labor guarda sus **insumos** como **salidas de almacen**.
+# Eso no esta en la fila, asi que `reenvios` no lo puede comparar solo: **la puerta lo acredita aqui**.
+#
+# ***Y hacia falta***: *antes, `reenvios` **saltaba** esos campos, asi que un reintento con **otras** lineas u
+# **otros** insumos devolvia el plan o la labor que ya habia **como si fuera lo que se acaba de mandar** -con las
+# filas hijas de la **primera** vez-. La revision lo pide con esas palabras: «cada puerta debe acreditar los
+# datos compuestos que el ayudante no compara».*
+
+
+def _un_numero(valor):
+    """**Un numero en la forma en que se compara**: *sin colas de redondeo; `None` sigue siendo `None`.*"""
+    return None if valor is None else round(float(valor), 4)
+
+
+def _la_linea_como_tupla(linea) -> tuple:
+    """***Los nueve campos de una linea***, *los mismos en la peticion y en la fila guardada.*"""
+    return (
+        linea.parcela_id,
+        _un_numero(linea.superficie_ha),
+        _un_numero(linea.cantidad),
+        (linea.unidad or "").strip(),
+        _un_numero(linea.dosis_por_ha),
+        linea.articulo_id,
+        linea.lote_id,
+        _un_numero(linea.horas),
+        (linea.observaciones or "").strip(),
+    )
+
+
+def _las_lineas_son_las_del_plan(db, previsto_id: int, datos) -> bool:
+    """***Si las lineas que se mandan son las que el plan ya tiene.*** *Se comparan como **conjunto ordenado**:
+    el orden en que se escribieron no es parte de la accion.*"""
+    las_de_antes = list(
+        db.scalars(
+            select(models.LineaDeTrabajoPrevisto).where(
+                models.LineaDeTrabajoPrevisto.trabajo_previsto_id == previsto_id
+            )
+        )
+    )
+    return sorted(_la_linea_como_tupla(una) for una in las_de_antes) == sorted(
+        _la_linea_como_tupla(una) for una in (datos.lineas or [])
+    )
+
+
+def _el_insumo_como_tupla(insumo) -> tuple:
+    """***Lo que de verdad se guarda de un insumo***: *el envase, la cantidad y la unidad.*
+
+    *`articulo_id` no se compara porque **no viaja**: el envase ya dice de que es. Y `dosis_por_ha` y
+    `aceptar_descuadre` tampoco se guardan en la salida, asi que **no se pueden comparar** -se dice aqui en vez
+    de fingir que se miran-.*
+    """
+    return (insumo.lote_id, _un_numero(insumo.cantidad), (insumo.unidad or "").strip())
+
+
+def _los_insumos_son_los_de_la_labor(db, labor_id: int, datos) -> bool:
+    """***Si los insumos que se mandan son los que la labor ya gasto.***
+
+    ***Solo se miran los que la puerta habria escrito***: *la funcion que saca del almacen **se salta** los
+    insumos sin cantidad, sin unidad o sin envase -y lo dice en un aviso-, asi que compararlos seria pedirle a la
+    base algo que nunca se le mando.*
+    """
+    las_salidas = list(
+        db.scalars(
+            select(models.MovimientoDeExistencias).where(
+                models.MovimientoDeExistencias.origen_tipo == "labor",
+                models.MovimientoDeExistencias.origen_id == labor_id,
+                models.MovimientoDeExistencias.anulado.is_(False),
+            )
+        )
+    )
+    los_que_se_escribieron = [
+        insumo
+        for insumo in (datos.insumos or [])
+        if insumo.cantidad is not None
+        and (insumo.unidad or "").strip()
+        and insumo.lote_id is not None
+    ]
+    return sorted(_el_insumo_como_tupla(una) for una in las_salidas) == sorted(
+        _el_insumo_como_tupla(uno) for uno in los_que_se_escribieron
+    )
+
+
+def _lo_compuesto(db):
+    """***El `tambien` que se le pasa a `reenvios`***: *contesta por las filas hijas y **cierra en falso** con lo
+    que no sepa.*
+
+    *Un campo que no sea columna ni este aqui **no se da por la misma accion**: un 409 que se puede explicar es
+    mejor que una fila hija que no se apunto.*
+    """
+
+    def el_que_mira(campo: str, ya, datos) -> bool:
+        if campo == "lineas":
+            return _las_lineas_son_las_del_plan(db, ya.id, datos)
+        if campo == "insumos":
+            return _los_insumos_son_los_de_la_labor(db, ya.id, datos)
+        return False
+
+    return el_que_mira
+
+
+# ***Y las horas, que se guardan con otro nombre***: *`horas` en la peticion, `horas_previstas` en la fila.*
+LAS_HORAS_DEL_PLAN = {"horas": "horas_previstas"}
 
 
 def _la_clave(datos) -> str | None:
@@ -562,6 +671,7 @@ def planificar_un_trabajo(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Planificar un trabajo: **lo que se piensa hacer, que no ha pasado y no gasta nada**.
 
@@ -595,8 +705,16 @@ def planificar_un_trabajo(
             )
         )
         if ya is not None:
+            # ***Y si la misma clave trae OTROS datos, 409*** (CRM-05, 17/10/2026): *devolver el plan que
+            # habia sin mirar seria dar por guardado algo que **no se guardo**.*
+            ya = reenvios.lo_que_contesta(
+                ya, datos, traducir=LAS_HORAS_DEL_PLAN, tambien=_lo_compuesto(db)
+            )
             respuesta.status_code = status.HTTP_200_OK
-            return {"previsto": _los_previstos(db, explotacion, parcela_id=ya.parcela_id)[0], "ya_estaba": True}
+            return {
+                "previsto": _los_previstos(db, explotacion, parcela_id=ya.parcela_id)[0],
+                "ya_estaba": True,
+            }
 
     plan = models.TrabajoPrevisto(
         explotacion_id=explotacion.id,
@@ -621,7 +739,33 @@ def planificar_un_trabajo(
         clave_de_reenvio=clave,
     )
     db.add(plan)
-    db.flush()
+    try:
+        # ***El `flush` es donde se ESCRIBE la fila*** (CRM-05, 17/10/2026): *el choque del indice salta
+        # aqui, no al confirmar al final. Sin este `try`, dos peticiones simultaneas que pasen las dos la
+        # consulta de «¿ya esta?» dejan a una con un **500** en vez del plan que ya estaba.*
+        #
+        # *Y aqui el `flush` **no se puede mover** al final: las lineas del plan necesitan `plan.id`, que
+        # no existe hasta que la fila va a la base.*
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        ya = db.scalar(
+            select(models.TrabajoPrevisto).where(
+                models.TrabajoPrevisto.explotacion_id == explotacion.id,
+                models.TrabajoPrevisto.clave_de_reenvio == clave,
+            )
+        )
+        if ya is None:
+            raise
+        # **El mismo 409, por el mismo camino.**
+        ya = reenvios.lo_que_contesta(
+            ya, datos, traducir=LAS_HORAS_DEL_PLAN, tambien=_lo_compuesto(db)
+        )
+        respuesta.status_code = status.HTTP_200_OK
+        return {
+            "previsto": _los_previstos(db, explotacion, parcela_id=ya.parcela_id)[0],
+            "ya_estaba": True,
+        }
 
     for linea in datos.lineas or []:
         obtener_de_la_explotacion(db, models.Parcela, linea.parcela_id, explotacion.id)
@@ -677,6 +821,7 @@ def corregir_un_trabajo_previsto(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Corregir un plan. Se cambia la fila que ya estaba y queda el rastro de qué decía antes.
 
@@ -739,6 +884,7 @@ def reprogramar_un_trabajo_previsto(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Mover un plan a otro día. **Lo que ya se hizo no se mueve**, y se dice por qué.
 
@@ -785,6 +931,7 @@ def cancelar_un_trabajo_previsto(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Cancelar un plan, con su motivo. **El plan no se borra**: queda cancelado y se puede leer.
 
@@ -936,7 +1083,12 @@ def _sacar_lo_que_gasto_el_trabajo(
             usuario=usuario,
             db=db,
             respuesta=Response(),
-        )
+                    # ***Llamada INTERNA, no una peticion de la pantalla*** (17/10/2026): *esta funcion
+            # **usa la misma puerta a proposito** -para que la regla viva en un solo sitio-, y quien
+            # llama es el propio programa, no una cuenta. Pasarle `None` es decir la verdad: **no hay
+            # una cuenta detras a la que preguntarle**.*
+            puede_modificar=None,
+)
 
 
 @router.post("/previstos/{previsto_id}/hecho", status_code=status.HTTP_201_CREATED)
@@ -946,6 +1098,7 @@ def marcar_lo_que_de_verdad_se_hizo(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """**Lo planificado se cumple apuntando lo que pasó**, con su día y lo que se gastó de verdad.
 
@@ -986,6 +1139,8 @@ def marcar_lo_que_de_verdad_se_hizo(
             )
         )
         if ya is not None:
+            # ***Y si la misma clave trae OTROS datos, 409*** (CRM-05, 17/10/2026).
+            reenvios.lo_que_contesta(ya, datos, tambien=_lo_compuesto(db))
             # La cola del móvil reintenta: se devuelve el trabajo que ya había **sin volver a descontar**.
             return {
                 "hecho": _una_labor_como_trabajo(db, ya),
@@ -1076,7 +1231,32 @@ def marcar_lo_que_de_verdad_se_hizo(
             },
         )
     )
-    db.commit()
+    try:
+        # ***Y aqui el `commit` es el que escribe*** (CRM-05, 17/10/2026): *esta puerta **no hace `flush`**,
+        # asi que la fila de la labor va a la base al confirmar. Es el mismo caso que la averia de la
+        # maquina, y el `try` va aqui por el mismo motivo: **sin el, la que pierde la carrera ve un 500
+        # en vez del trabajo que ya estaba apuntado**.*
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # **La misma busqueda que la de arriba**, con el mismo filtro: *una labor **anulada** no cuenta, y
+        # anular existe justo para poder volver a apuntar el trabajo.*
+        ya = db.scalar(
+            select(models.Labor).where(
+                models.Labor.explotacion_id == explotacion.id,
+                models.Labor.clave_de_reenvio == clave,
+                models.Labor.anulado.is_(False),
+            )
+        )
+        if ya is None:
+            raise
+        # **El mismo 409, por el mismo camino**, antes de montar la respuesta.
+        reenvios.lo_que_contesta(ya, datos, tambien=_lo_compuesto(db))
+        return {
+            "hecho": _una_labor_como_trabajo(db, ya),
+            "ya_estaba": True,
+            "aviso": textos.mensaje("TJ11_el_trabajo_ya_estaba"),
+        }
     db.refresh(labor)
     return {
         "hecho": _una_labor_como_trabajo(db, labor),
@@ -1093,6 +1273,7 @@ def apuntar_un_trabajo_hecho(
     usuario: UsuarioActual,
     db: Db,
     respuesta: Response,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Apuntar un trabajo que **ya se ha hecho** (sin plan detrás): rodillo, cultivador, escarda…
 
@@ -1111,6 +1292,12 @@ def apuntar_un_trabajo_hecho(
             )
         )
         if ya is not None:
+            # ***Y si la misma clave trae OTROS datos, 409*** (18/10/2026, y esto faltaba): *el 409 estaba **solo
+            # en el camino del `except IntegrityError`**, asi que en el caso **normal** -un reintento, que es el
+            # que pasa siempre- la puerta salia por aqui **sin mirar nada**. Un reintento con **otros kilos**
+            # devolvia la labor vieja con «ya estaba» **y el almacen se quedaba con el descuento de la primera
+            # vez**. Lo encontro la prueba de los insumos con envase.*
+            reenvios.lo_que_contesta(ya, datos, tambien=_lo_compuesto(db))
             respuesta.status_code = status.HTTP_200_OK
             return {
                 "hecho": _una_labor_como_trabajo(db, ya),
@@ -1145,7 +1332,30 @@ def apuntar_un_trabajo_hecho(
     )
     if clave is None:
         avisos.append(textos.mensaje("TJ12_no_se_pudo_comprobar_si_ya_estaba"))
-    db.commit()
+    try:
+        # ***Y aqui el `commit` es el que escribe*** (CRM-05, 17/10/2026): *esta puerta tampoco hace
+        # `flush`, asi que la labor va a la base al confirmar. **Sin el `try`, la que pierde la carrera ve
+        # un 500** en vez del trabajo que ya estaba apuntado -y es la puerta que el agricultor usa desde el
+        # campo la mayoria de las veces-.*
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        ya = db.scalar(
+            select(models.Labor).where(
+                models.Labor.explotacion_id == explotacion.id,
+                models.Labor.clave_de_reenvio == clave,
+                models.Labor.anulado.is_(False),
+            )
+        )
+        if ya is None:
+            raise
+        # **El mismo 409, por el mismo camino**, antes de montar la respuesta.
+        reenvios.lo_que_contesta(ya, datos, tambien=_lo_compuesto(db))
+        return {
+            "hecho": _una_labor_como_trabajo(db, ya),
+            "ya_estaba": True,
+            "aviso": textos.mensaje("TJ11_el_trabajo_ya_estaba"),
+        }
     db.refresh(labor)
     return {"hecho": _una_labor_como_trabajo(db, labor), "ya_estaba": False, "avisos": avisos}
 
@@ -1162,6 +1372,7 @@ def corregir_un_trabajo_hecho(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Corregir un trabajo **sin que queden dos descuentos ni se toque lo firmado**.
 
@@ -1292,6 +1503,7 @@ def anular_un_trabajo_hecho(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Anular un trabajo, con su motivo. **Y lo que gastó vuelve a contar, sin tocar el libro.**
 

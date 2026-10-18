@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from .. import certificados, correcciones, models, textos
-from ..deps import PuedeVerLoEconomico, Db, ExplotacionActual, UsuarioActual, obtener_de_la_explotacion
+from ..deps import Db, ExplotacionActual, PuedeModificar, PuedeVerLoEconomico, UsuarioActual, obtener_de_la_explotacion
 from ..schemas import CampanaCorreccion, CampanaEntrada, CampanaSalida, ExplotacionSalida
 
 router = APIRouter(prefix="/api", tags=["finca"])
@@ -20,7 +20,10 @@ def mi_finca(explotacion: ExplotacionActual) -> models.Explotacion:
 
 @router.put("/mi-finca", response_model=ExplotacionSalida)
 def actualizar_mi_finca(
-    datos: dict, explotacion: ExplotacionActual, db: Db
+    datos: dict,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Explotacion:
     permitidos = {
         "nombre",
@@ -133,7 +136,10 @@ def _ano_libre(db: Db, explotacion, anio: int, *, menos_esta: int | None = None)
 
 @router.post("/campanas", response_model=CampanaSalida, status_code=status.HTTP_201_CREATED)
 def crear_campana(
-    datos: CampanaEntrada, explotacion: ExplotacionActual, db: Db
+    datos: CampanaEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Campana:
     _comprobar_las_fechas(datos)
     _ano_libre(db, explotacion, datos.anio)
@@ -270,6 +276,7 @@ def corregir_campana(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> models.Campana:
     """Corrige una campaña: **su año, sus fechas y si está cerrada**.
 
@@ -465,6 +472,7 @@ def borrar_campana(
     explotacion: ExplotacionActual,
     usuario: UsuarioActual,
     db: Db,
+    puede_modificar: PuedeModificar,
 ) -> dict:
     """Quita una campaña del cuaderno, **si está vacía**.
 

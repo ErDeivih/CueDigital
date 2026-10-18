@@ -38,7 +38,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from .. import catalogos, correcciones, models, servicios, textos, validaciones
-from ..deps import Db, ExplotacionActual, UsuarioActual
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
 from ..schemas import (
     DeclaracionDeMedidas,
     MedidaConPregunta,
@@ -115,7 +115,10 @@ def validar_medidas_endpoint(datos: MedidasEntrada, _: ExplotacionActual) -> dic
 
 @router.put("/medidas", response_model=DeclaracionDeMedidas)
 def declarar_medidas(
-    datos: MedidasEntrada, explotacion: ExplotacionActual, db: Db
+    datos: MedidasEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> DeclaracionDeMedidas:
     """Guarda la declaración entera.
 
@@ -144,7 +147,10 @@ def declarar_medidas(
 
 @router.delete("/medidas", response_model=DeclaracionDeMedidas)
 def quitar_la_declaracion(
-    explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db
+    explotacion: ExplotacionActual,
+    usuario: UsuarioActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
 ) -> DeclaracionDeMedidas:
     """Deja la finca **sin declarar** las medidas preventivas.
 
