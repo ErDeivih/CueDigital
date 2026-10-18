@@ -831,6 +831,20 @@ class TestLoQueEstaBien:
             "obtener_de_la_explotacion",
             "_la_inspeccion_de_esta_maquina",
             "_la_averia_de_esta_maquina",
+            # **El del cuenta-horas** (CRM-07 #8, 15/10/2026). Comprueba `lectura.id`, `maquina_id` **y**
+            # `explotacion_id`, o sea que filtra por finca y por maquina a la vez. Se anade aqui porque
+            # este barrido mira **nombres** en el codigo de cada ruta, y un ayudante que no este en la
+            # lista sale como «sin comprobar» aunque compruebe: lo que no se hace es **renombrarlo** para
+            # que pase, que seria tapar el barrido en vez de mantenerlo.
+            # ***Que filtre de verdad lo dicen las pruebas de acceso cruzado***, no esta linea:
+            # `test_las_lecturas_del_contador` intenta corregir y anular una lectura de otra finca y de
+            # otra maquina de la misma finca, y las dos tienen que contestar 404.
+            "_la_lectura_de_esta_maquina",
+            # **El de las reservas** (CRM-07 #9, 17/10/2026). Comprueba `reserva.id`, `maquina_id` **y**
+            # `explotacion_id`: una reserva es de **su** maquina, y el camino lo dice. Se anade por el mismo
+            # motivo que el de las lecturas -el barrido mira **nombres**-, y **sin renombrarlo**: lo que
+            # filtra de verdad lo dicen las pruebas de acceso cruzado.
+            "_la_reserva_de_esta_maquina",
             "_el_papel_es_de_esta_finca",
             "_el_equipo_es_de_esta_finca",
         )

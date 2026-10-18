@@ -581,3 +581,20 @@ def crear_venta(cliente, cuenta, una_venta):
 @pytest.fixture
 def venta(crear_venta):
     return crear_venta()
+
+@pytest.fixture
+def db():
+    """**Una sesion de base de datos**, para lo que no se ve desde las puertas.
+
+    Hay cosas que solo se pueden comprobar mirando la base: el **rastro** de la auditoria -que no tiene
+    puerta de lectura-, y la **concurrencia**, que necesita **dos sesiones a la vez** para reproducir la
+    ventana entre «mirar» y «escribir». Se abre con el mismo generador que usa la aplicacion, y se llama `db`
+    porque es el nombre que ya usaban las pruebas de esta casa para esto.
+
+    Vive aqui y no en un fichero de pruebas porque la usan **dos**, y dos definiciones de lo mismo es
+    justamente lo que esta casa no quiere.
+    """
+    from app.database import SessionLocal
+
+    with SessionLocal() as sesion:
+        yield sesion

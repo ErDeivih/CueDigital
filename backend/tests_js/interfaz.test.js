@@ -1195,7 +1195,18 @@ const RESPUESTAS = {
       // Estas preguntas se piden desde el mapa de campos de `app.js` (`t("etiquetas.<clave>.pregunta")`) y **no estaban** en esta copia: mientras faltaban, las
       // pantallas de alta las pintaban en blanco en los tests y nadie lo veía. Ahora las copia el
       // guardián de `tests/test_interfaz.py` (`test_los_campos_del_mapa_tambien_estan_en_la_copia`).
-      "abono.nombre": { pregunta: "¿Cómo se llama el abono?", pista: "Tal y como viene en el saco" },
+      // ***Los dos de la riqueza*** (CRM-07, 17/10/2026): **la base** y **la densidad**. La copia tiene que
+    // decir lo mismo que sirve el servidor, o la pregunta sale en blanco en este test y **el test no la
+    // ve** -es el agujero que cerro `test_los_campos_del_mapa_tambien_estan_en_la_copia`-.
+    "abono.base_de_la_riqueza": {
+      pregunta: "¿Cómo viene la riqueza en la etiqueta?",
+      pista: "En los líquidos puede venir por litro en vez de por ciento en masa",
+    },
+    "abono.densidad_kg_por_litro": {
+      pregunta: "¿Cuánto pesa un litro?",
+      pista: "En kilos por litro. Hace falta para los líquidos en % en masa; si no consta, déjalo en blanco",
+    },
+    "abono.nombre": { pregunta: "¿Cómo se llama el abono?", pista: "Tal y como viene en el saco" },
       "abono.riqueza_k": { pregunta: "Potasio (el tercer número)", pista: "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"" },
       "abono.riqueza_n": { pregunta: "Nitrógeno (el primer número)", pista: "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"" },
       "abono.riqueza_p": { pregunta: "Fósforo (el segundo número)", pista: "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"" },
@@ -14806,6 +14817,82 @@ test("la misma tierra se dice igual en el panel y en su ficha", async () => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// El borrador de un formulario (CRM-08, 17/10/2026)
+//
+// El ticket lo pide asi: *«borrador **por usuario/finca**, guardar local, cierre/reapertura, respuesta
+// perdida…»*. Y aqui se prueba **lo que importa del cierre/reapertura**: que lo que quedo a medias
+// **vuelve al formulario** cuando se abre la aplicacion otra vez.
+//
+// ***Se arranca con el borrador ya en el almacen*** -`extra.almacen`-, que es lo que pasa de verdad: al
+// cerrar la pestana la memoria se va y el almacen se queda. *Comprobar solo la memoria no probaria nada,
+// porque eso ya funcionaba antes.*
 
+test("un borrador de factura a medias vuelve al formulario al abrir la aplicacion", async () => {
+  // ***La clave lleva la cuenta (1) y la finca (1)***, que son las de las pruebas: por eso el borrador de
+  // una cuenta **no sale en el formulario de otra**.
+  const { entorno } = await cargarAplicacion(
+    // ***Y hay que decirle quien es***: al arrancar, la aplicacion pregunta a `/api/cuenta/yo` **antes de
+    // pintar nada**, y el borrador no puede ser de nadie si esa respuesta no llega.
+    { "GET /api/cuenta/yo": { id: 1, explotacion: { id: 1 }, puede_modificar: true, puede_ver_lo_economico: true } },
+    {
+      almacen: {
+        "cuedigital.borrador.1.1.factura": {
+          datos: {
+            numero: "2026/00123",
+            fecha: "2026-03-15",
+            cliente: "COOPERATIVA AGRICOLA DE PENARANDA",
+          },
+          cuando: "2026-03-15T10:00:00.000Z",
+        },
+      },
+    },
+  );
+  await pulsar(entorno, "inicio", { ir: "ventas" });
+  // ***Y facturar se abre pulsando***, no por su clave: la ruta de `facturar_entregas` es
+  // `["ventas", "facturar"]`, y `inicio` navega por el **patron entero**. *Asi es como llega el agricultor:
+  // entrando en lo vendido y pulsando FACTURAR.*
+  await pulsar(entorno, "ventas-facturar");
 
+  // ***Y se mira DONDE ESTA***: la pantalla de facturar es React
+  // (`react/pantallas/facturar_entregas.js`), y lo suyo **no se ve en el DOM de mentira**. *Se comprueba
+  // por las propiedades que recibe, que es como lo hacen las demas pruebas de pantallas de React.*
+  const elemento = ultimoMontaje();
+  assert.equal(
+    elemento.type.name,
+    "PantallaFacturarEntregas",
+    "no se ha abierto la pantalla de facturar",
+  );
+  const borrador = elemento.props.borrador || {};
+  assert.equal(
+    borrador.numero,
+    "2026/00123",
+    "***el borrador que quedo a medias no vuelve al formulario***",
+  );
+  assert.equal(
+    borrador.cliente,
+    "COOPERATIVA AGRICOLA DE PENARANDA",
+    "el cliente del borrador tampoco vuelve",
+  );
+});
 
+test("y sin borrador, el formulario sale limpio", async () => {
+  // ***La otra mitad***: que no se invente nada. *Un formulario con el numero de una factura anterior seria
+  // peor que uno vacio: se guardaria una factura con datos que no son.*
+  const { entorno } = await cargarAplicacion({
+    "GET /api/cuenta/yo": { id: 1, explotacion: { id: 1 } },
+  });
+  await pulsar(entorno, "inicio", { ir: "ventas" });
+  // ***Y facturar se abre pulsando***, no por su clave: la ruta de `facturar_entregas` es
+  // `["ventas", "facturar"]`, y `inicio` navega por el **patron entero**. *Asi es como llega el agricultor:
+  // entrando en lo vendido y pulsando FACTURAR.*
+  await pulsar(entorno, "ventas-facturar");
+
+  const elemento = ultimoMontaje();
+  assert.equal(elemento.type.name, "PantallaFacturarEntregas");
+  const borrador = elemento.props.borrador || {};
+  assert.ok(
+    !borrador.numero,
+    `sin borrador el numero tiene que salir vacio, y sale ${JSON.stringify(borrador.numero)}`,
+  );
+});

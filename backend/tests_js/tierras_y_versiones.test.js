@@ -131,6 +131,7 @@ const TEXTOS = {
   leyenda_cultivo: "Lo que se declaró que hay sembrado en cada trozo, según el SIGPAC.",
   leyenda_mis_tierras: "Las rayas gruesas son tus tierras.",
   capa_avisos_no_esta: "La capa de avisos no está puesta porque el SIGPAC no publica ese servicio.",
+
 };
 
 /** `textos.VERSIONES_EN_PANTALLA`, que viaja en el mismo sitio. */

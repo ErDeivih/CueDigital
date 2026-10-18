@@ -412,6 +412,13 @@ test("la tabla de pantallas es la que es, y no se ha quedado corta", () => {
     "mapa",
     "dictado",
     "borrador",
+    // **La preparacion de la PAC (CRM-09, 17/10/2026)**: *el paquete por recinto. Tiene direccion porque **se
+    // enlaza y se recarga**: es un documento de trabajo, y el asesor se lo lleva por su enlace.*
+    //
+    // ***Y su ausencia aqui se noto de verdad***: *`ABRIR_LA_PANTALLA["pac"]` estaba puesto y la tabla del
+    // enrutador no, asi que la aplicacion contestaba «esa direccion no lleva a ninguna parte». **Lo cazo el
+    // recorrido**, no una prueba de unidad: el fallo solo se ve al andar la pantalla.*
+    "pac",
   ]);
   assert.equal(new Set(pantallas()).size, pantallas().length, "hay una pantalla repetida en la tabla");
 });

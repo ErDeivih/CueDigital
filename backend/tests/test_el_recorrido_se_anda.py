@@ -59,6 +59,25 @@ def _un_puerto_libre() -> int:
         return hueco.getsockname()[1]
 
 
+def _lo_que_dijo_el_servidor(log: pathlib.Path) -> str:
+    """***Lo que escribio el servidor, para poder leerlo en el fallo.***
+
+    *Con `DEVNULL` el fallo decia «no ha arrancado» y ahi se acababa todo: **la causa -un import roto, un
+    puerto ocupado, una columna que falta- se perdia en el vacio**.*
+
+    ***Y si el fichero esta vacio, se dice eso***: *«no dijo nada» es un dato -uvicorn ni llego a
+    arrancar-, y es distinto de «dijo esto otro».*
+    """
+    try:
+        dicho = log.read_bytes().decode("utf-8", errors="replace").strip()
+    except OSError as fallo:
+        return f"(no se ha podido leer {log.name}: {fallo})"
+    if not dicho:
+        return "(no dijo nada: ni siquiera llego a arrancar)"
+    # ***Las ultimas lineas son las que importan***: *uvicorn escribe mucho al arrancar y el fallo va al final.
+    return dicho[-3000:]
+
+
 def _esperar_al_servidor(direccion: str, segundos: float = 30.0) -> bool:
     import urllib.error
     import urllib.request
@@ -90,15 +109,26 @@ def test_el_recorrido_se_anda_entero():
         base = pathlib.Path(temporal) / "prueba.db"
         entorno = dict(os.environ)
         entorno["CUEDIGITAL_DATABASE_URL"] = f"sqlite:///{base}"
+        # ***Lo que dice el servidor, a un fichero*** (17/10/2026). *Antes iba a `DEVNULL`, y cuando no
+        # arrancaba la prueba solo podia decir **«no ha arrancado»** -sin la causa, que es lo unico que
+        # permite arreglarlo-. Con el fichero, el fallo **dice por que**.*
+        #
+        # ***Y el `stderr` va al mismo sitio que el `stdout`***: *uvicorn escribe una cosa en cada uno, y
+        # separarlos obligaria a leer dos ficheros para entender un fallo.*
+        log = pathlib.Path(temporal) / "servidor.log"
+        salida_del_servidor = log.open("wb")
         servidor = subprocess.Popen(  # noqa: S603 — es el propio proyecto, no una orden de fuera
             [str(PYTHON), "-m", "uvicorn", "app.main:app", "--port", str(puerto)],
             cwd=str(BACKEND),
             env=entorno,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=salida_del_servidor,
+            stderr=subprocess.STDOUT,
         )
         try:
-            assert _esperar_al_servidor(direccion), "el servidor de pruebas no ha arrancado"
+            assert _esperar_al_servidor(direccion), (
+                "el servidor de pruebas no ha arrancado. **Lo que dijo**:\n"
+                + _lo_que_dijo_el_servidor(log)
+            )
             recorrido = subprocess.run(  # noqa: S603
                 [
                     str(PYTHON),
@@ -135,7 +165,9 @@ def test_el_recorrido_se_anda_entero():
                 f"el recorrido ha hecho muy pocas comprobaciones ({cuantas.group(1)}): ¿se ha quedado a medias?"
             )
         finally:
+            # ***Y el fichero se cierra***, para que lo que se lea despues este entero.
             servidor.terminate()
+            salida_del_servidor.close()
             try:
                 servidor.wait(timeout=15)
             except subprocess.TimeoutExpired:

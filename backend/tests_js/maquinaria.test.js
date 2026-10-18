@@ -69,18 +69,28 @@ const MAQUINARIA = {
   // ***LAS FRASES DEL SERVIDOR, LITERALES***: `tests/test_revision_t14.py` compara esta copia con lo
   // que sirve `/api/interfaz`, palabra por palabra. Acortarlas aqui deja al guardian de «ni una frase
   // escrita a mano» sin poder distinguir una palabra de verdad de una inventada.
-  campo_papel_pista:
-    "El parte del taller, la factura de la reparación o el presupuesto. Si no hay papel, déjalo como está.",
+  campo_papel_pista: "El parte del taller, la factura de la reparación o el presupuesto. Si no hay papel, déjalo como está.",
   sin_papel: "Sin papel apuntado",
   papel_de_la_averia: "Papel",
+  seccion_contador: "El cuenta-horas",
+  apuntar_lectura: "Apunta lo que marca",
+  corregir_lectura: "Corregir",
+  anular_lectura_boton: "Anular",
+  contador_sin_lecturas: "De este cuenta-horas no hay ninguna lectura apuntada, así que no se sabe lo que ha trabajado. Apunta lo que marca hoy y, cuando tengas otra, el programa dirá lo que ha subido.",
+  contador_marca: "Marca ahora",
+  contador_ha_subido: "Ha subido desde la primera lectura",
+  contador_ha_subido_parcial: "Ha subido, de lo que se puede afirmar",
+  contador_no_se_sabe_cuanto: "Todavía no se sabe cuánto ha subido: hace falta otra lectura para poder comparar.",
+  contador_tramos_sin_decir_uno: "y hay 1 tramo que no se puede medir, porque falta alguna lectura",
+  contador_tramos_sin_decir_varios: "y hay {cuantos} tramos que no se pueden medir, porque faltan lecturas",
+  contador_sustitucion: "contador nuevo",
+  contador_anulada: "anulada",
   coste_de_la_maquina: "Lo que ha costado tenerla parada",
-  coste_no_se_pudo:
-    "No se ha podido traer lo que ha costado. Vuelve a abrir la ficha y, si sigue, avisa.",
+  coste_no_se_pudo: "No se ha podido traer lo que ha costado. Vuelve a abrir la ficha y, si sigue, avisa.",
   // ***LAS FRASES DEL SERVIDOR, LITERALES***: este objeto es una COPIA de lo que sirve `/api/interfaz`,
   // y `tests/test_revision_t14.py` compara las dos cosas palabra por palabra. Acortarlas aqui hace que
   // el guardian de «ni una frase escrita a mano» deje de valer: el compara contra ESTA copia.
-  coste_de_la_maquina_sin_gastos:
-    "De sus averías no hay ningún gasto apuntado, así que no se sabe lo que ha costado.",
+  coste_de_la_maquina_sin_gastos: "De sus averías no hay ningún gasto apuntado, así que no se sabe lo que ha costado.",
   coste_de_una_averia: "Costó",
   coste_de_una_averia_sin_constar: "No consta lo que costó",
   coste_sin_importe_uno: "y 1 de esos gastos no tiene importe",
@@ -256,6 +266,24 @@ const MAQUINARIA = {
   es_el_equipo_del_cuaderno_pista: "Si esta máquina es la misma que ya tenías apuntada como equipo para echar producto, elígela aquí: así no se escribe dos veces.",
   ningun_equipo: "No es ninguno de esos",
   el_equipo_que_ya_estaba: "El equipo que ya estaba enlazado",
+
+  // ── Las reservas (CRM-07 #9, 17/10/2026) ──
+  // ***La copia dice LO MISMO que el servidor***: hay una prueba que lo comprueba
+  // (`test_la_copia_de_los_textos_del_test_del_movil_dice_lo_que_sirve_el_servidor`).
+  seccion_reservas: "Reservas",
+  sin_reservas: "No has reservado esta máquina para nada.",
+  apuntar_reserva: "RESERVAR ESTA MÁQUINA",
+  corregir_reserva: "Corregir",
+  anular_reserva: "Anular",
+  reserva_no_gasta: "Reservar no gasta nada: solo dice que la vas a coger.",
+  reserva_anulada: "anulada",
+  // ***Los tres estados viven en el bloque de la PANTALLA***, no en `MENSAJES`: los usan **el servidor**
+  // -para escribir `estado_texto`- y **el formulario** -para sus tres opciones-. *Con dos copias, un dia
+  // dirian cosas distintas.*
+  reserva_estado_pedida: "Pedida",
+  reserva_estado_en_curso: "En curso",
+  reserva_estado_hecha: "Hecha",
+  anular_reserva: "Anular la reserva",
 };
 
 const ACCIONES = { volver: "VOLVER", guardar: "GUARDAR" };
@@ -394,6 +422,28 @@ function fichaConCosas() {
   // **Lo que ha costado tenerla parada** (CRM-07 #7). Con **un gasto sin importe**, que es el caso que
   // importa: el total tiene que salir y el aviso tambien, porque un total que solo suma la mitad y no lo
   // dice parece el total entero.
+  // **El cuenta-horas** (CRM-07 #8): dos lecturas -una de ellas con el contador cambiado- y la cuenta ya
+  // hecha, con un tramo sin poder medir. Es el caso que la pantalla tiene que saber decir.
+  ficha.contador = {
+    subido: 250,
+    cuantas: 2,
+    sin_decir: 1,
+    unidad: "horas",
+    marca: 1250,
+    tramos: [],
+    lo_que_falta: ["hay_tramos_sin_lectura_al_final"],
+    sinLecturas: false,
+    marca_texto: "Marca ahora: 1.250 h",
+    subido_texto: "Ha subido desde la primera lectura: 250 h",
+    noSeSabeTexto: "",
+    aviso: "y hay 1 tramo que no se puede medir.",
+  };
+  ficha.lecturas = [
+    { id: 1, fecha_texto: "01/03/2026", valor: 1000, unidad: "horas", anulado: false,
+      es_sustitucion: false, texto: "01/03/2026 · 1.000 h" },
+    { id: 2, fecha_texto: "01/06/2026", valor: 1250, unidad: "horas", anulado: false,
+      es_sustitucion: false, texto: "01/06/2026 · 1.250 h" },
+  ];
   ficha.coste = {
     texto: "1.100,00 €",
     gastos: 2,
@@ -943,7 +993,8 @@ test("la ficha no lleva ni una frase escrita a mano", async () => {
   for (const frase of frasesVisibles(html)) {
     assert.ok(delServidor.has(frase), `frase escrita a mano: «${frase}»`);
   }
-});
+});
+
 
 test("las máquinas que se pueden elegir: fuera la que no se puede contar, dentro la que no se sabe", async () => {
   /*
@@ -985,4 +1036,150 @@ test("las máquinas que se pueden elegir: fuera la que no se puede contar, dentr
   ]);
   // Una finca sin máquinas no revienta: devuelve la lista vacía, que es lo que el desplegable espera.
   assert.deepEqual(lasMaquinasParaElegir({}), []);
+});
+
+test("sin permiso de modificar, la ficha de la maquina NO ofrece los botones de las lecturas", async () => {
+  // **LA MITAD DE PANTALLA DEL PUNTO 2** (17/10/2026). El encargo dice «permisos en servidor **y
+  // pantalla**»: el servidor ya lo comprueba -la puerta contesta 403-, y esto es que la pantalla
+  // **no ofrezca** lo que va a dar 403.
+  //
+  // **Y hacia falta una prueba, no solo el cambio.** El envoltorio (`pantallaDeUnaMaquina`) usa
+  // **reparto** -pasa lo que le den-, asi que no puede perder una prop; **pero el componente si**: si no
+  // declarara `puede_modificar`, el valor por defecto `= true` la taparia y los botones saldrian igual,
+  // **sin un solo error**.
+  //
+  // ***Y eso mismo paso, de verdad, en la ficha de contacto***: alli el envoltorio leia
+  // `propiedades.puedo_modificar` -con «puedo» y no «puede»-, `app.js` manda `puede_modificar`, llegaba
+  // `undefined`… **y `undefined` y `true` se comportan igual**. Ninguna prueba lo cazaba, porque la que
+  // habia miraba el valor que llegaba y el valor por defecto lo tapaba.
+  //
+  // Asi que esta mira **las dos mitades**: que con `false` los botones no salgan, y que con `true` si.
+  // *Sin la segunda, un componente que no pintara nunca nada tambien «pasaria» -y estariamos arreglando
+  // un fallo con otro-.*
+  // ***Las lecturas se pasan aqui y NO en el ayudante*** (17/10/2026): `fichaConCosas()` las trae, pero
+  // meterlas en `htmlDeLaFicha` cambia **todos** los tests que usan ese ayudante, y uno de ellos afirma
+  // justo lo contrario -que no hay **ninguna fecha**-. *El ayudante compartido no se toca para una
+  // prueba: se le pasan a esta los datos que necesita.*
+  const conLecturas = { lecturas: fichaConCosas().lecturas, contador: null };
+  const sinPermiso = await htmlDeLaFicha({ ...conLecturas, puede_modificar: false });
+  for (const accion of [
+    "maquina-lectura-nueva",
+    "maquina-lectura-corregir",
+    "maquina-lectura-anular",
+  ]) {
+    assert.ok(
+      !sinPermiso.includes(accion),
+      `quien no puede modificar no puede recibir el boton de las lecturas (${accion}):\n${sinPermiso}`,
+    );
+  }
+
+  const conPermiso = await htmlDeLaFicha({ ...conLecturas, puede_modificar: true });
+  for (const accion of ["maquina-lectura-nueva", "maquina-lectura-corregir"]) {
+    assert.ok(
+      conPermiso.includes(accion),
+      `con permiso los botones tienen que estar (${accion}), o la prueba de arriba no prueba nada:\n${conPermiso}`,
+    );
+  }
+});
+
+test("la ficha de la maquina ensena sus RESERVAS, y sin permiso no ofrece los botones", async () => {
+  // **CRM-07 #9** (17/10/2026). *Lo que la cola pide con estas palabras: «***Reserva para planificar no es
+  // consumo***».*
+  //
+  // ***Y esto era un hueco de verdad, no un adorno***: `app/reservas.py` y sus 21 pruebas -el solape, las
+  // averias, los estados, **dos peticiones a la vez**- llevaban hechas desde hacia rondas, y `reserva` **no
+  // aparecia ni una vez en todo `web/`**. *El agricultor no lo podia usar.* Es lo que el objetivo llama
+  // «una funcion que solo existe en servidor».
+  //
+  // La prueba mira las cuatro cosas que importan:
+  //   · que **la reserva se vea** -el cuando y su estado-;
+  //   · que **con permiso** se ofrezcan los tres botones;
+  //   · que **sin permiso** no se ofrezcan… ***pero la reserva se siga viendo*** -no ofrecer no es no
+  //     poder mirar, y esa es la mitad que se olvida-;
+  //   · que **una anulada** no se pueda corregir ni anular otra vez, y se vea con su motivo.
+  const unaReserva = (cambios = {}) => ({
+    id: 5,
+    cuando_texto: "20/04/2026 08:00 → 20/04/2026 14:00",
+    estado_texto: "Pedida",
+    responsable_texto: "Sin decir quién la coge",
+    tarea_texto: "Laboreo · cultivador",
+    notas: null,
+    anulada: false,
+    motivo_anulacion: null,
+    ...cambios,
+  });
+
+  const conPermiso = await htmlDeLaFicha({ reservas: [unaReserva()] });
+  assert.ok(conPermiso.includes("20/04/2026 08:00"), `la reserva tiene que verse:\n${conPermiso}`);
+  assert.ok(conPermiso.includes("Sin decir quién la coge"), "y decir que no se sabe quien la coge");
+  assert.ok(
+    conPermiso.includes("maquina-reserva-nueva"),
+    `con permiso se ofrece reservar:\n${conPermiso}`,
+  );
+  assert.ok(
+    conPermiso.includes("maquina-reserva-corregir") && conPermiso.includes('data-que="reserva"'),
+    "y corregir y anular la reserva",
+  );
+
+  const sinPermiso = await htmlDeLaFicha({ reservas: [unaReserva()], puede_modificar: false });
+  // ***El de anular se mira POR SU `data-que`, no por su nombre*** (17/10/2026). *Anular una reserva va por
+  // `maquina-anular` -la puerta que ya existia, para que el motivo y su pregunta sean los mismos que en una
+  // averia-, **y `maquina-anular` es tambien el boton de las averias**, que no esta detras del permiso.
+  // Buscar solo el nombre daria un falso fallo: la prueba encontraria el de una averia y diria que el
+  // permiso no funciona.*
+  //
+  // *Y `data-que="reserva"` solo lo pone el boton de una reserva, asi que no se puede confundir.*
+  assert.ok(
+    sinPermiso.includes("maquina-reserva-nueva") === false &&
+      sinPermiso.includes("maquina-reserva-corregir") === false,
+    `quien no puede modificar no puede recibir los botones de la reserva:\n${sinPermiso}`,
+  );
+  assert.ok(
+    !sinPermiso.includes('data-que="reserva"'),
+    `ni el de anular -que se reconoce por su \`data-que\`-:\n${sinPermiso}`,
+  );
+  for (const accion of []) {
+    assert.ok(
+      !sinPermiso.includes(accion),
+      `quien no puede modificar no puede recibir el boton (${accion}):\n${sinPermiso}`,
+    );
+  }
+  assert.ok(
+    sinPermiso.includes("20/04/2026 08:00"),
+    "***pero la reserva se sigue VIENDO***: no ofrecer un boton no es no poder mirar",
+  );
+
+  const anulada = await htmlDeLaFicha({
+    reservas: [unaReserva({ anulada: true, motivo_anulacion: "Se cayó el trabajo" })],
+  });
+  assert.ok(anulada.includes("Se cayó el trabajo"), `una anulada dice por que:\n${anulada}`);
+  assert.ok(
+    !anulada.includes("maquina-reserva-corregir") && !anulada.includes('data-que="reserva"'),
+    "***y una anulada no se corrige ni se anula otra vez***",
+  );
+
+  const vacia = await htmlDeLaFicha({ reservas: [] });
+  assert.ok(
+    vacia.includes("No has reservado esta máquina para nada"),
+    `sin reservas se dice que no hay, en vez de dejar el hueco:\n${vacia}`,
+  );
+
+  // ***Y `null` NO es `[]`***, que es la distincion de la casa -la misma que `papeles` y `costes`-:
+  //   · **`[]`** es «se pidieron y no hay ninguna» -> se dice, **y se ofrece reservar**;
+  //   · **`null`** es «***todavia no se han pedido***» -> **ni se dice ni se ofrece**.
+  //
+  // ***Y esto no es un adorno: es un defecto que se cometio***. Cuando se añadio la seccion, `app.js`
+  // todavia no traia las reservas, asi que la ficha **ofrecia un boton de reservar que no llevaba a
+  // ninguna parte** -con su texto de «no has reservado nada», que ademas era mentira: no es que no haya
+  // ninguna, es que no se habian pedido-. *La distincion `null`/`[]` es lo que hace que no se pueda
+  // ofrecer de mas.*
+  const sinPedir = await htmlDeLaFicha({ reservas: null });
+  assert.ok(
+    !sinPedir.includes("maquina-reserva-nueva"),
+    `mientras no se hayan pedido las reservas NO se ofrece reservar:\n${sinPedir}`,
+  );
+  assert.ok(
+    !sinPedir.includes("No has reservado esta máquina para nada"),
+    "***y tampoco se dice que no hay ninguna: no es que no haya, es que no se ha preguntado***",
+  );
 });

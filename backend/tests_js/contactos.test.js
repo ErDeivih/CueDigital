@@ -2565,3 +2565,53 @@ test("sin poder modificar tampoco se ofrecen los botones de cada tarea ni las al
   assert.ok(sinPermiso.includes("Llamar"), "la tarea se sigue viendo");
   assert.ok(sinPermiso.includes("947 123 456"), "y el canal");
 });
+
+test("sin permiso de modificar, la ficha NO ofrece los botones que escriben", async () => {
+  const sinPermiso = await htmlDe("contactos", "pantallaDeUnContacto", {
+    textos: textosDePrueba(),
+    borrador: { id: 4 },
+    papeles: PAPELES,
+    vivos: [],
+    corrigiendo: true,
+    borrando: false,
+    guardando: false,
+    error: "",
+    saldo: unSaldo(),
+    puede_modificar: false,
+    puede_ver_lo_economico: false,
+  });
+  assert.ok(
+    !sinPermiso.includes("contacto-guardar"),
+    `quien no puede modificar no puede recibir el boton de guardar:\n${sinPermiso}`,
+  );
+  assert.ok(
+    !sinPermiso.includes("contacto-borrar"),
+    "ni el de borrar, que es el que mas se lleva por delante",
+  );
+  assert.ok(
+    !sinPermiso.includes("810,00 €"),
+    "ni el saldo, que es la otra mitad del mismo typo (`puede_ver_lo_economico`)",
+  );
+
+  // **Y la otra mitad, para que esta prueba no pueda pasar por vacio**: con permiso, los botones SI
+  // estan. Sin esto, un envoltorio que no pintara nunca nada tambien «pasaria» -y estariamos
+  // arreglando un fallo con otro-.
+  const conPermiso = await htmlDe("contactos", "pantallaDeUnContacto", {
+    textos: textosDePrueba(),
+    borrador: { id: 4 },
+    papeles: PAPELES,
+    vivos: [],
+    corrigiendo: true,
+    borrando: false,
+    guardando: false,
+    error: "",
+    saldo: unSaldo(),
+    puede_modificar: true,
+    puede_ver_lo_economico: true,
+  });
+  assert.ok(
+    conPermiso.includes("contacto-guardar"),
+    `con permiso los botones tienen que estar, o la prueba de arriba no prueba nada:\n${conPermiso}`,
+  );
+  assert.ok(conPermiso.includes("810,00 €"), "y el saldo tambien");
+});
