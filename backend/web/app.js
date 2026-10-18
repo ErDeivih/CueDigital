@@ -2403,11 +2403,63 @@ function pantallaElPaqueteDeLaPac() {
  * las pantallas, y esos **no pasan** por el componente. Con el inventario, los dos casos se resuelven en el
  * mismo sitio.*
  */
+let elVigilanteDeLoQueSeEscribe = null;
+
+/**
+ * **Aparta lo que escribe quien no puede escribir** (18/10/2026, segunda vuelta).
+ *
+ * ## Lo que estaba mal
+ *
+ * *Se hacia **una sola pasada al montar**, y con eso no basta: **React pinta despues**. Los botones que
+ * devuelve el componente `Boton` no llegan a existir -devuelve `null`-, pero los que una pantalla **pinta a
+ * mano** -un `<button data-accion="contacto-nota">` suelto- se crean **despues** de la pasada y se quedaban a
+ * la vista.*
+ *
+ * ***Se descubrio con el recorrido de los permisos, no leyendo***: *a una cuenta de **consulta** se le seguia
+ * ofreciendo **`contacto-nota`** en la ficha del contacto, mientras otras ocho acciones de la misma pantalla si
+ * desaparecian. La diferencia entre las dos era esa: unas vienen del componente y otras del HTML a mano.*
+ *
+ * ## Lo que hace ahora
+ *
+ * *Se aplica la regla al arbol, y **se queda mirando** lo que se anade despues -con un `MutationObserver`-, asi
+ * que vale para cualquier pantalla sin tocar ninguna. **Y funciona en los dos sentidos**: cuando el usuario
+ * puede escribir, lo que se escondio por permiso **se vuelve a mostrar** -al cambiar de cuenta sin recargar-.*
+ */
 function esconderLoQueEscribe() {
   if (typeof document === "undefined" || !document.querySelectorAll) return;
-  if (loQuePuedoHacer().modificar) return;
-  for (const boton of document.querySelectorAll("[data-accion]")) {
-    if (escribeEstaAccion(boton.dataset.accion)) boton.hidden = true;
+
+  const aplicar = (raiz) => {
+    if (!raiz) return;
+    const puede = loQuePuedoHacer().modificar;
+    const botones = [];
+    if (raiz.nodeType === 1 && raiz.matches && raiz.matches("[data-accion]")) botones.push(raiz);
+    if (raiz.querySelectorAll) botones.push(...raiz.querySelectorAll("[data-accion]"));
+    for (const boton of botones) {
+      if (!puede && escribeEstaAccion(boton.dataset.accion)) {
+        boton.hidden = true;
+        // *Se deja dicho que lo escondio esta regla: asi se puede volver a mostrar sin adivinar.*
+        boton.dataset.escondidoPorPermiso = "si";
+      } else if (puede && boton.dataset.escondidoPorPermiso === "si") {
+        boton.hidden = false;
+        delete boton.dataset.escondidoPorPermiso;
+      }
+    }
+  };
+
+  aplicar(document);
+
+  // ***Y lo que se pinte despues.*** *Una vez por documento: si ya esta mirando, no se pone otro.*
+  if (
+    elVigilanteDeLoQueSeEscribe === null &&
+    typeof MutationObserver !== "undefined" &&
+    document.body
+  ) {
+    elVigilanteDeLoQueSeEscribe = new MutationObserver((losCambios) => {
+      for (const cambio of losCambios) {
+        for (const nodo of cambio.addedNodes) aplicar(nodo);
+      }
+    });
+    elVigilanteDeLoQueSeEscribe.observe(document.body, { childList: true, subtree: true });
   }
 }
 
