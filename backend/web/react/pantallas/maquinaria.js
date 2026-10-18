@@ -577,6 +577,51 @@ function Averia({ averia, textos }) {
   `;
 }
 
+/** Una reserva de la máquina: cuándo la vas a coger, cómo va y para qué. */
+function Reserva({ reserva, textos, puedeModificar = true }) {
+  return html`
+    <li className=${reserva.anulada ? "anulado" : ""}>
+      <strong>${frase(reserva.cuando_texto)}</strong>
+      <div className="apunte-detalle">${frase(reserva.estado_texto)}</div>
+      ${
+        // **El responsable y la tarea se ensenan SIEMPRE, tambien cuando no constan**: *una reserva sin
+        // decir quien la coge es lo mas normal del mundo, y callarlo dejaria al agricultor sin saber si el
+        // programa no lo sabe o si se lo esta guardando.* La frase la monta `app.js` -«sin decir quien la
+        // coge»-, que es donde vive el texto.
+        html`<div className="apunte-detalle">${frase(reserva.responsable_texto)}</div>`
+      }
+      ${html`<div className="apunte-detalle">${frase(reserva.tarea_texto)}</div>`}
+      ${reserva.notas ? html`<div className="apunte-detalle">${frase(reserva.notas)}</div>` : null}
+      ${
+        // **Anular no es borrar**: la reserva se queda **tachada, con su motivo**, y deja de ocupar la
+        // maquina. Es el mismo trato que una averia o una lectura anulada.
+        reserva.anulada
+          ? html`<div className="apunte-detalle">${frase(textos.reserva_anulada)}: ${frase(reserva.motivo_anulacion)}</div>`
+          : null
+      }
+      ${
+        // **Y si esta cuenta no puede modificar, los botones NO se ofrecen** (17/10/2026):
+        // *corregir y anular una reserva son escribir. Si alguien llega a mano por la URL o por un
+        // identificador, **la puerta contesta 403 igual**: esto es no ofrecer, no autorizar.*
+        reserva.anulada || !puedeModificar
+          ? null
+          : html`<div className="barra-acciones">
+              <${BotonSencillo}
+                etiqueta=${textos.corregir_reserva}
+                accion="maquina-reserva-corregir"
+                datos=${{ id: reserva.id }}
+              />
+              <${BotonSencillo}
+                etiqueta=${textos.anular_reserva}
+                accion="maquina-anular"
+                datos=${{ que: "reserva", id: reserva.id }}
+              />
+            </div>`
+      }
+    </li>
+  `;
+}
+
 /**
  * La ficha de una máquina: sus datos, sus cinco obligaciones, sus inspecciones, sus averías y sus avisos.
  *
@@ -591,6 +636,21 @@ export function PantallaDeUnaMaquina({
   obligaciones = [],
   inspecciones = [],
   averias = [],
+  // **El cuenta-horas** (CRM-07 #8): las lecturas y las frases ya hechas de la cuenta. El envoltorio
+  // reparte las props, asi que no hay que anadirlas alli (ver la nota de `pantallaDeUnaMaquina`).
+  lecturas = [],
+  contador = null,
+  // **Las reservas** (CRM-07 #9, 17/10/2026): *cuando esta reservada la maquina, que es lo que la cola
+  // pide con «reserva para planificar no es consumo».* **Y el envoltorio reparte las props**, asi que no
+  // hay que anadirlas alli (ver la nota de `pantallaDeUnaMaquina`).
+  //
+  // ***Y `null` NO es `[]`***, que es la distincion de la casa -esta escrita para los papeles-:
+  //   · **`null`** es «**todavia no se han pedido**»: *la seccion **no se pinta**, y con ella **no se
+  //     pinta el boton de reservar**.* Asi, mientras `app.js` no traiga las reservas, la ficha no ofrece
+  //     un boton que no lleva a ninguna parte.
+  //   · **`[]`** es «**se pidieron y no hay ninguna**»: *se dice «no has reservado esta maquina para
+  //     nada» y se ofrece reservarla, que es lo que hace falta.*
+  reservas = null,
   // **Lo que ha costado tenerla parada** (CRM-07 #7, 14/10/2026): lo calcula el servidor y lo trae
   // `app.js`. `null` es «no se pudo traer», y entonces no se ensena ninguna cifra en vez de un cero:
   // no saberlo y ser cero no son lo mismo.
@@ -604,6 +664,10 @@ export function PantallaDeUnaMaquina({
   guardando = false,
   error = "",
   aviso = "",
+  // **Lo que esta cuenta puede hacer** (Entrega 4, 17/10/2026). Por defecto, **si**: la pantalla no
+  // parpadea, y esconder de mas dejaria al agricultor sin botones que si puede usar. *La autorizacion,
+  // en todo caso, la da la puerta.* ***Y va AQUI, antes de usarla, y no dentro de un `html`.***
+  puede_modificar = true,
 }) {
   const m = textos.maquinaria || {};
   const acciones = textos.acciones || {};
@@ -680,6 +744,109 @@ export function PantallaDeUnaMaquina({
             )}
           </ul>`
         : html`<p className="pista-campo">${frase(m.sin_inspecciones)}</p>`
+    }
+
+    <h2>${frase(m.seccion_contador)}</h2>
+    ${
+      // **El cuenta-horas** (CRM-07 #8). Tres casos y ninguno se confunde: sin lecturas se dice que no se
+      // sabe -***nunca un «0 h»***-, con una se sabe lo que marca pero no lo que ha subido, y con dos o
+      // mas se dice lo que ha subido **y los tramos que no se pueden medir**. Las frases vienen hechas de
+      // `app.js` (`elCuentaHorasDeLaMaquina`).
+      !contador
+        ? null
+        : contador.sinLecturas
+          ? html`<p className="pista-campo">${frase(m.contador_sin_lecturas)}</p>`
+          : html`
+              <p className="apunte-detalle">${frase(contador.marca_texto)}</p>
+              ${contador.subido_texto
+                ? html`<p className="apunte-detalle"><strong>${frase(contador.subido_texto)}</strong></p>`
+                : null}
+              ${contador.incidencias_texto
+                ? html`<p className="pista-campo">${frase(contador.incidencias_texto)}</p>`
+                : null}
+              ${contador.noSeSabeTexto
+                ? html`<p className="pista-campo">${frase(contador.noSeSabeTexto)}</p>`
+                : null}
+              ${contador.aviso ? html`<p className="pista-campo">${frase(contador.aviso)}</p>` : null}
+            `
+    }
+    ${lecturas.length
+      ? html`<ul className="lista">
+          ${lecturas.map(
+            (lectura, indice) => html`<li key=${indice} className="apunte-detalle">
+              ${frase(lectura.texto)}
+              ${
+                // **Una lectura anulada no se corrige ni se anula otra vez**: se queda tachada con su
+                // motivo y sus botones desaparecen. Es el mismo trato que las averias.
+                //
+                // **Y si esta cuenta no puede modificar, tampoco se ofrecen** (17/10/2026):
+                // *corregir y anular son escribir. Si alguien llega a mano por la URL, la puerta
+                // contesta 403 igual: esto es **no ofrecer**, no autorizar.*
+                lectura.anulado || !puede_modificar
+                  ? null
+                  : html`<div className="barra-acciones">
+                      <${BotonSencillo}
+                        etiqueta=${m.corregir_lectura}
+                        accion="maquina-lectura-corregir"
+                        datos=${{ id: lectura.id }}
+                      />
+                      <${BotonSencillo}
+                        etiqueta=${m.anular_lectura_boton}
+                        accion="maquina-lectura-anular"
+                        datos=${{ id: lectura.id }}
+                      />
+                    </div>`
+              }
+            </li>`,
+          )}
+        </ul>`
+      : null}
+
+    ${
+      // **Apuntar una lectura es escribir** (17/10/2026). *Si esta cuenta solo mira, el boton **no se
+      // ofrece** -y el formulario tampoco, porque es el boton el que lo abre-. **La autorizacion la da la
+      // puerta del servidor**, que es la que contesta 403: esto es no ofrecer, no autorizar.*
+      puede_modificar
+        ? html`<div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${m.apuntar_lectura} accion="maquina-lectura-nueva" />
+    </div>`
+        : null
+    }
+
+    ${
+      // ***La seccion entera solo si las reservas SE HAN PEDIDO*** (`reservas !== null`). *Y esto no es
+      // un detalle: es lo que evita que la ficha ofrezca un boton de reservar que no lleva a ninguna
+      // parte mientras `app.js` no traiga los datos. **No ofrecer de mas no es no ofrecer**: mientras no
+      // se sabe, no se ofrece.*
+      reservas === null
+        ? null
+        : html`
+    <h2>${frase(m.seccion_reservas)}</h2>
+    ${
+      // ***Reservar no gasta nada***, y decirlo es la mitad de la seccion: *el agricultor que duda entre
+      // «reservar» y «apuntar» tiene que poder saber que reservar **no toca el cuenta-horas ni el
+      // dinero**.* Es la frase de la cola -«Reserva para planificar no es consumo»-.
+      html`<p className="pista-campo">${frase(m.reserva_no_gasta)}</p>`
+    }
+    ${
+      reservas.length
+        ? html`<ul className="lista">
+            ${reservas.map(
+              (reserva, indice) => html`<${Reserva} key=${indice} reserva=${reserva} textos=${m} puedeModificar=${puede_modificar} />`,
+            )}
+          </ul>`
+        : html`<p className="pista-campo">${frase(m.sin_reservas)}</p>`
+    }
+    ${
+      // **Reservar es escribir** (CRM-07 #9): *si esta cuenta solo mira, el boton **no se ofrece** -y el
+      // formulario tampoco, porque es el boton el que lo abre-. **La autorizacion la da la puerta.**
+      puede_modificar
+        ? html`<div className="barra-acciones">
+      <${BotonSencillo} etiqueta=${m.apuntar_reserva} accion="maquina-reserva-nueva" />
+    </div>`
+        : null
+    }
+    `
     }
 
     <h2>${frase(m.seccion_averias)}</h2>

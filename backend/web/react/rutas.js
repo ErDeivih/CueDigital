@@ -244,6 +244,11 @@ export const PANTALLAS = [
   // Abrir `#/borrador` sin haber dictado no inventa una revisión: lleva al dictado, que es donde nace.
   { clave: "dictado", patron: ["dictado"] },
   { clave: "borrador", patron: ["borrador"] },
+  // **La preparacion de la PAC** (CRM-09, 17/10/2026): el paquete por recinto -referencias, superficie,
+  // cultivos, ecorregimen y **lo que falta**-. *Su direccion es `#/pac`, y **tiene que estar aqui**: sin esta
+  // linea, `ABRIR_LA_PANTALLA["pac"]` existe pero **la direccion no**, y la aplicacion contesta «esa
+  // direccion no lleva a ninguna parte» -que es lo que paso, y lo cazo el recorrido-.*
+  { clave: "pac", patron: ["pac"] },
 ];
 
 /**

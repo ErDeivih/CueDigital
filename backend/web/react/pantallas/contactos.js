@@ -909,6 +909,18 @@ export function pantallaDeLosContactos(propiedades) {
  * componente directamente. Es el mismo error que tuvo `tabla` antes. De ahí la prueba que monta **por aquí**.
  */
 export function pantallaDeUnContacto(propiedades) {
+  // ***AQUI VAN LOS COMENTARIOS, FUERA DEL `html`, Y NO DENTRO*** (17/10/2026). *Dentro de una plantilla
+  // `html\`…\`` un `//` **no es un comentario de JavaScript: htm la lee como HTML y eso es TEXTO**, asi que
+  // se mete **entre los atributos** y **los que van detras dejan de pasar**. Paso aqui mismo: se documento
+  // un typo con un comentario dentro, y se cayeron **cuatro props** -`canal_a_medias`, `tarea_a_medias`,
+  // `puede_modificar` y `puede_ver_lo_economico`- sin un solo error. **Lo cazo la prueba que mira el
+  // envoltorio**, que es justo para lo que esta.*
+  //
+  // ***Y las dos de los permisos, con su nombre de verdad***: *estaban escritas como*
+  // `propiedades.puedo_modificar` *-con «puedo» y no «puede»-, y `app.js` manda `puede_modificar`: llegaba
+  // `undefined`, y como el componente tiene `puede_modificar = true` por defecto, **la pantalla ofrecia los
+  // botones igual**. `undefined` y `true` se comportan igual, y por eso el typo no lo cazaba nadie. Estaban
+  // repetidas dos veces, que es de donde venia.*
   return html`
     <${PantallaDeUnContacto}
       textos=${propiedades.textos}
@@ -920,12 +932,10 @@ export function pantallaDeUnContacto(propiedades) {
       guardando=${propiedades.guardando}
       error=${propiedades.error}
       saldo=${propiedades.saldo}
-    canal_a_medias=${propiedades.canal_a_medias || null}
-    tarea_a_medias=${propiedades.tarea_a_medias || null}
-    puede_modificar=${propiedades.puedo_modificar}
-    puede_ver_lo_economico=${propiedades.puede_ver_lo_economico}
-    puede_modificar=${propiedades.puedo_modificar}
-    puede_ver_lo_economico=${propiedades.puedo_ver_lo_economico}
+      canal_a_medias=${propiedades.canal_a_medias || null}
+      tarea_a_medias=${propiedades.tarea_a_medias || null}
+      puede_modificar=${propiedades.puede_modificar}
+      puede_ver_lo_economico=${propiedades.puede_ver_lo_economico}
     />
   `;
 }

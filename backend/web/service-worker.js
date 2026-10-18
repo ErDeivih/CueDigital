@@ -274,7 +274,7 @@
 // `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
 // número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
 // caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
-const CACHE = "cuedigital-2026-10-11-73";
+const CACHE = "cuedigital-2026-10-18-74";
 
 const FICHEROS = [
   "/",
@@ -295,7 +295,12 @@ const FICHEROS = [
   // El enrutador (T04): traduce la dirección del navegador a la pantalla que se ve. Sin él, abrir una
   // dirección guardada sin cobertura no llevaría a ninguna parte.
   "/react/rutas.js",
+  // **El inventario de acciones por su efecto real** (18/10/2026): *sin el, la pantalla no sabe que
+  // botones esconder cuando no hay cobertura -ni cuando el usuario no puede escribir-.*
+  "/react/acciones.js",
   "/react/pantallas/inicio.js",
+  // **La preparacion de la PAC** (CRM-09): *su direccion es `#/pac`, y sin cobertura tiene que abrir.*
+  "/react/pantallas/pac.js",
   "/react/pantallas/hecho.js",
   "/react/pantallas/mis_cosas.js",
   "/react/pantallas/documentos.js",

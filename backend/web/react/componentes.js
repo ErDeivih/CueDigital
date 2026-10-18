@@ -222,7 +222,36 @@ function CuadroDelIcono({ icono }) {
  * te lleva a otro sitio» (ver `Flecha`)— ahí mentía (ronda 85). El cuadro del icono (✅ / ⬜) ya dice que
  * eso se marca.
  */
+
+// ---------------------------------------------------------------------------
+// ***Lo que este usuario PUEDE escribir*** (permisos en servidor **y pantalla**, 18/10/2026)
+// ---------------------------------------------------------------------------
+//
+// ***Y el clasificador ya NO es por sufijos***: *la revision independiente demostro que se quedaba corto con
+// **siete** acciones -`contacto-borrar-si` borra, `fusion-hacer` fusiona, `contacto-nota` apunta...-, y «una
+// confirmacion puede ser precisamente la operacion destructiva».*
+//
+// *Ahora se consulta **el inventario**, que esta en `acciones.js` y se hizo mirando **lo que cada accion hace**.
+// Aqui solo queda la regla de la pantalla.*
+import { escribeEstaAccion, LAS_DE_SESION, LAS_QUE_ESCRIBEN } from "./acciones.js";
+
+export { escribeEstaAccion, LAS_DE_SESION, LAS_QUE_ESCRIBEN };
+
+let puedeEscribir = true;
+
+/** **Dice si este usuario puede escribir.** *Lo pone `app.js` al montar cada pantalla.* */
+export function ponerSiSePuedeEscribir(puede) {
+  puedeEscribir = puede !== false;
+}
+
+/** ***Si hay que esconder ese boton***: *escribe y este usuario no puede escribir.* */
+function seEscondeElBoton(accion) {
+  return !puedeEscribir && escribeEstaAccion(accion);
+}
+
 export function Boton({ etiqueta, pista, icono, accion, datos, clase = "", flecha = true }) {
+  // ***Lo que no se puede hacer no se ofrece***: *el boton no sale, en vez de salir y contestar 403.*
+  if (seEscondeElBoton(accion)) return null;
   return html`
     <button
       type="button"
@@ -259,6 +288,8 @@ export function Boton({ etiqueta, pista, icono, accion, datos, clase = "", flech
  * roto; por eso la pantalla que lo apaga pone al lado la frase que lo explica, y en el mismo sitio.
  */
 export function BotonSencillo({ etiqueta, accion, datos, clase = "boton-claro", deshabilitado = false, pista = "" }) {
+  // **El mismo criterio que `Boton`**: *este tambien puede llevar una accion que escribe.*
+  if (seEscondeElBoton(accion)) return null;
   return html`
     <button
       type="button"

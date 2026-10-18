@@ -55,6 +55,16 @@ export function PantallaDecirCultivo({
   sistemas = [],
   ya_dicho = false,
   error = "",
+  // ***Si este usuario puede escribir en esta finca*** (CRM-06 con los permisos, 17/10/2026).
+  //
+  // *El servidor ya lo comprueba en **todas** sus puertas -`PuedeModificar` sale en mas de cien-, asi que un
+  // usuario de consulta **no puede** guardar nada: lo que pasaba es que la pantalla **le ofrecia el boton** y
+  // se llevaba un 403 al pulsarlo. «Permisos en servidor **y pantalla**».*
+  //
+  // **Y el defecto es `true`**: *una pantalla que no lo recibe se comporta como antes -no se rompe nada-, y
+  // las que lo reciben dicen la verdad. Con `false` por defecto, un sitio que se olvide de pasarlo dejaria la
+  // pantalla muda sin que nadie lo notara.*
+  puede_modificar = true,
 }) {
   const c = textos.cultivos || {};
   const acciones = textos.acciones || {};
@@ -151,11 +161,17 @@ export function PantallaDecirCultivo({
       `
     }
     <div className="barra-acciones">
-      <${Boton}
-        etiqueta=${ya_dicho ? corregir.boton_guardar : acciones.guardar}
-        accion="cultivo-guardar"
-        datos=${{ id: parcela.id }}
-      />
+      ${
+        // ***Lo que no se puede hacer no se ofrece***: *el boton no sale, en vez de salir y contestar 403. Y
+        // «volver» sale siempre, porque volver no cambia nada.*
+        puede_modificar
+          ? html`<${Boton}
+              etiqueta=${ya_dicho ? corregir.boton_guardar : acciones.guardar}
+              accion="cultivo-guardar"
+              datos=${{ id: parcela.id }}
+            />`
+          : null
+      }
       <${Boton} etiqueta=${acciones.volver} accion="cultivo-ver-todos" clase="boton-claro" />
     </div>
     ${
@@ -163,7 +179,7 @@ export function PantallaDecirCultivo({
       // botón que quita algo del cuaderno no puede ser el que más apetezca pulsar). Va **fuera de la barra
       // y debajo**, con su explicación, para que no se pulse por ir a guardar. Solo sale si esa tierra ya
       // tiene dicho qué hay sembrado este año: en una a la que le falta decirlo no hay nada que quitar.
-      ya_dicho
+      ya_dicho && puede_modificar
         ? html`
             <${Boton}
               etiqueta=${c.quitar}
@@ -187,5 +203,6 @@ export function pantallaDeDecirCultivo(propiedades) {
     sistemas=${propiedades.sistemas}
     ya_dicho=${propiedades.ya_dicho}
     error=${propiedades.error}
+    puede_modificar=${propiedades.puede_modificar}
   />`;
 }

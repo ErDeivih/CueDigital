@@ -47,6 +47,8 @@
  * aquí había una copia con su propio `try`.
  */
 import { Boton, frase, html } from "../componentes.js";
+// *`rellena` vive en el nucleo, que es donde esta escrita **una sola vez**.* 
+import { rellena } from "../../nucleo.js";
 import { PanelDeMando } from "../piezas/panel_de_mando.js";
 
 /**
@@ -116,6 +118,72 @@ export function BloqueAntesDeEmpezar({ maestros = {} }) {
  *    se esconden** (`.solo-movil`); en el móvil no cambia nada. Es la misma idea que la tabla y las
  *    tarjetas de una lista: **la misma pantalla, dos formas, en el mismo HTML**, y el CSS decide.
  */
+/**
+ * **Las metricas de la finca, con lo que hace falta para creerselas** (CRM-11, 17/10/2026).
+ *
+ * *Un panel no es una pantalla con numeros: es **un numero que se puede defender**.* Cada tarjeta dice:
+ *
+ *   · **que mide** (su titulo y su pregunta),
+ *   · **en que se mide** (su unidad, que es lo que decide si dos se pueden sumar),
+ *   · **de donde sale** (su fuente),
+ *   · y **cuanto ha mirado** (su cobertura).
+ *
+ * ***Y lo que no se sabe se dice con su palabra, nunca con un cero***: *`valor` en `null` es «no se sabe»
+ * -un cero diria «no hay», que es una afirmacion distinta-.*
+ *
+ * ***Y el aviso de que no se suman***: *dos cifras en hectareas pueden contestar a preguntas distintas -lo
+ * que hay plantado y lo que se trato-, y juntarlas da un numero que no contesta a nada.*
+ */
+function LasMetricas({ panel = {} }) {
+  const t = (panel && panel.textos) || {};
+  const las = (panel && panel.las_metricas) || [];
+  const sinComprobar = new Set(((panel && panel.sin_comprobar) || []).map((una) => una.clave));
+  if (!las.length) return null;
+  return html`
+    <section className="las-metricas">
+      <h2>${frase(t.titulo)}</h2>
+      <p className="pista">${frase(t.explica)}</p>
+      <ul className="lista">
+        ${las.map(
+          (una) => html`
+            <li key=${una.clave} className="fila-dato" data-metrica=${una.clave} data-se-sabe=${una.valor !== null}>
+              <span className="tabla-dato">${frase(una.titulo)}</span>
+              <span className="tabla-numero"
+                >${
+                  // ***`null` es «no se sabe», y NUNCA se pinta como un cero.***
+                  una.valor === null || una.valor === undefined
+                    ? // ***Y LA UNIDAD SE DICE TAMBIEN CUANDO NO SE SABE*** (CRM-11, 17/10/2026): *es lo
+                      // que dice **si esa cifra se puede sumar con otra**, y esconderla justo cuando el
+                      // numero no esta deja al agricultor sin la mitad de la informacion. Asi lo encontro
+                      // el recorrido: la metrica sin valor salia como «No se sabe» y **sin su unidad**.*
+                      `${frase(t.no_se_sabe)} · ${una.unidad || ""}`.trim()
+                    : `${una.valor} ${una.unidad || ""}`.trim()
+                }</span
+              >
+              <span className="tabla-pista"
+                >${frase(una.pregunta)}${
+                  // *Y de donde sale, que es lo que permite discutir el numero y corregirlo.*
+                  una.fuente ? ` · ${frase(una.fuente)}` : ""
+                }${
+                  // **Y cuanto ha mirado**: *sin eso, un total parece completo aunque le falten cuatro.*
+                  una.cobertura && una.cobertura.de
+                    ? ` · ${rellena(t.cobertura, { contadas: una.cobertura.contadas, de: una.cobertura.de })}`
+                    : ""
+                }${
+                  // ***Y lo que no se puede dar por bueno se dice***: «sin cumplimiento global que tape una
+                  // regla critica no comprobada».
+                  sinComprobar.has(una.clave) ? ` · ${frase(t.sin_fuente)}` : ""
+                }</span
+              >
+            </li>
+          `,
+        )}
+      </ul>
+      <p className="pista-campo">${frase(t.no_se_suman)}</p>
+    </section>
+  `;
+}
+
 export function PantallaInicio({
   textos = {},
   nombre = "",
@@ -124,6 +192,12 @@ export function PantallaInicio({
   hayUltimo = false,
   sinUltimo = "",
   mando = null,
+  // ***Las metricas de la finca*** (CRM-11, 17/10/2026), tal y como las devuelve `GET /api/panel`.
+  //
+  // ***Y `null` NO es una lista vacia***, que es la distincion de la casa: *`null` es «**todavia no se han
+  // pedido**» -la seccion **no se pinta**- y `[]` seria «se pidieron y no hay ninguna». Sin esa distincion,
+  // la pantalla diria «no hay nada» antes de haber preguntado.*
+  lasMetricas = null,
 }) {
   const inicio = textos.inicio || {};
   const maestros = textos.maestros || {};
@@ -147,6 +221,7 @@ export function PantallaInicio({
 
   return html`
     <h1>${titulo}</h1>
+    ${lasMetricas ? html`<${LasMetricas} panel=${lasMetricas} />` : null}
     ${
       // La acción que se viene a hacer, **nada más entrar** (ver arriba el porqué).
       elTrabajo
@@ -227,6 +302,20 @@ export function PantallaInicio({
  * sitio que habla con ReactDOM. Así, si los ficheros de React no están, la que falla es esta
  * función (y `montar.js` enseña el aviso), en vez de romperse el arranque entero.
  */
+/**
+ * El envoltorio del inicio: **el unico sitio por el que pasan las pantallas de React**.
+ *
+ * ***Y una prop que no se reenvie aqui NO LLEGA al componente*** (CRM-11, 17/10/2026). *Las metricas del panel
+ * se anadieron al componente y a `app.js`, y **este envoltorio las tiraba**: la seccion salia en la prueba -que
+ * montaba el componente directamente- y **no en la pantalla**.*
+ *
+ * ***Y no lo cazo ninguna prueba de unidad: lo cazo el recorrido***, que es el que monta lo que monta la
+ * aplicacion. *La prueba del panel se corrigio despues para montar este envoltorio, y asi habria cazado ella.*
+ *
+ * **Y el porque de que este comentario este aqui y no dentro de la plantilla**: *una comilla invertida
+ * -`` ` ``- dentro de un `` html`…` `` **cierra la plantilla**, y el fichero deja de compilar. Las explicaciones,
+ * fuera.*
+ */
 export function pantallaDeInicio(propiedades) {
   return html`
     <${PantallaInicio}
@@ -237,6 +326,7 @@ export function pantallaDeInicio(propiedades) {
       hayUltimo=${propiedades.hayUltimo}
       sinUltimo=${propiedades.sinUltimo}
       mando=${propiedades.mando}
+      lasMetricas=${propiedades.lasMetricas}
     />
   `;
 }

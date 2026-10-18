@@ -35,7 +35,17 @@ import { Campo } from "../piezas/campo_de_un_importe.js";
  *  - `contactos`: las fichas de los clientes, para enlazar el cobro con una.
  *  - `error`: lo que ha dicho el servidor, o nada.
  */
-export function PantallaCobroNuevo({ textos = {}, borrador = {}, facturas = [], contactos = [], error = "" }) {
+export function PantallaCobroNuevo({
+  textos = {},
+  borrador = {},
+  facturas = [],
+  contactos = [],
+  error = "",
+  // ***Si este usuario puede escribir en esta finca*** (17/10/2026). *El servidor ya lo comprueba en todas
+  // sus puertas; lo que pasaba es que la pantalla **ofrecia el boton** y se llevaba un 403 al pulsarlo. Y el
+  // defecto es `true`: una pantalla que no lo reciba se comporta como antes, no se queda muda.*
+  puede_modificar = true,
+}) {
   const c = textos.cobro || {};
   const acciones = textos.acciones || {};
   const formas = Object.entries(c.formas || {}).map(([valor, texto]) => ({ valor, texto }));
@@ -132,7 +142,11 @@ export function PantallaCobroNuevo({ textos = {}, borrador = {}, facturas = [], 
       facturas.length === 0 ? html`<p className="pista-campo">${frase(c.no_hay_facturas)}</p>` : null
     }
     <div className="barra-acciones">
-      <button type="button" className="boton" data-accion="cobro-guardar">${frase(acciones.guardar)}</button>
+      ${
+        puede_modificar
+          ? html`<button type="button" className="boton" data-accion="cobro-guardar">${frase(acciones.guardar)}</button>`
+          : null
+      }
       <${Boton} etiqueta=${acciones.volver} accion="cobros-ver" clase="boton-claro" />
     </div>
   `;
@@ -146,5 +160,6 @@ export function pantallaDeCobroNuevo(propiedades) {
     facturas=${propiedades.facturas}
     contactos=${propiedades.contactos}
     error=${propiedades.error}
+    puede_modificar=${propiedades.puede_modificar}
   />`;
 }

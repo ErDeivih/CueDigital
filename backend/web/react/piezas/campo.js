@@ -52,6 +52,12 @@ function Casilla({ id, tipo, valor, placeholder, autocompletar, filas }) {
   if (tipo === "fecha") {
     return html`<input id=${id} type="date" defaultValue=${valor} />`;
   }
+  if (tipo === "fecha_hora") {
+    // ***Con hora, y por eso es OTRO tipo*** (CRM-07 #9, 17/10/2026): *una reserva es «el martes de 9 a
+    // 11», y con un campo de solo fecha el agricultor no podria decir la hora -que es justo lo que decide
+    // si dos reservas se pisan o no-. Con `type="date"` la hora se perderia al guardar, y en silencio.*
+    return html`<input id=${id} type="datetime-local" defaultValue=${valor} />`;
+  }
   return html`<input
     id=${id}
     type="text"
@@ -69,7 +75,7 @@ function Casilla({ id, tipo, valor, placeholder, autocompletar, filas }) {
  *
  *  - `id`: el `id` de la casilla. **Tiene que ser el de siempre** (ver la regla 1 de arriba).
  *  - `etiqueta`: lo que se pregunta. Se acepta vacío (hay campos que solo llevan la pista).
- *  - `tipo`: `"texto"` (por defecto), `"numero"`, `"entero"`, `"fecha"` o `"area"`.
+ *  - `tipo`: `"texto"` (por defecto), `"numero"`, `"entero"`, `"fecha"`, `"fecha_hora"` o `"area"`.
  *  - `valor`: lo que ya hay escrito (viene del borrador o del maestro que se está rellenando).
  *  - `sufijo`: la pista de debajo, por ejemplo la unidad («hectáreas»).
  *  - `unidad`: la unidad que va **dentro de la etiqueta**, en su propio trocito de texto

@@ -47,7 +47,9 @@ import {
 // `html` se importa para poder **componer** varias piezas en un solo paso: hay tres pantallas del
 // asistente que piden dos cosas a la vez (una lista y un campo, una lista y unos números, una fecha y un
 // lote). Sin esto habría que hacer una pieza nueva para cada mezcla, y las piezas ya están hechas.
-import { html, AvisoDeError, BotonSencillo } from "./react/componentes.js";
+import { html, AvisoDeError, BotonSencillo,
+  ponerSiSePuedeEscribir,
+} from "./react/componentes.js";
 import { pantallaDeInicio } from "./react/pantallas/inicio.js";
 import { pantallaDeHecho } from "./react/pantallas/hecho.js";
 import { pantallaDeMisCosas } from "./react/pantallas/mis_cosas.js";
@@ -154,6 +156,10 @@ import {
   pantallaDeLaMaquinaria,
   pantallaDeUnaMaquina,
 } from "./react/pantallas/maquinaria.js";
+// **El paquete preparatorio de la PAC** (CRM-09, 17/10/2026): *la pantalla que hace visible la puerta.*
+import { PantallaElPaqueteDeLaPac } from "./react/pantallas/pac.js";
+// ***El inventario de acciones por su efecto real*** (18/10/2026): *lo que escribe, se sepa leer.*
+import { escribeEstaAccion } from "./react/acciones.js";
 // **Las cuentas de la explotación (T13, E7, 05/10/2026).** Un fichero con las dos pantallas del
 // contrato: la lista (`#/cuentas`) y la ficha de un gasto (`#/cuentas/<id>`). Es un solo fichero
 // porque las dos comparten las mismas piezas —la tarjeta de cifras, el cuadre del reparto y los
@@ -306,6 +312,10 @@ const PANTALLAS_EN_REACT = new Set([
   // una tierra. Va aquí por el mismo motivo que las demás: lo que está pensado y lo que se ha hecho se
   // mira en el campo, y sin este fichero en la caché esa pantalla se queda en blanco.
   "trabajos",
+  // ***La preparacion de la PAC*** (CRM-09, 17/10/2026): *su pantalla esta en React, y hay que apuntarla
+  // aqui -lo dice `test_la_migracion_a_react`: «hay ficheros de pantalla que no estan en
+  // `PANTALLAS_EN_REACT`»-.*
+  "pac",
 ]);
 
 // ---------------------------------------------------------------- almacenamiento
@@ -339,6 +349,59 @@ function guardar(clave, valor) {
     ALMACEN.setItem(clave, JSON.stringify(valor));
   } catch (error) {
     /* sin almacenamiento: se sigue funcionando en memoria */
+  }
+}
+
+// ------------------------------------------------------- el borrador de un formulario
+//
+// ***Lo que el agricultor ha escrito y todavia no ha guardado.*** El ticket lo pide asi: *«borrador **por
+// usuario/finca**, guardar local, cierre/reapertura, respuesta perdida…»*.
+//
+// **Por que por usuario Y por finca, y no solo por formulario**: `localStorage` es del **navegador**, no de
+// la cuenta. En el ordenador de una casa puede haber dos cuentas -el titular y el hijo-, y una misma persona
+// puede llevar varias fincas; con una clave sola, **el borrador de uno saldria en el formulario del otro**.
+
+/**
+ * ***La clave del borrador***, con la cuenta y la finca dentro. ***Y `null` si no se sabe de quien es.***
+ *
+ * ***POR QUE `null` Y NO UNA CLAVE CON «sin-cuenta»*** (17/10/2026, y lo encontro su propia prueba): la
+ * pantalla lee el borrador **al abrirse**, y `estado.yo` se rellena **despues**, al preguntar por los
+ * permisos. *Con una clave de relleno, todo lo que se guardara antes de saber quien es iria **al mismo
+ * sitio para todos** -`cuedigital.borrador.sin-cuenta.sin-finca.factura`-, y en el ordenador de una casa con
+ * dos cuentas el borrador de uno saldria en el formulario del otro.*
+ *
+ * **Mejor no guardarlo que mezclarlo**: si no se sabe de quien es, se pierde un borrador; si se mezcla, se
+ * guarda una factura con los datos de otro.
+ */
+function claveDelBorrador(cual) {
+  if (!estado.yo || !estado.yo.id) return null;
+  const finca = (estado.yo.explotacion && estado.yo.explotacion.id) || "sin-finca";
+  return `cuedigital.borrador.${estado.yo.id}.${finca}.${cual}`;
+}
+
+/** ***Guarda lo que hay a medias.*** Se llama **al escribir**, no al enviar: si se va la luz, esto ya esta. */
+function guardarElBorrador(cual, datos) {
+  const clave = claveDelBorrador(cual);
+  if (!datos || !clave) return;
+  guardar(clave, { datos, cuando: new Date().toISOString() });
+}
+
+/** ***Lo que quedo a medias***, o `null` si no hay nada -o si no se sabe de quien seria-. */
+function leerElBorrador(cual) {
+  const clave = claveDelBorrador(cual);
+  if (!clave) return null;
+  const suyo = leer(clave, null);
+  return suyo && suyo.datos ? suyo.datos : null;
+}
+
+/** ***Y se olvida cuando el envio va bien*** -o cuando el agricultor dice que no quiere volver a el-. */
+function olvidarElBorrador(cual) {
+  const clave = claveDelBorrador(cual);
+  if (!clave) return;
+  try {
+    ALMACEN.removeItem(clave);
+  } catch (error) {
+    /* sin almacenamiento: no hay nada que olvidar */
   }
 }
 
@@ -416,6 +479,9 @@ const estado = {
   borradorAjuste: null,
   borradorCobro: null,
   borradorFactura: null,
+  // ***La cuenta*** (CRM-08, 17/10/2026), para poder decir **de quien** y **de que finca** es cada
+  // borrador. La rellena `preguntarLoQuePuedo`, que es quien llama a `/api/cuenta/yo`.
+  yo: null,
   // La entrega entera que se está tocando (la pide al servidor `pantallaImporteDeUnaEntrega`) y la
   // clave de reenvío de la factura que se está haciendo. Las dos son de la pantalla que las usa, pero
   // viven aquí para que un repintado no las pierda.
@@ -749,6 +815,10 @@ function pintarAvisoPendientes() {
  */
 function montar(elemento) {
   let listo = null;
+  // ***Antes de pintar nada, se dice si este usuario puede escribir*** (17/10/2026): *los botones que escriben
+  // se esconden si no puede -`Boton` lo mira por el sufijo de la accion-, y se hace **aqui** porque es el unico
+  // sitio por el que pasan todas las pantallas.*
+  ponerSiSePuedeEscribir(loQuePuedoHacer().modificar);
   try {
     listo = elemento();
   } catch (fallo) {
@@ -776,6 +846,11 @@ function montar(elemento) {
   // pasan todas las pantallas, y **fuera** de `montarEn` para no contarse como una pantalla más (ver
   // `montajesDelMarco`).
   pintarMarco(listo);
+  // ***Y los botones que se pintan A MANO*** -un `<button data-accion="...">` suelto, que no pasa por `Boton`-:
+  // *se esconden **despues de pintar**, mirando el **inventario de acciones por su efecto real** y no el sufijo
+  // del nombre.* *Se hace aqui porque es el unico sitio por el que pasan todas las pantallas, y cubre las dos
+  // familias de boton a la vez.*
+  esconderLoQueEscribe();
   // Y la dirección se pone al día **en el mismo sitio por el que pasan todas las pantallas** (T04): si se
   // escribiera en cada `pantalla*()` habría veinte sitios donde olvidarse, y el olvido no se vería hasta
   // que alguien recargara.
@@ -1521,6 +1596,8 @@ async function reintentarLaDireccion() {
  */
 const ABRIR_LA_PANTALLA = {
   inicio: () => pantallaInicio(),
+  // ***La preparacion de la PAC*** (CRM-09): *su direccion es `#/pac`.*
+  pac: () => pantallaElPaqueteDeLaPac(),
   tierras: () => pantallaMisCosas(),
   cuaderno: () => pantallaCuaderno(),
   almacen: () => pantallaCesta(),
@@ -2277,8 +2354,100 @@ function pantallaInicio() {
       // (el CSS esconde `.solo-escritorio`), pero se prepara igual: los números salen de los mismos datos que
       // la pantalla ya tiene, así que no cuesta una petición más y no hay dos formas de contarlos.
       mando: datosDelPanelDeMando(),
+      // ***Las metricas de la finca*** (CRM-11, 17/10/2026): *lo que devuelve `GET /api/panel`.
+      //
+      // **`null` es «todavia no se han pedido»**, y por eso la seccion no se pinta hasta que lleguen:* *la
+      // pantalla no puede decir «no hay nada» antes de haber preguntado.*
+      lasMetricas: estado.metricas,
     }),
   );
+  // *Y se piden **aparte**, porque el inicio se pinta con lo que ya esta cargado y esto es una metrica
+  // contada en el servidor -que es donde se cuenta **una sola vez**-.*
+  if (!estado.metricasPedidas) pedirLasMetricas();
+}
+
+/**
+ * **Pide las metricas de la finca** y vuelve a pintar el inicio (CRM-11, 17/10/2026).
+ *
+ * *Se piden **una sola vez** por visita a la aplicacion* (`metricasPedidas`): *si falla, no se reintenta en
+ * cada pintado -eso seria un bucle de peticiones-, y la seccion simplemente **no sale**, que es lo honesto:
+ * no se inventa un panel vacio.*
+ */
+/**
+ * **El paquete preparatorio de la PAC** (CRM-09, 17/10/2026): su direccion es `#/pac`.
+ *
+ * *Se pide a su puerta y se pinta lo que contesta.* ***Y lo que contesta, cuando no hay fuente legal cargada,
+ * es que **no se puede decir si algo es elegible** -y eso se pinta lo primero-.***
+ */
+function pantallaElPaqueteDeLaPac() {
+  montar(() => PantallaElPaqueteDeLaPac({ paquete: estado.paquetePac }));
+  // *`null` es «todavia no se ha pedido»: la pantalla no puede decir «no hay tierras» antes de preguntar.*
+  if (!estado.paquetePacPedido) pedirElPaqueteDeLaPac();
+}
+
+/**
+ * **Pide el paquete de la PAC** y vuelve a pintar (CRM-09).
+ *
+ * ***Y si falla, se deja reintentar*** (`paquetePacPedido` vuelve a `false`): *a diferencia de las metricas
+ * del panel, que se piden una vez por visita, este es **un documento de trabajo** -se abre, se cierra y se
+ * vuelve a abrir-, y quedarse sin el hasta recargar la pagina no tiene sentido.*
+ */
+/**
+ * **Esconde los botones de escribir del que no puede escribir** (18/10/2026, revision independiente).
+ *
+ * *Se recorre el DOM ya pintado y se apaga cada `[data-accion]` cuyo efecto real sea escribir. **Se usa
+ * `hidden`**, que lo quita tambien del tabulador y de lo que lee un lector de pantalla -para el agricultor es lo
+ * mismo que no estar-.*
+ *
+ * ***Y por que una pasada por el DOM y no solo el componente `Boton`***: *hay botones que se pintan a mano en
+ * las pantallas, y esos **no pasan** por el componente. Con el inventario, los dos casos se resuelven en el
+ * mismo sitio.*
+ */
+function esconderLoQueEscribe() {
+  if (typeof document === "undefined" || !document.querySelectorAll) return;
+  if (loQuePuedoHacer().modificar) return;
+  for (const boton of document.querySelectorAll("[data-accion]")) {
+    if (escribeEstaAccion(boton.dataset.accion)) boton.hidden = true;
+  }
+}
+
+async function pedirElPaqueteDeLaPac() {
+  estado.paquetePacPedido = true;
+  try {
+    estado.paquetePac = await apiJson("/api/pac/paquete");
+  } catch (fallo) {
+    estado.paquetePacPedido = false;
+    estado.paquetePac = null;
+    return;
+  }
+  // **El mismo criterio que en el panel**: *la clave de la tabla del enrutador, no el texto del hash -que
+  // lleva la campaña y la finca detras-.*
+  const donde = typeof location !== "undefined" ? leerLaDireccion(location.hash) : null;
+  if (donde && !donde.desconocida && donde.pantalla === "pac") pantallaElPaqueteDeLaPac();
+}
+
+async function pedirLasMetricas() {
+  estado.metricasPedidas = true;
+  try {
+    estado.metricas = await apiJson("/api/panel");
+  } catch (fallo) {
+    estado.metricas = null;
+    return;
+  }
+  // ***Y se repinta solo si se sigue en el inicio***, mirandolo **con el enrutador** y no a mano.
+  //
+  // ***Por que con el enrutador, y esto costo un recorrido entero*** (17/10/2026): *la direccion del inicio
+  // **no es `#/`**: la aplicacion le anade la campaña y la finca, y queda `#/?campana=2026&finca=2`. *Comparar
+  // el hash con `""`, `"/"` o `"/panel"` **no acierta nunca**, asi que **el repintado no ocurre** -la peticion
+  // se hace, contesta 200, y la seccion no sale-.*
+  //
+  // *Con `leerLaDireccion` da igual lo que lleve detras: `pantalla` es la clave de la tabla del enrutador, y
+  // para el inicio es `inicio` -su camino esta vacio-.*
+  //
+  // ***Y `location` se comprueba antes de mirarlo***: *las pruebas de `app.js` lo cargan en un DOM de mentira
+  // **sin `location`**, y sin la guarda se caian todas con «location is not defined»*.
+  const donde = typeof location !== "undefined" ? leerLaDireccion(location.hash) : null;
+  if (donde && !donde.desconocida && donde.pantalla === "inicio") pantallaInicio();
 }
 
 /**
@@ -4315,6 +4484,11 @@ function cargaTratamiento() {
     aplicado_a_mano: b.aplicado_a_mano === undefined ? null : b.aplicado_a_mano,
     eficacia: b.eficacia || null,
     unidad_cantidad_aplicada: b.unidad_cantidad_aplicada || null,
+  // ***La version que tenia el formulario*** (CRM-08, 17/10/2026). ***El quinto sitio***: la entrada
+  // declara `version_esperada` y, si el formulario no la manda de vuelta, **la edicion concurrente no
+  // existe** por mucho que el servidor la compruebe. *Lo dijo el guardian: «`cargaTratamiento` no manda
+  // estos campos de un tratamiento: `['version_esperada']`».*
+  version_esperada: b.version_esperada ?? null,
   };
 }
 
@@ -4344,6 +4518,29 @@ function cargaFertilizacion() {
     tipo_fertilizacion: b.tipo_fertilizacion || null,
     factura_id: b.factura_id ?? null,
     nitratos_agua_riego: aNumero(b.nitratos_agua_riego),
+    // ***Y los cinco de la riqueza*** (CRM-07, 17/10/2026): **la base** de la riqueza, **la densidad**,
+    // **la fuente** y las **dos especies quimicas con su nombre** -`riqueza_p2o5` y `riqueza_k2o`-.
+    //
+    // ***Mismo motivo que los seis de arriba, y por eso van aqui***: el asistente **no los pregunta**
+    // -se rellenan en la ficha del abono-, y ***un abono que los tenga apuntados no los puede perder por
+    // corregir los kilos***. Sin estas lineas, `cargaFertilizacion` no los manda de vuelta y **corregir
+    // cualquier otra cosa los borra**.
+    //
+    // Lo dijo la suite entera, y por tres sitios a la vez:
+    //   · `test_el_formulario_manda_todo` -> «cargaFertilizacion no manda todos los campos»
+    //   · `test_interfaz`                 -> «los campos del mapa tambien estan en la copia»
+    //   · `test_los_maestros_se_pueden_corregir` -> «solo se corrige lo que el formulario puede mandar
+    //                                                de vuelta»: 5 items, el primero `base_de_la_riqueza`
+    base_de_la_riqueza: b.base_de_la_riqueza || null,
+    densidad_kg_por_litro: aNumero(b.densidad_kg_por_litro),
+    fuente_de_la_riqueza: b.fuente_de_la_riqueza || null,
+    riqueza_p2o5: aNumero(b.riqueza_p2o5),
+    riqueza_k2o: aNumero(b.riqueza_k2o),
+    // ***Y en que se conto*** (CRM-07, 17/10/2026): **kilos o litros**, que es de esta aplicacion y no del
+    // catalogo. ***Y se me quedo fuera al principio***: `FertilizacionEntrada` tiene **seis** campos nuevos
+    // y yo mande cinco. Lo dijo el guardian: «`cargaFertilizacion` no manda estos campos de un abono:
+    // `['unidad_del_producto']`».
+    unidad_del_producto: b.unidad_del_producto || null,
   };
 }
 
@@ -5327,7 +5524,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-11-73";
+const VERSION_DE_LA_APLICACION = "2026-10-18-74";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -7942,6 +8139,15 @@ const CAMPOS = {
   // *«lo que no se sabe no es 0»*. En blanco = no consta, y el calculo devuelve `None`, no un cero.
   "abono.riqueza_k": { campo: "riqueza_k", tipo: "numero" },
   "abono.tipo": { campo: "tipo", tipo: "opciones", opciones: "tipos_abono" },
+  // ***La base de la riqueza y la densidad*** (CRM-07, 17/10/2026). La base se **elige** -el anexo II
+  // del BOE admite tres- y la densidad **se escribe**: es lo que hace falta para pasar de un porcentaje
+  // en masa a kilos cuando el producto va en litros. Si no consta, se deja en blanco.
+  "abono.base_de_la_riqueza": {
+    campo: "base_de_la_riqueza", tipo: "opciones", opciones: "bases_de_la_riqueza",
+  },
+  "abono.densidad_kg_por_litro": {
+    campo: "densidad_kg_por_litro", tipo: "numero",
+  },
 
   "aplicador.nombre": { campo: "nombre", tipo: "texto", obligatorio: true },
   "aplicador.es_empresa": { campo: "es_empresa", tipo: "si_no" },
@@ -8192,6 +8398,13 @@ const MAESTRO_PASOS = {
   abono: [
     { campos: ["abono.nombre"] },
     { campos: ["abono.riqueza_n", "abono.riqueza_p", "abono.riqueza_k"], titulo: "abono.riqueza" },
+    // ***En que base viene esa riqueza*** (17/10/2026): sin esto, «15-0-0» no dice si son 15 % en masa o
+    // 15 gramos por litro. La densidad solo hace falta para los liquidos en % en masa.
+    {
+      opcional: true,
+      campos: ["abono.base_de_la_riqueza", "abono.densidad_kg_por_litro"],
+      titulo: "abono.base_de_la_riqueza",
+    },
     { opcional: true, campos: ["abono.tipo"] },
   ],
   aplicador: [
@@ -8296,7 +8509,13 @@ function composicionDelAbono(abono) {
   if (numeros.some((uno) => uno === null || uno === undefined)) {
     return t("rotulos.composicion_no_se", "");
   }
-  return numeros.join("-");
+  // ***Y CON SU BASE*** (CRM-07, 17/10/2026): «15-0-0» no dice si son 15 % **en masa** o 15 gramos por
+  // litro, y un liquido a 100 g/L se leia como «100-0-0», que parece cien por cien. La casa admite las
+  // tres bases -el anexo II del BOE-, asi que la composicion **tiene que decir cual es**.
+  const base = abono.base_de_la_riqueza || "porcentaje_masa";
+  const plantilla = t(`rotulos.composicion_en_${base}`, "");
+  const numeros_escritos = numeros.join("-");
+  return plantilla ? rellena(plantilla, { numeros: numeros_escritos }) : numeros_escritos;
 }
 
 /** Las opciones de un campo de elegir, o null si el campo se escribe. */
@@ -12225,7 +12444,9 @@ function pantallaDecirCultivo(parcelaId, escrito = {}) {
   montar(() =>
     pantallaDeDecirCultivo({
       textos: {
-        cultivos: t("cultivos", {}),
+        cultivos: t("cultivos", {  // ***Y el permiso***: *un usuario de consulta no ve el boton de guardar.*
+  puede_modificar: loQuePuedoHacer().modificar,
+}),
         acciones: t("acciones", {}),
         // El rótulo del botón de guardar cuando se está cambiando lo que ya estaba dicho
         // («GUARDAR LOS CAMBIOS»): viene de `corregir`, que es donde vive esa frase en toda la
@@ -13866,6 +14087,14 @@ async function pantallaFacturarEntregas(idMarcada = null) {
     else marcadas.add(Number(idMarcada));
   }
   estado.entregasAFacturar = [...marcadas];
+  // ***Lo que quedo a medias la ultima vez*** (CRM-08, 17/10/2026). Si no hay nada **en memoria**, se mira
+  // el almacen del navegador: *un fallo al guardar deja el borrador alli, y asi el agricultor no vuelve a
+  // teclear el numero, la fecha y el cliente que ya habia escrito.*
+  //
+  // ***Va aqui y no en cada repintado***, porque marcar una entrega vuelve a llamar a esta pantalla y el
+  // borrador **sigue en memoria**: releerlo del almacen lo pisaria. *Y es consistente*: al guardar bien se
+  // limpia el almacen, asi que lo que se lee aqui es **lo que de verdad quedo pendiente**.
+  if (!estado.borradorFactura) estado.borradorFactura = leerElBorrador("factura");
   // Las fichas de cliente, para poder decir a qué ficha va la factura (revisión del T12).
   const contactos = await conLosContactos();
   const entregas = filas.map((fila) => ({
@@ -13933,6 +14162,10 @@ async function guardarLaFacturaEmitida() {
     contacto_id: leer("factura-emitida-contacto"),
     notas: leer("factura-emitida-notas"),
   };
+  // ***Y al almacen del navegador, no solo a la memoria*** (CRM-08, 17/10/2026). *El comentario de arriba
+  // ya decia «para que un fallo al guardar no la pierda»: esto es lo que hace que sea verdad tambien si se
+  // cierra la pestana, se va la luz o el movil se queda sin bateria.*
+  guardarElBorrador("factura", estado.borradorFactura);
   const entregas = estado.entregasAFacturar || [];
   if (!entregas.length) {
     // Se comprueba aquí y no en el servidor por un motivo del campo: sin cobertura, una petición que se
@@ -13959,6 +14192,9 @@ async function guardarLaFacturaEmitida() {
       }),
     });
     estado.borradorFactura = null;
+    // ***Y se olvida el del almacen*** (CRM-08, 17/10/2026): lo que ya es una factura **no es un borrador**,
+    // y dejarlo ahi haria que la proxima vez saliera un formulario relleno con lo de la factura anterior.
+    olvidarElBorrador("factura");
     estado.claveDeLaFactura = null;
     estado.entregasAFacturar = [];
     estado.facturaEmitida = factura;
@@ -14046,7 +14282,8 @@ async function pantallaCobroNuevo(idDeFactura = null) {
   const contactos = await conLosContactos();
   return montar(() =>
     pantallaDeCobroNuevo({
-      textos: { cobro: t("cobro", {}), acciones: t("acciones", {}) },
+      textos: { cobro: t("cobro", {  puede_modificar: loQuePuedoHacer().modificar,
+}), acciones: t("acciones", {}) },
       borrador: estado.borradorCobro,
       facturas: estado.facturasEmitidas || [],
       contactos,
@@ -14668,7 +14905,8 @@ function pantallaMedidas() {
   // llegado, enseña el aviso de emergencia en vez de dejar la pantalla en blanco.
   montar(() =>
     pantallaDeMedidas({
-      textos: { medidas: t("medidas", {}), acciones: t("acciones", {}) },
+      textos: { medidas: t("medidas", {  puede_modificar: loQuePuedoHacer().modificar,
+}), acciones: t("acciones", {}) },
       medidas,
       // Si hay declaración, se ofrece **quitarla** (ronda 93). El dato lo dice el servidor
       // (`declarada`): sin él, la pantalla ofrecería quitar algo que no está declarado.
@@ -17291,6 +17529,87 @@ function lasOpcionesDeLosPapeles(elPuesto) {
   ];
 }
 
+/**
+ * **Las frases del cuenta-horas**, ya hechas (CRM-07 #8, 14/10/2026).
+ *
+ * El encargo lo pide asi: «lecturas de contador fechadas y unidad … ***no inventar horas ni reducir
+ * acumulados silenciosamente***». Y eso, en la pantalla, son tres cosas distintas que **no se pueden
+ * confundir**:
+ *
+ *   · **sin lecturas**: no se sabe lo que ha trabajado, y se dice. **Nunca un «0 h»**, que seria inventar.
+ *   · **una sola**: se sabe lo que **marca**, pero no lo que ha subido.
+ *   · **dos o mas**: lo que ha subido, **y los tramos que no se pueden medir se cuentan aparte** -un hueco
+ *     en medio o un contador cambiado dejan un tramo sin poder decir, y callarlo seria ensenar una cifra
+ *     corta como si fuera la buena-.
+ *
+ * Se monta aqui y no en el componente por lo de siempre (`docs/REACT.md`): el componente ensena frases
+ * hechas, no las compone.
+ */
+function elCuentaHorasDeLaMaquina(contador) {
+  if (!contador) return null;
+  const m = textosDeLaMaquinaria().maquinaria || {};
+  const cuantas = contador.cuantas || 0;
+
+  // ***LO QUE NO SE SABE NO SE FORMATEA COMO NUMERO*** (15/10/2026). `Number(null)` es **0**, y asi el
+  // servidor decia «desconocido» y la pantalla ensenaba **«Ha subido: 0 h»**: un cero que nadie ha dicho.
+  // Es la regla de `sumando_lo_que_se_sabe` -***nunca `(valor or 0)`***- traida a la pantalla. Y una
+  // **unidad desconocida no es horas**: si no se sabe cual es, la cifra no se ensena.
+  const esNumero = (valor) =>
+    valor !== null && valor !== undefined && Number.isFinite(Number(valor));
+  const unidad_texto =
+    contador.unidad === "horas" ? "h" : contador.unidad === "kilometros" ? "km" : "";
+  const conNumero = (valor) =>
+    esNumero(valor) && unidad_texto
+      ? `${Number(valor).toLocaleString("es-ES")} ${unidad_texto}`
+      : "";
+
+  // **El porque, con las palabras de la casa**, sacado de lo que la funcion pura dejo en `lo_que_falta`.
+  const POR_QUE = {
+    no_hay_ninguna_lectura: "contador_sin_lecturas",
+    hace_falta_otra_lectura_para_saber_cuanto_ha_subido: "contador_no_se_sabe_cuanto",
+    una_lectura_va_para_atras_sin_sustitucion: "contador_va_para_atras",
+    hay_lecturas_que_no_son_un_numero_de_contador: "contador_valor_raro",
+    las_lecturas_no_son_de_la_misma_unidad: "contador_unidades_distintas",
+  };
+  const motivos = (contador.lo_que_falta || [])
+    .map((cual) => t(`maquinaria.${POR_QUE[cual] || ""}`, ""))
+    .filter(Boolean);
+
+  const sinDecir = contador.sin_decir || 0;
+  const incoherentes = (contador.incoherentes || []).length;
+  // ***La banda: un subtotal no es un total*** (16/10/2026). Con un tramo que no cuadra, `subido` es lo
+  // que se puede **afirmar**, no el total: ensenar «Ha subido: 0 h» a secas presenta un cero como dato
+  // acreditado **y ademas calla la incidencia**. Lo reprodujo la revision del 16/10/2026.
+  const hayIncidencias = Boolean(contador.cobertura_incompleta) || incoherentes > 0 || sinDecir > 0;
+  const sePuedeDecir = esNumero(contador.subido) && Boolean(unidad_texto) && cuantas >= 2;
+  let aviso = "";
+  if (sinDecir === 1) aviso = m.contador_tramos_sin_decir_uno || "";
+  else if (sinDecir > 1) {
+    aviso = rellena(m.contador_tramos_sin_decir_varios || "", { cuantos: String(sinDecir) });
+  }
+  return {
+    cuantas,
+    sinLecturas: cuantas === 0,
+    marca_texto: conNumero(contador.marca) ? `${m.contador_marca}: ${conNumero(contador.marca)}` : "",
+    subido_texto: !sePuedeDecir
+      ? ""
+      : hayIncidencias
+        ? `${m.contador_ha_subido_parcial}: ${conNumero(contador.subido)}`
+        : `${m.contador_ha_subido}: ${conNumero(contador.subido)}`,
+    // **Las incidencias se ensenan siempre que las haya**, tambien cuando hay una cifra: es lo que impide
+    // que un subtotal pase por total. Cuando NO se puede decir la cifra, el motivo ya va en
+    // `noSeSabeTexto` y aqui no se repite.
+    incidencias_texto: sePuedeDecir && hayIncidencias ? motivos.join(" ") : "",
+    noSeSabeTexto: !sePuedeDecir
+      ? motivos.length
+        ? motivos.join(" ")
+        : m.contador_no_se_sabe_cuanto || ""
+      : "",
+    cobertura_incompleta: hayIncidencias,
+    aviso,
+  };
+}
+
 /** El estado de los contactos, creado la primera vez que hace falta. */
 function estadoDeLosContactos() {
   if (!estado.contactos) {
@@ -17596,16 +17915,17 @@ function pantallaFichaDeContacto() {
       // El saldo, tal cual llegó del servidor (con el dinero ya escrito). `null` mientras no se sabe
       // es un hueco, **no un cero**.
       saldo: suyo.saldo || null,
-      // **Lo que esta cuenta puede hacer** (Entrega 4): la pantalla lo usa para NO OFRECER, nunca para autorizar.
+      // **Lo que esta cuenta puede hacer** (Entrega 4): la pantalla lo usa para NO OFRECER, nunca para
+      // autorizar —eso lo hace la puerta en el servidor—.
       puede_modificar: loQuePuedoHacer().modificar,
       puede_ver_lo_economico: loQuePuedoHacer().economico,
-    // **Lo que esta cuenta puede hacer** (Entrega 4): la pantalla lo usa para NO OFRECER, nunca para
-    // autorizar —eso lo hace la puerta en el servidor—.
-    puede_modificar: loQuePuedoHacer().modificar,
-    puede_ver_lo_economico: loQuePuedoHacer().economico,
-    // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
-    canal_a_medias: suyo.canal_a_medias || null,
-    tarea_a_medias: suyo.tarea_a_medias || null,
+      // Lo que se estaba apuntando en el alta rápida, para no perderlo si el servidor dice que no.
+      // ***Estas dos claves se quedaban sin pasar a la pantalla*** (17/10/2026): *venian pegadas a un
+      // bloque duplicado -las dos lineas de `puede_*` estaban escritas dos veces, con la indentacion
+      // cambiada-, y al quitar la repeticion hay que **dejarlas aqui**, que es su sitio: `suyo.canal_a_medias`
+      // y `suyo.tarea_a_medias` se escriben en dos sitios y esta es **la unica linea que las pinta**.*
+      canal_a_medias: suyo.canal_a_medias || null,
+      tarea_a_medias: suyo.tarea_a_medias || null,
       puedeDesenlazar: true,
       corrigiendo: Boolean(suyo.corrigiendo),
       borrando: suyo.borrando,
@@ -17770,6 +18090,10 @@ async function pedirLoQuePuedoHacer() {
   // molesto; ofrecer lo que no se puede hacer es peor, porque el agricultor lo intenta y se lleva un error.
   try {
     const yo = await apiJson("/api/cuenta/yo");
+    // ***Y se guarda la cuenta*** (CRM-08, 17/10/2026): hace falta para el borrador, que va **por usuario
+    // y por finca**. Antes solo se guardaban los dos permisos, y `localStorage` es del **navegador**, no
+    // del usuario: sin el id, dos cuentas en el mismo ordenador se pisarian el borrador.
+    estado.yo = yo;
     estado.puedo = {
       modificar: yo.puede_modificar !== false,
       economico: yo.puede_ver_lo_economico !== false,
@@ -18492,6 +18816,12 @@ function estadoDeLaMaquinaria() {
       // esta lista es un campo que el siguiente que lea esto no sabe que está.
       costes: null,
       costeError: "",
+      // **Las reservas de la maquina** (CRM-07 #9, 17/10/2026): lo que devuelve
+      // `GET /maquinaria/{id}/reservas`. ***`null` es «todavia no se han pedido» y `[]` es «no hay
+      // ninguna»*** -la misma distincion que `papeles` y `costes`-, y es lo que hace que **la seccion no
+      // aparezca hasta que se sepa**: *ofrecer «reservar» antes de haber mirado seria ofrecer de mas.*
+      reservas: null,
+      reservasError: "",
       // **Los papeles de la finca** (CRM-07 #7, 14/10/2026), para el desplegable de la averia. Se piden
       // una vez y se guardan aqui: `null` es «todavia no se han pedido» y `[]` es «no hay ninguno».
       papeles: null,
@@ -18522,10 +18852,89 @@ function estadoDeLaMaquinaria() {
  * abrió, y lo que el agricultor había escrito se perdería —el mismo defecto que ya costó una ronda con el
  * fichero del cuaderno de la Junta—.
  */
+/**
+ * Un instante, en el formato que espera un `<input type="datetime-local">`: `2026-04-20T08:00`.
+ *
+ * *El servidor manda el instante completo -`2026-04-20T08:00:00`- y la casilla quiere los minutos justos:
+ * con los segundos, el navegador da el valor por invalido y **el agricultor se encuentra el campo vacio
+ * sin saber por que**.*
+ */
+function paraElCampoDeHora(instante) {
+  return instante ? String(instante).slice(0, 16) : "";
+}
+
+/**
+ * **El formulario de una reserva** (CRM-07 #9, 17/10/2026): de cuando a cuando, como va y lo que quieras
+ * apuntar.
+ *
+ * ***Los dos extremos van con HORA*** (`fecha_hora`), y no es un detalle: *una reserva es «el martes de 9
+ * a 11», y el solape -que es lo que el servidor comprueba- se decide por la hora. Con un campo de solo
+ * fecha, la hora se perderia al guardar y **en silencio**.*
+ *
+ * **El estado se elige entre los tres que hay**, y los tres textos son **los mismos que usa el servidor**
+ * para escribir `estado_texto` (viven en el bloque de la maquinaria): *con dos copias, un dia la pantalla
+ * diria «Pedida» y el dato diria otra cosa.*
+ */
+function formularioDeUnaReserva({ corrigiendo = null } = {}) {
+  const m = t("maquinaria", {});
+  const cruda = corrigiendo || {};
+  const estado = cruda.estado || "pedida";
+  return {
+    clase: "reserva",
+    corrigiendo,
+    titulo: corrigiendo ? m.form_reserva_corregir_titulo : m.form_reserva_titulo,
+    pista: m.form_reserva_pista,
+    guardar: m.guardar_reserva,
+    cancelar: t("corregir.volver_sin_guardar", ""),
+    guardando: m.form_guardando,
+    datos: { id: corrigiendo ? corrigiendo.id : "" },
+    bloques: [
+      {
+        tipo: "fecha_hora",
+        id: "reserva-desde",
+        etiqueta: m.campo_desde_reserva,
+        valor: paraElCampoDeHora(cruda.desde),
+      },
+      {
+        tipo: "fecha_hora",
+        id: "reserva-hasta",
+        etiqueta: m.campo_hasta_reserva,
+        valor: paraElCampoDeHora(cruda.hasta),
+      },
+      {
+        tipo: "opciones",
+        id: "reserva-estado",
+        campo: "estado",
+        etiqueta: m.campo_estado_reserva,
+        elegido: estado,
+        opciones: [
+          { valor: "pedida", texto: m.reserva_estado_pedida, elegido: estado === "pedida" },
+          { valor: "en_curso", texto: m.reserva_estado_en_curso, elegido: estado === "en_curso" },
+          { valor: "hecha", texto: m.reserva_estado_hecha, elegido: estado === "hecha" },
+        ],
+      },
+      {
+        tipo: "area",
+        id: "reserva-notas",
+        etiqueta: m.campo_notas_reserva,
+        valor: cruda.notas || "",
+        filas: 2,
+      },
+    ],
+  };
+}
+
 function elFormularioDeLaMaquinaria(descriptor) {
   if (!descriptor) return null;
   if (descriptor.clase === "inspeccion") return formularioDeUnaInspeccion(descriptor);
   if (descriptor.clase === "averia") return formularioDeUnaAveria(descriptor);
+  // **El cuenta-horas** (CRM-07 #8, 16/10/2026): apuntar, corregir y anular una lectura.
+  if (descriptor.clase === "lectura") return formularioDeUnaLectura(descriptor);
+  // **Las reservas** (CRM-07 #9): apuntar y corregir. *Anular va por `maquina-anular`, que ya existe.*
+  if (descriptor.clase === "reserva") return formularioDeUnaReserva(descriptor);
+  if (descriptor.clase === "anulacion_lectura") {
+    return formularioDeUnaAnulacionDeLectura(descriptor.corrigiendo);
+  }
   return formularioDeLaMaquina({ corrigiendo: Boolean(descriptor.corrigiendo) });
 }
 
@@ -19023,6 +19432,16 @@ function unaMaquinaPreparada(ficha, losCostes = {}) {
     })),
     // **Y el total de la máquina**, con sus dos avisos: cuántos gastos lo forman y **cuántos no tienen
     // importe**. Sin eso, un total que solo suma la mitad parecería el total entero.
+    // **El cuenta-horas** (CRM-07 #8, 14/10/2026), **en crudo y AQUI**: al nivel de `inspecciones`,
+    // `averias` y `coste`, que es donde lo lee `pantallaUnaMaquina` (`ficha.lecturas`, `ficha.contador`).
+    //
+    // ***Estuvo dentro del `map` de averias, y eso costo NUEVE rondas de diagnostico*** (15/10/2026): el
+    // objeto salia con sus seis claves de siempre, las dos propiedades se colgaban de **cada averia**, y
+    // en una maquina sin averias **desaparecian**. Parecia una cache fantasma y era **una llave mal
+    // cerrada**: la sangria no cambia el alcance. Si alguna vez vuelve a «no se pinta una seccion»,
+    // mirar **a que nivel esta la llave** antes que la cache.
+    lecturas: (ficha || {}).lecturas || [],
+    contador: (ficha || {}).contador || null,
     coste: elTotal
       ? {
           texto: elTotal.texto_coste || "",
@@ -19171,6 +19590,31 @@ async function cargarElCosteDeLasAverias(id) {
   }
 }
 
+/**
+ * **Las reservas de la maquina** (CRM-07 #9, 17/10/2026).
+ *
+ * *Se piden aparte, como el coste de las averias, porque tienen su propia puerta
+ * (`GET /maquinaria/{id}/reservas`) y **lo que no se ha pedido no se puede dar por vacio**: mientras no
+ * lleguen, `suyo.reservas` se queda en `null` y la ficha **no pinta la seccion** -ni su boton-. Si se
+ * dejara en `[]`, la ficha diria «no has reservado esta maquina para nada», **que es una afirmacion que
+ * nadie ha comprobado**.*
+ *
+ * ***Y si falla, se dice por que***: *una tolerancia que no deja rastro es una ceguera -la leccion del
+ * coste de las averias, 14/10/2026-.*
+ */
+async function cargarLasReservasDeLaMaquina(id) {
+  const suyo = estadoDeLaMaquinaria();
+  suyo.reservas = null;
+  suyo.reservasError = "";
+  try {
+    const suyas = await apiJson(`/api/maquinaria/${id}/reservas`);
+    suyo.reservas = Array.isArray(suyas) ? suyas : [];
+  } catch (fallo) {
+    suyo.reservas = null;
+    suyo.reservasError = mensajeDeFallo(fallo);
+  }
+}
+
 /** Abre la ficha de una máquina. */
 async function abrirUnaMaquina(id) {
   const suyo = estadoDeLaMaquinaria();
@@ -19197,11 +19641,18 @@ async function abrirUnaMaquina(id) {
     return;
   }
   suyo.maquinaCruda = await respuesta.json();
-  await cargarElCosteDeLasAverias(id);
-  suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda, suyo.costes);
-  // Y los avisos de todas las máquinas, que son los mismos que enseña la lista: se piden aquí para que la
-  // ficha y la lista no puedan decir cosas distintas de la misma máquina.
+  // ***EL ORDEN IMPORTA, Y ESTABA MAL*** (14/10/2026). `abrirLaMaquinaria` -la de la lista- pone
+  // `suyo.maquina = null` y **espera** a `/api/maquinaria`; el enrutador lanza **las dos**, asi que la
+  // lista puede terminar **despues** y pisar la ficha recien preparada. Una carrera de verdad, y el
+  // sintoma es el peor de todos: **la ficha sale entera menos lo ultimo que se le haya añadido**.
+  //
+  // Se piden primero los avisos de todas las maquinas -que son los mismos que enseña la lista, y por eso
+  // se piden aqui: para que la ficha y la lista no puedan decir cosas distintas de la misma maquina- y
+  // **despues** se prepara y se pinta la ficha, que asi es lo ultimo que se escribe.
   await recargarLaMaquinaria();
+  await cargarElCosteDeLasAverias(id);
+  await cargarLasReservasDeLaMaquina(id);
+  suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda, suyo.costes);
   pantallaUnaMaquina();
 }
 
@@ -19217,6 +19668,29 @@ function pantallaUnaMaquina() {
       obligaciones: ficha.obligaciones || [],
       inspecciones: ficha.inspecciones || [],
       averias: ficha.averias || [],
+      // **El cuenta-horas** (CRM-07 #8): las lecturas y **la cuenta que el servidor puede afirmar**. Las
+      // frases se montan AQUI (`docs/REACT.md`), con el `contador` que ya trae `sin_decir` y `lo_que_falta`
+      // calculados por la funcion pura: la pantalla no decide nada, solo lo dice.
+      lecturas: (ficha.lecturas || []).map((lectura) => ({
+        ...lectura,
+        // Una lectura se lee como una linea: «01/03/2026 · 1.000 h».
+        // **La linea entera, ya montada**: la fecha, la cifra con su unidad, y -si los tiene- el aviso de
+        // que ahi se cambio el contador y el de que esta anulada. Una frase, un nodo de texto, como manda
+        // `docs/REACT.md`: el componente no compone, solo ensena.
+        texto: [
+          lectura.fecha_texto,
+          `${Number(lectura.valor).toLocaleString("es-ES")} ${lectura.unidad === "kilometros" ? "km" : "h"}`,
+          lectura.es_sustitucion ? t("maquinaria.contador_sustitucion", "") : "",
+          lectura.anulado ? t("maquinaria.contador_anulada", "") : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      })),
+      contador: elCuentaHorasDeLaMaquina(ficha.contador),
+      // **Las reservas**, tal cual las devolvio el servidor -que ya manda los cuatro textos: cuando,
+      // estado, quien y para que-. ***Y `null` mientras no se hayan pedido***, que es lo que hace que la
+      // seccion no se pinte antes de tiempo.
+      reservas: suyo.reservas,
       coste: ficha.coste || null,
       costeError: suyo.costeError || "",
       formulario: elFormularioDeLaMaquinaria(suyo.formulario),
@@ -19224,6 +19698,12 @@ function pantallaUnaMaquina() {
       guardando: suyo.guardando,
       error: suyo.error || "",
       aviso: suyo.aviso || "",
+      // **Lo que esta cuenta puede hacer** (Entrega 4, 17/10/2026): la ficha de la maquina lo usa para
+      // **NO OFRECER** los botones de apuntar, corregir y anular lecturas. *Y esto **NO autoriza nada**,
+      // que es lo que dice el encargo con estas palabras: «ocultar un boton no es autorizacion». La
+      // autorizacion la da la puerta, que la comprueba en el servidor; si alguien llega a mano por la URL
+      // o por un identificador, **se encuentra el 403 igual**.*
+      puede_modificar: loQuePuedoHacer().modificar,
     }),
   );
 }
@@ -19236,6 +19716,7 @@ async function recargarLaFichaDeLaMaquina() {
   try {
     suyo.maquinaCruda = await apiJson(`/api/maquinaria/${id}`);
     await cargarElCosteDeLasAverias(id);
+  await cargarLasReservasDeLaMaquina(id);
     suyo.maquina = unaMaquinaPreparada(suyo.maquinaCruda, suyo.costes);
   } catch (fallo) {
     suyo.error = mensajeDeFallo(fallo);
@@ -19580,6 +20061,119 @@ function formularioDeUnaAveria({ corrigiendo = null } = {}) {
   };
 }
 
+/**
+ * **El formulario de una lectura del cuenta-horas** (CRM-07 #8, 16/10/2026).
+ *
+ * Una lectura es **fecha + valor + unidad**, y las tres se preguntan: «1.200» no dice si son horas o
+ * kilometros, y las dos cosas no se suman entre si. Y `es_sustitucion` **se pregunta aqui**, porque este
+ * es el unico sitio donde el agricultor sabe si ese dia le cambiaron el contador: sin ese dato el
+ * acumulado bajaria solo, que es justo lo que el encargo prohibe.
+ *
+ * **Al corregir, lo que no se toca se conserva.** Los bloques se rellenan con `puesto`, que lee primero
+ * lo que hay escrito en la pantalla y luego el borrador o lo apuntado, asi que cambiar la cifra no borra
+ * la unidad ni la sustitucion.
+ */
+function formularioDeUnaLectura({ corrigiendo = null } = {}) {
+  const m = t("maquinaria", {});
+  const b = estadoDeLaMaquinaria().borrador || {};
+  const puestos = corrigiendo || b;
+  // `puestos` trae lo del servidor tal cual -numeros y booleanos incluidos-, asi que se pasa a texto:
+  // una casilla no tiene numeros, tiene lo que se lee.
+  const puesto = (id, campo) =>
+    loEscrito(id, puestos[campo] === null || puestos[campo] === undefined ? "" : String(puestos[campo]));
+  const unidad = puesto("lectura-unidad", "unidad") || "horas";
+  const sustitucion = puesto("lectura-sustitucion", "es_sustitucion");
+  return {
+    clase: "lectura",
+    corrigiendo,
+    titulo: corrigiendo ? m.form_lectura_corregir_titulo : m.form_lectura_titulo,
+    pista: m.form_lectura_pista,
+    guardar: m.guardar_lectura,
+    cancelar: t("corregir.volver_sin_guardar", ""),
+    guardando: m.form_guardando,
+    datos: { id: corrigiendo ? corrigiendo.id : "" },
+    bloques: [
+      {
+        tipo: "fecha",
+        id: "lectura-fecha",
+        etiqueta: m.campo_fecha_lectura,
+        valor: puesto("lectura-fecha", "fecha") || hoyISO(),
+      },
+      {
+        tipo: "numero",
+        id: "lectura-valor",
+        etiqueta: m.campo_valor_lectura,
+        pista: m.campo_valor_lectura_pista,
+        valor: puesto("lectura-valor", "valor"),
+      },
+      {
+        // **La unidad se elige, no se supone**: es parte del dato, como en los abonos.
+        tipo: "opciones",
+        id: "lectura-unidad",
+        campo: "unidad",
+        etiqueta: m.campo_unidad_lectura,
+        elegido: unidad,
+        opciones: [
+          { valor: "horas", texto: m.unidad_horas, elegido: unidad === "horas" },
+          { valor: "kilometros", texto: m.unidad_kilometros, elegido: unidad === "kilometros" },
+        ],
+      },
+      {
+        tipo: "opciones",
+        id: "lectura-sustitucion",
+        campo: "es_sustitucion",
+        etiqueta: m.campo_sustitucion_lectura,
+        pista: m.campo_sustitucion_pista,
+        elegido: sustitucion,
+        opciones: [
+          { valor: "", texto: m.sustitucion_no, elegido: !sustitucion },
+          {
+            valor: "true",
+            texto: m.sustitucion_si,
+            elegido: sustitucion === "true" || sustitucion === true,
+          },
+        ],
+      },
+      {
+        tipo: "area",
+        id: "lectura-notas",
+        etiqueta: m.campo_notas_lectura,
+        valor: puesto("lectura-notas", "notas"),
+        filas: 2,
+      },
+    ],
+  };
+}
+
+/**
+ * **El formulario de anular una lectura**: se queda tachada, con su motivo, y deja de contar.
+ *
+ * Anular no es borrar -eso es `borrar`, y no se ofrece para una lectura-: el cuaderno tiene que poder
+ * ensenar que aquello se apunto y por que se tacho.
+ */
+function formularioDeUnaAnulacionDeLectura(lectura) {
+  const m = t("maquinaria", {});
+  return {
+    clase: "anulacion_lectura",
+    corrigiendo: lectura,
+    titulo: m.form_anular_lectura_titulo,
+    pista: m.form_anular_lectura_pista,
+    guardar: m.anular_lectura,
+    cancelar: t("corregir.volver_sin_guardar", ""),
+    guardando: m.form_guardando,
+    datos: { id: lectura ? lectura.id : "" },
+    bloques: [
+      {
+        tipo: "area",
+        id: "lectura-motivo",
+        etiqueta: m.campo_motivo_de_anular_lectura,
+        valor: "",
+        filas: 2,
+      },
+    ],
+  };
+}
+
 /** El valor de una casilla del formulario, por su `id`. */
 function valorDeLaCasilla(id) {
   const casilla = document.getElementById(id);
@@ -19742,6 +20336,55 @@ async function guardarLoDeLaMaquinaria() {
       ? `/api/maquinaria/${maquina.id}/averias/${id}`
       : `/api/maquinaria/${maquina.id}/averias`;
     metodo = id ? "PUT" : "POST";
+  } else if (formulario.clase === "lectura") {
+    const id = formulario.corrigiendo ? formulario.corrigiendo.id : null;
+    const valor = valorDeLaCasilla("lectura-valor");
+    // ***LO QUE NO SE TOCA, SE CONSERVA*** (regla A1, y aqui importa de verdad, 16/10/2026). La unidad y
+    // la sustitucion solo se mandan **si el agricultor las ha elegido en este formulario**; si no, viaja
+    // lo que ya tenia la lectura. Sin esto, corregir la cifra de una lectura **en kilometros** la pasaria
+    // a horas: el servidor ya se defiende por su lado (`model_fields_set`), pero la pantalla no puede
+    // mandar un dato que nadie ha dicho. Es el mismo fallo que costo una prueba el 14/10, y por eso va en
+    // los dos lados.
+    const antes = formulario.corrigiendo || {};
+    const unidadElegida = b.unidad === undefined ? antes.unidad || "horas" : b.unidad;
+    const sustitucionElegida =
+      b.es_sustitucion === undefined ? Boolean(antes.es_sustitucion) : b.es_sustitucion === "true";
+    datos = {
+      fecha: valorDeLaCasilla("lectura-fecha"),
+      // La coma decimal es de aqui: en la casilla se escribe «1.250,5» y el servidor quiere un numero.
+      valor: valor ? Number(valor.replace(",", ".")) : null,
+      unidad: unidadElegida,
+      es_sustitucion: sustitucionElegida,
+      notas: valorDeLaCasilla("lectura-notas") || null,
+      clave_de_reenvio: laClaveDeReenvio(),
+    };
+    ruta = id
+      ? `/api/maquinaria/${maquina.id}/lecturas/${id}`
+      : `/api/maquinaria/${maquina.id}/lecturas`;
+    metodo = id ? "PUT" : "POST";
+  } else if (formulario.clase === "reserva") {
+    const id = formulario.corrigiendo ? formulario.corrigiendo.id : null;
+    datos = {
+      // *Los dos extremos, tal cual los escribe la casilla: `2026-04-20T08:00`. El servidor los parsea y
+      // **el intervalo va en hora local de la finca y sin huso**, que es lo que esta escrito en
+      // `app/reservas.py`: el agricultor dice «el martes de 9 a 11» y eso es lo que se guarda.*
+      desde: valorDeLaCasilla("reserva-desde"),
+      hasta: valorDeLaCasilla("reserva-hasta"),
+      // **El estado se lee del borrador**, como «¿ya esta arreglada?»: los campos de tipo `opciones`
+      // escriben ahi, no en una casilla.
+      estado: b.estado || (formulario.corrigiendo || {}).estado || "pedida",
+      notas: valorDeLaCasilla("reserva-notas") || null,
+      clave_de_reenvio: laClaveDeReenvio(),
+    };
+    ruta = id
+      ? `/api/maquinaria/${maquina.id}/reservas/${id}`
+      : `/api/maquinaria/${maquina.id}/reservas`;
+    metodo = id ? "PUT" : "POST";
+  } else if (formulario.clase === "anulacion_lectura") {
+    // Anular lleva **su motivo**: una lectura tachada sin decir por que no sirve de nada dentro de un ano.
+    datos = { motivo: valorDeLaCasilla("lectura-motivo") };
+    ruta = `/api/maquinaria/${maquina.id}/lecturas/${formulario.corrigiendo.id}/anular`;
+    metodo = "POST";
   }
 
   suyo.guardando = true;
@@ -19753,9 +20396,25 @@ async function guardarLoDeLaMaquinaria() {
     return formulario.clase === "maquina" && !maquina.id ? pantallaMaquinaria() : pantallaUnaMaquina();
   }
   const eraNuevaMaquina = formulario.clase === "maquina" && !formulario.corrigiendo;
+  // **El aviso dice lo que se ha hecho** (16/10/2026): no es lo mismo apuntar que corregir, ni corregir
+  // que anular. Con una sola frase para todo, el agricultor no sabia si su correccion habia entrado.
+  const avisoDeLoHecho =
+    formulario.clase === "lectura"
+      ? formulario.corrigiendo
+        ? t("maquinaria.lectura_corregida", "")
+        : t("maquinaria.lectura_guardada", "")
+      : formulario.clase === "reserva"
+        ? formulario.corrigiendo
+          ? t("maquinaria.reserva_corregida", "")
+          : t("maquinaria.reserva_guardada", "")
+        : formulario.clase === "anulacion_lectura"
+        ? t("maquinaria.lectura_anulada", "")
+        : eraNuevaMaquina
+          ? t("maquinaria.guardado", "")
+          : t("maquinaria.corregida", "");
   suyo.formulario = null;
   suyo.borrador = null;
-  suyo.aviso = eraNuevaMaquina ? t("maquinaria.guardado", "") : t("maquinaria.corregida", "");
+  suyo.aviso = avisoDeLoHecho;
   await recargarLaMaquinaria();
   if (eraNuevaMaquina) {
     // Al apuntar una máquina nueva se abre su ficha: es donde están las cinco obligaciones que hay que
@@ -20800,6 +21459,58 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     await recargarLaMaquinaria();
     return pantallaUnaMaquina();
   }
+  // **El cuenta-horas** (CRM-07 #8, 16/10/2026): apuntar, corregir y anular una lectura. La lectura se
+  // busca en `maquinaCruda`, que es lo que devolvio el servidor **tal cual** -con la fecha en ISO y el
+  // valor sin formatear-, que es lo que necesita el formulario para rellenarse.
+  if (nombre === "maquina-lectura-nueva") {
+    const suyo = estadoDeLaMaquinaria();
+    suyo.error = "";
+    suyo.aviso = "";
+    suyo.borrador = {};
+    suyo.formulario = { clase: "lectura" };
+    return pantallaUnaMaquina();
+  }
+  if (nombre === "maquina-lectura-corregir" || nombre === "maquina-lectura-anular") {
+    const suyo = estadoDeLaMaquinaria();
+    const cruda = ((suyo.maquinaCruda || {}).lecturas || []).find(
+      (una) => Number(una.id) === Number(elemento.dataset.id),
+    );
+    if (!cruda) return pantallaUnaMaquina();
+    suyo.error = "";
+    suyo.aviso = "";
+    suyo.borrador = {};
+    suyo.formulario =
+      nombre === "maquina-lectura-anular"
+        ? { clase: "anulacion_lectura", corrigiendo: cruda }
+        : { clase: "lectura", corrigiendo: cruda };
+    return pantallaUnaMaquina();
+  }
+  // **Las reservas** (CRM-07 #9, 17/10/2026): apuntar y corregir. *Anular va por `maquina-anular`, que ya
+  // existe, con `que: "reserva"` -y asi el motivo y su pregunta son los mismos que en una averia-.*
+  //
+  // **La reserva se busca en `suyo.reservas`**, que es **la respuesta cruda de su puerta** -con los dos
+  // instantes en ISO y el estado sin texto-, que es lo que necesita el formulario para rellenarse. *No se
+  // busca en `maquinaCruda`: esa es la respuesta de `/api/maquinaria/{id}`, que **no trae las reservas**.*
+  if (nombre === "maquina-reserva-nueva") {
+    const suyo = estadoDeLaMaquinaria();
+    suyo.error = "";
+    suyo.aviso = "";
+    suyo.borrador = {};
+    suyo.formulario = { clase: "reserva" };
+    return pantallaUnaMaquina();
+  }
+  if (nombre === "maquina-reserva-corregir") {
+    const suyo = estadoDeLaMaquinaria();
+    const cruda = (suyo.reservas || []).find(
+      (una) => Number(una.id) === Number(elemento.dataset.id),
+    );
+    if (!cruda) return pantallaUnaMaquina();
+    suyo.error = "";
+    suyo.aviso = "";
+    suyo.borrador = {};
+    suyo.formulario = { clase: "reserva", corrigiendo: cruda };
+    return pantallaUnaMaquina();
+  }
   if (nombre === "maquina-averia-nueva") {
     const suyo = estadoDeLaMaquinaria();
     suyo.error = "";
@@ -20864,7 +21575,12 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     suyo.anulando = {
       que,
       id: Number(elemento.dataset.id),
-      titulo: que === "inspeccion" ? t("maquinaria.anular_inspeccion", "") : t("maquinaria.anular_averia", ""),
+      titulo:
+        que === "inspeccion"
+          ? t("maquinaria.anular_inspeccion", "")
+          : que === "reserva"
+            ? t("maquinaria.anular_reserva", "")
+            : t("maquinaria.anular_averia", ""),
       pista: t("maquinaria.anular_pista", ""),
     };
     return pantallaUnaMaquina();
@@ -20884,7 +21600,10 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
       return pantallaUnaMaquina();
     }
     suyo.error = "";
-    const base = `/api/maquinaria/${maquina.id}/${que === "inspeccion" ? "inspecciones" : "averias"}`;
+    // ***Y la reserva tiene su propia puerta*** (17/10/2026): *anular una reserva es
+    // `POST /maquinaria/{id}/reservas/{rid}/anular`, no la de las averias.*
+    const laDeLaReserva = que === "reserva" ? "reservas" : null;
+    const base = `/api/maquinaria/${maquina.id}/${laDeLaReserva || (que === "inspeccion" ? "inspecciones" : "averias")}`;
     const resultado = await mandarCambio(`${base}/${Number(elemento.dataset.id)}/anular`, "POST", {
       motivo,
     });
@@ -20893,7 +21612,10 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
       return pantallaUnaMaquina();
     }
     suyo.anulando = null;
-    suyo.aviso = t("maquinaria.anulada", "");
+    // ***Y el aviso dice QUE se ha anulado*** (17/10/2026): *una reserva anulada **libera la maquina**, y
+    // eso es lo que el agricultor necesita saber -no un «anulado» que vale igual para todo-.*
+    suyo.aviso =
+      que === "reserva" ? t("maquinaria.reserva_anulada_aviso", "") : t("maquinaria.anulada", "");
     await recargarLaFichaDeLaMaquina();
     await recargarLaMaquinaria();
     return pantallaUnaMaquina();

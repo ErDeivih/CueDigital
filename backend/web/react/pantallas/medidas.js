@@ -76,7 +76,15 @@ function Medida({ medida, textos }) {
  *  - `hay_declaracion`: si la finca **ya tiene** declarado qué hace (lo dice el servidor). Con eso se
  *    ofrece quitarlo, y sin eso no: en una finca sin declarar no hay nada que quitar (ronda 93).
  */
-export function PantallaMedidas({ textos = {}, medidas = [], hay_declaracion = false }) {
+export function PantallaMedidas({
+  textos = {},
+  medidas = [],
+  hay_declaracion = false,
+  // ***Si este usuario puede escribir en esta finca*** (17/10/2026). *El servidor ya lo comprueba en todas
+  // sus puertas; lo que pasaba es que la pantalla **ofrecia el boton** y se llevaba un 403 al pulsarlo. Y el
+  // defecto es `true`: una pantalla que no lo reciba se comporta como antes, no se queda muda.*
+  puede_modificar = true,
+}) {
   const m = textos.medidas || {};
   const acciones = textos.acciones || {};
 
@@ -99,15 +107,23 @@ export function PantallaMedidas({ textos = {}, medidas = [], hay_declaracion = f
     }
     <p className="pista-campo">${frase(m.catalogo_aviso)}</p>
     <div className="barra-acciones">
-      <${Boton} etiqueta=${m.guardar} accion="medidas-guardar" />
-      <${Boton} etiqueta=${m.no_hago_ninguna} accion="medidas-ninguna" clase="boton-claro" />
+      ${
+        // ***Y «no hago ninguna» tambien escribe***: *guarda una declaracion que dice que no. Sin permiso no
+        // se ofrece ninguna de las dos.*
+        puede_modificar ? html`<${Boton} etiqueta=${m.guardar} accion="medidas-guardar" />` : null
+      }
+      ${
+        puede_modificar
+          ? html`<${Boton} etiqueta=${m.no_hago_ninguna} accion="medidas-ninguna" clase="boton-claro" />`
+          : null
+      }
       <${Boton} etiqueta=${acciones.volver} accion="inicio" datos=${{ ir: "mi_cuaderno" }} clase="boton-claro" />
     </div>
     ${
       // **Quitar la declaración entera** (ronda 93): no es lo mismo que «no hago ninguna», y por eso no
       // está en la barra de guardar. Va debajo, aparte, con su explicación: lo que hace es dejar la finca
       // **sin contestar**, como recién dada de alta, y el programa vuelve a preguntar.
-      hay_declaracion
+      hay_declaracion && puede_modificar
         ? html`
             <${Boton} etiqueta=${m.quitar} accion="medidas-quitar" clase="boton-peligro" />
             <p className="pista-campo">${frase(m.quitar_pista)}</p>
@@ -124,6 +140,7 @@ export function pantallaDeMedidas(propiedades) {
       textos=${propiedades.textos}
       medidas=${propiedades.medidas}
       hay_declaracion=${propiedades.hay_declaracion}
+      puede_modificar=${propiedades.puede_modificar}
     />
   `;
 }

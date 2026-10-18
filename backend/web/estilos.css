@@ -2814,3 +2814,9 @@ div.tarjeta:active {
     display: none;
   }
 }
+
+/* ***Lo que este usuario NO puede escribir, no se ofrece*** (18/10/2026).
+   *Estuvo aqui, escondiendo por el sufijo del nombre. **Se quito**: el clasificador por sufijos se quedaba
+   corto -`contacto-borrar-si` borra y no acaba en ninguno-, y ahora lo decide el **inventario de acciones por su
+   efecto real** (`react/acciones.js`), en una pasada por el DOM al montar cada pantalla. **Una sola forma.*** */
+
