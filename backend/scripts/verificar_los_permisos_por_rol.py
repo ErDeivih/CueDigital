@@ -414,6 +414,73 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
     )
 
     # -------------------------------------------------------------------------------------------------------
+    # ***LOS DOS ESTADOS QUE FALTABAN*** (18/10/2026, segunda vuelta).
+    #
+    # *`bandeja-confirmar` y `banco-deshacer` **no existen en reposo**: el primero necesita un papel **revisado**
+    # -`se_puede_confirmar` es falso mientras no se diga qué queda-, y el segundo un movimiento **conciliado**,
+    # porque no se puede deshacer lo que no se ha hecho. **Los dos se preparan por la puerta**, como los
+    # prepararia el agricultor: revisando el papel y conciliando el movimiento.*
+    print("\n0b. LOS DOS ESTADOS QUE HACEN FALTA PARA LOS BOTONES QUE FALTABAN")
+    codigo, _ = _llamar(
+        direccion, f"/api/bandeja/{las_que_hay['papel']}/revisar", token=el_titular.token,
+        cuerpo={"campos": {"quien": "El proveedor de la prueba", "fecha": "2026-10-19"}, "metodo": None},
+        metodo="POST",
+    )
+    if codigo == 422:
+        # *El cuerpo lleva `metodo` de mas; se repite limpio.*
+        codigo, _ = _llamar(
+            direccion, f"/api/bandeja/{las_que_hay['papel']}/revisar", token=el_titular.token,
+            cuerpo={"campos": {"quien": "El proveedor de la prueba", "fecha": "2026-10-19"}},
+            metodo="POST",
+        )
+    comprobar(codigo == 200, "***el papel de la bandeja queda revisado*** -que es lo que hace falta para poder confirmarlo-", encontre=codigo)
+    codigo, el_papel = _llamar(direccion, f"/api/bandeja/{las_que_hay['papel']}", token=el_titular.token)
+    comprobar(
+        isinstance(el_papel, dict) and el_papel.get("se_puede_confirmar") is True,
+        "***y el papel dice que ya se puede confirmar***",
+        encontre=str(el_papel)[:260],
+    )
+
+    # *Y el banco: se concilia un movimiento. Lo que se imputa se le pregunta a la propia puerta de propuestas.*
+    if el_movimiento:
+        codigo, las_propuestas = _llamar(
+            direccion, f"/api/bancos/movimientos/{el_movimiento}/propuestas", token=el_titular.token
+        )
+        # ***La forma la dice la propia aplicacion***: *`conciliarUnMovimiento(propuesta.imputaciones)` -lo que
+        # se manda es **la lista de imputaciones de una propuesta**, no la propuesta entera-. Y a mano,
+        # `[{clase, documento_id, importe}]`, con `importe: null` para «reparte tu lo que quepa».*
+        #
+        # *Mi primera version mandaba **la propuesta entera** dentro de `imputaciones`, y la puerta la rechazaba:
+        # por eso este boton salia «sin verificar». No era el codigo, era yo.*
+        la_de_la_app = None
+        if isinstance(las_propuestas, dict):
+            suyas = las_propuestas.get("propuestas") or []
+            if suyas and isinstance(suyas[0], dict) and suyas[0].get("imputaciones"):
+                la_de_la_app = {"imputaciones": suyas[0]["imputaciones"]}
+        las_formas = [
+            la_de_la_app,
+            {"imputaciones": [{"clase": "gasto", "documento_id": escenario.gastos[0], "importe": None}]},
+            {"imputaciones": [{"clase": "gasto", "documento_id": escenario.gastos[0], "importe": "39.50"}]},
+        ]
+        el_ultimo = None
+        for forma in las_formas:
+            if not forma or not forma.get("imputaciones"):
+                continue
+            codigo, el_ultimo = _llamar(
+                direccion, f"/api/bancos/movimientos/{el_movimiento}/conciliar", token=el_titular.token,
+                cuerpo=forma, metodo="POST",
+            )
+            if codigo == 200:
+                break
+        comprobar(
+            codigo == 200,
+            "***y un movimiento del banco queda conciliado*** -que es lo que hace falta para poder deshacerlo-",
+            encontre=f"propuestas: {str(las_propuestas)[:200]} · conciliar: {str(el_ultimo)[:220]}",
+        )
+    else:
+        comprobar(False, "***hace falta un movimiento del banco para poder conciliar uno***")
+
+    # -------------------------------------------------------------------------------------------------------
     print("\n1. EL TITULAR  -el CONTROL POSITIVO: donde deberian estar, estan-")
     try:
         with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
