@@ -486,9 +486,43 @@ class FertilizanteEntrada(EntradaBase):
     # «0 % de nitrógeno, 0 % de fósforo y 0 % de potasio», que es una afirmación y no un hueco. El
     # abono también se crea desde una factura, y la factura **no trae la composición**: eso es
     # exactamente «no lo sé», y tiene que poder guardarse así en vez de inventarse tres ceros.
-    riqueza_n: float | None = Field(default=None, ge=0, le=100)
-    riqueza_p: float | None = Field(default=None, ge=0, le=100)
-    riqueza_k: float | None = Field(default=None, ge=0, le=100)
+    riqueza_n: float | None = Field(default=None, ge=0)
+    riqueza_p: float | None = Field(default=None, ge=0)
+    riqueza_k: float | None = Field(default=None, ge=0)
+    # ***`le=100` SE FUE, Y ES UN ARREGLO DE VERDAD*** (CRM-07, 17/10/2026): el tope daba por hecho que una
+    # riqueza **siempre** es un porcentaje, y no lo es. El anexo II del BOE admite, para liquidos, **gramos
+    # por litro** y **kilos por hectolitro**, y un producto a **150 g/L** no cabia: se comprobo, y el error
+    # era `Input should be less than or equal to 100`. El tope se pone **segun la base**, en el validador.
+    #
+    # ***La especie quimica, con su nombre***: en la etiqueta el fosforo va como **P2O5** y el potasio como
+    # **K2O**, no como P y K. `riqueza_p` y `riqueza_k` **se quedan** -el criterio manda «mantener las
+    # columnas antiguas compatibles»-, y estas dos dicen lo mismo con su nombre bueno.
+    riqueza_p2o5: float | None = Field(default=None, ge=0)
+    riqueza_k2o: float | None = Field(default=None, ge=0)
+    # ***La base de la riqueza***: sin ella, «15» no dice si son 15 % en masa o 15 g/L. El valor por defecto
+    # es `porcentaje_masa` porque **es lo que siempre fueron** las riquezas guardadas: no se reinterpreta
+    # nada, se dice lo que eran.
+    base_de_la_riqueza: str = "porcentaje_masa"
+    # **La densidad** -kilos por litro-: el dato que hace falta para pasar de un porcentaje **en masa** a
+    # kilos cuando el producto se mide **en litros**. Si no consta, `None` -y con `None` NO se calcula-.
+    densidad_kg_por_litro: float | None = Field(default=None, gt=0)
+    # **La fuente** de donde salio la composicion. El criterio manda conservarla: una riqueza sin fuente no
+    # se puede comprobar.
+    fuente_de_la_riqueza: str | None = None
+
+    @model_validator(mode="after")
+    def _la_riqueza_cabe_en_su_base(self):
+        """***El tope depende de la base***, que es lo que `le=100` no sabia.
+
+        Un **porcentaje en masa** no puede pasar de 100 -no hay mas del 100 % de nada-, pero **una
+        concentracion si**: 150 g/L o 20 kg/hl son normales, y el tope viejo los rechazaba.
+        """
+        if self.base_de_la_riqueza == "porcentaje_masa":
+            for cual in ("riqueza_n", "riqueza_p", "riqueza_k", "riqueza_p2o5", "riqueza_k2o"):
+                valor = getattr(self, cual)
+                if valor is not None and valor > 100:
+                    raise ValueError(f"{cual} es un porcentaje en masa y no puede pasar de 100")
+        return self
 
 
 class FertilizanteSalida(SalidaBase):
@@ -499,6 +533,16 @@ class FertilizanteSalida(SalidaBase):
     riqueza_n: float | None
     riqueza_p: float | None
     riqueza_k: float | None
+    # ***Los cinco de la riqueza*** (CRM-07, 17/10/2026). ***Y tienen que SALIR en la respuesta***, que es
+    # lo que la suite entera exigio por dos sitios: *una columna que no sale en la respuesta es un dato que el
+    # agricultor **no puede mandar de vuelta*** -`_columnas_que_una_correccion_no_toca`-, y el formulario de
+    # corregir se rellena con lo que devuelve la API. Sin esto, corregir los kilos de un abono **borraria** su
+    # base, su densidad y sus especies quimicas.
+    base_de_la_riqueza: str | None = None
+    densidad_kg_por_litro: float | None = None
+    fuente_de_la_riqueza: str | None = None
+    riqueza_p2o5: float | None = None
+    riqueza_k2o: float | None = None
 
 
 class AplicadorEntrada(EntradaBase):
@@ -832,6 +876,35 @@ class AveriaSalida(SalidaBase):
         return self
 
 
+class LecturaDeContadorEntrada(EntradaBase):
+    """Una lectura del cuenta-horas: **fecha, valor y unidad**, los tres (CRM-07 #8, 14/10/2026).
+
+    `es_sustitucion` marca la lectura en la que **se cambio el contador**: esa ya es del contador nuevo, y
+    por eso el acumulado **no baja** al cambiarlo. La `unidad` es parte del dato: «1.200» no dice si son
+    horas o kilometros, y las dos cosas no se suman entre si.
+    """
+
+    fecha: dt.date
+    valor: float
+    unidad: str = Field(default="horas", max_length=20)
+    es_sustitucion: bool = False
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(default=None, max_length=80)
+
+
+class LecturaDeContadorSalida(SalidaBase):
+    id: int
+    fecha: dt.date
+    valor: float
+    unidad: str
+    es_sustitucion: bool
+    notas: str | None
+    anulado: bool
+    motivo_anulacion: str | None
+    # La fecha, ya escrita para la pantalla: el agricultor lee «12/05/2026», no «2026-05-12».
+    fecha_texto: str | None = None
+
+
 class FuenteDeLaObligacionSalida(BaseModel):
     """De dónde sale una obligación: la norma que tenemos localizada, y lo que falta.
 
@@ -972,6 +1045,12 @@ class FichaDeUnaMaquinaSalida(BaseModel):
     inspecciones: list[InspeccionSalida]
     averias: list[AveriaSalida]
     avisos: list[AvisoDeMaquinaSalida]
+    # **El cuenta-horas** (CRM-07 #8): sus lecturas -fecha, valor y unidad- y **la cuenta que se puede
+    # afirmar**, que la hace `maquinaria.lo_que_marca_el_contador` (pura, con sus pruebas). Va `contador`
+    # como `dict` a proposito: dentro lleva `subido`, `sin_decir`, `lo_que_falta` y los tramos, y
+    # tiparlo todo aqui seria duplicar la forma de la funcion que ya esta probada.
+    lecturas: list[LecturaDeContadorSalida] = []
+    contador: dict = {}
     resumen: ResumenDeLaMaquinaSalida
     que_falta: list[dict] = []
     fuente_de_las_obligaciones: dict[str, FuenteDeLaObligacionSalida] = {}
@@ -1030,6 +1109,10 @@ class TratamientoEntrada(EntradaBase):
     medidas: list[str] = Field(default_factory=list)
     incidencias: str | None = None
     observaciones: str | None = None
+    # ***La version que tenia quien esta corrigiendo*** (CRM-08, 17/10/2026). Si viene y el apunte ha
+    # cambiado desde entonces, **no se escribe nada** y la puerta contesta **409**: *«no ultimo escritor
+    # silencioso»*. Si no viene, no se comprueba nada -es lo que deja encenderlo puerta a puerta-.
+    version_esperada: int | None = Field(default=None, ge=0)
 
 
 class TratamientoSalida(SalidaBase):
@@ -1098,6 +1181,9 @@ class TratamientoSalida(SalidaBase):
     operadores_expuestos: int | None = None
     incidencias: str | None = None
     observaciones: str | None = None
+    # ***La version del apunte*** (CRM-08, 17/10/2026), para que el formulario la tenga y la mande de vuelta
+    # al corregir. `None` es «no se ha calculado», que es mejor que un cero que diria «nadie lo ha tocado».
+    version: int | None = None
 
 
 # --------------------------------------------------------------------------
@@ -1116,6 +1202,13 @@ class FertilizacionEntrada(EntradaBase):
     # —los sacos— y lo que el contrato llama «600 kg en 3 ha». Si vienen, **el kg/ha se deduce**
     # y no se escribe a mano: *un numero escrito a mano es una cuenta que puede estar mal*.
     cantidad_total_kg: float | None = Field(default=None, gt=0)
+    # ***En que se cuenta la cantidad*** (CRM-07, 17/10/2026): un solido en **kilos** y un liquido en
+    # **litros**. Por defecto `kg`, porque es lo que eran todos los apuntes de antes.
+    unidad_del_producto: str = "kg"
+    # ***La base de la riqueza*** y **la densidad**: sin ellas, un liquido a 15 % en masa se multiplicaba como
+    # si el porcentaje fuera sobre kilos, y salia **diez veces mas** nitrogeno del que se echo.
+    base_de_la_riqueza: str = "porcentaje_masa"
+    densidad_kg_por_litro: float | None = Field(default=None, gt=0)
     # Y el kg/ha sigue admitiendose: es el camino de siempre, y **lo ya guardado no se toca**.
     kg_ha_producto: float | None = Field(default=None, gt=0)
     modo_aplicacion: str | None = None
@@ -1153,6 +1246,10 @@ class FertilizacionSalida(SalidaBase):
     riqueza_k: float | None
     kg_ha_producto: float
     cantidad_total_kg: float
+    # ***En que se conto la cantidad*** y **la base de la riqueza**: son parte del dato, no adorno. Sin ellos,
+    # «20» no dice si son kilos o litros, ni si el «15» es un porcentaje en masa o gramos por litro.
+    unidad_del_producto: str = "kg"
+    base_de_la_riqueza: str = "porcentaje_masa"
     uf_n_ha: float | None
     uf_p_ha: float | None
     uf_k_ha: float | None
@@ -2554,6 +2651,10 @@ class FacturaEntrada(EntradaBase):
         default=None, max_length=_cabe_en_la_columna(models.Factura, "clave_de_reenvio")
     )
     lineas: list[LineaDeFacturaEntrada] = Field(default_factory=list)
+    # ***La version que tenia quien esta corrigiendo*** (CRM-08, 17/10/2026). Si viene y el apunte ha
+    # cambiado desde entonces, **no se escribe nada** y la puerta contesta **409**: *«no ultimo escritor
+    # silencioso»*. Si no viene, no se comprueba nada -es lo que deja encenderlo puerta a puerta-.
+    version_esperada: int | None = Field(default=None, ge=0)
 
 
 class LineaDeFacturaSalida(SalidaBase):
@@ -2605,6 +2706,9 @@ class FacturaSalida(SalidaBase):
     # vez, o por qué no se ha podido comprobar si ya estaba.
     avisos: list[str] = Field(default_factory=list)
     lineas: list[LineaDeFacturaSalida] = Field(default_factory=list)
+    # ***La version del apunte*** (CRM-08, 17/10/2026), para que el formulario la tenga y la mande de vuelta
+    # al corregir. `None` es «no se ha calculado», que es mejor que un cero que diria «nadie lo ha tocado».
+    version: int | None = None
 
 
 class LineaDeFacturaLeidaSalida(SalidaBase):
@@ -4284,3 +4388,52 @@ class ReprogramarEntrada(EntradaBase):
 
     fecha_prevista: dt.date
     motivo: str | None = Field(default=None, max_length=500)
+
+
+class ReservaDeMaquinaEntrada(BaseModel):
+    """Una reserva de una maquina: **maquina, intervalo, responsable, trabajo y estado** (CRM-07 #9).
+
+    El **intervalo** va en **hora local de la finca y sin huso** -el porque esta escrito en la cabecera de
+    `app/reservas.py`-, y tiene que terminar **despues** de empezar: una reserva de duracion cero no es una
+    reserva.
+
+    `responsable_id` y `tarea_id` pueden no venir: una reserva para «el tractor el martes» es util aunque no
+    se sepa aun quien la coge, y **poder decir «no lo se» es la mitad de este programa**.
+    """
+
+    desde: dt.datetime
+    hasta: dt.datetime
+    responsable_id: int | None = None
+    tarea_id: int | None = None
+    estado: str = Field(default="pedida", max_length=20)
+    notas: str | None = None
+    clave_de_reenvio: str | None = Field(default=None, max_length=80)
+
+
+class ReservaDeMaquinaSalida(BaseModel):
+    """Una reserva tal como sale: con **lo que se puede afirmar de ella** y nada mas."""
+
+    id: int
+    maquina_id: int
+    desde: dt.datetime
+    hasta: dt.datetime
+    # Los textos se calculan en el servidor, que es donde sabe el formato de la casa.
+    desde_texto: str = ""
+    hasta_texto: str = ""
+    responsable_id: int | None = None
+    tarea_id: int | None = None
+    estado: str
+    notas: str | None = None
+    # ***Y QUIEN LA COGE Y PARA QUE, en texto*** (17/10/2026). *El servidor ya mandaba las fechas
+    # escritas -«es donde sabe el formato de la casa»- y faltaba lo mismo para las otras dos: sin esto la
+    # pantalla tendria los **identificadores** y no los nombres, o tendria que pedir dos listas mas para
+    # poder decir «la coge Juan» y «es para la siembra».*
+    #
+    # ***Y cuando no consta, lo dice con su palabra*** -«sin decir quien la coge»-: *un hueco en blanco
+    # pareceria un descuido de la pantalla en vez de un dato que nadie apunto.*
+    responsable_texto: str = ""
+    tarea_texto: str = ""
+    estado_texto: str = ""
+    # **Anular no es borrar**: la reserva se queda tachada con su motivo y **deja de ocupar** la maquina.
+    anulada: bool
+    motivo_anulacion: str | None = None

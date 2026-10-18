@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
-from . import catalogos, legal, nitratos_cyl, textos
+from . import catalogos, legal, nitratos_cyl, superficies, textos
 
 
 @dataclass(frozen=True)
@@ -122,14 +122,10 @@ def _superficie_del_grupo(grupo) -> float | None:
     parte, y con ella se decidiría si el apunte cupo dentro del grupo. Cuando pasa eso,
     `_grupo_con_superficie_a_medias` lo dice para que quien llama avise en vez de callar.
     """
-    if grupo is None:
-        return None
-    parcelas = getattr(grupo, "parcelas", None) or []
-    if not parcelas:
-        return None
-    if any(p.superficie_ha is None for p in parcelas):
-        return None
-    return round(sum(p.superficie_ha for p in parcelas), 4)
+    # ***La cuenta vive en `superficies.py`***, que es donde esta escrita **una sola vez** (17/10/2026).
+    # Aqui la tenia copiada, letra por letra, igual que en `validaciones`: dos copias de una regla son dos
+    # sitios donde puede dejar de cumplirse.
+    return superficies.la_superficie_de_un_grupo(grupo)
 
 
 def _grupo_con_superficie_a_medias(grupo) -> bool:

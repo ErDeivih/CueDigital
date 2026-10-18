@@ -47,6 +47,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from .dinero import Dinero, Precio
+# ***Las constantes de la riqueza*** (`PORCENTAJE_EN_MASA`, `KILOS`...): *la base y la unidad del
+# abono viven en `app/nutrientes.py`, que es donde esta escrito **una sola vez** que un porcentaje en
+# masa no es lo mismo que unos gramos por litro.*
+from . import nutrientes
 
 
 class Base(DeclarativeBase):
@@ -455,6 +459,35 @@ class Fertilizante(Base):
     riqueza_n: Mapped[float | None] = mapped_column(Float, default=None)
     riqueza_p: Mapped[float | None] = mapped_column(Float, default=None)
     riqueza_k: Mapped[float | None] = mapped_column(Float, default=None)
+    # ── ***Los cinco de la riqueza*** (CRM-07, 17/10/2026) ──
+    #
+    # *La cola pide, literal: «***Unidades incompatibles no se convierten sin equivalencia acreditada***».
+    # Sin la **base**, «15» no dice si son 15 % en masa o 15 g/L, y sin la **densidad** no se puede pasar de
+    # un porcentaje en masa a kilos cuando el producto se mide en litros -que es el error de diez veces que
+    # `app/nutrientes.py` existe para impedir-. Y sin la **especie quimica** con su nombre, el fosforo va
+    # como P donde la etiqueta dice P2O5.*
+    #
+    # ***Los cinco salen en `FertilizanteSalida`***, y no por gusto: *una columna que no sale en la
+    # respuesta es un dato que el agricultor **no puede mandar de vuelta**, y el formulario de corregir se
+    # rellena con lo que devuelve la API. **Sin esto, corregir los kilos de un abono borraria su base, su
+    # densidad y sus especies quimicas.***
+    #
+    # **`base_de_la_riqueza` nace en `porcentaje_masa`** porque **es lo que siempre fueron** las riquezas
+    # guardadas: no se reinterpreta nada, se dice lo que eran.
+    base_de_la_riqueza: Mapped[str] = mapped_column(
+        String(30),
+        default=nutrientes.PORCENTAJE_EN_MASA,
+        server_default=nutrientes.PORCENTAJE_EN_MASA,
+    )
+    # Kilos por litro. `None` es «no consta», **y con `None` NO se calcula**.
+    densidad_kg_por_litro: Mapped[float | None] = mapped_column(Float)
+    # **De donde salio la composicion.** *Una riqueza sin fuente no se puede comprobar.*
+    fuente_de_la_riqueza: Mapped[str | None] = mapped_column(String(40))
+    # **La especie quimica, con su nombre**: en la etiqueta el fosforo va como **P2O5** y el potasio como
+    # **K2O**. `riqueza_p` y `riqueza_k` **se quedan** -el criterio manda mantener las columnas antiguas
+    # compatibles-, y estas dos dicen lo mismo con su nombre bueno.
+    riqueza_p2o5: Mapped[float | None] = mapped_column(Float)
+    riqueza_k2o: Mapped[float | None] = mapped_column(Float)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
@@ -623,6 +656,30 @@ class Maquina(Base):
 
     __tablename__ = "maquinas"
 
+    # ***REENVIAR NO PUEDE APUNTAR DOS maquinas*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las maquinas se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_maquina_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
     nombre: Mapped[str] = mapped_column(String(120))
@@ -768,6 +825,31 @@ class InspeccionDeMaquina(Base):
 
     __tablename__ = "inspecciones_de_maquina"
 
+    # ***REENVIAR NO PUEDE APUNTAR DOS inspecciones*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las inspecciones se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_inspeccion_de_maquina_reenvio",
+            "explotacion_id",
+            "maquina_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
     maquina_id: Mapped[int] = mapped_column(ForeignKey("maquinas.id"), index=True)
@@ -809,6 +891,31 @@ class AveriaDeMaquina(Base):
 
     __tablename__ = "averias_de_maquina"
 
+    # ***REENVIAR NO PUEDE APUNTAR DOS averias*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las averias se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_averia_de_maquina_reenvio",
+            "explotacion_id",
+            "maquina_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
     maquina_id: Mapped[int] = mapped_column(ForeignKey("maquinas.id"), index=True)
@@ -845,6 +952,134 @@ class AveriaDeMaquina(Base):
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class LecturaDeContador(Base):
+    """**Una foto del cuenta-horas en una fecha** (CRM-07 #8, 14/10/2026).
+
+    El encargo lo pide asi: *«lecturas de contador fechadas y unidad; correcciones auditadas,
+    sustituciones de contador, datos faltantes. ***No inventar horas ni reducir acumulados
+    silenciosamente***»*. Esto es el apunte; el acumulado se **calcula** al leerlo (`app/maquinaria.py`),
+    nunca se guarda.
+
+    **`unidad` es parte del dato, no un adorno**: *«1.200» no dice si son horas o kilometros, y las dos
+    cosas **no se suman entre si***. Cambiar la unidad de una lectura es cambiar lo que dice.
+
+    **`es_sustitucion` marca la lectura en la que se cambio el contador**: *esa ya es del contador nuevo,
+    y por eso el acumulado **no baja** al cambiarlo. Sin esa marca, poner un contador a cero pareceria un
+    retroceso y el programa tendria que elegir entre mentir o perder el tramo anterior.*
+
+    ***Reconstruida el 17/10/2026*** *tras perderse el fichero: la definicion se ha recompuesto desde el
+    esquema (`LecturaDeContadorEntrada`/`Salida`), desde lo que usan la puerta y las pruebas, y desde el
+    `__table_args__` original -que si se conserva literal-. **Los comentarios de dentro eran mas largos**.*
+    """
+
+    __tablename__ = "lecturas_de_contador"
+
+    __table_args__ = (
+        # ***REENVIAR NO PUEDE APUNTAR DOS LECTURAS*** (CRM-07 #8, 17/10/2026). El agricultor toca dos veces
+        # con los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay
+        # cobertura: por eso el navegador manda una clave por **accion**. Hasta hoy habia un **indice no
+        # unico** y una consulta de «¿ya esta?» antes de insertar, y eso deja una ventana: dos peticiones
+        # **simultaneas** no se ven la una a la otra y acaban apuntando dos lecturas. Con el indice unico,
+        # la que pierde recibe un `IntegrityError`, se deshace lo intentado y **devuelve la que gano**.
+        #
+        # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): la mayoria de las lecturas se
+        # apuntan **desde la pantalla**, sin clave de reenvio, y sin el `WHERE` todas esas filas chocarian
+        # entre si por tener `NULL`. Es el mismo indice que ya tiene una cuenta bancaria.
+        #
+        # Y lleva **`maquina_id`** porque el alcance de la clave es **por maquina**: la misma clave en dos
+        # maquinas distintas son dos acciones distintas.
+        Index(
+            "uq_lectura_de_contador_reenvio",
+            "explotacion_id",
+            "maquina_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    maquina_id: Mapped[int] = mapped_column(ForeignKey("maquinas.id"), index=True)
+    # La fecha del dia en que se leyo el contador. Es obligatoria: una lectura sin fecha no dice nada.
+    fecha: Mapped[dt.date] = mapped_column(Date, index=True)
+    # **El numero que marcaba**, sin formatear y sin redondear.
+    valor: Mapped[float] = mapped_column(Float)
+    # `horas` o `kilometros` (ver `app/maquinaria.py`). **Parte del dato**: las dos no se suman.
+    unidad: Mapped[str] = mapped_column(String(20), default="horas")
+    # **La lectura en la que se cambio el contador**: el acumulado no baja al cambiarlo.
+    es_sustitucion: Mapped[bool] = mapped_column(Boolean, default=False)
+    notas: Mapped[str | None] = mapped_column(Text)
+    # El identificador de la peticion, para que el movil pueda reintentar sin apuntar dos veces la misma
+    # lectura cuando vuelve la cobertura.
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(80), index=True)
+    # Anular no es borrar: se queda tachada, con su motivo, y deja de contar.
+    anulado: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text)
+    creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+
+class ReservaDeMaquina(Base):
+    """**Una maquina reservada para un trabajo, de tal fecha y hora a tal fecha y hora** (CRM-07 #9).
+
+    El encargo lo pide asi: *«reservas con maquina, intervalo, responsable, trabajo y estado; conflictos
+    de solape en servidor, anulaciones e indisponibilidad por averia»*. Esto es el **apunte**.
+
+    **Las reglas de que dos no se pisen NO viven aqui**: viven en `app/reservas.py`, que es puro, se prueba
+    sin base de datos y dice **el motivo** de cada «no» -y distingue «no se puede» de «no se sabe»-. Aqui
+    solo esta lo que se guarda, y la puerta es quien pregunta antes de guardar.
+
+    ***El intervalo va en hora LOCAL DE LA FINCA y sin huso***, y esta dicho con su motivo en la cabecera de
+    `reservas.py`: el agricultor dice «el martes de 9 a 11» y eso es lo que se guarda. Cambiarlo a UTC haria
+    que la reserva se viera movida una hora en verano.
+
+    `anulada` es **una columna aparte**, no un estado: en esta casa lo anulado se queda en el cuaderno
+    tachado -como una lectura del contador o una averia- y **deja de ocupar** la maquina.
+    """
+
+    __tablename__ = "reservas_de_maquina"
+    __table_args__ = (
+        # ***Reenviar no puede apuntar dos reservas***, por el mismo motivo que en las lecturas del contador:
+        # el movil reintenta cuando no hay cobertura y el agricultor toca dos veces con los guantes. Indice
+        # **parcial** porque la mayoria de las reservas se apuntan desde la pantalla, sin clave.
+        Index(
+            "uq_reserva_de_maquina_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+        # **Para buscar los solapes**: la puerta pregunta por una maquina y un tramo de tiempo, y sin este
+        # indice esa pregunta recorre la tabla entera.
+        Index("ix_reservas_por_maquina_y_fecha", "maquina_id", "desde"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    maquina_id: Mapped[int] = mapped_column(ForeignKey("maquinas.id"), index=True)
+    # **El intervalo**, en hora local y sin huso (ver la cabecera de `app/reservas.py`).
+    desde: Mapped[dt.datetime] = mapped_column(DateTime)
+    hasta: Mapped[dt.datetime] = mapped_column(DateTime)
+    # **Quien la va a usar** y **para que trabajo**. Los dos pueden no saberse: una reserva para «el tractor
+    # el martes» es util aunque no se haya apuntado aun quien la coge, y decir «no lo se» es la mitad de
+    # este programa.
+    responsable_id: Mapped[int | None] = mapped_column(
+        ForeignKey("contactos.id"), nullable=True
+    )
+    tarea_id: Mapped[int | None] = mapped_column(ForeignKey("tareas.id"), nullable=True)
+    estado: Mapped[str] = mapped_column(String(20), default="pedida")
+    notas: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # **Anular no es borrar**: se queda tachada con su motivo y deja de ocupar.
+    anulada: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    clave_de_reenvio: Mapped[str | None] = mapped_column(String(80), index=True)
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
 
 
 # --------------------------------------------------------------------------
@@ -2039,6 +2274,29 @@ class RegistroFertilizacion(Base):
     anulado: Mapped[bool] = mapped_column(Boolean, default=False)
     motivo_anulacion: Mapped[str | None] = mapped_column(Text)
 
+    # ***Y en que se conto el producto, y con que base se declaro la riqueza*** (CRM-07, 17/10/2026).
+    #
+    # *La cantidad de un abono puede ir en **kilos o en litros** -`unidad_del_producto`-, y la riqueza puede
+    # venir en **% en masa**, en **gramos por litro** o en **kilos por hectolitro** -`base_de_la_riqueza`-.
+    # **Sin las dos, la cuenta de los nutrientes no se puede hacer**: es lo que `app/nutrientes.py` necesita
+    # para no confundir 100 g/L con el 100 %.*
+    #
+    # **Nacen en `kg` y en `porcentaje_masa`** porque **es lo que eran todos los apuntes de antes**: la
+    # columna se llamaba `cantidad_total_kg` y la riqueza siempre fue un porcentaje en masa. *No se
+    # reinterpreta lo guardado; se dice lo que era.*
+    #
+    # Y `densidad_kg_por_litro` es el dato que hace falta para pasar de un porcentaje **en masa** a kilos
+    # cuando el producto se mide **en litros**. *Si no consta, `None` -y con `None` NO se calcula: se dice
+    # que falta-.*
+    unidad_del_producto: Mapped[str] = mapped_column(
+        String(10), default=nutrientes.KILOS, server_default=nutrientes.KILOS
+    )
+    base_de_la_riqueza: Mapped[str] = mapped_column(
+        String(30),
+        default=nutrientes.PORCENTAJE_EN_MASA,
+        server_default=nutrientes.PORCENTAJE_EN_MASA,
+    )
+    densidad_kg_por_litro: Mapped[float | None] = mapped_column(Float)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
     actualizado_en: Mapped[dt.datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
@@ -2054,6 +2312,30 @@ class Labor(Base):
     """Siembra, plantación, riego, cosecha y demás trabajos del campo."""
 
     __tablename__ = "labores"
+
+    # ***REENVIAR NO PUEDE APUNTAR DOS labores*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las labores se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_labor_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
@@ -2169,6 +2451,30 @@ class TrabajoPrevisto(Base):
     """
 
     __tablename__ = "trabajos_previstos"
+
+    # ***REENVIAR NO PUEDE APUNTAR DOS trabajos previstos*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las trabajos previstos se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_trabajo_previsto_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
@@ -4081,6 +4387,30 @@ class Subvencion(Base):
     """
 
     __tablename__ = "subvenciones"
+
+    # ***REENVIAR NO PUEDE APUNTAR DOS subvenciones*** (CRM-05, 17/10/2026). *El agricultor toca dos veces con
+    # los guantes, la respuesta se puede perder por el camino y el movil reintenta cuando no hay cobertura:
+    # por eso el navegador manda una clave por **accion**.*
+    #
+    # ***La consulta de «¿ya esta?» que ya habia NO cierra una carrera***: *dos peticiones **simultaneas**
+    # no se ven la una a la otra, las dos encuentran la clave libre y acaban apuntando dos filas. **Lo que
+    # la cierra es el indice**, y se comprueba **haciendolo fallar** -que es la unica forma de demostrar
+    # que esta-.*
+    #
+    # ***Parcial a proposito*** (`WHERE clave_de_reenvio IS NOT NULL`): *la mayoria de las subvenciones se apuntan
+    # **desde la pantalla**, sin clave, y sin el `WHERE` todas esas filas chocarian entre si por tener
+    # `NULL`. Es el mismo indice que ya tienen las ventas, los cobros, las facturas y las lecturas del
+    # cuenta-horas.*
+    __table_args__ = (
+        Index(
+            "uq_subvencion_reenvio",
+            "explotacion_id",
+            "clave_de_reenvio",
+            unique=True,
+            sqlite_where=text("clave_de_reenvio IS NOT NULL"),
+            postgresql_where=text("clave_de_reenvio IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)

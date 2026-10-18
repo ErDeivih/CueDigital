@@ -40,7 +40,10 @@ técnica y la fecha del papel. Ese es el «lo dice y lo pregunta» del contrato.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
 import datetime as dt
+import math
 
 # --------------------------------------------------------------------------
 # Las cinco obligaciones, y sus estados
@@ -705,6 +708,207 @@ def resumen_de_una_maquina(
     }
 
 
+def formatea_con_hora(cuando) -> str:
+    """La fecha **y la hora**, como las lee una persona: `17/10/2026 a las 9:00`.
+
+    Hace falta para las **reservas** (CRM-07 #9): un intervalo sin hora no dice nada -«el martes» no es una
+    reserva, son muchas-, y `formatea` solo saca el dia. Se pone al lado de `formatea` para que las dos
+    fechas de esta casa se escriban en el mismo sitio y no cada una a su manera.
+    """
+    if cuando is None:
+        return ""
+    return f"{cuando.day:02d}/{cuando.month:02d}/{cuando.year} a las {cuando.hour}:{cuando.minute:02d}"
+
+
 def formatea(fecha: dt.date | None) -> str:
     """La fecha como se lee en España, o el texto vacío si no hay."""
     return fecha.strftime("%d/%m/%Y") if fecha else ""
+
+# ---------------------------------------------------------------------------
+# El cuenta-horas: lecturas, no un numero suelto (CRM-07 #8)
+# ---------------------------------------------------------------------------
+
+
+# Las unidades que admite un contador de maquina. **La unidad forma parte del dato**: «1.200» no dice
+# nada, y un contador de horas y uno de kilometros no se suman ni se comparan.
+UNIDADES_DEL_CONTADOR = ("horas", "kilometros")
+
+
+def _es_un_valor_de_contador(valor: Any) -> bool:
+    """Un valor de contador: un numero **finito y no negativo**. Lo demas no es una lectura.
+
+    Un contador no marca -3 ni infinito. Se comprueba **aqui** -y no solo en el esquema- porque esta
+    funcion es la que suma, y sumar un disparate es la forma mas rapida de ensenar un numero que nadie ha
+    dicho.
+    """
+    if valor is None or isinstance(valor, bool):
+        return False
+    try:
+        numero = float(valor)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(numero) and numero >= 0
+
+
+def lo_que_marca_el_contador(lecturas: Sequence[Mapping[str, Any]]) -> dict:
+    """**Cuanto ha subido el contador**, y que falta para poder decirlo (CRM-07 #8, 14/10/2026).
+
+    El encargo lo pide con estas palabras: *«lecturas de contador fechadas y unidad; correcciones
+    auditadas, sustitucion del contador, datos faltantes. ***No inventar horas ni reducir acumulados
+    silenciosamente***»*. Y esto es eso, sin base de datos de por medio: entra una lista de lecturas y
+    sale lo que se puede afirmar.
+
+    **Una lectura es fecha + valor + unidad**, y el acumulado de un tramo es `ultima - primera`, que
+    **solo se puede decir si las dos constan y el tramo cuadra**. Los casos que importan son los que casi
+    nadie trata:
+
+      * **Sin ninguna lectura** el contador no ha subido cero: **no se sabe**. `subido` sale 0 porque es
+        una suma y una suma de nada es nada, **y `cobertura_incompleta` lo dice**, que es lo que impide
+        que la pantalla ensene un «0 horas» como si fuera un dato. Es la regla de
+        `sumando_lo_que_se_sabe`: ***nunca `(valor or 0)`***.
+      * **Con una sola lectura** se sabe lo que **marca**, pero no lo que ha subido.
+      * ***Un contador no puede ir para atras, y se mira PASO A PASO***: 1.000, 1.200, 1.100, 1.300
+        termina **mas arriba** de donde empezo **y por el medio ha bajado**, que es imposible. Comparando
+        solo los extremos salian 300 horas **y ninguna incidencia** (lo reprodujo la revision del
+        16/10/2026). Un tramo asi **no se suma**: podria ser un error de tecleo o un contador cambiado sin
+        decirlo, y elegir una de las dos historias es inventarsela.
+      * ***Una sustitucion del contador corta el tramo***: la maquina paso a marcar desde cero y el
+        acumulado **no baja** -lo de antes se suma y se dice, que es justo lo que el encargo prohibe que
+        pase solo-.
+      * ***Una lectura que no vale CIERRA el tramo donde estaba***, no lo tira: con 1.000, 1.200 y un
+        hueco, las 200 horas del tramo anterior **se conservan**, y el trecho que queda sin medir se
+        cuenta aparte.
+      * **Una lectura anulada no cuenta**, como todo lo anulado de esta casa.
+      * **Y las unidades no se mezclan**: si no son todas la misma se dice, en vez de sumar peras con
+        manzanas.
+
+    Devuelve `{"subido", "cuantas", "sin_decir", "cobertura_incompleta", "incoherentes", "unidad",
+    "marca", "tramos", "lo_que_falta"}`. **El subtotal y su cobertura son dos cosas distintas**: lo que
+    se puede afirmar viaja en `subido`, y `cobertura_incompleta` dice que hay tramos que se quedan fuera.
+    """
+    suyas = [una for una in (lecturas or []) if not una.get("anulado")]
+    cuantas = len(suyas)
+    if not suyas:
+        return {
+            "subido": 0.0,
+            "cuantas": 0,
+            "sin_decir": 1,
+            "cobertura_incompleta": True,
+            "incoherentes": [],
+            "unidad": None,
+            "marca": None,
+            "tramos": [],
+            "lo_que_falta": ["no_hay_ninguna_lectura"],
+        }
+
+    unidades = {str(una.get("unidad") or "").strip() for una in suyas}
+    unidades.discard("")
+    if len(unidades) > 1:
+        return {
+            "subido": None,
+            "cuantas": cuantas,
+            "sin_decir": 0,
+            "cobertura_incompleta": True,
+            "incoherentes": [],
+            "unidad": None,
+            "marca": None,
+            "tramos": [],
+            "lo_que_falta": ["las_lecturas_no_son_de_la_misma_unidad"],
+        }
+    unidad = next(iter(unidades), None)
+
+    ordenadas = sorted(
+        suyas, key=lambda una: (una.get("fecha") or dt.date.min, int(una.get("id") or 0))
+    )
+
+    subido = 0.0
+    sin_decir = 0
+    incoherentes: list[dict] = []
+    tramos: list[dict] = []
+
+    def _apunta_el_tramo(del_tramo: list) -> None:
+        """Cierra un tramo: lo suma si **cuadra entero**, y si no lo deja dicho."""
+        nonlocal subido, sin_decir
+        if not del_tramo:
+            return
+        if len(del_tramo) == 1:
+            # Un tramo de **una sola lectura** no se puede medir: no hay con que compararlo.
+            sin_decir += 1
+            return
+        # ***Paso a paso, NO solo los extremos.*** Un contador que baja en medio no cuadra aunque acabe
+        # mas arriba de donde empezo, y restando los extremos eso se pierde.
+        for antes, ahora in zip(del_tramo, del_tramo[1:]):
+            if float(ahora["valor"]) < float(antes["valor"]):
+                incoherentes.append(
+                    {
+                        "desde": antes.get("fecha"),
+                        "hasta": ahora.get("fecha"),
+                        "subido": round(float(ahora["valor"]) - float(antes["valor"]), 3),
+                        "motivo": "una_lectura_va_para_atras_sin_sustitucion",
+                    }
+                )
+                # **Y el tramo entero queda sin afirmar**: con una lectura que no cuadra, el total del
+                # tramo no se puede dar por bueno.
+                return
+        subido += float(del_tramo[-1]["valor"]) - float(del_tramo[0]["valor"])
+        tramos.append(
+            {
+                "desde": del_tramo[0].get("fecha"),
+                "hasta": del_tramo[-1].get("fecha"),
+                "subido": round(float(del_tramo[-1]["valor"]) - float(del_tramo[0]["valor"]), 3),
+                "por_sustitucion": False,
+            }
+        )
+
+    tramo: list = []
+    for una in ordenadas:
+        if not _es_un_valor_de_contador(una.get("valor")):
+            if tramo:
+                # ***La lectura que no vale CIERRA el tramo donde estaba*** (15/10/2026). Antes se tiraba
+                # -`primera = None` y a otra cosa- y asi se perdia lo que SI se sabia de el: con 1.000,
+                # 1.200 y despues un hueco, las 200 horas desaparecian. Y ademas **se cuenta el hueco**,
+                # porque entre esta lectura y la siguiente que valga hay un trecho que nadie ha medido.
+                _apunta_el_tramo(tramo)
+                tramo = []
+                sin_decir += 1
+            continue
+        if una.get("es_sustitucion"):
+            # ***Esta lectura ya es del contador NUEVO***: cierra el tramo viejo -hasta la lectura
+            # ANTERIOR, no hasta esta- y abre uno nuevo con ella.
+            if tramo:
+                _apunta_el_tramo(tramo)
+            tramo = [una]
+            tramos.append(
+                {"desde": una.get("fecha"), "hasta": None, "subido": None, "por_sustitucion": True}
+            )
+            continue
+        tramo.append(una)
+    if tramo:
+        _apunta_el_tramo(tramo)
+
+    con_valor = [una for una in ordenadas if _es_un_valor_de_contador(una.get("valor"))]
+    malas = [
+        una
+        for una in ordenadas
+        if una.get("valor") is not None and not _es_un_valor_de_contador(una.get("valor"))
+    ]
+    falta: list[str] = []
+    if len(con_valor) < 2:
+        falta.append("hace_falta_otra_lectura_para_saber_cuanto_ha_subido")
+    elif sin_decir:
+        falta.append("hay_tramos_sin_lectura_al_final")
+    if incoherentes:
+        falta.append("una_lectura_va_para_atras_sin_sustitucion")
+    if malas:
+        falta.append("hay_lecturas_que_no_son_un_numero_de_contador")
+    return {
+        "subido": round(subido, 3),
+        "cuantas": cuantas,
+        "sin_decir": sin_decir,
+        "cobertura_incompleta": bool(sin_decir or incoherentes or malas),
+        "incoherentes": incoherentes,
+        "unidad": unidad,
+        "marca": con_valor[-1].get("valor") if con_valor else None,
+        "tramos": tramos,
+        "lo_que_falta": falta,
+    }

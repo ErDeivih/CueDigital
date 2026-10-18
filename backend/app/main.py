@@ -59,6 +59,8 @@ from .routers import (
     tareas_api,
     fusion_api,
     terceros_api,
+    panel_api,
+    pac_api,
 )
 
 # Los tipos de fichero se declaran a mano A PROPÓSITO.
@@ -246,6 +248,13 @@ app.include_router(bandeja_api.router)
 # en lo que ya está guardado. Hoy busca en las tierras (por nombre y por referencia oficial); los gastos,
 # los papeles, las personas y las máquinas son la vuelta siguiente (está dicho en su fichero).
 app.include_router(buscar_api.router)
+
+# **El panel** (CRM-11, 17/10/2026): *las metricas, con su fuente y su
+# cobertura. Un numero que no puede decir de donde sale no se ensena.*
+app.include_router(panel_api.router)
+
+# **La preparacion de la PAC** (CRM-09): *el paquete por recinto, con lo que falta dicho.*
+app.include_router(pac_api.router)
 
 
 @app.get("/health", tags=["sistema"])

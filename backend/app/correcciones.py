@@ -42,10 +42,10 @@ from __future__ import annotations
 import datetime as dt
 
 from sqlalchemy import inspect as inspeccionar
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from . import models
+from . import models, textos
 # Lo que no se copia nunca de un registro preparado a uno guardado. El identificador y la finca
 # no se tocan (una corrección no puede cambiar de finca ni de fila), y el estado de anulación
 # tampoco: corregir un apunte anulado no lo resucita, y para eso está volver a apuntarlo.
@@ -124,6 +124,83 @@ def apuntar(
     _apuntar_en_la_auditoria(db, explotacion_id, usuario_id, entidad, entidad_id, accion, datos)
 
 
+class VersionQueNoCuadra(Exception):
+    """***Alguien cambio el registro mientras lo tenias abierto*** (CRM-08, 17/10/2026).
+
+    El ticket lo pide con estas palabras: *«edicion concurrente: **version esperada** y **resolucion
+    explicita**; ***no ultimo escritor silencioso***»*.
+
+    ***Y se levanta ANTES de tocar nada***: lo que no se hace es pisar el trabajo de otro y que nadie se
+    entere. El error lleva **quien** lo cambio y **cuando**, que es lo que hace falta para decidir.
+    """
+
+    def __init__(
+        self, *, esperada: int, la_de_verdad: int, quien: int | None = None, cuando=None
+    ) -> None:
+        self.esperada = esperada
+        self.la_de_verdad = la_de_verdad
+        self.quien = quien
+        self.cuando = cuando
+        super().__init__(
+            "el apunte ha cambiado desde que lo abriste: esperabas la version "
+            f"{esperada} y va por la {la_de_verdad}"
+        )
+
+
+def _la_ultima_de_la_auditoria(db: Session, *, entidad: str, entidad_id: int | None):
+    """La ultima fila de auditoria de ese registro: **quien** lo toco y **cuando**, por ultima vez."""
+    if entidad_id is None:
+        return None
+    return db.scalar(
+        select(models.Auditoria)
+        .where(
+            models.Auditoria.entidad == entidad,
+            models.Auditoria.entidad_id == entidad_id,
+        )
+        .order_by(models.Auditoria.id.desc())
+    )
+
+
+def el_conflicto_del_apunte(choque: VersionQueNoCuadra) -> str:
+    """***El texto del 409***: dice **que** ha pasado y **quien** lo cambio, que es lo que hace falta para
+    decidir.
+
+    El ticket pide *«resolucion **explicita**»*, y explicita quiere decir esto: no basta con decir «no»,
+    hay que decir **quien** y **cuando**, para que el agricultor sepa si el cambio de otro le vale o si
+    tiene que rehacer el suyo.
+    """
+    quien = (
+        "otra cuenta" if choque.quien is None else f"la cuenta numero {choque.quien}"
+    )
+    cuando = (
+        "hace un momento"
+        if choque.cuando is None
+        else choque.cuando.strftime("%d/%m/%Y a las %H:%M")
+    )
+    return f"{textos.mensaje('el_apunte_ha_cambiado')} (lo cambio {quien}, {cuando})"
+
+
+def la_version_de(db: Session, *, entidad: str, entidad_id: int | None) -> int:
+    """***La version de un registro es su ultima fila de auditoria.***
+
+    ***Y esa es la idea entera***: la casa **ya apuntaba cada cambio** en `auditoria` -con quien y
+    cuando-, asi que la version **no hay que inventarla ni guardarla aparte**: se **lee** de lo que ya
+    estaba escrito. *Cero columnas nuevas en sesenta tablas.*
+
+    `0` significa **«no se ha tocado nunca desde que se creo»**, y es un valor legitimo: un apunte recien
+    dado de alta no tiene ninguna correccion encima.
+    """
+    if entidad_id is None:
+        return 0
+    ultimo = db.scalar(
+        select(func.max(models.Auditoria.id)).where(
+            models.Auditoria.entidad == entidad,
+            models.Auditoria.entidad_id == entidad_id,
+        )
+    )
+    return int(ultimo or 0)
+
+
 def corregir(
     db: Session,
     *,
@@ -132,6 +209,10 @@ def corregir(
     entidad: str,
     explotacion_id: int,
     usuario_id: int | None = None,
+    # ***La version que tenia quien llama*** (CRM-08, 17/10/2026). `None` -el valor por defecto- **no
+    # comprueba nada**, asi que las puertas que ya existian siguen igual: esto se enciende **puerta a
+    # puerta**, empezando por el piloto que pide el ticket.
+    version_esperada: int | None = None,
 ) -> dict:
     """Pasa al registro guardado los valores del registro recién preparado.
 
@@ -144,6 +225,20 @@ def corregir(
     Devuelve los cambios, que es lo que se guarda en la auditoría: `{campo: [antes, ahora]}`.
     Si no hay ningún cambio, no se apunta nada (corregir sin cambiar nada no es un cambio).
     """
+    # ***La edicion concurrente*** (CRM-08, 17/10/2026). Si quien llama dice **que version tenia**, y el
+    # registro ha cambiado desde entonces, **no se escribe nada**: se levanta el error, con quien lo cambio
+    # y cuando. *«No ultimo escritor silencioso»*.
+    if version_esperada is not None:
+        la_de_verdad = la_version_de(db, entidad=entidad, entidad_id=guardado.id)
+        if la_de_verdad != version_esperada:
+            ultima = _la_ultima_de_la_auditoria(db, entidad=entidad, entidad_id=guardado.id)
+            raise VersionQueNoCuadra(
+                esperada=version_esperada,
+                la_de_verdad=la_de_verdad,
+                quien=ultima.usuario_id if ultima is not None else None,
+                cuando=ultima.fecha if ultima is not None else None,
+            )
+
     cambios: dict[str, list] = {}
     for nombre in campos_corregibles(type(guardado)):
         nuevo = getattr(preparado, nombre, None)

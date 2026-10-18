@@ -7,7 +7,7 @@ probarse sin levantar un servidor ni hacer peticiones HTTP.
 
 from __future__ import annotations
 
-from . import geo
+from . import geo, superficies
 import datetime as dt
 import unicodedata
 from dataclasses import dataclass
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
-from . import borradores, catalogos, correcciones, dinero, geo, legal, models, textos
+from . import borradores, catalogos, correcciones, dinero, geo, legal, models, nutrientes, textos
 from .schemas import FertilizacionEntrada, TratamientoEntrada
 
 
@@ -173,10 +173,31 @@ def preparar_fertilizacion(
     # a mano. El camino de siempre (kg/ha a mano) se queda igual: **lo ya guardado no se toca**.
     if datos.cantidad_total_kg is not None and datos.superficie_ha:
         kg_ha = round(datos.cantidad_total_kg / datos.superficie_ha, 4)
-        cantidad_total_kg = datos.cantidad_total_kg
+        cantidad_total = datos.cantidad_total_kg
     else:
         kg_ha = datos.kg_ha_producto
-        cantidad_total_kg = round(kg_ha * datos.superficie_ha, 4)
+        cantidad_total = round(kg_ha * datos.superficie_ha, 4)
+
+    # ***LA CUENTA DE LOS NUTRIENTES LA HACE `nutrientes.py`*** (CRM-07, 17/10/2026), y no una
+    # multiplicacion suelta aqui. El motivo es un defecto de verdad: `legal.unidades_fertilizantes` da por
+    # hecho que la riqueza es **un porcentaje en masa** y que el producto son **kilos**, y con un liquido a
+    # **100 g/L** y **20 L** daba **20 kg de nitrogeno** donde son **2** -diez veces mas-, que es justo el
+    # caso de aceptacion del criterio: *«20 L a 100 g N/L en 2 ha: 2 kg N totales y 1 kg N/ha»*.
+    #
+    # Ahora la **base** y la **unidad** son parte de la cuenta, y lo que no se puede afirmar sale `None` con
+    # su motivo -el caso estrella: un 15 % en masa sobre litros **sin densidad** no se calcula-.
+    #
+    # `uf_p_*` y `uf_k_*` siguen siendo lo que **siempre fueron**: el fosforo como **P2O5** y el potasio como
+    # **K2O**. No se renombran porque el criterio manda mantener las columnas antiguas compatibles.
+    aporte = nutrientes.el_aporte(
+        cantidad=cantidad_total,
+        unidad=datos.unidad_del_producto,
+        riquezas={"n": riqueza_n, "p2o5": riqueza_p, "k2o": riqueza_k},
+        base=datos.base_de_la_riqueza,
+        superficie_ha=datos.superficie_ha,
+        densidad_kg_por_litro=datos.densidad_kg_por_litro,
+    )
+    lo_que_aporta = aporte["nutrientes"]
 
     return models.RegistroFertilizacion(
         explotacion_id=explotacion_id,
@@ -192,13 +213,20 @@ def preparar_fertilizacion(
         riqueza_p=riqueza_p,
         riqueza_k=riqueza_k,
         kg_ha_producto=kg_ha,
-        cantidad_total_kg=cantidad_total_kg,
-        uf_n_ha=legal.uf_por_hectarea(kg_ha, riqueza_n),
-        uf_p_ha=legal.uf_por_hectarea(kg_ha, riqueza_p),
-        uf_k_ha=legal.uf_por_hectarea(kg_ha, riqueza_k),
-        uf_n_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_n),
-        uf_p_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_p),
-        uf_k_total=legal.unidades_fertilizantes(cantidad_total_kg, riqueza_k),
+        # **La cantidad, en la unidad que diga `unidad_del_producto`**: kilos o **litros**. El nombre de la
+        # columna dice `_kg` porque nacio con los solidos, y se queda por compatibilidad.
+        cantidad_total_kg=cantidad_total,
+        # **Y en que se conto**: `kg` por defecto, porque es lo que eran todos los apuntes de antes.
+        unidad_del_producto=datos.unidad_del_producto,
+        base_de_la_riqueza=datos.base_de_la_riqueza,
+        densidad_kg_por_litro=datos.densidad_kg_por_litro,
+        # **De la cuenta de `nutrientes.py`**, que es la que sabe de bases y de unidades.
+        uf_n_ha=lo_que_aporta["n"]["por_hectarea_kg"],
+        uf_p_ha=lo_que_aporta["p2o5"]["por_hectarea_kg"],
+        uf_k_ha=lo_que_aporta["k2o"]["por_hectarea_kg"],
+        uf_n_total=lo_que_aporta["n"]["total_kg"],
+        uf_p_total=lo_que_aporta["p2o5"]["total_kg"],
+        uf_k_total=lo_que_aporta["k2o"]["total_kg"],
         modo_aplicacion=datos.modo_aplicacion,
         momento=datos.momento,
         plan_id=datos.plan_id,
@@ -567,14 +595,10 @@ def superficie_contada_del_grupo(grupo) -> float | None:
     Se calcula al vuelo y no se guarda, por el mismo motivo que en `validaciones._superficie_del_grupo`:
     cambiar las tierras del grupo dejaría el número viejo mintiendo.
     """
-    if grupo is None:
-        return None
-    parcelas = getattr(grupo, "parcelas", None) or []
-    if not parcelas:
-        return None
-    if any(parcela.superficie_ha is None for parcela in parcelas):
-        return None
-    return round(sum(parcela.superficie_ha for parcela in parcelas), 4)
+    # ***La cuenta vive en `superficies.py`***, que es donde esta escrita **una sola vez** (17/10/2026).
+    # Aqui la tenia copiada, letra por letra, igual que en `validaciones`: dos copias de una regla son dos
+    # sitios donde puede dejar de cumplirse.
+    return superficies.la_superficie_de_un_grupo(grupo)
 
 
 

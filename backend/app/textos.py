@@ -342,6 +342,34 @@ AYUDA: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MENSAJES: dict[str, str] = {
+    # ------------------------------------------------------------------ las reservas (CRM-07 #9)
+    #
+    # **Los motivos van AQUI y no en el bloque de la pantalla**, porque quien los dice es el **servidor**
+    # (`textos.mensaje(...)` desde las puertas de las reservas): en el bloque de la pantalla el guardian de
+    # T14 los daria por «textos que no se ensenan en ningun sitio», y con razon, porque la pantalla no los
+    # escribe. Un «no se puede» sin decir **por que** no le deja decidir a nadie, y el encargo pide
+    # **conflictos de solape en servidor**: o sea que el servidor tiene que poder explicarse.
+    # ***LAS CLAVES SON LOS CODIGOS QUE DEVUELVE `app/reservas.py`***, y no otros (17/10/2026): la puerta
+    # hace `textos.mensaje(motivo)` con lo que le dio la funcion pura, asi que si aqui se llaman de otra
+    # manera sale un `KeyError` -y salio, en la primera corrida de las puertas-. Los codigos viven en
+    # `reservas.py`, al lado de la regla que los produce.
+    "la_reserva_termina_antes_de_empezar": "La reserva tiene que terminar después de empezar: revisa las fechas.",
+    "esa_maquina_ya_esta_reservada_esas_horas": "Esa máquina ya está reservada en parte de esas horas.",
+    "la_maquina_esta_averiada_esas_horas": "Esa máquina estaba averiada en esas horas.",
+    "no_se_sabe_si_estaba_averiada_esas_horas": (
+        "De esa avería no se sabe si estaba arreglada, así que no se puede dar por libre esa máquina."
+    ),
+    "reserva_motivo_estado": "Ese estado de reserva no existe.",
+    # **Las reservas, dichas por el servidor** (CRM-07 #9, 17/10/2026). *Los textos de una reserva los
+    # monta el servidor, como los de las fechas (`desde_texto`), por la regla de la casa: **es donde sabe
+    # el formato** y asi la pantalla no compone nada.*
+    #
+    # ***El responsable y la tarea pueden no saberse***, y las dos frases de «sin decir» estan para eso:
+    # *«una reserva para el tractor el martes es util aunque no se sepa quien la coge», y un hueco en
+    # blanco pareceria un descuido de la pantalla en vez de un dato que nadie apunto.*
+    "reserva_sin_responsable": "Sin decir quién la coge",
+    "reserva_sin_tarea": "Sin decir para qué",
+
     # --- tratamientos ---
     "V1_sin_registro": (
         "Ese número de etiqueta no nos suena. Míralo otra vez en el envase del producto."
@@ -2170,6 +2198,16 @@ ETIQUETAS_MAESTRO: dict[str, dict[str, str]] = {
         "pregunta": "¿Qué tres números trae el saco?",
         "pista": "Nitrógeno, fósforo y potasio. Por ejemplo: 33,5 - 0 - 0",
     },
+    # ***La base y la densidad del abono*** (CRM-07, 17/10/2026). La base es **parte del dato**: sin ella,
+    # «15» no dice si son 15 % en masa o 15 g/L.
+    "abono.base_de_la_riqueza": {
+        "pregunta": "¿Cómo viene la riqueza en la etiqueta?",
+        "pista": "En los líquidos puede venir por litro en vez de por ciento en masa",
+    },
+    "abono.densidad_kg_por_litro": {
+        "pregunta": "¿Cuánto pesa un litro?",
+        "pista": "En kilos por litro. Hace falta para los líquidos en % en masa; si no consta, déjalo en blanco",
+    },
     "abono.riqueza_n": {
         "pregunta": "Nitrógeno (el primer número)",
         "pista": "Si el saco no lo trae, dejalo en blanco: quedara como \"no consta\"",
@@ -3854,6 +3892,11 @@ ROTULOS: dict[str, str] = {
     # es un cero: «0-0-0» afirmaría que ese abono no lleva nitrógeno, fósforo ni potasio, y eso solo lo sabe
     # quien lea la etiqueta. Es el mismo criterio que la raya del almacén («—»), pero aquí se puede explicar.
     "composicion_no_se": "no consta la composición",
+    # ***La composicion, CON SU BASE*** (17/10/2026): «15-0-0» no dice si son 15 % en masa o 15 g/L, y un
+    # liquido a 100 g/L se leia como «100-0-0», que parece cien por cien.
+    "composicion_en_porcentaje_masa": "{numeros} % en masa",
+    "composicion_en_gramos_por_litro": "{numeros} g/L",
+    "composicion_en_kilogramos_por_hectolitro": "{numeros} kg/hl",
     # La unidad corta de peso, para las líneas donde el número va delante («2 ventas apuntadas · 44.000
     # kg»). La larga («Kilos») es un rótulo de campo, y con mayúscula en medio de una frase no se lee.
     "kilos_corto": "kg",
@@ -6121,6 +6164,7 @@ TIERRA_Y_MAPA: dict[str, str] = {
         "conteste ahora mismo. Tus linderos siguen dibujados y la lista funciona igual: puedes "
         "seguir mirando y trabajando. Prueba otra vez dentro de un rato."
     ),
+
 }
 
 # Las versiones de una tierra, en su pantalla (T06, 03/10/2026).
@@ -6972,6 +7016,15 @@ MENSAJES_DE_LOS_CONTACTOS: dict[str, str] = {
     # La accion ya se guardo, pero con otro texto o en otro contacto (13/10/2026, revision). Se dice
     # lo que pasa y que NO se ha cambiado nada, para que el agricultor no crea que su texto nuevo esta
     # guardado: lo que escribio sigue en la pantalla, y volver a pulsar lo apunta como nota nueva.
+    # ***Alguien cambio el apunte mientras lo tenias abierto*** (CRM-08, 17/10/2026). Es el mismo caso
+    # que `T08_el_fichero_ha_cambiado` -y por eso se lee igual-, pero este es de **un apunte del cuaderno**
+    # y no de un fichero de la bandeja. *«No ultimo escritor silencioso»*: se dice lo que ha pasado y el
+    # agricultor decide.
+    "el_apunte_ha_cambiado": (
+        "Otro ha cambiado este apunte mientras lo tenías abierto, así que no se ha guardado nada de lo "
+        "tuyo. Vuelve a abrirlo para ver lo que hay ahora y vuelve a hacer tu cambio: así no se pierde "
+        "el trabajo de ninguno de los dos."
+    ),
     "C7_la_accion_ya_se_guardo_de_otra_manera": (
         "Esta acción ya se había guardado, pero con otro texto. No se ha cambiado nada: lo que has escrito sigue aquí, y si vuelves a pulsar se apunta como nota nueva."
     ),
@@ -7457,6 +7510,74 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     ),
     "fecha_resuelta": "¿Cuándo se arregló?",
     "horas_de_la_averia": "Horas del cuenta-horas cuando pasó",
+    # **El cuenta-horas por lecturas** (CRM-07 #8). Lo que el encargo pide: «no inventar horas ni
+    # reducir acumulados silenciosamente». Cuando no hay lecturas se dice, y **no se pone un cero**.
+    "seccion_contador": "El cuenta-horas",
+    "contador_sin_lecturas": (
+        "De este cuenta-horas no hay ninguna lectura apuntada, así que no se sabe lo que ha trabajado. "
+        "Apunta lo que marca hoy y, cuando tengas otra, el programa dirá lo que ha subido."
+    ),
+    "contador_marca": "Marca ahora",
+    "contador_ha_subido": "Ha subido desde la primera lectura",
+    # ***La banda: un subtotal no es un total*** (16/10/2026). Cuando hay un tramo que no cuadra, lo que
+    # se ensena es **lo que se puede afirmar**, y la frase lo dice. Sin ella, un cero calculado sobre
+    # tramos incoherentes pasaba por un dato acreditado.
+    "contador_ha_subido_parcial": "Ha subido, de lo que se puede afirmar",
+    # **Y POR QUE no se puede decir** (15/10/2026). Antes la pantalla solo miraba `sin_decir`, asi que
+    # los motivos que no fueran ese se callaban... y con **unidades mezcladas** el servidor contestaba
+    # «desconocido» y la pantalla ensenaba «Ha subido: 0 h». Un cero que nadie ha dicho.
+    "contador_va_para_atras": (
+        "Hay una lectura que marca menos que la anterior: revisa esas dos o di que se cambió el contador."
+    ),
+    "contador_valor_raro": "Hay una lectura que no es un número de contador válido: revísala.",
+    "contador_unidades_distintas": (
+        "Las lecturas no son todas de la misma unidad (horas o kilómetros), así que no se pueden sumar."
+    ),
+    "contador_no_se_sabe_cuanto": (
+        "Todavía no se sabe cuánto ha subido: hace falta otra lectura para poder comparar."
+    ),
+    "contador_tramos_sin_decir_uno": "y hay 1 tramo que no se puede medir, porque falta alguna lectura",
+    "contador_tramos_sin_decir_varios": "y hay {cuantos} tramos que no se pueden medir, porque faltan lecturas",
+    "contador_sustitucion": "contador nuevo",
+    "contador_anulada": "anulada",
+    # **El formulario de las lecturas** (CRM-07 #8, 16/10/2026). `apuntar_lectura` es el rotulo del boton
+    # que abre el formulario: es la palabra que estaba puesta y sin gastar, y ahora se gasta porque el
+    # formulario existe. No se quita: esconder la carencia no es resolverla.
+    # ***ESTA PALABRA LA BORRE SIN QUERER*** (17/10/2026) y el guardian de T14 lo cazo: al anadir los textos
+    # de las reservas use esta linea como **ancla de reemplazo** en vez de anadir despues, y la pantalla se
+    # quedo diciendo «undefined» en el boton de apuntar una lectura. Se devuelve aqui, y la leccion es la de
+    # siempre: **un ancla que se reemplaza es una ancla que se borra**.
+    "apuntar_lectura": "Apunta lo que marca",
+    "corregir_lectura": "Corregir",
+    "anular_lectura_boton": "Anular",
+    "form_lectura_titulo": "Apuntar lo que marca el cuenta-horas",
+    "form_lectura_corregir_titulo": "Corregir una lectura del cuenta-horas",
+    "form_lectura_pista": (
+        "Una lectura es un día y lo que marcaba. Con dos lecturas, el programa dice lo que ha subido."
+    ),
+    "guardar_lectura": "Guardar la lectura",
+    "campo_fecha_lectura": "¿De qué día es?",
+    "campo_valor_lectura": "¿Cuánto marca?",
+    "campo_valor_lectura_pista": "El número que se ve en el cuenta-horas, sin la unidad",
+    "campo_unidad_lectura": "¿Qué mide?",
+    "unidad_horas": "Horas",
+    "unidad_kilometros": "Kilómetros",
+    "campo_sustitucion_lectura": "¿Aquí se cambió el contador?",
+    "campo_sustitucion_pista": (
+        "Si le pusieron un contador nuevo, dilo aquí: así el acumulado no baja por el cambio."
+    ),
+    "sustitucion_no": "No, es el mismo contador",
+    "sustitucion_si": "Sí, aquí empieza el contador nuevo",
+    "campo_notas_lectura": "Notas",
+    "form_anular_lectura_titulo": "Anular una lectura",
+    "form_anular_lectura_pista": (
+        "Anular no es borrar: la lectura se queda en el cuaderno, tachada, y deja de contar."
+    ),
+    "campo_motivo_de_anular_lectura": "¿Por qué la anulas?",
+    "anular_lectura": "Anular la lectura",
+    "lectura_guardada": "Lectura apuntada",
+    "lectura_corregida": "Lectura corregida",
+    "lectura_anulada": "Lectura anulada",
     # **El taller** (CRM-07 #7, 14/10/2026). El informe lo pide: «taller de la avería». Es un contacto
     # de la finca con su papel de taller, y puede quedarse **sin decir**: la mayoría de las averías se
     # arreglan uno mismo, así que lo que no se sabe se dice «no consta», no se deja en blanco.
@@ -7507,6 +7628,49 @@ MAQUINARIA_DE_LA_FINCA: dict[str, str] = {
     ),
     "ningun_equipo": "No es ninguno de esos",
     "el_equipo_que_ya_estaba": "El equipo que ya estaba enlazado",
+    # ── Las reservas (CRM-07 #9, 17/10/2026) ──
+    #
+    # ***Reservar no es consumir***, que es lo que la cola pide con estas palabras: «***Reserva para
+    # planificar no es consumo***». *Una reserva dice que la vas a coger: **no gasta gasoil, no cambia el
+    # cuenta-horas y no apunta ningun gasto**.* Y por eso vive aparte de las averias y de las lecturas.
+    #
+    # ***Y esto es lo que faltaba de verdad***: `app/reservas.py` y sus 21 pruebas llevan hechas desde
+    # hace rondas -el solape, las averias, los estados, **dos peticiones a la vez**-, y el agricultor **no
+    # lo podia usar**: `reserva` no aparecia **ni una vez** en todo `web/`. *Es lo que el objetivo llama
+    # «una funcion que solo existe en servidor», y no se puede dar por terminada.*
+    #
+    # ***El responsable y la tarea pueden no saberse***: *«una reserva para el tractor el martes es util
+    # aunque no se sepa quien la coge»*, y **poder decir «no lo se» es la mitad de este programa**.
+    "seccion_reservas": "Reservas",
+    "sin_reservas": "No has reservado esta máquina para nada.",
+    "apuntar_reserva": "RESERVAR ESTA MÁQUINA",
+    "corregir_reserva": "Corregir",
+    "anular_reserva": "Anular",
+    "reserva_no_gasta": "Reservar no gasta nada: solo dice que la vas a coger.",
+    "reserva_anulada": "anulada",
+    # ***Los tres estados viven AQUI, y no en `MENSAJES`, porque los usan LOS DOS*** (17/10/2026): *el
+    # servidor para escribir `estado_texto` y **el formulario** para las tres opciones de «como va». Con dos
+    # copias, un dia dirian cosas distintas -y la pantalla y el dato irian cada uno por su lado-.*
+    "reserva_estado_pedida": "Pedida",
+    "reserva_estado_en_curso": "En curso",
+    "reserva_estado_hecha": "Hecha",
+    # ── El formulario de una reserva ──
+    "form_reserva_titulo": "Reservar esta máquina",
+    "form_reserva_corregir_titulo": "Corregir la reserva",
+    "form_reserva_pista": (
+        "Di de cuándo a cuándo la vas a coger. **Reservar no gasta nada**: ni gasóleo, ni cuenta-horas, "
+        "ni dinero. Si dos reservas se pisan, el programa lo dice y no deja apuntar la segunda."
+    ),
+    "guardar_reserva": "GUARDAR LA RESERVA",
+    "campo_desde_reserva": "Desde cuándo",
+    "campo_hasta_reserva": "Hasta cuándo",
+    "campo_estado_reserva": "Cómo va",
+    "campo_notas_reserva": "Lo que quieras apuntar de la reserva",
+    "anular_reserva": "Anular la reserva",
+    # ── Y lo que se dice cuando se ha hecho ──
+    "reserva_guardada": "Ya está reservada.",
+    "reserva_corregida": "Ya está corregida la reserva.",
+    "reserva_anulada_aviso": "La reserva queda anulada: la máquina vuelve a estar libre.",
 }
 
 # Los mensajes de la maquinaria. Los siete primeros (M1 a M10) son **avisos de verdad**, y por eso
@@ -8113,6 +8277,11 @@ MENSAJES.update(
     # «No se ha podido», y el agricultor **no sabe que le falta escribir**. La regla se comprueba en la
     # puerta para poder decir **que escribir**, con un ejemplo. (Los codigos `G…` viven AQUI, en `MENSAJES`,
     # no en el bloque de las palabras de cada pantalla: `textos.mensaje()` solo mira este.)
+    # **La unidad del contador tiene que ser de las que hay** (CRM-07 #8): «1.200» no dice si son horas
+    # o kilometros, y las dos cosas **no se suman entre si**.
+    "G55_esa_unidad_de_contador_no_existe": (
+        "Esa unidad de contador no existe. Un cuenta-horas mide horas o kilómetros: elige una de las dos."
+    ),
     "G54_la_averia_sin_decir_que_paso": (
         "Falta decir qué pasó: sin eso la avería no dice nada. Ponlo en dos palabras, como «se rompió el "
         "eje del ventilador»."
@@ -9167,3 +9336,96 @@ FUSION: dict[str, str] = {
     ),
 }
 
+# ---------------------------------------------------------------------------
+# ***Las metricas del panel*** (CRM-11, 17/10/2026)
+#
+# ***Y EL NOMBRE NO ES `PANEL`, y hay que decir por que***: *`PANEL` **ya existia** -es el panel del
+# ordenador de la pantalla de tierras, con su `tierra_historia` y sus rotulos-. **Anadir un segundo
+# `PANEL` no da error: el segundo PISA al primero**, y los textos del panel de siempre se quedan **en
+# blanco**. Lo cazo `test_que_no_falte_ningun_texto.py`, que fue el unico que se entero. **Antes de anadir
+# un bloque aqui, se mira si el nombre esta cogido.***
+# ---------------------------------------------------------------------------
+#
+# *Un panel no es una pantalla con numeros: es **un numero que se puede defender**. Cada metrica dice **que
+# mide** -su pregunta-, **en que se mide** -su unidad- y **de donde sale** -su fuente-. Y las que contestan a
+# preguntas distintas **no se suman**, aunque las dos sean hectareas.*
+LAS_METRICAS: dict[str, str] = {
+    "titulo": "El panel de la finca",
+    "explica": (
+        "Cada cifra dice en qué se mide y de dónde sale. Las que contestan a preguntas distintas no se "
+        "suman entre sí, aunque se midan en lo mismo."
+    ),
+    # ── Las metricas, con su pregunta ──
+    "superficie_titulo": "La tierra que hay",
+    "superficie_pregunta": "lo que hay plantado en la finca",
+    "trabajo_titulo": "Trabajo acumulado",
+    "trabajo_pregunta": "lo que se ha pasado por encima de la tierra, contando cada vez",
+    "tratado_titulo": "Lo que se trató",
+    "tratado_pregunta": "lo que se trató de verdad, sumando cada hecho",
+    "tercero_titulo": "Trabajos para otros",
+    "tercero_pregunta": "lo que se hizo en tierras que no son tuyas",
+    "gastos_titulo": "Lo que se ha gastado",
+    "gastos_pregunta": "el dinero que ha salido",
+    "cosecha_titulo": "Lo que se ha cosechado",
+    "cosecha_pregunta": "los kilos que han salido de la finca",
+    # ── Lo que hay que saber de una cifra ──
+    "no_se_sabe": "No se sabe",
+    "sin_fuente": "no dice de dónde sale",
+    "cobertura": "Se han mirado {contadas} de {de}.",
+    "cobertura_corta": "***Faltan datos***: se han mirado {contadas} de {de}.",
+    "no_se_suman": "Estas cifras no se suman: contestan a preguntas distintas.",
+    "sin_nada": "Todavía no hay nada apuntado en esta campaña.",
+}
+
+# ---------------------------------------------------------------------------
+# ***La preparacion de la PAC*** (CRM-09, 17/10/2026)
+# ---------------------------------------------------------------------------
+#
+# *El contrato de la cola: «paquete preparatorio por recinto: referencias, superficie, cultivos, practica,
+# documentos y cuestiones pendientes. ***No envio directo ni garantia de elegibilidad***».*
+#
+# ***Y la regla que manda sobre todas las demas***: *«fuente legal por ambito/año/fecha de vigencia y version…
+# ninguna competencia autoriza usar su interpretacion como norma»*. **Sin fuente cargada, esto no puede decir
+# si algo es elegible**, y lo dice en vez de callarse.
+PAC: dict[str, str] = {
+    "titulo": "La preparación de la PAC",
+    "explica": (
+        "Lo que hay que llevar al asesor, tierra por tierra: la referencia, la superficie, lo que se siembra "
+        "y lo que falta por saber. **Esto no es la declaración**: no se envía nada y no promete que nada sea "
+        "elegible."
+    ),
+    # ── La fuente, que es lo primero ──
+    "sin_fuente": (
+        "No hay ninguna fuente legal cargada para esta campaña, así que **no se puede decir si algo es "
+        "elegible**. Se puede preparar el paquete, pero la elegibilidad la dice la norma, no este programa."
+    ),
+    "fuente_de_otra": (
+        "La fuente que hay cargada no vale para esta campaña o para esta comunidad, así que no se aplica."
+    ),
+    "no_es_garantia": (
+        "**Esto no es la declaración ni una garantía de elegibilidad.** Es el paquete para revisarlo con el "
+        "asesor."
+    ),
+    # ── Una tierra ──
+    "tierra": "Tierra",
+    "referencia": "Referencia",
+    "superficie": "Superficie",
+    "del_sigpac": "La del SIGPAC",
+    "cultivo": "Cultivo",
+    "ecorregimen": "Ecorrégimen",
+    "completo": "completa",
+    "incompleto": "incompleta",
+    # ── Y lo que falta, dicho ──
+    "falta_superficie": "le falta la superficie",
+    "falta_cultivo": "no consta qué se siembra",
+    "falta_ecorregimen": "no consta el ecorégimen",
+    "falta_referencia": "la referencia del SIGPAC está a medias",
+    "falta_aqui": "Falta: {que}.",
+    # ── El resumen ──
+    "resumen": "El resumen",
+    "sin_cultivo_aviso": (
+        "La tierra sin cultivo **no se pinta de verde**: se dice. El porcentaje va sobre toda la finca, no "
+        "solo sobre lo sembrado."
+    ),
+    "sin_tierras": "Todavía no hay tierras en esta finca.",
+}

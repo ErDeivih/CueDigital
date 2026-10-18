@@ -28,6 +28,42 @@ from . import models
 
 TITULAR = "titular"
 AYUDANTE = "ayudante"
+# ***Y el tercero*** (CRM-08, 17/10/2026). El ticket pide *«propietario, colaborador y consulta»*, y el
+# consulta **no es un papel nuevo en la base**: es **un acceso con `puede_modificar` en falso** -consultar ya
+# lo da el propio acceso a la finca, como dice el comentario de `puede_modificar`-. Lo que faltaba era
+# **nombrarlo** y, sobre todo, **que las capacidades dependieran del papel**.
+CONSULTA = "consulta"
+
+LOS_PAPELES = (TITULAR, AYUDANTE, CONSULTA)
+
+# --------------------------------------------------------------------------- la matriz
+#
+# ***AQUI ESTABA EL DEFECTO*** (17/10/2026): `puede_modificar` y `puede_ver_lo_economico` son columnas que
+# nacian en **`True`** para todos, y `anadir_acceso` **solo ponia el papel**. O sea: **cualquier acceso a una
+# finca podia modificarla y ver su dinero**, dijeran lo que dijeran el papel y el ticket -que pide *«matriz
+# por accion y dato»*-.
+#
+# La matriz es **la unica fuente de verdad**, y por eso la usan **los dos** sitios que crean accesos
+# -`asegurar_accesos` y `anadir_acceso`-: asi el papel y las capacidades **no pueden ir en desacuerdo**.
+LAS_CAPACIDADES: dict[str, dict[str, bool]] = {
+    # El dueno de la finca: puede todo, y es el unico que puede quitar accesos.
+    TITULAR: {"puede_modificar": True, "puede_ver_lo_economico": True},
+    # ***El colaborador trabaja, pero no ve las cuentas.*** Apunta, corrige y quita lo suyo; los saldos, los
+    # importes y los documentos con dinero **no salen en su respuesta** -la casa lo comprueba **en la
+    # puerta**, no en la pantalla-.
+    AYUDANTE: {"puede_modificar": True, "puede_ver_lo_economico": False},
+    # ***El consulta mira y no toca.*** Es el que entra a ver como va la finca sin poder cambiar nada.
+    CONSULTA: {"puede_modificar": False, "puede_ver_lo_economico": False},
+}
+
+# Lo que se le concede a un papel que no esta en la matriz. ***Ante la duda, lo que MENOS concede***: un
+# papel mal escrito no puede acabar dando permiso de escritura sobre la finca de nadie.
+SIN_CONCEDER: dict[str, bool] = {"puede_modificar": False, "puede_ver_lo_economico": False}
+
+
+def las_capacidades_de(papel: str) -> dict[str, bool]:
+    """***Lo que puede un papel.*** Es la matriz, y **nunca `None`**: un papel que no exista no concede nada."""
+    return dict(LAS_CAPACIDADES.get((papel or "").strip(), SIN_CONCEDER))
 
 
 def asegurar_accesos(db: Session) -> int:
@@ -48,11 +84,15 @@ def asegurar_accesos(db: Session) -> int:
         )
         if ya is not None:
             continue
+        papel = TITULAR if usuario.es_titular else AYUDANTE
         db.add(
             models.AccesoAFinca(
                 usuario_id=usuario.id,
                 explotacion_id=usuario.explotacion_id,
-                papel=TITULAR if usuario.es_titular else AYUDANTE,
+                papel=papel,
+                # ***Las capacidades, de la matriz*** (17/10/2026): antes se quedaban en el `True` por
+                # defecto de la columna, que es lo que hacia que un ayudante viera el dinero de la finca.
+                **las_capacidades_de(papel),
             )
         )
         puestos += 1
@@ -149,8 +189,15 @@ def anadir_acceso(
     ya = acceso(db, usuario.id, explotacion_id)
     if ya is not None:
         return ya
+    if papel not in LOS_PAPELES:
+        raise ValueError(f"ese papel no existe: {papel!r}")
     nuevo = models.AccesoAFinca(
-        usuario_id=usuario.id, explotacion_id=explotacion_id, papel=papel
+        usuario_id=usuario.id,
+        explotacion_id=explotacion_id,
+        papel=papel,
+        # ***Y las capacidades, de la matriz***, para que el papel y lo que puede hacer **no puedan ir en
+        # desacuerdo**. Antes solo se ponia el papel y las dos columnas nacian en `True`.
+        **las_capacidades_de(papel),
     )
     db.add(nuevo)
     db.flush()

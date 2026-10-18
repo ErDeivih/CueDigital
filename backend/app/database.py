@@ -557,6 +557,63 @@ def _borrar_copia(ruta) -> None:
             pass
 
 
+def ensayar_la_restauracion(destino, *, motor: Engine | None = None) -> dict:
+    """***Restaurar la base en un DESTINO NUEVO, y comprobar que ha llegado entera*** (17/10/2026).
+
+    El ticket de la cola lo pide asi: *«Restauracion: base+adjuntos+configuracion necesaria, **ensayo sobre
+    destino nuevo**, integridad…»*. Esto es **la mitad de la base**; los adjuntos son ficheros aparte.
+
+    ***Por que un destino NUEVO, y no la base de siempre***: un ensayo que escribiera encima de la base no
+    probaria nada. *La cola lo dice con estas palabras: «nunca restaurar sobre la base real en las pruebas».*
+
+    ***Y por que no basta con copiar***: la copia puede salir bien y quedarse corta -un `-wal` sin leer, un
+    fichero a medias-; asi que aqui **se compara tabla por tabla y valor por valor** con
+    `_copia_tiene_lo_mismo`. *Copiar sin comprobar no es restaurar: es haber movido bytes.*
+
+    Devuelve lo que hay que poder decir despues: **cuantas tablas**, **si tiene lo mismo** y **si esta
+    entera**.
+    """
+    from pathlib import Path
+
+    motor = motor if motor is not None else crear_engine()
+    ruta = _ruta_del_fichero(motor)
+    if ruta is None:
+        raise RuntimeError(
+            "Esta base no es un fichero de SQLite, asi que no se puede ensayar una restauracion sobre un "
+            "destino nuevo: en PostgreSQL esto se hace con su herramienta. No se ha tocado nada."
+        )
+    destino = Path(destino)
+    if destino.exists():
+        # ***Un destino que ya existe no es un destino nuevo***: escribir encima de algo es justo lo que el
+        # ensayo tiene que no hacer.
+        raise FileExistsError(f"el destino del ensayo ya existe: {destino}")
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    _copiar_con_sqlite(ruta, destino)
+    return {
+        "destino": str(destino),
+        "tablas": len(_tablas_de_una_base(destino)),
+        "igual": _copia_tiene_lo_mismo(ruta, destino),
+        "entera": _la_copia_esta_entera(destino),
+    }
+
+
+def _tablas_de_una_base(ruta) -> list:
+    """Los nombres de las tablas de una base, sin las de dentro de SQLite."""
+    import sqlite3
+
+    conexion = sqlite3.connect(f"file:{ruta}?mode=ro", uri=True)
+    try:
+        return [
+            fila[0]
+            for fila in conexion.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' "
+                "AND name NOT LIKE 'sqlite_%' ORDER BY name"
+            )
+        ]
+    finally:
+        conexion.close()
+
+
 def _copiar_con_sqlite(ruta, destino) -> None:
     """Copia la base con la API de copia de SQLite: lee la base entera, **WAL incluido**.
 
