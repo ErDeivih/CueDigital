@@ -4504,3 +4504,39 @@ class TrabajoParaUnTercero(Base):
         UniqueConstraint("explotacion_id", "clave_de_reenvio", name="uq_trabajo_a_tercero_reenvio"),
     )
 
+
+class FotoDeLaPac(Base):
+    """**Lo que se le enseno al asesor, guardado con su version y su fecha** (18/10/2026, CRM-09).
+
+    POR QUE. *El escenario **se calcula y se tira** -que es lo correcto para comparar alternativas-, pero
+    cuando el agricultor quiere **ensenar lo que dijo** hace falta algo que no cambie: el contrato lo pide con
+    estas palabras, «**la exportacion coincide con el detalle y conserva la version evaluada**».*
+
+    ***Y guarda el CONTENIDO, no la receta***: *si dentro de un año cambia un cultivo de la finca, **la foto
+    sigue diciendo lo que decia**. La `huella` deja comprobar que el fichero exportado es el de esa foto y no
+    otro.*
+
+    *No lleva clave de reenvio: guardar una foto **es una accion deliberada**, y dos fotos iguales son dos
+    fotos -la segunda con su version y su fecha-, no un reintento.*
+    """
+
+    __tablename__ = "fotos_de_la_pac"
+    __table_args__ = (
+        # **La version es por finca y por año**, y no se repite: *la foto 2 de 2027 es una sola.*
+        UniqueConstraint("explotacion_id", "anio", "version", name="uq_foto_de_la_pac_version"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    explotacion_id: Mapped[int] = mapped_column(ForeignKey("explotaciones.id"), index=True)
+    # ***No cuelga de una campaña, y es una decision*** (18/10/2026): *una foto **no es un apunte del cuaderno**;
+    # es un papel que se lleva al asesor. Si colgara de `campana_id`, entraria en el **recuento de cosas del
+    # año** -saldria como «otra cosa»- y en el **guardian de borrado** de la campaña, donde no pinta nada. **El
+    # año lo lleva en `anio`**, que es lo unico que necesita: la version es por finca y por año.*
+    anio: Mapped[int] = mapped_column()
+    version: Mapped[int] = mapped_column()
+    # **La huella del contenido**, para poder decir «este fichero es el de esa foto».
+    huella: Mapped[str] = mapped_column(String(64))
+    # **El escenario entero, tal y como se calculo.** *Es lo que se exporta, y por eso el fichero coincide.*
+    el_contenido: Mapped[str] = mapped_column(Text)
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
+    creada_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())

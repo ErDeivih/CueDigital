@@ -25,13 +25,20 @@ se siembra, el ecorregimen y **lo que falta**- y resumir la finca **sin el denom
 
 from __future__ import annotations
 
+import csv
 import datetime as dt
+import hashlib
+import io
+import json
 
-from fastapi import APIRouter
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Response
+from sqlalchemy import func, select
 
 from .. import models, pac, superficies, textos
-from ..deps import Db, ExplotacionActual
+# ***`PuedeModificar` y `UsuarioActual` son DEPENDENCIAS, no parametros.*** *Con `from __future__ import
+# annotations` sus nombres son texto, asi que si no se importan FastAPI no los resuelve y **los trata como
+# parametros de consulta**: la puerta contestaba 422 pidiendo `usuario` y `puede_modificar` en la direccion.*
+from ..deps import Db, ExplotacionActual, PuedeModificar, UsuarioActual
 
 router = APIRouter(prefix="/api/pac", tags=["pac"])
 
@@ -219,3 +226,134 @@ def el_escenario_del_ano_que_viene(
         la_contestacion["contra"] = el_otro
         la_contestacion["comparacion"] = pac.comparar_alternativas(el_suyo, el_otro)
     return la_contestacion
+
+
+def _la_foto(db, explotacion, version: int) -> models.FotoDeLaPac:
+    """*La foto de esa version, o 404: **no se inventa una foto que no existe**.*"""
+    la_foto = db.scalar(
+        select(models.FotoDeLaPac).where(
+            models.FotoDeLaPac.explotacion_id == explotacion.id,
+            models.FotoDeLaPac.version == version,
+        )
+    )
+    if la_foto is None:
+        raise HTTPException(status_code=404, detail=textos.PAC["sin_fuente"])
+    return la_foto
+
+
+@router.post("/foto")
+def guardar_la_foto_de_la_pac(
+    datos: dict, explotacion: ExplotacionActual, usuario: UsuarioActual, db: Db,
+    puede_modificar: PuedeModificar,
+) -> dict:
+    """***Guarda lo que se le ha ensenado al asesor***, con su version y su fecha.
+
+    *El escenario se calcula y se tira -que es lo correcto para **comparar**-, pero **ensenar** es otra cosa:
+    hace falta que lo que se enseno **siga siendo lo mismo** dentro de un año. Eso es esta foto.*
+
+    *Guarda **el contenido**, no la receta: si la finca cambia, la foto no. Y la `huella` dice cual es cual.*
+    """
+    el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=datos.get("campana_id"))
+    el_anio = int(datos.get("anio") or ((el_paquete.get("campana_anio") or 0) + 1))
+    el_suyo = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("cambios"))
+    el_texto = json.dumps(el_suyo, ensure_ascii=False, sort_keys=True)
+    la_huella = hashlib.sha256(el_texto.encode("utf-8")).hexdigest()
+
+    la_ultima = (
+        db.scalar(
+            select(func.max(models.FotoDeLaPac.version)).where(
+                models.FotoDeLaPac.explotacion_id == explotacion.id,
+                models.FotoDeLaPac.anio == el_anio,
+            )
+        )
+        or 0
+    )
+    la_foto = models.FotoDeLaPac(
+        explotacion_id=explotacion.id,
+        anio=el_anio,
+        version=la_ultima + 1,
+        huella=la_huella,
+        el_contenido=el_texto,
+        usuario_id=usuario.id,
+    )
+    db.add(la_foto)
+    db.commit()
+    db.refresh(la_foto)
+    return {
+        "version": la_foto.version,
+        "anio": la_foto.anio,
+        "huella": la_foto.huella,
+        "creada_en": la_foto.creada_en,
+        "cuantos_recintos": len(el_suyo.get("los_recintos") or []),
+        # ***Y lo que la foto NO es***, dicho con la misma claridad que el paquete.
+        "es_hipotesis": True,
+        "no_es_garantia": True,
+        "toca_lo_guardado": False,
+    }
+
+
+@router.get("/foto/{version}")
+def la_foto_guardada(version: int, explotacion: ExplotacionActual, db: Db) -> dict:
+    """***El detalle de la foto***, *que es exactamente lo que se exporta.*"""
+    la_foto = _la_foto(db, explotacion, version)
+    return {
+        "version": la_foto.version,
+        "anio": la_foto.anio,
+        "huella": la_foto.huella,
+        "creada_en": la_foto.creada_en,
+        "el_escenario": json.loads(la_foto.el_contenido),
+    }
+
+
+@router.get("/foto/{version}/exportar")
+def exportar_la_foto(version: int, explotacion: ExplotacionActual, db: Db) -> Response:
+    """***El fichero, y es EXACTAMENTE la foto.***
+
+    *El contrato lo pide asi: «**la exportacion coincide con el detalle y conserva la version evaluada**».*
+    *Por eso **no se vuelve a calcular nada**: se lee el contenido guardado y se escribe. Si se recalculara, un
+    cambio en la finca haria que el fichero dijera una cosa y la foto otra.*
+
+    *La cabecera lleva **la version, el año y la fecha**, para que el papel que se lleva al asesor diga de que
+    es; y **no lleva ninguna columna de elegibilidad**, porque este programa no la afirma.*
+    """
+    la_foto = _la_foto(db, explotacion, version)
+    el_escenario = json.loads(la_foto.el_contenido)
+
+    salida = io.StringIO()
+    escritor = csv.writer(salida, delimiter=";")
+    escritor.writerow([f"version {la_foto.version}", f"año {la_foto.anio}", f"hecha {la_foto.creada_en}"])
+    escritor.writerow(
+        [
+            "referencia", "alias", "superficie_ha", "especie", "variedad", "ecorregimen",
+            "superficie_cultivada_ha", "completa", "falta",
+        ]
+    )
+    for uno in el_escenario.get("los_recintos") or []:
+        el_cultivo = uno.get("cultivo") or {}
+        escritor.writerow(
+            [
+                uno.get("referencia") or "",
+                uno.get("alias") or "",
+                _un_numero_texto(uno.get("superficie_ha")),
+                el_cultivo.get("especie") or "",
+                el_cultivo.get("variedad") or "",
+                el_cultivo.get("ecorregimen") or "",
+                _un_numero_texto(el_cultivo.get("superficie_cultivada_ha")),
+                "si" if uno.get("completa") else "no",
+                " ".join(uno.get("falta") or []),
+            ]
+        )
+    el_cuerpo = "\ufeff" + salida.getvalue()
+    return Response(
+        content=el_cuerpo.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="pac-{la_foto.anio}-v{la_foto.version}.csv"'
+        },
+    )
+
+
+def _un_numero_texto(valor) -> str:
+    """*Un numero, o **la casilla en blanco** si no consta.* *Un `0` ahi seria decir que esa tierra tiene cero
+    hectareas, que es lo contrario de «no consta».*"""
+    return "" if valor is None else str(valor)
