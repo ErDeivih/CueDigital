@@ -720,3 +720,10 @@ datos/adjuntos/              Boletines de laboratorio subidos. EN EL .gitignore.
 - [ ] El resumen dice qué cambió, qué ficheros y qué tests corriste.
 
 
+
+## Contexto de GitHub y del chat en la nube
+
+Antes de continuar, leer CONTEXTO_PARA_EL_CHAT.md y DESARROLLO_EN_LA_NUBE.md.
+La cola y las revisiones independientes están en contexto_agentes/. Sus rutas Windows
+son históricas: usar las copias del checkout remoto. No probar contra datos reales.
+En Linux puede prepararse el entorno con bash .codex/setup.sh.

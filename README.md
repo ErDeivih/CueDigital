@@ -1,5 +1,7 @@
 # CUE Digital — el cuaderno de campo
 
+> **GitHub y chat en la nube:** empieza por [CONTEXTO_PARA_EL_CHAT.md](CONTEXTO_PARA_EL_CHAT.md) y [DESARROLLO_EN_LA_NUBE.md](DESARROLLO_EN_LA_NUBE.md). El código estable y el trabajo PAC pendiente están en ramas distintas.
+
 > **Integración IUWS, 23/09/2026:** ya están localizados el descriptor oficial CUE
 > v3.11.4 y su esquema JSON, y se han corregido las rutas con `/api/`. El mapeo de los
 > 18 bloques está inventariado; la exportación oficial sigue pendiente de catálogos,
