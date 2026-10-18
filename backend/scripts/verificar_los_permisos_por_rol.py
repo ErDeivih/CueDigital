@@ -49,6 +49,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import uuid
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
@@ -104,6 +105,44 @@ def _llamar(
     if token:
         cabeceras["Authorization"] = f"Bearer {token}"
     peticion = urllib.request.Request(f"{direccion}{camino}", data=datos, method=metodo, headers=cabeceras)
+    try:
+        with urllib.request.urlopen(peticion, timeout=120) as respuesta:
+            texto = respuesta.read().decode("utf-8")
+            return respuesta.status, (json.loads(texto) if texto.strip() else None)
+    except urllib.error.HTTPError as fallo:
+        texto = fallo.read().decode("utf-8", errors="replace")
+        try:
+            return fallo.code, json.loads(texto)
+        except json.JSONDecodeError:
+            return fallo.code, texto
+
+
+def _con_formulario(direccion: str, camino: str, token: str, campos: dict) -> tuple[int, object]:
+    """***Un POST con campos de FORMULARIO***, no con un cuerpo JSON.
+
+    *La puerta de la factura lo pide asi -`datos: str = File(...)`- y lo explica ella misma: **los datos van como
+    un JSON dentro de un campo del formulario**, porque en la misma peticion viaja el fichero de la factura, y un
+    formulario con fichero no puede llevar un cuerpo JSON normal.*
+
+    ***Con un cuerpo JSON contesta `loc: ["body", "datos"]`, y el cuerpo entero se ignora en silencio*** -me paso, y
+    parecia que la puerta «no aceptaba» la factura-.*
+    """
+    limite = "----cuedigital" + uuid.uuid4().hex
+    trozos = []
+    for nombre, valor in campos.items():
+        trozos.append(
+            f'--{limite}\r\nContent-Disposition: form-data; name="{nombre}"\r\n\r\n{valor}\r\n'.encode()
+        )
+    trozos.append(f"--{limite}--\r\n".encode())
+    peticion = urllib.request.Request(
+        f"{direccion}{camino}",
+        data=b"".join(trozos),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": f"multipart/form-data; boundary={limite}",
+        },
+    )
     try:
         with urllib.request.urlopen(peticion, timeout=120) as respuesta:
             texto = respuesta.read().decode("utf-8")
@@ -446,6 +485,36 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
         codigo, las_propuestas = _llamar(
             direccion, f"/api/bancos/movimientos/{el_movimiento}/propuestas", token=el_titular.token
         )
+        # ***Para conciliar hace falta un PAPEL PENDIENTE*** (18/10/2026): *la puerta resuelve la imputacion
+        # contra los papeles sin pagar de la finca, y las clases que admite son `factura_emitida`, `cobro` y
+        # `factura_de_compra` -**`gasto` no existe**-. El escenario **no crea ninguno**, asi que se da de alta
+        # **una factura de compra**, que es lo que hace el agricultor cuando le llega el papel. Sin ella,
+        # `banco-deshacer` no puede existir: no se puede deshacer lo que no se ha hecho.*
+        codigo, la_factura = _con_formulario(
+            direccion,
+            "/api/facturas",
+            el_titular.token,
+            {
+                "datos": json.dumps(
+                    {
+                        "fecha": "2026-06-27",
+                        "proveedor": "El proveedor de la prueba",
+                        "numero_factura": "F-PRUEBA-1",
+                        "base_imponible": 36.07,
+                        "cuota_iva": 3.43,
+                        "total": 39.5,
+                        "lineas": [{"descripcion": "Lo que se compro", "importe": 39.5}],
+                    }
+                )
+            },
+        )
+        comprobar(
+            codigo in (200, 201) and isinstance(la_factura, dict) and la_factura.get("id"),
+            "***se da de alta una factura de compra, que es el papel que falta para poder conciliar***",
+            encontre=f"{codigo} {str(la_factura)[:220]}",
+        )
+        el_papel_pendiente = (la_factura or {}).get("id") if isinstance(la_factura, dict) else None
+
         # ***La forma la dice la propia aplicacion***: *`conciliarUnMovimiento(propuesta.imputaciones)` -lo que
         # se manda es **la lista de imputaciones de una propuesta**, no la propuesta entera-. Y a mano,
         # `[{clase, documento_id, importe}]`, con `importe: null` para «reparte tu lo que quepa».*
@@ -457,10 +526,19 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
             suyas = las_propuestas.get("propuestas") or []
             if suyas and isinstance(suyas[0], dict) and suyas[0].get("imputaciones"):
                 la_de_la_app = {"imputaciones": suyas[0]["imputaciones"]}
+        la_del_papel = None
+        if el_papel_pendiente:
+            la_del_papel = {
+                "imputaciones": [
+                    {"clase": "factura_de_compra", "documento_id": el_papel_pendiente, "importe": None}
+                ]
+            }
         las_formas = [
             la_de_la_app,
-            {"imputaciones": [{"clase": "gasto", "documento_id": escenario.gastos[0], "importe": None}]},
-            {"imputaciones": [{"clase": "gasto", "documento_id": escenario.gastos[0], "importe": "39.50"}]},
+            la_del_papel,
+            {"imputaciones": [{"clase": "factura_de_compra", "documento_id": el_papel_pendiente, "importe": "39.50"}]}
+            if el_papel_pendiente
+            else None,
         ]
         el_ultimo = None
         for forma in las_formas:
