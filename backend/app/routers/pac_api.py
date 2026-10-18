@@ -66,16 +66,13 @@ def _lo_que_falta(parcela, cultivo) -> list[str]:
     no es una tierra de cero hectareas, y una sin cultivo no es una tierra sin sembrar: es una tierra de la
     que **no consta**.*
     """
-    falta = []
-    if parcela.superficie_ha is None:
-        falta.append("falta_superficie")
-    if not (parcela.ref_sigpac or "").strip():
-        falta.append("falta_referencia")
-    if cultivo is None:
-        falta.append("falta_cultivo")
-    elif not (cultivo.ecorregimen or "").strip():
-        falta.append("falta_ecorregimen")
-    return falta
+    # ***La regla vive en `pac.py`*** (18/10/2026): *la usa tambien **el escenario del año que viene**, y dos
+    # copias de la misma regla acaban diciendo cosas distintas de la misma tierra.*
+    return pac.lo_que_falta_para_la_pac(
+        superficie_ha=parcela.superficie_ha,
+        referencia=parcela.ref_sigpac,
+        cultivo=None if cultivo is None else {"ecorregimen": cultivo.ecorregimen},
+    )
 
 
 @router.get("/paquete")
@@ -182,3 +179,43 @@ def el_paquete_de_la_pac(
         # elegibilidad» tiene que viajar con el paquete, porque el paquete se puede guardar y reenviar.*
         "no_es_garantia": textos.PAC["no_es_garantia"],
     }
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***El escenario del año que viene***
+# -----------------------------------------------------------------------------------------------------------
+
+
+@router.post("/escenario")
+def el_escenario_del_ano_que_viene(
+    datos: dict, explotacion: ExplotacionActual, db: Db, campana_id: int | None = None
+) -> dict:
+    """***Un escenario del año que viene***: *una **hipotesis**, separada de lo declarado y de lo realizado.*
+
+    *El contrato lo pide asi: «escenario siguiente año separado de lo declarado y de lo realizado. Comparar
+    alternativas **sin consumir**».*
+
+    ***Esta puerta no escribe nada***: *lee el paquete -que es lo que la finca tiene de verdad-, le aplica los
+    cambios que se le mandan **en memoria** y devuelve otra cosa, dicha con su capa. **Editar el escenario no
+    cambia el historial porque no hay historial que tocar**, y comparar dos alternativas no consume ninguna.*
+
+    *Es `POST` y no `GET` porque lo que se manda es **un juego de cambios por recinto**, que no cabe razonablemente
+    en una direccion; **no porque escriba**.*
+
+    *Y **no dice si es elegible**: un escenario no es una solicitud, y este programa **no envia nada**.*
+    """
+    el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=campana_id)
+    # *El año siguiente al de la campaña que se esta mirando. Si no hay campaña, se queda en el que digan.*
+    el_anio = datos.get("anio") or ((el_paquete.get("campana_anio") or 0) + 1)
+
+    el_suyo = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("cambios"))
+    la_contestacion = {
+        "escenario": el_suyo,
+        # *Las palabras de la casa, las mismas del paquete: el escenario no inventa un idioma nuevo.*
+        "textos": el_paquete.get("textos"),
+    }
+    if datos.get("contra") is not None:
+        el_otro = pac.el_escenario(el_paquete, anio=el_anio, cambios=datos.get("contra"))
+        la_contestacion["contra"] = el_otro
+        la_contestacion["comparacion"] = pac.comparar_alternativas(el_suyo, el_otro)
+    return la_contestacion

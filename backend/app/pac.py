@@ -165,3 +165,156 @@ def tierra_sin_cultivo_no_se_pinta_de_verde(*, superficie_total, superficie_con_
         "sin_cultivo": sin_cultivo,
         "se_queda_fuera": sin_cultivo if sin_cultivo > 0 else 0,
     }
+
+# ---------------------------------------------------------------------------
+# ***Lo que le falta a un recinto***, en un solo sitio
+# ---------------------------------------------------------------------------
+
+
+def lo_que_falta_para_la_pac(*, superficie_ha, referencia, cultivo) -> list[str]:
+    """***Las cuestiones pendientes de un recinto***, dichas con su clave.
+
+    *Es la mitad del contrato: «falta area/cultivo/evidencia -> **incompleto**». Y vive **aqui** -no en la
+    puerta- porque **la usa tambien el escenario del año que viene**: si hubiera dos copias de la regla, un dia
+    dirian cosas distintas de la misma tierra.*
+
+    *Una tierra sin superficie no es una tierra de cero hectareas, y una sin cultivo no es una tierra sin
+    sembrar: es una tierra de la que **no consta**.*
+    """
+    falta = []
+    if superficie_ha is None:
+        falta.append("falta_superficie")
+    if not (referencia or "").strip():
+        falta.append("falta_referencia")
+    if cultivo is None:
+        falta.append("falta_cultivo")
+    elif not ((cultivo or {}).get("ecorregimen") or "").strip():
+        falta.append("falta_ecorregimen")
+    return falta
+
+
+# ---------------------------------------------------------------------------
+# ***El escenario del año que viene***
+# ---------------------------------------------------------------------------
+
+
+def el_escenario(el_paquete: dict, *, anio: int, cambios: dict | None = None) -> dict:
+    """***Un escenario del año que viene: una HIPOTESIS, no lo declarado ni lo realizado.***
+
+    *El contrato lo pide con estas palabras: «**escenario siguiente año separado de lo declarado y de lo
+    realizado**. Comparar alternativas **sin consumir**».*
+
+    ***Y por eso esta funcion no escribe ni puede escribir***: *recibe el paquete -que es lo que la finca tiene
+    de verdad- y devuelve **otra cosa**, con su capa dicha. **Editar un escenario no cambia el historial porque no
+    hay historial que tocar**; y comparar dos alternativas **no consume ninguna de las dos**, porque no hay nada
+    que consumir.*
+
+    ### Lo que NO hace, y se dice
+
+      · **No dice si es elegible.** *Un escenario no es una solicitud, y este programa no envia nada.*
+      · **No inventa el cultivo que falta**: *si no se le pasa, el recinto sigue **incompleto**, con su clave.*
+      · **No cambia las hectareas de la finca**: *la superficie es la que consta; lo que cambia es lo que se
+        propone sembrar.*
+
+    `cambios` es `{parcela_id: {"cultivo": {...}}}` -lo mismo que lleva un recinto del paquete, con `especie`,
+    `variedad`, `ecorregimen` y `superficie_cultivada_ha`-.
+    """
+    # ***Las claves llegan como TEXTO cuando vienen de un JSON*** (18/10/2026): *`{"5": {...}}`, no
+    # `{5: {...}}`. Buscar `5` en ese diccionario **no encontraba nada**, y el cambio **se perdia en silencio**:
+    # el escenario salia igual que el paquete y no habia forma de saber por que. Se normalizan a numero.*
+    los_cambios = {}
+    for la_clave, el_valor in (cambios or {}).items():
+        try:
+            los_cambios[int(la_clave)] = el_valor
+        except (TypeError, ValueError):
+            los_cambios[la_clave] = el_valor
+    los_recintos: list[dict] = []
+    lo_que_cambia: list[dict] = []
+
+    # ***`las_tierras` es como llama el paquete a sus recintos*** -se comprobo leyendo su `return`, no
+    # suponiendolo-.
+    for uno in el_paquete.get("las_tierras") or []:
+        suyo = dict(uno)
+        el_cambio = los_cambios.get(uno.get("parcela_id"))
+        if isinstance(el_cambio, dict) and "cultivo" in el_cambio:
+            lo_que_cambia.append(
+                {
+                    "parcela_id": uno.get("parcela_id"),
+                    "alias": uno.get("alias"),
+                    "que": "el cultivo",
+                    "antes": uno.get("cultivo"),
+                    "ahora": el_cambio["cultivo"],
+                }
+            )
+            suyo["cultivo"] = el_cambio["cultivo"]
+        suyo["falta"] = lo_que_falta_para_la_pac(
+            superficie_ha=suyo.get("superficie_ha"),
+            referencia=suyo.get("referencia"),
+            cultivo=suyo.get("cultivo"),
+        )
+        suyo["completa"] = not suyo["falta"]
+        # ***La capa, dicha en cada recinto***: *esto es una hipotesis, y no se confunde con lo que hay.*
+        suyo["capa"] = "hipotesis"
+        los_recintos.append(suyo)
+
+    con_cultivo = sum(
+        float((uno.get("cultivo") or {}).get("superficie_cultivada_ha") or 0) for uno in los_recintos
+    )
+    la_superficie = sum(float(uno.get("superficie_ha") or 0) for uno in los_recintos)
+    # ***El denominador NO se estrecha***: *las hectareas sin cultivo siguen contando -«tierra sin cultivo no
+    # desaparece para pintar verde»-, y el escenario no es la excepcion.*
+    # ***Se le pasa el numero, aunque sea cero.*** *`or None` convertia «no hay hectareas» en «no hay
+    # denominador», y eso **lanza**: `el_porcentaje` ya sabe que hacer con un cero -no hay nada que medir, y el
+    # porcentaje es `None`-, pero con `None` no puede.*
+    el_resumen = tierra_sin_cultivo_no_se_pinta_de_verde(
+        superficie_total=la_superficie, superficie_con_cultivo=con_cultivo
+    )
+
+    return {
+        "anio": anio,
+        "capa": "hipotesis",
+        "es_hipotesis": True,
+        "no_es_lo_declarado": True,
+        "no_es_lo_realizado": True,
+        "toca_lo_guardado": False,
+        "no_es_garantia": True,
+        "los_recintos": los_recintos,
+        "lo_que_cambia": lo_que_cambia,
+        "el_resumen": el_resumen,
+        "los_incompletos": [uno for uno in los_recintos if not uno["completa"]],
+    }
+
+
+def comparar_alternativas(uno: dict, otro: dict) -> dict:
+    """***Dos escenarios, frente a frente, sin consumir ninguno.***
+
+    *Devuelve **en que se diferencian**, recinto a recinto, y **los dos totales con su porcentaje**. No toca la
+    base, no guarda nada y no elige: **comparar no es decidir**.*
+    """
+    por_id_uno = {u.get("parcela_id"): u for u in uno.get("los_recintos") or []}
+    por_id_otro = {u.get("parcela_id"): u for u in otro.get("los_recintos") or []}
+    las_diferencias = []
+    for el_id in sorted(set(por_id_uno) | set(por_id_otro)):
+        el_de_uno = por_id_uno.get(el_id) or {}
+        el_de_otro = por_id_otro.get(el_id) or {}
+        if (el_de_uno.get("cultivo"), el_de_uno.get("completa")) != (
+            el_de_otro.get("cultivo"),
+            el_de_otro.get("completa"),
+        ):
+            las_diferencias.append(
+                {
+                    "parcela_id": el_id,
+                    "alias": el_de_uno.get("alias") or el_de_otro.get("alias"),
+                    "en_uno": el_de_uno.get("cultivo"),
+                    "en_otro": el_de_otro.get("cultivo"),
+                    "completa_en_uno": el_de_uno.get("completa"),
+                    "completa_en_otro": el_de_otro.get("completa"),
+                }
+            )
+    return {
+        "no_consume_nada": True,
+        "las_diferencias": las_diferencias,
+        "cuantas": len(las_diferencias),
+        "el_total_en_uno": (uno.get("el_resumen") or {}).get("porcentaje"),
+        "el_total_en_otro": (otro.get("el_resumen") or {}).get("porcentaje"),
+    }
