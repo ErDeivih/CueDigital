@@ -90,3 +90,20 @@ No seguir las colas de RadioPV o facylf de otros proyectos.
 Antes de editar, actualizar el diagnóstico contra el código de la rama elegida.
 No confundir una instantánea pendiente con una reparación verificada. No resetear
 trabajo ajeno ni subir datos de producción para reproducir fallos.
+
+## Verificación de la publicación (19/10/2026)
+
+- Repositorio privado, rama predeterminada `main`; historial y rama PAC pendiente publicados.
+- JavaScript: 1143/1143 en la copia de publicación; el job independiente de GitHub
+  también terminó correctamente en la ejecución 39202933556.
+- Humo: `RESULTADO: todo correcto`, contra servidor temporal aislado.
+- Python: colección local de 5524 casos. NO se certifica la suite completa sobre esta
+  publicación: la primera ejecución Linux (39169550083) agotó los 30 minutos tras
+  mostrar aproximadamente el 70 %. La ejecución 39202933556 seguía en curso al
+  escribir esta nota. Ahora imprime cada caso y vuelca las pilas si uno tarda 60 s;
+  consultar su resultado antes de afirmar que todo está verde. No se ha quitado ningún test.
+- Las 13 pruebas de protección de descargas y las 23 de reenvíos/duplicados pasaron
+  aparte en Windows; eso NO demuestra dónde se detuvo Linux ni sustituye la suite completa.
+- La base local del agricultor conserva la huella SHA-256 comprobada antes de publicar.
+
+Estado de las comprobaciones: https://github.com/ErDeivih/CueDigital/actions
