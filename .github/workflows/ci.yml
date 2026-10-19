@@ -29,7 +29,15 @@ jobs:
         run: python -m pip install -r backend/requirements.txt
       - name: Python
         working-directory: backend
-        run: python -m pytest tests
+        run: python -m pytest tests -o addopts="--strict-markers -v" -o faulthandler_timeout=60
+  javascript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
       - name: JavaScript
         working-directory: backend
         run: node --test "tests_js/*.test.js"
