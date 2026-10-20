@@ -4437,3 +4437,59 @@ class ReservaDeMaquinaSalida(BaseModel):
     # **Anular no es borrar**: la reserva se queda tachada con su motivo y **deja de ocupar** la maquina.
     anulada: bool
     motivo_anulacion: str | None = None
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***La PAC: lo que se propone y lo que se guarda*** (18/10/2026)
+# -----------------------------------------------------------------------------------------------------------
+
+
+class UnCultivoHipotetico(BaseModel):
+    """***Un cultivo propuesto para un recinto***: *lo que el agricultor esta pensando sembrar.*
+
+    *Es **una hipotesis**, y se llama asi en todas partes: no es un cultivo declarado ni uno sembrado. **Nada de
+    lo que entra por aqui toca la finca.***
+    """
+
+    especie: str | None = Field(default=None, max_length=120)
+    variedad: str | None = Field(default=None, max_length=120)
+    sistema: str | None = Field(default=None, max_length=60)
+    ecorregimen: str | None = Field(default=None, max_length=60)
+    # ***Sin superficie no se inventa nada***: *`None` es «no consta», y el recinto queda incompleto con su
+    # clave en vez de darse por bueno.*
+    superficie_cultivada_ha: float | None = Field(default=None, ge=0)
+
+
+class UnCambioDeUnRecinto(BaseModel):
+    """*Lo que se propone para un recinto. Hoy, un cultivo; mañana, lo que haga falta.*"""
+
+    cultivo: UnCultivoHipotetico | None = None
+
+
+class EscenarioDeLaPacEntrada(BaseModel):
+    """**Lo que se manda para calcular un escenario** -y para comparar dos-.
+
+    `cambios` es `{parcela_id: {"cultivo": {...}}}`. *Las claves llegan como texto desde un JSON y Pydantic las
+    convierte: **el servidor no tiene que adivinar**.*
+    """
+
+    anio: int = Field(ge=2000, le=2100)
+    campana_id: int | None = None
+    cambios: dict[int, UnCambioDeUnRecinto] = Field(default_factory=dict)
+    # ***La otra alternativa***, si se quieren comparar dos.
+    contra: dict[int, UnCambioDeUnRecinto] | None = None
+
+
+class FotoDeLaPacEntrada(EscenarioDeLaPacEntrada):
+    """**Lo que se manda para guardar una foto de lo evaluado.**
+
+    ***Y lo importante es `huella_de_la_fuente`***: *la que devolvio el escenario que se **mostro**. Si al
+    guardar la finca ha cambiado, `huella_de_la_fuente` no coincidira con la de ahora, y el servidor **no
+    sustituye nada en silencio**: contesta **409**, dice que cambio y deja `recalcular`.*
+
+    *Sin huella se guarda lo de ahora -que es lo que quiere un guion de pruebas-, y se dice.*
+    """
+
+    huella_de_la_fuente: str | None = Field(default=None, max_length=64)
+    # ***Y recalcular es una decision explicita***: *no algo que pase por no mandar la huella.*
+    recalcular: bool = False

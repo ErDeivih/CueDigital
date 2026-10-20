@@ -2379,10 +2379,218 @@ function pantallaInicio() {
  * *Se pide a su puerta y se pinta lo que contesta.* ***Y lo que contesta, cuando no hay fuente legal cargada,
  * es que **no se puede decir si algo es elegible** -y eso se pinta lo primero-.***
  */
+// -----------------------------------------------------------------------------------------------------------
+// ***La PAC: escenario, fotos e historial*** (18/10/2026, segunda entrega)
+// -----------------------------------------------------------------------------------------------------------
+//
+// *La pantalla ya no solo ensena el paquete: **evalua, compara, guarda y exporta**. Y por debajo hay **tres capas
+// que no se mezclan**:*
+//
+//   · ***lo que consta*** -el paquete: superficie, referencia y cultivo de la campaña-, que **no cambia**;
+//   · ***la hipotesis*** -el escenario-, que se calcula y **no toca nada**;
+//   · ***y los trabajos realizados***, que se miran **aparte** y no son ni una cosa ni la otra.
+//
+// *«Persistir un borrador no lo convierte en una declaracion oficial ni en un trabajo realizado»: por eso la foto
+// se llama foto, y la pantalla lo dice.*
+
+function estadoDeLaPac() {
+  if (!estado.pac) {
+    estado.pac = {
+      anio: "", cambios: {}, escenario: null, contra: null, comparacion: null,
+      historial: null, trabajos: null, guardando: false, conflicto: null, error: "", aviso: "",
+    };
+  }
+  return estado.pac;
+}
+
+/** ***El año que se esta evaluando***: *el escrito; si no, el siguiente al de la campaña abierta.* */
+function elAnioDeLaPac(suyo) {
+  const escrito = Number(valorDeLaCasilla("pac-anio"));
+  if (escrito) return escrito;
+  if (suyo.anio) return suyo.anio;
+  const elDeLaCampana = (estado.paquetePac && estado.paquetePac.campana_anio) || 0;
+  return elDeLaCampana ? elDeLaCampana + 1 : "";
+}
+
+/** ***Calcular la hipotesis***. *No escribe nada: el servidor la calcula y se tira.* */
+async function evaluarElEscenarioDeLaPac() {
+  const suyo = estadoDeLaPac();
+  suyo.error = ""; suyo.aviso = ""; suyo.conflicto = null;
+  suyo.anio = elAnioDeLaPac(suyo);
+  if (!suyo.anio) { suyo.error = mensaje("no_se_pudo"); return pantallaElPaqueteDeLaPac(); }
+  pantallaElPaqueteDeLaPac();
+  try {
+    const contestado = await apiJson("/api/pac/escenario", {
+      method: "POST",
+      body: JSON.stringify({ anio: suyo.anio, cambios: suyo.cambios }),
+    });
+    suyo.escenario = contestado.escenario;
+    suyo.comparacion = null; suyo.contra = null;
+    suyo.aviso = "Escenario calculado. ***Todavia no se ha guardado nada.***";
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return pantallaElPaqueteDeLaPac();
+}
+
+/** ***Proponer un cultivo*** para un recinto. *Es una hipotesis: no toca la finca.* */
+function proponerUnCultivoEnLaPac(parcelaId, especie) {
+  const suyo = estadoDeLaPac();
+  const laEspecie = String(especie || "").trim();
+  if (!laEspecie) delete suyo.cambios[parcelaId];
+  else suyo.cambios[parcelaId] = { cultivo: { especie: laEspecie, sistema: "secano", ecorregimen: "secano" } };
+  // *Cambiar la hipotesis **tira lo calculado y el conflicto**: lo que habia ya no es lo que hay.*
+  suyo.escenario = null; suyo.comparacion = null; suyo.conflicto = null; suyo.aviso = "";
+  // ***Y SE VUELVE A EVALUAR*** (19/10/2026): *antes solo se tiraba, y el escenario se quedaba en `null` hasta que
+  // el agricultor pulsara EVALUAR otra vez -si se acordaba-. **El boton de guardar, que se apaga sin escenario,
+  // quedaba muerto y sin decir por que**: proponer un cultivo y no poder guardarlo parecia un fallo del programa.
+  // Ahora proponer **calcula**, y guardar guarda lo que se acaba de ver.*
+  return evaluarElEscenarioDeLaPac();
+}
+
+/** ***Comparar dos alternativas***: *las de ahora contra las propuestas, sin consumir ninguna.* */
+async function compararElEscenarioDeLaPac() {
+  const suyo = estadoDeLaPac();
+  suyo.error = ""; suyo.aviso = "";
+  suyo.anio = elAnioDeLaPac(suyo);
+  try {
+    const contestado = await apiJson("/api/pac/escenario", {
+      method: "POST",
+      body: JSON.stringify({ anio: suyo.anio, cambios: {}, contra: suyo.cambios }),
+    });
+    suyo.contra = contestado.contra;
+    suyo.comparacion = contestado.comparacion;
+    // ***El escenario de la PROPUESTA se respeta, y solo se pone el de base si no habia ninguno.*** *Comparar
+    // calcula **lo de ahora contra lo propuesto**, y su `escenario` es **lo de ahora** -`cambios: {}`-. Si se
+    // sobreescribiera el de la propuesta, al guardar se mandaria **la huella del escenario equivocado** y el
+    // servidor contestaria **409** con razon: lo que se iba a guardar no era lo que se habia evaluado. Lo cazo el
+    // recorrido, que ya no se cree una espera sin comprobarla.*
+    if (!suyo.escenario) suyo.escenario = contestado.escenario;
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return pantallaElPaqueteDeLaPac();
+}
+
+/**
+ * ***Guardar la foto de lo evaluado***, y **solo si sigue siendo lo mismo**.
+ *
+ * *Se manda **la huella de la fuente** que devolvio el escenario que se enseno. Si la finca ha cambiado desde
+ * entonces, el servidor contesta **409** y **no guarda nada**: aqui se ensena el conflicto y se ofrece
+ * **recalcular**. **Nunca se sustituye en silencio.***
+ */
+async function guardarLaFotoDeLaPac(recalcular = false) {
+  const suyo = estadoDeLaPac();
+  if (suyo.guardando) return pantallaElPaqueteDeLaPac();
+  suyo.guardando = true; suyo.error = ""; suyo.aviso = ""; suyo.conflicto = null;
+  pantallaElPaqueteDeLaPac();
+  try {
+    // ***`api` y no `apiJson`***: *hace falta **el codigo** y **el cuerpo** del 409, y `apiJson` los tira.*
+    const respuesta = await api("/api/pac/foto", {
+      method: "POST",
+      body: JSON.stringify({
+        anio: suyo.anio,
+        cambios: suyo.cambios,
+        huella_de_la_fuente: (suyo.escenario && suyo.escenario.huella_de_la_fuente) || null,
+        recalcular: recalcular,
+      }),
+    });
+    let cuerpo = null;
+    try { cuerpo = await respuesta.json(); } catch (fallo) { cuerpo = null; }
+    if (respuesta.status === 409 && cuerpo && cuerpo.detail) {
+      suyo.conflicto = cuerpo.detail;
+      suyo.escenario = (cuerpo.detail && cuerpo.detail.lo_que_hay_ahora) || suyo.escenario;
+    } else if (!respuesta.ok) {
+      suyo.error = avisoDelServidor(cuerpo) || mensaje("no_se_pudo");
+    } else {
+      suyo.aviso = `Guardada la foto de ${cuerpo.anio}, version ${cuerpo.version}.`;
+      suyo.conflicto = null;
+      await pedirElHistorialDeLaPac();
+    }
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  return pantallaElPaqueteDeLaPac();
+}
+
+async function pedirElHistorialDeLaPac() {
+  const suyo = estadoDeLaPac();
+  try {
+    suyo.historial = await apiJson("/api/pac/foto/historial");
+  } catch (fallo) {
+    suyo.historial = { las_fotos: [], cuantas: 0 };
+  }
+  return suyo.historial;
+}
+
+async function pedirLosTrabajosDeLaPac() {
+  const suyo = estadoDeLaPac();
+  const laCampana = estado.paquetePac && estado.paquetePac.campana_id;
+  if (!laCampana) { suyo.trabajos = []; return []; }
+  try {
+    const los = await apiJson(`/api/trabajos?campana_id=${laCampana}`);
+    suyo.trabajos = Array.isArray(los) ? los : los.trabajos || los.hechos || [];
+  } catch (fallo) {
+    suyo.trabajos = null;
+  }
+  return suyo.trabajos;
+}
+
+/** ***El fichero de una foto***: *exactamente esa version, no una recalculada.* */
+async function descargarLaFotoDeLaPac(anio, version) {
+  const respuesta = await api(`/api/pac/foto/${anio}/${version}/exportar`);
+  if (!respuesta.ok) return;
+  const blob = await respuesta.blob();
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = `pac-${anio}-v${version}.csv`;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+}
+
+/** ***Todo lo de la PAC, por su nombre***: *un solo sitio, y las acciones empiezan por `pac-`.* */
+function atenderLaPac(nombre, elemento) {
+  if (nombre === "pac-evaluar") return evaluarElEscenarioDeLaPac();
+  if (nombre === "pac-comparar") return compararElEscenarioDeLaPac();
+  if (nombre === "pac-guardar") return guardarLaFotoDeLaPac(false);
+  if (nombre === "pac-recalcular") return guardarLaFotoDeLaPac(true);
+  if (nombre === "pac-historial") return pedirElHistorialDeLaPac().then(() => pantallaElPaqueteDeLaPac());
+  if (nombre === "pac-exportar") {
+    return descargarLaFotoDeLaPac(Number(elemento.dataset.anio), Number(elemento.dataset.version));
+  }
+  if (nombre === "pac-proponer") {
+    const elSelect = document.getElementById(`pac-cultivo-${elemento.dataset.parcela}`);
+    return proponerUnCultivoEnLaPac(Number(elemento.dataset.parcela), elSelect ? elSelect.value : "");
+  }
+  if (nombre === "pac-quitar") return proponerUnCultivoEnLaPac(Number(elemento.dataset.parcela), "");
+  return pantallaElPaqueteDeLaPac();
+}
+
 function pantallaElPaqueteDeLaPac() {
-  montar(() => PantallaElPaqueteDeLaPac({ paquete: estado.paquetePac }));
+  const suyo = estadoDeLaPac();
+  montar(() =>
+    PantallaElPaqueteDeLaPac({
+      paquete: estado.paquetePac,
+      anio: suyo.anio,
+      cambios: suyo.cambios,
+      escenario: suyo.escenario,
+      contra: suyo.contra,
+      comparacion: suyo.comparacion,
+      historial: suyo.historial,
+      trabajos: suyo.trabajos,
+      guardando: suyo.guardando,
+      conflicto: suyo.conflicto,
+      error: suyo.error,
+      aviso: suyo.aviso,
+    }),
+  );
   // *`null` es «todavia no se ha pedido»: la pantalla no puede decir «no hay tierras» antes de preguntar.*
   if (!estado.paquetePacPedido) pedirElPaqueteDeLaPac();
+  // *Y el historial y los trabajos, la primera vez: **se ensenan aparte del paquete**.*
+  if (suyo.historial === null) pedirElHistorialDeLaPac().then(() => pantallaElPaqueteDeLaPac());
+  if (suyo.trabajos === null) pedirLosTrabajosDeLaPac().then(() => pantallaElPaqueteDeLaPac());
 }
 
 /**
@@ -20493,6 +20701,8 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     estado.marcoPintado = "";
   }
 
+  // ***Y todas las de la PAC, por su nombre***: *un solo sitio, y sin tocar el despacho grande.*
+  if (nombre.startsWith("pac-")) return atenderLaPac(nombre, elemento);
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));
