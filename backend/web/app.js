@@ -21,6 +21,8 @@ import {
   conCuenta,
   crearCola,
   decideQueHacer,
+  // ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026).
+  loQueSePuedeMandar,
   diasDeEspera,
   fechaEnPalabras,
   formateaFecha,
@@ -658,6 +660,22 @@ async function apiJson(ruta, opciones = {}) {
  * pendiente, o `{error}` si el servidor lo rechazó.
  */
 /**
+ * ***Quién está dentro, como una sola cadena*** (19/10/2026).
+ *
+ * *`usuario_id:finca_id`. **Es lo que se guarda con cada apunte de la cola**, para que un apunte de una cuenta no
+ * se pueda mandar con el vale de otra. Sale de `/api/cuenta/yo`, que es el único que lo sabe.*
+ *
+ * ***Y `null` cuando todavía no se sabe***: *con `null` **no se manda nada** -ver `loQueSePuedeMandar`-, porque
+ * «no sé de quién es» no es «es de quien esté ahora».*
+ */
+function laSesionDeAhora() {
+  const yo = estado.yo;
+  if (!yo || !yo.usuario_id) return null;
+  const laFinca = (yo.explotacion && yo.explotacion.id) || "";
+  return `${yo.usuario_id}:${laFinca}`;
+}
+
+/**
  * Manda un apunte. Si no hay cobertura, lo guarda en el móvil para mandarlo después.
  *
  * `guardarComoUltimo` existe porque "LO MISMO QUE LA ÚLTIMA VEZ" solo tiene sentido
@@ -666,7 +684,7 @@ async function apiJson(ruta, opciones = {}) {
  */
 async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
   if (!navigator.onLine) {
-    cola.apuntar({ tipo, ruta, datos });
+    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
     pintarAvisoPendientes();
     return { encolado: true };
   }
@@ -689,12 +707,12 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
       return { error: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"), estado: respuesta.status };
     }
     // Un 5xx sí puede ser pasajero: se guarda y se reintenta.
-    cola.apuntar({ tipo, ruta, datos });
+    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
     pintarAvisoPendientes();
     return { encolado: true };
   } catch (error) {
     // El navegador dice que hay red, pero no llega: es lo normal en el campo.
-    cola.apuntar({ tipo, ruta, datos });
+    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
     pintarAvisoPendientes();
     return { encolado: true };
   }
@@ -738,7 +756,11 @@ async function mandarPendientes() {
 
   const rechazados = leer(CLAVE_RECHAZADOS, []);
   let algoMandado = false;
-  for (const apunte of cola.leer()) {
+  // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
+  // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
+  // dueño, y lo que no lleva cuenta -de antes de esta corrección- **no se adivina**.*
+  const { suyos } = loQueSePuedeMandar(cola, laSesionDeAhora());
+  for (const apunte of suyos) {
     try {
       const respuesta = await api(apunte.ruta, {
         method: "POST",
@@ -793,6 +815,24 @@ function pintarAvisoPendientes() {
   }
 
   avisoPendientes.className = "aviso";
+  // ***Y si lo que hay es de otra cuenta, se DICE*** (19/10/2026): *no se manda -seria escribir en una finca que no
+  // es- y **no se borra** -perder un apunte del agricultor en silencio no-. Se queda esperando a que su dueño
+  // entre, y la pantalla lo cuenta en vez de dejar un número que no baja sin explicar por qué.*
+  //
+  // ***Y si todavía no se sabe quién está dentro, no se echa la culpa a nadie***: *se dice el número, que es
+  // verdad, porque **«N pendientes» es cierto y «N de otra cuenta» sería mentira**: no consta que lo sean. Se
+  // mandarán en cuanto se sepa.*
+  const laDeAhora = laSesionDeAhora();
+  const { deOtraCuenta, sinCuenta } = loQueSePuedeMandar(cola, laDeAhora);
+  if (laDeAhora && deOtraCuenta.length > 0) {
+    avisoPendientes.textContent = mensaje("apuntes_de_otra_cuenta", { cuantas: deOtraCuenta.length });
+    return;
+  }
+  if (laDeAhora && sinCuenta.length > 0) {
+    // *Los de antes de esta corrección: **no se sabe de quién son**, y mandarlos sería adivinar.*
+    avisoPendientes.textContent = mensaje("apuntes_sin_cuenta", { cuantas: sinCuenta.length });
+    return;
+  }
   // El texto va en singular o en plural según cuántos haya: «1 cosas apuntadas» se lee fatal, y este aviso
   // sale en la cabecera justo cuando el agricultor está en el campo sin cobertura (ronda 84).
   avisoPendientes.textContent = conCuenta(t("aviso", {}) || {}, "pendientes", cuantos);
@@ -18358,6 +18398,12 @@ async function pedirLoQuePuedoHacer() {
       modificar: yo.puede_modificar !== false,
       economico: yo.puede_ver_lo_economico !== false,
     };
+    // ***Y AHORA que se sabe quien esta dentro, se puede vaciar la cola*** (19/10/2026): *antes el vaciado se
+    // intentaba al arrancar, cuando `estado.yo` todavia era `null` — y con la sesion sin conocer **no se manda
+    // nada a proposito**, para no escribir en una finca que no es. Pero **nadie lo reintentaba despues**: la cola
+    // se quedaba quieta hasta el siguiente «hay red», que puede no llegar en todo el dia. Se vio en el recorrido,
+    // por el **control positivo**: el apunte de la cuenta abierta tampoco salia.*
+    mandarPendientes().catch(() => {});
   } catch (fallo) {
     estado.puedo = { modificar: false, economico: false };
   }

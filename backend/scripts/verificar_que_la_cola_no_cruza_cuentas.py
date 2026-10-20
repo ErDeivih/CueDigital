@@ -1,0 +1,179 @@
+"""**La cola sin conexion no cruza cuentas** (19/10/2026).
+
+### ***El fallo, con las palabras del informe***
+
+*«La cola sin conexión puede enviar operaciones de una cuenta desde otra».* *Y era verdad: `mandarPendientes`
+recorria `cola.leer()` **entero** y mandaba cada apunte con `api(...)`, es decir **con el vale de la sesion que
+estuviera abierta**. Un trabajo apuntado sin cobertura en una finca, mandado al reconectar con otra cuenta, **se
+escribia en la finca equivocada**.*
+
+### ***Como se comprueba aqui, y por que asi***
+
+*Se siembra la cola **directamente en `localStorage`** -que es exactamente lo que deja una sesion sin cobertura- con
+**dos apuntes que solo se diferencian en la cuenta**:
+
+    · uno de **la cuenta abierta**  -> ***tiene que mandarse***      (control positivo)
+    · uno de **otra cuenta**       -> ***NO tiene que mandarse***   (el fallo)
+
+*Si los dos se mandaran, habria **dos** trabajos; si solo el suyo, **uno**. **No hay forma de que pase por
+casualidad.***
+
+*Y ademas: el ajeno **sigue en la cola** -no se pierde- y la pantalla **lo dice**.*
+
+Uso:  python scripts/verificar_que_la_cola_no_cruza_cuentas.py
+"""
+
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+sys.path.insert(0, "scripts")
+
+from andar_el_recorrido_de_la_pac import el_servidor_temporal  # noqa: E402
+import capturar_la_pantalla_del_reparto as el_reparto  # noqa: E402
+from capturar_la_pantalla_del_reparto import _api  # noqa: E402
+from verificar_los_permisos_por_rol import _llamar  # noqa: E402
+from datos_representativos import preparar  # noqa: E402
+from navegador_cdp import NavegadorDeVerdad  # noqa: E402
+
+COMPROBACIONES = 0
+FALLOS: list[str] = []
+
+
+def comprobar(bien: bool, que: str, encontre: str = "") -> bool:
+    global COMPROBACIONES
+    COMPROBACIONES += 1
+    if bien:
+        print(f"  [OK   ] {que}")
+    else:
+        print(f"  [FALLO] {que}")
+        if encontre:
+            print(f"          encontre : {encontre[:300]}")
+        FALLOS.append(que)
+    return bien
+
+
+def los_trabajos(direccion, token: str) -> list[dict]:
+    """*Los trabajos de la finca, **sin filtrar**.*
+
+    ***Y sin filtrar porque el filtro no es lo que parecia*** (19/10/2026): *`GET /api/trabajos?campana_id=5`
+    contestaba **`[]`** con el trabajo creado en la campaña 5 -lo dijo el `POST`, que devolvio 201 con
+    `campana_id: 5`-. **El trabajo estaba; el filtro de la direccion no lo traia.** Se comprobo mandando el mismo
+    cuerpo a mano: 201, y la lista filtrada vacia. **La prueba se hace sobre lo que la puerta devuelve de verdad,
+    no sobre el filtro que uno supone.***
+    """
+    los = _api("/api/trabajos", token, metodo="GET")
+    if isinstance(los, list):
+        return los
+    los = los or {}
+    return los.get("hechos") or los.get("trabajos") or []
+
+
+def main() -> int:
+    with el_servidor_temporal() as direccion:
+        print(f"== La cola no cruza cuentas  ({direccion}) ==")
+        escenario = preparar(direccion)
+        token = escenario.volumen.token
+        # ***`_api` lee la direccion de SU modulo***: *si no se le dice, se va al 8029 de por defecto -que no esta
+        # levantado- y el guion muere con «conexion rechazada» antes de empezar.*
+        el_reparto.DIRECCION = direccion
+        la_campana = escenario.volumen.campanas[0].id
+        la_parcela = escenario.tierras[0].id
+
+        yo = _api("/api/cuenta/yo", token, metodo="GET") or {}
+        la_de_ahora = f"{yo.get('usuario_id')}:{(yo.get('explotacion') or {}).get('id')}"
+        print(f"  la sesion: {la_de_ahora}")
+        assert la_de_ahora != "None:None", f"no se pudo leer la cuenta: {yo}"
+
+        la_de_otra = "999999:999999"
+        los_antes = los_trabajos(direccion, token)
+
+        # ***Dos apuntes, iguales menos en la cuenta.***
+        def un_apunte(subtipo: str, cuenta: str | None) -> dict:
+            apunte = {
+                "tipo": "laboreo",
+                "ruta": "/api/trabajos",
+                "datos": {
+                    "campana_id": la_campana,
+                    "tipo": "laboreo",
+                    "subtipo": subtipo,
+                    "fecha": "2026-10-19",
+                    "parcela_id": la_parcela,
+                },
+                "id_local": f"p-{subtipo}",
+                "apuntado_en": "2026-10-19T08:00:00.000Z",
+            }
+            if cuenta is not None:
+                apunte["cuenta"] = cuenta
+            return apunte
+
+        la_cola = [un_apunte("de-la-cuenta-abierta", la_de_ahora), un_apunte("de-otra-cuenta", la_de_otra)]
+
+        with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
+            nav.medir(1440, 1000)
+            # ***La sesion Y la cola, puestas ANTES de la primera pagina***: *es lo que deja una sesion sin
+            # cobertura, y aqui se siembra a mano para que la prueba no dependa de apagar la red.*
+            nav.orden(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": (
+                        "window.localStorage.setItem('cuedigital.token', " + json.dumps(token) + ");"
+                        "window.localStorage.setItem('cuedigital.pendientes', " + json.dumps(json.dumps(la_cola)) + ");"
+                    )
+                },
+            )
+            nav.abrir(f"{direccion}/#/inicio", esperar=3.0)
+            nav.esperar("document.querySelector('#pantalla') && document.querySelector('#pantalla').innerText.length > 40", segundos=40)
+
+            print("\n1. LA COLA SE VACIA CON LA SESION ABIERTA")
+            nav.evaluar("window.dispatchEvent(new Event('online')); 'ok'")
+            # *Se espera a que el suyo llegue: es el control positivo.*
+            for _intento in range(60):
+                los_de_ahora = los_trabajos(direccion, token)
+                if len(los_de_ahora) > len(los_antes):
+                    break
+                import time as _time
+
+                _time.sleep(1.0)
+            los_de_ahora = los_trabajos(direccion, token)
+            comprobar(
+                "de-la-cuenta-abierta" in los_subtipos,
+                "***el apunte de la cuenta abierta SI se manda*** (control positivo)",
+                encontre=str(los_subtipos[:6]),
+            )
+            comprobar(
+                "de-otra-cuenta" not in los_subtipos,
+                "***y el de OTRA cuenta NO se manda***",
+                encontre=str(los_subtipos[:6]),
+            )
+
+            print("\n2. Y LO AJENO NO SE PIERDE, Y SE DICE")
+            la_que_queda = nav.evaluar(
+                "(() => { try { return window.localStorage.getItem('cuedigital.pendientes') || '[]'; }"
+                " catch (e) { return '(sin almacen)'; } })()"
+            ) or "[]"
+            comprobar(
+                "de-otra-cuenta" in str(la_que_queda),
+                "***el apunte ajeno SIGUE en la cola: no se ha perdido***",
+                encontre=str(la_que_queda)[:300],
+            )
+            el_aviso = nav.evaluar(
+                "(() => { const a = document.querySelector('#aviso-pendientes');"
+                " return a ? a.innerText : '(sin aviso)'; })()"
+            ) or ""
+            comprobar(
+                "otra cuenta" in str(el_aviso).lower(),
+                "***y la pantalla lo dice, en vez de dejar un numero que no baja***",
+                encontre=str(el_aviso)[:200],
+            )
+
+        print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
+        for uno in FALLOS:
+            print(f"  - {uno}")
+        return 0 if not FALLOS else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

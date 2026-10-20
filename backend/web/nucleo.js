@@ -205,6 +205,39 @@ export function decideQueHacer(cola, hayRed) {
   return { accion: "mandar", cuantos };
 }
 
+/**
+ * ***Qué apuntes de la cola se pueden mandar con ESTA sesión*** (19/10/2026).
+ *
+ * ### ***El fallo, tal y como se reproducía***
+ *
+ * *La cola guardaba `{tipo, ruta, datos}` **sin decir de qué cuenta era cada apunte**, y `mandarPendientes` los
+ * mandaba **todos con el vale que hubiera en ese momento**. Un trabajo apuntado sin cobertura en una finca,
+ * mandado al reconectar con otra cuenta, **se escribía en la finca equivocada** -o se quedaba en un 404 sin que
+ * nadie supiera por qué-. **Y en una aplicación donde el dinero y las labores son de cada finca, eso no es un
+ * detalle de pantalla.***
+ *
+ * ### ***Y por eso hay tres montones, no dos***
+ *
+ *   · **`suyos`**: *los de la sesión abierta. **Son los únicos que se mandan.***
+ *   · **`deOtraCuenta`**: *no se mandan **y no se borran**: se quedan esperando a que su dueño entre. **Perder un
+ *     apunte del agricultor en silencio es lo que esta aplicación no puede hacer.***
+ *   · **`sinCuenta`**: *los apuntados **antes** de esta corrección. **No se sabe de quién son, así que mandarlos
+ *     sería adivinar**, y adivinar aquí es escribir en una finca que no es. Se quedan y se dicen.*
+ *
+ * *Es una función pura: **la interfaz solo tiene que obedecer**, y se puede probar sin navegador.*
+ */
+export function loQueSePuedeMandar(cola, cuenta) {
+  const suyos = [];
+  const deOtraCuenta = [];
+  const sinCuenta = [];
+  for (const apunte of cola.leer()) {
+    if (!apunte.cuenta) sinCuenta.push(apunte);
+    else if (cuenta && apunte.cuenta === cuenta) suyos.push(apunte);
+    else deOtraCuenta.push(apunte);
+  }
+  return { suyos, deOtraCuenta, sinCuenta };
+}
+
 // ---------------------------------------------------------------------------
 // Repetir lo de la última vez
 // ---------------------------------------------------------------------------

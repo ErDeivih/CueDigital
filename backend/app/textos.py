@@ -342,6 +342,19 @@ AYUDA: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MENSAJES: dict[str, str] = {
+    # ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026): *antes se mandaba toda la cola con
+    # la sesion abierta, y un apunte de una finca acababa escrito en otra. Lo de otra cuenta **se queda** -no se
+    # pierde- esperando a que su dueno entre, y se dice con estas palabras.*
+    # ***Los de antes de la correccion***: *no llevan cuenta -no se sabia de quien eran-, asi que **no se mandan**
+    # -seria escribir en una finca que no se sabe-. Se quedan y se dicen, que es lo unico honesto.*
+    "apuntes_sin_cuenta": (
+        "Hay {cuantas} cosas apuntadas **de antes de esta version**, y no consta de que cuenta eran. No se mandan "
+        "para no escribir en una finca que no es: **no se ha perdido ninguna**."
+    ),
+    "apuntes_de_otra_cuenta": (
+        "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
+        "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"
+    ),
     # ------------------------------------------------------------------ las reservas (CRM-07 #9)
     #
     # **Los motivos van AQUI y no en el bloque de la pantalla**, porque quien los dice es el **servidor**
