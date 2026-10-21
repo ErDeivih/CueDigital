@@ -19,7 +19,7 @@ sys.path.insert(0, "scripts")
 
 from andar_el_recorrido_de_la_pac import el_servidor_temporal  # noqa: E402
 from navegador_cdp import NavegadorDeVerdad  # noqa: E402
-from verificar_los_permisos_por_rol import _poner_la_sesion, _una_cuenta_nueva  # noqa: E402
+from verificar_los_permisos_por_rol import _llamar, _poner_la_sesion, _una_cuenta_nueva  # noqa: E402
 
 NO_LLEVA_A_NADA = "no lleva a ninguna parte"
 
@@ -33,6 +33,16 @@ def comprobar(bien: bool, que: str, encontre: str = "") -> bool:
 
 def el_texto(nav) -> str:
     return str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText") or "")
+
+
+def las_filas(nav) -> int:
+    """***Cuantas tierras se ven en la tabla***: *es la lista, y es lo que se puede contar de verdad.*"""
+    return int(
+        nav.evaluar(
+            "document.querySelectorAll('#pantalla table tbody tr').length || 0"
+        )
+        or 0
+    )
 
 
 def abrir(nav, direccion: str, camino: str) -> str:
@@ -122,7 +132,54 @@ def main() -> int:
                 str(nav.evaluar("window.location.hash")),
             )
 
-    print(f"\nComprobaciones: 8   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 5 · la lista y el mapa
+            print("\n5. LA LISTA Y EL MAPA, CON EL MISMO CONJUNTO")
+            # *Tres tierras de verdad, creadas por la puerta: sin datos, esto no probaria nada.*
+            for i, alias in enumerate(("TIERRA UNO", "TIERRA DOS", "OTRA COSA"), start=1):
+                _llamar(
+                    direccion,
+                    "/api/parcelas",
+                    token=cuenta["token"],
+                    metodo="POST",
+                    cuerpo={
+                        "alias": alias,
+                        "ref_sigpac": f"47-001-0-0-{i}",
+                        "municipio": "Valladolid",
+                        "superficie_ha": 1.5,
+                    },
+                )
+            todas = abrir(nav, direccion, "#/tierras/mapa")
+            las_todas = las_filas(nav)
+            fallos += not comprobar(
+                las_todas == 3,
+                f"***la vista ensena las TRES tierras*** (filas: {las_todas})",
+                todas,
+            )
+            # *Y con un filtro puesto por la direccion, las que casan.*
+            las_filtradas_texto = abrir(nav, direccion, "#/tierras/mapa?q=TIERRA")
+            las_filtradas = las_filas(nav)
+            fallos += not comprobar(
+                las_filtradas == 2,
+                f"***con `?q=TIERRA` ensena DOS, no tres*** (filas: {las_filtradas})",
+                las_filtradas_texto,
+            )
+            # *Y al recargar la misma direccion, sigue filtrado: la direccion lleva el contexto.*
+            recargada = abrir(nav, direccion, "#/tierras/mapa?q=TIERRA")
+            las_de_la_recarga = las_filas(nav)
+            fallos += not comprobar(
+                las_de_la_recarga == 2,
+                f"***y al recargar sigue en DOS: el filtro viaja en la direccion*** (filas: {las_de_la_recarga})",
+                recargada,
+            )
+            # ***Y lo que el encargo pide de verdad***: *la lista y el mapa salen del **mismo** array -la pantalla
+            # recibe `vista.tierras` una sola vez y lo usa para las dos-, asi que no pueden discrepar. Se deja dicho
+            # aqui para que la comprobacion no prometa mas de lo que mide: **lo medido es la lista**.*
+            fallos += not comprobar(
+                las_filtradas == las_de_la_recarga,
+                "***las tres lecturas cuentan lo mismo: 3 sin filtro, 2 con el, 2 al recargar***",
+            )
+
+    print(f"\nComprobaciones: 12   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

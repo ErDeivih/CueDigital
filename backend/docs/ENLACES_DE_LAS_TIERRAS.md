@@ -71,10 +71,13 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    finca en la dirección** (`#/tierras/mapa?campana=2026&finca=1`), que es el «enlace permanente al
    contexto» del contrato. **Comprobado pulsándolo en un navegador** (`5 → 8` comprobaciones, `0` fallos).*
    *Antes **no había ninguna puerta**: la pantalla solo se alcanzaba escribiendo la dirección a mano.*
-2. **Comprobar en 1440×900, 1024 y móvil** que la lista y el mapa de `#/tierras/mapa` **enseñan el mismo
-   conjunto**: *mismo recuento con los mismos filtros, misma selección y mismo detalle.* **Hoy solo está
-   comprobado que la pantalla abre y de qué habla.**
-3. **Que los filtros y la selección sobrevivan a la recarga** en esa dirección (*es lo que el encargo llama
-   «enlace permanente al contexto»*).
+2. **La lista con el mismo conjunto** — **MEDIDO a 1440×900** (21/10/2026): *con tres tierras dadas de alta
+   por la puerta, la vista enseña **3 filas**; con `?q=TIERRA`, **2**; y al recargar, **2**.*
+   **Lo que esto mide y lo que no**: *mide **la lista** (las filas de la tabla). **El mapa no se cuenta** —
+   recibe el mismo array (`vista.tierras`, una sola vez) y por eso **no puede discrepar**, pero eso es una
+   lectura del código, no una medición. **Faltan 1024 y el móvil**, y **falta contar lo que dibuja el mapa**.
+3. **Los filtros sobreviven a la recarga** — **MEDIDO**: *el filtro viaja en la dirección (`?q=`) y recargar
+   deja a la vista filtrada.* **Falta la selección** (*la tierra elegida, `id=`, y las marcadas*), que también
+   está escrita en la dirección pero **no se ha comprobado recargando**.
 
 ***Nada de esto está hecho.*** *La tabla y la comprobación de que cada enlace abre lo suyo, sí.*
