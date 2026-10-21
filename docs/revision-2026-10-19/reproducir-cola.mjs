@@ -31,6 +31,8 @@ function preparar() {
   const contexto = vm.createContext({
     estado, navigator:{onLine:true}, cola:crearCola(almacen), almacen, window:{localStorage:almacen},
     ALMACEN:almacen, CLAVE_ULTIMO:'cuedigital.ultimo', CLAVE_RECHAZADOS:'cuedigital.rechazados',
+    // *La instalacion, que es de donde sale el dueno cuando el vale no se puede leer.*
+    CLAVE_INSTALACION:'cuedigital.instalacion',
     sesionDelToken, loQueSePuedeMandar, decideQueHacer, crearAlmacenMemoria,
     // ***Y el id de comando, que `enviarOApuntar` usa desde el 21/10***: *sin el en el contexto, la funcion
     // revienta y el diagnóstico moria con «rechazar is not a function», que no decia nada de la cola.*
@@ -38,7 +40,9 @@ function preparar() {
     pintarAvisoPendientes:()=>{}, cargarDatos:async()=>{}, mensaje:x=>x,
     avisoDelServidor:x=>x?.detail||'', leer:(k,d)=>JSON.parse(almacen.getItem(k)||JSON.stringify(d)),
   });
-  for(const nombre of ['guardar','almacenSeguro','laSesionDeAhora','apuntarSinCobertura','enviarOApuntar','mandarPendientes'])
+  // ***Y las dos que dan dueno a las claves locales*** (21/10/2026): *`mandarPendientes` usa `laClaveDe` para los
+  // rechazados, y sin ellas en el contexto la regresion revienta por el andamio y no por el codigo.*
+  for(const nombre of ['guardar','almacenSeguro','laSesionDeAhora','laInstalacion','laClaveDe','apuntarSinCobertura','enviarOApuntar','mandarPendientes'])
     vm.runInContext(funcion(nombre),contexto);
   return contexto;
 }
@@ -93,12 +97,15 @@ const resultado={};
 {
   const c=preparar();
   c.cola.apuntar({ruta:'/api/trabajos',datos:{nota:'rechazado'},cuenta:'1:1',id_local:'p-rechazo'});
-  const set=c.almacen.setItem;c.almacen.setItem=(k,v)=>{if(k==='cuedigital.rechazados')throw new Error('cuota');set(k,v);};
+  // ***La clave lleva dueno desde el 21/10***: *el rechazo de esta sesion vive en `cuedigital.rechazados.1:1`, no
+  // en la clave global. El interceptor mira el prefijo, y la lectura de abajo tambien.*
+  const laClaveDeLosRechazos='cuedigital.rechazados.1:1';
+  const set=c.almacen.setItem;c.almacen.setItem=(k,v)=>{if(k.startsWith('cuedigital.rechazados'))throw new Error('cuota');set(k,v);};
   c.api=async()=>({ok:false,status:422,json:async()=>({detail:'No aceptado'})});
   await c.mandarPendientes();
   // ***El dato NO se pierde***: *o sigue pendiente, o quedo apartado. Lo que no puede es desaparecer.*
   const pendientes=c.cola.tamano();
-  const apartados=JSON.parse(c.almacen.getItem('cuedigital.rechazados')||'[]').length;
+  const apartados=JSON.parse(c.almacen.getItem(laClaveDeLosRechazos)||'[]').length;
   assert.ok(
     pendientes + apartados >= 1,
     '***si no se puede apartar, el apunte se queda; no se borra***',

@@ -352,6 +352,38 @@ const CLAVE_INTERFAZ = "cuedigital.interfaz";
 const CLAVE_ULTIMO = "cuedigital.ultimo";
 const CLAVE_RECHAZADOS = "cuedigital.rechazados";
 const CLAVE_LETRA = "cuedigital.letra-grande";
+const CLAVE_INSTALACION = "cuedigital.instalacion";
+
+/** ***El id de ESTA instalación***, para cuando todavía no se sabe de quién es el móvil. */
+function laInstalacion() {
+  let la = ALMACEN.getItem(CLAVE_INSTALACION);
+  if (!la) {
+    la = unIdDeComando();
+    try {
+      ALMACEN.setItem(CLAVE_INSTALACION, la);
+    } catch (error) {
+      // *Si no se puede guardar, se usa el de esta sesión de la aplicación: no se comparte con nadie.*
+    }
+  }
+  return la;
+}
+
+/**
+ * ***La clave de un dato local, con su dueño*** (21/10/2026).
+ *
+ * *`CLAVE_ULTIMO` y `CLAVE_RECHAZADOS` eran **globales**: el «último apunte» y los rechazos de una cuenta eran los
+ * mismos que veía otra en el mismo móvil. **Un rechazo de A se le enseñaba a B** —el mismo fallo que se acaba de
+ * cerrar en los pendientes, y que el encargo pide cerrar «completo, no solo el filtrado de pendientes»-.*
+ *
+ * ***Y sin sesión NO se usa un cubo compartido***: *el encargo lo prohíbe con estas palabras —«la clave no puede
+ * contener `sin-cuenta` como propietario compartido»—. Se usa el id de **esta instalación**, que no comparte nadie
+ * hasta que se sepa de quién es.*
+ */
+function laClaveDe(claveBase) {
+  const laDeAhora = laSesionDeAhora();
+  if (laDeAhora) return `${claveBase}.${laDeAhora}`;
+  return `${claveBase}.inst.${laInstalacion()}`;
+}
 
 const cola = crearCola(ALMACEN);
 
@@ -517,7 +549,8 @@ const estado = {
   filtroTierrasMisCosas: "",
   // El mapa: dónde se está mirando, qué parcela se ha encontrado y con qué nombre se apuntaría.
   mapa: null,
-  ultimo: leer(CLAVE_ULTIMO, null),
+  // *Se rellena justo despues del objeto: la clave depende de quien esta dentro, y `estado` aun no existe aqui.*
+  ultimo: null,
   confirmacion: null,
   // El dictado: lo que se ha escrito o dicho, y lo que ha entendido el servidor.
   dictadoTexto: "",
@@ -571,6 +604,11 @@ const estado = {
   // va la cobertura) nadie tiene por qué cargar con eso para apuntar un tratamiento.
   t06: null,
 };
+
+// ***Y el «ultimo apunte», ya con su dueno*** (21/10/2026): *se lee **aqui** y no dentro del objeto, porque la clave
+// depende de `estado.token` -que se acaba de poner- y dentro del literal `estado` todavia no existe. Sin esto,
+// «lo mismo que la ultima vez» se quedaria en blanco para siempre.*
+estado.ultimo = leer(laClaveDe(CLAVE_ULTIMO), null);
 
 /**
  * Busca un texto por su ruta: "mensajes.V10_sin_justificacion",
@@ -764,7 +802,7 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
     if (respuesta.ok) {
       const cuerpo = await respuesta.json();
       if (guardarComoUltimo) {
-        guardar(CLAVE_ULTIMO, { tipo, datos });
+        guardar(laClaveDe(CLAVE_ULTIMO), { tipo, datos });
         estado.ultimo = { tipo, datos };
       }
       return { ok: true, datos: cuerpo };
@@ -821,7 +859,7 @@ async function mandarPendientes() {
     return;
   }
 
-  const rechazados = leer(CLAVE_RECHAZADOS, []);
+  const rechazados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
   let algoMandado = false;
   // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
   // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
@@ -881,8 +919,8 @@ async function mandarPendientes() {
         // `rechazados: 0`, `dato_perdido: true`.*
         //
         // *Se comprueba **leyendo**, que es lo único que dice la verdad. Si no quedó, se deja en la cola.*
-        guardar(CLAVE_RECHAZADOS, rechazados);
-        const losGuardados = leer(CLAVE_RECHAZADOS, []);
+        guardar(laClaveDe(CLAVE_RECHAZADOS), rechazados);
+        const losGuardados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
         if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
           break;
         }
@@ -904,7 +942,7 @@ async function mandarPendientes() {
 
 function pintarAvisoPendientes() {
   const cuantos = cola.tamano();
-  const rechazados = leer(CLAVE_RECHAZADOS, []);
+  const rechazados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
   if (cuantos === 0 && rechazados.length === 0) {
     avisoPendientes.classList.add("oculto");
     avisoPendientes.className = "aviso oculto";
@@ -4002,6 +4040,10 @@ async function entrarEnLaFinca(explotacionId) {
   await pedirLoQuePuedoHacer();
     ALMACEN.setItem(CLAVE_TOKEN, datos.token);
     estado.ultimo = null;
+    ALMACEN.removeItem(laClaveDe(CLAVE_ULTIMO));
+    // ***Y la clave ANTIGUA, la global*** (21/10/2026): *antes de darles dueño, `cuedigital.ultimo` era de todos.
+    // No se lee -la aplicación lee la clave con dueño-, pero **se borra al cambiar de finca**: es un dato legado que
+    // no debe quedar por ahí, y así el cambio de finca sigue olvidando el atajo, que es lo que promete.*
     ALMACEN.removeItem(CLAVE_ULTIMO);
     olvidarLoDeLaFincaAnterior();
     await cargarDatos();

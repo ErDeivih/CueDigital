@@ -2391,6 +2391,12 @@ async function cargarAplicacion(cambios = {}, extra = {}) {
   for (const [clave, valor] of Object.entries(extra.almacen || {})) {
     entorno.window.localStorage.setItem(clave, JSON.stringify(valor));
   }
+  // ***Y lo que va CRUDO*** (21/10/2026): *el vale se guarda **tal cual** -la aplicacion hace
+  // `setItem(CLAVE_TOKEN, token)`-, asi que sembrarlo serializado le pone comillas delante y **el lector del
+  // vale no lo puede decodificar**: `atob` revienta con la comilla y la sesion sale `null`.*
+  for (const [clave, valor] of Object.entries(extra.almacenCrudo || {})) {
+    entorno.window.localStorage.setItem(clave, String(valor));
+  }
   // La ubicación del móvil, cuando la prueba la necesita. Sin esto, `navigator.geolocation` no
   // existe, que es el caso de un navegador al que no se le ha dado permiso.
   if (extra.ubicacion) {
@@ -14920,3 +14926,64 @@ test("subir el papel de una factura sin elegir fichero muestra el aviso y conser
   assert.equal(ultimoMontaje().props.error, RESPUESTAS["/api/interfaz"].facturas.que_fichero);
   assert.ok(!servidor.enviados.some((e) => e.ruta === "/api/facturas/7/fichero"));
 });
+
+// ---------------------------------------------------------------------------
+// ***Lo local tiene dueño: los rechazos de una cuenta no los ve otra*** (21/10/2026)
+// ---------------------------------------------------------------------------
+
+test("los rechazos de una cuenta no los ve otra", async () => {
+  // *`CLAVE_RECHAZADOS` y `CLAVE_ULTIMO` eran **globales**: en el mismo móvil, **un rechazo de A se le enseñaba a
+  // B**. Es el mismo fallo que se cerró en los pendientes, y el encargo pide cerrarlo «completo, no solo el filtrado
+  // de pendientes».*
+  //
+  // *La regresión reproduce lo de antes: se guarda un rechazo de A bajo su clave -con dueño-, y se carga la
+  // aplicación **como B**. Si las claves fueran globales, B leería el rechazo de A y lo enseñaría.*
+  const unVale = (uid, eid) =>
+    `${Buffer.from(JSON.stringify({ uid, eid })).toString("base64url")}.firma`;
+
+  const elRechazoDeA = [{ id_local: "p1", motivo: "EL RECHAZO DE LA CUENTA A", estado: 422 }];
+
+  // *A: ve su rechazo.*
+  const comoA = await cargarAplicacion(
+    {},
+    {
+      almacen: {
+        "cuedigital.rechazados.1:1": elRechazoDeA,
+      },
+      almacenCrudo: {
+        "cuedigital.token": unVale(1, 1),
+      },
+    },
+  );
+  await new Promise((resolver) => setTimeout(resolver, 60));
+  // ***Se mira el HTML y el texto***: *la rama de rechazados pinta con `innerHTML` —para poder poner el motivo en
+  // negrita—, y el nodo de mentira del arnés **no sincroniza** `innerHTML` con `textContent`. Mirar solo uno
+  // hacia que la prueba fallara por el andamio y no por la aplicación.*
+  const elAvisoDeA = comoA.entorno.nodos.get("aviso-pendientes");
+  assert.match(
+    `${elAvisoDeA.innerHTML || ""} ${elAvisoDeA.textContent || ""}`,
+    /EL RECHAZO DE LA CUENTA A/,
+    "***A tiene que ver su propio rechazo***",
+  );
+
+  // *B: el mismo móvil, otra cuenta. **No puede verlo.***
+  const comoB = await cargarAplicacion(
+    {},
+    {
+      almacen: {
+        "cuedigital.rechazados.1:1": elRechazoDeA,
+      },
+      almacenCrudo: {
+        "cuedigital.token": unVale(2, 2),
+      },
+    },
+  );
+  await new Promise((resolver) => setTimeout(resolver, 60));
+  const elAvisoDeB = comoB.entorno.nodos.get("aviso-pendientes");
+  const loDeB = `${elAvisoDeB.innerHTML || ""} ${elAvisoDeB.textContent || ""}`;
+  assert.ok(
+    !loDeB.includes("CUENTA A"),
+    `***B no puede ver el rechazo de A***: ${loDeB}`,
+  );
+});
+
