@@ -75,7 +75,9 @@ function montarEntorno() {
   const nodos = new Map();
   // `marco` es el armazón del ordenador (el menú lateral y la barra de arriba): tiene que estar, como en
   // `index.html`, o el armazón no se monta y las pruebas de cableado no podrían mirarlo.
-  for (const id of ["pantalla", "aviso-pendientes", "cabecera-texto", "pie", "marco"]) {
+    // *Y `aviso-cargas`, que es el de D03: **el arnés tiene que tener los mismos nodos que `index.html`**, o la
+  // aplicación no encuentra el suyo y no se puede probar que un fallo se enseña.*
+  for (const id of ["pantalla", "aviso-pendientes", "aviso-cargas", "cabecera-texto", "pie", "marco"]) {
     nodos.set(id, crearNodo(id));
   }
 
@@ -184,6 +186,20 @@ const BOTONES = [  { id: "echar_producto", icono: "💧", texto: "HE ECHADO PROD
 ];
 
 const RESPUESTAS = {
+  // ***Las rutas que al arnes le faltaban*** (21/10/2026, D03): *la aplicacion las pedia con `.catch(() => [])`, que
+  // las convertia en «no hay datos» y **nadie notaba que el servidor de mentira no las tenia**. Al apuntar los
+  // fallos (D03) salieron: sin esto, la carga «limpia» del arnes tenia diez secciones en fallo que no lo estan en la
+  // aplicacion de verdad. **Si el arnes no tiene la ruta, la prueba mide el arnes, no el programa.***
+  "/api/documentos": null,
+  "/api/tratamientos": [],
+  "/api/fertilizaciones": [],
+  "/api/labores": [],
+  "/api/firmas": [],
+  "/api/cuaderno/resumen": null,
+  "/api/ventas/tabla": null,
+  "/api/facturas-emitidas": [],
+  "/api/cobros": [],
+  "/api/maquinaria/avisos": [],
   "/api/interfaz": {
     pantalla_inicio: {
       saludo: "Hola",
@@ -15023,5 +15039,39 @@ test("y un fallo de las tierras tampoco es «no hay tierras»", async () => {
   });
   const loQueFallo = elQueFalla.app.loQueNoSePudoCargar();
   assert.ok(loQueFallo.parcelas, `***un fallo de tierras no es una finca sin tierras***: ${JSON.stringify(loQueFallo).slice(0, 300)}`);
+});
+
+test("lo que no se pudo cargar se DICE en pantalla, con su reintento", async () => {
+  // *Que `estado.cargas` lo apunte no sirve de nada si **el agricultor sigue leyendo «0 facturas»**. Esto
+  // comprueba que **se enseña**, que **dice qué** falló y que **ofrece reintentar**.*
+  const elQueFalla = await cargarAplicacion({
+    "/api/facturas": falla({ detail: "El servidor se ha caido." }, 500),
+  });
+  const elAviso = elQueFalla.entorno.nodos.get("aviso-cargas");
+  const loQueDice = `${elAviso.innerHTML || ""} ${elAviso.textContent || ""}`;
+  assert.match(loQueDice, /facturas/, `***tiene que decir que fallo facturas***: ${loQueDice}`);
+  assert.match(
+    loQueDice,
+    /reintentar-lo-que-fallo/,
+    `***y ofrecer reintentar***: ${loQueDice}`,
+  );
+
+  // *Y el reintento vuelve a pedirlo: **sin perder nada**, porque lo unico que hace es repetir la carga.*
+  const lasDeAntes = elQueFalla.servidor.llamadas.filter((ruta) => ruta === "/api/facturas").length;
+  await pulsar(elQueFalla.entorno, "reintentar-lo-que-fallo");
+  const lasDeAhora = elQueFalla.servidor.llamadas.filter((ruta) => ruta === "/api/facturas").length;
+  assert.ok(
+    lasDeAhora > lasDeAntes,
+    `***reintentar tiene que volver a pedirlo***: ${lasDeAntes} -> ${lasDeAhora}`,
+  );
+
+  // ***Y el control positivo: sin fallos, el aviso NO se enseña.***
+  const elQueVaBien = await cargarAplicacion({});
+  const elOtro = elQueVaBien.entorno.nodos.get("aviso-cargas");
+  assert.match(
+    elOtro.className || "",
+    /oculto/,
+    `***sin fallos no se ensena nada***: ${elOtro.className} · fallaron: ${JSON.stringify(elQueVaBien.app.loQueNoSePudoCargar())}`,
+  );
 });
 

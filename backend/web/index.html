@@ -16,6 +16,11 @@
        agricultor tiene que saber que lo que apuntó sin cobertura NO se ha perdido. -->
   <div id="aviso-pendientes" class="aviso oculto" role="status" aria-live="polite"></div>
 
+  <!-- ***Lo que no se ha podido cargar*** (21/10/2026, D03): *un fallo de la red **no es «no hay datos»**.
+       Va arriba y se ve siempre, con su boton de reintentar, para que el agricultor no lea «0 facturas» cuando
+       lo que pasa es que no se ha podido preguntar.* -->
+  <div id="aviso-cargas" class="aviso oculto" role="status" aria-live="polite"></div>
+
   <!-- El armazón de la aplicación en el ordenador: el menú de la izquierda y la barra de arriba
        (la finca, el año, la cuenta y el botón de apuntar). Lo pinta React (`react/piezas/marco.js`) y
        **en el móvil no se ve**: en una pantalla estrecha manda el CSS y ahí se sigue entrando por la

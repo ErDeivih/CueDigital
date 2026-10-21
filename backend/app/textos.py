@@ -364,6 +364,10 @@ MENSAJES: dict[str, str] = {
     "y_otros_de_otra_cuenta": (
         "Y {ajenos} de otra cuenta, que se quedan hasta que entres en ella."
     ),
+    # ***Un fallo de red no es «no hay datos»*** (21/10/2026, D03): *la pantalla dice **que** no se ha podido
+    # cargar, y ofrece reintentar. Antes, un fallo de facturas se veia como «0 facturas».*
+    "no_se_pudieron_cargar": "**No se han podido cargar**:",
+    "reintentar_la_carga": "Reintentar",
     "apuntes_de_otra_cuenta": (
         "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
         "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"

@@ -492,6 +492,8 @@ function ayerISO() {
 
 const pantalla = document.getElementById("pantalla");
 const avisoPendientes = document.getElementById("aviso-pendientes");
+// ***Y el de las cargas*** (21/10/2026, D03): *un fallo de la red **no es «no hay datos»*, y esto lo dice.*
+const avisoCargas = document.getElementById("aviso-cargas");
 const cabeceraTexto = document.getElementById("cabecera-texto");
 
 // ------------------------------------------------------------------------ estado
@@ -1023,6 +1025,45 @@ function pintarAvisoPendientes() {
   avisoPendientes.textContent = conCuenta(t("aviso", {}) || {}, "pendientes", cuantos);
 }
 
+/**
+ * ***Lo que no se pudo cargar, en pantalla*** (21/10/2026, D03).
+ *
+ * *`cargarDatos` apunta cada sección en `estado.cargas`; esto lo **enseña**. Sin esto, el fallo se apuntaba pero
+ * **el agricultor seguía leyendo «0 facturas»**, que es una afirmación sobre su finca y no sobre la red.*
+ *
+ * ***Se dice qué falló, no un «error» genérico***: *de qué sección se trata decide lo que puede hacer -si falló
+ * lo de facturas no puede facturar, pero sí apuntar una labor-.*
+ */
+function pintarLoQueFallo() {
+  if (!avisoCargas) return;
+  const lasQueFallaron = Object.keys(estado.cargas).filter(
+    (clave) => estado.cargas[clave] === "fallo",
+  );
+  if (lasQueFallaron.length === 0) {
+    avisoCargas.className = "aviso oculto";
+    avisoCargas.textContent = "";
+    return;
+  }
+  avisoCargas.className = "aviso aviso-error";
+  const losNombres = lasQueFallaron.map((clave) => clave.replace(/_/g, " ")).join(", ");
+  avisoCargas.innerHTML =
+    `<strong>${esc(mensaje("no_se_pudieron_cargar"))}</strong> ${esc(losNombres)} · ` +
+    `<button type="button" class="boton boton-claro" data-accion="reintentar-lo-que-fallo">` +
+    `${esc(mensaje("reintentar_la_carga"))}</button>`;
+}
+
+/**
+ * ***Volver a pedir lo que falló***, sin perder nada (21/10/2026, D03).
+ *
+ * *El encargo: «conservar borrador, filtros, finca y campaña al reintentar». **No hay que tocar nada**: el borrador,
+ * los filtros y el año viven en `estado` y esto solo repite la carga. **Lo único que se pierde al reintentar es el
+ * fallo**.*
+ */
+async function reintentarLoQueFallo() {
+  await cargarDatos().catch(() => {});
+  pintarLoQueFallo();
+}
+
 // --------------------------------------------------------------- montar en React
 
 /**
@@ -1044,6 +1085,9 @@ function montar(elemento) {
   // se esconden si no puede -`Boton` lo mira por el sufijo de la accion-, y se hace **aqui** porque es el unico
   // sitio por el que pasan todas las pantallas.*
   ponerSiSePuedeEscribir(loQuePuedoHacer().modificar);
+  // ***Y el aviso de lo que no se pudo cargar*** (21/10/2026): *aqui pasan todas las pantallas, asi que se pinta
+  // en todas. **Un fallo de carga no se queda en una seccion que nadie mira**.*
+  pintarLoQueFallo();
   try {
     listo = elemento();
   } catch (fallo) {
@@ -5850,7 +5894,12 @@ export function loQueNoSePudoCargar() {
   return { ...estado.porQueFallo };
 }
 
-async function cargarDatos() {  const [
+async function cargarDatos() {
+  // *Al terminar, se dice lo que fallo. **Y al empezar se limpian las marcas** para que un fallo viejo no se quede
+  // pegado a una carga que ahora va bien.*
+  estado.cargas = {};
+  estado.porQueFallo = {};
+  const [
     campana,
     campanas,
     parcelas,
@@ -20980,6 +21029,7 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
 
   // ***Y todas las de la PAC, por su nombre***: *un solo sitio, y sin tocar el despacho grande.*
   if (nombre.startsWith("pac-")) return atenderLaPac(nombre, elemento);
+  if (nombre === "reintentar-lo-que-fallo") return reintentarLoQueFallo();
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));
