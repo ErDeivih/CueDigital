@@ -138,6 +138,10 @@ def main() -> int:
 
                 _time.sleep(1.0)
             los_de_ahora = los_trabajos(direccion, token)
+            # ***Y los subtipos, para poder mirarlos***: *la limpieza de los diagnosticos se llevo esta linea y el
+            # recorrido dejo de arrancar -`NameError` en la comprobacion-. Se vio al volver a ejecutarlo, que es
+            # justo lo que hay que hacer despues de limpiar.*
+            los_subtipos = [str(uno.get("subtipo") or "") for uno in los_de_ahora]
             comprobar(
                 "de-la-cuenta-abierta" in los_subtipos,
                 "***el apunte de la cuenta abierta SI se manda*** (control positivo)",
@@ -167,6 +171,80 @@ def main() -> int:
                 "otra cuenta" in str(el_aviso).lower(),
                 "***y la pantalla lo dice, en vez de dejar un numero que no baja***",
                 encontre=str(el_aviso)[:200],
+            )
+
+        # ==================================================================================== 3 · rechazados
+        print("\n3. LO QUE EL SERVIDOR RECHAZA SE APARTA, NO SE PIERDE")
+        # *Un apunte con una campaña que no existe: **el servidor contesta 4xx**, y la cola tiene que **apartarlo con
+        # su motivo** en vez de reintentarlo para siempre o tirarlo en silencio.*
+        la_cola_mala = [un_apunte("que-el-servidor-rechaza", la_de_ahora)]
+        la_cola_mala[0]["datos"]["campana_id"] = 999999
+        la_cola_mala[0]["id_local"] = "p-de-rechazo"
+
+        with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
+            nav.medir(1440, 1000)
+            nav.orden(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": (
+                        "window.localStorage.setItem('cuedigital.token', " + json.dumps(token) + ");"
+                        "window.localStorage.setItem('cuedigital.pendientes', "
+                        + json.dumps(json.dumps(la_cola_mala))
+                        + ");"
+                        "window.localStorage.removeItem('cuedigital.rechazados');"
+                    )
+                },
+            )
+            nav.abrir(f"{direccion}/#/inicio", esperar=3.0)
+            nav.esperar(
+                "document.querySelector('#pantalla') && document.querySelector('#pantalla').innerText.length > 40",
+                segundos=40,
+            )
+            nav.evaluar("window.dispatchEvent(new Event('online')); 'ok'")
+
+            los_rechazados = "(todavia nada)"
+            for _intento in range(45):
+                los_rechazados = (
+                    nav.evaluar(
+                        "(() => { try { return window.localStorage.getItem('cuedigital.rechazados')"
+                        " || ''; } catch (e) { return ''; } })()"
+                    )
+                    or ""
+                )
+                if "que-el-servidor-rechaza" in str(los_rechazados):
+                    break
+                import time as _time
+
+                _time.sleep(1.0)
+
+            comprobar(
+                "que-el-servidor-rechaza" in str(los_rechazados),
+                "***el apunte rechazado se APARTA, con lo que se mando***",
+                encontre=str(los_rechazados)[:400],
+            )
+            la_que_queda = (
+                nav.evaluar(
+                    "(() => { try { return window.localStorage.getItem('cuedigital.pendientes')"
+                    " || '[]'; } catch (e) { return '[]'; } })()"
+                )
+                or "[]"
+            )
+            comprobar(
+                "que-el-servidor-rechaza" not in str(la_que_queda),
+                "***y sale de la cola: no se reintenta para siempre***",
+                encontre=str(la_que_queda)[:300],
+            )
+            el_aviso_malo = (
+                nav.evaluar(
+                    "(() => { const a = document.querySelector('#aviso-pendientes');"
+                    " return a ? a.innerText : '(sin aviso)'; })()"
+                )
+                or ""
+            )
+            comprobar(
+                len(str(el_aviso_malo).strip()) > 0 and "sin aviso" not in str(el_aviso_malo),
+                "***y se dice en la pantalla, con su motivo***",
+                encontre=str(el_aviso_malo)[:250],
             )
 
         print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
