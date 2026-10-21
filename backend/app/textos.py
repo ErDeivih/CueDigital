@@ -3163,6 +3163,11 @@ VENTA: dict[str, str] = {
 # ese es el peor fallo que puede tener esta entrega.
 # --------------------------------------------------------------------------
 FACTURA_EMITIDA: dict[str, str] = {
+    # ***Un fallo de la red no es «no hay facturas emitidas»*** (21/10/2026, D03).
+    "sin_nada_fallo": (
+        "No se han podido cargar las facturas emitidas: **no es que no tengas ninguna**, es que no se ha podido "
+        "mirar. Reintenta cuando vuelva la conexión."
+    ),
     "titulo": "Mis facturas de lo vendido",
     "explica": (
         "Aquí juntas una o varias entregas y ves de un vistazo lo que te deben. Es tu cuenta de "

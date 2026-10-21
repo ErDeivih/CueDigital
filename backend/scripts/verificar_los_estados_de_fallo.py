@@ -131,7 +131,32 @@ def main() -> int:
                     el_cuaderno,
                 )
 
-    print(f"\nComprobaciones: {8}   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 4 · facturas emitidas
+            print("\n4. LAS FACTURAS EMITIDAS, CON SU CARGA FALLANDO")
+            with el_proxy_que_falla(direccion, "/api/facturas-emitidas") as el_proxy:
+                _poner_la_sesion(nav, el_proxy, cuenta["token"])
+                # ***Se llega desde ventas***: *la lista de facturas emitidas **no tiene direccion propia** -ni
+                # `#/facturas_emitidas` ni `#/facturas-emitidas` abren nada-, se abre con su boton. **Y asi es como
+                # llega el agricultor**, que es lo que hay que comprobar.*
+                nav.abrir(f"{el_proxy}/#/ventas", esperar=3.0)
+                time.sleep(1.5)
+                nav.evaluar(
+                    "(() => { const b = document.querySelector('[data-accion=\"facturas-emitidas-ver\"]');"
+                    " if (b) b.click(); return Boolean(b); })()"
+                )
+                for _ in range(20):
+                    time.sleep(0.5)
+                    if "factura" in el_texto(nav).lower():
+                        break
+                time.sleep(1.5)
+                el_emitidas = el_texto(nav)
+                fallos += not comprobar(
+                    "no es que no tengas ninguna" in el_emitidas,
+                    "***las facturas emitidas dicen que no se pudieron cargar***",
+                    el_emitidas,
+                )
+
+    print(f"\nComprobaciones: {9}   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

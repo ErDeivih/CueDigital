@@ -78,7 +78,15 @@ function FichaDeFactura({ factura, textos }) {
  *    tiene el número).
  *  - `error`: lo que ha dicho el servidor, o nada.
  */
-export function PantallaFacturasEmitidas({ textos = {}, facturas = [], resumen = "", error = "" }) {
+export function PantallaFacturasEmitidas({
+  textos = {},
+  facturas = [],
+  resumen = "",
+  error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay facturas emitidas» es una afirmacion sobre lo que el
+  // agricultor ha facturado; no se puede hacer sin haber podido preguntar.*
+  noSePudoCargar = false,
+}) {
   const f = textos.factura_emitida || {};
   const acciones = textos.acciones || {};
   return html`
@@ -89,7 +97,9 @@ export function PantallaFacturasEmitidas({ textos = {}, facturas = [], resumen =
     ${resumen ? html`<p className="cuantas">${frase(resumen)}</p>` : null}
     ${
       facturas.length === 0
-        ? html`<div className="aviso">${frase(f.sin_nada)}</div>`
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(f.sin_nada_fallo)}</div>`
+          : html`<div className="aviso">${frase(f.sin_nada)}</div>`
         : html`<ul className="lista">
             ${facturas.map(
               (factura, indice) => html`<${FichaDeFactura} key=${indice} factura=${factura} textos=${textos} />`,
@@ -108,6 +118,7 @@ export function pantallaDeFacturasEmitidas(propiedades) {
   return html`<${PantallaFacturasEmitidas}
     textos=${propiedades.textos}
     facturas=${propiedades.facturas}
+      noSePudoCargar=${propiedades.noSePudoCargar}
     resumen=${propiedades.resumen}
     error=${propiedades.error}
   />`;

@@ -14700,6 +14700,9 @@ function pantallaFacturasEmitidas() {
         : "",
       aviso: estado.avisoVentas || "",
       error: estado.errorVentas || "",
+      // ***Y que se sepa si fallo la carga*** (21/10/2026, D03): *«no hay facturas emitidas» es una afirmacion
+      // sobre lo que el agricultor ha facturado; no se puede hacer sin haber podido preguntar.*
+      noSePudoCargar: estado.cargas.facturas_emitidas === "fallo",
     }),
   );
   estado.avisoVentas = "";
