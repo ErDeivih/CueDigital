@@ -678,16 +678,8 @@ async function apiJson(ruta, opciones = {}) {
  * «no sé de quién es» no es «es de quien esté ahora».*
  */
 function laSesionDeAhora() {
-  // ***Del VALE, que es lo que `api()` manda*** (19/10/2026): *si la sesión se dedujera de `estado.yo`, un cambio
-  // de vale sin tocar `yo` -o al revés- haría que la cola se **filtrara** por una cuenta y se **mandara** con otra.
-  // El vale lleva `uid` y `eid`, así que dice lo mismo y además **es lo que viaja**.*
-  const laDelVale = sesionDelToken(estado.token);
-  if (laDelVale) return laDelVale;
-  // *Y si el vale no se puede leer -viejo, raro, a mano-, se cae a `yo`, que es lo que hay: no se inventa nada.*
-  const yo = estado.yo;
-  if (!yo || !yo.usuario_id) return null;
-  const laFinca = (yo.explotacion && yo.explotacion.id) || "";
-  return `${yo.usuario_id}:${laFinca}`;
+  // El contexto sale del mismo vale que viaja, nunca de datos de una cuenta anterior.
+  return sesionDelToken(estado.token);
 }
 
 /**

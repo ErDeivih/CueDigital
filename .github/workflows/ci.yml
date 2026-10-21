@@ -2,7 +2,7 @@ name: Pruebas del CRM
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'integracion/**']
   pull_request:
   workflow_dispatch:
 

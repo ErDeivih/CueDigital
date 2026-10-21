@@ -2,37 +2,69 @@
 
 Fecha: 19/10/2026. Objetivo: cerrar fiabilidad y experiencia para un piloto comercial verificable.
 
-## Actualización de coordinación — 20/10/2026
+## Entrega integrada y revisión independiente — 21/10/2026
 
-El propietario ha aportado una entrega del agente Windows que declara cerrados el cruce de cola
-y el flujo PAC en `estabilizacion-2026-10-18`, con commits `325faf8`, `71236f8` y `ab3a278`.
-Es evidencia declarada por ese agente, no una revisión independiente de esos commits.
-Al comprobar GitHub el 20/10, la rama remota seguía en `eec9e55`; esos tres objetos no están
-en el checkout cloud. No repetir la implementación ni afirmar que los arreglos ya están aquí.
+La rama `integracion/cloud-estabilizacion-2026-10-21` conserva la entrega cloud y los diez commits
+Windows hasta `8392f4d`. Se han integrado con una fusión, no recreado ni descartado sus commits.
+**Usar esta rama de Git; el ZIP del 20/10 ya no es el mecanismo de continuidad.** No aplicar su parche
+otra vez encima. El árbol Windows `F:\EspacioCodigo\CueDigital` sigue siendo un destino válido.
+Antes de cambiar de rama, revisar `git status` y conservar cualquier trabajo pendiente.
 
-**Primero integrar las dos entregas de forma revisable.** El checkout Windows
-`F:\EspacioCodigo\CueDigital` es un destino válido si contiene los commits declarados.
-La ruta cloud no es una dependencia de la aplicación. Copiar allí estos documentos permite leer
-la cola; incorporar el parche cloud exige revisar conflictos en especial en `app.js`, `nucleo.js`,
-textos, pruebas y versiones de caché. No reemplazar esos ficheros completos por copias cloud.
-No fusionar ni publicar principal automáticamente como consecuencia de leer este encargo.
+```bash
+git fetch origin refs/heads/integracion/cloud-estabilizacion-2026-10-21:refs/remotes/origin/integracion/cloud-estabilizacion-2026-10-21
+git switch -c integracion/cloud-estabilizacion-2026-10-21 --track origin/integracion/cloud-estabilizacion-2026-10-21
+```
 
-Antes de cerrar D01/D02 en el árbol integrado, contrastar lo declarado con TODOS sus criterios:
+El segundo comando crea la rama local si no existe; si ya existe, comprobar su estado y cambiar a ella
+sin recrearla. No tocar `main` ni `principal`. Los informes describen primero la auditoría histórica:
+leer también el cierre del 21/10 de `REVISION_PRODUCTO_2026-10-19.md` antes de repetir un arreglo.
 
-- D01: dueño y conservación de apuntes ajenos son un avance; comprobar además último apunte,
-  rechazados, migración de datos sin dueño, cambio de cuenta/finca durante una petición,
-  `setItem` fallido, expiración de acceso, dos pestañas e idempotencia tras respuesta perdida.
-  Cuatro comprobaciones de filtrado no acreditan por sí solas este contrato completo.
-- D02: año/ID, conflicto de huella y numeración concurrente son avances declarados. Comprobar
-  identidad de la evaluación y de las reglas, contenido exacto exportado, datos de otra finca,
-  actualización de fotos antiguas e idempotencia: repetir una petición por respuesta perdida
-  no debe crear una foto nueva. Dos intenciones simultáneas sí pueden producir versiones distintas.
-- Convertir el hallazgo `GET /api/trabajos?campana_id=` en una reproducción mínima: distinguir
-  parámetro vacío de campaña válida y definir si se rechaza con 422 o significa ausencia de filtro.
-  No concluir pérdida de un trabajo solo por una lista filtrada vacía.
-- Ejecutar las suites y recorridos sobre el MISMO HEAD integrado. Los recuentos cambian con
-  código y documentos parametrizados; comparar casos, fallos y omisiones, no exigir que dos
-  árboles distintos tengan la misma cifra. Después continuar D03 y el orden restante.
+**Numeración canónica: D01 = cola, D02 = PAC, D03 = fallos/recuperación.** La entrega Windows
+intercambiaba D01/D02 al no disponer del encargo. No abrir otro plan con esos números al revés.
+
+### D01 sigue ABIERTO: reproducciones independientes sobre el código integrado
+
+1. `sesionDelToken` esperaba un JWT de tres partes, pero `security.crear_token` emite `carga.firma`.
+   **Corregido en esta integración**, con prueba que entrega un token creado por Python al lector JS.
+   No volver a deducir el contexto de `estado.yo` si el vale no se puede leer.
+2. `enviarOApuntar` hace el primer POST sin sellar la clave. Tras pérdida de respuesta, la cola añade
+   una clave nueva: se reprodujeron **dos trabajos reales** para una sola intención. Sellar identidad
+   ANTES del primer intento y conservarla en todos los caminos; inventariar todas las rutas encolables.
+3. Si A inicia un envío, cambia a B y después falla la red, `apuntarSinCobertura` asigna el dueño B.
+   Capturar cuenta/finca/token/datos antes de cualquier `await`, también para el primer envío, no solo
+   el vaciado. Probar con promesas controladas: no hace falta depender de temporizadores aleatorios.
+4. Dos instancias con reloj idéntico generan el mismo `id_local`; confirmar uno elimina ambos.
+   Identidad resistente a reinicios/pestañas y persistencia que no pierda escrituras concurrentes.
+   No basta la idempotencia del servidor para resolver pérdidas locales antes del envío.
+5. Si localStorage falla desde el arranque, `almacenSeguro` devuelve memoria y la cola dice `guardado`.
+   La prueba de `setItem` que lanza después de crear la cola no cubría esta sustitución. Distinguir
+   persistencia durable de memoria; conservar formulario y no prometer guardado sin confirmación.
+6. Si falla guardar rechazados, `guardar` oculta el fallo y después `cola.quitar` borra el original.
+   Reproducido sin pendientes ni rechazo conservado. Transferencia durable antes de quitar, con dueño,
+   identidad/ruta/datos y recuperación; 401/403 no son rechazos definitivos. Un 401 antiguo tampoco
+   debe cerrar una cuenta nueva que entró mientras la petición estaba en vuelo.
+7. Último apunte y rechazados continúan con claves globales. Cerrar aislamiento y migración completos,
+   no solo el filtrado de pendientes, y comprobar que los apuntes sin dueño se distinguen de los ajenos.
+
+Evidencia y diagnóstico ejecutable: `docs/revision-2026-10-19/reproducciones.txt` y
+`node docs/revision-2026-10-19/reproducir-cola.mjs`. Este diagnóstico espera reproducir defectos
+(y sale con código 1); NO contarlo como suite verde. Extrae funciones originales y controla sus
+colaboradores en VM; no equivale a un recorrido de UI. El caso adicional de duplicación se contrastó
+contra servidor real aislado. Convertir estos casos en regresiones de comportamiento al arreglarlos.
+
+### D02: avances comprobados, contrato completo por revisar
+
+La identidad año/versión e ID, conflicto por huella, exportación y deduplicación de contenido están
+integrados. El recorrido real PAC pasa 16 comprobaciones; no confundir eso con cierre de cada criterio.
+Revisar compatibilidad/migración de fotos previas, falta de huella (`None` permite guardar lo actual),
+`recalcular=True`, campaña inexistente/ajena, datos desconocidos y reglas/fuentes que forman la identidad.
+Distinguir reintento de la misma intención y nueva evaluación: deduplicar por contenido es la política
+implementada, pero no sustituye toda la identidad de una orden ni su consistencia ante cambios posteriores.
+
+Cerrar D01 por sus regresiones y completar D02; después D03 según su especificación más abajo.
+D03 consiste en distinguir carga, vacío real, fallo, permiso y dato antiguo, con reintento y formulario,
+filtros, finca y campaña conservados. No interpretar un `.catch(() => [])` como «no hay datos».
+Continuar los cortes restantes con sus criterios y evidencias. No volver a buscar el paquete por discos.
 
 **La aplicación YA existe en el repositorio privado `ErDeivih/CueDigital`.** No crear otra app, otro
 repositorio ni una maqueta independiente. Trabajar sobre los modelos, rutas, pantallas React/HTM,
@@ -48,9 +80,9 @@ FastAPI como consecuencia de este encargo. No instalar servicios de pago para co
    `docs/CONTRATO_IMPLEMENTACION_CRM.md`, `docs/MATRIZ_NORMATIVA_CRM.md` y esta entrega.
 3. Leer `docs/REVISION_PRODUCTO_2026-10-19.md`, `docs/ESPEC_MARCA_UX_2026-10-19.md`,
    `contexto_agentes/REVISION_PAC_2026-10-18.md` y la cola existente. No tratar cifras históricas como estado actual.
-4. Comprobar `git status`, rama y HEAD. La revisión parte de `dc0e4a5` y deja cambios locales:
-   no resetearlos, no sustituirlos por la rama PAC en curso y no afirmar que llegaron a GitHub sin comprobarlo.
-   Si solo se dispone de un clon remoto, verificar que esta entrega está integrada antes de continuar.
+4. Comprobar `git status`, rama y HEAD, y usar la entrega integrada indicada arriba.
+   La auditoría original partía de `dc0e4a5`; los resultados de esa base no certifican la integración.
+   No resetear cambios pendientes ni aplicar de nuevo el antiguo parche cloud.
 5. Inventariar para cada ticket: pantalla → acción → ruta → modelo → efectos → permiso → prueba.
    Reproducir el fallo y conservar evidencia de su estado anterior antes del arreglo.
 

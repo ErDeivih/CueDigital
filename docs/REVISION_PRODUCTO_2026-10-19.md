@@ -3,6 +3,9 @@
 Fecha: 19/10/2026. Base inspeccionada: `dc0e4a5`, checkout `/workspace/CueDigital`, rama local `work`.
 Autor: revisión realizada en el entorno cloud con datos ficticios. Los cambios están en el árbol de trabajo.
 
+**Continuidad:** lo anterior identifica la instantánea inicial. Leer el cierre del **21/10/2026**
+al final: ambas entregas están integradas, pero la revisión independiente mantiene D01 abierto.
+
 **Decisión: apta para continuar desarrollo y preparar un piloto; todavía no para una venta general.**
 La cantidad de funciones y de pruebas es importante, pero una suite verde no evita por sí sola los
 defectos de aislamiento y de identidad reproducidos aquí. No se certifica ausencia de errores,
@@ -196,3 +199,69 @@ No cerrar por una suma de tests: R01/R02 deben tener regresión que falle antes 
 sin pérdida de datos al migrar. Después: errores/recuperación, permisos de producción, copias/restauración,
 revisión visual, prueba con usuarios y revisión de fuentes/licencias. El registro y disponibilidad legal de
 la marca CUE Digital requieren comprobación propia; un SVG original no acredita una marca registrada.
+
+## Integración y revisión independiente — 21/10/2026
+
+Rama de entrega: `integracion/cloud-estabilizacion-2026-10-21`. Conserva el commit cloud `c09b793`
+y los diez commits Windows hasta `8392f4d`, unidos mediante el merge `1252d49`. No se ha fusionado
+`main` ni `principal`. Los documentos y el código viajan juntos por Git: el agente Windows no
+necesita encontrar el ZIP del 20/10 ni aplicar de nuevo su parche. Comandos y orden de continuidad
+en [el encargo actualizado](ENCARGO_DEEPSEEK_2026-10-19.md).
+
+Se conservaron ambos conjuntos de cambios. Los conflictos manuales fueron recuentos documentales;
+se revisaron además las combinaciones automáticas de `app.js`, núcleo y textos. `app.js` conserva
+el formato LF de la entrega Windows; `schemas.py` conserva su CRLF. Versión/caché `2026-10-21-78`.
+El servidor temporal del recorrido PAC aísla ahora también adjuntos, además de la base.
+
+### Corrección adicional aplicada
+
+El nuevo `sesionDelToken` interpretaba un JWT de tres partes y leía la parte central. Sin embargo,
+`security.crear_token` emite **dos partes: carga.firma**, con usuario/finca en la primera.
+Sus pruebas inventaban un JWT y no comprobaban ese contrato. Corregidos lector y fixtures, y
+eliminada la deducción desde `estado.yo` cuando el vale no se puede interpretar. Nueva regresión
+cruzada: Python genera un token real y Node ejecuta el lector de producción, verificando `32:47`.
+No se usa esta lectura local como autorización: el servidor sigue comprobando firma y permisos.
+
+### D01 no está cerrado: defectos reproducidos tras integrar
+
+La revisión no acepta como cierre las etiquetas del resumen del otro agente. Sus avances de filtrado,
+token capturado en el vaciado y control positivo se conservan. Quedan estas reproducciones:
+
+| Caso | Evidencia y efecto | Corrección exigida |
+|---|---|---|
+| Primera respuesta perdida | Primer POST sin clave; la cola añade una distinta después. Con servidor real y base temporal una intención creó **dos trabajos**, IDs ficticios 14 y 15 | Sellar identidad antes del primer intento y reutilizarla; cubrir todas las rutas encolables |
+| Cambio durante el primer envío | A inicia POST; se cambia a B antes de rechazar su promesa. El pendiente queda con dueño **B** | Capturar contexto de origen antes del primer `await`, no solo al vaciar |
+| Identidad entre instancias | Dos colas con el mismo reloj generan igual ID; `quitar` de uno elimina **los dos** | Identidad resistente a reinicio/pestañas y escrituras locales coordinadas |
+| Almacén bloqueado al arrancar | `almacenSeguro` sustituye disco por memoria; `apuntar` sigue devolviendo `guardado: true` | Distinguir persistencia durable, conservar formulario y evitar falso guardado |
+| Fallo al apartar rechazo | Guardar rechazados lanza y se oculta; se borra el original. Resultado: **0 pendientes, 0 rechazados** | No quitar hasta confirmar persistencia del rechazo, con su dueño y recuperación |
+
+Los cinco casos se ejecutaron sobre funciones originales extraídas de `app.js` en una VM con
+colaboradores controlados. No son un recorrido completo de interfaz. **Además**, la duplicación
+del primer caso se contrastó contra API real, con pérdida de respuesta simulada después de confirmar
+la escritura. No se usaron datos reales. Diagnóstico reproducible:
+
+```bash
+node docs/revision-2026-10-19/reproducir-cola.mjs
+```
+
+Su salida 1 significa «defectos reproducidos», no un test de aceptación verde. Debe convertirse
+en regresiones al corregir D01. Resultados conservados en
+[reproducciones](revision-2026-10-19/reproducciones.txt). Último apunte y rechazados siguen con claves
+globales; sus permisos, migración y recuperación también forman parte de D01. La idempotencia
+del servidor no evita por sí sola pérdidas por almacenamiento o escrituras entre pestañas.
+
+### D02 y continuidad
+
+Se han integrado identidad año/versión e ID, huella/conflicto, historial, exportación y deduplicación
+PAC. El recorrido real comprueba 16 casos y el de cola 9, ambos sin fallos. No certifican todas las
+condiciones del encargo. Antes de cerrar D02 revisar fotos antiguas, ausencia de huella (admite guardar
+el estado actual), `recalcular`, campaña ajena/inexistente, datos desconocidos e identidad de reglas/fuentes.
+
+La numeración correcta es **D01 cola, D02 PAC, D03 fallos y recuperación**. D03 ya está definido
+en el encargo: distinguir carga/vacío/fallo/permiso/dato antiguo, conservar contexto y formulario,
+y ofrecer reintento. No hace falta otra decisión del propietario para leerlo o comenzar el corte.
+
+### Verificación de la entrega integrada
+
+Resultados completos pendientes de terminar y registrar en este cierre. Los resultados del 20/10
+anteriores corresponden al árbol cloud previo y no se reutilizan como certificación de esta integración.

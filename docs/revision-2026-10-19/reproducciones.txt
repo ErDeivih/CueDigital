@@ -1,2 +1,37 @@
 PAC: {"primera": {"anio": 2027, "version": 1}, "segunda": {"anio": 2028, "version": 1}, "detalle_segunda": {"anio": 2027, "version": 1}}
 COLA: {"origen_intencionado": 2, "cuenta_que_reconecta": 1, "creadas_en_B": [{"id": 66, "alias": "AUDITORIA_COLA_ORIGEN_A"}]}
+
+
+Auditoría de integración 21/10/2026, sobre 1252d49 con lector de token corregido:
+{
+  "cambio_durante_primer_envio": {
+    "creador": "1:1",
+    "dueno_asignado": "2:2"
+  },
+  "identidad_primer_envio": {
+    "primero_tiene_clave": false,
+    "reintento_tiene_clave": true
+  },
+  "identidad_dos_instancias": {
+    "ids_iguales": true,
+    "apuntes_eliminados_al_confirmar_uno": 2
+  },
+  "almacen_bloqueado_desde_arranque": {
+    "fallback": "memoria",
+    "dice_guardado": true
+  },
+  "fallo_al_apartar": {
+    "pendientes": 0,
+    "rechazados": 0,
+    "dato_perdido": true
+  },
+  "servidor_real_respuesta_perdida": {
+    "filas_creadas": 2,
+    "ids": [
+      14,
+      15
+    ]
+  }
+}
+
+Funciones originales ejecutadas en VM con dependencias controladas; último caso además con servidor real y base temporal. No es un recorrido de UI. Ver reproducir-cola.mjs y el informe.

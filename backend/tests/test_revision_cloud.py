@@ -1,13 +1,33 @@
 """Regresiones de la revisión en Linux, sobre archivos y datos temporales."""
 
 import datetime as dt
+from pathlib import Path
 import re
+import subprocess
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.schema import CreateTable
 
 from app import database, models, textos
 from scripts import navegador_cdp
+
+
+def test_el_cliente_lee_el_contexto_del_token_real_del_servidor():
+    from app.security import crear_token
+
+    # Acoplar ambos extremos: el token de producción es carga.firma, no un JWT.
+    resultado = subprocess.run(
+        ["node", "--input-type=module", "-e", """
+            import assert from 'node:assert/strict';
+            import { sesionDelToken } from './nucleo.js';
+            let token = '';
+            for await (const trozo of process.stdin) token += trozo;
+            assert.equal(sesionDelToken(token), '32:47');
+        """],
+        input=crear_token(32, 47), text=True, capture_output=True, timeout=15,
+        cwd=Path(__file__).resolve().parents[1] / "web",
+    )
+    assert resultado.returncode == 0, resultado.stderr
 
 
 def test_migrar_una_venta_antigua_conserva_la_fila_y_repara_la_clave(tmp_path):

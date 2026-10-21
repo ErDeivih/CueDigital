@@ -244,23 +244,16 @@ export function decideQueHacer(cola, hayRed) {
  *
  * *Es una función pura: **la interfaz solo tiene que obedecer**, y se puede probar sin navegador.*
  */
-/**
- * ***Quién es esta sesión, leyendo el vale*** (19/10/2026).
- *
- * *El vale es un JWT y lleva `uid` y `eid` en su carga -se ve decodificando `eyJ1aWQiOjIsImVpZCI6Miw…`, que es
- * `{"uid":2,"eid":2,…}`-. **Deducir la sesión de ahí y no de `estado.yo` es lo que hace que no puedan discrepar**:
- * `api()` manda ese mismo vale, así que **lo que se cuenta y lo que se envía son lo mismo por construcción**.*
- *
- * ***Y `null` cuando no se puede leer*** -no hay vale, no es un JWT, la carga no tiene `uid`/`eid`-: *con `null` la
- * cola **no manda nada**, que es la respuesta segura.*
+/** Lee usuario y finca del formato carga.firma que emite security.crear_token.
+ * Solo identifica el contexto local; la firma y el permiso los comprueba el servidor.
  */
 export function sesionDelToken(token) {
   if (!token || typeof token !== "string") return null;
   const partes = token.split(".");
-  if (partes.length !== 3) return null;
+  if (partes.length !== 2) return null;
   try {
     // *El trozo de en medio va en base64url; `atob` quiere base64 normal y el relleno.*
-    const carga = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const carga = partes[0].replace(/-/g, "+").replace(/_/g, "/");
     const conRelleno = carga.padEnd(Math.ceil(carga.length / 4) * 4, "=");
     const texto = globalThis.atob(conRelleno);
     const datos = JSON.parse(texto);

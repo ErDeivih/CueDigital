@@ -94,7 +94,7 @@ test("dos apuntes distintos llevan claves distintas", () => {
 
 function unVale(carga) {
   const trozo = Buffer.from(JSON.stringify(carga)).toString("base64url");
-  return `x.${trozo}.y`;
+  return `${trozo}.firma-de-prueba`;
 }
 
 test("la sesion sale del vale, que es lo que de verdad viaja", () => {
@@ -104,7 +104,7 @@ test("la sesion sale del vale, que es lo que de verdad viaja", () => {
 
 test("y un vale que no se puede leer NO es una sesion: es null", () => {
   // *Con `null` la cola no manda nada, que es la respuesta segura.*
-  for (const el_malo of [null, undefined, "", "no-es-un-vale", "a.b", "a.b.c", 42]) {
+  for (const el_malo of [null, undefined, "", "no-es-un-vale", "a.b", "a.b.c", unVale({ uid: 2, eid: 7 }) + ".otra-parte", 42]) {
     assert.equal(sesionDelToken(el_malo), null, `***${String(el_malo)} no puede dar una sesion***`);
   }
 });
@@ -115,4 +115,3 @@ test("y un vale sin cuenta tampoco", () => {
   assert.equal(sesionDelToken(unVale({ uid: 2 })), null, "***sin finca no hay sesion***");
   assert.equal(sesionDelToken(unVale({ eid: 2 })), null, "***sin usuario tampoco***");
 });
-
