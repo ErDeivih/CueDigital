@@ -75,7 +75,13 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    por la puerta, la vista enseña **3 filas**; con `?q=TIERRA`, **2**; y al recargar, **2**.*
    **Lo que esto mide y lo que no**: *mide **la lista** (las filas de la tabla). **El mapa no se cuenta** —
    recibe el mismo array (`vista.tierras`, una sola vez) y por eso **no puede discrepar**, pero eso es una
-   lectura del código, no una medición. **Faltan 1024 y el móvil**, y **falta contar lo que dibuja el mapa**.
+   lectura del código, no una medición. **Falta contar lo que dibuja el mapa** (*hacen falta tierras con
+   forma: sin geometría no se dibuja ningún polígono*).
+   **En las tres anchuras sí está medido** (`scripts/verificar_las_anchuras_de_las_tierras.py`):
+   **3 filas a 1440, 3 a 1024 y 3 a 390**, y **2 con `?q=TIERRA`** en las tres.
+   ***Hallazgo de diseño***: *esta pantalla usa **la misma tabla** en las tres anchuras — no cambia a
+   tarjetas como las demás. **A 390 px una tabla de tierras se lee mal**, y el documento de marca pide la
+   forma de tarjeta en el móvil: **queda anotado, no arreglado**.*
 3. **Los filtros y la selección sobreviven a la recarga** — **MEDIDO** (21/10/2026): *el filtro viaja en la
    dirección (`?q=`) y recargar deja la vista filtrada; y `?id=N` deja **elegida esa tierra** —la fila lleva
    `tabla-fila-elegida`— **también después de recargar**. **Falta la selección múltiple** (`marcadas=`), que
