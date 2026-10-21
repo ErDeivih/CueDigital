@@ -9861,13 +9861,35 @@ function pantallaMisCosas() {
   // Hay **dos formas de sección**, y no es un capricho: las tierras van con la tarjeta (`tarjetas: true`,
   // ver `tierrasParaMisCosas()`) porque son cincuenta y una y hay que reconocerlas de un vistazo; las
   // otras seis van como lista de renglones, que es lo que se lee de un tirón cuando son diez.
+  // ***De que seccion de `cargarDatos` vive cada una*** (21/10/2026, D03): *si su carga fallo, el «vacio» de esa
+  // seccion **no puede ser «todavia no tienes»** -una afirmacion sobre la finca-, tiene que ser «no se ha podido
+  // cargar» -una sobre la red-.*
+  //
+  // *Y no hay que tocar el componente: **el texto del vacio es un dato** (`vacio`), asi que basta con mandar el
+  // otro. Es la forma mas barata de arreglar las siete secciones a la vez.*
+  const LA_CARGA_DE_LA_SECCION = {
+    parcela: "parcelas",
+    producto: "productos",
+    abono: "fertilizantes",
+    aplicador: "aplicadores",
+    asesor: "asesores",
+    equipo: "equipos",
+    instalacion: "instalaciones",
+  };
   const preparadas = secciones.map((seccion) => ({
     tipo: seccion.tipo,
     titulo: m(`seccion_${seccion.tipo}`),
     pista: m(`pista_${seccion.tipo}`),
-    vacio: m(`sin_${seccion.tipo}`),
+    // ***Y el vacio, el que toca***: *el de verdad si lo que se sabe es que no hay; el de fallo si lo que se sabe es
+    // que no se ha podido mirar.*
+    vacio:
+      estado.cargas[LA_CARGA_DE_LA_SECCION[seccion.tipo]] === "fallo"
+        ? `${m("sin_fallo")} (${m(`seccion_${seccion.tipo}`)})`
+        : m(`sin_${seccion.tipo}`),
+    noSePudoCargar: estado.cargas[LA_CARGA_DE_LA_SECCION[seccion.tipo]] === "fallo",
     anadir: m(`anadir_${seccion.tipo}`),
-    cuantas: seccion.cuantas || "",
+    // *Y la cuenta, vacia cuando la carga fallo: **«0 tierras» es una cifra falsa**.*
+    cuantas: estado.cargas[LA_CARGA_DE_LA_SECCION[seccion.tipo]] === "fallo" ? "" : seccion.cuantas || "",
     tarjetas: Boolean(seccion.tarjetas),
     buscar: seccion.buscar || null,
     // **La tabla, para el ordenador** (30/09/2026): la misma lista que las tarjetas, mirada de otra forma.

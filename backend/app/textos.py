@@ -1969,6 +1969,12 @@ ETIQUETAS: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MAESTROS: dict[str, str] = {
+    # ***Un fallo de carga no es «todavia no tienes»*** (21/10/2026, D03): *lo segundo es una afirmacion sobre la
+    # finca y lo primero sobre la red. Se usa en las siete secciones de «mis cosas».*
+    "sin_fallo": (
+        "No se han podido cargar: **no es que no tengas**, es que no se ha podido mirar. Reintenta cuando vuelva "
+        "la conexión."
+    ),
     "titulo": "Mis parcelas, productos y máquinas",
     "intro": (
         "Aquí se da de alta lo que usas: la tierra, los productos, los abonos, quién "
