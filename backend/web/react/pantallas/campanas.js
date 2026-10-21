@@ -92,7 +92,15 @@ function Ficha({ campana, textos }) {
  *  - `tabla`: la misma lista como tabla, para el ordenador (o `null`, y entonces solo salen las fichas).
  *  - `error`: lo que ha dicho el servidor (o vacío).
  */
-export function PantallaCampanas({ textos = {}, campanas = [], tabla = null, error = "" }) {
+export function PantallaCampanas({
+  textos = {},
+  campanas = [],
+  tabla = null,
+  error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03).
+  noSePudoCargar = false,
+  noSePudoCargarTexto = "",
+}) {
   const c = textos.campanas || {};
   const acciones = textos.acciones || {};
 
@@ -109,7 +117,9 @@ export function PantallaCampanas({ textos = {}, campanas = [], tabla = null, err
     }
     ${
       campanas.length === 0
-        ? html`<div className="aviso">${frase(c.sin_campanas)}</div>`
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(noSePudoCargarTexto)}</div>`
+          : html`<div className="aviso">${frase(c.sin_campanas)}</div>`
         : html`<ul className="lista solo-movil">
             ${campanas.map(
               (campana, indice) =>
@@ -134,6 +144,8 @@ export function pantallaDeCampanas(propiedades) {
   return html`<${PantallaCampanas}
     textos=${propiedades.textos}
     campanas=${propiedades.campanas}
+    noSePudoCargar=${propiedades.noSePudoCargar}
+    noSePudoCargarTexto=${propiedades.noSePudoCargarTexto}
     tabla=${propiedades.tabla}
     error=${propiedades.error}
   />`;

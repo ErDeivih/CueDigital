@@ -108,7 +108,17 @@ function Producto({ producto, textos }) {
  *    (la otra pantalla que enseña un error): se pasa aparte de los textos, porque **no es un texto
  *    de la pantalla: es lo que ha pasado**.
  */
-export function PantallaCesta({ textos = {}, productos = [], tabla = null, resumen = "", error = "" }) {
+export function PantallaCesta({
+  textos = {},
+  productos = [],
+  tabla = null,
+  resumen = "",
+  error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«la cesta esta vacia» es una afirmacion sobre lo que el
+  // agricultor tiene comprado; no se puede hacer sin haber podido preguntar.*
+  noSePudoCargar = false,
+  noSePudoCargarTexto = "",
+}) {
   const c = textos.cesta || {};
   const acciones = textos.acciones || {};
 
@@ -131,7 +141,9 @@ export function PantallaCesta({ textos = {}, productos = [], tabla = null, resum
     }
     ${
       productos.length === 0
-        ? html`<div className="aviso">${frase(c.vacia)}</div>`
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(noSePudoCargarTexto)}</div>`
+          : html`<div className="aviso">${frase(c.vacia)}</div>`
         : html`
             <ul className="lista solo-movil">
               ${productos.map(
@@ -167,6 +179,8 @@ export function pantallaDeCesta(propiedades) {
     <${PantallaCesta}
       textos=${propiedades.textos}
       productos=${propiedades.productos}
+    noSePudoCargar=${propiedades.noSePudoCargar}
+    noSePudoCargarTexto=${propiedades.noSePudoCargarTexto}
       tabla=${propiedades.tabla}
       resumen=${propiedades.resumen}
       error=${propiedades.error}

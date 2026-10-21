@@ -179,7 +179,29 @@ def main() -> int:
                         el_suyo,
                     )
 
-    print(f"\nComprobaciones: {11}   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 7 a 9 · cultivos, cesta, anos
+            for numero, nombre, clave_api, camino in (
+                (7, "LOS CULTIVOS", "/api/cultivos", "#/cultivos"),
+                (8, "LA CESTA DE PRODUCTOS", "/api/productos/cesta/situacion", "#/almacen"),
+                (9, "LAS CAMPANAS", "/api/campanas", "#/anos"),
+            ):
+                print(f"\n{numero}. {nombre}, CON SU CARGA FALLANDO")
+                with el_proxy_que_falla(direccion, clave_api) as el_proxy:
+                    _poner_la_sesion(nav, el_proxy, cuenta["token"])
+                    nav.abrir(f"{el_proxy}/{camino}", esperar=3.0)
+                    for _ in range(30):
+                        if el_texto(nav):
+                            break
+                        time.sleep(0.5)
+                    time.sleep(2.0)
+                    el_suyo = el_texto(nav)
+                    fallos += not comprobar(
+                        "no es que no tengas" in el_suyo,
+                        f"***{nombre.lower()} dicen que no se pudieron cargar***",
+                        el_suyo,
+                    )
+
+    print(f"\nComprobaciones: {13}   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

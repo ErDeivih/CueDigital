@@ -10402,6 +10402,10 @@ function pantallaCesta() {
       // singular o en plural según cuántos sean, y eso lo decide el servidor (`con_cuenta`).
       resumen: datos.resumen || "",
       error: estado.errorCesta,
+      // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay» es una afirmacion sobre la finca;
+      // «no se pudo cargar», sobre la red.*
+      noSePudoCargar: estado.cargas.productos_cesta_situacion === "fallo",
+      noSePudoCargarTexto: t("aviso.no_se_pudo_cargar", ""),
     }),
   );
 }
@@ -12964,6 +12968,10 @@ function pantallaCultivos() {
               : null,
       },
       error: estado.errorCultivos,
+      // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay» es una afirmacion sobre la finca;
+      // «no se pudo cargar», sobre la red.*
+      noSePudoCargar: estado.cargas.cultivos === "fallo",
+      noSePudoCargarTexto: t("aviso.no_se_pudo_cargar", ""),
     }),
   );
 }
@@ -13476,6 +13484,10 @@ function pantallaCampanas() {
       // dentro. Es la misma lista que las fichas, mirada de otra forma.
       tabla: tablaDeLosAnos(suyas),
       error: estado.errorCampanas || "",
+      // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay» es una afirmacion sobre la finca;
+      // «no se pudo cargar», sobre la red.*
+      noSePudoCargar: estado.cargas.campanas === "fallo",
+      noSePudoCargarTexto: t("aviso.no_se_pudo_cargar", ""),
     }),
   );
 }

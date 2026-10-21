@@ -119,6 +119,9 @@ export function PantallaCultivos({
   tabla = null,
   aviso = {},
   error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay tierras» es una afirmacion sobre la finca.*
+  noSePudoCargar = false,
+  noSePudoCargarTexto = "",
 }) {
   const c = textos.cultivos || {};
   const maestros = textos.maestros || {};
@@ -128,7 +131,13 @@ export function PantallaCultivos({
     <h1>${frase(c.titulo)}</h1>
     <p className="pista">${frase(c.explica)}</p>
     <${AvisoDeError} texto=${error} />
-    ${parcelas.length === 0 && !aviso.texto ? html`<div className="aviso">${frase(c.sin_parcelas)}</div>` : null}
+    ${
+      parcelas.length === 0 && !aviso.texto
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(noSePudoCargarTexto)}</div>`
+          : html`<div className="aviso">${frase(c.sin_parcelas)}</div>`
+        : null
+    }
     ${
       // La franja de lo que falta, **con su botón al lado**: el aviso dice cuántas son y el botón enseña esas
       // y solo esas (o vuelve a verlas todas). Es la misma forma que la franja de un aviso con salida que
@@ -185,6 +194,8 @@ export function pantallaDeCultivos(propiedades) {
     <${PantallaCultivos}
       textos=${propiedades.textos}
       parcelas=${propiedades.parcelas}
+    noSePudoCargar=${propiedades.noSePudoCargar}
+    noSePudoCargarTexto=${propiedades.noSePudoCargarTexto}
       tabla=${propiedades.tabla}
       aviso=${propiedades.aviso}
       error=${propiedades.error}
