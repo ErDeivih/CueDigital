@@ -158,7 +158,16 @@ function tablaDeLosCobros(cobros, c) {
  *  - `resumen`: cuántos hay, en singular o plural (lo elige `app.js`).
  *  - `error`: lo que ha dicho el servidor, o nada.
  */
-export function PantallaCobros({ textos = {}, cobros = [], sin_asignar = [], resumen = "", error = "" }) {
+export function PantallaCobros({
+  textos = {},
+  cobros = [],
+  sin_asignar = [],
+  resumen = "",
+  error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay cobros» es una afirmacion sobre la finca; «no se pudieron
+  // cargar», sobre la red. **No se puede afirmar lo primero sin haber podido preguntar.***
+  noSePudoCargar = false,
+}) {
   const c = textos.cobro || {};
   const acciones = textos.acciones || {};
   // **La tabla, en el ordenador**: medido, esta pantalla pintaba **una tarjeta por cobro** y ninguna tabla,
@@ -178,7 +187,10 @@ export function PantallaCobros({ textos = {}, cobros = [], sin_asignar = [], res
 
     ${
       cobros.length === 0
-        ? html`<div className="aviso">${frase(c.sin_nada)}</div>`
+        ? noSePudoCargar
+          ? // ***No se repite el «no hay»***: *seria mentira; arriba ya se dice cual fallo y se ofrece reintentar.*
+            html`<div className="aviso aviso-error">${frase(c.sin_cobros_fallo)}</div>`
+          : html`<div className="aviso">${frase(c.sin_nada)}</div>`
         : html`<ul className="lista">
             ${cobros.map(
               (cobro, indice) => html`<${FichaDeCobro} key=${indice} cobro=${cobro} textos=${textos} />`,

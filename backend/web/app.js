@@ -14832,6 +14832,9 @@ function pantallaCobros() {
       sin_asignar: sinAsignar,
       resumen: cobros.length ? rellena(c(cobros.length === 1 ? "cuantos_uno" : "cuantos"), { cuantas: cobros.length }) : "",
       error: estado.errorVentas || "",
+      // ***Y que se sepa que fallo*** (21/10/2026, D03): *«no hay cobros» es una afirmacion sobre el dinero del
+      // agricultor; no se puede hacer sin haber podido preguntar.*
+      noSePudoCargar: estado.cargas.cobros === "fallo",
     }),
   );
 }

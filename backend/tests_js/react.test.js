@@ -8395,3 +8395,31 @@ test("con la carga fallida, las facturas dicen que no se pudo cargar, no que no 
   );
 });
 
+test("un fallo de cobros no se pinta como «no has cobrado nada»", async () => {
+  // *El mismo patron que en facturas, en la pantalla del **dinero**: sin poder preguntar, no se puede afirmar
+  // nada sobre lo que el agricultor ha cobrado.*
+  const { PantallaCobros } = await import(`../web/react/pantallas/cobros.js?prueba=${Math.random()}`);
+  const textos = {
+    cobro: {
+      titulo: "Los cobros",
+      sin_nada: "Todavía no has cobrado nada.",
+      sin_cobros_fallo: "NO SE HAN PODIDO CARGAR LOS COBROS.",
+    },
+    acciones: {},
+  };
+  const pintar = (propiedades) =>
+    globalThis.ReactDOMServer.renderToStaticMarkup(
+      globalThis.React.createElement(PantallaCobros, propiedades),
+    );
+
+  const conFallo = pintar({ textos, cobros: [], sin_asignar: [], noSePudoCargar: true });
+  assert.match(conFallo, /NO SE HAN PODIDO CARGAR LOS COBROS/, conFallo.slice(0, 300));
+  assert.ok(
+    !conFallo.includes("Todavía no has cobrado nada"),
+    `***y NO puede decir que no has cobrado***: ${conFallo.slice(0, 300)}`,
+  );
+
+  const sinFallo = pintar({ textos, cobros: [], sin_asignar: [] });
+  assert.match(sinFallo, /Todavía no has cobrado nada/, sinFallo.slice(0, 300));
+});
+

@@ -3255,6 +3255,12 @@ FACTURA_EMITIDA: dict[str, str] = {
 # un cobro no crea ninguna factura, nunca.
 # --------------------------------------------------------------------------
 COBRO: dict[str, str] = {
+    # ***Un fallo de la red no es «no hay cobros»*** (21/10/2026, D03): *lo segundo es una afirmacion sobre **el
+    # dinero del agricultor**. No se puede afirmar sin haber podido preguntar.*
+    "sin_cobros_fallo": (
+        "No se han podido cargar los cobros: **no es que no hayas cobrado nada**, es que no se ha podido mirar. "
+        "Reintenta cuando vuelva la conexión."
+    ),
     "titulo": "Lo que me han pagado",
     "explica": (
         "El dinero que ha entrado, aunque sea una parte de lo que te deben. Un pago puede ir contra "
