@@ -2917,6 +2917,11 @@ MEDIDAS: dict[str, str] = {
 # Textos de lo que se vende. La app oficial lo llama «Otras Actividades: Cosecha
 # Comercializada»; aquí se llama «lo que he vendido», que es como lo dice el agricultor.
 VENTA: dict[str, str] = {
+    # ***Un fallo de la red no es «no hay ventas»*** (21/10/2026, D03).
+    "sin_ventas_fallo": (
+        "No se han podido cargar las ventas: **no es que no hayas vendido nada**, es que no se ha podido mirar. "
+        "Reintenta cuando vuelva la conexión."
+    ),
     "titulo": "Lo que he vendido",
     "explica": (
         "Aquí se apunta lo que sale de la finca: a quién, cuánto y de qué parcelas salió. "

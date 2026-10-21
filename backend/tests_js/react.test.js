@@ -8423,3 +8423,40 @@ test("un fallo de cobros no se pinta como «no has cobrado nada»", async () => 
   assert.match(sinFallo, /Todavía no has cobrado nada/, sinFallo.slice(0, 300));
 });
 
+test("un fallo de ventas no se pinta como «no has vendido nada»", async () => {
+  // *La tercera pantalla con el patron, y la **tercera de dinero**. Y aqui manda sobre el «vacio por filtro»:
+  // sin datos que filtrar, decir «con ese filtro no hay nada» es mentira por partida doble.*
+  const { PantallaVentas } = await import(`../web/react/pantallas/ventas.js?prueba=${Math.random()}`);
+  const textos = {
+    venta: {
+      titulo: "Las ventas",
+      sin_nada: "Todavía no has vendido nada.",
+      vacio_filtro: "Con ese filtro no hay nada.",
+      sin_ventas_fallo: "NO SE HAN PODIDO CARGAR LAS VENTAS.",
+    },
+    acciones: {},
+    tabla: {},
+  };
+  const pintar = (propiedades) =>
+    globalThis.ReactDOMServer.renderToStaticMarkup(
+      globalThis.React.createElement(PantallaVentas, { textos, ...propiedades }),
+    );
+
+  const conFallo = pintar({ tabla: { filas: [] }, noSePudoCargar: true });
+  assert.match(conFallo, /NO SE HAN PODIDO CARGAR LAS VENTAS/, conFallo.slice(0, 300));
+  assert.ok(
+    !conFallo.includes("Todavía no has vendido nada"),
+    `***y NO puede decir que no has vendido***: ${conFallo.slice(0, 300)}`,
+  );
+
+  // *Y con un filtro puesto, un fallo **tampoco** es «no hay nada con ese filtro».*
+  const conFiltro = pintar({ tabla: { filas: [] }, filtros: { q: "trigo" }, noSePudoCargar: true });
+  assert.ok(
+    !conFiltro.includes("Con ese filtro no hay nada"),
+    `***sin datos, un filtro no puede decir nada***: ${conFiltro.slice(0, 300)}`,
+  );
+
+  const sinFallo = pintar({ tabla: { filas: [] } });
+  assert.match(sinFallo, /Todavía no has vendido nada/, sinFallo.slice(0, 300));
+});
+

@@ -156,7 +156,16 @@ function Tarjeta({ fila, textos }) {
  *  - `filtros`: `{q, solo}` para que la barra sepa qué está puesto.
  *  - `resumen`: la línea de cuántas hay, con su palabra (singular y plural los elige el servidor).
  */
-export function PantallaVentas({ textos = {}, tabla = {}, filtros = {}, resumen = "", aviso = "" }) {
+export function PantallaVentas({
+  textos = {},
+  tabla = {},
+  filtros = {},
+  resumen = "",
+  aviso = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay ventas» es una afirmacion sobre la finca; «no se pudo
+  // cargar», sobre la red. **Y manda sobre el vacio por filtro**: sin datos, un filtro no dice nada.*
+  noSePudoCargar = false,
+}) {
   const v = textos.venta || {};
   const acciones = textos.acciones || {};
   const filas = tabla.filas || [];
@@ -195,7 +204,11 @@ export function PantallaVentas({ textos = {}, tabla = {}, filtros = {}, resumen 
 
     ${
       filas.length === 0
-        ? html`<div className="aviso">${frase(filtros.q || filtros.solo ? v.vacio_filtro : v.sin_nada)}</div>`
+        ? noSePudoCargar
+          ? // ***Manda sobre el «vacio por filtro»***: *sin datos que filtrar, decir «no hay nada con ese filtro» es
+            // mentira por partida doble.*
+            html`<div className="aviso aviso-error">${frase(v.sin_ventas_fallo)}</div>`
+          : html`<div className="aviso">${frase(filtros.q || filtros.solo ? v.vacio_filtro : v.sin_nada)}</div>`
         : html`
             ${
               // **La tabla del ordenador va dentro de su contenedor de desplazamiento**, y no es un adorno:
@@ -230,5 +243,6 @@ export function pantallaDeVentas(propiedades) {
     filtros=${propiedades.filtros}
     resumen=${propiedades.resumen}
     aviso=${propiedades.aviso}
+    noSePudoCargar=${propiedades.noSePudoCargar}
   />`;
 }

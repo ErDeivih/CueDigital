@@ -14348,6 +14348,8 @@ function pantallaVentas() {
         : "",
       // Y lo que se acaba de hacer, si se viene de guardar algo del dinero: se dice una vez y se olvida.
       aviso: estado.avisoVentas || "",
+      // ***Y que se sepa que fallo*** (21/10/2026, D03): *«no hay ventas» es una afirmacion sobre la finca.*
+      noSePudoCargar: estado.cargas.ventas_tabla === "fallo",
     }),
   );
   estado.avisoVentas = "";
