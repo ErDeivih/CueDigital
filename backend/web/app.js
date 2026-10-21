@@ -676,6 +676,26 @@ function laSesionDeAhora() {
 }
 
 /**
+ * ***Apuntar sin cobertura, y decir si se guardó*** (19/10/2026).
+ *
+ * *El almacén del móvil puede fallar: modo privado, lleno, un navegador que lo bloquea. **Antes se decía que sí
+ * siempre** -el resultado de `escribir` se tiraba- y el apunte **no existía**. Ahora, si no se pudo guardar, **se
+ * dice** y no se pierde en silencio.*
+ *
+ * *Y está en **un solo sitio** a propósito: las tres ramas de `enviarOApuntar` que encolan -sin cobertura, tras un
+ * 5xx y al fallar la red- pasan por aquí, así que el día que cambie algo se cambia una vez.*
+ */
+function apuntarSinCobertura(tipo, ruta, datos) {
+  const apuntado = cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
+  if (!apuntado.guardado) {
+    // *No se pinta el aviso de pendientes: **no hay nada pendiente**, no se guardó.*
+    return { error: mensaje("no_se_pudo_guardar_el_apunte") };
+  }
+  pintarAvisoPendientes();
+  return { encolado: true };
+}
+
+/**
  * Manda un apunte. Si no hay cobertura, lo guarda en el móvil para mandarlo después.
  *
  * `guardarComoUltimo` existe porque "LO MISMO QUE LA ÚLTIMA VEZ" solo tiene sentido
@@ -684,9 +704,7 @@ function laSesionDeAhora() {
  */
 async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
   if (!navigator.onLine) {
-    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   }
   try {
     const respuesta = await api(ruta, { method: "POST", body: JSON.stringify(datos) });
@@ -707,14 +725,10 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
       return { error: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"), estado: respuesta.status };
     }
     // Un 5xx sí puede ser pasajero: se guarda y se reintenta.
-    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   } catch (error) {
     // El navegador dice que hay red, pero no llega: es lo normal en el campo.
-    cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   }
 }
 
@@ -759,8 +773,13 @@ async function mandarPendientes() {
   // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
   // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
   // dueño, y lo que no lleva cuenta -de antes de esta corrección- **no se adivina**.*
-  const { suyos } = loQueSePuedeMandar(cola, laSesionDeAhora());
+  const laDelPrincipio = laSesionDeAhora();
+  const { suyos } = loQueSePuedeMandar(cola, laDelPrincipio);
   for (const apunte of suyos) {
+    // ***Y si la cuenta cambia A MITAD del vaciado, se para*** (19/10/2026): *el vale se lee **en cada `api()`**,
+    // asi que sin esto los apuntes siguientes se mandarian con la sesion nueva -el mismo fallo, solo que un
+    // segundo mas tarde-. Comprobarlo aqui es barato y cierra el hueco de verdad.*
+    if (laSesionDeAhora() !== laDelPrincipio) break;
     try {
       const respuesta = await api(apunte.ruta, {
         method: "POST",

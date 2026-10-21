@@ -351,6 +351,13 @@ MENSAJES: dict[str, str] = {
         "Hay {cuantas} cosas apuntadas **de antes de esta version**, y no consta de que cuenta eran. No se mandan "
         "para no escribir en una finca que no es: **no se ha perdido ninguna**."
     ),
+    # ***Cuando el almacen del movil falla*** (19/10/2026): *modo privado, almacenamiento lleno, un navegador que
+    # lo bloquea. Antes **se decia que si** y el apunte no existia; ahora se dice que no, y que se apunte con
+    # cobertura o se libere espacio, en vez de perder un trabajo del campo en silencio.*
+    "no_se_pudo_guardar_el_apunte": (
+        "**No se ha podido guardar en el movil**: el navegador no deja almacenar. No se ha apuntado nada. "
+        "Prueba a liberar espacio o a salir del modo privado, y vuelve a apuntarlo."
+    ),
     "apuntes_de_otra_cuenta": (
         "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
         "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"

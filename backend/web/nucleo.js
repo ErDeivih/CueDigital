@@ -168,18 +168,36 @@ export function crearCola(almacen, opciones = {}) {
     leer,
     tamano: () => leer().length,
 
-    /** Apunta algo para mandarlo. Devuelve el apunte con su identificador local. */
+    /**
+     * ***Apunta algo para mandarlo, y DICE SI SE GUARDÓ*** (19/10/2026).
+     *
+     * ### ***Dos cosas que antes no hacía, y las dos costaban datos***
+     *
+     * ***1 · Decía que sí siempre.*** *`escribir` devuelve `false` cuando el almacén falla -modo privado,
+     * almacenamiento lleno, un navegador que lo bloquea-, y **ese resultado se tiraba**: el agricultor creía que
+     * había apuntado y **el apunte no existía**. Ahora se devuelve `guardado` y quien llama lo cuenta.*
+     *
+     * ***2 · No llevaba clave de reenvío.*** *El servidor sabe reconocer un reintento por `clave_de_reenvio`
+     * (`reenvios.la_misma_accion`), y la cola **no la mandaba**: una respuesta perdida que provoca un reintento
+     * -o **dos pestañas vaciando la misma cola**- mandaba lo mismo dos veces. Se sella con el `id_local`, que es
+     * único y estable, **y si quien llama ya trae una, se respeta**.*
+     */
     apuntar(apunte) {
       const lista = leer();
       contador.n += 1;
+      const idLocal = apunte.id_local || `p${contador.n}-${reloj()}`;
       const conId = {
         ...apunte,
-        id_local: apunte.id_local || `p${contador.n}-${reloj()}`,
+        id_local: idLocal,
         apuntado_en: apunte.apuntado_en || reloj(),
+        datos:
+          apunte.datos && typeof apunte.datos === "object" && !apunte.datos.clave_de_reenvio
+            ? { ...apunte.datos, clave_de_reenvio: idLocal }
+            : apunte.datos,
       };
       lista.push(conId);
-      escribir(lista);
-      return conId;
+      // ***Y se dice si se guardo***: *antes se tiraba el resultado de `escribir`.*
+      return { ...conId, guardado: escribir(lista) };
     },
 
     quitar(idLocal) {
