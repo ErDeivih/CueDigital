@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { crearAlmacenMemoria, crearCola } from "../web/nucleo.js";
+import { crearAlmacenMemoria, crearCola, sesionDelToken } from "../web/nucleo.js";
 
 /**
  * ***La cola dice si guardo, y sella lo que manda*** (19/10/2026).
@@ -87,3 +87,32 @@ test("dos apuntes distintos llevan claves distintas", () => {
 
   assert.notEqual(uno.datos.clave_de_reenvio, otro.datos.clave_de_reenvio);
 });
+
+// ---------------------------------------------------------------------------
+// ***La sesión sale del VALE, que es lo que `api()` manda***
+// ---------------------------------------------------------------------------
+
+function unVale(carga) {
+  const trozo = Buffer.from(JSON.stringify(carga)).toString("base64url");
+  return `x.${trozo}.y`;
+}
+
+test("la sesion sale del vale, que es lo que de verdad viaja", () => {
+  assert.equal(sesionDelToken(unVale({ uid: 2, eid: 7, exp: 1 })), "2:7");
+  assert.equal(sesionDelToken(unVale({ uid: 9, eid: 9 })), "9:9");
+});
+
+test("y un vale que no se puede leer NO es una sesion: es null", () => {
+  // *Con `null` la cola no manda nada, que es la respuesta segura.*
+  for (const el_malo of [null, undefined, "", "no-es-un-vale", "a.b", "a.b.c", 42]) {
+    assert.equal(sesionDelToken(el_malo), null, `***${String(el_malo)} no puede dar una sesion***`);
+  }
+});
+
+test("y un vale sin cuenta tampoco", () => {
+  // *Un vale que no dice de quien es no sirve para decidir de quien es un apunte.*
+  assert.equal(sesionDelToken(unVale({ sub: "alguien", exp: 1 })), null);
+  assert.equal(sesionDelToken(unVale({ uid: 2 })), null, "***sin finca no hay sesion***");
+  assert.equal(sesionDelToken(unVale({ eid: 2 })), null, "***sin usuario tampoco***");
+});
+
