@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api", tags=["interfaz"])
 @router.get("/interfaz")
 def interfaz() -> dict:
     return {
+        "marca": textos.MARCA,
         # Pantallas
         "pantalla_inicio": textos.PANTALLA_INICIO,
         "pantalla_entrar": textos.PANTALLA_ENTRAR,

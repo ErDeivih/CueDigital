@@ -351,7 +351,8 @@ class TestSeSirve:
         respuesta = cliente.get("/")
         assert respuesta.status_code == 200
         assert "text/html" in respuesta.headers["content-type"]
-        assert "Mi cuaderno" in respuesta.text
+        # La marca identifica la aplicación; «Mi cuaderno» sigue siendo un módulo.
+        assert f'<title>{textos.MARCA["nombre"]}</title>' in respuesta.text
     def test_la_api_sigue_respondiendo_con_la_pantalla_montada(self, cliente):
         """El montaje de ficheros en "/" se come cualquier ruta registrada después.
 

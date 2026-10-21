@@ -110,6 +110,23 @@ def main() -> int:
         print("\nEsto es solo el aviso: no se ha tocado nada. Quita --mirar para hacerlo.")
         return 0
 
+    # Pasar de WAL a DELETE exige que SQLite pueda cerrar el WAL: si otro proceso lo
+    # usa, falla ANTES de copiar o borrar nada, también en Linux (donde unlink sí deja
+    # borrar un WAL abierto). Recupera además el WAL de un proceso caído antes del backup.
+    try:
+        conexion = sqlite3.connect(f"file:{base.as_posix()}?mode=rw", uri=True, timeout=0)
+        try:
+            conexion.execute("PRAGMA journal_mode=DELETE").fetchone()
+        finally:
+            conexion.close()
+    except sqlite3.Error:
+        print(
+            "No se ha podido terminar: otro programa está usando la base o no se puede preparar. "
+            "La vuelta atrás no está hecha. Cierra la aplicación y cualquier visor de SQLite "
+            "y vuelve a ejecutar este guion. No se ha sustituido la base."
+        )
+        return 1
+
     # El estado de ahora, guardado antes de pisarlo: deshacer un deshacer tiene que ser posible.
     marca = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     guardada = base.with_name(f"{base.name}{MARCA_DE_ESTE_GUION}{marca}")
@@ -120,7 +137,7 @@ def main() -> int:
     pendientes = []
     for fichero in al_lado:
         try:
-            fichero.unlink()
+            fichero.unlink(missing_ok=True)
             print(f"Borrado: {fichero.name} (si se queda, SQLite reaplica encima lo de después)")
         except OSError:
             # En Windows, un fichero de WAL **abierto por otro proceso** no se puede borrar. Y sin borrarlo

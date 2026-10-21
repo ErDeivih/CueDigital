@@ -15,29 +15,57 @@ concurrency:
 
 jobs:
   pruebas:
-    runs-on: ubuntu-latest
+    name: Python (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-python@v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Instalar dependencias
         run: python -m pip install -r backend/requirements.txt
+      - name: Exigir navegador para los recorridos
+        working-directory: backend
+        run: >-
+          python -c "from scripts.navegador_cdp import el_navegador; assert el_navegador(), 'Falta Chrome/Chromium: los recorridos no pueden omitirse en CI'"
       - name: Python
         working-directory: backend
-        run: python -m pytest tests -o addopts="--strict-markers -v" -o faulthandler_timeout=60
+        run: python -m pytest tests --timeout=180 --timeout-method=thread -o addopts="--strict-markers -v" -o faulthandler_timeout=60 --junitxml=resultado-python.xml
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pruebas-python-${{ matrix.os }}
+          path: backend/resultado-python.xml
+          if-no-files-found: warn
   javascript:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: JavaScript
         working-directory: backend
         run: node --test "tests_js/*.test.js"
+      - name: Variables y claves JavaScript
+        run: npx --yes --package eslint@9.39.1 eslint --config .github/eslint.config.mjs "backend/web/**/*.js" --ignore-pattern "**/vendor/**"
+  calidad_python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ruff==0.14.0
+      - run: ruff check --select F821,F822,F823,E9 backend/app backend/scripts

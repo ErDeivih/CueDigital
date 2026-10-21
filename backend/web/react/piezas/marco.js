@@ -54,7 +54,7 @@
  * El componente es PURO: no llama a `fetch`, no lee `localStorage` y no toca el DOM.
  */
 
-import { datosDelBoton, frase, html } from "../componentes.js";
+import { Marca, datosDelBoton, frase, html } from "../componentes.js";
 
 /** Una lista de lo que llegue, sin reventar si no es una lista: el armazón no puede tumbar la pantalla. */
 function lista(valor) {
@@ -230,7 +230,9 @@ export function Marco({
       id="menu-de-la-aplicacion"
     >
       <div className="menu-cabecera">
-        <p className="menu-marca">${frase(m.titulo)}</p>
+        ${textos.marca?.nombre
+          ? html`<${Marca} textos=${textos.marca} />`
+          : html`<p className="menu-marca">${frase(m.titulo)}</p>`}
         ${
           // El botón de cerrar: en el móvil el menú tapa la pantalla, así que tiene que poder cerrarse con
           // un botón (y con Escape, que está en la lista de `app.js`). En el ordenador no se ve: allí el

@@ -274,7 +274,7 @@
 // `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
 // número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
 // caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
-const CACHE = "cuedigital-2026-10-18-74";
+const CACHE = "cuedigital-2026-10-19-77";
 
 const FICHEROS = [
   "/",
@@ -283,6 +283,7 @@ const FICHEROS = [
   "/app.js",
   "/nucleo.js",
   "/manifest.webmanifest",
+  "/marca.svg",
   // La pantalla de inicio se pinta con React. Estos tres van aquí porque son tan parte de la
   // aplicación como `app.js`: sin ellos, la primera pantalla no se puede dibujar sin cobertura.
   // El de `react-dom-server` NO va: ese es solo para las pruebas, en el navegador no se usa.

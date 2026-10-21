@@ -1103,7 +1103,7 @@ class Test7LasCapasDelMapa:
         )
         assert mapa.LADO_MINIMO_GRADOS > 0  # el import sigue siendo el del programa
 
-    def test_la_caja_que_da_la_vista_la_tiene_que_aceptar_el_mismo_programa(self, cliente, cuenta, crear_parcela):
+    def test_la_caja_que_da_la_vista_la_tiene_que_aceptar_el_mismo_programa(self, cliente, cuenta, crear_parcela, monkeypatch):
         """**DEFECTO (media), encontrado y arreglado durante la revisión.** La vista daba una caja que el propio programa rechazaba.
 
         **Lo que pasaba.** `_el_mapa_de_la_finca` agrandaba la caja si era **más pequeña** que el mínimo
@@ -1130,6 +1130,20 @@ class Test7LasCapasDelMapa:
         aviso y lo dice en el mapa. Esta prueba exige las dos mitades: **que la caja que da la vista se
         pueda pedir** y que, si la finca no cabe, se diga y la pantalla lo lea.
         """
+        # Solo se sustituye el proveedor externo. La caja y el endpoint siguen siendo reales.
+        import io
+        from PIL import Image
+        from app import sigpac
+
+        imagen = io.BytesIO()
+        Image.new("RGB", (1, 1)).save(imagen, format="PNG")
+        llamadas = []
+
+        def proveedor(capa, oeste, sur, este, norte, ancho, alto):
+            llamadas.append((capa, oeste, sur, este, norte, ancho, alto))
+            return imagen.getvalue(), "image/png"
+
+        monkeypatch.setattr(sigpac, "pedir_imagen_del_mapa", proveedor)
         crear_parcela(alias="Al oeste", geometria=UN_WKT)
         crear_parcela(alias="Al este", geometria=WKT_MUY_AL_ESTE)
 
@@ -1155,6 +1169,10 @@ class Test7LasCapasDelMapa:
             f"{respuesta.status_code}. La pantalla, delante de ese fallo, enseña «puede ser la cobertura», "
             "que no es lo que pasa"
         )
+
+        assert respuesta.content == imagen.getvalue()
+        assert respuesta.headers["content-type"].startswith("image/png")
+        assert llamadas == [("foto", caja["oeste"], caja["sur"], caja["este"], caja["norte"], 900, 600)]
 
         # Y la otra mitad: si esta finca es más ancha que lo que el servicio acepta, la respuesta tiene
         # que decirlo y la pantalla tiene que leerlo.

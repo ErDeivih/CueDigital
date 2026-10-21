@@ -653,3 +653,16 @@ test("sin decir de dónde coger el número, suma la lista tal cual", () => {
   // El caso de una lista de números: `sumandoLoQueSeSabe([1, 2, null])` no necesita el segundo argumento.
   assert.deepEqual(sumandoLoQueSeSabe([1, 2, null]), { suma: 3, sin_decir: 1 });
 });
+
+
+test("las métricas tienen números españoles y unidades legibles sin cambiar la magnitud", async () => {
+  const { presentarMetrica } = await import("../web/nucleo.js");
+  const textos = { no_se_sabe: "No se sabe", unidades: { ha_de_trabajo: "ha trabajadas" } };
+  const original = { valor: 1234.5, unidad: "ha_de_trabajo", clave: "trabajo" };
+  const vista = presentarMetrica(original, textos);
+  assert.equal(vista.texto_valor, "1.234,50 · ha trabajadas");
+  assert.equal(vista.unidad, original.unidad);
+  assert.equal(original.texto_valor, undefined);
+  assert.equal(presentarMetrica({ ...original, valor: 0 }, textos).texto_valor, "0,00 · ha trabajadas");
+  assert.equal(presentarMetrica({ ...original, valor: null }, textos).texto_valor, "No se sabe · ha trabajadas");
+});

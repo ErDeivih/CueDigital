@@ -29,7 +29,7 @@
  * El componente es PURO: no llama a `fetch`, no lee `localStorage` y no toca el DOM.
  */
 
-import { AvisoDeError, Boton, frase, html } from "../componentes.js";
+import { AvisoDeError, Boton, Marca, frase, html } from "../componentes.js";
 
 /**
  * La ayuda de un campo, tal y como la pinta la pantalla vieja: un bloque con cuatro explicaciones.
@@ -90,6 +90,9 @@ export function PantallaEntrar({
   const primeraVez = modo === "registro";
 
   return html`
+    <section className="entrada-cuenta">
+    <${Marca} textos=${textos.marca} />
+    ${textos.marca?.lema ? html`<p className="marca-lema">${frase(textos.marca.lema)}</p>` : null}
     <h1>${frase(ent.titulo)}</h1>
     <p className="pista">${frase((ayuda.porques || {}).papel_o_digital)}</p>
     <${AvisoDeError} texto=${errorEntrar} />
@@ -165,6 +168,7 @@ export function PantallaEntrar({
       datos=${{ modo: primeraVez ? "entrar" : "registro" }}
       clase="boton-claro"
     />
+    </section>
   `;
 }
 

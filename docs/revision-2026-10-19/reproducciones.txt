@@ -1,0 +1,2 @@
+PAC: {"primera": {"anio": 2027, "version": 1}, "segunda": {"anio": 2028, "version": 1}, "detalle_segunda": {"anio": 2027, "version": 1}}
+COLA: {"origen_intencionado": 2, "cuenta_que_reconecta": 1, "creadas_en_B": [{"id": 66, "alias": "AUDITORIA_COLA_ORIGEN_A"}]}

@@ -1,0 +1,621 @@
+{
+  "datos": "Ficticios, generados con scripts/datos_representativos.py en servidor temporal",
+  "revisadas": [
+    {
+      "name": "inicio",
+      "route": "/",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Hola · 2026",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "tierras",
+      "route": "/tierras/mapa",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis tierras, en el mapa y en la tabla",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "ficha-tierra",
+      "route": "/tierras/2",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis parcelas, productos y máquinas",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "trabajos",
+      "route": "/trabajos",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Los trabajos",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "almacen",
+      "route": "/almacen/libro",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "El libro del almacén",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "bandeja",
+      "route": "/papeles/bandeja",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La bandeja de los papeles",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "facturas",
+      "route": "/facturas",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis facturas",
+      "width": 1440,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "cuentas",
+      "route": "/cuentas",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis cuentas",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "bancos",
+      "route": "/cuentas/bancos",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "El banco y los papeles",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "contactos",
+      "route": "/contactos",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Las personas y las empresas",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "maquinaria",
+      "route": "/maquinaria",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mi maquinaria",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "pac",
+      "route": "/pac",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La preparación de la PAC · 2026",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "ventas",
+      "route": "/ventas",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Lo que he vendido",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "normativa",
+      "route": "/normativa",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La normativa",
+      "width": 1425,
+      "bodyWidth": 1440,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "inicio",
+      "route": "/",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Hola · 2026",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "tierras",
+      "route": "/tierras/mapa",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis tierras, en el mapa y en la tabla",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "ficha-tierra",
+      "route": "/tierras/2",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis parcelas, productos y máquinas",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "trabajos",
+      "route": "/trabajos",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Los trabajos",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "almacen",
+      "route": "/almacen/libro",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "El libro del almacén",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "bandeja",
+      "route": "/papeles/bandeja",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La bandeja de los papeles",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "facturas",
+      "route": "/facturas",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis facturas",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "cuentas",
+      "route": "/cuentas",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis cuentas",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "bancos",
+      "route": "/cuentas/bancos",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "El banco y los papeles",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "contactos",
+      "route": "/contactos",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Las personas y las empresas",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "maquinaria",
+      "route": "/maquinaria",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mi maquinaria",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "pac",
+      "route": "/pac",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La preparación de la PAC · 2026",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "ventas",
+      "route": "/ventas",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Lo que he vendido",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "normativa",
+      "route": "/normativa",
+      "viewport": [
+        390,
+        844
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "La normativa",
+      "width": 390,
+      "bodyWidth": 390,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "inicio",
+      "route": "/",
+      "viewport": [
+        1024,
+        900
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Hola · 2026",
+      "width": 1009,
+      "bodyWidth": 1024,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "tierras",
+      "route": "/tierras/mapa",
+      "viewport": [
+        1024,
+        900
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis tierras, en el mapa y en la tabla",
+      "width": 1009,
+      "bodyWidth": 1024,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "inicio",
+      "route": "/",
+      "viewport": [
+        320,
+        700
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Hola · 2026",
+      "width": 320,
+      "bodyWidth": 320,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    },
+    {
+      "name": "tierras",
+      "route": "/tierras/mapa",
+      "viewport": [
+        320,
+        700
+      ],
+      "ready": true,
+      "title": "CUE Digital",
+      "h1": "Mis tierras, en el mapa y en la tabla",
+      "width": 320,
+      "bodyWidth": 320,
+      "badRoute": false,
+      "technicalUnits": false,
+      "overflow": false
+    }
+  ],
+  "cabecera_tactil": [
+    {
+      "width": 320,
+      "header": [
+        {
+          "name": "Abrir el menú de la aplicación",
+          "left": 12.796875,
+          "right": 56.796875,
+          "width": 44,
+          "height": 48
+        },
+        {
+          "name": "CUE Digital",
+          "left": 64.796875,
+          "right": 178.9375,
+          "width": 114.140625,
+          "height": 44
+        },
+        {
+          "name": "Poner la letra más grande",
+          "left": 186.9375,
+          "right": 242.9375,
+          "width": 56,
+          "height": 48
+        },
+        {
+          "name": "Salir de la cuenta",
+          "left": 249.328125,
+          "right": 307.203125,
+          "width": 57.875,
+          "height": 48
+        }
+      ],
+      "overlap": false
+    },
+    {
+      "width": 390,
+      "header": [
+        {
+          "name": "Abrir el menú de la aplicación",
+          "left": 12.796875,
+          "right": 98.5,
+          "width": 85.703125,
+          "height": 48
+        },
+        {
+          "name": "CUE Digital",
+          "left": 109.765625,
+          "right": 245.671875,
+          "width": 135.90625,
+          "height": 44
+        },
+        {
+          "name": "Poner la letra más grande",
+          "left": 256.9375,
+          "right": 312.9375,
+          "width": 56,
+          "height": 48
+        },
+        {
+          "name": "Salir de la cuenta",
+          "left": 319.328125,
+          "right": 377.203125,
+          "width": 57.875,
+          "height": 48
+        }
+      ],
+      "overlap": false
+    },
+    {
+      "width": 712,
+      "header": [
+        {
+          "name": "Abrir el menú de la aplicación",
+          "left": 12.796875,
+          "right": 98.5,
+          "width": 85.703125,
+          "height": 48
+        },
+        {
+          "name": "CUE Digital",
+          "left": 270.765625,
+          "right": 406.671875,
+          "width": 135.90625,
+          "height": 44
+        },
+        {
+          "name": "Poner la letra más grande",
+          "left": 578.9375,
+          "right": 634.9375,
+          "width": 56,
+          "height": 48
+        },
+        {
+          "name": "Salir de la cuenta",
+          "left": 641.328125,
+          "right": 699.203125,
+          "width": 57.875,
+          "height": 48
+        }
+      ],
+      "overlap": false
+    }
+  ]
+}

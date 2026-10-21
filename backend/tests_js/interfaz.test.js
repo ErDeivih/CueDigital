@@ -14896,3 +14896,27 @@ test("y sin borrador, el formulario sale limpio", async () => {
     `sin borrador el numero tiene que salir vacio, y sale ${JSON.stringify(borrador.numero)}`,
   );
 });
+
+
+test("rectificar un papel manda el identificador elegido al servidor", async () => {
+  const papel = { id: 5, titulo: "La factura corregida", campos: {}, vinculos: [], rectificada_por: [] };
+  const { entorno, servidor } = await cargarAplicacion({
+    "/api/bandeja/5": papel,
+    "/api/bandeja/5/rectificar": { papel, avisos: [] },
+    "/api/bandeja": { papeles: [papel] },
+  });
+  await pulsar(entorno, "bandeja-abrir", { id: "5" });
+  escribir(entorno, "bandeja-rectifica-a", "2");
+  await pulsar(entorno, "bandeja-rectificar", { id: "5" });
+  const enviado = servidor.enviados.find((e) => e.ruta === "/api/bandeja/5/rectificar");
+  assert.ok(enviado, "el botón debe enviar la rectificación");
+  assert.deepEqual(enviado.cuerpo, { rectifica_a_id: 2 });
+});
+
+test("subir el papel de una factura sin elegir fichero muestra el aviso y conserva la lista", async () => {
+  const { entorno, servidor } = await cargarAplicacion();
+  await pulsar(entorno, "facturas-abrir");
+  await pulsar(entorno, "factura-papel-subir", { id: "7" });
+  assert.equal(ultimoMontaje().props.error, RESPUESTAS["/api/interfaz"].facturas.que_fichero);
+  assert.ok(!servidor.enviados.some((e) => e.ruta === "/api/facturas/7/fichero"));
+});

@@ -50,7 +50,9 @@ NAVEGADORES = [
 
 
 def _hay_navegador() -> bool:
-    return any(pathlib.Path(ruta).exists() for ruta in NAVEGADORES)
+    from scripts.navegador_cdp import el_navegador
+
+    return el_navegador() is not None
 
 
 def _un_puerto_libre() -> int:

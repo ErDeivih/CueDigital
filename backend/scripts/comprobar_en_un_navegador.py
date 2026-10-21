@@ -70,7 +70,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import httpx  # noqa: E402
 
 import datos_representativos  # noqa: E402
-from navegador_cdp import NavegadorDeVerdad, SinNavegador  # noqa: E402
+from navegador_cdp import NavegadorDeVerdad, SinNavegador, el_navegador  # noqa: E402
 
 DIRECCION_POR_DEFECTO = "http://127.0.0.1:8010"
 
@@ -91,10 +91,7 @@ def comprobar(condicion: bool, descripcion: str) -> None:
 
 
 def navegador() -> str | None:
-    for ruta in NAVEGADORES:
-        if pathlib.Path(ruta).exists():
-            return ruta
-    return None
+    return el_navegador()
 
 
 def crear_cuenta(direccion: str) -> str:

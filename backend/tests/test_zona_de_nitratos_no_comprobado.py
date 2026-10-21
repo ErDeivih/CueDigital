@@ -812,7 +812,8 @@ class TestDeshacerLaMigracion:
         assert codigo == 1, "no puede decir que ha terminado si no ha podido quitar el WAL"
         assert "No se ha podido terminar" in salida
         assert "no está hecha" in salida
-        assert "antes-de-deshacer" in salida, "tiene que decir cómo dejarlo como estaba"
+        assert self._nombres(ruta) == ["La Vega", "El Prado"], "no debe pisar la base que está en uso"
+        assert not list(tmp_path.glob("*.antes-de-deshacer-*")), "se rechaza antes de empezar la restauración"
 
     def test_guarda_el_estado_de_ahora_antes_de_pisarlo(self, tmp_path):
         """Deshacer un deshacer también tiene que ser posible: si te equivocas de copia, no la pierdes."""

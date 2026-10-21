@@ -332,6 +332,8 @@ def reconstruir_para_que_nazcan_las_claves_ajenas(motor: Engine) -> list[str]:
     `_reconstruir_tabla` copia todas las filas y las deja igual: lo que cambia es el esquema de delante. Y es
     **idempotente**: si la clave ya está, no se toca nada.
     """
+    from . import models
+
     pendientes = [
         tabla
         for tabla in TABLAS_QUE_NECESITAN_RECONSTRUIRSE_POR_UNA_CLAVE_AJENA

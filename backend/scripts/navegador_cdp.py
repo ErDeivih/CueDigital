@@ -60,6 +60,9 @@ NAVEGADORES = [
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ]
 
 
@@ -71,7 +74,7 @@ def el_navegador() -> str | None:
     for ruta in NAVEGADORES:
         if pathlib.Path(ruta).exists():
             return ruta
-    return None
+    return shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
 
 
 def _un_puerto_libre() -> int:

@@ -25,6 +25,7 @@ import {
   fechaEnPalabras,
   formateaFecha,
   formateaNumero,
+  presentarMetrica,
   queSePuedeRepetir,
   rellena,
   repetirUltimo,
@@ -462,7 +463,6 @@ const estado = {
   instalaciones: [],
   planes: [],
   analiticas: [],
-  medidas: null,
   ventas: [],
   // **El dinero de lo que se vende (T12).** `ventasTabla` es la respuesta de `/api/ventas/tabla`: la
   // tabla con su pie y sus totales, **calculados por el servidor sobre el conjunto filtrado** (el
@@ -1954,7 +1954,7 @@ function pintarMarco(listo) {
   let armazon = null;
   try {
     armazon = marcoDeLaAplicacion({
-      textos: { menu: t("menu", {}), marco: t("marco", {}), acciones: t("acciones", {}) },
+      textos: { menu: t("menu", {}), marco: t("marco", {}), acciones: t("acciones", {}), marca: t("marca", {}) },
       // Quién está apuntando: lo que se guardó al entrar (`estado.nombre`) y, si no está, el nombre del
       // titular de la finca. En este programa la finca no tiene nombre propio (ver `textos.MENU`), así que
       // el dato de la barra es la cuenta.
@@ -2256,6 +2256,7 @@ function pantallaEntrar(modo = "entrar") {
   montar(() =>
     pantallaDeEntrar({
       textos: {
+        marca: t("marca", {}),
         pantalla_entrar: t("pantalla_entrar", {}),
         ayuda: { porques: t("ayuda.porques", {}) },
         certificado: t("certificado", {}),
@@ -2481,7 +2482,11 @@ async function pedirElPaqueteDeLaPac() {
 async function pedirLasMetricas() {
   estado.metricasPedidas = true;
   try {
-    estado.metricas = await apiJson("/api/panel");
+    const panel = await apiJson(conLaCampana("/api/panel"));
+    estado.metricas = {
+      ...panel,
+      las_metricas: (panel.las_metricas || []).map((una) => presentarMetrica(una, panel.textos)),
+    };
   } catch (fallo) {
     estado.metricas = null;
     return;
@@ -5576,7 +5581,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-18-74";
+const VERSION_DE_LA_APLICACION = "2026-10-19-77";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -5600,7 +5605,7 @@ async function arrancarSesion() {
     avisarDelError(error.message, { sinVolver: true });
     return;
   }
-  cabeceraTexto.textContent = t("cuaderno.titulo", "");
+  cabeceraTexto.textContent = t("marca.nombre", t("cuaderno.titulo", ""));
   pintarPie();
   pintarAvisoPendientes();
   mandarPendientes();
@@ -11785,7 +11790,7 @@ async function subirElPapelDeLaFactura(id) {
   const facturas = estadoDeLasFacturas();
   const entrada = document.getElementById(`factura-papel-${id}`);
   if (!entrada || !entrada.files || !entrada.files.length) {
-    facturas.error = f("que_fichero");
+    facturas.error = t("facturas.que_fichero", "");
     pantallaFacturas();
     return;
   }
@@ -24643,7 +24648,7 @@ async function atenderLaBandeja(nombre, elemento) {
     const alQueCorrige = valorDeLaCasilla("bandeja-rectifica-a");
     if (!alQueCorrige) return pantallaUnPapelDeLaBandeja();
     return hacerAlgoConElPapelDeLaBandeja(id, "rectificar", {
-      rectifica_a_id: Number(alQueCorrije),
+      rectifica_a_id: Number(alQueCorrige),
     });
   }
 }

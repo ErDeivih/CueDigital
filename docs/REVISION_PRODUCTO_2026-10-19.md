@@ -1,0 +1,198 @@
+# CUE Digital: revisión técnica, de producto y de experiencia
+
+Fecha: 19/10/2026. Base inspeccionada: `dc0e4a5`, checkout `/workspace/CueDigital`, rama local `work`.
+Autor: revisión realizada en el entorno cloud con datos ficticios. Los cambios están en el árbol de trabajo.
+
+**Decisión: apta para continuar desarrollo y preparar un piloto; todavía no para una venta general.**
+La cantidad de funciones y de pruebas es importante, pero una suite verde no evita por sí sola los
+defectos de aislamiento y de identidad reproducidos aquí. No se certifica ausencia de errores,
+cumplimiento normativo, seguridad completa ni equivalencia con PostgreSQL.
+
+Esta revisión actualiza la evidencia, no reemplaza los contratos CRM ni convierte sus pendientes en hechos.
+Leer junto a [contrato CRM](CONTRATO_IMPLEMENTACION_CRM.md), [matriz normativa](MATRIZ_NORMATIVA_CRM.md),
+[especificación de marca y UX](ESPEC_MARCA_UX_2026-10-19.md) y
+[encargo de implementación](ENCARGO_DEEPSEEK_2026-10-19.md).
+
+## Alcance y límites de la revisión
+
+- Inventario estático de los 96 módulos Python de `backend/app`: 84.741 líneas, 1.818 funciones y
+  357 declaraciones HTTP al generar el [inventario](INVENTARIO_REVISION_2026-10-19.md).
+  Las líneas incluyen comentarios; los recuentos describen tamaño, no calidad ni cobertura.
+- Análisis de referencias indefinidas en `app` y `scripts`, y de variables indefinidas, claves
+  duplicadas y código inalcanzable en todo el JavaScript propio. Se excluye el vendor de terceros.
+- Lectura de contratos, arquitectura, autenticación, permisos, persistencia, restauración,
+  cola local, arranque, PAC, textos, navegación, montaje React, PWA, diseño y CI.
+- Suites completas, regresiones específicas, servidor real, humo y revisión de capturas de escritorio
+  y móvil con una finca ficticia de 64 tierras, 20 contactos, 8 máquinas, compras, trabajos y banco.
+- Inventariar todas las rutas no significa haber intentado todas las combinaciones de estados,
+  permisos, importaciones, concurrencia y dispositivos. No se ha efectuado un pentest ni una
+  certificación fiscal, normativa o de accesibilidad. Windows queda configurado en CI, no ejecutado aquí.
+
+## Hallazgos que bloquean la comercialización
+
+### R01 — La cola puede escribir en otra finca: P0, pendiente
+
+Código: `backend/web/app.js`, `enviarOApuntar`, `mandarPendientes`, `api`, `salir`;
+`backend/web/nucleo.js`, `crearCola`. Clave global: `cuedigital.pendientes`.
+
+La cola persiste al salir, pero no guarda una identidad de cuenta/finca que limite su envío.
+Al volver a entrar, `api()` firma las peticiones con el token de la cuenta actual.
+Una tierra nueva no necesita referenciar un ID de la finca antigua: puede crearse en la nueva.
+
+Reproducción realizada en Chromium y servidor temporal: cola de origen A (explotación 2),
+reconexión con B (explotación 1), `POST /api/parcelas` pendiente con alias
+`AUDITORIA_COLA_ORIGEN_A`. Resultado: tierra 66 creada en B. No es una hipótesis sobre permisos del servidor:
+el servidor recibe una orden válida de B porque el cliente perdió su origen.
+
+Además, `cuedigital.ultimo` y `cuedigital.rechazados` son globales. `crearCola.escribir` puede devolver
+`false` por cuota/permisos y `apuntar` no propaga ese fallo: la interfaz puede afirmar que algo quedó
+guardado sin haberse persistido. Son defectos distintos dentro del mismo bloque de fiabilidad.
+
+**No resuelto por este cambio.** Requiere aislamiento, migración de las colas existentes, recuperación
+de entradas sin dueño y pruebas de cambio de cuenta/finca, almacenamiento y respuesta perdida. Ticket D01.
+
+### R02 — Las fotos PAC no identifican el año: P0, pendiente
+
+Código: `backend/app/routers/pac_api.py`, `guardar_la_foto_de_la_pac`, `_la_foto` y exportación;
+`models.FotoDeLaPac`.
+
+El alta numera por explotación/año; el detalle consulta por explotación/versión sin año.
+Reproducido en esta revisión: guardar 2027 → v1; guardar 2028 → v1;
+abrir `/api/pac/foto/1` para la segunda → contenido de 2027.
+El defecto ya estaba documentado el 18/10 y sigue presente en esta rama.
+
+El alta también vuelve a calcular en vez de guardar una evaluación identificada que el usuario haya visto.
+La revisión anterior reproduce una modificación entre evaluar y guardar; la lectura actual confirma que
+se sigue recalculando. `max(version)+1` necesita garantía transaccional e idempotencia, no solo una consulta.
+
+**No resuelto por este cambio.** Debe cerrarse identidad + evaluación + concurrencia y el recorrido de pantalla,
+no solo cambiar la consulta para elegir otra fila. Ticket D02.
+
+### R03 — Preparación para exposición comercial: P0/P1 según despliegue, pendiente
+
+`security.py` declara límites todavía pendientes: intentos de acceso, revocación, rotación y doble factor.
+Los tokens duran 30 días; no contienen una versión de credenciales para revocarlos al cambiar una clave.
+La clave aleatoria de desarrollo invalida accesos al reiniciar y no sustituye la configuración de producción.
+
+Antes de exponer un servicio: definir instalación aislada o SaaS compartido, HTTPS/proxy fiable,
+secretos persistentes, límites de autenticación y de recursos, recuperación de cuenta,
+privacidad/retención, actualización y restauración. No activar confianza en cabeceras de certificado
+en una aplicación accesible directamente. Ticket D06; la matriz de roles actual debe conservarse.
+
+## Correcciones aplicadas
+
+| Problema | Cambio | Evidencia relevante |
+|---|---|---|
+| CI se bloqueaba al 71 % | El cliente ASGI entrega una petición, espera la respuesta y después desconecta; espera acotada | Se conservan las 13 pruebas de protección de descargas, incluidos controles positivos |
+| Chromium instalado pero recorridos dicen que no existe | Detección Linux/macOS/PATH y la misma detección en pruebas y guion de comprobación | Recorridos reales, no omisiones artificiales |
+| Una migración fallaba al necesitar reconstruir una tabla | Importación local de `models` en la rama que sí reconstruye | Nueva prueba con una venta antigua, copia, fila conservada, FK reparada e idempotencia |
+| `Decimal` no estaba definido en anotaciones de servicios | Importación explícita | Ruff sobre todo el backend propio |
+| Rectificar un papel rompía la acción | `alQueCorrije` → variable elegida `alQueCorrige` | Prueba de botón que exige POST y cuerpo con el ID seleccionado |
+| Subir justificante sin elegir fichero lanzaba `ReferenceError` | Obtención del aviso mediante los textos del servidor | Prueba que exige aviso y ausencia de envío |
+| Estado inicial declaraba `medidas` dos veces | Una única declaración | ESLint `no-dupe-keys` |
+| Una prueba de caja del mapa dependía de IGN | Doble solo del proveedor; endpoint, validación, caja y bytes reales del ensayo se comprueban | Regresión de mapa sin dependencia de red; conexión real permanece separada |
+| Restaurar podía pisar una base con WAL abierto en Linux | Preparación de WAL con SQLite antes de sustituir archivos; rechazo si está en uso; tolerar sidecars ya cerrados por SQLite | Base temporal con conexión viva conserva sus dos filas; restauración tras caída conserva la vuelta atrás |
+| Entrada descentrada y sin identidad | Formulario centrado, marca común, símbolo vectorial, CTA verde, favicon y nombre instalable | Capturas de navegador y prueba de coherencia de marca/API/icono |
+| Rótulos verdes sobre fondo verde apenas legibles | Texto blanco usando los tokens existentes | Capturas de menú y barra |
+| Indicadores mostraban claves y decimales técnicos | Presentación española, unidades legibles, tarjetas separadas, campaña explícita al pedir el panel | Prueba con cantidad, cero y desconocido; recorrido de panel |
+| El vocabulario del panel podía incluir la moneda en respuestas restringidas | Las etiquetas de unidad también respetan la capacidad económica | Cuatro pruebas de privacidad conservadas, con control positivo del titular |
+| Indicadores desplazaban las acciones del campo | Se conservan los seis botones y su orden y se muestran antes de las métricas | Capturas móviles |
+| CI carecía de controles para estos fallos | Python Linux/Windows, navegador obligatorio, límite por caso, JUnit y análisis estático | Validación local; SHA de las acciones comprobados contra sus etiquetas remotas |
+
+El guardado de restauración sigue siendo una operación de mantenimiento **con la aplicación parada**.
+La comprobación de WAL no acredita restauración concurrente ni un sistema completo de copias de adjuntos.
+
+## UI/UX: lo que impide una experiencia comercial sólida
+
+1. **Dos caminos a las tierras.** `#/tierras` mezcla parcelas, productos y máquinas;
+   `#/tierras/mapa` ofrece la vista nueva. Hay nombres largos y contextos que abren el camino heredado.
+   Mantener un modelo y una ficha canónica, y migrar enlaces con compatibilidad. CRM-06 / D04.
+2. **Filtros que ocupan la pantalla antes de ver las tierras.** En escritorio, los botones de cultivo,
+   municipio y estado se apilan; a 1440 px la tabla/mapa queda por debajo del primer pliegue.
+   La capacidad existe, la jerarquía necesita otro diseño. No resolver reduciendo la letra. D04.
+3. **Menú largo y vocabulario irregular.** Se mezclan módulos, objetos y frases: una cuenta necesita
+   reconocer Tierras, Trabajo, Almacén, Cuentas, Personas y Cuaderno sin leer párrafos de navegación.
+   Mantener la voz clara en ayuda y acciones; nombres breves y estables en despacho. D04.
+4. **Fallos que aparentan vacío.** `cargarDatos` convierte numerosas peticiones fallidas en `[]` o `null`.
+   Deben distinguirse vacío, sin permiso, dato antiguo y fallo con reintento. No se puede interpretar
+   «0 facturas» cuando falló la consulta. D03.
+5. **Montaje y rendimiento.** `montar.js` crea raíces React nuevas y conserva historiales de montajes
+   en arrays también en producción. Revisar propiedad de cada raíz, desmontaje, foco y memoria antes
+   de modularizar las más de 24.000 líneas de `app.js`. D07.
+6. **PAC aún necesita un recorrido de decisión completo.** Hipótesis, comparación, evaluación versionada,
+   historial y exportación deben abrir la misma identidad, sin prometer elegibilidad. D02.
+7. **No basta con capturas bonitas.** Faltan pruebas de usabilidad con agricultores autorizados,
+   teclado, zoom y sol real. Validar tareas, comprensión del dinero/desconocido y recuperación. D05.
+
+## Funcionalidades y promesas
+
+| Área | Base que existe | Qué debe cerrarse antes de ampliar la promesa |
+|---|---|---|
+| Tierras/campañas | Altas, historial, geometría, tabla/mapa y versiones | Ficha única, filtros/contexto, solapes y superficies distintas visibles |
+| Trabajo/insumos | Planificación, ejecución, consumos, anulación y auditoría | Recuperación sin cobertura y carreras entre dispositivos |
+| Compras/almacén | Factura, albarán, lote, gasto y pagos vinculados | Estados y navegación uniforme; ninguna suma económica doble |
+| Ventas/banco | Entregas, facturación interna, cobros y conciliación por fichero | Repartos y permisos visibles; no anunciar banca conectada ni fiscalidad certificada |
+| Personas/maquinaria | Roles, actividad, tareas, reservas, averías y contadores | Acceso por el mismo registro y obligaciones con aplicabilidad acreditada |
+| Cuaderno/PAC | Informes, firmas, reglas documentadas y paquete preparatorio | R02, fuentes vigentes por ámbito/año y revisión agronómica |
+| OCR/dictado | Propuestas revisables; OCR local español disponible | Corpus autorizado y evaluación por campo; no prometer precisión no medida |
+| Meteo/satélite | Hay especificación y puntos de continuidad | Fuente, licencia, cobertura y piloto; no venderlo como integración comprobada |
+
+## Resultados y evidencia
+
+Verificación final local, cerrada el **20 de octubre de 2026**:
+
+| Comprobación | Resultado |
+|---|---|
+| Suite Python completa | 5.539 pruebas recogidas: **5.537 superadas, 2 omitidas**, 7 avisos; 12 min 9 s |
+| Suite JavaScript completa | **1.146 superadas**, sin fallos ni omisiones |
+| Ruff y ESLint | Sin errores en las comprobaciones configuradas |
+| Contrato visual `DESIGN.md` | 0 errores y 0 avisos |
+| Dependencias Python (`pip check`) | Sin incompatibilidades declaradas |
+| Humo con servidor y base temporal | **465 comprobaciones correctas y 1 fallida**: consulta externa SIGPAC bloqueada por el proxy con HTTP 403 |
+| Vistas medidas en Chromium | 32 vistas; sin desbordamiento horizontal de página en las medidas conservadas |
+
+Las dos omisiones Python son un escenario de saldo que intenta pagar una factura ya pagada
+(el servidor lo rechaza con 422) y una prueba OCR que requiere un entorno solo inglés, cuando
+este dispone del modelo español. El primer escenario debe sustituirse por un caso válido;
+no acredita que el saldo a favor esté probado. Los siete avisos proceden de API obsoletas
+de Starlette/httpx y de la constante antigua para HTTP 422.
+
+La suite completa y el recorrido real de navegador se ejecutaron en Linux. La matriz Windows
+y GitHub Actions están configuradas, pero **no se han ejecutado aquí**. SIGPAC y otros servicios
+externos necesitan verificación desde una red autorizada; no se ha sustituido ese fallo por éxito.
+Estos resultados no cierran R01/R02 ni equivalen a una certificación para comercializar.
+
+Comandos reproducibles desde `backend`:
+
+```bash
+../.venv/bin/python -m pytest tests --timeout=180 --timeout-method=thread -o addopts="--strict-markers -v" -o faulthandler_timeout=60 --junitxml=/tmp/cue-python.xml
+node --test "tests_js/*.test.js"
+```
+
+Desde la raíz: `ruff check --select F821,F822,F823,E9 backend/app backend/scripts`;
+`npx --yes --package eslint@9.39.1 eslint --config .github/eslint.config.mjs "backend/web/**/*.js" --ignore-pattern "**/vendor/**"`;
+`npx --yes -p @google/design.md designmd lint DESIGN.md`.
+
+Las capturas y reproducciones de esta instancia están en `/workspace/scratch/cuedigital-review/`.
+No incluyen cuentas reales ni tokens. Los JSON privados de preparación permanecen en `/tmp` y no deben versionarse.
+Los resultados locales no prueban que GitHub Actions se haya ejecutado: no se ha hecho push ni publicado una release.
+
+Evidencia conservada en el repositorio para el siguiente agente:
+
+- [Entrada anterior](revision-2026-10-19/entrada-antes.png) y [entrada con marca](revision-2026-10-19/entrada-despues.png).
+- [Inicio móvil anterior](revision-2026-10-19/inicio-movil-antes.png) y [acciones móviles primero](revision-2026-10-19/inicio-movil-despues.png).
+- [Tierras en escritorio: filtro por compactar](revision-2026-10-19/tierras-escritorio.png).
+- [Mediciones de 32 vistas y cabecera táctil](revision-2026-10-19/mediciones.json) y
+  [reproducciones de los bloqueos](revision-2026-10-19/reproducciones.txt).
+
+Las 32 medidas corresponden a 14 rutas en 1440/390 y a inicio/tierras en 1024/320. Comprobar
+ancho de página no basta para descartar solapes: se verificaron además rectángulos de los controles
+de cabecera y objetivos de 44 px a 320/390/712. Las capturas revisadas representan esos datos ficticios,
+no pruebas sobre hardware móvil, cartografía externa disponible ni entrevistas con agricultores.
+
+## Cierre de lanzamiento
+
+No cerrar por una suma de tests: R01/R02 deben tener regresión que falle antes del arreglo y recorrido real,
+sin pérdida de datos al migrar. Después: errores/recuperación, permisos de producción, copias/restauración,
+revisión visual, prueba con usuarios y revisión de fuentes/licencias. El registro y disponibilidad legal de
+la marca CUE Digital requieren comprobación propia; un SVG original no acredita una marca registrada.

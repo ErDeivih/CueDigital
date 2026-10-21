@@ -1588,7 +1588,7 @@ div.tarjeta:active {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--sobre-verde-tenue);
+  color: var(--sobre-verde);
 }
 
 @media (min-width: 64rem) {
@@ -1630,7 +1630,7 @@ div.tarjeta:active {
     font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--sobre-verde-tenue);
+    color: var(--sobre-verde);
     text-transform: uppercase;
   }
 
@@ -1758,7 +1758,7 @@ div.tarjeta:active {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--sobre-verde-tenue);
+    color: var(--sobre-verde);
   }
 
   .marco .barra-valor {
@@ -2820,3 +2820,49 @@ div.tarjeta:active {
    corto -`contacto-borrar-si` borra y no acaba en ninguno-, y ahora lo decide el **inventario de acciones por su
    efecto real** (`react/acciones.js`), en una pasada por el DOM al montar cada pantalla. **Una sola forma.*** */
 
+
+/* La firma del producto usa los mismos colores, bordes y tipografía que el campo. */
+.marca-producto {
+  display: flex;
+  align-items: center;
+  gap: var(--e-md);
+  font-size: var(--t-subtitulo);
+  font-weight: 800;
+  line-height: 1.2;
+}
+.marca-simbolo { flex: 0 0 auto; display: block; }
+.marca-lema { color: var(--tinta-suave); }
+.entrada-cuenta > .marca-producto { margin-bottom: var(--e-lg); }
+.entrada-cuenta > h1 { margin-top: var(--e-xl); }
+body:has(.entrada-cuenta) .pantalla {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 36rem;
+  padding-top: var(--e-xxl);
+}
+body:has(.entrada-cuenta) .pie {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 36rem;
+}
+
+.las-metricas { margin-top: var(--e-xl); }
+.las-metricas .fila-dato { display: grid; gap: var(--e-xs); }
+.las-metricas .tabla-numero { font-size: var(--t-dato-grande); font-weight: 700; }
+@media (min-width: 64rem) {
+  .las-metricas > .lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-lg); }
+}
+
+.entrada-cuenta [data-accion="entrar"] {
+  background: var(--verde-medio);
+  border-color: var(--verde-oscuro);
+  color: var(--sobre-verde);
+}
+
+/* En teléfonos de 320 px se conserva el nombre accesible del menú sin apretar su texto. */
+@media (max-width: 24rem) {
+  .cabecera-menu [id="cabecera-menu-texto"] { display: none; }
+  .cabecera-menu { flex: 0 0 auto; min-width: 44px; }
+  .cabecera-titulo { flex: 1 1 auto; min-width: 0; }
+  .cabecera-botones { flex: 0 0 auto; }
+}

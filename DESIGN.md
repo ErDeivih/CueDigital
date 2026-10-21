@@ -228,6 +228,20 @@ components:
 
 # CUE Digital
 
+> Revisión de identidad y experiencia, 19/10/2026:
+> [especificación de marca y UX](docs/ESPEC_MARCA_UX_2026-10-19.md).
+> CUE Digital es la firma de producto; «Mi cuaderno» sigue siendo un módulo.
+> El símbolo vectorial `backend/web/marca.svg` y la pieza `Marca` se comparten en
+> entrada, menú e instalación. Se conserva esta paleta y la tipografía del sistema.
+> La entrada ocupa una columna centrada; su acción principal usa verde con texto blanco.
+> Los rótulos del menú y la barra usan blanco sobre verde, nunca verde tenue como texto.
+> En móvil, las acciones de campo preceden a las métricas; estas tienen separación entre
+> título, cifra y contexto, números españoles y unidades legibles. En escritorio se
+> distribuyen en dos columnas sin sumar magnitudes distintas. No se cambian los seis
+> botones ni su orden. La guía enlazada define los criterios para las siguientes entregas.
+> Hasta 24 rem se oculta solo el texto visible «Menú»: su botón conserva el nombre
+> accesible y 44 px de objetivo para que marca y controles no se superpongan a 320 px.
+
 > **Nota para quien lea esto, sea persona o agente.** Este documento es para quien
 > construye la aplicación, no para el agricultor. Por eso aquí sí aparecen nombradas
 > las palabras prohibidas, justamente para prohibirlas. La regla de "cero jerga" se

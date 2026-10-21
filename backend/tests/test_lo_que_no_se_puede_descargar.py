@@ -89,13 +89,29 @@ def _pedir_al_asgi(app, ruta: str, *, leer_cuerpo: bool = True) -> tuple[int, by
     mensajes: list[dict] = []
     trozos = bytearray()
 
-    async def recibir() -> dict:
-        return {"type": "http.request", "body": b"", "more_body": False}
+    async def pedir() -> None:
+        terminado = asyncio.Event()
+        primera_peticion = True
 
-    async def enviar(mensaje: dict) -> None:
-        mensajes.append(mensaje)
-        if leer_cuerpo and mensaje["type"] == "http.response.body":
-            trozos.extend(mensaje.get("body", b""))
+        async def recibir() -> dict:
+            nonlocal primera_peticion
+            if primera_peticion:
+                primera_peticion = False
+                return {"type": "http.request", "body": b"", "more_body": False}
+            # Un cliente real espera la respuesta antes de desconectarse. Devolver peticiones
+            # sin esperar impedía ejecutar el envío de FileResponse y bloqueaba toda la suite.
+            await terminado.wait()
+            return {"type": "http.disconnect"}
+
+        async def enviar(mensaje: dict) -> None:
+            mensajes.append(mensaje)
+            if mensaje["type"] == "http.response.body":
+                if leer_cuerpo:
+                    trozos.extend(mensaje.get("body", b""))
+                if not mensaje.get("more_body", False):
+                    terminado.set()
+
+        await asyncio.wait_for(app(alcance, recibir, enviar), timeout=5)
 
     alcance = {
         "type": "http",
@@ -113,7 +129,7 @@ def _pedir_al_asgi(app, ruta: str, *, leer_cuerpo: bool = True) -> tuple[int, by
         "server": ("127.0.0.1", 80),
     }
 
-    asyncio.run(app(alcance, recibir, enviar))
+    asyncio.run(pedir())
 
     arranques = [m for m in mensajes if m["type"] == "http.response.start"]
     assert arranques, f"la aplicación no contestó nada a {ruta!r}"

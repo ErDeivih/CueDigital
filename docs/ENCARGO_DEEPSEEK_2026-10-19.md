@@ -1,0 +1,278 @@
+# Encargo de continuidad para DeepSeek — CUE Digital
+
+Fecha: 19/10/2026. Objetivo: cerrar fiabilidad y experiencia para un piloto comercial verificable.
+
+## Actualización de coordinación — 20/10/2026
+
+El propietario ha aportado una entrega del agente Windows que declara cerrados el cruce de cola
+y el flujo PAC en `estabilizacion-2026-10-18`, con commits `325faf8`, `71236f8` y `ab3a278`.
+Es evidencia declarada por ese agente, no una revisión independiente de esos commits.
+Al comprobar GitHub el 20/10, la rama remota seguía en `eec9e55`; esos tres objetos no están
+en el checkout cloud. No repetir la implementación ni afirmar que los arreglos ya están aquí.
+
+**Primero integrar las dos entregas de forma revisable.** El checkout Windows
+`F:\EspacioCodigo\CueDigital` es un destino válido si contiene los commits declarados.
+La ruta cloud no es una dependencia de la aplicación. Copiar allí estos documentos permite leer
+la cola; incorporar el parche cloud exige revisar conflictos en especial en `app.js`, `nucleo.js`,
+textos, pruebas y versiones de caché. No reemplazar esos ficheros completos por copias cloud.
+No fusionar ni publicar principal automáticamente como consecuencia de leer este encargo.
+
+Antes de cerrar D01/D02 en el árbol integrado, contrastar lo declarado con TODOS sus criterios:
+
+- D01: dueño y conservación de apuntes ajenos son un avance; comprobar además último apunte,
+  rechazados, migración de datos sin dueño, cambio de cuenta/finca durante una petición,
+  `setItem` fallido, expiración de acceso, dos pestañas e idempotencia tras respuesta perdida.
+  Cuatro comprobaciones de filtrado no acreditan por sí solas este contrato completo.
+- D02: año/ID, conflicto de huella y numeración concurrente son avances declarados. Comprobar
+  identidad de la evaluación y de las reglas, contenido exacto exportado, datos de otra finca,
+  actualización de fotos antiguas e idempotencia: repetir una petición por respuesta perdida
+  no debe crear una foto nueva. Dos intenciones simultáneas sí pueden producir versiones distintas.
+- Convertir el hallazgo `GET /api/trabajos?campana_id=` en una reproducción mínima: distinguir
+  parámetro vacío de campaña válida y definir si se rechaza con 422 o significa ausencia de filtro.
+  No concluir pérdida de un trabajo solo por una lista filtrada vacía.
+- Ejecutar las suites y recorridos sobre el MISMO HEAD integrado. Los recuentos cambian con
+  código y documentos parametrizados; comparar casos, fallos y omisiones, no exigir que dos
+  árboles distintos tengan la misma cifra. Después continuar D03 y el orden restante.
+
+**La aplicación YA existe en el repositorio privado `ErDeivih/CueDigital`.** No crear otra app, otro
+repositorio ni una maqueta independiente. Trabajar sobre los modelos, rutas, pantallas React/HTM,
+datos oficiales, fixtures y pruebas existentes. No reconstruir el frontend con Vite/Next ni sustituir
+FastAPI como consecuencia de este encargo. No instalar servicios de pago para completar una pantalla.
+
+## Antes de implementar
+
+1. Usar el checkout existente donde se integra el trabajo: `/workspace/CueDigital` en cloud,
+   o `F:\EspacioCodigo\CueDigital` en Windows. Comprobar su identidad con Git, no solo su ruta.
+   No crear worktrees salvo petición expresa: la tarea cloud ya está aislada.
+2. Leer `AGENTS.md`, `CONTEXTO_PARA_EL_CHAT.md`, `DESARROLLO_EN_LA_NUBE.md`, `DESIGN.md`,
+   `docs/CONTRATO_IMPLEMENTACION_CRM.md`, `docs/MATRIZ_NORMATIVA_CRM.md` y esta entrega.
+3. Leer `docs/REVISION_PRODUCTO_2026-10-19.md`, `docs/ESPEC_MARCA_UX_2026-10-19.md`,
+   `contexto_agentes/REVISION_PAC_2026-10-18.md` y la cola existente. No tratar cifras históricas como estado actual.
+4. Comprobar `git status`, rama y HEAD. La revisión parte de `dc0e4a5` y deja cambios locales:
+   no resetearlos, no sustituirlos por la rama PAC en curso y no afirmar que llegaron a GitHub sin comprobarlo.
+   Si solo se dispone de un clon remoto, verificar que esta entrega está integrada antes de continuar.
+5. Inventariar para cada ticket: pantalla → acción → ruta → modelo → efectos → permiso → prueba.
+   Reproducir el fallo y conservar evidencia de su estado anterior antes del arreglo.
+
+El setup es `bash .codex/setup.sh` desde la raíz; Python 3.12, Node 24, SQLite para desarrollo.
+No hay instalación npm ni compilación del frontend. Las herramientas de lint de CI son herramientas
+de desarrollo, no una cadena nueva de producción. Nunca usar `backend/cuedigital.db` o adjuntos reales
+para ensayos. Usar base, carpeta de adjuntos, puerto y perfil de navegador temporales.
+
+## Qué incorpora esta entrega y se debe conservar
+
+- Corrección del simulador ASGI que bloqueaba pytest, sin eliminar sus controles positivos.
+- Navegador portable, corrección de la rama de reconstrucción de FK y pruebas con una venta antigua.
+- Protección previa de restauración con WAL vivo; exige aplicación parada y conserva la base si rechaza.
+- Correcciones de rectificación documental y aviso al subir una factura sin fichero, con pruebas de acciones.
+- Marca CUE Digital, símbolo propio, entrada centrada, rótulos contrastados e icono instalable coherente.
+- Acciones móviles antes de las métricas; cifras españolas, unidades legibles y campaña explícita del panel.
+- CI Linux/Windows, navegador obligatorio, límite por test, JUnit, Ruff y ESLint, acciones fijadas por SHA.
+
+No deshacer estas correcciones para recuperar una captura anterior ni resolver una regresión desactivando
+una prueba. Las pruebas nuevas deben comprobar comportamiento; un texto presente en un fichero no
+acredita que una acción funcione. Los resultados finales están en el cierre del informe de revisión.
+
+## Orden de ejecución y relación con la cola existente
+
+| Corte | Prioridad | CRM existente | Depende de | Salida cerrable |
+|---|---|---|---|---|
+| D01 Cola y almacenamiento con dueño | P0 | CRM-08 | Ninguno | No hay envíos cruzados ni falsos guardados |
+| D02 Fotos y evaluación PAC | P0 | CRM-09 | Identidad/contexto actual | Una versión identifica exactamente lo visto y exportado |
+| D03 Errores, contexto y recuperación | P1 | CRM-08 / CRM-11 | D01 | Fallo nunca aparenta vacío ni pierde el formulario |
+| D04 Tierras y despacho coherente | P1 | CRM-06 / CRM-00 | D03 | Lista/mapa/ficha únicos y filtros útiles |
+| D05 Identidad y tareas completas | P1 | CRM-00 / CRM-01 / CRM-11 | D04 | Marca aplicada y recorridos comprensibles en móvil/PC |
+| D06 Piloto y operación comercial | P0 antes de exposición | CRM-08 | D01, D02 | Acceso, copia, restauración y despliegue ensayados |
+| D07 Rendimiento y mantenimiento | P1 | Transversal | Regresiones de los cortes anteriores | Navegación estable y memoria acotada |
+| D08 Integraciones y alcance ampliado | P2 | CRM-10 / CRM-12 | Fuentes/corpus/accesos | Solo promesas medidas y documentadas |
+
+Se adelanta la fiabilidad dentro del contrato existente; no se abre un segundo plan de CRM.
+Máximo un escritor por fichero compartido. No mezclar una migración crítica y un rediseño amplio
+en una entrega imposible de revisar. Cerrar D01 y D02 antes de ampliar promesas de producto.
+
+## D01 — Cola local, cuenta, finca y persistencia
+
+**Defecto reproducido:** un alta de tierra pendiente de A se envía al entrar como B y se crea en B.
+No depende de un ID ajeno ni de un fallo de autorización: `api()` usa el token actual.
+
+Rutas iniciales: `backend/web/nucleo.js` (`crearCola`), `backend/web/app.js`
+(`enviarOApuntar`, `mandarPendientes`, `api`, `salir`, cambio de finca, `CLAVE_ULTIMO`, `CLAVE_RECHAZADOS`),
+pruebas JS de núcleo/interfaz y regresión con servidor/navegador reales.
+
+Contrato de datos propuesto:
+
+- Comando persistido: versión de esquema, ID estable de comando, usuario creador, finca de origen,
+  campaña cuando proceda, método/ruta, datos, fecha del hecho y fecha local de creación.
+  No persistir un token de acceso dentro de cada apunte.
+- Almacenamiento por cuenta/finca; último apunte, borrador, rechazados y pendientes siguen el mismo contexto.
+  La clave no puede contener `sin-cuenta` como propietario compartido.
+- El reenvío captura su contexto al empezar y no adopta otro si cambia la cuenta/finca mientras espera.
+  El servidor deriva la autorización del token y rechaza una orden cuyo contexto declarado no coincide.
+- La misma clave de comando debe tener garantía idempotente en todas las altas que la cola permita.
+  `Date.now` o un contador reiniciado no bastan como identidad entre pestañas/reinicios.
+- Si no hay identidad utilizable o persistencia confirmada, no contestar «guardado en el móvil».
+  Conservar el formulario y explicar la acción necesaria. No perder el dato por cuota o almacenamiento privado.
+- Evitar dos procesadores concurrentes de la cola en eventos `online`, arranque y varias pestañas.
+  Bloqueo/lease con caducidad y autoridad de idempotencia en el servidor, sin depender solo del bloqueo local.
+
+**Migración:** las entradas de la clave global antigua no tienen dueño fiable. No asignarlas a quien esté
+conectado al actualizar. Conservarlas en cuarentena, impedir su envío y ofrecer recuperación documentada
+con comprobación del origen. No mostrar contenido de otra cuenta como un borrador propio. No borrarlas
+para conseguir que la prueba pase; probar actualización con datos locales ya existentes.
+
+Aceptación obligatoria:
+
+1. A sin red apunta una tierra, cierra, entra B con red: B no recibe la tierra, ni ve su contenido como suyo.
+2. A vuelve con red: solo sus comandos correctos se envían, una vez; quedan sus rechazos recuperables.
+3. Misma cuenta con dos fincas: no hay cruces; cambiar durante una petición no vacía la cola equivocada.
+4. Respuesta perdida, reintento y dos pestañas no duplican ni consumen dos veces.
+5. `setItem` que lanza, cuota agotada, JSON local corrupto y navegador reiniciado no producen un falso éxito.
+6. Las entradas antiguas sin dueño permanecen recuperables y nunca se autoenvían como B.
+7. Si falta permiso o caduca el acceso, no descartar como «rechazado definitivo» una orden válida pendiente.
+
+## D02 — Identidad PAC, evaluación y versión guardada
+
+Rutas iniciales: `backend/app/routers/pac_api.py`, `app/pac.py`, `models.FotoDeLaPac`,
+`web/react/pantallas/pac.js`, router y acciones de `app.js`, pruebas de escenarios/fotos/exportación.
+
+Contrato:
+
+- Cada foto tiene un ID inmutable, explotación, año objetivo, versión, autor/fecha y huella del contenido.
+  Verificar las restricciones existentes antes de crear índices o migraciones; preservar todas las fotos.
+- Propuesta de API canónica: `GET /api/pac/fotos/{foto_id}` y su exportación, listado por año,
+  respuesta de alta con `id`, `anio`, `version` y enlaces inequívocos. Adaptar los nombres a la convención
+  vigente si hay una mejor opción, manteniendo esta semántica.
+- Compatibilidad: una dirección antigua por versión debe exigir año si es ambigua o devolver conflicto
+  explicable. Nunca `first`, `limit(1)` ni cambiar el orden para ocultar la ambigüedad.
+- Evaluar devuelve una identidad/huella validada por servidor y asociada a su finca, entradas, reglas y datos
+  de origen. Guardar esa evaluación exacta. Si la base cambió, conflicto explícito y opción de recalcular.
+  No confiar en un JSON libre del cliente para afirmar que representa el estado real.
+- Numeración garantizada por transacción/restricción de base y tratamiento de colisión. Reintentar la misma
+  petición devuelve la misma foto; una nueva intención crea otra versión. Nunca sobrescribir una foto.
+- Exportar devuelve el mismo contenido de la foto y su huella/identidad. Una campaña ajena o foto de otra
+  finca da 404 sin filtrar metadatos. Registro de modificaciones fuera de la foto no la altera.
+
+Pruebas mínimas: 2027 v1 y 2028 v1, varias versiones de cada año, segunda finca, respuesta perdida,
+dos guardados simultáneos, actualización con fotos existentes, cambio de alias/cultivo/superficie entre
+evaluar y guardar, reglas de otro ámbito/año y exportación de la versión elegida.
+
+Recorrido: abrir campaña de origen → elegir año objetivo → editar hipótesis → comparar alternativas →
+ver datos pendientes → evaluar → guardar versión → abrir historial → abrir/exportar esa misma versión.
+Comprobar que no se cambia lo declarado, no se consumen existencias y no se inventa elegibilidad.
+
+## D03 — Fallo, vacío, permisos y contexto
+
+Inventariar los `.catch(() => [])`/`null` de `cargarDatos` y las cargas de módulos.
+Introducir estados explícitos de carga/success/fallo/restringido/dato local antiguo, con reintento por
+sección. Un fallo de facturas no implica cero facturas ni deja guardar una propuesta con referencias vacías.
+
+Conservar borrador, filtros, finca y campaña al reintentar. Un 401 no debe mezclar el contexto anterior con
+una nueva cuenta. Un 403 no debe reintentarse como alta sin cobertura. El borrado/anulación requiere motivo
+y conserva auditoría. Aplicar el contrato de estados de la especificación UX.
+
+Probar red caída, 500, 401, 403, 404 de registro y lista legítimamente vacía. No basta con devolver cadenas
+distintas: comprobar controles, foco, ausencia de cifras falsas y persistencia del contenido del formulario.
+
+## D04 — Una experiencia de tierras y despacho
+
+Cerrar la doble puerta `#/tierras` / `#/tierras/mapa` con una ruta/ficha canónica y compatibilidad.
+Reutilizar el filtrado, mapa, geometrías, versiones y selección existentes. No crear tablas paralelas para
+simular lo que el servidor ya sabe hacer. Tabla de enlaces antiguos/nuevos antes de mover acciones.
+
+En 1440×900: búsqueda, contexto y filtros activos visibles junto a resultados útiles; opciones avanzadas
+plegables; tabla/mapa sincronizados por ID. En 1024: ninguna columna de acciones queda fuera de la página.
+En móvil: tarjetas útiles y filtros breves; sin forzar a atravesar todos los municipios/cultivos antes de
+ver las tierras. Nunca reducir controles por debajo del suelo del diseño para hacerlos caber.
+
+Aceptar con 64 tierras, búsqueda que devuelve 8, filtro cruzado de cultivo y pueblo, tierra sin geometría,
+polígono con agujero, selección múltiple, exportación filtrada y regreso desde la ficha con scroll/filtros
+conservados. Probar enlace directo, recarga, Atrás/Adelante y cambio de campaña sin cambiar la historia.
+
+## D05 — Marca, móvil y flujos de dinero/documentos
+
+Aplicar `docs/ESPEC_MARCA_UX_2026-10-19.md` y `DESIGN.md`: conservar símbolo, paleta, voz y datos reales;
+extenderlos a informes y estados. Entregar variantes de icono, impresión/monocromo y PWA instalada.
+El propietario debe verificar disponibilidad de nombre/marca/dominio antes de fijar la identidad comercial.
+
+Cerrar cuatro cortes de experiencia completos: tierra → trabajo → consumo; compra → recepción → lote →
+gasto → pago; venta → factura → cobro parcial → pendiente; papel → propuesta → confirmación/rectificación.
+Cada total abre sus registros por ID y conserva contexto. Revisar también texto de ayuda, vacío, error,
+conflicto y sin permiso. No usar visuales de «cumple» o «pagado» cuando solo falta un dato.
+
+Capturas de 320/390/712/1024/1440, zoom 200 %, tabulador/Escape, foco de regreso, lector de pantalla,
+contraste y controles táctiles. Revisión con visión: si el modelo no ve imágenes, mantener EN_REVISION
+hasta que un revisor que sí las vea emita resultado. Prueba de tareas con usuarios, no solo opinión estética.
+
+## D06 — Operación y comercialización
+
+Preparar primero un piloto por instalación aislada, coherente con la arquitectura actual. Si se elige
+SaaS compartido, presentar antes su contrato de aislamiento, operación, soporte, cuotas y costes; no
+declarar que las pruebas SQLite equivalen a un servicio multiusuario de producción.
+
+- Configuración de producción: secreto persistente y rotación, HTTPS, proxy de certificados fiable,
+  límites de intentos y tamaños, permisos de almacenamiento y logs que no contengan datos privados.
+- Sesiones: revocación al cambiar clave/retirar acceso, cierre y recuperación de cuenta verificables;
+  decidir segundo factor según despliegue. Conservar la matriz de permisos y probar enlaces directos.
+- Copia: base coherente, adjuntos, configuración necesaria y versiones, con cifrado/retención definidos.
+  Restaurar en destino nuevo; abrir documentos y comprobar vínculos/firmas, no solo `quick_check`.
+- Actualización: copia previa, migración idempotente ensayada, comprobación posterior y vuelta atrás real.
+  No restaurar encima de una aplicación viva, ni borrar un WAL porque Linux deje hacerlo.
+- Si PostgreSQL es el destino comercial, levantar una instancia desechable y ejecutar aceptaciones y
+  migraciones esenciales en ese motor. Si no se puede, dejar la promesa limitada a SQLite.
+- Inventario de licencias del código/vendor/datos/cartografía, privacidad y retención, soporte,
+  alcance fiscal/normativo y condiciones de servicio. Una revisión de software no es asesoría jurídica.
+
+Las pruebas que requieren proveedor/certificado real permanecen separadas y documentadas.
+SIGPAC e IUWS devolvieron 403 del proxy en esta revisión. Solicitar solo dominio/acceso que siga faltando,
+por ajustes seguros; nunca pedir certificados, tokens o bases agrícolas en chat ni guardarlos en fixtures.
+
+## D07/D08 — Después de cerrar lo anterior
+
+D07: medir navegación prolongada, peticiones de arranque y memoria; una raíz React controlada por
+contenedor, desmontaje/foco correctos, historial de instrumentación fuera de producción o acotado.
+Extraer `app.js` por dominio después de asegurar contratos de eventos y rutas, sin una reescritura masiva.
+
+D08: OCR con corpus autorizado y resultados por campo; meteo/satélite con fuente/licencia/fecha/resolución
+y estados observado/estimado/pronóstico distintos; reglas legales con autoridad/ámbito/campaña/versión.
+Avanzar tareas independientes mientras falte un acceso; no sustituir lo desconocido por un mock presentado
+como integración disponible. No inventar datos del agricultor, precios, geometrías ni normativa.
+
+## Criterio de cierre de cada corte
+
+1. Reproducción anterior y regresión que detecta el defecto; código propio con cambios revisables.
+2. Pruebas afectadas y ambas suites completas, indicando fallos/omitidos y sus causas.
+3. Humo con servidor/base/adjuntos temporales; separar el fallo de un proveedor del flujo interno.
+4. Si afecta UI: capturas actuales vistas, teclado, foco, tamaños y contrato de diseño coherente.
+5. Si afecta persistencia: migración idempotente con copia, dos ejecuciones, datos anteriores conservados,
+   concurrencia y rollback/recuperación. No tocar datos reales.
+6. Actualizar contrato y cola existentes con commit/evidencia y próximo paso. No cerrar por una captura,
+   por un test que no ejecutó casos ni por un script que devolvió cero ignorando fallos.
+
+Desde `backend`: `../.venv/bin/python -m pytest tests --timeout=180 --timeout-method=thread`
+y `node --test "tests_js/*.test.js"`. En Windows usar el intérprete de `.venv/Scripts`.
+Para lint, usar exactamente los comandos de `.github/workflows/ci.yml`. Una modificación de UI exige
+además `designmd lint DESIGN.md`. Mantener todos los casos y controles positivos.
+
+El repositorio comprueba sus recuentos en README, AGENTS y `docs/LO_QUE_PIDE_LA_JUNTA.md`.
+Medir la colección real antes de actualizar esos tres números: añadir documentación también puede
+añadir casos parametrizados de revisión UTF-8. No desactivar ese guardián ni sumar estimaciones.
+Se conserva una omisión previa del caso de exceso de cobro: el escenario intenta imputar a una factura
+ya saldada y la API lo rechaza; no acredita el recorrido alternativo de saldo sin asignar. Cerrarlo en D05
+con un escenario válido, sin permitir una sobreimputación para que pase una prueba.
+
+## Objetivo para pegar al agente
+
+```text
+Continúa CUE Digital en el repositorio existente ErDeivih/CueDigital. La aplicación ya está hecha
+en /workspace/CueDigital; no crees otra app ni copies una plantilla genérica. Lee AGENTS.md y
+docs/ENCARGO_DEEPSEEK_2026-10-19.md, junto al contrato CRM, la revisión de producto y la especificación UX.
+Verifica HEAD y cambios locales y conserva la entrega anterior.
+Empieza por D01 (cola aislada, migración y persistencia) y D02 (fotos/evaluación PAC inequívocas).
+Cierra cada corte con reproducción, regresión, recorrido real y evidencia, y continúa los cortes
+independientes autorizados sin parar tras un resumen. Mantén un escritor por fichero compartido.
+No uses bases, adjuntos ni certificados reales. No desactives pruebas ni conviertas fallos en vacíos.
+Conserva FastAPI, React/HTM sin compilación, el lenguaje agrario claro y la identidad CUE Digital.
+No declares el producto comercializable mientras existan bloqueos P0 o falte la revisión visual
+y operativa. Si no puedes ver capturas, entrégalas con medidas a un revisor con visión y deja
+la revisión pendiente. Registra límites externos concretos y continúa el trabajo independiente.
+```

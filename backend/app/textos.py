@@ -1539,6 +1539,11 @@ FINCAS: dict[str, str] = {
     "no_se_pudo_quitar": "No se ha podido quitar el acceso.",
 }
 
+MARCA = {
+    "nombre": "CUE Digital",
+    "lema": "Tu tierra. Tus cuentas. Todo en su sitio.",
+}
+
 PANTALLA_ENTRAR: dict = {    "titulo": "Mi cuaderno",
     "crear": "CREAR MI CUADERNO",
     "entrar": "ENTRAR",
@@ -5772,6 +5777,7 @@ def textos_visibles() -> list[str]:
         textos.extend(ayuda.values())
     textos.extend(_recoger(PANTALLA_INICIO))
     textos.extend(_recoger(PANTALLA_ENTRAR))
+    textos.extend(_recoger(MARCA))
     textos.extend(_recoger(PANTALLA_CUADERNO))
     textos.extend(_recoger(PANTALLA_AYUDA))
     textos.extend(_recoger(TRABAJOS))
@@ -9357,7 +9363,7 @@ LAS_METRICAS: dict[str, str] = {
     ),
     # ── Las metricas, con su pregunta ──
     "superficie_titulo": "La tierra que hay",
-    "superficie_pregunta": "lo que hay plantado en la finca",
+    "superficie_pregunta": "la superficie de tus tierras",
     "trabajo_titulo": "Trabajo acumulado",
     "trabajo_pregunta": "lo que se ha pasado por encima de la tierra, contando cada vez",
     "tratado_titulo": "Lo que se trató",
@@ -9371,6 +9377,13 @@ LAS_METRICAS: dict[str, str] = {
     # ── Lo que hay que saber de una cifra ──
     "no_se_sabe": "No se sabe",
     "sin_fuente": "no dice de dónde sale",
+    "unidades": {
+        "ha_de_superficie": "ha de tierra",
+        "ha_de_trabajo": "ha trabajadas",
+        "ha_de_tercero": "ha para otros",
+        "kg": "kg", "L": "L", "l": "L", "EUR": "€", "h": "h",
+    },
+    "unidad_sin_indicar": "unidad sin indicar",
     "cobertura": "Se han mirado {contadas} de {de}.",
     "cobertura_corta": "***Faltan datos***: se han mirado {contadas} de {de}.",
     "no_se_suman": "Estas cifras no se suman: contestan a preguntas distintas.",

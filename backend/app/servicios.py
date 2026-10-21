@@ -11,6 +11,7 @@ from . import geo, superficies
 import datetime as dt
 import unicodedata
 from dataclasses import dataclass
+from decimal import Decimal
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session

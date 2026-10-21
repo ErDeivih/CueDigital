@@ -641,3 +641,11 @@ function casaLaReferencia(referencia, buscadas) {
   }
   return true;
 }
+
+/** Presentación de una métrica; conserva la magnitud de cálculo y no suma hectáreas distintas. */
+export function presentarMetrica(metrica, textos = {}) {
+  const unidad = textos.unidades?.[metrica.unidad] || textos.unidad_sin_indicar || "";
+  const numero = formateaNumero(metrica.valor);
+  const valor = numero || textos.no_se_sabe || "";
+  return { ...metrica, texto_valor: `${valor} · ${unidad}`.trim() };
+}

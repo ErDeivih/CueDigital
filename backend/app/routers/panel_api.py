@@ -254,7 +254,14 @@ def el_panel(
     return {
         # **Las palabras viajan con los datos**, como en `/api/parcelas/vista`: *este endpoint es el unico
         # que las usa, y asi no hay que tocar `/api/interfaz`.*
-        "textos": textos.LAS_METRICAS,
+        "textos": {
+            **textos.LAS_METRICAS,
+            "unidades": {
+                clave: etiqueta
+                for clave, etiqueta in textos.LAS_METRICAS["unidades"].items()
+                if puede_ver_el_dinero or clave != paneles.EUROS
+            },
+        },
         "campana_id": la_campana.id if la_campana is not None else None,
         "campana_anio": la_campana.anio if la_campana is not None else None,
         "las_metricas": las_metricas,

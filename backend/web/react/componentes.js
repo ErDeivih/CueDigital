@@ -465,3 +465,12 @@ export function OpcionesParaElegir({ rotulo, opciones = [], accion, campo = "", 
     </div>
   `;
 }
+
+/** La misma firma de producto en la entrada y en el menú; el nombre viene del servidor. */
+export function Marca({ textos = {} }) {
+  if (!textos.nombre) return null;
+  return html`<div className="marca-producto">
+    <img className="marca-simbolo" src="/marca.svg" width="40" height="40" alt="" aria-hidden="true" />
+    <span>${frase(textos.nombre)}</span>
+  </div>`;
+}

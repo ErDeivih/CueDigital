@@ -1,5 +1,12 @@
 # Cola de implementación del CRM y estudio de referencias
 
+> **Prioridad del encargo del 19/10/2026:** la aplicación YA está en el repositorio
+> `ErDeivih/CueDigital`, checkout cloud `/workspace/CueDigital`.
+> Leer primero `docs/ENCARGO_DEEPSEEK_2026-10-19.md` y `docs/REVISION_PRODUCTO_2026-10-19.md`.
+> Sus cortes D01–D08 mapean a los CRM existentes: empezar por aislamiento de la cola (CRM-08)
+> e identidad/evaluación PAC (CRM-09), antes de ampliar funciones o declarar el producto vendible.
+> Las rutas Windows de este perfil son históricas; no crear otra app ni otra copia paralela.
+
 Fecha: 11/10/2026. Los IDs CRM son entregas de continuidad, no sustituyen T01-T24 ni E0-E13.
 Actualizar el contrato del destino al cerrar. Contratos aquí descritos son propuestas ejecutables,
 no funciones acreditadas ni validaciones legales.

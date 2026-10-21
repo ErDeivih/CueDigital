@@ -1,5 +1,10 @@
 # Contrato de implementación del CRM agrario
 
+> **Revisión cloud del 19/10/2026:** ver [hallazgos y evidencia](REVISION_PRODUCTO_2026-10-19.md),
+> [marca y UX](ESPEC_MARCA_UX_2026-10-19.md) y [encargo a DeepSeek](ENCARGO_DEEPSEEK_2026-10-19.md).
+> Se adelantan las garantías de CRM-08 (cola por cuenta/finca) y CRM-09 (identidad de fotos PAC).
+> Los recuentos históricos de abajo conservan su fecha; no acreditan el estado actual ni cierran estos bloqueos.
+
 Fecha: 01/10/2026. Estado: especificación, no funcionalidad entregada. Destinatario:
 DeepSeek y cualquier agente implementador. Complementa el plan E0–E13 y la
 especificación detallada; este documento concreta contratos, pantallas y entregas.

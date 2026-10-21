@@ -116,7 +116,7 @@ def main() -> int:
                     encontre=texto[:600],
                 )
                 comprobar(
-                    una["unidad"] in texto,
+                    el_panel["textos"]["unidades"][una["unidad"]] in texto,
                     f"***y en que se mide ({una['unidad']})***",
                     esperaba=una["unidad"],
                     encontre=texto[:800],

@@ -149,7 +149,7 @@ function LasMetricas({ panel = {} }) {
             <li key=${una.clave} className="fila-dato" data-metrica=${una.clave} data-se-sabe=${una.valor !== null}>
               <span className="tabla-dato">${frase(una.titulo)}</span>
               <span className="tabla-numero"
-                >${
+                >${una.texto_valor || (
                   // ***`null` es «no se sabe», y NUNCA se pinta como un cero.***
                   una.valor === null || una.valor === undefined
                     ? // ***Y LA UNIDAD SE DICE TAMBIEN CUANDO NO SE SABE*** (CRM-11, 17/10/2026): *es lo
@@ -158,7 +158,7 @@ function LasMetricas({ panel = {} }) {
                       // el recorrido: la metrica sin valor salia como «No se sabe» y **sin su unidad**.*
                       `${frase(t.no_se_sabe)} · ${una.unidad || ""}`.trim()
                     : `${una.valor} ${una.unidad || ""}`.trim()
-                }</span
+                )}</span
               >
               <span className="tabla-pista"
                 >${frase(una.pregunta)}${
@@ -221,7 +221,6 @@ export function PantallaInicio({
 
   return html`
     <h1>${titulo}</h1>
-    ${lasMetricas ? html`<${LasMetricas} panel=${lasMetricas} />` : null}
     ${
       // La acción que se viene a hacer, **nada más entrar** (ver arriba el porqué).
       elTrabajo
@@ -292,6 +291,7 @@ export function PantallaInicio({
         clase="boton-claro"
       />
     </div>
+    ${lasMetricas ? html`<${LasMetricas} panel=${lasMetricas} />` : null}
   `;
 }
 
