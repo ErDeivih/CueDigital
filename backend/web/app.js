@@ -12162,6 +12162,9 @@ function pantallaFacturas() {
   // **el dato estaba en el servidor desde la ronda 40 y no lo enseñaba nadie**, y el papel es justo lo
   // que se pide en una inspección. Los dos caminos (verlo y subirlo) también estaban en el servidor:
   // `GET/POST /api/facturas/{id}/fichero`.
+  // ***Si la carga de facturas fallo*** (21/10/2026, D03): *lo dice `estado.cargas` desde que cada seccion apunta
+  // como fue. **Un fallo de facturas no es «cero facturas»**, y la pantalla tiene que poder distinguirlo.*
+  const noSePudoCargar = estado.cargas.facturas === "fallo";
   const suyas = (estado.facturasLista || []).map((factura) => ({
     id: factura.id,
     proveedor: factura.proveedor || f("sin_proveedor"),
@@ -12205,11 +12208,17 @@ function pantallaFacturas() {
       facturas: suyas,
       // **Y la tabla, para el ordenador** (30/09/2026): las facturas del año juntas, con sus números y si
       // tienen el papel guardado. Al pie, el total gastado.
-      tabla: tablaDeFacturas(suyas),
+      // ***Y si la seccion fallo, NO se pinta la tabla*** (21/10/2026, D03): *`tablaDeFacturas([])` da un total de
+      // **0,00 €**, que es una cifra falsa -«no se ha gastado nada»- cuando lo que pasa es que no se ha podido
+      // preguntar. El encargo pide «ausencia de cifras falsas», y un cero es una cifra.*
+      tabla: noSePudoCargar ? null : tablaDeFacturas(suyas),
       // Cuántas hay, en singular o en plural: lo decide el servidor con `con_cuenta` (ronda 84).
       resumen: suyas.length
         ? conCuenta(t("facturas", {}) || {}, "cuantas", suyas.length)
         : "",
+      // ***Y que se sepa que fallo*** (21/10/2026, D03): *la pantalla distingue «no hay facturas» de «no se han
+      // podido cargar», que son cosas distintas y llevan a acciones distintas.*
+      noSePudoCargar: noSePudoCargar,
       lector: lector ? lector.nota : "",
       error: facturas.error || "",
       guardada: facturas.guardada ? "si" : "",

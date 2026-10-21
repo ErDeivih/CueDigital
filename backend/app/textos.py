@@ -5508,6 +5508,13 @@ COMPRA: dict[str, str] = {
 }
 
 FACTURAS: dict[str, str] = {
+    # ***Un fallo de la red no es «no hay facturas»*** (21/10/2026, D03): *lo primero es una afirmacion sobre la
+    # **red** y lo segundo sobre la **finca**. *Confundirlas hace que el agricultor crea que no tiene nada cuando lo
+    # que pasa es que no se ha podido preguntar.*
+    "sin_facturas_fallo": (
+        "No se han podido cargar las facturas: **no es que no tengas ninguna**, es que no se ha podido mirar. "
+        "Reintenta cuando vuelva la conexión."
+    ),
     "titulo": "Mis facturas",
     "resumen_cifras": "Los números de tus facturas",
     "numero_de_facturas": "Facturas",

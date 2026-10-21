@@ -8349,3 +8349,49 @@ test("la lista enseña lo que hay que hacer, marca lo vencido y solo deja cerrar
   const cargando = await htmlDeLasTareas({ tareas: [], cargando: true });
   assert.ok(cargando.includes("Mirando lo que tienes"), "y mientras se mira, se dice que se está mirando");
 });
+
+// ---------------------------------------------------------------------------
+// ***D03: un fallo de facturas no es «no hay facturas»*** (21/10/2026)
+// ---------------------------------------------------------------------------
+
+test("con la carga fallida, las facturas dicen que no se pudo cargar, no que no hay", async () => {
+  // *«Un fallo de facturas no implica cero facturas»* (encargo, D03). **La lista no puede afirmar nada sobre la
+  // finca cuando lo que ha fallado es la red**: *«todavia no hay facturas» es una afirmacion sobre lo que el
+  // agricultor tiene, y no se puede hacer sin haber podido preguntar.*
+  const { PantallaFacturas } = await import(
+    `../web/react/pantallas/facturas.js?prueba=${Math.random()}`
+  );
+  const textos = {
+    facturas: {
+      sin_facturas: "Todavía no hay facturas.",
+      sin_facturas_pista: "Añade la primera cuando la tengas.",
+      sin_facturas_fallo: "NO SE HAN PODIDO CARGAR LAS FACTURAS.",
+    },
+    acciones: {},
+  };
+  const pintar = (propiedades) =>
+    globalThis.ReactDOMServer.renderToStaticMarkup(
+      globalThis.React.createElement(PantallaFacturas, propiedades),
+    );
+
+  // *Con la carga fallida: **dice que no se pudo cargar**, y **NO** dice que no hay.*
+  const conFallo = pintar({ textos, facturas: [], noSePudoCargar: true });
+  assert.match(
+    conFallo,
+    /NO SE HAN PODIDO CARGAR LAS FACTURAS/,
+    `***tiene que decir que no se pudo cargar***: ${conFallo.slice(0, 300)}`,
+  );
+  assert.ok(
+    !conFallo.includes("Todavía no hay facturas"),
+    `***y NO puede decir que no hay***: ${conFallo.slice(0, 300)}`,
+  );
+
+  // *Y el control positivo: con la lista vacía **de verdad**, sí se dice que no hay.*
+  const sinFallo = pintar({ textos, facturas: [] });
+  assert.match(
+    sinFallo,
+    /Todavía no hay facturas/,
+    `***una lista vacia de verdad si lo dice***: ${sinFallo.slice(0, 300)}`,
+  );
+});
+

@@ -116,6 +116,9 @@ export function PantallaFacturas({
   tabla = null,
   error = "",
   guardada = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay facturas» es una afirmacion sobre la finca; «no se han
+  // podido cargar» sobre la red. **Confundirlas hace que el agricultor crea que no tiene nada.***
+  noSePudoCargar = false,
 }) {
   const f = textos.facturas || {};
   const acciones = textos.acciones || {};
@@ -162,8 +165,12 @@ export function PantallaFacturas({
     }
     ${
       facturas.length === 0
-        ? html`<div className="aviso">${frase(f.sin_facturas)}</div>
-            <p className="pista-campo">${frase(f.sin_facturas_pista)}</p>`
+        ? noSePudoCargar
+          ? // ***No se repite el «no hay facturas»***: *seria mentira, y arriba ya se dice cual fallo y se ofrece
+            // reintentar. Aqui se dice que **no se pudo mirar**, que es lo que ha pasado.*
+            html`<div className="aviso aviso-error">${frase(f.sin_facturas_fallo)}</div>`
+          : html`<div className="aviso">${frase(f.sin_facturas)}</div>
+              <p className="pista-campo">${frase(f.sin_facturas_pista)}</p>`
         : html`<ul className="lista solo-movil">
             ${facturas.map(
               (factura, indice) => html`<${Ficha} key=${indice} factura=${factura} textos=${textos} />`,
@@ -192,5 +199,6 @@ export function pantallaDeFacturas(propiedades) {
     tabla=${propiedades.tabla}
     error=${propiedades.error}
     guardada=${propiedades.guardada}
+    noSePudoCargar=${propiedades.noSePudoCargar}
   />`;
 }

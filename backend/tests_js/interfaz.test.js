@@ -224,6 +224,14 @@ const RESPUESTAS = {
     // la copia, el renglón salía **sin nombre** y la prueba del armazón lo decía («el módulo semillas
     // no lleva su nombre»), que es exactamente para lo que está.
     semillas: { titulo: "Mis semillas" },
+    // ***Y el vocabulario de facturas*** (21/10/2026, D03): *la pantalla distingue «no hay ninguna» de «no se han
+    // podido cargar», y para comprobarlo el arnes tiene que traer las dos frases.*
+    facturas: {
+      sin_facturas: "Todavía no hay facturas.",
+      sin_facturas_pista: "Añade la primera cuando la tengas.",
+      sin_facturas_fallo: "NO SE HAN PODIDO CARGAR LAS FACTURAS.",
+      anadir: "AÑADIR UNA FACTURA",
+    },
     // Las prácticas de «otro trabajo». En la ronda 14 se añadió el paso que las pregunta,
     // porque hasta entonces todo lo que no fuera sembrar, plantar, regar o coger la cosecha
     // acababa en el cajón de «otra» sin decir cuál. La cubierta y el pastoreo los nombra el
@@ -15080,7 +15088,11 @@ test("un 403 no aparta una orden valida: se queda en la cola", async () => {
   // (encargo, D01) y ***«un 403 no se reintenta como alta sin cobertura»*** (D03). *Son las dos caras del mismo
   // caso: un 403 **no dice que el apunte este mal**, dice que **ahora no se puede**. Se queda esperando a que el
   // permiso vuelva; apartarlo seria tirar una orden valida del agricultor.*
-  const unVale = `₹{Buffer.from(JSON.stringify({ uid: 1, eid: 1 })).toString("base64url")}.firma`.replace("₹", "$");
+  // ***El vale, de verdad***: *la version anterior usaba una plantilla con un truco de sustitucion que **no
+  // interpolaba**, asi que el vale era texto literal, `sesionDelToken` devolvia `null` y **el vaciado ni corria**.
+  // La prueba pasaba porque **no se mandaba nada**, no porque el 403 se respetara. Es el vicio de siempre: un
+  // control que pasa con y sin el defecto.*
+  const unVale = Buffer.from(JSON.stringify({ uid: 1, eid: 1 })).toString("base64url") + ".firma";
   const elApunte = [
     {
       id_local: "p-del-403",
@@ -15115,4 +15127,5 @@ test("un 403 no aparta una orden valida: se queda en la cola", async () => {
     `***ni apartarlo como rechazo definitivo***: ${losApartados}`,
   );
 });
+
 
