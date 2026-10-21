@@ -612,8 +612,15 @@ function aviso(clave) {
 
 async function api(ruta, opciones = {}) {
   const cabeceras = { "Content-Type": "application/json" };
-  if (estado.token) cabeceras.Authorization = `Bearer ${estado.token}`;
-  const respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+  // ***`opciones.token` manda, si viene*** (19/10/2026): *el vaciado de la cola **fija el vale al empezar** y lo
+  // usa en todas sus peticiones, así que **un cambio de cuenta a mitad no puede mandar un apunte con otra
+  // sesión**. Sin esto, `api` leía `estado.token` **en cada llamada**, y la carrera era posible aunque la
+  // comprobación de la sesión la estrechara a un parpadeo.*
+  const elToken = opciones.token !== undefined ? opciones.token : estado.token;
+  if (elToken) cabeceras.Authorization = `Bearer ${elToken}`;
+  // *Y el `token` **no viaja al `fetch`**: es nuestro, no del navegador.*
+  const { token: _elToken, ...lasOpciones } = opciones;
+  const respuesta = await fetch(ruta, { ...lasOpciones, headers: cabeceras });
   if (respuesta.status === 401) {
     salir(false);
     throw new Error("sin permiso");
@@ -782,6 +789,11 @@ async function mandarPendientes() {
   // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
   // dueño, y lo que no lleva cuenta -de antes de esta corrección- **no se adivina**.*
   const laDelPrincipio = laSesionDeAhora();
+  // ***Y el vale, fijado al empezar*** (19/10/2026): *es lo que de verdad se manda. Al fijarlo aquí y usarlo en
+  // todas las peticiones del vaciado, **un cambio de cuenta a mitad no puede afectarlas**: la carrera no se hace
+  // improbable, **deja de existir**. La comprobación de abajo se queda porque además **para** el vaciado en cuanto
+  // la sesión cambia, en vez de seguir con una que ya no es la de la pantalla.*
+  const elTokenDelVaciado = estado.token;
   const { suyos } = loQueSePuedeMandar(cola, laDelPrincipio);
   for (const apunte of suyos) {
     // ***Y si la cuenta cambia A MITAD del vaciado, se para*** (19/10/2026): *el vale se lee **en cada `api()`**,
@@ -792,6 +804,8 @@ async function mandarPendientes() {
       const respuesta = await api(apunte.ruta, {
         method: "POST",
         body: JSON.stringify(apunte.datos),
+        // ***El vale del principio, no el de ahora***: *es lo que hace que el cambio de cuenta no pueda colarse.*
+        token: elTokenDelVaciado,
       });
       if (respuesta.ok) {
         cola.quitar(apunte.id_local);
