@@ -247,6 +247,70 @@ def main() -> int:
                 encontre=str(el_aviso_malo)[:250],
             )
 
+        # ============================================================================ 4 · el aviso dice la verdad entera
+        print("\n4. CON PROPIOS Y AJENOS A LA VEZ, EL AVISO DICE LAS DOS COSAS")
+        # ***El caso que el aviso ocultaba***: *con dos apuntes del agricultor y uno de otra cuenta, decia «1 de
+        # otra cuenta» y **se callaba los dos suyos** -contaba lo que no puede mandar y ocultaba lo que si-.*
+        #
+        # *Se fuerza **sin red** -el evento `offline`, que la aplicacion escucha y repinta- para que los propios no
+        # se manden y se queden en la cola, que es cuando el aviso mixto aparece.*
+        la_cola_mixta = [
+            un_apunte("propio-uno", la_de_ahora),
+            un_apunte("propio-dos", la_de_ahora),
+            un_apunte("ajeno", la_de_otra),
+        ]
+
+        with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
+            nav.medir(1440, 1000)
+            nav.orden(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": (
+                        "window.localStorage.setItem('cuedigital.token', " + json.dumps(token) + ");"
+                        "window.localStorage.setItem('cuedigital.pendientes', "
+                        + json.dumps(json.dumps(la_cola_mixta))
+                        + ");"
+                    )
+                },
+            )
+            nav.abrir(f"{direccion}/#/inicio", esperar=3.0)
+            nav.esperar(
+                "document.querySelector('#pantalla') && document.querySelector('#pantalla').innerText.length > 40",
+                segundos=40,
+            )
+            # *Y se vuelve a sembrar la cola **despues** de que el vaciado del arranque haya pasado, y se dispara
+            # el evento: la pantalla repinta con los tres apuntes en la cola.*
+            nav.evaluar(
+                "(() => { window.localStorage.setItem('cuedigital.pendientes', "
+                + json.dumps(json.dumps(la_cola_mixta))
+                + "); window.dispatchEvent(new Event('offline')); return 'puesto'; })()"
+            )
+            el_aviso_mixto = ""
+            for _intento in range(20):
+                el_aviso_mixto = (
+                    nav.evaluar(
+                        "(() => { const a = document.querySelector('#aviso-pendientes');"
+                        " return a ? a.innerText : ''; })()"
+                    )
+                    or ""
+                )
+                if "otra cuenta" in str(el_aviso_mixto).lower():
+                    break
+                import time as _time
+
+                _time.sleep(0.5)
+
+            comprobar(
+                "otra cuenta" in str(el_aviso_mixto).lower(),
+                "***dice que hay apuntes de otra cuenta***",
+                encontre=str(el_aviso_mixto)[:250],
+            )
+            comprobar(
+                "2" in str(el_aviso_mixto),
+                "***y NO se calla los dos del agricultor***",
+                encontre=str(el_aviso_mixto)[:250],
+            )
+
         print(f"\nComprobaciones: {COMPROBACIONES}   Fallos: {len(FALLOS)}")
         for uno in FALLOS:
             print(f"  - {uno}")

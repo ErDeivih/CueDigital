@@ -864,7 +864,20 @@ function pintarAvisoPendientes() {
   // verdad, porque **«N pendientes» es cierto y «N de otra cuenta» sería mentira**: no consta que lo sean. Se
   // mandarán en cuanto se sepa.*
   const laDeAhora = laSesionDeAhora();
-  const { deOtraCuenta, sinCuenta } = loQueSePuedeMandar(cola, laDeAhora);
+  const { suyos, deOtraCuenta, sinCuenta } = loQueSePuedeMandar(cola, laDeAhora);
+  // ***Y si hay de las DOS cosas, se dicen las dos*** (19/10/2026): *antes, con dos apuntes propios y uno ajeno,
+  // el aviso decia «1 de otra cuenta» y **se callaba los dos del agricultor**: contaba lo que no puede mandar y
+  // ocultaba lo que si. **Un aviso que solo dice la mitad es peor que no decirlo**, porque el numero que importa
+  // -«te faltan dos»- desaparecia.*
+  if (laDeAhora && suyos.length > 0) {
+    let elTexto = conCuenta(t("aviso", {}) || {}, "pendientes", suyos.length);
+    const losAjenos = deOtraCuenta.length + sinCuenta.length;
+    if (losAjenos > 0) {
+      elTexto += " " + mensaje("y_otros_de_otra_cuenta", { ajenos: losAjenos });
+    }
+    avisoPendientes.textContent = elTexto;
+    return;
+  }
   if (laDeAhora && deOtraCuenta.length > 0) {
     avisoPendientes.textContent = mensaje("apuntes_de_otra_cuenta", { cuantas: deOtraCuenta.length });
     return;

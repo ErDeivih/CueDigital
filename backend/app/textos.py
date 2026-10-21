@@ -358,6 +358,12 @@ MENSAJES: dict[str, str] = {
         "**No se ha podido guardar en el movil**: el navegador no deja almacenar. No se ha apuntado nada. "
         "Prueba a liberar espacio o a salir del modo privado, y vuelve a apuntarlo."
     ),
+    # ***Las DOS cosas a la vez*** (19/10/2026): *con dos apuntes propios y uno ajeno, el aviso decia «1 de otra
+    # cuenta» y **se callaba los dos del agricultor**. Este trozo se anade al «te faltan N» para no ocultar el
+    # numero que importa.*
+    "y_otros_de_otra_cuenta": (
+        "Y {ajenos} de otra cuenta, que se quedan hasta que entres en ella."
+    ),
     "apuntes_de_otra_cuenta": (
         "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
         "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"
