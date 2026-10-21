@@ -73,10 +73,12 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    *Antes **no había ninguna puerta**: la pantalla solo se alcanzaba escribiendo la dirección a mano.*
 2. **La lista con el mismo conjunto** — **MEDIDO a 1440×900** (21/10/2026): *con tres tierras dadas de alta
    por la puerta, la vista enseña **3 filas**; con `?q=TIERRA`, **2**; y al recargar, **2**.*
-   **Lo que esto mide y lo que no**: *mide **la lista** (las filas de la tabla). **El mapa no se cuenta** —
-   recibe el mismo array (`vista.tierras`, una sola vez) y por eso **no puede discrepar**, pero eso es una
-   lectura del código, no una medición. **Falta contar lo que dibuja el mapa** (*hacen falta tierras con
-   forma: sin geometría no se dibuja ningún polígono*).
+   **Lo que esto mide y lo que no**: *mide **la lista** (las filas de la tabla) y, desde el 22/10/2026,
+   **también el mapa**: con una tierra **con forma** (WKT) y tres sin ella, la lista tiene **4 filas** y el
+   mapa dibuja **1 polígono** — `#/pantalla svg polygon` —, *así que **no inventa las que no tienen forma**,
+   que es la parte del código que decía «sin ninguna forma que enseñar no se dibuja un cuadro»*.
+   **Lo que sigue sin medirse**: *que el polígono dibujado sea **el mismo** que su fila (mismo `data-id`)* —
+   las dos pintan el mismo array, pero eso es lectura del código.*
    **En las tres anchuras sí está medido** (`scripts/verificar_las_anchuras_de_las_tierras.py`):
    **3 filas a 1440, 3 a 1024 y 3 a 390**, y **2 con `?q=TIERRA`** en las tres.
    ***Hallazgo de diseño***: *esta pantalla usa **la misma tabla** en las tres anchuras — no cambia a
@@ -87,4 +89,17 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    `tabla-fila-elegida`— **también después de recargar**. **Falta la selección múltiple** (`marcadas=`), que
    está escrita en la dirección pero **no se ha comprobado recargando**.
 
-***Nada de esto está hecho.*** *La tabla y la comprobación de que cada enlace abre lo suyo, sí.*
+## 5 · Lo que queda de D04
+
+| | |
+|---|---|
+| ✅ **la tabla de enlaces**, con cada dirección abierta | *5 comprobaciones* |
+| ✅ **el puente** de la lista a la vista completa | *3, pulsándolo* |
+| ✅ **el mismo conjunto** en la lista y el mapa *(4 filas / 1 polígono con forma)* | *6* |
+| ✅ **filtro, selección y marcadas** sobreviven a la recarga | *4* |
+| ✅ **las tres anchuras** (1440, 1024, 390), con y sin filtro | *6* |
+| ⏳ ***la tabla a 390 px***: *esta pantalla no cambia a tarjetas como las demás, y una tabla de tierras a 390 se lee mal* | **anotado, no arreglado** — *es diseño, y hay que medirlo antes de cambiarlo* |
+| ⏳ *que el polígono y su fila lleven el mismo `data-id`* | *lectura del código, no medición* |
+
+**Total medido en navegador**: **18 comprobaciones, 0 fallos** (`scripts/verificar_los_enlaces_de_las_tierras.py`
+y `scripts/verificar_las_anchuras_de_las_tierras.py`).

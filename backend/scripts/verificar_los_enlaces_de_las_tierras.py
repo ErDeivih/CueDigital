@@ -219,7 +219,72 @@ def main() -> int:
                     f"***y al recargar sigue elegida*** (elegida: {la_segunda!r})",
                 )
 
-    print(f"\nComprobaciones: 14   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 7 · la seleccion multiple
+            print("\n7. LAS TIERRAS MARCADAS, Y QUE SOBREVIVAN A LA RECARGA")
+            if len(los_ids) < 2:
+                fallos += not comprobar(False, "***hacen falta dos tierras para marcarlas***")
+            else:
+                las_dos = f"{los_ids[0]}-{los_ids[1]}"
+
+                def las_marcadas(nav) -> int:
+                    """*Cuantas casillas estan marcadas en la tabla.*"""
+                    return int(
+                        nav.evaluar(
+                            "document.querySelectorAll('#pantalla table tbody input[type=checkbox]:checked').length"
+                            " || 0"
+                        )
+                        or 0
+                    )
+
+                abrir(nav, direccion, f"#/tierras/mapa?marcadas={las_dos}")
+                las_primero = las_marcadas(nav)
+                fallos += not comprobar(
+                    las_primero == 2,
+                    f"***`?marcadas={las_dos}` deja DOS marcadas*** (marcadas: {las_primero})",
+                )
+                # ***Y al recargar, siguen.***
+                abrir(nav, direccion, f"#/tierras/mapa?marcadas={las_dos}")
+                las_despues = las_marcadas(nav)
+                fallos += not comprobar(
+                    las_despues == 2,
+                    f"***y al recargar siguen marcadas*** (marcadas: {las_despues})",
+                )
+
+            # ---------------------------------------------------------------- 8 · el mapa dibuja
+            print("\n8. EL MAPA: DIBUJA LO QUE TIENE FORMA, Y NO INVENTA LAS QUE NO")
+            # *Una tierra **con** forma (WKT de verdad, en Castilla y Leon) y el resto sin ella.*
+            _, la_con_forma = _llamar(
+                direccion,
+                "/api/parcelas",
+                token=cuenta["token"],
+                metodo="POST",
+                cuerpo={
+                    "alias": "CON FORMA",
+                    "ref_sigpac": "47-003-0-0-9",
+                    "municipio": "Valladolid",
+                    "superficie_ha": 2.0,
+                    "geometria": "POLYGON((-4.72 41.65, -4.71 41.65, -4.71 41.66, -4.72 41.66, -4.72 41.65))",
+                },
+            )
+            el_dibujo = abrir(nav, direccion, "#/tierras/mapa")
+            las_filas_con_forma = las_filas(nav)
+            los_poligonos = int(
+                nav.evaluar("document.querySelectorAll('#pantalla svg polygon').length || 0") or 0
+            )
+            print(f"          (filas: {las_filas_con_forma}, poligonos: {los_poligonos})")
+            fallos += not comprobar(
+                las_filas_con_forma == 4,
+                f"***la lista tiene las CUATRO*** (filas: {las_filas_con_forma})",
+                el_dibujo,
+            )
+            fallos += not comprobar(
+                los_poligonos == 1,
+                f"***y el mapa dibuja UNA -la que tiene forma- y no inventa las otras tres*** "
+                f"(poligonos: {los_poligonos})",
+                el_dibujo,
+            )
+
+    print(f"\nComprobaciones: 18   Fallos: {fallos}")
     return 1 if fallos else 0
 
 
