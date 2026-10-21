@@ -15075,3 +15075,44 @@ test("lo que no se pudo cargar se DICE en pantalla, con su reintento", async () 
   );
 });
 
+test("un 403 no aparta una orden valida: se queda en la cola", async () => {
+  // ***«Si falta permiso o caduca el acceso, no descartar como rechazado definitivo una orden valida pendiente»***
+  // (encargo, D01) y ***«un 403 no se reintenta como alta sin cobertura»*** (D03). *Son las dos caras del mismo
+  // caso: un 403 **no dice que el apunte este mal**, dice que **ahora no se puede**. Se queda esperando a que el
+  // permiso vuelva; apartarlo seria tirar una orden valida del agricultor.*
+  const unVale = `₹{Buffer.from(JSON.stringify({ uid: 1, eid: 1 })).toString("base64url")}.firma`.replace("₹", "$");
+  const elApunte = [
+    {
+      id_local: "p-del-403",
+      ruta: "/api/trabajos",
+      datos: { tipo: "laboreo", clave_de_reenvio: "p-del-403" },
+      cuenta: "1:1",
+      apuntado_en: "2026-10-21T08:00:00.000Z",
+    },
+  ];
+
+  const { entorno } = await cargarAplicacion(
+    { "/api/trabajos": falla({ detail: "No puedes apuntar eso." }, 403) },
+    {
+      almacen: { "cuedigital.pendientes": elApunte },
+      almacenCrudo: { "cuedigital.token": unVale },
+    },
+  );
+  // *Se le da tiempo al vaciado, que arranca cuando se sabe quien esta dentro.*
+  await new Promise((resolver) => setTimeout(resolver, 120));
+
+  const laCola = entorno.window.localStorage.getItem("cuedigital.pendientes") || "";
+  assert.ok(
+    laCola.includes("p-del-403"),
+    `***un 403 NO puede apartar una orden valida: tiene que quedarse en la cola***: ${laCola}`,
+  );
+  const losApartados = Object.keys(entorno.window.localStorage)
+    .filter((clave) => clave.indexOf("cuedigital.rechazados") === 0)
+    .map((clave) => entorno.window.localStorage.getItem(clave) || "")
+    .join("");
+  assert.ok(
+    !losApartados.includes("p-del-403"),
+    `***ni apartarlo como rechazo definitivo***: ${losApartados}`,
+  );
+});
+
