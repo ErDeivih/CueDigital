@@ -35,3 +35,43 @@ Auditoría de integración 21/10/2026, sobre 1252d49 con lector de token corregi
 }
 
 Funciones originales ejecutadas en VM con dependencias controladas; último caso además con servidor real y base temporal. No es un recorrido de UI. Ver reproducir-cola.mjs y el informe.
+
+PAC, revisión con API real y servidor/base/adjuntos temporales (21/10/2026):
+{
+  "tierras_sin_superficie": 10,
+  "resumen_paquete": {
+    "de_que": "superficie con cultivo sobre el total de la finca",
+    "unidad": "ha",
+    "numerador": null,
+    "denominador": null,
+    "porcentaje": null,
+    "sin_cultivo": null,
+    "se_queda_fuera": null,
+    "aviso": "le falta la superficie"
+  },
+  "resumen_escenario": {
+    "de_que": "superficie con cultivo sobre el total de la finca",
+    "unidad": "ha",
+    "numerador": 0.0,
+    "denominador": 290.0,
+    "porcentaje": 0.0,
+    "sin_cultivo": 290.0,
+    "se_queda_fuera": 290.0
+  },
+  "campana_inexistente": {
+    "estado_http": 200,
+    "devuelve_escenario": true
+  },
+  "foto_con_campana_inexistente_sin_huella": {
+    "estado_http": 200,
+    "id": 1
+  }
+}
+
+Cierre de verificación local integrada (21/10/2026):
+Python: {'name': 'pytest', 'errors': '0', 'failures': '0', 'skipped': '2', 'tests': '5566', 'time': '403.918', 'timestamp': '2026-10-21T18:13:31.544291+00:00', 'hostname': 'aac4597f0156'}
+5564 passed, 2 skipped, 7 warnings in 403.95s (0:06:43)
+JavaScript: 1157 tests, 1157 pass, 0 fail, 0 skipped.
+Humo sobre servidor nuevo: 483 OK, RESULTADO: todo correcto.
+Recorridos Chromium: PAC 16/0; cola final 9/0. Ruff/ESLint correctos; diseño 0 errores/0 avisos.
+Estas suites no cubren las reproducciones adicionales D01/D02 documentadas: siguen abiertas.

@@ -56,8 +56,18 @@ contra servidor real aislado. Convertir estos casos en regresiones de comportami
 
 La identidad año/versión e ID, conflicto por huella, exportación y deduplicación de contenido están
 integrados. El recorrido real PAC pasa 16 comprobaciones; no confundir eso con cierre de cada criterio.
-Revisar compatibilidad/migración de fotos previas, falta de huella (`None` permite guardar lo actual),
-`recalcular=True`, campaña inexistente/ajena, datos desconocidos y reglas/fuentes que forman la identidad.
+**También se reprodujeron con servidor real dos defectos pendientes:**
+
+- Con tierras sin superficie, el paquete devuelve denominador/porcentaje `null`, pero el escenario
+  suma los valores conocidos ignorando las ausencias y muestra total `290` y `0 %`. Desconocido no
+  es cero ni un total completo. Conservar desconocido o separar subtotal conocido/cobertura, sin
+  publicar porcentaje completo. Probar además superficie cultivada desconocida y comparar alternativas.
+- Una campaña inexistente (`campana_id=999999`) permite evaluar y guardar una foto, ambos con 200.
+  Si se pide una campaña explícita inexistente o ajena, rechazar sin revelar datos (404) antes de
+  evaluar/guardar; distinguirlo de no enviar campaña. Probar ambos endpoints y ninguna escritura.
+
+Revisar además compatibilidad/migración de fotos previas, falta de huella (`None` permite guardar lo
+actual), `recalcular=True` y reglas/fuentes que forman la identidad.
 Distinguir reintento de la misma intención y nueva evaluación: deduplicar por contenido es la política
 implementada, pero no sustituye toda la identidad de una orden ni su consistencia ante cambios posteriores.
 

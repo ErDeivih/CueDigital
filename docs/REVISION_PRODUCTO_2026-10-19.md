@@ -257,11 +257,46 @@ PAC. El recorrido real comprueba 16 casos y el de cola 9, ambos sin fallos. No c
 condiciones del encargo. Antes de cerrar D02 revisar fotos antiguas, ausencia de huella (admite guardar
 el estado actual), `recalcular`, campaña ajena/inexistente, datos desconocidos e identidad de reglas/fuentes.
 
+**La revisión adicional contra servidor real confirma dos defectos D02:**
+
+- En el escenario ficticio había 10 tierras sin superficie. `/paquete` conserva denominador y porcentaje
+  `null`; `/escenario` los convierte en `290 ha` y `0 %`, ignorando los datos ausentes en su suma. Un
+  subtotal conocido no es la superficie total. Debe conservar desconocido o explicitar cobertura parcial,
+  sin presentar un porcentaje completo. Reproducir con alta de tierra de superficie `null` y comparar
+  ambos resúmenes para la misma campaña; cubrir también superficie cultivada desconocida.
+- `POST /escenario` con `{"anio":2027,"campana_id":999999}` devuelve 200 y un escenario. `POST /foto`
+  con ese mismo cuerpo también devuelve 200 y crea una foto. La campaña no existe: `_la_campana`
+  devuelve `None` y el cálculo sigue. Rechazar campaña explícita inexistente/ajena antes de evaluar o
+  guardar, con 404 y sin escritura; no confundir con omitir el parámetro. Respuestas conservadas en
+  el mismo fichero de reproducciones. No se ha probado aquí el caso de campaña ajena con otra cuenta.
+
 La numeración correcta es **D01 cola, D02 PAC, D03 fallos y recuperación**. D03 ya está definido
 en el encargo: distinguir carga/vacío/fallo/permiso/dato antiguo, conservar contexto y formulario,
 y ofrecer reintento. No hace falta otra decisión del propietario para leerlo o comenzar el corte.
 
 ### Verificación de la entrega integrada
 
-Resultados completos pendientes de terminar y registrar en este cierre. Los resultados del 20/10
-anteriores corresponden al árbol cloud previo y no se reutilizan como certificación de esta integración.
+Las comprobaciones siguientes corresponden al código integrado de `390187f` (más los añadidos
+posteriores de documentación). El primer intento Python se interrumpió al añadir la regresión del token;
+no se cuenta como ejecución completa. La ejecución final se inició de nuevo con los 5.566 casos.
+
+| Comprobación local | Resultado |
+|---|---|
+| Python completo | **5.564 superadas, 2 omitidas**, 0 fallos; 7 avisos; 6 min 43 s |
+| JavaScript completo | **1.157 superadas**, 0 fallos, 0 omisiones |
+| Recorrido PAC en Chromium y servidor temporal | **16 comprobaciones, 0 fallos** |
+| Recorrido cola tras corregir el lector del token | **9 comprobaciones, 0 fallos** |
+| Humo completo en servidor/base/adjuntos temporales nuevos | **483 comprobaciones correctas**, salida 0 |
+| Ruff / ESLint | Sin errores en las reglas configuradas |
+| Contrato visual oficial | 0 errores, 0 avisos |
+| `pip check` y comprobación de espacios del diff | Correctos |
+
+Las dos omisiones son las de saldo y OCR explicadas en el cierre del 20/10; los avisos tampoco
+son fallos. El humo de esta ejecución sí obtuvo respuesta de SIGPAC; el bloqueo de red del 20/10 es histórico.
+No se ha probado IUWS autenticado ni PostgreSQL. Los recorridos positivos no cubren las reproducciones
+adicionales de D01/D02: estas siguen pendientes aunque las suites existentes pasen.
+
+La rama está publicada con CI configurada para `integracion/**`, además de `main` y pull requests.
+**No se ha verificado el resultado de GitHub Actions ni ejecutado Windows desde este entorno.**
+Los comandos para repetir las suites son los de la sección anterior; la regresión nueva necesita
+Python y Node, disponibles en el setup y en la matriz CI. No se ha hecho merge en principal.
