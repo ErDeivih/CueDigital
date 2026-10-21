@@ -168,18 +168,36 @@ export function crearCola(almacen, opciones = {}) {
     leer,
     tamano: () => leer().length,
 
-    /** Apunta algo para mandarlo. Devuelve el apunte con su identificador local. */
+    /**
+     * ***Apunta algo para mandarlo, y DICE SI SE GUARDÓ*** (19/10/2026).
+     *
+     * ### ***Dos cosas que antes no hacía, y las dos costaban datos***
+     *
+     * ***1 · Decía que sí siempre.*** *`escribir` devuelve `false` cuando el almacén falla -modo privado,
+     * almacenamiento lleno, un navegador que lo bloquea-, y **ese resultado se tiraba**: el agricultor creía que
+     * había apuntado y **el apunte no existía**. Ahora se devuelve `guardado` y quien llama lo cuenta.*
+     *
+     * ***2 · No llevaba clave de reenvío.*** *El servidor sabe reconocer un reintento por `clave_de_reenvio`
+     * (`reenvios.la_misma_accion`), y la cola **no la mandaba**: una respuesta perdida que provoca un reintento
+     * -o **dos pestañas vaciando la misma cola**- mandaba lo mismo dos veces. Se sella con el `id_local`, que es
+     * único y estable, **y si quien llama ya trae una, se respeta**.*
+     */
     apuntar(apunte) {
       const lista = leer();
       contador.n += 1;
+      const idLocal = apunte.id_local || `p${contador.n}-${reloj()}`;
       const conId = {
         ...apunte,
-        id_local: apunte.id_local || `p${contador.n}-${reloj()}`,
+        id_local: idLocal,
         apuntado_en: apunte.apuntado_en || reloj(),
+        datos:
+          apunte.datos && typeof apunte.datos === "object" && !apunte.datos.clave_de_reenvio
+            ? { ...apunte.datos, clave_de_reenvio: idLocal }
+            : apunte.datos,
       };
       lista.push(conId);
-      escribir(lista);
-      return conId;
+      // ***Y se dice si se guardo***: *antes se tiraba el resultado de `escribir`.*
+      return { ...conId, guardado: escribir(lista) };
     },
 
     quitar(idLocal) {
@@ -203,6 +221,68 @@ export function decideQueHacer(cola, hayRed) {
   if (cuantos === 0) return { accion: "nada", cuantos: 0 };
   if (!hayRed) return { accion: "esperar", cuantos };
   return { accion: "mandar", cuantos };
+}
+
+/**
+ * ***Qué apuntes de la cola se pueden mandar con ESTA sesión*** (19/10/2026).
+ *
+ * ### ***El fallo, tal y como se reproducía***
+ *
+ * *La cola guardaba `{tipo, ruta, datos}` **sin decir de qué cuenta era cada apunte**, y `mandarPendientes` los
+ * mandaba **todos con el vale que hubiera en ese momento**. Un trabajo apuntado sin cobertura en una finca,
+ * mandado al reconectar con otra cuenta, **se escribía en la finca equivocada** -o se quedaba en un 404 sin que
+ * nadie supiera por qué-. **Y en una aplicación donde el dinero y las labores son de cada finca, eso no es un
+ * detalle de pantalla.***
+ *
+ * ### ***Y por eso hay tres montones, no dos***
+ *
+ *   · **`suyos`**: *los de la sesión abierta. **Son los únicos que se mandan.***
+ *   · **`deOtraCuenta`**: *no se mandan **y no se borran**: se quedan esperando a que su dueño entre. **Perder un
+ *     apunte del agricultor en silencio es lo que esta aplicación no puede hacer.***
+ *   · **`sinCuenta`**: *los apuntados **antes** de esta corrección. **No se sabe de quién son, así que mandarlos
+ *     sería adivinar**, y adivinar aquí es escribir en una finca que no es. Se quedan y se dicen.*
+ *
+ * *Es una función pura: **la interfaz solo tiene que obedecer**, y se puede probar sin navegador.*
+ */
+/**
+ * ***Quién es esta sesión, leyendo el vale*** (19/10/2026).
+ *
+ * *El vale es un JWT y lleva `uid` y `eid` en su carga -se ve decodificando `eyJ1aWQiOjIsImVpZCI6Miw…`, que es
+ * `{"uid":2,"eid":2,…}`-. **Deducir la sesión de ahí y no de `estado.yo` es lo que hace que no puedan discrepar**:
+ * `api()` manda ese mismo vale, así que **lo que se cuenta y lo que se envía son lo mismo por construcción**.*
+ *
+ * ***Y `null` cuando no se puede leer*** -no hay vale, no es un JWT, la carga no tiene `uid`/`eid`-: *con `null` la
+ * cola **no manda nada**, que es la respuesta segura.*
+ */
+export function sesionDelToken(token) {
+  if (!token || typeof token !== "string") return null;
+  const partes = token.split(".");
+  if (partes.length !== 3) return null;
+  try {
+    // *El trozo de en medio va en base64url; `atob` quiere base64 normal y el relleno.*
+    const carga = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const conRelleno = carga.padEnd(Math.ceil(carga.length / 4) * 4, "=");
+    const texto = globalThis.atob(conRelleno);
+    const datos = JSON.parse(texto);
+    if (datos.uid === undefined || datos.uid === null) return null;
+    if (datos.eid === undefined || datos.eid === null) return null;
+    return `${datos.uid}:${datos.eid}`;
+  } catch (error) {
+    // *Un vale que no se puede leer no es una sesión: es `null`, y se trata como tal.*
+    return null;
+  }
+}
+
+export function loQueSePuedeMandar(cola, cuenta) {
+  const suyos = [];
+  const deOtraCuenta = [];
+  const sinCuenta = [];
+  for (const apunte of cola.leer()) {
+    if (!apunte.cuenta) sinCuenta.push(apunte);
+    else if (cuenta && apunte.cuenta === cuenta) suyos.push(apunte);
+    else deOtraCuenta.push(apunte);
+  }
+  return { suyos, deOtraCuenta, sinCuenta };
 }
 
 // ---------------------------------------------------------------------------

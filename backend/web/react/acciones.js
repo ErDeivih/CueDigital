@@ -36,6 +36,10 @@
  *
  * *En orden alfabetico para que se pueda leer y comparar.*
  */
+// ***`pac-guardar` y `pac-recalcular` van aqui a mano, y hay que saber por que*** (18/10/2026): *las acciones
+// de la PAC se despachan **en `atenderLaPac`**, no en una rama `nombre === "..."` del despacho grande, asi que el
+// analisis que genera esta lista **no las ve**. Se revisan a mano -y `pac-guardar` **escribe**: guarda una foto en
+// la base-, que es exactamente el caso que el inventario existe para no dejar pasar.*
 export const LAS_QUE_ESCRIBEN = new Set([
   "ajuste-anular-si",
   "ajuste-guardar",
@@ -111,6 +115,8 @@ export const LAS_QUE_ESCRIBEN = new Set([
   "medidas-guardar",
   "medidas-quitar-si",
   "mis-datos-guardar",
+  "pac-guardar",
+  "pac-recalcular",
   "papel-guardar",
   "papel-nuevo",
   "papel-subir",
@@ -136,6 +142,19 @@ export const LAS_QUE_ESCRIBEN = new Set([
  * ***Las de SESION***: *entrar, cambiar de finca. **No escriben datos**, y esconderlas dejaria al agricultor
  * fuera de su propio cuaderno. Se nombran para que se vea que **se pensaron**, no para esconderlas.*
  */
+/**
+ * ***Las que solo CALCULAN, aunque manden un POST*** (18/10/2026).
+ *
+ * *El guardian de los permisos deduce que una accion escribe si su manejador manda algo que no es un GET. **Y eso
+ * se queda corto por arriba**: `POST /api/pac/escenario` **calcula un escenario y lo tira** -el contrato lo pide
+ * asi: «comparar alternativas **sin consumir**»-, asi que marcar `pac-evaluar` como escritura seria **el error
+ * contrario al de `sacar`**: quitarle a una cuenta de consulta algo que solo mira.*
+ *
+ * *Se nombran, con su motivo, en vez de aflojar la regla para todos: **un POST nuevo que si escriba sigue
+ * cantando**.*
+ */
+export const LAS_QUE_SOLO_CALCULAN = new Set(["pac-evaluar", "pac-comparar", "pac-quitar"]);
+
 export const LAS_DE_SESION = new Set([
   "entrar",
   "entrar-certificado",
@@ -153,5 +172,6 @@ export const LAS_DE_SESION = new Set([
 export function escribeEstaAccion(accion) {
   const nombre = String(accion || "");
   if (LAS_DE_SESION.has(nombre)) return false;
+  if (LAS_QUE_SOLO_CALCULAN.has(nombre)) return false;
   return LAS_QUE_ESCRIBEN.has(nombre);
 }

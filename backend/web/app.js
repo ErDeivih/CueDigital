@@ -21,6 +21,10 @@ import {
   conCuenta,
   crearCola,
   decideQueHacer,
+  // ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026).
+  loQueSePuedeMandar,
+  // *Y la sesión se lee **del vale**, que es lo que `api()` manda: así no pueden discrepar.*
+  sesionDelToken,
   diasDeEspera,
   fechaEnPalabras,
   formateaFecha,
@@ -608,8 +612,15 @@ function aviso(clave) {
 
 async function api(ruta, opciones = {}) {
   const cabeceras = { "Content-Type": "application/json" };
-  if (estado.token) cabeceras.Authorization = `Bearer ${estado.token}`;
-  const respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+  // ***`opciones.token` manda, si viene*** (19/10/2026): *el vaciado de la cola **fija el vale al empezar** y lo
+  // usa en todas sus peticiones, así que **un cambio de cuenta a mitad no puede mandar un apunte con otra
+  // sesión**. Sin esto, `api` leía `estado.token` **en cada llamada**, y la carrera era posible aunque la
+  // comprobación de la sesión la estrechara a un parpadeo.*
+  const elToken = opciones.token !== undefined ? opciones.token : estado.token;
+  if (elToken) cabeceras.Authorization = `Bearer ${elToken}`;
+  // *Y el `token` **no viaja al `fetch`**: es nuestro, no del navegador.*
+  const { token: _elToken, ...lasOpciones } = opciones;
+  const respuesta = await fetch(ruta, { ...lasOpciones, headers: cabeceras });
   if (respuesta.status === 401) {
     salir(false);
     throw new Error("sin permiso");
@@ -658,6 +669,48 @@ async function apiJson(ruta, opciones = {}) {
  * pendiente, o `{error}` si el servidor lo rechazó.
  */
 /**
+ * ***Quién está dentro, como una sola cadena*** (19/10/2026).
+ *
+ * *`usuario_id:finca_id`. **Es lo que se guarda con cada apunte de la cola**, para que un apunte de una cuenta no
+ * se pueda mandar con el vale de otra. Sale de `/api/cuenta/yo`, que es el único que lo sabe.*
+ *
+ * ***Y `null` cuando todavía no se sabe***: *con `null` **no se manda nada** -ver `loQueSePuedeMandar`-, porque
+ * «no sé de quién es» no es «es de quien esté ahora».*
+ */
+function laSesionDeAhora() {
+  // ***Del VALE, que es lo que `api()` manda*** (19/10/2026): *si la sesión se dedujera de `estado.yo`, un cambio
+  // de vale sin tocar `yo` -o al revés- haría que la cola se **filtrara** por una cuenta y se **mandara** con otra.
+  // El vale lleva `uid` y `eid`, así que dice lo mismo y además **es lo que viaja**.*
+  const laDelVale = sesionDelToken(estado.token);
+  if (laDelVale) return laDelVale;
+  // *Y si el vale no se puede leer -viejo, raro, a mano-, se cae a `yo`, que es lo que hay: no se inventa nada.*
+  const yo = estado.yo;
+  if (!yo || !yo.usuario_id) return null;
+  const laFinca = (yo.explotacion && yo.explotacion.id) || "";
+  return `${yo.usuario_id}:${laFinca}`;
+}
+
+/**
+ * ***Apuntar sin cobertura, y decir si se guardó*** (19/10/2026).
+ *
+ * *El almacén del móvil puede fallar: modo privado, lleno, un navegador que lo bloquea. **Antes se decía que sí
+ * siempre** -el resultado de `escribir` se tiraba- y el apunte **no existía**. Ahora, si no se pudo guardar, **se
+ * dice** y no se pierde en silencio.*
+ *
+ * *Y está en **un solo sitio** a propósito: las tres ramas de `enviarOApuntar` que encolan -sin cobertura, tras un
+ * 5xx y al fallar la red- pasan por aquí, así que el día que cambie algo se cambia una vez.*
+ */
+function apuntarSinCobertura(tipo, ruta, datos) {
+  const apuntado = cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
+  if (!apuntado.guardado) {
+    // *No se pinta el aviso de pendientes: **no hay nada pendiente**, no se guardó.*
+    return { error: mensaje("no_se_pudo_guardar_el_apunte") };
+  }
+  pintarAvisoPendientes();
+  return { encolado: true };
+}
+
+/**
  * Manda un apunte. Si no hay cobertura, lo guarda en el móvil para mandarlo después.
  *
  * `guardarComoUltimo` existe porque "LO MISMO QUE LA ÚLTIMA VEZ" solo tiene sentido
@@ -666,9 +719,7 @@ async function apiJson(ruta, opciones = {}) {
  */
 async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
   if (!navigator.onLine) {
-    cola.apuntar({ tipo, ruta, datos });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   }
   try {
     const respuesta = await api(ruta, { method: "POST", body: JSON.stringify(datos) });
@@ -689,14 +740,10 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
       return { error: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"), estado: respuesta.status };
     }
     // Un 5xx sí puede ser pasajero: se guarda y se reintenta.
-    cola.apuntar({ tipo, ruta, datos });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   } catch (error) {
     // El navegador dice que hay red, pero no llega: es lo normal en el campo.
-    cola.apuntar({ tipo, ruta, datos });
-    pintarAvisoPendientes();
-    return { encolado: true };
+    return apuntarSinCobertura(tipo, ruta, datos);
   }
 }
 
@@ -738,11 +785,27 @@ async function mandarPendientes() {
 
   const rechazados = leer(CLAVE_RECHAZADOS, []);
   let algoMandado = false;
-  for (const apunte of cola.leer()) {
+  // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
+  // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
+  // dueño, y lo que no lleva cuenta -de antes de esta corrección- **no se adivina**.*
+  const laDelPrincipio = laSesionDeAhora();
+  // ***Y el vale, fijado al empezar*** (19/10/2026): *es lo que de verdad se manda. Al fijarlo aquí y usarlo en
+  // todas las peticiones del vaciado, **un cambio de cuenta a mitad no puede afectarlas**: la carrera no se hace
+  // improbable, **deja de existir**. La comprobación de abajo se queda porque además **para** el vaciado en cuanto
+  // la sesión cambia, en vez de seguir con una que ya no es la de la pantalla.*
+  const elTokenDelVaciado = estado.token;
+  const { suyos } = loQueSePuedeMandar(cola, laDelPrincipio);
+  for (const apunte of suyos) {
+    // ***Y si la cuenta cambia A MITAD del vaciado, se para*** (19/10/2026): *el vale se lee **en cada `api()`**,
+    // asi que sin esto los apuntes siguientes se mandarian con la sesion nueva -el mismo fallo, solo que un
+    // segundo mas tarde-. Comprobarlo aqui es barato y cierra el hueco de verdad.*
+    if (laSesionDeAhora() !== laDelPrincipio) break;
     try {
       const respuesta = await api(apunte.ruta, {
         method: "POST",
         body: JSON.stringify(apunte.datos),
+        // ***El vale del principio, no el de ahora***: *es lo que hace que el cambio de cuenta no pueda colarse.*
+        token: elTokenDelVaciado,
       });
       if (respuesta.ok) {
         cola.quitar(apunte.id_local);
@@ -793,6 +856,37 @@ function pintarAvisoPendientes() {
   }
 
   avisoPendientes.className = "aviso";
+  // ***Y si lo que hay es de otra cuenta, se DICE*** (19/10/2026): *no se manda -seria escribir en una finca que no
+  // es- y **no se borra** -perder un apunte del agricultor en silencio no-. Se queda esperando a que su dueño
+  // entre, y la pantalla lo cuenta en vez de dejar un número que no baja sin explicar por qué.*
+  //
+  // ***Y si todavía no se sabe quién está dentro, no se echa la culpa a nadie***: *se dice el número, que es
+  // verdad, porque **«N pendientes» es cierto y «N de otra cuenta» sería mentira**: no consta que lo sean. Se
+  // mandarán en cuanto se sepa.*
+  const laDeAhora = laSesionDeAhora();
+  const { suyos, deOtraCuenta, sinCuenta } = loQueSePuedeMandar(cola, laDeAhora);
+  // ***Y si hay de las DOS cosas, se dicen las dos*** (19/10/2026): *antes, con dos apuntes propios y uno ajeno,
+  // el aviso decia «1 de otra cuenta» y **se callaba los dos del agricultor**: contaba lo que no puede mandar y
+  // ocultaba lo que si. **Un aviso que solo dice la mitad es peor que no decirlo**, porque el numero que importa
+  // -«te faltan dos»- desaparecia.*
+  if (laDeAhora && suyos.length > 0) {
+    let elTexto = conCuenta(t("aviso", {}) || {}, "pendientes", suyos.length);
+    const losAjenos = deOtraCuenta.length + sinCuenta.length;
+    if (losAjenos > 0) {
+      elTexto += " " + mensaje("y_otros_de_otra_cuenta", { ajenos: losAjenos });
+    }
+    avisoPendientes.textContent = elTexto;
+    return;
+  }
+  if (laDeAhora && deOtraCuenta.length > 0) {
+    avisoPendientes.textContent = mensaje("apuntes_de_otra_cuenta", { cuantas: deOtraCuenta.length });
+    return;
+  }
+  if (laDeAhora && sinCuenta.length > 0) {
+    // *Los de antes de esta corrección: **no se sabe de quién son**, y mandarlos sería adivinar.*
+    avisoPendientes.textContent = mensaje("apuntes_sin_cuenta", { cuantas: sinCuenta.length });
+    return;
+  }
   // El texto va en singular o en plural según cuántos haya: «1 cosas apuntadas» se lee fatal, y este aviso
   // sale en la cabecera justo cuando el agricultor está en el campo sin cobertura (ronda 84).
   avisoPendientes.textContent = conCuenta(t("aviso", {}) || {}, "pendientes", cuantos);
@@ -2380,10 +2474,223 @@ function pantallaInicio() {
  * *Se pide a su puerta y se pinta lo que contesta.* ***Y lo que contesta, cuando no hay fuente legal cargada,
  * es que **no se puede decir si algo es elegible** -y eso se pinta lo primero-.***
  */
+// -----------------------------------------------------------------------------------------------------------
+// ***La PAC: escenario, fotos e historial*** (18/10/2026, segunda entrega)
+// -----------------------------------------------------------------------------------------------------------
+//
+// *La pantalla ya no solo ensena el paquete: **evalua, compara, guarda y exporta**. Y por debajo hay **tres capas
+// que no se mezclan**:*
+//
+//   · ***lo que consta*** -el paquete: superficie, referencia y cultivo de la campaña-, que **no cambia**;
+//   · ***la hipotesis*** -el escenario-, que se calcula y **no toca nada**;
+//   · ***y los trabajos realizados***, que se miran **aparte** y no son ni una cosa ni la otra.
+//
+// *«Persistir un borrador no lo convierte en una declaracion oficial ni en un trabajo realizado»: por eso la foto
+// se llama foto, y la pantalla lo dice.*
+
+function estadoDeLaPac() {
+  if (!estado.pac) {
+    estado.pac = {
+      anio: "", cambios: {}, escenario: null, contra: null, comparacion: null,
+      historial: null, trabajos: null, guardando: false, conflicto: null, error: "", aviso: "",
+    };
+  }
+  return estado.pac;
+}
+
+/** ***El año que se esta evaluando***: *el escrito; si no, el siguiente al de la campaña abierta.* */
+function elAnioDeLaPac(suyo) {
+  const escrito = Number(valorDeLaCasilla("pac-anio"));
+  if (escrito) return escrito;
+  if (suyo.anio) return suyo.anio;
+  const elDeLaCampana = (estado.paquetePac && estado.paquetePac.campana_anio) || 0;
+  return elDeLaCampana ? elDeLaCampana + 1 : "";
+}
+
+/** ***Calcular la hipotesis***. *No escribe nada: el servidor la calcula y se tira.* */
+async function evaluarElEscenarioDeLaPac() {
+  const suyo = estadoDeLaPac();
+  suyo.error = ""; suyo.aviso = ""; suyo.conflicto = null;
+  suyo.anio = elAnioDeLaPac(suyo);
+  if (!suyo.anio) { suyo.error = mensaje("no_se_pudo"); return pantallaElPaqueteDeLaPac(); }
+  pantallaElPaqueteDeLaPac();
+  try {
+    const contestado = await apiJson("/api/pac/escenario", {
+      method: "POST",
+      body: JSON.stringify({ anio: suyo.anio, cambios: suyo.cambios }),
+    });
+    suyo.escenario = contestado.escenario;
+    suyo.comparacion = null; suyo.contra = null;
+    suyo.aviso = "Escenario calculado. ***Todavia no se ha guardado nada.***";
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return pantallaElPaqueteDeLaPac();
+}
+
+/** ***Proponer un cultivo*** para un recinto. *Es una hipotesis: no toca la finca.* */
+function proponerUnCultivoEnLaPac(parcelaId, especie) {
+  const suyo = estadoDeLaPac();
+  const laEspecie = String(especie || "").trim();
+  if (!laEspecie) delete suyo.cambios[parcelaId];
+  else suyo.cambios[parcelaId] = { cultivo: { especie: laEspecie, sistema: "secano", ecorregimen: "secano" } };
+  // *Cambiar la hipotesis **tira lo calculado y el conflicto**: lo que habia ya no es lo que hay.*
+  suyo.escenario = null; suyo.comparacion = null; suyo.conflicto = null; suyo.aviso = "";
+  // ***Y SE VUELVE A EVALUAR*** (19/10/2026): *antes solo se tiraba, y el escenario se quedaba en `null` hasta que
+  // el agricultor pulsara EVALUAR otra vez -si se acordaba-. **El boton de guardar, que se apaga sin escenario,
+  // quedaba muerto y sin decir por que**: proponer un cultivo y no poder guardarlo parecia un fallo del programa.
+  // Ahora proponer **calcula**, y guardar guarda lo que se acaba de ver.*
+  return evaluarElEscenarioDeLaPac();
+}
+
+/** ***Comparar dos alternativas***: *las de ahora contra las propuestas, sin consumir ninguna.* */
+async function compararElEscenarioDeLaPac() {
+  const suyo = estadoDeLaPac();
+  suyo.error = ""; suyo.aviso = "";
+  suyo.anio = elAnioDeLaPac(suyo);
+  try {
+    const contestado = await apiJson("/api/pac/escenario", {
+      method: "POST",
+      body: JSON.stringify({ anio: suyo.anio, cambios: {}, contra: suyo.cambios }),
+    });
+    suyo.contra = contestado.contra;
+    suyo.comparacion = contestado.comparacion;
+    // ***El escenario de la PROPUESTA se respeta, y solo se pone el de base si no habia ninguno.*** *Comparar
+    // calcula **lo de ahora contra lo propuesto**, y su `escenario` es **lo de ahora** -`cambios: {}`-. Si se
+    // sobreescribiera el de la propuesta, al guardar se mandaria **la huella del escenario equivocado** y el
+    // servidor contestaria **409** con razon: lo que se iba a guardar no era lo que se habia evaluado. Lo cazo el
+    // recorrido, que ya no se cree una espera sin comprobarla.*
+    if (!suyo.escenario) suyo.escenario = contestado.escenario;
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  return pantallaElPaqueteDeLaPac();
+}
+
+/**
+ * ***Guardar la foto de lo evaluado***, y **solo si sigue siendo lo mismo**.
+ *
+ * *Se manda **la huella de la fuente** que devolvio el escenario que se enseno. Si la finca ha cambiado desde
+ * entonces, el servidor contesta **409** y **no guarda nada**: aqui se ensena el conflicto y se ofrece
+ * **recalcular**. **Nunca se sustituye en silencio.***
+ */
+async function guardarLaFotoDeLaPac(recalcular = false) {
+  const suyo = estadoDeLaPac();
+  if (suyo.guardando) return pantallaElPaqueteDeLaPac();
+  suyo.guardando = true; suyo.error = ""; suyo.aviso = ""; suyo.conflicto = null;
+  pantallaElPaqueteDeLaPac();
+  try {
+    // ***`api` y no `apiJson`***: *hace falta **el codigo** y **el cuerpo** del 409, y `apiJson` los tira.*
+    const respuesta = await api("/api/pac/foto", {
+      method: "POST",
+      body: JSON.stringify({
+        anio: suyo.anio,
+        cambios: suyo.cambios,
+        huella_de_la_fuente: (suyo.escenario && suyo.escenario.huella_de_la_fuente) || null,
+        recalcular: recalcular,
+      }),
+    });
+    let cuerpo = null;
+    try { cuerpo = await respuesta.json(); } catch (fallo) { cuerpo = null; }
+    if (respuesta.status === 409 && cuerpo && cuerpo.detail) {
+      suyo.conflicto = cuerpo.detail;
+      suyo.escenario = (cuerpo.detail && cuerpo.detail.lo_que_hay_ahora) || suyo.escenario;
+    } else if (!respuesta.ok) {
+      suyo.error = avisoDelServidor(cuerpo) || mensaje("no_se_pudo");
+    } else {
+      // ***Y si ya estaba, se dice*** (19/10/2026): *un reintento con el mismo contenido **devuelve la foto que ya
+      // habia** en vez de crear otra igual. Decirlo evita que el agricultor crea que se ha guardado algo nuevo, y
+      // le dice cual es la que tiene.*
+      suyo.aviso = cuerpo.ya_estaba
+        ? `Esa foto ya estaba guardada: ${cuerpo.anio}, version ${cuerpo.version}. No se ha duplicado.`
+        : `Guardada la foto de ${cuerpo.anio}, version ${cuerpo.version}.`;
+      suyo.conflicto = null;
+      await pedirElHistorialDeLaPac();
+    }
+  } catch (fallo) {
+    suyo.error = (fallo && fallo.message) || mensaje("no_se_pudo");
+  }
+  suyo.guardando = false;
+  return pantallaElPaqueteDeLaPac();
+}
+
+async function pedirElHistorialDeLaPac() {
+  const suyo = estadoDeLaPac();
+  try {
+    suyo.historial = await apiJson("/api/pac/foto/historial");
+  } catch (fallo) {
+    suyo.historial = { las_fotos: [], cuantas: 0 };
+  }
+  return suyo.historial;
+}
+
+async function pedirLosTrabajosDeLaPac() {
+  const suyo = estadoDeLaPac();
+  const laCampana = estado.paquetePac && estado.paquetePac.campana_id;
+  if (!laCampana) { suyo.trabajos = []; return []; }
+  try {
+    const los = await apiJson(`/api/trabajos?campana_id=${laCampana}`);
+    suyo.trabajos = Array.isArray(los) ? los : los.trabajos || los.hechos || [];
+  } catch (fallo) {
+    suyo.trabajos = null;
+  }
+  return suyo.trabajos;
+}
+
+/** ***El fichero de una foto***: *exactamente esa version, no una recalculada.* */
+async function descargarLaFotoDeLaPac(anio, version) {
+  const respuesta = await api(`/api/pac/foto/${anio}/${version}/exportar`);
+  if (!respuesta.ok) return;
+  const blob = await respuesta.blob();
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = `pac-${anio}-v${version}.csv`;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+}
+
+/** ***Todo lo de la PAC, por su nombre***: *un solo sitio, y las acciones empiezan por `pac-`.* */
+function atenderLaPac(nombre, elemento) {
+  if (nombre === "pac-evaluar") return evaluarElEscenarioDeLaPac();
+  if (nombre === "pac-comparar") return compararElEscenarioDeLaPac();
+  if (nombre === "pac-guardar") return guardarLaFotoDeLaPac(false);
+  if (nombre === "pac-recalcular") return guardarLaFotoDeLaPac(true);
+  if (nombre === "pac-historial") return pedirElHistorialDeLaPac().then(() => pantallaElPaqueteDeLaPac());
+  if (nombre === "pac-exportar") {
+    return descargarLaFotoDeLaPac(Number(elemento.dataset.anio), Number(elemento.dataset.version));
+  }
+  if (nombre === "pac-proponer") {
+    const elSelect = document.getElementById(`pac-cultivo-${elemento.dataset.parcela}`);
+    return proponerUnCultivoEnLaPac(Number(elemento.dataset.parcela), elSelect ? elSelect.value : "");
+  }
+  if (nombre === "pac-quitar") return proponerUnCultivoEnLaPac(Number(elemento.dataset.parcela), "");
+  return pantallaElPaqueteDeLaPac();
+}
+
 function pantallaElPaqueteDeLaPac() {
-  montar(() => PantallaElPaqueteDeLaPac({ paquete: estado.paquetePac }));
+  const suyo = estadoDeLaPac();
+  montar(() =>
+    PantallaElPaqueteDeLaPac({
+      paquete: estado.paquetePac,
+      anio: suyo.anio,
+      cambios: suyo.cambios,
+      escenario: suyo.escenario,
+      contra: suyo.contra,
+      comparacion: suyo.comparacion,
+      historial: suyo.historial,
+      trabajos: suyo.trabajos,
+      guardando: suyo.guardando,
+      conflicto: suyo.conflicto,
+      error: suyo.error,
+      aviso: suyo.aviso,
+    }),
+  );
   // *`null` es «todavia no se ha pedido»: la pantalla no puede decir «no hay tierras» antes de preguntar.*
   if (!estado.paquetePacPedido) pedirElPaqueteDeLaPac();
+  // *Y el historial y los trabajos, la primera vez: **se ensenan aparte del paquete**.*
+  if (suyo.historial === null) pedirElHistorialDeLaPac().then(() => pantallaElPaqueteDeLaPac());
+  if (suyo.trabajos === null) pedirLosTrabajosDeLaPac().then(() => pantallaElPaqueteDeLaPac());
 }
 
 /**
@@ -5581,7 +5888,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-19-77";
+const VERSION_DE_LA_APLICACION = "2026-10-21-78";
 
 function pintarPie() {
   const pie = document.getElementById("pie");
@@ -18155,6 +18462,12 @@ async function pedirLoQuePuedoHacer() {
       modificar: yo.puede_modificar !== false,
       economico: yo.puede_ver_lo_economico !== false,
     };
+    // ***Y AHORA que se sabe quien esta dentro, se puede vaciar la cola*** (19/10/2026): *antes el vaciado se
+    // intentaba al arrancar, cuando `estado.yo` todavia era `null` — y con la sesion sin conocer **no se manda
+    // nada a proposito**, para no escribir en una finca que no es. Pero **nadie lo reintentaba despues**: la cola
+    // se quedaba quieta hasta el siguiente «hay red», que puede no llegar en todo el dia. Se vio en el recorrido,
+    // por el **control positivo**: el apunte de la cuenta abierta tampoco salia.*
+    mandarPendientes().catch(() => {});
   } catch (fallo) {
     estado.puedo = { modificar: false, economico: false };
   }
@@ -20498,6 +20811,8 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
     estado.marcoPintado = "";
   }
 
+  // ***Y todas las de la PAC, por su nombre***: *un solo sitio, y sin tocar el despacho grande.*
+  if (nombre.startsWith("pac-")) return atenderLaPac(nombre, elemento);
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));

@@ -274,7 +274,7 @@
 // `app.js`, `rutas.js`, `gastos.js` (el botón que entra desde las cuentas) y `textos.py`. Se sube el
 // número porque esto se mira **en el despacho y sin prisa**, y una pantalla de dinero que no está en la
 // caché es un hueco justo cuando hay que decidir a qué factura va un cobro.
-const CACHE = "cuedigital-2026-10-19-77";
+const CACHE = "cuedigital-2026-10-21-78";
 
 const FICHEROS = [
   "/",

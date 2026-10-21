@@ -107,8 +107,14 @@ test("lo primero que se ve es lo que NO se puede afirmar: no hay fuente legal", 
   const html = await elHtml(unPaquete());
 
   assert.ok(html.includes("no se puede decir si algo es elegible"), `***falta el aviso***:\n${html.slice(0, 700)}`);
-  assert.ok(html.indexOf("no se puede decir") < html.indexOf("El resumen"), (
-    "***y va ANTES del resumen: decirlo despues es decirlo tarde***"
+  // ***Y va antes de las cifras***: *decirlo despues es decirlo tarde.*
+  //
+  // *El ancla es **«Lo que consta»** desde el 18/10/2026: la pantalla se rehizo con el recorrido completo -campaña
+  // objetivo, hipotesis, comparación, pendientes, guardar, historial y trabajos-, y el resumen del paquete vive
+  // ahora en la capa de **lo que consta**. **La propiedad que se comprueba es la misma**: el aviso, antes que los
+  // numeros.*
+  assert.ok(html.indexOf("no se puede decir") < html.indexOf("Lo que consta"), (
+    "***y va ANTES de las cifras: decirlo despues es decirlo tarde***"
   ));
 });
 

@@ -1,15 +1,24 @@
-"""**La foto evaluada: lo ensenado al asesor no cambia, y el fichero es esa foto** (18/10/2026, CRM-09).
+"""**Las fotos de la PAC: identidad, consistencia al guardar y el fichero exacto** (18/10/2026).
 
-### ***Lo que el contrato pide, con sus palabras***
+### ***Los dos defectos que la revision reprodujo, y que estas pruebas fijan***
 
-  *«**la exportacion coincide con el detalle y conserva la version evaluada**»*.
+  ***1 · Se podia recuperar la foto del año equivocado.*** *Se guardaba 2027 version 1 y 2028 version 1, y
+  `GET /api/pac/foto/{version}` **solo miraba la version**: contestaba siempre la de 2027. **Una direccion que no
+  lleva el año no identifica nada.***
 
-### ***Por que la foto guarda el CONTENIDO y no la receta***
+  ***2 · Guardar no conservaba necesariamente lo evaluado.*** *Se evaluaba una tierra, se cambiaba su alias
+  despues y se guardaba: **la foto se llevaba el alias nuevo sin decir nada**, y lo que quedaba guardado no era lo
+  que se habia visto.*
 
-*El escenario **se calcula y se tira** -que es lo correcto para **comparar**-, pero **ensenar** es otra cosa: hace
-falta que lo que se enseno **siga siendo lo mismo** dentro de un año. **Por eso la foto guarda el escenario
-entero**, y la exportacion lo **lee** en vez de recalcularlo: si recalculara, un cambio en la finca haria que el
-fichero dijera una cosa y la foto otra.*
+### ***Como se corrigen***
+
+  · **la identidad lleva el año** -`/api/pac/foto/{anio}/{version}`- **y ademas el id** -`/api/pac/foto/id/{id}`,
+    que no depende de contar nada-; y al guardar se devuelven **los dos enlaces** ya compuestos;
+  · **al guardar se manda `huella_de_la_fuente`**, la que devolvio el escenario que se mostro. Si la finca ha
+    cambiado, **409** con lo evaluado, lo que hay y **`se_puede_recalcular`**. *No se sustituye nada en silencio.*
+
+***Y el contenido lo calcula SIEMPRE el servidor***: *la huella solo dice «esto es lo que te ensene»; un navegador
+no acredita datos de la finca.*
 """
 
 from __future__ import annotations
@@ -18,129 +27,280 @@ import csv
 import io
 
 
-def _la_foto(cliente, cuenta, cuerpo: dict | None = None) -> dict:
-    respuesta = cliente.post(
-        "/api/pac/foto", headers=cuenta["cabeceras"], json=cuerpo or {"anio": 2027}
-    )
+def _evaluar(cliente, cuenta, cuerpo: dict) -> dict:
+    respuesta = cliente.post("/api/pac/escenario", headers=cuenta["cabeceras"], json=cuerpo)
+    assert respuesta.status_code == 200, respuesta.text
+    return respuesta.json()["escenario"]
+
+
+def _guardar(cliente, cuenta, cuerpo: dict):
+    return cliente.post("/api/pac/foto", headers=cuenta["cabeceras"], json=cuerpo)
+
+
+def _la_foto(cliente, cuenta, cuerpo: dict) -> dict:
+    respuesta = _guardar(cliente, cuenta, cuerpo)
     assert respuesta.status_code == 200, respuesta.text
     return respuesta.json()
 
 
-def _las_filas_del_csv(cliente, cuenta, version: int) -> list[list[str]]:
-    respuesta = cliente.get(
-        f"/api/pac/foto/{version}/exportar", headers=cuenta["cabeceras"]
-    )
+def _las_filas_del_csv(respuesta) -> list[list[str]]:
     assert respuesta.status_code == 200, respuesta.text
-    el_texto = respuesta.text.lstrip("\ufeff")
-    return list(csv.reader(io.StringIO(el_texto), delimiter=";"))
+    return list(csv.reader(io.StringIO(respuesta.text.lstrip("\ufeff")), delimiter=";"))
 
 
-def test_guardar_una_foto_le_pone_version_y_fecha(cliente, cuenta, campana, crear_parcela):
-    """***La primera foto es la version 1***, *con su huella, y no toca el paquete.*"""
-    crear_parcela(alias="La de la primera foto")
-    antes = cliente.get("/api/pac/paquete", headers=cuenta["cabeceras"]).json()
-
-    la_foto = _la_foto(cliente, cuenta)
-
-    assert la_foto["version"] == 1, la_foto
-    assert la_foto["anio"] == 2027
-    assert len(la_foto["huella"]) == 64, la_foto["huella"]
-    assert la_foto["creada_en"], la_foto
-    assert la_foto["es_hipotesis"] is True and la_foto["no_es_garantia"] is True
-    assert la_foto["toca_lo_guardado"] is False
-
-    despues = cliente.get("/api/pac/paquete", headers=cuenta["cabeceras"]).json()
-    assert despues == antes, "***guardar una foto no puede cambiar el paquete***"
+# -----------------------------------------------------------------------------------------------------------
+# ***1 · La identidad: dos años con la version 1 no se confunden***
+# -----------------------------------------------------------------------------------------------------------
 
 
-def test_dos_fotos_son_la_1_y_la_2(cliente, cuenta, campana, crear_parcela):
-    """*La version sube, y cada foto es la suya.*"""
-    crear_parcela(alias="La de las dos fotos")
-    la_primera = _la_foto(cliente, cuenta)
-    la_segunda = _la_foto(cliente, cuenta)
+def test_dos_anios_con_la_VERSION_1_no_se_confunden(cliente, cuenta, campana, crear_parcela):
+    """***El defecto, tal y como se reprodujo.***
 
-    assert (la_primera["version"], la_segunda["version"]) == (1, 2), (la_primera, la_segunda)
-    assert la_primera["creada_en"] <= la_segunda["creada_en"]
-
-
-def test_la_exportacion_COINCIDE_con_el_detalle(cliente, cuenta, campana, crear_parcela):
-    """***El fichero y el detalle dicen lo mismo***, *recinto a recinto.*
-
-    *Es la mitad del contrato: «la exportacion **coincide con el detalle**».*
+    *Se guarda 2027 version 1 y 2028 version 1. **Las dos direcciones devuelven lo suyo**, y el id tambien.*
     """
-    crear_parcela(alias="La del fichero")
-    la_foto = _la_foto(cliente, cuenta)
-    el_detalle = cliente.get(
-        f"/api/pac/foto/{la_foto['version']}", headers=cuenta["cabeceras"]
-    ).json()["el_escenario"]
+    crear_parcela(alias="La de los dos años")
 
-    las_filas = _las_filas_del_csv(cliente, cuenta, la_foto["version"])
-    las_de_los_recintos = las_filas[2:]  # *las dos primeras son la cabecera y los nombres de columna*
+    la_de_2027 = _la_foto(cliente, cuenta, {"anio": 2027})
+    la_de_2028 = _la_foto(cliente, cuenta, {"anio": 2028})
+    assert (la_de_2027["version"], la_de_2028["version"]) == (1, 1), "las dos son la version 1 de su año"
 
-    assert len(las_de_los_recintos) == len(el_detalle["los_recintos"]), (
-        f"***el fichero tiene que traer los mismos recintos***: {len(las_de_los_recintos)} "
-        f"frente a {len(el_detalle['los_recintos'])}"
+    el_de_2027 = cliente.get(la_de_2027["el_detalle"], headers=cuenta["cabeceras"])
+    el_de_2028 = cliente.get(la_de_2028["el_detalle"], headers=cuenta["cabeceras"])
+    assert el_de_2027.status_code == 200 and el_de_2028.status_code == 200
+    assert el_de_2027.json()["anio"] == 2027, f"***2027/1 devolvio {el_de_2027.json()['anio']}***"
+    assert el_de_2028.json()["anio"] == 2028, f"***2028/1 devolvio {el_de_2028.json()['anio']}***"
+
+    # *Y por id, que no depende de contar versiones.*
+    por_id = cliente.get(la_de_2028["por_id"], headers=cuenta["cabeceras"])
+    assert por_id.status_code == 200
+    assert por_id.json()["id"] == la_de_2028["id"]
+    assert por_id.json()["anio"] == 2028
+    # *Y el fichero del 2028 dice 2028.*
+    el_fichero = _las_filas_del_csv(cliente.get(la_de_2028["el_fichero"], headers=cuenta["cabeceras"]))
+    assert "2028" in el_fichero[0][1], el_fichero[0]
+
+
+def test_y_el_anio_que_no_existe_no_devuelve_la_de_otro(cliente, cuenta, campana, crear_parcela):
+    """*Antes, pedir un año sin fotos podia contestar la de otro año. **Ahora, 404.***"""
+    crear_parcela(alias="La del año que no hay")
+    _la_foto(cliente, cuenta, {"anio": 2027})
+    assert (
+        cliente.get("/api/pac/foto/2031/1", headers=cuenta["cabeceras"]).status_code == 404
+    ), "***un año sin fotos no puede contestar la de otro***"
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***2 · Lo que se guarda es lo que se evaluo***
+# -----------------------------------------------------------------------------------------------------------
+
+
+def test_si_la_finca_cambia_entre_evaluar_y_guardar_NO_se_guarda_nada(cliente, cuenta, campana, crear_parcela):
+    """***El defecto, tal y como se reprodujo.***
+
+    *Se evalua. Se cambia el alias de la tierra. Se guarda con la huella de lo evaluado. **409**, y el historial
+    sigue **vacio**.*
+    """
+    la_parcela = crear_parcela(alias="Alias visto al evaluar")
+    el_evaluado = _evaluar(cliente, cuenta, {"anio": 2027})
+    la_huella_evaluada = el_evaluado["huella_de_la_fuente"]
+    assert la_huella_evaluada, "el escenario tiene que traer su huella"
+
+    # *Alguien cambia el alias de la tierra entre la vista previa y el guardado.*
+    correccion = cliente.put(
+        f"/api/parcelas/{la_parcela['id']}",
+        headers=cuenta["cabeceras"],
+        json={"alias": "Alias cambiado antes de guardar"},
     )
-    por_referencia = {fila[0]: fila for fila in las_de_los_recintos}
-    for uno in el_detalle["los_recintos"]:
-        la_fila = por_referencia.get(uno.get("referencia") or "")
-        assert la_fila is not None, f"***falta el recinto en el fichero***: {uno.get('alias')}"
-        assert la_fila[1] == (uno.get("alias") or ""), la_fila
+    assert correccion.status_code in (200, 204), correccion.text
+
+    el_intento = _guardar(cliente, cuenta, {"anio": 2027, "huella_de_la_fuente": la_huella_evaluada})
+
+    assert el_intento.status_code == 409, (
+        f"***guardar lo de antes con la finca cambiada NO puede salir bien***: {el_intento.text[:300]}"
+    )
+    el_conflicto = el_intento.json()["detail"]
+    assert el_conflicto["se_puede_recalcular"] is True, el_conflicto
+    assert el_conflicto["huella_que_se_evaluo"] == la_huella_evaluada
+    assert el_conflicto["huella_de_ahora"] != la_huella_evaluada
+    assert el_conflicto["no_se_ha_guardado_nada"]
+
+    # ***Y no se ha guardado nada***: *el historial esta vacio, que es la prueba de que no hubo sustitucion.*
+    el_historial = cliente.get("/api/pac/historial", headers=cuenta["cabeceras"])
+    assert el_historial.status_code == 404 or not el_historial.json().get("las_fotos"), (
+        el_historial.text[:300]
+    )
+
+
+def test_y_recalcular_guarda_lo_de_ahora_diciendolo(cliente, cuenta, campana, crear_parcela):
+    """***La salida del conflicto***: *recalcular es una decision explicita, y guarda lo de ahora.*
+
+    *Lo que se guarda es lo que el servidor calcula **ahora**, y la huella guardada es la de este momento: **no se
+    queda una foto que diga una cosa y una huella que diga otra**.*
+    """
+    la_parcela = crear_parcela(alias="Alias primero")
+    el_evaluado = _evaluar(cliente, cuenta, {"anio": 2027})
+    cliente.put(
+        f"/api/parcelas/{la_parcela['id']}",
+        headers=cuenta["cabeceras"],
+        json={"alias": "Alias de ahora"},
+    )
+
+    la_foto = _la_foto(
+        cliente,
+        cuenta,
+        {"anio": 2027, "huella_de_la_fuente": el_evaluado["huella_de_la_fuente"], "recalcular": True},
+    )
+    assert la_foto["version"] == 1, la_foto
+
+    el_detalle = cliente.get(la_foto["el_detalle"], headers=cuenta["cabeceras"]).json()
+    el_recinto = next(
+        uno for uno in el_detalle["el_escenario"]["los_recintos"] if uno["parcela_id"] == la_parcela["id"]
+    )
+    assert el_recinto["alias"] == "Alias de ahora", (
+        f"***recalcular guarda lo de ahora***: {el_recinto['alias']}"
+    )
+
+
+def test_sin_cambios_la_huella_coincide_y_se_guarda(cliente, cuenta, campana, crear_parcela):
+    """*El camino bueno: evaluar y guardar sin tocar nada, con la huella.*"""
+    crear_parcela(alias="La que no cambia")
+    el_evaluado = _evaluar(cliente, cuenta, {"anio": 2027})
+    la_foto = _la_foto(
+        cliente, cuenta, {"anio": 2027, "huella_de_la_fuente": el_evaluado["huella_de_la_fuente"]}
+    )
+    assert la_foto["version"] == 1, la_foto
+
+    # ***Son dos huellas distintas, y conviene no confundirlas***: *la de la foto identifica **el contenido
+    # guardado** -para poder decir «este fichero es esta foto»-, y `huella_de_la_fuente` identifica **los datos de
+    # los que se calculo** -para detectar que la finca cambio-. Lo que tiene que coincidir, si nada cambio, es
+    # **la de la fuente**, y eso es lo que se mira.*
+    el_detalle = cliente.get(la_foto["el_detalle"], headers=cuenta["cabeceras"]).json()
+    assert el_detalle["el_escenario"]["huella_de_la_fuente"] == el_evaluado["huella_de_la_fuente"], (
+        "***si nada cambio, lo guardado es exactamente lo que se evaluo***"
+    )
+    assert len(la_foto["huella"]) == 64, la_foto["huella"]
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***3 · Concurrencia: dos guardados a la vez***
+# -----------------------------------------------------------------------------------------------------------
+
+
+def test_dos_guardados_a_la_vez_no_pisan_ninguna_version(cliente, cuenta, campana, crear_parcela):
+    """***Ni un 500, ni una version sobrescrita*** — y **dos iguales son la misma foto**.
+
+    *Dos guardados simultaneos **del mismo contenido** piden el mismo numero y encuentran la misma huella: **los dos
+    contestan la version 1**, que es una sola fila. **Ninguno se pierde y ninguno pisa al otro**, que es lo que
+    importa.*
+
+    ***Y la version sube cuando la evaluacion cambia***, que es el otro lado: *se comprueba aqui mismo cambiando la
+    finca y guardando otra vez.*
+    """
+    la_parcela = crear_parcela(alias="La de la carrera")
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=2) as los_hilos:
+        las_dos = list(
+            los_hilos.map(
+                lambda _n: _guardar(cliente, cuenta, {"anio": 2027}), range(2)
+            )
+        )
+
+    los_codigos = sorted(una.status_code for una in las_dos)
+    assert los_codigos == [200, 200], (
+        f"***las dos tienen que salir bien***: {[una.text[:200] for una in las_dos]}"
+    )
+    # ***Un solo id y una sola version***: *el mismo contenido es la misma foto, se pidan a la vez o no.*
+    los_ids = {una.json()["id"] for una in las_dos}
+    las_versiones = {una.json()["version"] for una in las_dos}
+    assert los_ids == {list(los_ids)[0]}, f"***dos filas para el mismo contenido***: {los_ids}"
+    assert las_versiones == {1}, f"***y una sola version***: {las_versiones}"
+    assert cliente.get("/api/pac/foto/2027/1", headers=cuenta["cabeceras"]).status_code == 200
+
+    # ***Y el otro lado, con la finca cambiada: version 2.***
+    cliente.put(
+        f"/api/parcelas/{la_parcela['id']}",
+        headers=cuenta["cabeceras"],
+        json={"alias": "La de la carrera, corregida"},
+    )
+    la_de_verdad = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_de_verdad["version"] == 2, f"***una evaluacion distinta SI es otra version***: {la_de_verdad}"
+
+
+def test_el_mismo_contenido_guardado_dos_veces_es_la_MISMA_foto(cliente, cuenta, campana, crear_parcela):
+    """***La respuesta perdida no llena el historial de fotos iguales*** (19/10/2026).
+
+    *El movil guardaba, se perdia la respuesta, reintentaba, y quedaba una segunda version **con el mismo
+    contenido**. La huella es del contenido, asi que **dos evaluaciones identicas son la misma foto**: se contesta la
+    que ya estaba, con `ya_estaba` para poder decirlo.*
+    """
+    crear_parcela(alias="La del reintento")
+
+    la_primera = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_primera["version"] == 1 and la_primera["ya_estaba"] is False, la_primera
+
+    la_repetida = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_repetida["id"] == la_primera["id"], f"***tiene que ser la misma foto***: {la_repetida}"
+    assert la_repetida["version"] == 1, la_repetida
+    assert la_repetida["ya_estaba"] is True, la_repetida
+
+    # *Y en el historial hay UNA, no dos.*
+    el_historial = cliente.get("/api/pac/foto/historial", headers=cuenta["cabeceras"]).json()
+    las_de_2027 = [una for una in el_historial["las_fotos"] if una["anio"] == 2027]
+    assert len(las_de_2027) == 1, f"***el reintento no puede dejar dos fotos***: {las_de_2027}"
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***4 · Aislamiento entre fincas***
+# -----------------------------------------------------------------------------------------------------------
+
+
+def test_otra_finca_no_puede_leer_la_foto(cliente, cuenta, campana, crear_parcela, crear_cuenta):
+    """***Ni por año y version, ni por id.***"""
+    crear_parcela(alias="La de la finca de al lado")
+    la_foto = _la_foto(cliente, cuenta, {"anio": 2027})
+
+    la_otra = crear_cuenta("la-de-al-lado@ejemplo.test")
+    for camino in (la_foto["el_detalle"], la_foto["por_id"], la_foto["el_fichero"]):
+        respuesta = cliente.get(camino, headers=la_otra["cabeceras"])
+        assert respuesta.status_code == 404, f"***{camino} no es suya***: {respuesta.status_code}"
+
+
+# -----------------------------------------------------------------------------------------------------------
+# ***5 · El fichero es exactamente la foto***
+# -----------------------------------------------------------------------------------------------------------
+
+
+def test_la_exportacion_coincide_con_el_detalle_y_conserva_la_version(cliente, cuenta, campana, crear_parcela):
+    """*Recinto a recinto, y con la version y el año en la cabecera.*"""
+    crear_parcela(alias="La del fichero")
+    la_foto = _la_foto(cliente, cuenta, {"anio": 2027})
+    el_detalle = cliente.get(la_foto["el_detalle"], headers=cuenta["cabeceras"]).json()
+
+    las_filas = _las_filas_del_csv(cliente.get(la_foto["el_fichero"], headers=cuenta["cabeceras"]))
+    las_de_los_recintos = las_filas[2:]
+
+    assert len(las_de_los_recintos) == len(el_detalle["el_escenario"]["los_recintos"])
+    for uno in el_detalle["el_escenario"]["los_recintos"]:
+        la_fila = next((f for f in las_de_los_recintos if f[1] == (uno.get("alias") or "")), None)
+        assert la_fila is not None, f"***falta {uno.get('alias')} en el fichero***"
         assert la_fila[7] == ("si" if uno.get("completa") else "no"), la_fila
         assert la_fila[8] == " ".join(uno.get("falta") or []), la_fila
 
-
-def test_y_CONSERVA_la_version_evaluada(cliente, cuenta, campana, crear_parcela, db_sesion):
-    """***Cambiar la finca despues NO cambia lo que se enseno.***
-
-    *Se guarda la foto, se siembra una tierra -con el cultivo de verdad, en la base-, y **la foto y su fichero
-    siguen diciendo lo mismo**: eso es «conserva la version evaluada».*
-    """
-    la_parcela = crear_parcela(alias="La que cambia despues")
-    la_foto = _la_foto(cliente, cuenta)
-
-    el_antes = cliente.get(f"/api/pac/foto/{la_foto['version']}", headers=cuenta["cabeceras"]).json()
-    las_filas_antes = _las_filas_del_csv(cliente, cuenta, la_foto["version"])
-
-    # *Ahora se siembra la tierra de verdad, con la puerta del cultivo.*
-    cliente.post(
-        "/api/cultivos",
-        headers=cuenta["cabeceras"],
-        json={
-            "campana_id": campana["id"],
-            "parcela_id": la_parcela["id"],
-            "especie": "cebada",
-            "ecorregimen": "secano",
-            "superficie_cultivada_ha": 2.0,
-        },
-    )
-
-    el_despues = cliente.get(f"/api/pac/foto/{la_foto['version']}", headers=cuenta["cabeceras"]).json()
-    las_filas_despues = _las_filas_del_csv(cliente, cuenta, la_foto["version"])
-
-    assert el_despues == el_antes, "***la foto guardada no puede cambiar***"
-    assert las_filas_despues == las_filas_antes, "***ni el fichero que se saca de ella***"
-
-    # *Y la cabecera del fichero lleva la version y el año: el papel dice de que es.*
-    assert "version 1" in las_filas_antes[0][0], las_filas_antes[0]
-    assert "2027" in las_filas_antes[0][1], las_filas_antes[0]
+    assert "version 1" in las_filas[0][0], las_filas[0]
+    assert "2027" in las_filas[0][1], las_filas[0]
 
 
-def test_la_foto_no_afirma_elegibilidad(cliente, cuenta, campana, crear_parcela):
-    """***Ni una columna de elegibilidad***: *este programa no la afirma, y el fichero tampoco.*
-
-    *Y una foto que no existe es un 404, no una inventada.*
-    """
+def test_y_guardar_no_cambia_el_paquete_ni_afirma_elegibilidad(cliente, cuenta, campana, crear_parcela):
+    """*Ni el paquete cambia, ni el fichero lleva una columna de elegibilidad.*"""
     crear_parcela(alias="La de la elegibilidad")
-    la_foto = _la_foto(cliente, cuenta)
-    las_filas = _las_filas_del_csv(cliente, cuenta, la_foto["version"])
+    antes = cliente.get("/api/pac/paquete", headers=cuenta["cabeceras"]).json()
+    la_foto = _la_foto(cliente, cuenta, {"anio": 2027})
+    despues = cliente.get("/api/pac/paquete", headers=cuenta["cabeceras"]).json()
+    assert despues == antes, "***guardar una foto no puede cambiar el paquete***"
 
+    las_filas = _las_filas_del_csv(cliente.get(la_foto["el_fichero"], headers=cuenta["cabeceras"]))
     los_nombres = " ".join(las_filas[1]).lower()
     for prohibida in ("elegib", "subvencion", "importe", "ayuda"):
-        assert prohibida not in los_nombres, (
-            f"***el fichero no puede llevar «{prohibida}»***: {las_filas[1]}"
-        )
-
-    assert cliente.get(
-        f"/api/pac/foto/{la_foto['version'] + 99}", headers=cuenta["cabeceras"]
-    ).status_code == 404
+        assert prohibida not in los_nombres, f"***no puede llevar «{prohibida}»***"

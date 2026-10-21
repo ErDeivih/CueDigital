@@ -342,6 +342,32 @@ AYUDA: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MENSAJES: dict[str, str] = {
+    # ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026): *antes se mandaba toda la cola con
+    # la sesion abierta, y un apunte de una finca acababa escrito en otra. Lo de otra cuenta **se queda** -no se
+    # pierde- esperando a que su dueno entre, y se dice con estas palabras.*
+    # ***Los de antes de la correccion***: *no llevan cuenta -no se sabia de quien eran-, asi que **no se mandan**
+    # -seria escribir en una finca que no se sabe-. Se quedan y se dicen, que es lo unico honesto.*
+    "apuntes_sin_cuenta": (
+        "Hay {cuantas} cosas apuntadas **de antes de esta version**, y no consta de que cuenta eran. No se mandan "
+        "para no escribir en una finca que no es: **no se ha perdido ninguna**."
+    ),
+    # ***Cuando el almacen del movil falla*** (19/10/2026): *modo privado, almacenamiento lleno, un navegador que
+    # lo bloquea. Antes **se decia que si** y el apunte no existia; ahora se dice que no, y que se apunte con
+    # cobertura o se libere espacio, en vez de perder un trabajo del campo en silencio.*
+    "no_se_pudo_guardar_el_apunte": (
+        "**No se ha podido guardar en el movil**: el navegador no deja almacenar. No se ha apuntado nada. "
+        "Prueba a liberar espacio o a salir del modo privado, y vuelve a apuntarlo."
+    ),
+    # ***Las DOS cosas a la vez*** (19/10/2026): *con dos apuntes propios y uno ajeno, el aviso decia «1 de otra
+    # cuenta» y **se callaba los dos del agricultor**. Este trozo se anade al «te faltan N» para no ocultar el
+    # numero que importa.*
+    "y_otros_de_otra_cuenta": (
+        "Y {ajenos} de otra cuenta, que se quedan hasta que entres en ella."
+    ),
+    "apuntes_de_otra_cuenta": (
+        "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
+        "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"
+    ),
     # ------------------------------------------------------------------ las reservas (CRM-07 #9)
     #
     # **Los motivos van AQUI y no en el bloque de la pantalla**, porque quien los dice es el **servidor**
@@ -9401,6 +9427,17 @@ LAS_METRICAS: dict[str, str] = {
 # ninguna competencia autoriza usar su interpretacion como norma»*. **Sin fuente cargada, esto no puede decir
 # si algo es elegible**, y lo dice en vez de callarse.
 PAC: dict[str, str] = {
+    # ***La PAC nueva*** (18/10/2026): *lo que se dice al guardar una foto, y lo que la pantalla necesita.*
+    "la_finca_cambio_al_guardar": (
+        "La finca ha cambiado desde que lo evaluaste. **No se ha guardado nada**: lo que ibas a guardar ya no "
+        "es lo que viste. Puedes recalcular con los datos de ahora y guardarlo asi."
+    ),
+    "no_se_ha_guardado_nada": "No se ha guardado nada.",
+    "otra_foto_a_la_vez": (
+        "Otra foto de este año se guardo a la vez. No se ha pisado ninguna: vuelve a intentarlo y tendras la "
+        "tuya con el numero siguiente."
+    ),
+    "esos_recintos_no_son_tuyos": "Esos recintos no son de esta finca, asi que no se pueden evaluar.",
     "titulo": "La preparación de la PAC",
     "explica": (
         "Lo que hay que llevar al asesor, tierra por tierra: la referencia, la superficie, lo que se siembra "
