@@ -76,8 +76,9 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    **Lo que esto mide y lo que no**: *mide **la lista** (las filas de la tabla). **El mapa no se cuenta** —
    recibe el mismo array (`vista.tierras`, una sola vez) y por eso **no puede discrepar**, pero eso es una
    lectura del código, no una medición. **Faltan 1024 y el móvil**, y **falta contar lo que dibuja el mapa**.
-3. **Los filtros sobreviven a la recarga** — **MEDIDO**: *el filtro viaja en la dirección (`?q=`) y recargar
-   deja a la vista filtrada.* **Falta la selección** (*la tierra elegida, `id=`, y las marcadas*), que también
+3. **Los filtros y la selección sobreviven a la recarga** — **MEDIDO** (21/10/2026): *el filtro viaja en la
+   dirección (`?q=`) y recargar deja la vista filtrada; y `?id=N` deja **elegida esa tierra** —la fila lleva
+   `tabla-fila-elegida`— **también después de recargar**. **Falta la selección múltiple** (`marcadas=`), que
    está escrita en la dirección pero **no se ha comprobado recargando**.
 
 ***Nada de esto está hecho.*** *La tabla y la comprobación de que cada enlace abre lo suyo, sí.*

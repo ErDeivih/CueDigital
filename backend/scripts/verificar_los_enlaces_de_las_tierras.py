@@ -135,8 +135,9 @@ def main() -> int:
             # ---------------------------------------------------------------- 5 · la lista y el mapa
             print("\n5. LA LISTA Y EL MAPA, CON EL MISMO CONJUNTO")
             # *Tres tierras de verdad, creadas por la puerta: sin datos, esto no probaria nada.*
+            los_ids = []
             for i, alias in enumerate(("TIERRA UNO", "TIERRA DOS", "OTRA COSA"), start=1):
-                _llamar(
+                _, la_creada = _llamar(
                     direccion,
                     "/api/parcelas",
                     token=cuenta["token"],
@@ -148,6 +149,8 @@ def main() -> int:
                         "superficie_ha": 1.5,
                     },
                 )
+                if isinstance(la_creada, dict) and la_creada.get("id"):
+                    los_ids.append(la_creada["id"])
             todas = abrir(nav, direccion, "#/tierras/mapa")
             las_todas = las_filas(nav)
             fallos += not comprobar(
@@ -179,7 +182,44 @@ def main() -> int:
                 "***las tres lecturas cuentan lo mismo: 3 sin filtro, 2 con el, 2 al recargar***",
             )
 
-    print(f"\nComprobaciones: 12   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 6 · la seleccion
+            print("\n6. LA TIERRA ELEGIDA, Y QUE SOBREVIVA A LA RECARGA")
+            if len(los_ids) < 1:
+                fallos += not comprobar(False, "***no se creo ninguna tierra: no se puede comprobar la seleccion***")
+            else:
+                la_elegida = los_ids[0]
+
+                def la_fila_elegida(nav) -> str:
+                    """*El `data-id` de la fila marcada como elegida, o vacio.*"""
+                    # ***El `data-id` no esta en la fila: esta en el checkbox de dentro.*** *Se lee de ahi,
+                    # que es donde lo pone la pantalla -comprobado mirando las clases: la fila si quedaba elegida
+                    # y el lector devolvia vacio.*
+                    return str(
+                        nav.evaluar(
+                            "(() => { const f = document.querySelector('#pantalla tr.tabla-fila-elegida');"
+                            " if (!f) return '';"
+                            " const c = f.querySelector('[data-id]');"
+                            " return c ? String(c.dataset ? c.dataset.id : c.getAttribute('data-id')) : 'elegida';"
+                            " })()"
+                        )
+                        or ""
+                    )
+
+                abrir(nav, direccion, f"#/tierras/mapa?id={la_elegida}")
+                la_primera = la_fila_elegida(nav)
+                fallos += not comprobar(
+                    la_primera == str(la_elegida),
+                    f"***`?id={la_elegida}` deja elegida ESA tierra*** (elegida: {la_primera!r})",
+                )
+                # ***Y al recargar, sigue.***
+                abrir(nav, direccion, f"#/tierras/mapa?id={la_elegida}")
+                la_segunda = la_fila_elegida(nav)
+                fallos += not comprobar(
+                    la_segunda == str(la_elegida),
+                    f"***y al recargar sigue elegida*** (elegida: {la_segunda!r})",
+                )
+
+    print(f"\nComprobaciones: 14   Fallos: {fallos}")
     return 1 if fallos else 0
 
 
