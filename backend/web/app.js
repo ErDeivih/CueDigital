@@ -9848,6 +9848,9 @@ function pantallaMisCosas() {
         ? rellena(m(cuantas === 1 ? "cuantas_tierras_una" : "cuantas_tierras"), { cuantas })
         : "",
       elementos: tierras,
+      // ***Y su puente a la vista completa*** (21/10/2026, D04): *`#/tierras/mapa` **no se podia alcanzar desde
+      // ningun sitio de la aplicacion**; solo escribiendo la direccion a mano.*
+      verEnElMapa: m("verlas_en_el_mapa"),
     },
     {
       tipo: "producto",
@@ -9912,6 +9915,8 @@ function pantallaMisCosas() {
     anadir: m(`anadir_${seccion.tipo}`),
     // *Y la cuenta, vacia cuando la carga fallo: **«0 tierras» es una cifra falsa**.*
     cuantas: estado.cargas[LA_CARGA_DE_LA_SECCION[seccion.tipo]] === "fallo" ? "" : seccion.cuantas || "",
+    // *El puente, si esa seccion lo tiene (hoy, las tierras).*
+    verEnElMapa: seccion.verEnElMapa || "",
     tarjetas: Boolean(seccion.tarjetas),
     buscar: seccion.buscar || null,
     // **La tabla, para el ordenador** (30/09/2026): la misma lista que las tarjetas, mirada de otra forma.
@@ -21111,6 +21116,8 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   // ***Y todas las de la PAC, por su nombre***: *un solo sitio, y sin tocar el despacho grande.*
   if (nombre.startsWith("pac-")) return atenderLaPac(nombre, elemento);
   if (nombre === "reintentar-lo-que-fallo") return reintentarLoQueFallo();
+  // ***El puente a la vista completa de las tierras*** (21/10/2026, D04).
+  if (nombre === "tierras-al-mapa") return abrirLasTierrasDelMapa();
   if (nombre === "ir-inicio") return irAInicio(null);
   if (nombre === "inicio") return irAInicio(elemento.dataset.ir);
   if (nombre === "trabajo") return abrirAsistente(elemento.dataset.tipo, pasosLabor(elemento.dataset.tipo));

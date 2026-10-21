@@ -59,6 +59,16 @@ function Seccion({ seccion }) {
     <h2>${frase(seccion.titulo)}</h2>
     <p className="pista-campo">${frase(seccion.pista)}</p>
     ${seccion.cuantas ? html`<p className="cuantas">${frase(seccion.cuantas)}</p>` : null}
+    ${
+      // ***El puente a la vista completa*** (21/10/2026, D04): *la pantalla de `#/tierras/mapa` **no tenia puerta**:
+      // solo se llegaba escribiendo la direccion. Se pasa desde la lista, que es donde el agricultor se pregunta
+      // «y esto, ¿donde esta?». **No es una segunda puerta**: es el camino a la canonica.*
+      seccion.verEnElMapa
+        ? html`<p className="barra-acciones">
+            <${Boton} etiqueta=${seccion.verEnElMapa} accion="tierras-al-mapa" clase="boton-claro" />
+          </p>`
+        : null
+    }
     ${seccion.buscar || null}
     ${
       // **La tabla, solo en el ordenador** (30/09/2026). Es la misma lista de tierras que las tarjetas de

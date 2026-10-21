@@ -66,8 +66,11 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
 
 ## 4 · Lo que falta, y es el trabajo que viene
 
-1. **Un puente desde «mis cosas» a la vista completa**: *quien está mirando la lista de tierras no tiene
-   camino al mapa sin volver al menú.* **Hoy no lo hay.**
+1. ~~Un puente desde «mis cosas» a la vista completa~~ — **HECHO** (21/10/2026): *la sección de las tierras
+   lleva **«VER MIS TIERRAS EN EL MAPA»**, y al pulsarlo se llega a `#/tierras/mapa` **con la campaña y la
+   finca en la dirección** (`#/tierras/mapa?campana=2026&finca=1`), que es el «enlace permanente al
+   contexto» del contrato. **Comprobado pulsándolo en un navegador** (`5 → 8` comprobaciones, `0` fallos).*
+   *Antes **no había ninguna puerta**: la pantalla solo se alcanzaba escribiendo la dirección a mano.*
 2. **Comprobar en 1440×900, 1024 y móvil** que la lista y el mapa de `#/tierras/mapa` **enseñan el mismo
    conjunto**: *mismo recuento con los mismos filtros, misma selección y mismo detalle.* **Hoy solo está
    comprobado que la pantalla abre y de qué habla.**

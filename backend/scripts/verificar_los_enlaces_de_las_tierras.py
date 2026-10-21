@@ -89,7 +89,40 @@ def main() -> int:
                 las_tierras,
             )
 
-    print(f"\nComprobaciones: 5   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 4 · el puente
+            print("\n4. EL PUENTE: DE LA LISTA A LA VISTA COMPLETA, SIN VOLVER AL MENU")
+            el_de_la_lista = abrir(nav, direccion, "#/tierras")
+            fallos += not comprobar(
+                "mis tierras en el mapa" in el_de_la_lista.lower(),
+                "***la lista de lo que uso OFRECE el puente a la vista completa***",
+                el_de_la_lista,
+            )
+            # *Y se pulsa, que es como se llega.*
+            se_pulso = nav.evaluar(
+                "(() => { const b = document.querySelector('[data-accion=\"tierras-al-mapa\"]');"
+                " if (b) b.click(); return Boolean(b); })()"
+            )
+            la_vista = ""
+            for _ in range(30):
+                la_vista = el_texto(nav)
+                if "en el mapa y en la tabla" in la_vista:
+                    break
+                time.sleep(0.5)
+            fallos += not comprobar(
+                bool(se_pulso) and "en el mapa y en la tabla" in la_vista,
+                "***y al pulsarlo se llega a la vista completa***",
+                la_vista,
+            )
+            fallos += not comprobar(
+                # ***Con su contexto detras, que es lo que hace falta***: *la direccion no es solo «la pantalla»,
+                # es **la pantalla en esta campaña y esta finca** -`#/tierras/mapa?campana=2026&finca=1`-, y eso es
+                # el «enlace permanente al contexto» del contrato.*
+                str(nav.evaluar("window.location.hash")).startswith("#/tierras/mapa"),
+                "***y la direccion queda escrita, con su campaña y su finca***",
+                str(nav.evaluar("window.location.hash")),
+            )
+
+    print(f"\nComprobaciones: 8   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

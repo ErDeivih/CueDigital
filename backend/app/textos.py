@@ -1975,6 +1975,8 @@ ETIQUETAS: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MAESTROS: dict[str, str] = {
+    # ***El puente a la vista completa de las tierras*** (21/10/2026, D04): *la pantalla existia y no tenia puerta.*
+    "verlas_en_el_mapa": "VER MIS TIERRAS EN EL MAPA",
     # ***Un fallo de carga no es «todavia no tienes»*** (21/10/2026, D03): *lo segundo es una afirmacion sobre la
     # finca y lo primero sobre la red. Se usa en las siete secciones de «mis cosas».*
     "sin_fallo": (
