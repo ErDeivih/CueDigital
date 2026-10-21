@@ -191,7 +191,11 @@ def main() -> int:
                         "window.localStorage.setItem('cuedigital.pendientes', "
                         + json.dumps(json.dumps(la_cola_mala))
                         + ");"
-                        "window.localStorage.removeItem('cuedigital.rechazados');"
+                        # ***La clave lleva dueno desde el 21/10***: *`cuedigital.rechazados.2:2`. Se borran todos
+                        # los cubos, para que el recorrido empiece limpio.*
+                        "Object.keys(window.localStorage)"
+                        ".filter(function (k) { return k.indexOf('cuedigital.rechazados') === 0; })"
+                        ".forEach(function (k) { window.localStorage.removeItem(k); });"
                     )
                 },
             )
@@ -206,8 +210,12 @@ def main() -> int:
             for _intento in range(45):
                 los_rechazados = (
                     nav.evaluar(
-                        "(() => { try { return window.localStorage.getItem('cuedigital.rechazados')"
-                        " || ''; } catch (e) { return ''; } })()"
+                        # ***Se leen TODOS los cubos de rechazados***: *la clave lleva dueno -`...rechazados.2:2`-,
+                        # y buscar solo la global daba «no se aparto» cuando sí se habia apartado.*
+                        "(() => { try { return Object.keys(window.localStorage)"
+                        ".filter(function (k) { return k.indexOf('cuedigital.rechazados') === 0; })"
+                        ".map(function (k) { return window.localStorage.getItem(k) || ''; }).join(''); }"
+                        " catch (e) { return ''; } })()"
                     )
                     or ""
                 )

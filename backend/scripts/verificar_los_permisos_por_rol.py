@@ -366,6 +366,16 @@ def _el_dinero_en_la_pantalla(nav) -> str:
     return nav.evaluar("document.querySelector('#pantalla').innerText") or ""
 
 
+def _hay_dinero(texto: str) -> bool:
+    """***Si ese texto lleva dinero***, mire como mire la unidad (21/10/2026).
+
+    *La entrega integrada cambio las cifras a formato espanol y el dinero se pinta **`X,XX €`**, no «EUR». **Estas
+    comprobaciones median el simbolo y no la intencion**: lo que se mira es si **hay dinero**, y valen las dos
+    formas. Se vio porque, tras integrar, el titular «no veia el dinero» -y lo veia, con otro simbolo-.*
+    """
+    return "EUR" in texto or "\u20ac" in texto
+
+
 def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
     print(f"== Los permisos por rol, andados en un navegador  ({direccion}) ==")
     escenario = preparar(direccion)
@@ -617,7 +627,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
             nav.abrir(f"{direccion}/", esperar=2.5)
             nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
             el_texto_del_titular = _el_dinero_en_la_pantalla(nav)
-            comprobar("EUR" in el_texto_del_titular, "***y el titular SI ve el dinero en su panel***", encontre=el_texto_del_titular[:400])
+            comprobar(_hay_dinero(el_texto_del_titular), "***y el titular SI ve el dinero en su panel***", encontre=el_texto_del_titular[:400])
 
             # ---------------------------------------------------------------------------------------------------
             print("\n2. EL AYUDANTE  -puede apuntar, y el dinero no le llega-")
@@ -639,7 +649,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
                 codigo == 200 and not any(m["clave"] == "gastos" for m in (su_panel or {}).get("las_metricas", [])),
                 "***y NO recibe la metrica del dinero***", encontre=el_crudo[:300],
             )
-            comprobar("EUR" not in el_crudo, "***ni la unidad del dinero en la respuesta***", encontre=el_crudo[:300])
+            comprobar(not _hay_dinero(el_crudo), "***ni la unidad del dinero en la respuesta***", encontre=el_crudo[:300])
 
             _poner_la_sesion(nav, direccion, los_vales["ayudante"])
             print("    las pantallas del ayudante:")
@@ -657,7 +667,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
                 )
             nav.abrir(f"{direccion}/", esperar=2.5)
             nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
-            comprobar("EUR" not in _el_dinero_en_la_pantalla(nav), "***ni lo ve en la pantalla***")
+            comprobar(not _hay_dinero(_el_dinero_en_la_pantalla(nav)), "***ni lo ve en la pantalla***")
 
             # ---------------------------------------------------------------------------------------------------
             print("\n3. LA CONSULTA  -ni escribe ni ve el dinero-")
@@ -693,7 +703,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
                     )
                 nav.abrir(f"{direccion}/", esperar=2.5)
                 nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
-                comprobar("EUR" not in _el_dinero_en_la_pantalla(nav), "***y no ve el dinero en la pantalla***")
+                comprobar(not _hay_dinero(_el_dinero_en_la_pantalla(nav)), "***y no ve el dinero en la pantalla***")
 
                 # -----------------------------------------------------------------------------------------------
                 print("\n3b. Y LAS QUE NO SE ALCANZAN EN LA PANTALLA, POR LA PUERTA")
@@ -725,7 +735,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
             _poner_la_sesion(nav, direccion, los_vales["titular"])
             nav.abrir(f"{direccion}/", esperar=2.5)
             nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
-            comprobar("EUR" in _el_dinero_en_la_pantalla(nav), "***vuelto al titular, el dinero reaparece***", encontre=_el_dinero_en_la_pantalla(nav)[:300])
+            comprobar(_hay_dinero(_el_dinero_en_la_pantalla(nav)), "***vuelto al titular, el dinero reaparece***", encontre=_el_dinero_en_la_pantalla(nav)[:300])
 
             # *Y el cambio de EXPLOTACION: el ayudante tiene dos -la suya y la del titular-.*
             codigo, suya = _llamar(direccion, "/api/cuenta/yo", token=los_vales["ayudante"])
