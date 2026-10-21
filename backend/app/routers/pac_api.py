@@ -209,8 +209,32 @@ def _los_cambios(cambios) -> dict:
     }
 
 
+def _exigir_que_la_campana_sea_de_esta_finca(db, explotacion, campana_id) -> None:
+    """***Una campaña explícita que no es de esta finca da 404, sin revelar nada*** (21/10/2026).
+
+    *Se reprodujo: `campana_id=999999` **permitía evaluar y guardar una foto**, los dos con 200. Y la campaña de
+    **otra** finca, igual: *`_la_campana` filtra por `explotacion_id`, no la encontraba, y el paquete **se caía a la
+    última** como si no se hubiera pedido nada.*
+
+    ***Y no es lo mismo no mandar campaña que mandar una que no existe.*** *Sin campaña se usa la última —eso está
+    bien y se conserva—; con una campaña explícita que no resuelve, **el agricultor pidió un año que no es suyo**, y
+    contestar con otro año es contestar a otra cosa.*
+
+    *El 404 es el mismo para «no existe» y «es de otra finca»: **no se revela si existe**.*
+    """
+    if campana_id is None:
+        return
+    if _la_campana(db, explotacion.id, campana_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Esa campaña no es de esta finca.",
+        )
+
+
 def _el_escenario_de_ahora(explotacion, db, *, anio: int, campana_id, cambios) -> dict:
     """***El escenario que sale de la finca AHORA.*** *Con su huella de la fuente, que es lo que lo identifica.*"""
+    # ***Antes de evaluar***: *una campaña ajena o inexistente se rechaza aquí, no después de haber calculado.*
+    _exigir_que_la_campana_sea_de_esta_finca(db, explotacion, campana_id)
     el_paquete = el_paquete_de_la_pac(explotacion=explotacion, db=db, campana_id=campana_id)
     las_suyas = {uno["parcela_id"] for uno in el_paquete.get("las_tierras") or []}
     los_ajenos = sorted(set(cambios or {}) - las_suyas)

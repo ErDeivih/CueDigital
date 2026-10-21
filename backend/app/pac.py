@@ -285,9 +285,40 @@ def el_escenario(el_paquete: dict, *, anio: int, cambios: dict | None = None) ->
     # ***Se le pasa el numero, aunque sea cero.*** *`or None` convertia «no hay hectareas» en «no hay
     # denominador», y eso **lanza**: `el_porcentaje` ya sabe que hacer con un cero -no hay nada que medir, y el
     # porcentaje es `None`-, pero con `None` no puede.*
-    el_resumen = tierra_sin_cultivo_no_se_pinta_de_verde(
-        superficie_total=la_superficie, superficie_con_cultivo=con_cultivo
-    )
+    # ***Y si a alguna tierra le falta la superficie, el total NO se sabe*** (21/10/2026).
+    #
+    # *Antes se sumaban las conocidas -`or 0`- y se publicaba «`290` ha · `0 %`»: **el agricultor leia «no he
+    # sembrado nada» cuando lo que pasaba es que no consta la superficie de una tierra**. Desconocido no es cero ni
+    # un total completo, y el contrato lo pide asi: «conservar desconocido o separar subtotal conocido/cobertura,
+    # **sin publicar porcentaje completo**».*
+    las_sin_superficie = [uno for uno in los_recintos if uno.get("superficie_ha") is None]
+    if las_sin_superficie:
+        el_resumen = {
+            "de_que": "superficie con cultivo sobre el total de la finca",
+            "unidad": "ha",
+            # *Lo que no se sabe, se dice que no se sabe. **No se rellena con lo conocido.***
+            "numerador": None,
+            "denominador": None,
+            "porcentaje": None,
+            "sin_cultivo": None,
+            "se_queda_fuera": None,
+            "conocido": False,
+            # ***Y lo que si se sabe, aparte y dicho***: *el subtotal de las tierras que constan, para que el asesor
+            # vea algo sin que parezca la finca entera.*
+            "lo_conocido_ha": la_superficie,
+            "las_tierras_sin_superficie": len(las_sin_superficie),
+            "aviso": (
+                "no se puede dar el porcentaje de la finca: falta la superficie de "
+                f"{len(las_sin_superficie)} tierra(s)"
+            ),
+        }
+    else:
+        el_resumen = {
+            **tierra_sin_cultivo_no_se_pinta_de_verde(
+                superficie_total=la_superficie, superficie_con_cultivo=con_cultivo
+            ),
+            "conocido": True,
+        }
 
     return {
         "anio": anio,
