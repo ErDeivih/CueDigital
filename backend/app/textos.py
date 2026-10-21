@@ -1421,6 +1421,12 @@ ACCIONES: dict[str, str] = {
 }
 
 PANTALLA_CUADERNO: dict = {
+    # ***Un fallo parcial deja el cuaderno incompleto, no vacio*** (21/10/2026, D03): *peor que vacio, porque
+    # **parece completo**. Se dice **que** falta y que lo que se ve no esta todo.*
+    "faltan_apuntes": (
+        "**Lo que ves no está completo**: no se han podido cargar {cuales}. "
+        "Reintenta cuando vuelva la conexión."
+    ),
     "titulo": "Mi cuaderno",
     "sin_nada": "Todavía no has apuntado nada este año.",
     "ver_papel": "SACAR EN PAPEL",
@@ -3879,6 +3885,15 @@ CORREGIR: dict[str, str] = {
 
 # Textos de estado de la interfaz
 INTERFAZ: dict[str, str] = {
+    # ***Un fallo de carga no es «no hay»*** (21/10/2026, D03): *la frase que vale para **cualquier** pantalla. Se
+    # sirve como `aviso` -ver `routers/interfaz.py`-, asi que se lee con `t("aviso.no_se_pudo_cargar")`.*
+    #
+    # *Dice las dos cosas que hacen falta: **que no se pudo mirar** y **que no es que no tengas** -que es la
+    # conclusion equivocada a la que lleva un fallo de red-.*
+    "no_se_pudo_cargar": (
+        "No se han podido cargar: **no es que no tengas**, es que no se ha podido mirar. "
+        "Reintenta cuando vuelva la conexión."
+    ),
     "apuntado_ok": "Apuntado. Si te has equivocado, pulsa DESHACER.",
     # La explicación del botón de deshacer (ronda 90, del diseño de Stitch de la pantalla de
     # confirmación). Sin ella, el único botón que puede borrar un apunte es también el que menos se sabe

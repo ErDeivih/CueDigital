@@ -3602,7 +3602,7 @@ function datosDelCuaderno() {
     // **no se anade una clave nueva** sin saber donde vive el vocabulario del cuaderno, y asi no queda una frase sin
     // traducir por un sitio que nadie mira.*
     faltanPorCargarTexto: faltanPorCargar.length
-      ? `${t("maestros.sin_fallo", "")} (${faltanPorCargar.join(", ")})`
+      ? rellena(c("faltan_apuntes"), { cuales: faltanPorCargar.join(", ") })
       : "",
     textos: { cuaderno: t("cuaderno", {}) },
     apuntes: {
@@ -13325,6 +13325,10 @@ function pantallaGrupos() {
       grupos: preparados,
       faltanCultivos,
       error: estado.errorGrupos,
+      // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay» es una afirmacion sobre la finca;
+      // «no se pudo cargar», sobre la red.*
+      noSePudoCargar: estado.cargas.grupos === "fallo",
+      noSePudoCargarTexto: t("aviso.no_se_pudo_cargar", ""),
     }),
   );
 }
@@ -15849,6 +15853,10 @@ function pantallaAnaliticas() {
     pantallaDeAnaliticas({
       textos: { analitica: t("analitica", {}), acciones: t("acciones", {}) },
       analisis,
+      // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay» es una afirmacion sobre la finca;
+      // «no se pudo cargar», sobre la red.*
+      noSePudoCargar: estado.cargas.analiticas === "fallo",
+      noSePudoCargarTexto: t("aviso.no_se_pudo_cargar", ""),
     }),
   );
 }

@@ -73,7 +73,15 @@ function Grupo({ grupo, textos }) {
  *  - `faltanCultivos`: cuántas tierras no dicen todavía qué tienen sembrado este año.
  *  - `error`: lo que ha dicho el servidor cuando algo ha fallado, o nada.
  */
-export function PantallaGrupos({ textos = {}, grupos = [], faltanCultivos = 0, error = "" }) {
+export function PantallaGrupos({
+  textos = {},
+  grupos = [],
+  faltanCultivos = 0,
+  error = "",
+  // ***Y si la carga fallo*** (21/10/2026, D03).
+  noSePudoCargar = false,
+  noSePudoCargarTexto = "",
+}) {
   const g = textos.grupos || {};
   const cultivos = textos.cultivos || {};
   const maestros = textos.maestros || {};
@@ -91,7 +99,13 @@ export function PantallaGrupos({ textos = {}, grupos = [], faltanCultivos = 0, e
           `
         : null
     }
-    ${grupos.length === 0 ? html`<div className="aviso">${frase(g.sin_grupos)}</div>` : null}
+    ${
+      grupos.length === 0
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(noSePudoCargarTexto)}</div>`
+          : html`<div className="aviso">${frase(g.sin_grupos)}</div>`
+        : null
+    }
     ${
       grupos.length
         ? html`
@@ -118,6 +132,8 @@ export function pantallaDeGrupos(propiedades) {
     <${PantallaGrupos}
       textos=${propiedades.textos}
       grupos=${propiedades.grupos}
+    noSePudoCargar=${propiedades.noSePudoCargar}
+    noSePudoCargarTexto=${propiedades.noSePudoCargarTexto}
       faltanCultivos=${propiedades.faltanCultivos}
       error=${propiedades.error}
     />

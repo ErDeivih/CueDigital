@@ -121,8 +121,10 @@ def main() -> int:
                 time.sleep(2.0)
                 el_cuaderno = el_texto(nav)
                 fallos += not comprobar(
-                    "no es que no tengas" in el_cuaderno,
-                    "***el cuaderno DICE que no se pudo cargar***",
+                    # ***El cuaderno tiene su frase propia***, y es mejor que la generica: no dice «no es que no
+                    # tengas» -que ahi no encaja- sino **«lo que ves no esta completo»**, que es lo que pasa.
+                    "no está completo" in el_cuaderno,
+                    "***el cuaderno dice que lo que se ve NO ESTA COMPLETO***",
                     el_cuaderno,
                 )
                 fallos += not comprobar(
@@ -156,7 +158,28 @@ def main() -> int:
                     el_emitidas,
                 )
 
-    print(f"\nComprobaciones: {9}   Fallos: {fallos}")
+            # ---------------------------------------------------------------- 5 y 6 · analisis y grupos
+            for numero, nombre, clave_api, camino in (
+                (5, "LOS ANALISIS", "/api/analiticas", "#/analisis"),
+                (6, "LOS GRUPOS", "/api/grupos", "#/grupos"),
+            ):
+                print(f"\n{numero}. {nombre}, CON SU CARGA FALLANDO")
+                with el_proxy_que_falla(direccion, clave_api) as el_proxy:
+                    _poner_la_sesion(nav, el_proxy, cuenta["token"])
+                    nav.abrir(f"{el_proxy}/{camino}", esperar=3.0)
+                    for _ in range(30):
+                        if el_texto(nav):
+                            break
+                        time.sleep(0.5)
+                    time.sleep(2.0)
+                    el_suyo = el_texto(nav)
+                    fallos += not comprobar(
+                        "no es que no tengas" in el_suyo,
+                        f"***{nombre.lower()} dicen que no se pudieron cargar***",
+                        el_suyo,
+                    )
+
+    print(f"\nComprobaciones: {11}   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

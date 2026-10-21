@@ -152,7 +152,14 @@ function Ficha({ analisis, textos }) {
  *  - `analisis`: los análisis del año, ya preparados por `app.js` (título, filas, números, nota y
  *    la línea del informe).
  */
-export function PantallaAnaliticas({ textos = {}, analisis = [] }) {
+export function PantallaAnaliticas({
+  textos = {},
+  analisis = [],
+  // ***Y si la carga fallo*** (21/10/2026, D03): *«no hay analisis» es una afirmacion sobre la finca; «no se pudo
+  // cargar», sobre la red.*
+  noSePudoCargar = false,
+  noSePudoCargarTexto = "",
+}) {
   const a = textos.analitica || {};
   const acciones = textos.acciones || {};
 
@@ -161,7 +168,9 @@ export function PantallaAnaliticas({ textos = {}, analisis = [] }) {
     <p className="pista">${frase(a.explica)}</p>
     ${
       analisis.length === 0
-        ? html`<div className="aviso">${frase(a.sin_analisis)}</div>`
+        ? noSePudoCargar
+          ? html`<div className="aviso aviso-error">${frase(noSePudoCargarTexto)}</div>`
+          : html`<div className="aviso">${frase(a.sin_analisis)}</div>`
         : analisis.map(
             (uno, indice) => html`<${Ficha} key=${indice} analisis=${uno} textos=${textos} />`,
           )
@@ -184,5 +193,7 @@ export function pantallaDeAnaliticas(propiedades) {
   return html`<${PantallaAnaliticas}
     textos=${propiedades.textos}
     analisis=${propiedades.analisis}
+    noSePudoCargar=${propiedades.noSePudoCargar}
+    noSePudoCargarTexto=${propiedades.noSePudoCargarTexto}
   />`;
 }
