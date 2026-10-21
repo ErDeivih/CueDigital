@@ -109,7 +109,29 @@ def main() -> int:
                     el_suyo,
                 )
 
-    print(f"\nComprobaciones: {6}   Fallos: {fallos}")
+    # ---------------------------------------------------------------- 3 · el cuaderno
+            print("\n3. EL CUADERNO, CON UNA DE SUS TRES CARGAS FALLANDO")
+            with el_proxy_que_falla(direccion, "/api/labores") as el_proxy:
+                _poner_la_sesion(nav, el_proxy, cuenta["token"])
+                nav.abrir(f"{el_proxy}/#/cuaderno", esperar=3.0)
+                for _ in range(30):
+                    if el_texto(nav):
+                        break
+                    time.sleep(0.5)
+                time.sleep(2.0)
+                el_cuaderno = el_texto(nav)
+                fallos += not comprobar(
+                    "no es que no tengas" in el_cuaderno,
+                    "***el cuaderno DICE que no se pudo cargar***",
+                    el_cuaderno,
+                )
+                fallos += not comprobar(
+                    "labores y cosechas" in el_cuaderno,
+                    "***y dice CUAL falta: las labores***",
+                    el_cuaderno,
+                )
+
+    print(f"\nComprobaciones: {8}   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

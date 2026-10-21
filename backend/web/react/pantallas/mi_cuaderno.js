@@ -391,6 +391,10 @@ function BloqueDelRegistroElectronico({ registro }) {
  */
 export function PantallaMiCuaderno({
   textos = {},
+  // ***Lo que no se ha podido cargar*** (21/10/2026, D03): *el cuaderno junta tres secciones, y un fallo parcial lo
+  // deja **incompleto**, no vacio. `faltanPorCargarTexto` viene compuesto del servidor.*
+  faltanPorCargar = [],
+  faltanPorCargarTexto = "",
   apuntes,
   faltantes,
   ventas,
@@ -404,6 +408,13 @@ export function PantallaMiCuaderno({
 }) {
   return html`
     <h1>${frase((textos.cuaderno || {}).titulo)}</h1>
+    ${
+      // ***Lo que falta, lo primero***: *si el cuaderno esta incompleto se dice antes que nada. Quien lee «tienes 5
+      // apuntes» sin saber que faltan dos **cree que su cuaderno esta bien**.*
+      faltanPorCargar.length
+        ? html`<p className="aviso aviso-error" role="alert">${frase(faltanPorCargarTexto)}</p>`
+        : null
+    }
     ${
       // «Te falta 1 cosa por apuntar» / «No te falta nada por apuntar»: lo primero que se lee, y lo que
       // contesta a la pregunta con la que se abre esta pantalla. Viene del servidor y **solo está si el
@@ -431,6 +442,8 @@ export function pantallaDeMiCuaderno(propiedades) {
       textos=${propiedades.textos}
       apuntes=${propiedades.apuntes}
       faltantes=${propiedades.faltantes}
+      faltanPorCargar=${propiedades.faltanPorCargar}
+      faltanPorCargarTexto=${propiedades.faltanPorCargarTexto}
       ventas=${propiedades.ventas}
       medidas=${propiedades.medidas}
       analiticas=${propiedades.analiticas}

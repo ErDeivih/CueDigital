@@ -3487,6 +3487,18 @@ function datosDelCuaderno() {
   const p = (clave) => t(`plan.${clave}`, "");
   const cyl = (clave) => t(`cuaderno_cyl.${clave}`, "");
 
+  // ***Lo que NO se ha podido cargar*** (21/10/2026, D03): *el cuaderno junta **tres** secciones
+  // -tratamientos, abonos y labores-, asi que un fallo parcial **no deja la lista vacia: la deja incompleta**, que
+  // es peor -parece completa-. Aqui se dice **que** falta, y el aviso va arriba.*
+  const LAS_CARGAS_DEL_CUADERNO = [
+    ["tratamientos", "tratamientos"],
+    ["fertilizaciones", "abonos"],
+    ["labores", "labores y cosechas"],
+  ];
+  const faltanPorCargar = LAS_CARGAS_DEL_CUADERNO.filter(
+    ([clave]) => estado.cargas[clave] === "fallo",
+  ).map(([, loQueEs]) => loQueEs);
+
   // --- 1. Lo que tengo apuntado este año --------------------------------------------------
   //
   // Cada apunte es una ficha (rediseño de la ronda 79, `docs/stitch/rediseno/mi_cuaderno.png`): su
@@ -3582,6 +3594,16 @@ function datosDelCuaderno() {
   const enlaces = t("registro_electronico.enlaces", []) || [];
 
   return {
+    // ***Y lo que falta, dicho***: *«no se han podido cargar: labores» - y **lo que se ve no esta completo**.*
+    faltanPorCargar,
+    // ***Ojo con `m`***: *en esta funcion `m` es **`medidas`**, no `maestros` -lo cazo la comprobacion del
+    // navegador, que leyo «(labores y cosechas)» sin ninguna frase delante-. La clave va **entera**.*
+    // *El texto se compone con el que ya existe y esta servido -`maestros.sin_fallo`- y la lista de lo que falta:
+    // **no se anade una clave nueva** sin saber donde vive el vocabulario del cuaderno, y asi no queda una frase sin
+    // traducir por un sitio que nadie mira.*
+    faltanPorCargarTexto: faltanPorCargar.length
+      ? `${t("maestros.sin_fallo", "")} (${faltanPorCargar.join(", ")})`
+      : "",
     textos: { cuaderno: t("cuaderno", {}) },
     apuntes: {
       // El número con su palabra en singular o en plural: «1 apuntes» es lo primero que hace desconfiar
