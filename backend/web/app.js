@@ -25,6 +25,8 @@ import {
   loQueSePuedeMandar,
   // *Y la sesión se lee **del vale**, que es lo que `api()` manda: así no pueden discrepar.*
   sesionDelToken,
+  // *Si un 401 tiene que cerrar la sesion -solo si es el vale de ahora-.*
+  hayQueCerrarLaSesion,
   // *Una pestana a la vez para vaciar la cola.*
   pedirElTurno,
   soltarElTurno,
@@ -672,7 +674,11 @@ async function api(ruta, opciones = {}) {
   const { token: _elToken, ...lasOpciones } = opciones;
   const respuesta = await fetch(ruta, { ...lasOpciones, headers: cabeceras });
   if (respuesta.status === 401) {
-    salir(false);
+    // ***Y solo se cierra si el vale que fallo es el de AHORA*** (21/10/2026, D03): *un 401 del vale viejo -el que
+    // el vaciado captura al empezar, o una peticion que estaba en vuelo cuando entro otra cuenta- **no puede cerrar
+    // la sesion nueva**, que no ha fallado. El encargo lo pide con estas palabras: «un 401 antiguo tampoco debe
+    // cerrar una cuenta nueva que entro mientras la peticion estaba en vuelo».*
+    if (hayQueCerrarLaSesion(elToken, estado.token)) salir(false);
     throw new Error("sin permiso");
   }
   return respuesta;

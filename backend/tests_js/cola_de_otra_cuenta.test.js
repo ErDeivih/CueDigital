@@ -7,6 +7,7 @@ import {
   loQueSePuedeMandar,
   pedirElTurno,
   soltarElTurno,
+  hayQueCerrarLaSesion,
 } from "../web/nucleo.js";
 
 /**
@@ -108,5 +109,30 @@ test("soltar el turno de OTRO no se lo quita", () => {
   soltarElTurno(almacen, { dueno: "pestana-B" });
   const sigue = pedirElTurno(almacen, { dueno: "pestana-B", ahora: 1_000_001, duraMs: 30000 });
   assert.equal(sigue.turno, false, "***B no puede quitarle el turno a A***");
+});
+
+// ---------------------------------------------------------------------------
+// ***Un 401 viejo no cierra la sesion nueva*** (21/10/2026, D03)
+// ---------------------------------------------------------------------------
+
+test("un 401 del vale VIEJO no cierra la sesion de ahora", () => {
+  // *El vaciado manda con el vale capturado al empezar; si mientras tanto entra otra cuenta y el viejo vale vuelve
+  // con 401, **cerrar la sesion seria cerrarle la de quien no ha fallado**.*
+  assert.equal(
+    hayQueCerrarLaSesion("vale-de-A", "vale-de-B"),
+    false,
+    "***un 401 de otro vale NO puede cerrar la sesion nueva***",
+  );
+});
+
+test("y un 401 del vale de AHORA si la cierra", () => {
+  // *El control positivo: la sesion que si ha caducado se cierra.*
+  assert.equal(hayQueCerrarLaSesion("el-mismo", "el-mismo"), true);
+});
+
+test("sin vale que fallo, no se cierra nada", () => {
+  // *No se puede saber de quien era: **se prefiere que tenga que volver a entrar a cerrarle una sesion buena**.*
+  assert.equal(hayQueCerrarLaSesion(null, "vale-de-B"), false);
+  assert.equal(hayQueCerrarLaSesion(undefined, "vale-de-B"), false);
 });
 

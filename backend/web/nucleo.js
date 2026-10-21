@@ -282,6 +282,24 @@ export function decideQueHacer(cola, hayRed) {
 /** Lee usuario y finca del formato carga.firma que emite security.crear_token.
  * Solo identifica el contexto local; la firma y el permiso los comprueba el servidor.
  */
+/**
+ * ***¿Hay que cerrar la sesión con este 401?*** (21/10/2026, D03).
+ *
+ * *El encargo: «un **401 antiguo** tampoco debe cerrar una cuenta nueva que entró mientras la petición estaba en
+ * vuelo».*
+ *
+ * *Y pasaba: `api` cerraba sesión con **cualquier** 401. El vaciado de la cola manda con **el vale capturado al
+ * empezar** -para que un cambio de cuenta no se cuele-, así que si ese vale viejo vuelve con un 401, **se le cierra
+ * la sesión a la cuenta nueva, que no ha fallado**.*
+ *
+ * ***La regla***: *solo se cierra si el vale que falló es **el de ahora**. Y si no hay vale que falló, **no se
+ * cierra**: es preferible que tenga que volver a entrar a cerrarle una sesión buena.*
+ */
+export function hayQueCerrarLaSesion(elTokenQueFallo, elTokenDeAhora) {
+  if (!elTokenQueFallo) return false;
+  return elTokenQueFallo === elTokenDeAhora;
+}
+
 export function sesionDelToken(token) {
   if (!token || typeof token !== "string") return null;
   const partes = token.split(".");
