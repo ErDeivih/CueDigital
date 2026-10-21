@@ -14987,3 +14987,41 @@ test("los rechazos de una cuenta no los ve otra", async () => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// ***D03: un fallo no es un cero*** (21/10/2026)
+// ---------------------------------------------------------------------------
+
+test("un fallo de facturas no es cero facturas", async () => {
+  // *`cargarDatos` pedia 32 secciones con `.catch(() => [])`: **un fallo se convertia en «no hay datos»**. El
+  // encargo lo dice con estas palabras: «un fallo de facturas no implica cero facturas».*
+  //
+  // *Ahora cada seccion **apunta como fue**, y esto lo comprueba: con el servidor fallando en `/api/facturas`, la
+  // seccion queda **como fallo** -no desaparece en silencio-, y con el servidor bien, **no figura como fallo**.*
+  const elQueFalla = await cargarAplicacion({
+    "/api/facturas": falla({ detail: "El servidor se ha caido." }, 500),
+  });
+  const loQueFallo = elQueFalla.app.loQueNoSePudoCargar();
+  assert.ok(
+    loQueFallo.facturas,
+    `***un fallo de facturas NO es «no hay facturas»***: ${JSON.stringify(loQueFallo).slice(0, 300)}`,
+  );
+
+  // *Y el control positivo: cuando el servidor va bien, la seccion no figura como fallo.*
+  const elQueVaBien = await cargarAplicacion({});
+  assert.equal(
+    elQueVaBien.app.loQueNoSePudoCargar().facturas,
+    undefined,
+    "***una carga buena no puede apuntarse como fallo***",
+  );
+});
+
+test("y un fallo de las tierras tampoco es «no hay tierras»", async () => {
+  // *La misma trampa en otra seccion: si `/api/parcelas` falla, la pantalla no puede decir que la finca no tiene
+  // tierras -que es una afirmacion sobre la finca, no sobre la red-.*
+  const elQueFalla = await cargarAplicacion({
+    "/api/parcelas": falla({ detail: "El servidor se ha caido." }, 500),
+  });
+  const loQueFallo = elQueFalla.app.loQueNoSePudoCargar();
+  assert.ok(loQueFallo.parcelas, `***un fallo de tierras no es una finca sin tierras***: ${JSON.stringify(loQueFallo).slice(0, 300)}`);
+});
+

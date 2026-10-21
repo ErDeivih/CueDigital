@@ -554,6 +554,9 @@ const estado = {
   mapa: null,
   // *Se rellena justo despues del objeto: la clave depende de quien esta dentro, y `estado` aun no existe aqui.*
   ultimo: null,
+  // ***Como fue cada carga*** (21/10/2026, D03): *`bien` o `fallo`, por seccion. **Un fallo no es un cero.***
+  cargas: {},
+  porQueFallo: {},
   confirmacion: null,
   // El dictado: lo que se ha escrito o dicho, y lo que ha entendido el servidor.
   dictadoTexto: "",
@@ -5809,6 +5812,38 @@ function olvidarLaVistaDeLasTierras() {
   }
 }
 
+/**
+ * ***Pide una sección y APUNTA cómo fue*** (21/10/2026, D03).
+ *
+ * *`cargarDatos` pedía 25 secciones con `.catch(() => [])` / `.catch(() => null)`: **un fallo se convertía en «no
+ * hay datos»**. El encargo lo dice con estas palabras: «**un fallo de facturas no implica cero facturas** ni deja
+ * guardar una propuesta con referencias vacías».*
+ *
+ * ***Un fallo y una lista vacía no son lo mismo***, y la pantalla tiene que poder distinguirlos. Aquí se apunta el
+ * fallo en `estado.cargas` -para que quien pinte lo diga- y **se devuelve el valor por defecto solo para que la
+ * pantalla no reviente**. *Quien pinte **tiene que mirar `estado.cargas`**; si no, sigue enseñando un cero que no
+ * es verdad.*
+ */
+function unaSeccion(clave, ruta, porDefecto) {
+  return apiJson(ruta)
+    .then((lo) => {
+      estado.cargas[clave] = "bien";
+      delete estado.porQueFallo[clave];
+      return lo;
+    })
+    .catch((fallo) => {
+      estado.cargas[clave] = "fallo";
+      estado.porQueFallo[clave] = (fallo && fallo.message) || "";
+      return porDefecto;
+    });
+}
+
+/** ***Lo que no se pudo cargar***, por sección, con su motivo (21/10/2026). *Es lo que se comprueba desde las
+ * pruebas: sin esto no había forma de saber, desde fuera, si un fallo se registró o se tomó por «no hay datos».* */
+export function loQueNoSePudoCargar() {
+  return { ...estado.porQueFallo };
+}
+
 async function cargarDatos() {  const [
     campana,
     campanas,
@@ -5851,53 +5886,53 @@ async function cargarDatos() {  const [
     // Los avisos de la maquinaria (T14): ver el porqué donde se piden.
     avisosDeLaMaquinaria,
   ] = await Promise.all([
-    apiJson("/api/campanas/actual").catch(() => null),
+    unaSeccion("campanas_actual", "/api/campanas/actual", null),
     // **Los años del cuaderno** (ronda 93): sin la lista no se puede corregir ni borrar ninguno, porque
     // `cosaCargada` busca la cosa entre lo que hay cargado. Se pide con el resto: es una lista de dos o
     // tres filas.
-    apiJson("/api/campanas").catch(() => []),    apiJson("/api/parcelas").catch(() => []),
-    apiJson("/api/productos").catch(() => []),
-    apiJson("/api/fertilizantes").catch(() => []),
-    apiJson("/api/aplicadores").catch(() => []),
-    apiJson("/api/asesores").catch(() => []),
-    apiJson("/api/equipos").catch(() => []),
-    apiJson("/api/instalaciones").catch(() => []),
-    apiJson("/api/planes").catch(() => []),
-    apiJson("/api/analiticas").catch(() => []),
-    apiJson("/api/medidas").catch(() => null),
-    apiJson("/api/ventas").catch(() => []),
-    apiJson("/api/documentos").catch(() => null),
-    apiJson("/api/productos/cesta/situacion").catch(() => null),
-    apiJson("/api/cultivos").catch(() => null),
-    apiJson("/api/grupos").catch(() => []),
-    apiJson(conLaCampana("/api/cuaderno/falta")).catch(() => null),
-    apiJson(conLaCampana("/api/firmas/estado")).catch(() => null),
-    apiJson("/api/facturas").catch(() => []),
-    apiJson("/api/facturas/estado").catch(() => null),
-    apiJson(conLaCampana("/api/cuaderno-cyl/que-falta")).catch(() => null),
-    apiJson("/api/mi-finca").catch(() => null),
+    unaSeccion("campanas", "/api/campanas", []),    unaSeccion("parcelas", "/api/parcelas", []),
+    unaSeccion("productos", "/api/productos", []),
+    unaSeccion("fertilizantes", "/api/fertilizantes", []),
+    unaSeccion("aplicadores", "/api/aplicadores", []),
+    unaSeccion("asesores", "/api/asesores", []),
+    unaSeccion("equipos", "/api/equipos", []),
+    unaSeccion("instalaciones", "/api/instalaciones", []),
+    unaSeccion("planes", "/api/planes", []),
+    unaSeccion("analiticas", "/api/analiticas", []),
+    unaSeccion("medidas", "/api/medidas", null),
+    unaSeccion("ventas", "/api/ventas", []),
+    unaSeccion("documentos", "/api/documentos", null),
+    unaSeccion("productos_cesta_situacion", "/api/productos/cesta/situacion", null),
+    unaSeccion("cultivos", "/api/cultivos", null),
+    unaSeccion("grupos", "/api/grupos", []),
+    unaSeccion("cuaderno_falta", conLaCampana("/api/cuaderno/falta"), null),
+    unaSeccion("firmas_estado", conLaCampana("/api/firmas/estado"), null),
+    unaSeccion("facturas", "/api/facturas", []),
+    unaSeccion("facturas_estado", "/api/facturas/estado", null),
+    unaSeccion("cuaderno_cyl_que_falta", conLaCampana("/api/cuaderno-cyl/que-falta"), null),
+    unaSeccion("mi_finca", "/api/mi-finca", null),
     // **Estos dos faltaban, y se notaba en pantalla.** `estado.tratamientos` no lo rellenaba
     // nadie: la pantalla «mi cuaderno» enseñaba «0 apuntes de producto» y una lista vacía
     // aunque el agricultor tuviera el año lleno de tratamientos. Y el resumen es lo que permite
     // decir la verdad al final de la pantalla de inicio («todavía no has apuntado nada» solo se
     // dice si de verdad no hay nada apuntado). Los dos se piden aquí, con el resto.
-    apiJson("/api/tratamientos").catch(() => []),
-    apiJson("/api/fertilizaciones").catch(() => []),
-    apiJson("/api/labores").catch(() => []),
-    apiJson(conLaCampana("/api/firmas")).catch(() => []),
-    apiJson("/api/cuaderno/resumen").catch(() => null),
+    unaSeccion("tratamientos", "/api/tratamientos", []),
+    unaSeccion("fertilizaciones", "/api/fertilizaciones", []),
+    unaSeccion("labores", "/api/labores", []),
+    unaSeccion("firmas", conLaCampana("/api/firmas"), []),
+    unaSeccion("cuaderno_resumen", "/api/cuaderno/resumen", null),
     // T12: la tabla de lo que se ha vendido con su pie (el servidor calcula el agregado del conjunto
     // filtrado), las facturas nuestras y los cobros.
-    apiJson("/api/ventas/tabla").catch(() => null),
-    apiJson("/api/facturas-emitidas").catch(() => []),
-    apiJson("/api/cobros").catch(() => []),
+    unaSeccion("ventas_tabla", "/api/ventas/tabla", null),
+    unaSeccion("facturas_emitidas", "/api/facturas-emitidas", []),
+    unaSeccion("cobros", "/api/cobros", []),
     // **Los avisos de la maquinaria** (T14, 03/10/2026). Se piden aquí, con el resto, y no al abrir su
     // pantalla, por un motivo: el aviso de «esa máquina no está para trabajar» o «se le ha pasado la
     // inspección» hace falta **donde se elige la máquina para un trabajo**, que es el asistente. Sin
     // esto, el agricultor se enteraría al abrir la lista de maquinaria… y para entonces ya ha hecho el
     // trabajo. Es una consulta pequeña (una fila por máquina con algo que mirar) y no trae la lista
     // entera: solo lo que hay que mirar.
-    apiJson("/api/maquinaria/avisos").catch(() => []),
+    unaSeccion("maquinaria_avisos", "/api/maquinaria/avisos", []),
   ]);
   // **Antes de quedarse con las tierras de ahora, se olvida la vista de antes**: es lo que hace que
   // apuntar, corregir o borrar una tierra desde cualquier pantalla no deje al mapa contando las de
