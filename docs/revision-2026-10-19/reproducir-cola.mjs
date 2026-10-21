@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando } from '../../backend/web/nucleo.js';
+import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando, pedirElTurno, soltarElTurno } from '../../backend/web/nucleo.js';
 
 const source = fs.readFileSync(new URL('../../backend/web/app.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 function funcion(nombre) {
@@ -37,6 +37,8 @@ function preparar() {
     // ***Y el id de comando, que `enviarOApuntar` usa desde el 21/10***: *sin el en el contexto, la funcion
     // revienta y el diagnóstico moria con «rechazar is not a function», que no decia nada de la cola.*
     unIdDeComando,
+    // *Y el turno, que `mandarPendientes` pide desde el 21/10 para no vaciar dos pestañas a la vez.*
+    pedirElTurno, soltarElTurno,
     pintarAvisoPendientes:()=>{}, cargarDatos:async()=>{}, mensaje:x=>x,
     avisoDelServidor:x=>x?.detail||'', leer:(k,d)=>JSON.parse(almacen.getItem(k)||JSON.stringify(d)),
   });

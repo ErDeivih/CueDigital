@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { crearAlmacenMemoria, crearCola, loQueSePuedeMandar } from "../web/nucleo.js";
+import {
+  crearAlmacenMemoria,
+  crearCola,
+  loQueSePuedeMandar,
+  pedirElTurno,
+  soltarElTurno,
+} from "../web/nucleo.js";
 
 /**
  * ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026).
@@ -60,3 +66,47 @@ test("un apunte SIN cuenta no se adivina, y no se pierde", () => {
   assert.equal(suyo.sinCuenta.length, 2);
   assert.equal(cola.tamano(), 2);
 });
+
+// ---------------------------------------------------------------------------
+// ***Una pestana a la vez: el turno para vaciar la cola*** (21/10/2026)
+// ---------------------------------------------------------------------------
+
+test("dos pestanas no vacian la cola a la vez", () => {
+  const almacen = crearAlmacenMemoria();
+  const ahora = 1_000_000;
+
+  // *La primera pestaña toma el turno.*
+  const una = pedirElTurno(almacen, { dueno: "pestana-A", ahora, duraMs: 30000 });
+  assert.equal(una.turno, true, "***la primera tiene que poder***");
+
+  // *La segunda, a la vez, **no**.*
+  const otra = pedirElTurno(almacen, { dueno: "pestana-B", ahora: ahora + 1, duraMs: 30000 });
+  assert.equal(otra.turno, false, "***la segunda NO puede vaciar a la vez***");
+  assert.equal(otra.dueno, "pestana-A");
+});
+
+test("y cuando la primera suelta, la segunda puede", () => {
+  const almacen = crearAlmacenMemoria();
+  const ahora = 1_000_000;
+  pedirElTurno(almacen, { dueno: "pestana-A", ahora, duraMs: 30000 });
+  soltarElTurno(almacen, { dueno: "pestana-A" });
+  const otra = pedirElTurno(almacen, { dueno: "pestana-B", ahora: ahora + 1, duraMs: 30000 });
+  assert.equal(otra.turno, true, "***soltado el turno, el siguiente entra***");
+});
+
+test("un turno CADUCADO no bloquea la cola", () => {
+  // *Si una pestaña se cierra sin soltar -o el movil se apaga-, el turno no puede quedarse para siempre.*
+  const almacen = crearAlmacenMemoria();
+  pedirElTurno(almacen, { dueno: "pestana-A", ahora: 1_000_000, duraMs: 30000 });
+  const tarde = pedirElTurno(almacen, { dueno: "pestana-B", ahora: 1_100_000, duraMs: 30000 });
+  assert.equal(tarde.turno, true, "***un cerrojo sin caducidad es una cola parada***");
+});
+
+test("soltar el turno de OTRO no se lo quita", () => {
+  const almacen = crearAlmacenMemoria();
+  pedirElTurno(almacen, { dueno: "pestana-A", ahora: 1_000_000, duraMs: 30000 });
+  soltarElTurno(almacen, { dueno: "pestana-B" });
+  const sigue = pedirElTurno(almacen, { dueno: "pestana-B", ahora: 1_000_001, duraMs: 30000 });
+  assert.equal(sigue.turno, false, "***B no puede quitarle el turno a A***");
+});
+

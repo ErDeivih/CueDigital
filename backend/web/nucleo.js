@@ -301,6 +301,52 @@ export function sesionDelToken(token) {
   }
 }
 
+/**
+ * ***El turno para vaciar la cola: una pestaña a la vez*** (21/10/2026).
+ *
+ * *El encargo: «evitar dos procesadores concurrentes de la cola en eventos `online`, arranque y varias pestañas.
+ * Bloqueo/lease con caducidad **y autoridad de idempotencia en el servidor, sin depender solo del bloqueo
+ * local**».*
+ *
+ * *La segunda mitad ya estaba -cada apunte lleva su `clave_de_reenvio` y el servidor reconoce el reintento-, pero
+ * **la primera no**: dos pestañas abiertas vaciaban a la vez, y aunque el servidor no duplicara, **se mandaban las
+ * mismas peticiones dos veces** y el trabajo se repartía de forma impredecible.*
+ *
+ * ***Y el turno caduca***: *si una pestaña se cierra sin soltarlo -o el movil se apaga-, el turno **no se queda
+ * bloqueado para siempre**; a los `duraMs` lo puede tomar otra. **Un cerrojo sin caducidad es una cola parada.***
+ *
+ * ***Si no se puede escribir el turno, se deja pasar***: *bloquear el envío porque el almacén no deja anotar quién
+ * manda sería peor que mandar dos veces -y el servidor desduplica igualmente-.*
+ */
+export function pedirElTurno(almacen, { clave = "cuedigital.cola.turno", dueno, ahora = Date.now(), duraMs = 30000 } = {}) {
+  try {
+    const bruto = almacen.getItem(clave);
+    if (bruto) {
+      const elTurno = JSON.parse(bruto);
+      // *Si es de otro y **no ha caducado**, no es nuestro.*
+      if (elTurno && elTurno.dueno && elTurno.dueno !== dueno && Number(elTurno.caduca) > ahora) {
+        return { turno: false, dueno: elTurno.dueno, caduca: Number(elTurno.caduca) };
+      }
+    }
+    // *Se toma -o se renueva, si ya era nuestro-.*
+    almacen.setItem(clave, JSON.stringify({ dueno, caduca: ahora + duraMs }));
+    return { turno: true };
+  } catch (error) {
+    return { turno: true, sinAlmacen: true };
+  }
+}
+
+/** ***Soltar el turno***, y **solo si es nuestro**: *no se le quita a otra pestaña lo que no es nuestro.* */
+export function soltarElTurno(almacen, { clave = "cuedigital.cola.turno", dueno } = {}) {
+  try {
+    const bruto = almacen.getItem(clave);
+    const elTurno = bruto ? JSON.parse(bruto) : null;
+    if (elTurno && elTurno.dueno === dueno) almacen.removeItem(clave);
+  } catch (error) {
+    // *Si no se puede soltar, **caduca solo**: no se queda bloqueada la cola.*
+  }
+}
+
 export function loQueSePuedeMandar(cola, cuenta) {
   const suyos = [];
   const deOtraCuenta = [];

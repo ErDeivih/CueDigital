@@ -25,6 +25,9 @@ import {
   loQueSePuedeMandar,
   // *Y la sesión se lee **del vale**, que es lo que `api()` manda: así no pueden discrepar.*
   sesionDelToken,
+  // *Una pestana a la vez para vaciar la cola.*
+  pedirElTurno,
+  soltarElTurno,
   // *Un id de comando que no se repite entre pestañas ni reinicios.*
   unIdDeComando,
   diasDeEspera,
@@ -871,6 +874,18 @@ async function mandarPendientes() {
   // la sesión cambia, en vez de seguir con una que ya no es la de la pantalla.*
   const elTokenDelVaciado = estado.token;
   const { suyos } = loQueSePuedeMandar(cola, laDelPrincipio);
+  // ***Y una sola pestaña vacía a la vez*** (21/10/2026): *el encargo pide «evitar dos procesadores concurrentes de
+  // la cola en eventos `online`, arranque y varias pestañas», con un **bloqueo/lease con caducidad**. El servidor
+  // ya desduplica por la clave de reenvío, pero sin esto **las mismas peticiones salían dos veces** y el trabajo se
+  // repartía de forma impredecible.*
+  const elDuenoDelTurno = `${laDelPrincipio || "sin-sesion"}:${laInstalacion()}`;
+  const { turno } = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno });
+  if (!turno) {
+    // *Otra pestaña está vaciando: **no se manda nada**, y lo que hay sigue en la cola.*
+    pintarAvisoPendientes();
+    return;
+  }
+  try {
   for (const apunte of suyos) {
     // ***Y si la cuenta cambia A MITAD del vaciado, se para*** (19/10/2026): *el vale se lee **en cada `api()`**,
     // asi que sin esto los apuntes siguientes se mandarian con la sesion nueva -el mismo fallo, solo que un
@@ -937,7 +952,12 @@ async function mandarPendientes() {
     // de memoria se han quedado viejas. Se recargan sin molestar a nadie.
     await cargarDatos().catch(() => {});
   }
-  pintarAvisoPendientes();
+  } finally {
+    // ***Y se suelta el turno SIEMPRE*** (21/10/2026): *también si se sale por un `break` o revienta algo. Si no,
+    // la cola quedaría parada hasta que caducara el turno, y eso el agricultor lo ve como «no se manda nada».*
+    soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno });
+    pintarAvisoPendientes();
+  }
 }
 
 function pintarAvisoPendientes() {
