@@ -35,6 +35,68 @@ def el_texto(nav) -> str:
     return str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText") or "")
 
 
+def el_texto_quieto(nav, segundos: float = 25.0) -> str:
+    """***El texto de la pantalla, cuando ya no cambia*** (21/10/2026).
+
+    *Antes se esperaba un tiempo fijo -`_ = el_texto_quieto(nav)`-, y eso hace **pruebas intermitentes**: la primera pasada
+    de este mismo guion fallo una vez y a la siguiente paso, sin tocar nada. **Una prueba que a veces pasa no prueba
+    nada.***
+
+    *Aqui se espera a que el texto sea el mismo dos veces seguidas: la pantalla ha terminado de pintarse de
+    verdad.*
+    """
+    anterior = ""
+    for _ in range(int(segundos / 0.4)):
+        actual = el_texto(nav)
+        if actual and actual == anterior:
+            return actual
+        anterior = actual
+        time.sleep(0.4)
+    return el_texto(nav)
+
+
+def esperar_a_que_aparezca(nav, lo_que_busca: str, segundos: float = 15.0) -> str:
+    """***Espera a que ese texto este en la pantalla, y devuelve lo ultimo que se leyo*** (21/10/2026).
+
+    *La lectura de un instante no vale: la pantalla **se pinta mas de una vez** -primero sin datos, despues con lo
+    que ha contestado el servidor- y a veces redirige. **Medido**: la comprobacion de las campañas fallaba una vez de
+    cada dos, sin tocar nada.*
+
+    *Una prueba que a veces pasa no prueba nada, asi que se espera **a que aparezca**, que es lo que se quiere saber,
+    y se falla con el ultimo texto leido si no llega.*
+    """
+    el_ultimo = ""
+    for _ in range(int(segundos / 0.4)):
+        el_ultimo = el_texto(nav)
+        if lo_que_busca in el_ultimo:
+            return el_ultimo
+        time.sleep(0.4)
+    return el_ultimo
+
+
+def abrir_y_esperar(nav, el_proxy: str, camino: str, lo_que_busca: str, intentos: int = 3) -> str:
+    """***Abre la pantalla y espera a que diga lo que se busca, reintentando*** (21/10/2026).
+
+    *Todo pasa por el proxy, y a veces una carga de pagina se queda a medias: la pantalla se queda en la de entrar o
+    a medio pintar. Se vio porque **cada pasada fallaba una pantalla distinta** -analisis, campañas, emitidas- sin
+    tocar nada: **el fallo era del instrumento, no de la aplicacion**.*
+
+    *Se reintenta la navegacion, no la comprobacion: si el texto aparece, aparece; lo que puede fallar es que la
+    pagina llegue a pintarse.*
+    """
+    el_ultimo = ""
+    for _ in range(intentos):
+        nav.abrir(f"{el_proxy}/{camino}", esperar=3.0)
+        for _ in range(30):
+            if el_texto(nav):
+                break
+            time.sleep(0.5)
+        el_ultimo = esperar_a_que_aparezca(nav, lo_que_busca, segundos=12.0)
+        if lo_que_busca in el_ultimo:
+            return el_ultimo
+    return el_ultimo
+
+
 def el_aviso(nav) -> str:
     return str(nav.evaluar("(document.querySelector('#aviso-cargas') || {}).innerText") or "")
 
@@ -62,7 +124,7 @@ def main() -> int:
                     if el_texto(nav):
                         break
                     time.sleep(0.5)
-                time.sleep(2.0)
+                _ = el_texto_quieto(nav)
                 el_suyo = el_texto(nav)
                 el_de_arriba = el_aviso(nav)
                 fallos += not comprobar(
@@ -93,8 +155,8 @@ def main() -> int:
                     if el_texto(nav):
                         break
                     time.sleep(0.5)
-                time.sleep(2.0)
-                el_suyo = el_texto(nav)
+                _ = el_texto_quieto(nav)
+                el_suyo = esperar_a_que_aparezca(nav, "no es que no tengas")
                 fallos += not comprobar(
                     sin_parcela in el_suyo,
                     "***sin fallar SU carga, las tierras dicen que no hay -que es la verdad-***",
@@ -118,8 +180,8 @@ def main() -> int:
                     if el_texto(nav):
                         break
                     time.sleep(0.5)
-                time.sleep(2.0)
-                el_cuaderno = el_texto(nav)
+                _ = el_texto_quieto(nav)
+                el_cuaderno = esperar_a_que_aparezca(nav, "no está completo")
                 fallos += not comprobar(
                     # ***El cuaderno tiene su frase propia***, y es mejor que la generica: no dice «no es que no
                     # tengas» -que ahi no encaja- sino **«lo que ves no esta completo»**, que es lo que pasa.
@@ -151,7 +213,7 @@ def main() -> int:
                     if "factura" in el_texto(nav).lower():
                         break
                 time.sleep(1.5)
-                el_emitidas = el_texto(nav)
+                el_emitidas = esperar_a_que_aparezca(nav, "no es que no tengas ninguna")
                 fallos += not comprobar(
                     "no es que no tengas ninguna" in el_emitidas,
                     "***las facturas emitidas dicen que no se pudieron cargar***",
@@ -166,13 +228,7 @@ def main() -> int:
                 print(f"\n{numero}. {nombre}, CON SU CARGA FALLANDO")
                 with el_proxy_que_falla(direccion, clave_api) as el_proxy:
                     _poner_la_sesion(nav, el_proxy, cuenta["token"])
-                    nav.abrir(f"{el_proxy}/{camino}", esperar=3.0)
-                    for _ in range(30):
-                        if el_texto(nav):
-                            break
-                        time.sleep(0.5)
-                    time.sleep(2.0)
-                    el_suyo = el_texto(nav)
+                    el_suyo = abrir_y_esperar(nav, el_proxy, camino, "no es que no tengas")
                     fallos += not comprobar(
                         "no es que no tengas" in el_suyo,
                         f"***{nombre.lower()} dicen que no se pudieron cargar***",
@@ -188,13 +244,7 @@ def main() -> int:
                 print(f"\n{numero}. {nombre}, CON SU CARGA FALLANDO")
                 with el_proxy_que_falla(direccion, clave_api) as el_proxy:
                     _poner_la_sesion(nav, el_proxy, cuenta["token"])
-                    nav.abrir(f"{el_proxy}/{camino}", esperar=3.0)
-                    for _ in range(30):
-                        if el_texto(nav):
-                            break
-                        time.sleep(0.5)
-                    time.sleep(2.0)
-                    el_suyo = el_texto(nav)
+                    el_suyo = abrir_y_esperar(nav, el_proxy, camino, "no es que no tengas")
                     fallos += not comprobar(
                         "no es que no tengas" in el_suyo,
                         f"***{nombre.lower()} dicen que no se pudieron cargar***",
