@@ -2597,7 +2597,12 @@ async function guardarLaFotoDeLaPac(recalcular = false) {
     } else if (!respuesta.ok) {
       suyo.error = avisoDelServidor(cuerpo) || mensaje("no_se_pudo");
     } else {
-      suyo.aviso = `Guardada la foto de ${cuerpo.anio}, version ${cuerpo.version}.`;
+      // ***Y si ya estaba, se dice*** (19/10/2026): *un reintento con el mismo contenido **devuelve la foto que ya
+      // habia** en vez de crear otra igual. Decirlo evita que el agricultor crea que se ha guardado algo nuevo, y
+      // le dice cual es la que tiene.*
+      suyo.aviso = cuerpo.ya_estaba
+        ? `Esa foto ya estaba guardada: ${cuerpo.anio}, version ${cuerpo.version}. No se ha duplicado.`
+        : `Guardada la foto de ${cuerpo.anio}, version ${cuerpo.version}.`;
       suyo.conflicto = null;
       await pedirElHistorialDeLaPac();
     }

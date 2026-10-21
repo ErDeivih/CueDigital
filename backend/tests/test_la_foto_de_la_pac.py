@@ -187,12 +187,16 @@ def test_sin_cambios_la_huella_coincide_y_se_guarda(cliente, cuenta, campana, cr
 
 
 def test_dos_guardados_a_la_vez_no_pisan_ninguna_version(cliente, cuenta, campana, crear_parcela):
-    """***Ni un 500, ni una version sobrescrita.***
+    """***Ni un 500, ni una version sobrescrita*** — y **dos iguales son la misma foto**.
 
-    *Dos guardados simultaneos pueden pedir el mismo numero. **El indice unico lo corta y se reintenta**: salen la
-    1 y la 2, cada una con lo suyo.*
+    *Dos guardados simultaneos **del mismo contenido** piden el mismo numero y encuentran la misma huella: **los dos
+    contestan la version 1**, que es una sola fila. **Ninguno se pierde y ninguno pisa al otro**, que es lo que
+    importa.*
+
+    ***Y la version sube cuando la evaluacion cambia***, que es el otro lado: *se comprueba aqui mismo cambiando la
+    finca y guardando otra vez.*
     """
-    crear_parcela(alias="La de la carrera")
+    la_parcela = crear_parcela(alias="La de la carrera")
 
     from concurrent.futures import ThreadPoolExecutor
 
@@ -207,12 +211,44 @@ def test_dos_guardados_a_la_vez_no_pisan_ninguna_version(cliente, cuenta, campan
     assert los_codigos == [200, 200], (
         f"***las dos tienen que salir bien***: {[una.text[:200] for una in las_dos]}"
     )
-    las_versiones = sorted(una.json()["version"] for una in las_dos)
-    assert las_versiones == [1, 2], f"***y con numeros distintos***: {las_versiones}"
+    # ***Un solo id y una sola version***: *el mismo contenido es la misma foto, se pidan a la vez o no.*
+    los_ids = {una.json()["id"] for una in las_dos}
+    las_versiones = {una.json()["version"] for una in las_dos}
+    assert los_ids == {list(los_ids)[0]}, f"***dos filas para el mismo contenido***: {los_ids}"
+    assert las_versiones == {1}, f"***y una sola version***: {las_versiones}"
+    assert cliente.get("/api/pac/foto/2027/1", headers=cuenta["cabeceras"]).status_code == 200
 
-    # *Y las dos se pueden leer.*
-    for version in (1, 2):
-        assert cliente.get(f"/api/pac/foto/2027/{version}", headers=cuenta["cabeceras"]).status_code == 200
+    # ***Y el otro lado, con la finca cambiada: version 2.***
+    cliente.put(
+        f"/api/parcelas/{la_parcela['id']}",
+        headers=cuenta["cabeceras"],
+        json={"alias": "La de la carrera, corregida"},
+    )
+    la_de_verdad = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_de_verdad["version"] == 2, f"***una evaluacion distinta SI es otra version***: {la_de_verdad}"
+
+
+def test_el_mismo_contenido_guardado_dos_veces_es_la_MISMA_foto(cliente, cuenta, campana, crear_parcela):
+    """***La respuesta perdida no llena el historial de fotos iguales*** (19/10/2026).
+
+    *El movil guardaba, se perdia la respuesta, reintentaba, y quedaba una segunda version **con el mismo
+    contenido**. La huella es del contenido, asi que **dos evaluaciones identicas son la misma foto**: se contesta la
+    que ya estaba, con `ya_estaba` para poder decirlo.*
+    """
+    crear_parcela(alias="La del reintento")
+
+    la_primera = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_primera["version"] == 1 and la_primera["ya_estaba"] is False, la_primera
+
+    la_repetida = _la_foto(cliente, cuenta, {"anio": 2027})
+    assert la_repetida["id"] == la_primera["id"], f"***tiene que ser la misma foto***: {la_repetida}"
+    assert la_repetida["version"] == 1, la_repetida
+    assert la_repetida["ya_estaba"] is True, la_repetida
+
+    # *Y en el historial hay UNA, no dos.*
+    el_historial = cliente.get("/api/pac/foto/historial", headers=cuenta["cabeceras"]).json()
+    las_de_2027 = [una for una in el_historial["las_fotos"] if una["anio"] == 2027]
+    assert len(las_de_2027) == 1, f"***el reintento no puede dejar dos fotos***: {las_de_2027}"
 
 
 # -----------------------------------------------------------------------------------------------------------

@@ -364,7 +364,35 @@ def guardar_la_foto_de_la_pac(
     el_texto = json.dumps(el_suyo, ensure_ascii=False, sort_keys=True)
     la_huella = hashlib.sha256(el_texto.encode("utf-8")).hexdigest()
 
+    # ***Y si ya hay una foto con ESTE MISMO contenido, se devuelve esa*** (19/10/2026).
+    #
+    # *El contrato pide «idempotencia tras respuesta perdida», y aqui pasaba lo contrario: **el movil guardaba, se
+    # perdia la respuesta, reintentaba, y quedaba una segunda version con el MISMO contenido**. No era corrupcion
+    # -`max+1` y el indice unico aguantaban-, pero **el historial se llenaba de fotos iguales** y el agricultor no
+    # sabia cual ensenar.*
+    #
+    # ***La huella es del contenido, asi que dos evaluaciones identicas son la misma foto.*** *Si quiere una
+    # version nueva, cambia algo -que es lo que una version nueva significa-.*
     for _intento in range(5):
+        # ***La huella se mira DENTRO del intento, no antes*** (19/10/2026): *dos guardados simultaneos del mismo
+        # contenido **no se ven** al mirar -los dos miran antes de insertar-, el perdedor choca con el indice unico
+        # y reintenta. **Si la comprobacion esta fuera, el reintento no vuelve a mirar y crea la version 2 con el
+        # mismo contenido** -que es justo lo que se venia a evitar-.*
+        #
+        # *Aqui, en cambio, cuando el perdedor reintenta **la otra ya esta commiteada**, la encuentra y devuelve
+        # esa. Se vio porque la prueba de concurrencia daba `{1, 2}` unas veces y `{1}` otras: **una prueba que a
+        # veces pasa es una prueba que no prueba**.*
+        la_que_ya_estaba = db.scalar(
+            select(models.FotoDeLaPac).where(
+                models.FotoDeLaPac.explotacion_id == explotacion.id,
+                models.FotoDeLaPac.anio == datos.anio,
+                models.FotoDeLaPac.huella == la_huella,
+            )
+        )
+        if la_que_ya_estaba is not None:
+            # *`ya_estaba` va en la respuesta para que la pantalla lo diga: **no es un fallo, es la misma foto**.*
+            return {**_la_identidad_de(la_que_ya_estaba), "ya_estaba": True}
+
         la_ultima = (
             db.scalar(
                 select(func.max(models.FotoDeLaPac.version)).where(
@@ -391,7 +419,7 @@ def guardar_la_foto_de_la_pac(
             db.rollback()
             continue
         db.refresh(la_foto)
-        return _la_identidad_de(la_foto)
+        return {**_la_identidad_de(la_foto), "ya_estaba": False}
 
     raise HTTPException(
         status_code=409,
