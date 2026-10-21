@@ -25,6 +25,8 @@ import {
   loQueSePuedeMandar,
   // *Y la sesión se lee **del vale**, que es lo que `api()` manda: así no pueden discrepar.*
   sesionDelToken,
+  // *Un id de comando que no se repite entre pestañas ni reinicios.*
+  unIdDeComando,
   diasDeEspera,
   fechaEnPalabras,
   formateaFecha,
@@ -330,6 +332,10 @@ function almacenSeguro() {
     const prueba = "__cuedigital_prueba__";
     window.localStorage.setItem(prueba, "1");
     window.localStorage.removeItem(prueba);
+    // ***Y se marca como DURABLE*** (21/10/2026): *hace falta que la cola sepa que esto sobrevive a cerrar el
+    // navegador. Sin la marca, memoria y `localStorage` eran indistinguibles y la pantalla decía «guardado» en
+    // los dos casos **—que es el falso éxito reproducido—**.*
+    window.localStorage.esDurable = true;
     return window.localStorage;
   } catch (error) {
     // En modo privado el navegador bloquea el almacenamiento. La aplicación tiene
@@ -692,10 +698,24 @@ function laSesionDeAhora() {
  * *Y está en **un solo sitio** a propósito: las tres ramas de `enviarOApuntar` que encolan -sin cobertura, tras un
  * 5xx y al fallar la red- pasan por aquí, así que el día que cambie algo se cambia una vez.*
  */
-function apuntarSinCobertura(tipo, ruta, datos) {
-  const apuntado = cola.apuntar({ tipo, ruta, datos, cuenta: laSesionDeAhora() });
-  if (!apuntado.guardado) {
-    // *No se pinta el aviso de pendientes: **no hay nada pendiente**, no se guardó.*
+function apuntarSinCobertura(tipo, ruta, datos, contexto = {}) {
+  // ***El dueño y la identidad vienen de FUERA, capturados antes de cualquier `await`*** (21/10/2026): *si se
+  // pidieran aquí, un cambio de cuenta mientras la petición está en vuelo haría que el apunte encolado **se
+  // quedara con la cuenta nueva** —el cruce reproducido—, y el reintento llevaría una clave distinta del primer
+  // intento —la duplicación reproducida—.*
+  const apuntado = cola.apuntar({
+    tipo,
+    ruta,
+    datos,
+    cuenta: contexto.cuenta !== undefined ? contexto.cuenta : laSesionDeAhora(),
+    // *`undefined` deja que la cola genere uno: es el caso de un apunte que no viene de un envío.*
+    id_local: contexto.idLocal,
+  });
+  // ***Y no se promete guardado sin persistencia confirmada***: *`guardado` dice que se escribió; `durable`,
+  // que sobrevive a cerrar el navegador. **En modo privado se escribe en memoria y se pierde**: ahí no se dice
+  // «guardado en el móvil», se dice que no y el formulario se conserva.*
+  if (!apuntado.guardado || !apuntado.durable) {
+    // *No se pinta el aviso de pendientes: **no hay nada pendiente de verdad**, no quedó guardado.*
     return { error: mensaje("no_se_pudo_guardar_el_apunte") };
   }
   pintarAvisoPendientes();
@@ -710,11 +730,37 @@ function apuntarSinCobertura(tipo, ruta, datos) {
  * guardase como "último", el atajo ofrecería crear la misma parcela otra vez.
  */
 async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
+  // ***El contexto y la identidad se capturan AQUÍ, antes de cualquier `await`*** (21/10/2026).
+  //
+  // *Dos defectos reproducidos salían de no hacerlo:*
+  //
+  //   · **el primer POST salía SIN clave**, así que tras perderse la respuesta la cola añadía una nueva y el
+  //     reintento creaba **dos filas de verdad** para una sola intención -reproducido contra servidor real-;
+  //   · **y el dueño se asignaba en el `catch`**, después de esperar: si mientras tanto se cambiaba de cuenta,
+  //     el apunte se quedaba con la cuenta nueva y **se enviaba a la finca equivocada**.*
+  //
+  // *Ahora la clave se sella **antes del primer intento** y viaja en él y en el reintento; y la cuenta, la finca
+  // y el vale se capturan al empezar, no al encolar.*
+  const laSesion = laSesionDeAhora();
+  const elToken = estado.token;
+  const laClave = unIdDeComando();
+  const losDatos =
+    datos && typeof datos === "object" && !Array.isArray(datos)
+      ? { ...datos, clave_de_reenvio: datos.clave_de_reenvio || laClave }
+      : datos;
+  const elContexto = { cuenta: laSesion, idLocal: laClave };
+
   if (!navigator.onLine) {
-    return apuntarSinCobertura(tipo, ruta, datos);
+    return apuntarSinCobertura(tipo, ruta, losDatos, elContexto);
   }
   try {
-    const respuesta = await api(ruta, { method: "POST", body: JSON.stringify(datos) });
+    // ***Con el vale de AHORA, capturado arriba***: *si cambia mientras espera, la petición sigue siendo de quien
+    // la empezó.*
+    const respuesta = await api(ruta, {
+      method: "POST",
+      body: JSON.stringify(losDatos),
+      token: elToken,
+    });
     if (respuesta.ok) {
       const cuerpo = await respuesta.json();
       if (guardarComoUltimo) {
@@ -731,11 +777,11 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
     if (respuesta.status >= 400 && respuesta.status < 500) {
       return { error: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"), estado: respuesta.status };
     }
-    // Un 5xx sí puede ser pasajero: se guarda y se reintenta.
-    return apuntarSinCobertura(tipo, ruta, datos);
+    // Un 5xx sí puede ser pasajero: se guarda y se reintenta -**con la misma clave y el mismo dueño**-.
+    return apuntarSinCobertura(tipo, ruta, losDatos, elContexto);
   } catch (error) {
     // El navegador dice que hay red, pero no llega: es lo normal en el campo.
-    return apuntarSinCobertura(tipo, ruta, datos);
+    return apuntarSinCobertura(tipo, ruta, losDatos, elContexto);
   }
 }
 
@@ -805,15 +851,41 @@ async function mandarPendientes() {
         continue;
       }
       if (respuesta.status >= 400 && respuesta.status < 500) {
+        // ***401 y 403 NO son rechazos definitivos*** (21/10/2026): *el permiso puede volver, o la sesión estar
+        // caducada y renovarse. Descartarlas como «rechazado» sería **tirar una orden válida** del agricultor.*
+        // *Se quedan en la cola y se reintentan cuando haya sesión buena.*
+        if (respuesta.status === 401 || respuesta.status === 403) {
+          break;
+        }
         // Se aparta en vez de borrarlo: perder un apunte del agricultor en silencio
         // es exactamente lo que esta aplicación no puede hacer.
         const cuerpo = await respuesta.json().catch(() => null);
-        rechazados.push({
+        const elRechazo = {
+          // ***Con su identidad completa*** (21/10/2026): *antes solo se guardaban `datos`, `motivo` y `cuando`,
+          // así que un rechazo **no se podía recuperar**: no se sabía de quién era, ni a qué ruta iba, ni cuál
+          // era su identidad. El encargo pide «dueño, identidad/ruta/datos y recuperación».*
+          id_local: apunte.id_local,
+          cuenta: apunte.cuenta || null,
+          tipo: apunte.tipo || null,
+          ruta: apunte.ruta,
           datos: apunte.datos,
           motivo: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"),
+          estado: respuesta.status,
           cuando: apunte.apuntado_en,
-        });
+        };
+        rechazados.push(elRechazo);
+        // ***Y NO se quita hasta que el rechazo esté guardado de verdad*** (21/10/2026).
+        //
+        // *`guardar` **se calla** cuando el almacén falla, y después `cola.quitar` borraba el original: quedaba
+        // **sin pendiente y sin rechazo**, y el apunte se perdía. Es el caso reproducido: `pendientes: 0`,
+        // `rechazados: 0`, `dato_perdido: true`.*
+        //
+        // *Se comprueba **leyendo**, que es lo único que dice la verdad. Si no quedó, se deja en la cola.*
         guardar(CLAVE_RECHAZADOS, rechazados);
+        const losGuardados = leer(CLAVE_RECHAZADOS, []);
+        if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
+          break;
+        }
         cola.quitar(apunte.id_local);
         continue;
       }

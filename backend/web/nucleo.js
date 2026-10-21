@@ -120,6 +120,10 @@ export function sumaDias(iso, dias) {
 export function crearAlmacenMemoria(inicial = {}) {
   const datos = { ...inicial };
   return {
+    // ***Y dice que NO es durable*** (21/10/2026): *esto es memoria del proceso; al cerrar el navegador se
+    // pierde. Quien guarde aquí **no puede prometer que se guardó**, y sin esta marca no había forma de
+    // distinguirlo de un `localStorage` de verdad —que es el falso éxito que el encargo reproduce-.*
+    esDurable: false,
     getItem: (clave) => (clave in datos ? datos[clave] : null),
     setItem: (clave, valor) => {
       datos[clave] = String(valor);
@@ -128,6 +132,28 @@ export function crearAlmacenMemoria(inicial = {}) {
       delete datos[clave];
     },
   };
+}
+
+/**
+ * ***Un identificador de comando, único aunque dos pestañas arranquen en el mismo milisegundo*** (21/10/2026).
+ *
+ * *Antes era `p${contador}-${new Date().toISOString()}`: **un contador que se reinicia** con cada pestaña y un
+ * reloj que dos instancias comparten. Se reprodujo: **dos instancias generaban el mismo `id_local`, y confirmar
+ * uno eliminaba los dos**.*
+ *
+ * *Aleatorio, y de la fuente criptográfica cuando la hay: `crypto.randomUUID`; si no, dos trozos de
+ * `Math.random`. **Lo aleatorio no se reinicia al recargar**, que es lo que hacía falta.*
+ */
+export function unIdDeComando() {
+  try {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+  } catch (error) {
+    // *Sin criptografía se sigue: hay respaldo.*
+  }
+  const unTrozo = () => Math.random().toString(36).slice(2, 10);
+  return `c-${unTrozo()}-${unTrozo()}-${Date.now().toString(36)}`;
 }
 
 /**
@@ -141,6 +167,9 @@ export function crearCola(almacen, opciones = {}) {
   const clave = opciones.clave || "cuedigital.pendientes";
   const reloj = opciones.reloj || (() => new Date().toISOString());
   const contador = { n: 0 };
+  // ***Si el almacén sobrevive a cerrar el navegador*** (21/10/2026): *un `localStorage` sí; la memoria no. Si el
+  // almacén no dice nada, se da por durable: los `localStorage` de verdad y los dobles de las pruebas lo son.*
+  const esDurable = almacen.esDurable !== false;
 
   function leer() {
     try {
@@ -185,7 +214,10 @@ export function crearCola(almacen, opciones = {}) {
     apuntar(apunte) {
       const lista = leer();
       contador.n += 1;
-      const idLocal = apunte.id_local || `p${contador.n}-${reloj()}`;
+      // ***Y el id, aleatorio***: *no un contador que se reinicia con cada pestaña y un reloj que dos instancias
+      // comparten. Con `unIdDeComando`, dos pestañas abiertas en el mismo milisegundo **no pueden generar el
+      // mismo**, y confirmar uno no elimina los dos.*
+      const idLocal = apunte.id_local || unIdDeComando();
       const conId = {
         ...apunte,
         id_local: idLocal,
@@ -196,8 +228,11 @@ export function crearCola(almacen, opciones = {}) {
             : apunte.datos,
       };
       lista.push(conId);
-      // ***Y se dice si se guardo***: *antes se tiraba el resultado de `escribir`.*
-      return { ...conId, guardado: escribir(lista) };
+      const guardado = escribir(lista);
+      // ***`guardado` y `durable` son dos cosas distintas*** (21/10/2026): *en memoria **se escribe** -no lanza- y
+      // **se pierde al cerrar**. Devolver solo `guardado` era la mentira reproducida: el agricultor leía «guardado
+      // en el móvil» y no había nada. **Quien prometa guardado tiene que mirar los dos.***
+      return { ...conId, guardado, durable: guardado && esDurable };
     },
 
     quitar(idLocal) {
