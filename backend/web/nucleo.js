@@ -875,3 +875,94 @@ export function presentarMetrica(metrica, textos = {}) {
   const valor = numero || textos.no_se_sabe || "";
   return { ...metrica, texto_valor: `${valor} · ${unidad}`.trim() };
 }
+
+/**
+ * ***Vaciar la cola de una cuenta, con los efectos por fuera*** (22/10/2026, D01).
+ *
+ * *El vaciado vivía dentro de `app.js`, soldado a `api`, al almacén y al aviso de la pantalla: **no se podía probar** el
+ * éxito, el rechazo ni el almacenamiento fallido sin arrancar la aplicación entera. Y es donde estaban los dos
+ * defectos que reprodujo la revisión independiente.*
+ *
+ * ***Aquí solo está la decisión***; *mandar, guardar y mirar la sesión se pasan desde fuera. **La interfaz obedece**, que
+ * es la regla que ya sigue `decideQueHacer`.*
+ *
+ * ***Lo que NO cambia***: *el orden de los casos y sus consecuencias, tal como estaban —*
+ *
+ *   · **200** → *se quita de la cola;*
+ *   · **401/403** → *paran el vaciado y **no** son rechazo: el permiso puede volver;*
+ *   · **otro 4xx** → *se aparta como rechazo **con su identidad completa**, y **no se quita de la cola hasta
+ *     comprobar leyendo que quedó guardado** — `guardar` se calla cuando el almacén falla, y antes eso dejaba el apunte
+ *     **sin pendiente y sin rechazo**;*
+ *   · **5xx o red caída** → *se para y se reintenta luego;*
+ *   · **y si la sesión cambia a mitad**, *se para en el acto: los siguientes irían con otro dueño.*
+ *
+ * ***`claveRechazados` llega hecha***: *la captura quien llama **antes del primer `await`**, que es lo que impide que
+ * un 422 de A acabe en la libreta de B.*
+ */
+export async function vaciarLaCola({
+  suyos,
+  cola,
+  claveRechazados,
+  api,
+  leer,
+  guardar,
+  sesionDeAhora,
+  sesionDelOrigen,
+  motivoDelRechazo,
+}) {
+  const rechazados = leer(claveRechazados, []);
+  let mandados = 0;
+  let apartados = 0;
+  let paradoPor = null;
+
+  for (const apunte of suyos) {
+    if (sesionDeAhora() !== sesionDelOrigen) {
+      paradoPor = "cambio-de-cuenta";
+      break;
+    }
+    let respuesta;
+    try {
+      respuesta = await api(apunte);
+    } catch (error) {
+      paradoPor = "sin-red";
+      break;
+    }
+    if (respuesta.ok) {
+      cola.quitar(apunte.id_local);
+      mandados += 1;
+      continue;
+    }
+    if (respuesta.status >= 400 && respuesta.status < 500) {
+      // *401 y 403 NO son rechazos definitivos: el permiso puede volver.*
+      if (respuesta.status === 401 || respuesta.status === 403) {
+        paradoPor = "sin-permiso";
+        break;
+      }
+      const cuerpo = await respuesta.json().catch(() => null);
+      rechazados.push({
+        id_local: apunte.id_local,
+        cuenta: apunte.cuenta || null,
+        tipo: apunte.tipo || null,
+        ruta: apunte.ruta,
+        datos: apunte.datos,
+        motivo: motivoDelRechazo(cuerpo),
+        estado: respuesta.status,
+        cuando: apunte.apuntado_en,
+      });
+      // ***No se quita hasta comprobarlo leyendo***: *es lo único que dice si se guardó.*
+      guardar(claveRechazados, rechazados);
+      const losGuardados = leer(claveRechazados, []);
+      if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
+        paradoPor = "no-se-pudo-apartar";
+        break;
+      }
+      cola.quitar(apunte.id_local);
+      apartados += 1;
+      continue;
+    }
+    paradoPor = "servidor";
+    break;
+  }
+
+  return { mandados, apartados, paradoPor };
+}

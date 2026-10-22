@@ -32,6 +32,7 @@ import {
   soltarElTurno,
   laClaveConDueno,
   esDelMismoContexto,
+  vaciarLaCola,
   // *Un id de comando que no se repite entre pestañas ni reinicios.*
   unIdDeComando,
   diasDeEspera,
@@ -924,8 +925,6 @@ async function mandarPendientes() {
   // **guardaba** con otra, porque `laClaveDe` pregunta por la sesión de ese instante. Si entra B a mitad del vaciado,
   // el 422 de A acababa en **`cuedigital.rechazados.2:2`** — el rechazo de uno, en la libreta del otro.*
   const laClaveRechazados = laClaveConDueno(CLAVE_RECHAZADOS, laSesionDeAhora()) || laClaveDe(CLAVE_RECHAZADOS);
-  const rechazados = leer(laClaveRechazados, []);
-  let algoMandado = false;
   // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
   // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
   // dueño, y lo que no lleva cuenta -de antes de esta corrección- **no se adivina**.*
@@ -950,72 +949,34 @@ async function mandarPendientes() {
     return;
   }
   try {
-  for (const apunte of suyos) {
-    // ***Y si la cuenta cambia A MITAD del vaciado, se para*** (19/10/2026): *el vale se lee **en cada `api()`**,
-    // asi que sin esto los apuntes siguientes se mandarian con la sesion nueva -el mismo fallo, solo que un
-    // segundo mas tarde-. Comprobarlo aqui es barato y cierra el hueco de verdad.*
-    if (laSesionDeAhora() !== laDelPrincipio) break;
-    try {
-      const respuesta = await api(apunte.ruta, {
-        method: "POST",
-        body: JSON.stringify(apunte.datos),
-        // ***El vale del principio, no el de ahora***: *es lo que hace que el cambio de cuenta no pueda colarse.*
-        token: elTokenDelVaciado,
-      });
-      if (respuesta.ok) {
-        cola.quitar(apunte.id_local);
-        algoMandado = true;
-        continue;
-      }
-      if (respuesta.status >= 400 && respuesta.status < 500) {
-        // ***401 y 403 NO son rechazos definitivos*** (21/10/2026): *el permiso puede volver, o la sesión estar
-        // caducada y renovarse. Descartarlas como «rechazado» sería **tirar una orden válida** del agricultor.*
-        // *Se quedan en la cola y se reintentan cuando haya sesión buena.*
-        if (respuesta.status === 401 || respuesta.status === 403) {
-          break;
-        }
-        // Se aparta en vez de borrarlo: perder un apunte del agricultor en silencio
-        // es exactamente lo que esta aplicación no puede hacer.
-        const cuerpo = await respuesta.json().catch(() => null);
-        const elRechazo = {
-          // ***Con su identidad completa*** (21/10/2026): *antes solo se guardaban `datos`, `motivo` y `cuando`,
-          // así que un rechazo **no se podía recuperar**: no se sabía de quién era, ni a qué ruta iba, ni cuál
-          // era su identidad. El encargo pide «dueño, identidad/ruta/datos y recuperación».*
-          id_local: apunte.id_local,
-          cuenta: apunte.cuenta || null,
-          tipo: apunte.tipo || null,
-          ruta: apunte.ruta,
-          datos: apunte.datos,
-          motivo: avisoDelServidor(cuerpo) || mensaje("no_se_pudo"),
-          estado: respuesta.status,
-          cuando: apunte.apuntado_en,
-        };
-        rechazados.push(elRechazo);
-        // ***Y NO se quita hasta que el rechazo esté guardado de verdad*** (21/10/2026).
-        //
-        // *`guardar` **se calla** cuando el almacén falla, y después `cola.quitar` borraba el original: quedaba
-        // **sin pendiente y sin rechazo**, y el apunte se perdía. Es el caso reproducido: `pendientes: 0`,
-        // `rechazados: 0`, `dato_perdido: true`.*
-        //
-        // *Se comprueba **leyendo**, que es lo único que dice la verdad. Si no quedó, se deja en la cola.*
-        guardar(laClaveRechazados, rechazados);
-        const losGuardados = leer(laClaveRechazados, []);
-        if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
-          break;
-        }
-        cola.quitar(apunte.id_local);
-        continue;
-      }
-      break; // el servidor está de mal humor: se reintenta luego
-    } catch (error) {
-      break; // se ha ido la red otra vez
+    // ***La decisión, en `nucleo.js` y con sus efectos por fuera*** (22/10/2026, D01): *estaba aquí, soldada a `api`
+    // y al almacén, y **no se podía probar** el éxito, el rechazo ni el almacenamiento fallido sin arrancar la
+    // aplicación entera. Ahora la función está probada -siete casos- y **esto es lo único que queda aquí**.*
+    //
+    // ***Y la clave de los rechazos se pasa HECHA***: *capturada arriba, antes de esperar nada. Es lo que impide que un
+    // 422 de A acabe en la libreta de B.*
+    const elResumen = await vaciarLaCola({
+      suyos,
+      cola,
+      claveRechazados: laClaveRechazados,
+      api: (apunte) =>
+        api(apunte.ruta, {
+          method: "POST",
+          body: JSON.stringify(apunte.datos),
+          // ***El vale del principio, no el de ahora***: *es lo que hace que el cambio de cuenta no pueda colarse.*
+          token: elTokenDelVaciado,
+        }),
+      leer,
+      guardar,
+      sesionDeAhora: laSesionDeAhora,
+      sesionDelOrigen: laDelPrincipio,
+      motivoDelRechazo: (cuerpo) => avisoDelServidor(cuerpo) || mensaje("no_se_pudo"),
+    });
+    if (elResumen.mandados > 0) {
+      // Si lo que se ha mandado era dar de alta una parcela o un producto, las listas
+      // de memoria se han quedado viejas. Se recargan sin molestar a nadie.
+      await cargarDatos().catch(() => {});
     }
-  }
-  if (algoMandado) {
-    // Si lo que se ha mandado era dar de alta una parcela o un producto, las listas
-    // de memoria se han quedado viejas. Se recargan sin molestar a nadie.
-    await cargarDatos().catch(() => {});
-  }
   } finally {
     // ***Y se suelta el turno SIEMPRE*** (21/10/2026): *también si se sale por un `break` o revienta algo. Si no,
     // la cola quedaría parada hasta que caducara el turno, y eso el agricultor lo ve como «no se manda nada».*

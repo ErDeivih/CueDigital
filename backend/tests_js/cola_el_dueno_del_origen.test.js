@@ -52,13 +52,15 @@ test("el vaciado de la cola NO deriva la clave de los rechazos de la sesión de 
     !/laClaveDe\(\s*CLAVE_RECHAZADOS\s*\)/.test(loQueVaDespuesDeEsperar),
     "***después del primer `await` no puede haber `laClaveDe(CLAVE_RECHAZADOS)`: preguntaría por la sesión de ese instante, que puede ser otra***",
   );
+  // ***Y la clave capturada es la que se LE PASA al vaciado***: *desde el 22/10 el bucle vive en `nucleo.js` -para
+  // poder probarlo-, así que lo que hay que exigir aquí es que se le entregue la clave del origen, no que la use.*
   assert.ok(
-    /guardar\(\s*laClaveRechazados\s*,/.test(elVaciado),
-    "***el rechazo se guarda con la clave capturada***",
+    /claveRechazados:\s*laClaveRechazados/.test(elVaciado),
+    "***el vaciado recibe la clave capturada, no una que se calcule dentro***",
   );
   assert.ok(
-    /leer\(\s*laClaveRechazados\s*,/.test(elVaciado),
-    "***y se comprueba leyendo con la MISMA clave con la que se guardó***",
+    elVaciado.includes("await vaciarLaCola("),
+    "***y la decisión es la función probada, no un bucle propio sin pruebas***",
   );
 });
 
