@@ -11,7 +11,9 @@ Uso:  python scripts/verificar_la_aceptacion_de_las_tierras.py
 
 from __future__ import annotations
 
+import pathlib
 import sys
+import tempfile
 import time
 
 sys.path.insert(0, "scripts")
@@ -147,8 +149,36 @@ def main() -> int:
                 f"***se dibujan como mucho las 64 -no hay poligonos de mas-*** ({los_poligonos})",
             )
 
-            # ---- 5 · el enlace directo, la recarga y Atras/Adelante ----
-            print("\n5. EL ENLACE DIRECTO, LA RECARGA Y ATRAS")
+            # ---- ***5 · la exportacion filtrada*** ----
+            print("\n5. LA EXPORTACION FILTRADA")
+            la_carpeta = pathlib.Path(tempfile.mkdtemp(prefix="cuedigital-export-"))
+            nav.descargas_en(str(la_carpeta))
+            abrir(nav, direccion, "#/tierras/mapa?q=VEGA")
+            se_pulso = nav.evaluar(
+                "(() => { const b = document.querySelector('[data-accion=\"t06-exportar\"]');"
+                " if (b) b.click(); return Boolean(b); })()"
+            )
+            el_fichero = nav.lo_descargado(segundos=25)
+            if el_fichero is None:
+                fallos += not comprobar(False, "***la exportacion tiene que descargar un fichero***")
+            else:
+                el_contenido = el_fichero.read_text(encoding="utf-8-sig", errors="replace")
+                las_lineas = [l for l in el_contenido.splitlines() if l.strip()]
+                print(f"  (el fichero: {el_fichero.name}, {len(las_lineas)} lineas)")
+                # ***Una cabecera y OCHO filas***: *las mismas que la busqueda.*
+                fallos += not comprobar(
+                    len(las_lineas) == 9,
+                    f"***exporta las 8 filtradas, y no las 64*** ({len(las_lineas)} lineas con la cabecera)",
+                    el_contenido[:300],
+                )
+                fallos += not comprobar(
+                    "LA VEGA 1" in el_contenido and "LA ERA" not in el_contenido,
+                    "***y lleva las que se ven, sin colarse las de fuera del filtro***",
+                    el_contenido[:300],
+                )
+
+            # ---- 6 · el enlace directo, la recarga y Atras/Adelante ----
+            print("\n6. EL ENLACE DIRECTO, LA RECARGA Y ATRAS")
             abrir(nav, direccion, "#/tierras/mapa?q=VEGA")
             la_primera = las_filas(nav)
             la_recargada = abrir(nav, direccion, "#/tierras/mapa?q=VEGA")
@@ -167,7 +197,7 @@ def main() -> int:
                 el_texto(nav),
             )
 
-    print(f"\nComprobaciones: 8   Fallos: {fallos}")
+    print(f"\nComprobaciones: 10   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

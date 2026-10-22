@@ -125,12 +125,18 @@ y `scripts/verificar_las_anchuras_de_las_tierras.py`).
 
 ### ***Y lo que el encargo pide y NO está***
 
-***«Exportación filtrada»***: *no hay **ninguna** exportación de las tierras. Las que hay en la aplicación son la del
-**banco**, la de **firmar** y la de la **PAC**. La del **cuaderno** (`/cuaderno/export.csv`) **solo acepta la
-campaña** —ningún filtro—, así que **no se puede exportar «lo que está filtrado»**.*
+***«Exportación filtrada»*** — **HECHA** (22/10/2026): *el botón **«EXPORTAR LO QUE SE VE»** está en la barra de
+acciones, y **se exporta lo que se ve**, con los filtros puestos.*
 
-***Es un hueco real contra la aceptación de D04***, y no se arregla con una prueba: **hay que hacer la exportación**.
-*Queda escrito, no simulado.*
+| | |
+|---|---|
+| *con `?q=VEGA` -8 tierras- se pulsa el botón* | *descarga `tierras-2026-10-22.csv`* |
+| *el fichero* | ***9 líneas*** *(la cabecera y las 8)* |
+| *y lleva las que se ven* | ***sin colarse las de fuera del filtro*** |
+
+***Y se hace **en la pantalla**, no en el servidor***: *el filtro vive en `filtrarLasTierras`, y llevarlo a una puerta
+nueva sería tener el mismo filtro en dos sitios que se pueden separar.* *El CSV va con punto y coma y con su marca de
+orden de bytes, para que las tildes salgan bien en la hoja de cálculo.*
 
 ***Y «volver de la ficha con el scroll conservado»***: *los **filtros** sí vuelven —van en la dirección—; **el scroll**,
 no se ha medido.*

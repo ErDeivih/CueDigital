@@ -6118,6 +6118,10 @@ TIERRA_Y_MAPA: dict[str, str] = {
     "pac_con_hectareas": "Con hectáreas dichas",
     "pac_sin_hectareas": "Sin hectáreas dichas",
     "quitar_filtros": "QUITAR LOS FILTROS",
+    # ***La exportacion filtrada*** (22/10/2026, D04): *el encargo la pide por su nombre, y no habia ninguna: las
+    # unicas exportaciones eran la del banco, la de firmar y la de la PAC. **Se exporta lo que se ve**, con los
+    # filtros puestos, porque el filtro vive en la pantalla y no en la puerta.*
+    "exportar": "EXPORTAR LO QUE SE VE",
     "sin_filtros_titulo": "Con esos filtros no hay ninguna tierra",
     "sin_filtros_pista": (
         "Prueba a quitar alguno. Las tierras no se han ido a ningún sitio: están todas, solo que "

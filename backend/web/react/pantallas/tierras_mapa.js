@@ -338,6 +338,9 @@ function Filtros({ textos, filtros, filtro }) {
       />
       <div className="barra-acciones">
         <${Boton} etiqueta=${textos.quitar_filtros} accion="t06-quitar-filtros" clase="boton-claro" />
+        ${/* ***La exportacion filtrada*** (22/10/2026, D04): *el encargo la pide por su nombre -«exportacion
+             filtrada»- y no habia ninguna. **Exporta lo que se ve**: los mismos filtros que la tabla.* */ ""}
+        <${Boton} etiqueta=${textos.exportar} accion="t06-exportar" clase="boton-claro" />
       </div>
     </section>
   `;

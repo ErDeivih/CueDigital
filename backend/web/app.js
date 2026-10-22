@@ -16659,6 +16659,49 @@ function buscarEnLasTierras() {
 }
 
 /** Quita todos los filtros de golpe: es la salida de «con esos filtros no hay ninguna tierra». */
+/**
+ * ***Exportar las tierras que se estan viendo*** (22/10/2026, D04).
+ *
+ * *El encargo pide «**exportacion filtrada**», y no habia ninguna: las unicas eran la del banco, la de firmar y la de
+ * la PAC. **Se exporta lo que se ve**, y se hace **en la pantalla**, no en el servidor: **el filtro vive aqui**
+ * -`filtrarLasTierras`-, y llevarlo a una puerta nueva seria tener el mismo filtro en dos sitios que se pueden
+ * separar.*
+ *
+ * *Una fila por tierra, con lo que la tabla enseña. Se descarga como CSV -punto y coma, que es lo que abre bien el
+ * programa de hojas de calculo en castellano- y con su marca de orden de bytes, para que las tildes salgan bien.*
+ */
+function exportarLasTierrasDeLaVista() {
+  const t06 = estado.t06 || {};
+  const las_que_se_ven = filtrarLasTierras(estado.parcelas || [], t06.filtro || {});
+  if (!las_que_se_ven.length) return;
+  const elrotulo = (clave) => t(`tierras.${clave}`, "");
+  const laCabecera = [
+    elrotulo("nombre"),
+    elrotulo("referencia"),
+    elrotulo("pueblo"),
+    elrotulo("superficie"),
+    elrotulo("cultivo"),
+  ];
+  const lasFilas = las_que_se_ven.map((tierra) => [
+    tierra.alias || "",
+    tierra.ref_sigpac || "",
+    tierra.municipio || "",
+    tierra.superficie_ha === null || tierra.superficie_ha === undefined
+      ? ""
+      : formateaNumero(tierra.superficie_ha, 2),
+    (tierra.cultivo || tierra.uso_sigpac || "").toString(),
+  ]);
+  // *Y se arma el CSV. **Se entrecomilla todo**: un alias con punto y coma partiria la fila.*
+  const unaCelda = (celda) => `"${String(celda === null || celda === undefined ? "" : celda).replace(/"/g, '""')}"`;
+  const elTexto = [laCabecera, ...lasFilas].map((fila) => fila.map(unaCelda).join(";")).join("\n");
+  const elFichero = new Blob(["\ufeff" + elTexto], { type: "text/csv;charset=utf-8" });
+  const elEnlace = document.createElement("a");
+  elEnlace.href = URL.createObjectURL(elFichero);
+  elEnlace.download = `tierras-${new Date().toISOString().slice(0, 10)}.csv`;
+  elEnlace.click();
+  URL.revokeObjectURL(elEnlace.href);
+}
+
 function quitarLosFiltrosDeLasTierras() {
   const t06 = elEstadoDeT06();
   t06.filtro = { q: "", cultivo: "", municipio: "", revision: "", pac: "" };
@@ -21245,6 +21288,8 @@ document.addEventListener("click", async (evento) => {  const elemento = evento.
   }
   if (nombre === "t06-buscar") return buscarEnLasTierras();
   if (nombre === "t06-quitar-filtros") return quitarLosFiltrosDeLasTierras();
+  // ***La exportacion filtrada*** (22/10/2026, D04).
+  if (nombre === "t06-exportar") return exportarLasTierrasDeLaVista();
   if (nombre === "t06-agrupar") return agruparLasTierrasDeLaVista(elemento.dataset.valor);
   // **El enlace entre las dos vistas.** El nombre de una fila y cada trozo del mapa llevan la misma
   // acción y el mismo `data-id`: tocar cualquiera de los dos enfoca la tierra, y con ella su fila y su
