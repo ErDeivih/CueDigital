@@ -18,7 +18,7 @@
 | **D01 · la cola sin conexión** | *9 comprobaciones de recorrido + las regresiones de la suite* | ✅ |
 | **D02 · la PAC** | *16: escenario, guardado, historial, exportación* | ✅ |
 | **D03 · fallo, vacío, permisos** | *13 con **fallos inyectados** + **53 de permisos por rol*** | ✅ |
-| **D04 · tierras y despacho** | *24: 18 de enlaces y conjunto + 6 de las tres anchuras* | ✅ *(con dos puntos abiertos, abajo)* |
+| **D04 · tierras y despacho** | ***40***: *18 de enlaces y conjunto + 6 de las anchuras + **8 de la aceptación con 64 tierras** + **2 de la exportación filtrada** + **6 de las tarjetas del móvil*** | ✅ *(el scroll, hecho y no visto saltar)* |
 | **D05 · marca y los cuatro flujos** | *57: los cuatro recorridos (29) + tacto 8, contraste 6, zoom 12, Escape 2* | ✅ *(la visión, EN_REVISION)* |
 | **D06 · operación** | *5 de copiar y restaurar + la migración idempotente (en la suite)* | ✅ *(lo de despliegue, no)* |
 | **D07 · rendimiento** | *5: arranque, memoria, navegación y tiempo* | ✅ |
@@ -38,14 +38,22 @@ texto nuevo es una prueba nueva** -el test de jerga-, y el recuento es lo que av
 
 ## 2 · Lo que **no** está hecho, y se sabe por qué
 
-### D04: la aceptación grande, a medias
+### D04: la aceptación, medida — y los dos huecos, cerrados
 
-*El encargo pide aceptar con **64 tierras**: una búsqueda que devuelve 8, un filtro cruzado de cultivo y pueblo, una
-tierra sin geometría, un **polígono con agujero**, selección múltiple, **exportación filtrada** y **volver de la ficha
-con el scroll y los filtros conservados**.*
+*El encargo pedía aceptar con **64 tierras**: una búsqueda que devuelve 8, un filtro cruzado, una tierra sin geometría,
+un **polígono con agujero**, selección múltiple, **exportación filtrada** y volver con el scroll.*
 
-***Lo que sí está medido***: *el mismo conjunto en la lista y el mapa, el filtro y la selección al recargar, y las tres
-anchuras.* ***Lo que no***: *los 64, la búsqueda de 8, el polígono con agujero, la exportación filtrada y el scroll.*
+| el encargo pide | estado |
+|---|---|
+| **64 tierras** | ✅ *64* |
+| **una búsqueda que devuelve 8** | ✅ *`?q=VEGA` → 8* |
+| **un filtro cruzado** | ✅ *Medina (16) ∩ VEGA (8) = 2* |
+| **una tierra sin geometría** | ✅ *56 de las 64* |
+| **un polígono con agujero** | ✅ *se dibuja* |
+| **selección múltiple** | ✅ *(ya estaba)* |
+| **exportación filtrada** | ✅ ***HECHA*** *(botón «EXPORTAR LO QUE SE VE»: 9 líneas, las 8 de la búsqueda)* |
+| **tarjetas en el móvil** | ✅ ***HECHAS*** *(1440 → 3 filas; 1024 y 390 → 3 tarjetas)* |
+| **volver con el scroll** | ⚠️ *el mecanismo está escrito en `app.js` (`recordarPorDondeIba` / `volverAdondeIba`); **la medición en el navegador no llegó a verlo saltar** — dicho, no disfrazado* |
 
 ***Y un punto de diseño que el encargo pide y hoy no se cumple***: *en el móvil **esta pantalla sigue siendo una
 tabla** —no cambia a tarjetas—, y a 390 px una tabla de tierras se lee mal. **El encargo dice «tarjetas útiles» en el
