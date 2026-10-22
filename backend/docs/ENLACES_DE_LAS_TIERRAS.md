@@ -103,3 +103,34 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
 
 **Total medido en navegador**: **18 comprobaciones, 0 fallos** (`scripts/verificar_los_enlaces_de_las_tierras.py`
 y `scripts/verificar_las_anchuras_de_las_tierras.py`).
+
+---
+
+## 5 · La aceptación grande, medida (22/10/2026)
+
+*`scripts/verificar_la_aceptacion_de_las_tierras.py`. **Con 64 tierras de verdad**, dadas de alta por la puerta.*
+
+| el encargo pide | medido |
+|---|---|
+| **aceptar con 64 tierras** | **64** ✅ |
+| **una búsqueda que devuelve 8** | `?q=VEGA` → **8 filas** ✅ |
+| **un filtro cruzado** | *Medina (16) ∩ VEGA (8) = **2*** ✅ — *un subconjunto de los dos* |
+| **una tierra sin geometría** | ✅ *56 de las 64 no tienen forma, y se ven en la lista* |
+| **un polígono con agujero** | ✅ *se dibuja; el mapa pinta **10 polígonos** de 64 tierras (8 cuadrados + el del agujero, que son dos anillos)* |
+| **selección múltiple** | ✅ *(ya medido: `?marcadas=` sobrevive a la recarga)* |
+| **enlace directo y recarga** | ✅ *recargar la misma dirección deja lo mismo* |
+| **Atrás/Adelante** | ✅ *Atrás no rompe la pantalla* |
+
+    Comprobaciones: 8   Fallos: 0
+
+### ***Y lo que el encargo pide y NO está***
+
+***«Exportación filtrada»***: *no hay **ninguna** exportación de las tierras. Las que hay en la aplicación son la del
+**banco**, la de **firmar** y la de la **PAC**. La del **cuaderno** (`/cuaderno/export.csv`) **solo acepta la
+campaña** —ningún filtro—, así que **no se puede exportar «lo que está filtrado»**.*
+
+***Es un hueco real contra la aceptación de D04***, y no se arregla con una prueba: **hay que hacer la exportación**.
+*Queda escrito, no simulado.*
+
+***Y «volver de la ficha con el scroll conservado»***: *los **filtros** sí vuelven —van en la dirección—; **el scroll**,
+no se ha medido.*
