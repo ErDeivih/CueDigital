@@ -140,3 +140,33 @@ orden de bytes, para que las tildes salgan bien en la hoja de cálculo.*
 
 ***Y «volver de la ficha con el scroll conservado»***: *los **filtros** sí vuelven —van en la dirección—; **el scroll**,
 no se ha medido.*
+
+---
+
+## 6 · «Volver de la ficha con el scroll» (22/10/2026)
+
+*El encargo pide «regreso desde la ficha **con scroll/filtros conservados**».*
+
+***Los filtros***: *van en la dirección, así que vuelven solos — se midió (`?q=VEGA` sigue en la dirección).*
+
+***El scroll***: ***está hecho***, y no es una impresión: *`app.js` lo guarda y lo devuelve por pantalla.*
+
+| | |
+|---|---|
+| `recordarPorDondeIba()` | *apunta, al dejar una lista, **su dirección** y **en qué píxel** estaba* |
+| `volverAdondeIba()` | *si se vuelve **exactamente a la misma lista**, `window.scrollTo(0, vista.scroll)`* |
+
+***Y la condición importa***: *vuelve a su sitio **sólo si la dirección es la misma** («volver **exactamente** a la
+misma lista», dice el código). Si se vuelve a otra lista —otro filtro, otra campaña—, **empieza arriba**, que es lo
+razonable.*
+
+### ***Y una medición que no salió, y por qué***
+
+*`scripts/medir_la_vuelta_de_la_ficha.py` intentó comprobarlo **pulsando Atrás**, y **Atrás no llegó a navegar** en
+las condiciones del instrumento —cada `nav.abrir` deja su entrada en el historial, y el texto quedó en la dirección de
+la ficha—. **El botón de volver** (`t06-volver`) tampoco está en `#/tierras/:id`, porque **esa pantalla es «Mis
+tierras» con una tierra elegida**, no una ficha con botón.*
+
+***Lo que se sabe con certeza es lo que dice el código y lo que se midió de los filtros***: *el mecanismo existe y la
+condición está escrita. **Lo que no se ha conseguido es verlo saltar en el navegador con este instrumento**, y se dice
+en vez de darlo por bueno.*
