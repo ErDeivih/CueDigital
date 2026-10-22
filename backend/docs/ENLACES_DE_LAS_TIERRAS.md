@@ -167,6 +167,12 @@ las condiciones del instrumento —cada `nav.abrir` deja su entrada en el histor
 la ficha—. **El botón de volver** (`t06-volver`) tampoco está en `#/tierras/:id`, porque **esa pantalla es «Mis
 tierras» con una tierra elegida**, no una ficha con botón.*
 
-***Lo que se sabe con certeza es lo que dice el código y lo que se midió de los filtros***: *el mecanismo existe y la
-condición está escrita. **Lo que no se ha conseguido es verlo saltar en el navegador con este instrumento**, y se dice
-en vez de darlo por bueno.*
+***Y midiéndolo se encontró un defecto de verdad*** (22/10/2026): *la pantalla del mapa —**`tierras_mapa`**, la de las
+64 tierras— **no estaba en `TABLA_DE_LA_PANTALLA`**, y `recordarPorDondeIba()` sale sin apuntar nada si su clave no
+está: **el scroll no se guardaba nunca en la pantalla donde de verdad hay que guardarlo**.*
+
+***Corregido***: *`tierras_mapa` entra en la tabla (la pantalla `mapa` **no**, que se abre de cero y se centra sola, y su
+comentario lo dice).*
+
+***Y aun así el scroll sigue volviendo a 0*** *en la medición: **queda otra causa que no se ha identificado**. El
+defecto de la tabla era real y está arreglado; el efecto completo **no se ha conseguido**, y se dice.*

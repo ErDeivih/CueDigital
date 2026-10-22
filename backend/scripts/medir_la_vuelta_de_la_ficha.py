@@ -91,14 +91,22 @@ def main() -> int:
             en_la_ficha = str(nav.evaluar(LA_DIRECCION) or "")
 
             # ---- 3 · ***se vuelve con Atras*** ----
-            # ***Se vuelve con el boton de la ficha*** -`t06-volver`, «volver a las tierras»-, que es **el camino del
-            # agricultor**. *Se probo con `history.back()` y no sirve para medir esto: cada `nav.abrir` deja su
-            # entrada en el historial, y Atras se iba **mas alla** de la lista. El boton es lo que hay que medir.*
-            se_pulso = nav.evaluar(
-                "(() => { const b = document.querySelector('[data-accion=\"t06-volver\"]');"
-                " if (b) { b.click(); return true; } return false; })()"
+            # ***Se vuelve con la navegacion de la app***, que es lo que dispara `volverAdondeIba()`: *`hashchange`.
+            # Se probo con `history.back()` y con el boton de la ficha, y ninguno servia: **Atras se iba mas alla** de
+            # la lista -cada `nav.abrir` deja su entrada-, y `#/tierras/:id` **no tiene boton de volver** -es «Mis
+            # tierras» con una tierra elegida-.
+            #
+            # *Lo que si es el camino de la app*: **escribir el fragmento**. `location.hash = ...` dispara
+            # `hashchange`, que es exactamente el evento con el que `abrirLaDireccion` vuelve a abrir una pantalla. **Se
+            # va a la ficha y se vuelve escribiendo la misma direccion de la lista**. Si el scroll se conserva, es
+            # `volverAdondeIba()` haciendo su trabajo.*
+            nav.evaluar(
+                f"location.hash = '#/tierras/{la_tierra}?campana=2026&finca=1&orden=numero&sentido=1'; 1"
             )
-            print(f"  (el boton de volver: {'pulsado' if se_pulso else '***NO ESTA***'})")
+            time.sleep(2.0)
+            en_la_ficha = str(nav.evaluar(LA_DIRECCION) or "")
+            print(f"  (se fue a: {en_la_ficha})")
+            nav.evaluar("location.hash = '#/tierras/mapa?q=VEGA'; 1")
             time.sleep(2.5)
             el_scroll_vuelto = int(str(nav.evaluar(EL_SCROLL) or 0))
             la_direccion_vuelta = str(nav.evaluar(LA_DIRECCION) or "")

@@ -1160,6 +1160,12 @@ function moduloDeLaPantalla(clave) {
  */
 const TABLA_DE_LA_PANTALLA = {
   tierras: "tierras",
+  // ***Y el mapa de las tierras*** (22/10/2026): *la pantalla que el encargo llama «las 64 tierras» **no estaba
+  // aqui**, asi que `recordarPorDondeIba` salia sin apuntar nada y **volver de la ficha devolvia al principio**. Se
+  // vio midiendo: el scroll bajaba a 320 px, se abria la ficha, se volvia… y la pagina estaba **a 0 px**.*
+  // *La pantalla `mapa` **no** entra: se abre de cero y se centra sola, y su comentario lo dice; **esta no**, porque
+  // es una lista con su mapa al lado, y lo que se pierde al volver es el sitio de la lista.*
+  tierras_mapa: "tierras_mapa",
   cuaderno: "apuntes",
   facturas: "facturas",
   anos: "anos",
