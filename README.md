@@ -1377,7 +1377,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5584 tests
+../.venv/Scripts/python.exe -m pytest          # 5604 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1172 tests
