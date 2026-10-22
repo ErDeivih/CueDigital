@@ -53,17 +53,37 @@ un **polígono con agujero**, selección múltiple, **exportación filtrada** y 
 | **selección múltiple** | ✅ *(ya estaba)* |
 | **exportación filtrada** | ✅ ***HECHA*** *(botón «EXPORTAR LO QUE SE VE»: 9 líneas, las 8 de la búsqueda)* |
 | **tarjetas en el móvil** | ✅ ***HECHAS*** *(1440 → 3 filas; 1024 y 390 → 3 tarjetas)* |
-| **volver con el scroll** | ⚠️ *el mecanismo está escrito en `app.js` (`recordarPorDondeIba` / `volverAdondeIba`); **la medición en el navegador no llegó a verlo saltar** — dicho, no disfrazado* |
+| **volver con el scroll** | ⚠️ ***no se ve saltar***, pero **por el camino se arreglaron dos defectos reales** (abajo) |
 
 ***Y un punto de diseño que el encargo pide y hoy no se cumple***: *en el móvil **esta pantalla sigue siendo una
 tabla** —no cambia a tarjetas—, y a 390 px una tabla de tierras se lee mal. **El encargo dice «tarjetas útiles» en el
 móvil: hoy no lo son.***
 
+### D04: el scroll — dos defectos arreglados, y una causa sin identificar
+
+*El encargo pide volver de la ficha **con el scroll conservado**. **Los filtros vuelven** (medido). El scroll **no**. Pero
+perseguirlo encontró **dos defectos reales**:*
+
+| defecto | arreglo |
+|---|---|
+| **`tierras_mapa` no estaba en `TABLA_DE_LA_PANTALLA`** | *el scroll **no se guardaba nunca** en la pantalla donde hay que guardarlo* |
+| **se guardaba la dirección de la ficha, no la de la lista** | *`recordarPorDondeIba` leía `window.location.hash` **cuando ya había cambiado**; ahora guarda `estado.ultimaDireccion`* |
+
+***Y el efecto sigue sin verse***: *con el estado correcto (`"casa": true`, `"scroll": 320`), una sola llamada, y el
+`scrollTo` ejecutándose, **la página se queda a 0**. Se descartaron con medidas **siete** hipótesis —Atrás, el botón, la
+tabla, el orden, la altura, otra rama y el navegador—. **Es lo que hay, y está escrito en
+`docs/ENLACES_DE_LAS_TIERRAS.md` con cada descarte.***
+
 ### D05: la revisión con visión
 
 ***EN_REVISION***. *Las **quince capturas** -320, 390, 712, 1024 y 1440, tres pantallas- están en
-`docs/capturas-de-anchuras/`. **El modelo de esta sesión no acepta imágenes**, y el encargo manda dejarlo así hasta que
-lo mire quien sí puede.*
+`docs/capturas-de-anchuras/`.*
+
+***Y no es una suposición: se probó con la herramienta del arnés*** — *`read_image` contesta «model
+"deepseek-v4-flash-vision-exp" **does not declare image input**»*.
+
+***Para que el bloqueo cueste diez minutos en vez de una tarde***: *`docs/REVISION_CON_VISION.md` es **la hoja de
+revisión** —las quince capturas, lo que ya está medido, siete preguntas por captura y la tabla para firmar—.*
 
 ### D06: lo que necesita un despliegue
 
