@@ -1571,6 +1571,13 @@ function recordarPorDondeIba() {
 }
 
 /** Y si se vuelve **exactamente a la misma lista**, se devuelve al sitio en el que estaba. */
+// ***El scroll lo lleva la aplicacion, no el navegador*** (22/10/2026): *con `scrollRestoration` en `auto` -lo que
+// trae el navegador-, **cada cambio de fragmento es una navegacion**, y el navegador **restaura su propia posicion
+// despues** de que la aplicacion haya bajado a la suya: la deja a 0. Se vio con el instrumento -`"casa": true`,
+// `scroll: 320`, una sola llamada, y `scrollY = 0`-, y se descarto que fuera la altura. **En `manual`, la unica voz es
+// esta.***
+if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+
 function volverAdondeIba() {
   const clave = estado.pantalla;
   const vista = clave && TABLA_DE_LA_PANTALLA[clave] ? recupera(estado.vistas, clave) : null;

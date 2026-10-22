@@ -205,5 +205,13 @@ describe la pantalla que se deja. **El estado guardado queda bien**:
 ***Queda una tercera causa, sin identificar***: *con la dirección correcta, el píxel correcto y la condición cumplida,
 **algo devuelve la página a 0 después de bajarla**. Se sondeó a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos: siempre 0.*
 
+***Y se descartaron más hipótesis, con medidas***:
+
+| la hipótesis | cómo se descartó |
+|---|---|
+| *lo pone otra rama del código* | *se buscó `scrollTo(0, 0)` en toda la interfaz: **un solo sitio**, y es la rama «no casa»* |
+| *se llama dos veces, la segunda sin casar* | *se contaron: **una sola llamada**, con `"casa": true`* |
+| *lo pisa el navegador al restaurar* | ***se puso `history.scrollRestoration = "manual"`, y tampoco*** — pero **se queda**: *es lo correcto para una aplicación que lleva el scroll ella misma* |
+
 ***Dos defectos reales encontrados y arreglados, y el efecto todavía no se ve.*** *Se deja la forma sencilla —sin código
 que no se haya comprobado que sirva— y se entrega así.*
