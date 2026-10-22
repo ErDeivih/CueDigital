@@ -199,13 +199,37 @@ def test_dos_guardados_a_la_vez_no_pisan_ninguna_version(cliente, cuenta, campan
     la_parcela = crear_parcela(alias="La de la carrera")
 
     from concurrent.futures import ThreadPoolExecutor
+    from threading import Event, Lock
+    from sqlalchemy import event
+    from app.database import engine
 
-    with ThreadPoolExecutor(max_workers=2) as los_hilos:
-        las_dos = list(
-            los_hilos.map(
-                lambda _n: _guardar(cliente, cuenta, {"anio": 2027}), range(2)
-            )
-        )
+    # Pausar la primera petición ANTES de leer max; la segunda confirma su foto.
+    # El orden antiguo (huella -> max) crea dos filas en esta intercalación.
+    bloqueada, continuar = Event(), Event()
+    mutex = Lock()
+
+    def antes_de_leer_max(_conexion, _cursor, sql, _parametros, _contexto, _muchas):
+        if "max(fotos_de_la_pac.version)" not in sql:
+            return
+        with mutex:
+            primera = not bloqueada.is_set()
+            if primera:
+                bloqueada.set()
+        if primera and not continuar.wait(15):
+            raise TimeoutError("La segunda foto no liberó la primera petición")
+
+    event.listen(engine, "before_cursor_execute", antes_de_leer_max)
+    try:
+        with ThreadPoolExecutor(max_workers=1) as los_hilos:
+            primera = los_hilos.submit(_guardar, cliente, cuenta, {"anio": 2027})
+            try:
+                assert bloqueada.wait(15), "No se alcanzó la consulta de versión"
+                segunda = _guardar(cliente, cuenta, {"anio": 2027})
+            finally:
+                continuar.set()
+            las_dos = [primera.result(timeout=15), segunda]
+    finally:
+        event.remove(engine, "before_cursor_execute", antes_de_leer_max)
 
     los_codigos = sorted(una.status_code for una in las_dos)
     assert los_codigos == [200, 200], (

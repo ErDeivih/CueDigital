@@ -398,14 +398,18 @@ def guardar_la_foto_de_la_pac(
     # ***La huella es del contenido, asi que dos evaluaciones identicas son la misma foto.*** *Si quiere una
     # version nueva, cambia algo -que es lo que una version nueva significa-.*
     for _intento in range(5):
-        # ***La huella se mira DENTRO del intento, no antes*** (19/10/2026): *dos guardados simultaneos del mismo
-        # contenido **no se ven** al mirar -los dos miran antes de insertar-, el perdedor choca con el indice unico
-        # y reintenta. **Si la comprobacion esta fuera, el reintento no vuelve a mirar y crea la version 2 con el
-        # mismo contenido** -que es justo lo que se venia a evitar-.*
-        #
-        # *Aqui, en cambio, cuando el perdedor reintenta **la otra ya esta commiteada**, la encuentra y devuelve
-        # esa. Se vio porque la prueba de concurrencia daba `{1, 2}` unas veces y `{1}` otras: **una prueba que a
-        # veces pasa es una prueba que no prueba**.*
+        # Leer primero la versión: una foto que se confirme después de comprobar
+        # la huella debe chocar con esta versión y obligar a reintentar. Si se lee
+        # max después de la huella, puede verse el nuevo número sin volver a verla.
+        la_ultima = (
+            db.scalar(
+                select(func.max(models.FotoDeLaPac.version)).where(
+                    models.FotoDeLaPac.explotacion_id == explotacion.id,
+                    models.FotoDeLaPac.anio == datos.anio,
+                )
+            )
+            or 0
+        )
         la_que_ya_estaba = db.scalar(
             select(models.FotoDeLaPac).where(
                 models.FotoDeLaPac.explotacion_id == explotacion.id,
@@ -417,15 +421,6 @@ def guardar_la_foto_de_la_pac(
             # *`ya_estaba` va en la respuesta para que la pantalla lo diga: **no es un fallo, es la misma foto**.*
             return {**_la_identidad_de(la_que_ya_estaba), "ya_estaba": True}
 
-        la_ultima = (
-            db.scalar(
-                select(func.max(models.FotoDeLaPac.version)).where(
-                    models.FotoDeLaPac.explotacion_id == explotacion.id,
-                    models.FotoDeLaPac.anio == datos.anio,
-                )
-            )
-            or 0
-        )
         la_foto = models.FotoDeLaPac(
             explotacion_id=explotacion.id,
             anio=datos.anio,
