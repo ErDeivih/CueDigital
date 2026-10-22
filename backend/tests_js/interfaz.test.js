@@ -77,7 +77,9 @@ function montarEntorno() {
   // `index.html`, o el armazón no se monta y las pruebas de cableado no podrían mirarlo.
     // *Y `aviso-cargas`, que es el de D03: **el arnés tiene que tener los mismos nodos que `index.html`**, o la
   // aplicación no encuentra el suyo y no se puede probar que un fallo se enseña.*
-  for (const id of ["pantalla", "aviso-pendientes", "aviso-cargas", "cabecera-texto", "pie", "marco"]) {
+    // *Y los dos trozos del aviso de cargas* (22/10/2026): *el texto y el boton de reintentar, que ahora son
+  // **marcado fijo** de `index.html` y no se montan desde `app.js` -montar HTML a mano esta prohibido-.*
+  for (const id of ["pantalla", "aviso-pendientes", "aviso-cargas", "aviso-cargas-texto", "aviso-cargas-boton", "cabecera-texto", "pie", "marco"]) {
     nodos.set(id, crearNodo(id));
   }
 
@@ -1177,6 +1179,9 @@ const RESPUESTAS = {
     },
     rotulos: { hectareas_corto: "ha", kilos_corto: "kg", hectareas: "Hectáreas", kilos_por_hectarea: "Kilos por hectárea", unidad_kilos: "Kilos", ya_cosechado: "Hasta aquí no puedes coger la cosecha:", apuntes_de_producto: "apuntes de producto", apunte_de_producto: "apunte de producto", dias_espera_corto: "días de espera", itv_hasta: "ITV hasta", unidad_hectareas: "hectáreas", elegida: "ELEGIDA", paso: "Paso {numero} de {total}", tierra_en_nitratos: "Está en zona de nitratos", tierra_masa_agua: "Tiene una masa de agua cerca" },
     mensajes: {
+    // ***La frase del boton de reintentar*** (22/10/2026): *`app.js` la pide con `mensaje("reintentar_la_carga")`;
+    // sin ella en el vocabulario falso, el boton sale **en blanco** y la prueba -con razon- lo dice.*
+    reintentar_la_carga: "Reintentar",
       V8_dias_de_espera: "Podrás cogerla a partir del {fin}.",
       sin_cobertura: "No hay cobertura.",
       no_se_pudo: "No se ha podido mandar.",
@@ -15055,12 +15060,17 @@ test("lo que no se pudo cargar se DICE en pantalla, con su reintento", async () 
   const elQueFalla = await cargarAplicacion({
     "/api/facturas": falla({ detail: "El servidor se ha caido." }, 500),
   });
+  // ***El aviso es marcado fijo y la aplicacion le pone el texto*** (22/10/2026): *el texto vive en
+  // `#aviso-cargas-texto` y la etiqueta del boton en `#aviso-cargas-boton`. Antes se leia el `innerHTML` del padre,
+  // que era montar HTML a mano y una prueba lo prohibe.*
   const elAviso = elQueFalla.entorno.nodos.get("aviso-cargas");
-  const loQueDice = `${elAviso.innerHTML || ""} ${elAviso.textContent || ""}`;
+  const elTextoDelAviso = elQueFalla.entorno.nodos.get("aviso-cargas-texto");
+  const elBotonDeReintentar = elQueFalla.entorno.nodos.get("aviso-cargas-boton");
+  const loQueDice = `${elAviso.className || ""} ${elTextoDelAviso ? elTextoDelAviso.textContent : ""} ${elBotonDeReintentar ? elBotonDeReintentar.textContent : ""}`;
   assert.match(loQueDice, /facturas/, `***tiene que decir que fallo facturas***: ${loQueDice}`);
   assert.match(
-    loQueDice,
-    /reintentar-lo-que-fallo/,
+    elBotonDeReintentar ? elBotonDeReintentar.textContent : "",
+    /[Rr]eintentar/,
     `***y ofrecer reintentar***: ${loQueDice}`,
   );
 

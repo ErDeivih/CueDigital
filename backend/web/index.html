@@ -19,7 +19,13 @@
   <!-- ***Lo que no se ha podido cargar*** (21/10/2026, D03): *un fallo de la red **no es «no hay datos»**.
        Va arriba y se ve siempre, con su boton de reintentar, para que el agricultor no lea «0 facturas» cuando
        lo que pasa es que no se ha podido preguntar.* -->
-  <div id="aviso-cargas" class="aviso oculto" role="status" aria-live="polite"></div>
+  <!-- ***Y su boton, escrito aqui y no montado a mano*** (22/10/2026): *`app.js` **no puede** montar HTML
+       -hay una prueba que lo impide-, asi que el aviso es marcado fijo y la aplicacion solo le pone el **texto** y
+       lo ensena o lo esconde.* -->
+  <div id="aviso-cargas" class="aviso oculto" role="status" aria-live="polite">
+    <strong id="aviso-cargas-texto"></strong>
+    <button type="button" class="boton boton-claro" data-accion="reintentar-lo-que-fallo" id="aviso-cargas-boton"></button>
+  </div>
 
   <!-- El armazón de la aplicación en el ordenador: el menú de la izquierda y la barra de arriba
        (la finca, el año, la cuenta y el botón de apuntar). Lo pinta React (`react/piezas/marco.js`) y

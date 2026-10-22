@@ -494,6 +494,10 @@ const pantalla = document.getElementById("pantalla");
 const avisoPendientes = document.getElementById("aviso-pendientes");
 // ***Y el de las cargas*** (21/10/2026, D03): *un fallo de la red **no es «no hay datos»*, y esto lo dice.*
 const avisoCargas = document.getElementById("aviso-cargas");
+// ***Y sus dos trozos*** (22/10/2026): *el texto del aviso y el boton de reintentar. **Se ponen desde aqui y no se
+// montan**: montar HTML a mano en `app.js` esta prohibido por una prueba, y con razon.*
+const avisoCargasTexto = document.getElementById("aviso-cargas-texto");
+const avisoCargasBoton = document.getElementById("aviso-cargas-boton");
 const cabeceraTexto = document.getElementById("cabecera-texto");
 
 // ------------------------------------------------------------------------ estado
@@ -1041,15 +1045,15 @@ function pintarLoQueFallo() {
   );
   if (lasQueFallaron.length === 0) {
     avisoCargas.className = "aviso oculto";
-    avisoCargas.textContent = "";
+    if (avisoCargasTexto) avisoCargasTexto.textContent = "";
     return;
   }
   avisoCargas.className = "aviso aviso-error";
   const losNombres = lasQueFallaron.map((clave) => clave.replace(/_/g, " ")).join(", ");
-  avisoCargas.innerHTML =
-    `<strong>${esc(mensaje("no_se_pudieron_cargar"))}</strong> ${esc(losNombres)} · ` +
-    `<button type="button" class="boton boton-claro" data-accion="reintentar-lo-que-fallo">` +
-    `${esc(mensaje("reintentar_la_carga"))}</button>`;
+  // ***El texto, a sus dos trozos***: *el marcado es fijo -`index.html`-, y aqui solo se escribe lo que dice y lo
+  // que pone el boton. `textContent` escapa solo: no hay que escapar nada.*
+  if (avisoCargasTexto) avisoCargasTexto.textContent = `${mensaje("no_se_pudieron_cargar")} ${losNombres}`;
+  if (avisoCargasBoton) avisoCargasBoton.textContent = mensaje("reintentar_la_carga");
 }
 
 /**
