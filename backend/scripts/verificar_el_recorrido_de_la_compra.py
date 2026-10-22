@@ -11,13 +11,15 @@ from __future__ import annotations
 import base64
 import json
 import sys
+import time
 import urllib.error
 import urllib.request
 
 sys.path.insert(0, "scripts")
 
 from andar_el_recorrido_de_la_pac import el_servidor_temporal  # noqa: E402
-from verificar_los_permisos_por_rol import _llamar, _una_cuenta_nueva  # noqa: E402
+from navegador_cdp import NavegadorDeVerdad  # noqa: E402
+from verificar_los_permisos_por_rol import _llamar, _poner_la_sesion, _una_cuenta_nueva  # noqa: E402
 
 EL_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -53,6 +55,24 @@ def con_formulario(direccion: str, camino: str, el_vale: str, datos: dict) -> tu
             return la_respuesta.status, json.loads(la_respuesta.read().decode("utf-8", "replace"))
     except urllib.error.HTTPError as el_error:
         return el_error.code, el_error.read().decode("utf-8", "replace")
+
+
+def el_texto(nav) -> str:
+    return str(nav.evaluar("(document.querySelector('#pantalla') || {}).innerText") or "")
+
+
+def abrir(nav, direccion: str, camino: str) -> str:
+    el_ultimo = ""
+    for _ in range(3):
+        nav.abrir(f"{direccion}/{camino}", esperar=3.0)
+        anterior = ""
+        for _ in range(30):
+            el_ultimo = el_texto(nav)
+            if el_ultimo and el_ultimo == anterior:
+                return el_ultimo
+            anterior = el_ultimo
+            time.sleep(0.4)
+    return el_ultimo
 
 
 def comprobar(bien: bool, que: str, encontre: str = "") -> bool:
@@ -176,7 +196,25 @@ def main() -> int:
             print(f"  (el pago: {codigo} {str(el_pago)[:160]})")
             fallos += not comprobar(codigo in (200, 201), "***y se paga, en parte***", str(el_pago))
 
-    print(f"\nComprobaciones: 5   Fallos: {fallos}")
+        # ---- 6 · y lo que se ve: la compra, por su ID ----
+        # *`#/compras/:id` esta en la tabla de patrones, y se miro antes de escribir la direccion.*
+        with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
+            _poner_la_sesion(nav, direccion, el_vale)
+            la_compra_abierta = abrir(nav, direccion, f"#/compras/{la_compra_id}")
+            fallos += not comprobar(
+                "no lleva a ninguna parte" not in la_compra_abierta and "SUMAGRO" in la_compra_abierta,
+                f"***`#/compras/{la_compra_id}` abre la compra, con su proveedor***",
+                la_compra_abierta,
+            )
+            la_otra = abrir(nav, direccion, f"#/compras/{la_compra_id}")
+            fallos += not comprobar(
+                la_otra == la_compra_abierta,
+                "***y aguanta la recarga***",
+                la_otra,
+            )
+
+
+    print(f"\nComprobaciones: 7   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

@@ -246,8 +246,16 @@ verdad.***
 
 ***Eso es lo que el encargo llama «revisar también el texto de ayuda, vacío, error»: un error que dice qué hacer.***
 
-### ***Lo que NO se ha añadido, y por qué***
+### ***Y la compra, en el navegador — ya añadida***
 
-***La compra abierta en el navegador*** *(`#/compras/<id>`, que la tabla de patrones sí tiene). El guion se quedó en
-las cinco puertas: **la comprobación del navegador no se llegó a añadir** —un ancla que no casó, y el fichero quedó
-intacto y verde—. **Queda pendiente**, y es lo único que le falta a este recorrido.*
+*El guion se quedó primero en las cinco puertas; **le faltaba abrir la compra en el navegador**. Ya está:*
+
+| | |
+|---|---|
+| **`#/compras/1` abre la compra, con su proveedor** | ✅ |
+| **y aguanta la recarga** | ✅ |
+
+    Comprobaciones: 7   Fallos: 0
+
+***Y la dirección se acertó a la primera por mirar la tabla de patrones***: *`compras/:id` está, y se leyó **antes**
+de escribir el guion. **La lección de la rectificación, aplicada dos veces seguidas.***

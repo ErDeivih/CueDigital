@@ -44,6 +44,15 @@ LAS_LLAMADAS = (
 
 LOS_NODOS = "document.getElementsByTagName('*').length"
 
+# ***Lo que dice el navegador de su propia navegacion***: *`domContentLoaded` y `load`, en milisegundos. Y **lo que
+# de verdad importa**: *cuanto se tarda hasta que hay algo en la pantalla, que eso **no lo dice el navegador** -la
+# aplicacion pinta cuando termina de pedir- y se mide desde fuera.*
+EL_TIEMPO_DEL_NAVEGADOR = (
+    "(() => { const n = performance.getEntriesByType('navigation')[0];"
+    " if (!n) return '';"
+    " return Math.round(n.domContentLoadedEventEnd) + '|' + Math.round(n.loadEventEnd); })()"
+)
+
 LA_MEMORIA = (
     "(() => { if (!performance.memory) return -1;"
     " return Math.round(performance.memory.usedJSHeapSize / 1048576); })()"
@@ -90,7 +99,16 @@ def main() -> int:
         with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
             _poner_la_sesion(nav, direccion, el_vale)
             print(f"== El arranque  ({direccion}) ==")
+            # ***Cuanto se tarda en tener pantalla***: *se mide **desde fuera**, con el reloj, porque el navegador
+            # no sabe cuando la aplicacion ha terminado de pedir y pintar.*
+            el_reloj = time.time()
             abrir(nav, direccion, "#/")
+            lo_que_tardo = time.time() - el_reloj
+            print(f"  ***medido***: {lo_que_tardo:.1f} s hasta tener pantalla")
+            el_tiempo = str(nav.evaluar(EL_TIEMPO_DEL_NAVEGADOR) or "")
+            if el_tiempo:
+                el_dom, _, el_load = el_tiempo.partition("|")
+                print(f"  (el navegador: `domContentLoaded` {el_dom} ms · `load` {el_load} ms)")
 
             # ---- 1 · las peticiones de arranque ----
             las_llamadas = nav.evaluar(LAS_LLAMADAS) or []
@@ -100,6 +118,10 @@ def main() -> int:
             fallos += not comprobar(
                 len(las_unicas) > 0,
                 f"***el navegador cuenta las peticiones de arranque*** ({len(las_unicas)} distintas)",
+            )
+            fallos += not comprobar(
+                lo_que_tardo < 30.0,
+                f"***y el arranque no se eterniza*** ({lo_que_tardo:.1f} s hasta tener pantalla)",
             )
             # *Y se dice cuantas, sin inventar un limite: es una medida, no un veredicto.*
             print(f"  ***medido***: {len(las_unicas)} peticiones distintas al abrir")
@@ -141,7 +163,7 @@ def main() -> int:
             else:
                 print("  (este navegador no da `performance.memory`: la memoria no se mide)")
 
-    print(f"\nComprobaciones: 4   Fallos: {fallos}")
+    print(f"\nComprobaciones: 5   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

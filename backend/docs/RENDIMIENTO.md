@@ -12,6 +12,9 @@
 
 | medida | valor |
 |---|---|
+| **tiempo hasta tener pantalla** | **3,1 s** (*medido desde fuera, con el reloj*) |
+| **`domContentLoaded`** | **194 ms** |
+| **`load`** | **194 ms** |
 | **peticiones al abrir** | **35** distintas (*contadas por el navegador con `performance.getEntriesByType`*) |
 | **nodos del documento al principio** | **307** |
 | **nodos después de andar 18 pantallas** | **307** |
@@ -41,8 +44,9 @@ vez, para que las pantallas no esperen—. **Lo que no se ha medido es cuánto t
 |---|---|
 | **navegación prolongada** | *medido con **18 pantallas** y una vuelta. **No** con media hora de uso real* |
 | **memoria** | *la del **montón de JavaScript** (`performance.memory`). **No** la del proceso, ni la del servidor* |
-| **cuánto tarda el arranque** | **no medido**. *Se cuentan las peticiones, no el tiempo* |
-| **el coste de cada petición** | **no medido** |
+| ~~cuánto tarda el arranque~~ | **MEDIDO**: *3,1 s hasta tener pantalla; el navegador tarda 194 ms en su `load`* |
+| **el coste de cada petición** | **no medido**. *Se sabe el total, no cuál pesa* |
+| **si 3,1 s es rápido o lento** | **no medido**: *no hay con qué compararlo. **Aquí no hay una versión anterior, ni un 4G, ni un móvil de gama baja*** |
 | **una raíz React controlada por contenedor** | *no revisado. **Lo que sí está medido es el efecto**: los nodos vuelven a 307* |
 | **fallos de foco al desmontar** | *medido **solo** el de Escape con el menú (`verificar_el_escape_y_el_foco.py`), no el de cada pantalla* |
 | **historial de instrumentación fuera de producción** | **no revisado** |
@@ -53,7 +57,8 @@ vez, para que las pantallas no esperen—. **Lo que no se ha medido es cuánto t
 
 - ***No hay fuga de nodos** en una navegación de 18 pantallas y vuelta.*
 - ***No crece la memoria de JavaScript** en esa navegación.*
-- ***El arranque pide 35 cosas distintas**, y eso es el diseño, **no una medida de que sea rápido**.*
+- ***El arranque tarda 3,1 s hasta tener pantalla** y pide 35 cosas distintas. **Si eso es rápido o lento no se
+  sabe**: no hay con qué compararlo.*
 
 ***Y lo que no se puede decir***: *que la aplicación sea rápida. **No se ha medido el tiempo**, ni el coste de cada
 petición, ni una sesión larga de verdad.*
