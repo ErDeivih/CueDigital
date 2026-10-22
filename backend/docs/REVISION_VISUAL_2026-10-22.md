@@ -32,6 +32,35 @@ porque enfocaba **con código** (`.focus()`) y el CSS usa **`:focus-visible`** �
 **tabulador**, el contorno aparece: `BUTTON solid 3px rgb(13, 43, 24)`.* **La aplicación estaba bien; la medición
 estaba mal.**
 
+### El contraste, medido con la fórmula (`scripts/medir_el_contraste.py`)
+
+*Sobre los colores que el navegador tiene puestos de verdad — `getComputedStyle`, subiendo a buscar el fondo efectivo
+cuando el del elemento es transparente — y con la fórmula de la WCAG:*
+
+| pantalla | el peor contraste | textos por debajo de 4,5 | por debajo de 3,0 |
+|---|---|---|---|
+| inicio | **6,37:1** | **0** | **0** |
+| tierras | **6,37:1** | **0** | **0** |
+| cuaderno | **6,3:1** | **0** | **0** |
+
+***La paleta pasa la WCAG AA con margen*** — *el mínimo para texto normal es 4,5 y el peor texto de estos tres
+pantallas está en 6,3.*
+
+*Lo que esto **no** mide: el contraste **sentido** — un texto fino sobre un fondo claro se lee peor de lo que dice el
+número —. **Eso solo lo ve quien mira**, y es otra vez la revisión con visión.*
+
+### Escape y el foco de regreso (`scripts/verificar_el_escape_y_el_foco.py`)
+
+***En el móvil, con el menú abierto:***
+
+    se abre el menú                →  ***su botón de cerrar se ve*** (1)
+    se pulsa Escape                →  ***el menú se cierra*** (0)
+    y el foco                      →  ***vuelve al botón que lo abrió*** (`menu-abrir`)
+
+***Las dos comprobaciones pasan.*** *Y por el camino salieron dos cosas que no eran de la aplicación: `#/inicio` **no
+es una dirección** —el inicio es la raíz— y **el menú vive fuera de `#pantalla`**, así que medir su texto no dice
+nada; hay que mirar su propio botón.*
+
 ---
 
 ## 2 · Lo que NO está hecho, y no se puede dar por bueno
@@ -49,9 +78,9 @@ visión sobre ellas. **Hasta entonces, D05 no está cerrado.**
 ## 3 · Y lo que el encargo pide además, que sigue pendiente
 
 - **el zoom al 200 %**;
-- **Escape y foco de regreso** (*que al cerrar algo el foco vuelva a donde estaba*);
+- ~~Escape y foco de regreso~~ — **HECHO** (con el menú del móvil, que es lo que tapa la pantalla);
 - **lector de pantalla** (*que los `aria-live` y las etiquetas se anuncien como toca*);
-- **contraste medido** (*no a ojo: con la relación calculada sobre los colores reales*);
+- ~~contraste medido~~ — **HECHO** (*no a ojo: la relación calculada sobre los colores reales*);
 - y **los cuatro recorridos completos** de D05: *tierra → trabajo → consumo; compra → recepción → lote → gasto →
   pago; venta → factura → cobro parcial → pendiente; papel → propuesta → confirmación/rectificación*, **cada total
   abriendo sus registros por ID**.
