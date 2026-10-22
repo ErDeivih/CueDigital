@@ -160,3 +160,29 @@ cabecera de un módulo que no se abrió.***
 ***No había nada que arreglar en la aplicación.*** *El encargo dice «cada total abre sus registros por ID»: **se
 cumple**.*
 
+---
+
+## 5 · El tercer recorrido: venta → factura → cobro parcial → pendiente
+
+*`scripts/verificar_el_recorrido_del_dinero.py`. **Por las puertas de verdad**, comprobando **A06**, que el contrato
+pide con nombre: **una factura de 121 con un pago de 40 deja 81 pendientes**.*
+
+| comprobación | |
+|---|---|
+| **la venta se apunta, con su importe** (`POST /api/ventas`) | **201** ✅ |
+| **la entrega se factura** (`POST /api/facturas-emitidas`) | **201** ✅ |
+| **se apunta un cobro PARCIAL de 40** (`POST /api/cobros`) | **201** ✅ |
+| **de 121 pagados 40 quedan 81** | `pendiente: 81.00` ✅ |
+| **la venta sale en la tabla, con su 121** (`#/ventas`) | ✅ |
+| **`#/ventas/facturas/1` abre la factura, con su pendiente** | ✅ |
+| **y al recargarla, lo mismo** | ✅ |
+
+***El pendiente no es cero***: *ese es el defecto que tendría un programa que diera la factura por cobrada al primer
+pago, y aquí no pasa.*
+
+***Y una dirección que NO existe, a propósito***: *`#/ventas/1` **no** es una pantalla — una venta es **una fila de la
+tabla**, no una ficha. La tabla de patrones (`PANTALLAS`, en `react/rutas.js`) tiene `ventas/:id/importe` y
+`ventas/:id/ajuste`, pero **no `ventas/:id`**; la ficha es **de la factura**: `#/ventas/facturas/:id`.*
+
+***Eso es lo que se aprendió de la rectificación del 22/10***: *antes de decir «esto no existe», **se mira la tabla de
+patrones del lector**, no la forma en que uno recuerda la dirección.*
