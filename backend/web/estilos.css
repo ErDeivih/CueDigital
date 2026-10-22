@@ -2866,3 +2866,25 @@ body:has(.entrada-cuenta) .pie {
   .cabecera-titulo { flex: 1 1 auto; min-width: 0; }
   .cabecera-botones { flex: 0 0 auto; }
 }
+
+/* ***El pliegue de los filtros avanzados*** (22/10/2026, C2). *El `summary` es un control: se le da el suelo de
+   altura del diseño -44 px-, no se le baja la letra, y se le pone el dedo gordo encima sin que estorbe.* */
+.t06-avanzados {
+  border: 1px solid var(--borde);
+  padding: 0 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.t06-avanzados > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.t06-avanzados[open] > summary {
+  border-bottom: 1px solid var(--borde);
+  margin-bottom: 0.5rem;
+}

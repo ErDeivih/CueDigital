@@ -211,31 +211,22 @@ export function PantallaInicio({
   const anio = campana && campana.anio !== null && campana.anio !== undefined ? campana.anio : "";
   const titulo =
     frase(inicio.saludo) + (nombre ? `, ${nombre}` : "") + (anio === "" ? "" : ` · ${anio}`);
-  // **Apuntar un trabajo, arriba** (decisión de David, 07/10/2026). Medido con
-  // `scripts/medir_las_acciones.py`: Inicio ofrecía 41 acciones y solo 3 se veían al entrar —el resto son
-  // enlaces de lista, uno por tierra—, así que lo que había que decidir era **qué se viene a hacer al abrir
-  // el cuaderno**, y la respuesta es **apuntar un trabajo**. Se sube el botón que ya existe en los botones de
-  // Inicio —con **su** texto y **su** acción, sin inventar etiquetas ni acciones nuevas—, y en el ordenador
-  // se ve además del panel de mando.
-  const elTrabajo = (botones || []).find((uno) => uno.id === "trabajo") || null;
+  // ***Y el botón de arriba se fue*** (22/10/2026, A1 de la revisión con visión).
+  //
+  // *Se subía «apuntar un trabajo» **antes de la pregunta** con el mismo texto y la misma acción que uno de los
+  // seis, y la revisión lo midió: **«HE HECHO UN TRABAJO» aparece antes de la pregunta y otra vez entre las seis
+  // acciones**; en el móvil **consume altura y compite con la acción principal**, y en el escritorio se repetía
+  // también entre los atajos del panel.*
+  //
+  // *El motivo de subirlo era una medición del 07/10 -41 acciones y solo 3 se veían al entrar-, pero **ese problema
+  // ya no es este**: los seis botones van justo detrás de la pregunta, con el principal marcado. **Un botón de más
+  // arriba no arregla la altura: la gasta**.*
+  //
+  // ***Si alguna vez hace falta más peso para «apuntar un trabajo», el sitio es `textos.py`*** -marcarlo como el
+  // principal, que es de donde salen los seis-, **no pintarlo dos veces**.
 
   return html`
     <h1>${titulo}</h1>
-    ${
-      // La acción que se viene a hacer, **nada más entrar** (ver arriba el porqué).
-      elTrabajo
-        ? html`<div className="barra-acciones">
-            <${BotonDeInicio}
-              etiqueta=${elTrabajo.texto}
-              pista=${elTrabajo.pista}
-              icono=${elTrabajo.icono}
-              accion=${elTrabajo.accion}
-              ir=${elTrabajo.ir}
-              tipo=${elTrabajo.tipo}
-            />
-          </div>`
-        : null
-    }
     ${hayParcelas ? null : html`<${BloqueAntesDeEmpezar} maestros=${maestros} />`}
     ${
       // **El panel de mando, solo en el ordenador** (fase 4, 30/09/2026): el estado del año de un vistazo.

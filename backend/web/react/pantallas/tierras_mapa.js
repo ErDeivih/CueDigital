@@ -296,7 +296,6 @@ export function puntosDelTrozo(anillos, caja, ancho, alto) {
 function Filtros({ textos, filtros, filtro }) {
   return html`
     <section className="t06-filtros" aria-label=${frase(textos.filtros_titulo)}>
-      <h2 className="t06-titulo-seccion">${frase(textos.filtros_titulo)}</h2>
       <div className="campo">
         <label htmlFor="t06_buscar">${frase(textos.buscar)}</label>
         <div className="t06-buscar">
@@ -304,6 +303,16 @@ function Filtros({ textos, filtros, filtro }) {
           <${BotonSencillo} etiqueta=${textos.buscar_boton} accion="t06-buscar" clase="boton-claro" />
         </div>
       </div>
+      ${/* ***Los cuatro grupos, plegados*** (22/10/2026, C2): *el encargo pide «filtros avanzados plegables» y
+           **«primeras tierras visibles sin atravesar todas las opciones»**. Se pliegan en un `<details>`, que el
+           navegador ya sabe abrir con el teclado y con el dedo -no hace falta JavaScript-, y **se abren solos si hay
+           algún filtro puesto**, para que el agricultor vea lo que está filtrando en vez de preguntarse por qué
+           faltan tierras.* */ ""}
+      <details
+        className="t06-avanzados"
+        open=${Boolean(filtro.cultivo || filtro.municipio || filtro.revision || filtro.pac)}
+      >
+        <summary>${frase(textos.filtros_avanzados)}</summary>
       <${OpcionesParaElegir}
         rotulo=${textos.filtro_cultivo}
         opciones=${filtros.cultivos}
@@ -336,10 +345,13 @@ function Filtros({ textos, filtros, filtro }) {
         elegido=${filtro.pac || ""}
         todas=${textos.filtro_todas}
       />
+        <div className="barra-acciones">
+          <${Boton} etiqueta=${textos.quitar_filtros} accion="t06-quitar-filtros" clase="boton-claro" />
+        </div>
+      </details>
+      ${/* ***Y la exportación, fuera***: *es una acción, no un filtro: quitarla de la vista la escondía detrás de
+           otro pliegue.* */ ""}
       <div className="barra-acciones">
-        <${Boton} etiqueta=${textos.quitar_filtros} accion="t06-quitar-filtros" clase="boton-claro" />
-        ${/* ***La exportacion filtrada*** (22/10/2026, D04): *el encargo la pide por su nombre -«exportacion
-             filtrada»- y no habia ninguna. **Exporta lo que se ve**: los mismos filtros que la tabla.* */ ""}
         <${Boton} etiqueta=${textos.exportar} accion="t06-exportar" clase="boton-claro" />
       </div>
     </section>
@@ -757,21 +769,12 @@ export function PantallaTierrasDeLaExplotacion({
     : t.ninguna_marcada || "";
   return html`
     <h1>${frase(t.titulo)}</h1>
-    <p className="pista">${frase(t.explica)}</p>
+    ${/* ***La explicación, detrás de los resultados*** (22/10/2026, C2): *la revisión lo midió: «en las cinco primeras
+         vistas se ven sobre todo **explicación** y filtros». Lo que se viene a ver son **las tierras**; que se
+         explique después de enseñarlas no le quita nada a quien quiera leerlo.* */ ""}
     <${AvisoDeError} texto=${aviso} />
     <${Filtros} textos=${t} filtros=${vista.filtros || {}} filtro=${filtro} />
-    <${OpcionesParaElegir}
-      rotulo=${t.agrupar_titulo}
-      opciones=${[
-        { valor: "cultivo", texto: t.agrupar_cultivo },
-        { valor: "municipio", texto: t.agrupar_municipio },
-        { valor: "forma", texto: t.agrupar_forma },
-      ]}
-      accion="t06-agrupar"
-      campo="grupo"
-      elegido=${grupo}
-      todas=${t.agrupar_no}
-    />
+    
     <div className="barra-acciones">
       <${Boton} etiqueta=${t.marcar_todas} accion="t06-marcar-todas" clase="boton-claro" />
       <${Boton} etiqueta=${t.desmarcar_todas} accion="t06-desmarcar-todas" clase="boton-claro" />
@@ -803,6 +806,23 @@ export function PantallaTierrasDeLaExplotacion({
           `
     }
     <p className="pista-campo">${(pies || []).filter(Boolean).join(" · ")}</p>
+    ${/* Y aquí, debajo, la explicación de la pantalla. */ ""}
+    <p className="pista t06-explica">${frase(t.explica)}</p>
+    ${/* ***Y cómo se agrupan, aquí abajo*** (22/10/2026, C2): *es una **opción de vista**, no un filtro, y estaba
+         empujando las tierras fuera de la ventana del móvil. Quien quiera agrupar las encuentra después de verlas;
+         **nadie tiene que elegir cómo agrupar antes de saber si hay algo que agrupar**.* */ ""}
+<${OpcionesParaElegir}
+      rotulo=${t.agrupar_titulo}
+      opciones=${[
+        { valor: "cultivo", texto: t.agrupar_cultivo },
+        { valor: "municipio", texto: t.agrupar_municipio },
+        { valor: "forma", texto: t.agrupar_forma },
+      ]}
+      accion="t06-agrupar"
+      campo="grupo"
+      elegido=${grupo}
+      todas=${t.agrupar_no}
+    />
     ${
       // **El mapa dibuja las tierras que pasan el filtro**, no las 64 siempre: es lo que pide el
       // contrato («el mapa respeta la selección declarada») y lo que hace útil filtrar por lo

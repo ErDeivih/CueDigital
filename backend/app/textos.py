@@ -6118,6 +6118,10 @@ TIERRA_Y_MAPA: dict[str, str] = {
     "pac_con_hectareas": "Con hectáreas dichas",
     "pac_sin_hectareas": "Sin hectáreas dichas",
     "quitar_filtros": "QUITAR LOS FILTROS",
+    # ***Los filtros avanzados, plegados*** (22/10/2026, C2 de la revision con vision): *«en las cinco primeras
+    # vistas se ven sobre todo explicacion y filtros; **ni a 1440x900 aparece una tierra**». Los cuatro grupos se
+    # pliegan y **se abren solos si hay algun filtro puesto**, para que se vea lo que esta filtrando.*
+    "filtros_avanzados": "FILTROS AVANZADOS",
     # ***La exportacion filtrada*** (22/10/2026, D04): *el encargo la pide por su nombre, y no habia ninguna: las
     # unicas exportaciones eran la del banco, la de firmar y la de la PAC. **Se exporta lo que se ve**, con los
     # filtros puestos, porque el filtro vive en la pantalla y no en la puerta.*
