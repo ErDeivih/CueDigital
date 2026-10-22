@@ -98,8 +98,39 @@ visión sobre ellas. **Hasta entonces, D05 no está cerrado.**
 - **lector de pantalla de verdad** (*que se anuncie bien*: *los nombres y las etiquetas están medidos —0 sin
   nombre, 0 sin etiqueta, 3 zonas vivas—, pero **que se lean bien necesita un lector real**);
 - ~~contraste medido~~ — **HECHO** (*no a ojo: la relación calculada sobre los colores reales*);
-- y **los cuatro recorridos completos** de D05: *tierra → trabajo → consumo; compra → recepción → lote → gasto →
-  pago; venta → factura → cobro parcial → pendiente; papel → propuesta → confirmación/rectificación*, **cada total
-  abriendo sus registros por ID**.
+- ~~los cuatro recorridos completos~~ — **UNO EMPEZADO**: *tierra → trabajo → consumo, ver abajo*;
+- **los otros tres**: *compra → recepción → lote → gasto → pago; venta → factura → cobro parcial → pendiente;
+  papel → propuesta → confirmación/rectificación*.
+
+---
+
+## 4 · El primer recorrido: tierra → trabajo → consumo
+
+*`scripts/verificar_el_recorrido_de_la_tierra.py`. **Por las puertas de verdad** —las mismas que usa la pantalla—,
+no inventando filas en la base.*
+
+| comprobación | |
+|---|---|
+| **la tierra se da de alta** por `POST /api/parcelas` | **201** ✅ |
+| **el trabajo se apunta en ella** por `POST /api/tratamientos` | **201** ✅ |
+| **la tierra sale en la lista** `#/tierras/mapa`, con su nombre | ✅ |
+| **el cuaderno RECHAZA un tratamiento con un producto sin número de registro** | `V1_sin_registro` ✅ |
+| **y RECHAZA uno sin decir por qué se echó** | `V10_sin_justificacion` ✅ |
+
+***Las dos últimas no estaban en el guion: las destapó el recorrido.*** *Al intentar apuntar el tratamiento, el
+cuaderno lo rechazó dos veces —primero por el producto, luego por la justificación—, y eso **es la aplicación
+haciendo su trabajo**: un tratamiento sin producto identificable no vale para la Junta. **Comprobarlo vale más que
+lo que se buscaba.***
+
+### ***Lo que NO se ha podido comprobar, y es la mitad de lo que pedía el encargo***
+
+**«Cada total abre sus registros por ID»**. *Las fichas —`#/apunte?id=N` y `#/tierra?id=N`— **contestan «esa
+dirección no lleva a ninguna parte»***, también con la campaña y la finca en la dirección. **La aplicación las abre
+por otro camino que no he encontrado**, y el botón de la fila de la lista **marca** —es la casilla de la selección
+múltiple—, no abre la ficha.
+
+***Queda pendiente, con el hallazgo escrito***: *o las fichas no tienen dirección propia —y entonces el «enlace
+permanente al contexto» que pide el contrato no está— o la tienen con otra forma. **Es una pregunta para el
+encargo, no un arreglo a ciegas.**
 
 ***Nada de eso está hecho.** Este documento dice lo que hay y lo que falta, sin redondear.*
