@@ -191,8 +191,19 @@ describe la pantalla que se deja. **El estado guardado queda bien**:
 
     {"tierras_mapa":{"direccion":"#/tierras/mapa?campana=2026&finca=1&q=VEGA","scroll":320}}
 
-***Y aun así el scroll sigue volviendo a 0***: *con la dirección y el píxel ya correctos, **`scrollTo` no llega a
-ejecutarse** — se sondeó el scroll a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos, y **siempre 0**, así que no es que se
-restaure y se pierda: **es que la condición sigue sin cumplirse**. **Queda una tercera causa, sin identificar.***
+***Y se instrumentó la condición misma*** (22/10/2026), *otra vez con un hook temporal:*
 
-***Dos defectos reales encontrados y arreglados, y el efecto todavía no se ve.*** *Se entrega así.*
+    {"clave":"tierras_mapa","en_la_tabla":true,
+     "vista":{"direccion":"#/tierras/mapa?campana=2026&finca=1&q=VEGA","scroll":320},
+     "hash":"#/tierras/mapa?campana=2026&finca=1&q=VEGA","casa":true}
+
+***«`casa`: true»*** — *la condición **se cumple** y `scrollTo(0, 320)` **se llama**… y **la página se queda a 0**.*
+
+***Y no es que se baje antes de que haya altura***: *se probó a bajar **después de pintar** —primero con
+`requestAnimationFrame`, y luego esperando a que la página tuviera altura— y **tampoco**.*
+
+***Queda una tercera causa, sin identificar***: *con la dirección correcta, el píxel correcto y la condición cumplida,
+**algo devuelve la página a 0 después de bajarla**. Se sondeó a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos: siempre 0.*
+
+***Dos defectos reales encontrados y arreglados, y el efecto todavía no se ve.*** *Se deja la forma sencilla —sin código
+que no se haya comprobado que sirva— y se entrega así.*

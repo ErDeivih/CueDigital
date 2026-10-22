@@ -1575,6 +1575,11 @@ function volverAdondeIba() {
   const clave = estado.pantalla;
   const vista = clave && TABLA_DE_LA_PANTALLA[clave] ? recupera(estado.vistas, clave) : null;
   if (vista && vista.direccion === window.location.hash && vista.scroll) {
+    // ***Y se baja*** (22/10/2026): *la condicion **se cumple** -se instrumento y dio `"casa": true`-, y `scrollTo`
+    // **se llama**… y **la pagina se queda a 0**: se sono a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos, y siempre 0. Se
+    // probo a bajar **despues de pintar** -`requestAnimationFrame`, y luego esperando a que la pagina tuviera altura-,
+    // y **tampoco**. **Queda una tercera causa, sin identificar**: algo devuelve la pagina a 0 despues de bajarla.
+    // *Se deja la forma sencilla, que es la que estaba, sin anadir codigo que no se ha comprobado que sirva.*
     window.scrollTo(0, vista.scroll);
     return;
   }
