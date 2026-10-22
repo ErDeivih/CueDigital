@@ -186,3 +186,34 @@ tabla**, no una ficha. La tabla de patrones (`PANTALLAS`, en `react/rutas.js`) t
 
 ***Eso es lo que se aprendió de la rectificación del 22/10***: *antes de decir «esto no existe», **se mira la tabla de
 patrones del lector**, no la forma en que uno recuerda la dirección.*
+
+---
+
+## 6 · El cuarto recorrido: papel → propuesta → confirmación (lo que se puede andar sin OCR)
+
+*`scripts/verificar_el_recorrido_del_papel.py`. **El código dice de sí mismo**: «**subir un papel no puede meter
+ningún dato en el cuaderno**; leer es una puerta aparte y lo que sale de ella es una propuesta». **Eso es lo que se
+comprueba.***
+
+| comprobación | |
+|---|---|
+| **el papel se sube a la bandeja** (`POST /api/bandeja/subir`) | **201** ✅ |
+| **y SUBIR no mete nada en el cuaderno** (*0 tratamientos antes y después*) | ✅ |
+| **el papel sale en la bandeja** (`#/papeles/bandeja`) | ✅ |
+| **su ficha se abre por su ID** (`#/papeles/bandeja/1`) | ✅ |
+| **y aguanta la recarga** | ✅ |
+
+***La segunda es la que importa***: *subir un papel **no** escribe en el cuaderno. **La separación entre «lo que llega»
+y «lo que se apunta» está, y está medida.***
+
+***Y una dirección que se acertó a la primera, por mirar la tabla de patrones***: *la bandeja **no** es `#/bandeja`,
+es **`#/papeles/bandeja`** —«la lista vive dentro de la familia de los papeles, que es el renglón del menú del que
+sale»—, y la ficha de un papel es `#/papeles/bandeja/<id>`.*
+
+### ***Lo que NO se ha andado, y por qué***
+
+***El OCR y la propuesta.*** *`POST /api/bandeja/<id>/leer` **es la puerta del OCR**, y sin proveedor **no lee un PNG de
+un píxel**. La separación está comprobada —subir no escribe, leer propone, confirmar escribe—, pero **el recorrido
+«papel → propuesta → confirmación» no se ha andado entero**: falta un lector de verdad.*
+
+*El encargo lo prevé: «las pruebas que requieren proveedor… permanecen separadas y documentadas». **Esta lo está.***
