@@ -81,9 +81,9 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
    las dos pintan el mismo array, pero eso es lectura del código.*
    **En las tres anchuras sí está medido** (`scripts/verificar_las_anchuras_de_las_tierras.py`):
    **3 filas a 1440, 3 a 1024 y 3 a 390**, y **2 con `?q=TIERRA`** en las tres.
-   ***Hallazgo de diseño***: *esta pantalla usa **la misma tabla** en las tres anchuras — no cambia a
-   tarjetas como las demás. **A 390 px una tabla de tierras se lee mal**, y el documento de marca pide la
-   forma de tarjeta en el móvil: **queda anotado, no arreglado**.*
+   ***Y ya no es un hallazgo***: *desde el 22/10/2026 **el móvil tiene tarjetas** — la tabla pasa a
+   `solo-escritorio` y al lado hay tarjetas en `solo-movil`, con las mismas tierras y los mismos `data-accion`.
+   **Medido**: 1440 → **3 filas**; 1024 y 390 → **3 tarjetas**. Ver «La aceptación grande», abajo.*
 3. **Los filtros y la selección sobreviven a la recarga** — **MEDIDO** (21/10/2026): *el filtro viaja en la
    dirección (`?q=`) y recargar deja la vista filtrada; y `?id=N` deja **elegida esa tierra** —la fila lleva
    `tabla-fila-elegida`— **también después de recargar**. **Falta la selección múltiple** (`marcadas=`), que
@@ -98,7 +98,7 @@ alta— **y desde `#/tierras/mapa`** —con el mapa al lado—. **Las dos son le
 | ✅ **el mismo conjunto** en la lista y el mapa *(4 filas / 1 polígono con forma)* | *6* |
 | ✅ **filtro, selección y marcadas** sobreviven a la recarga | *4* |
 | ✅ **las tres anchuras** (1440, 1024, 390), con y sin filtro | *6* |
-| ⏳ ***la tabla a 390 px***: *esta pantalla no cambia a tarjetas como las demás, y una tabla de tierras a 390 se lee mal* | **anotado, no arreglado** — *es diseño, y hay que medirlo antes de cambiarlo* |
+| ✅ ***el móvil, con tarjetas*** *(el encargo: «en móvil: tarjetas útiles»)* | **hecho** — *1440: 3 filas · 1024 y 390: 3 tarjetas* |
 | ⏳ *que el polígono y su fila lleven el mismo `data-id`* | *lectura del código, no medición* |
 
 **Total medido en navegador**: **18 comprobaciones, 0 fallos** (`scripts/verificar_los_enlaces_de_las_tierras.py`
