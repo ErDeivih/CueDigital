@@ -1683,6 +1683,22 @@ div.tarjeta:active {
      **sigue sin caber en 64**: queda por ver qué la mantiene en dos filas. La medida de 83 → 64 px de antes era
      la del **móvil**, que en el ordenador ni se enseña. El guion que lo mide es
      `scripts/medir_la_barra_de_escritorio.py`, y lo que falta está apuntado en `docs/ESTADO_DEL_REDISENO.md`. */
+  /* ***El suelo, también en la barra*** (22/10/2026, C1). *La revisión pide que cuenta, finca y campaña «se
+     identifiquen, con nombres largos… **sin reducir el suelo tipográfico ni el área de los controles**». Y en la barra
+     había texto a **13 px** y un control de **40**: por debajo de los 15 y los 44 del diseño. **Se suben al suelo**; no
+     se recorta nada para que quepa.* */
+  .marco .barra .pista,
+  .marco .barra small,
+  .marco .barra .etiqueta {
+    font-size: 0.9375rem;
+  }
+
+  .marco .barra select,
+  .marco .barra button,
+  .marco .barra input {
+    min-height: 44px;
+  }
+
   .marco .barra {
     position: fixed;
     top: 0;
@@ -1692,7 +1708,11 @@ div.tarjeta:active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: nowrap;
+    /* ***Envuelve cuando no cabe*** (22/10/2026, C1 de la revisión con visión). *Con `nowrap`, a 1024 y con nombres
+       largos de finca y campaña los hijos **se encogen y se pisan**: la revisión lo midió -«los textos de finca/campaña
+       se superponen y el contexto de cuenta se recorta»-. **Envolver no recorta letra ni toca el área de los
+       controles**: cuando caben, sigue en una fila; cuando no, usa dos.* */
+    flex-wrap: wrap;
     gap: 0.4rem 1rem;
     min-height: var(--alto-barra);
     /* **0.3rem dejaba la barra en 68 px** (07/10/2026): con 0.2rem cabe en los 64 del diseño y no se recorta

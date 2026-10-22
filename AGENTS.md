@@ -42,7 +42,7 @@ que pase. Si no hay test para lo que estás tocando, **escríbelo**.
 ```bash
 cd backend
 
-# Python (5629 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
+# Python (5631 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
 # certificado, firma, instalaciones, plan de abono, análisis, medidas preventivas, dictado,
 # documentación anexa, el cliente del interfaz de la Junta, la comprobación de la firma,
 # varias cuentas dentro de una misma finca, las tierras en el mapa y en la tabla (T06),
