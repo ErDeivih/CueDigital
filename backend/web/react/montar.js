@@ -120,7 +120,12 @@ export function montarEn(contenedor, elemento, avisoDeEmergencia = {}) {
   if (puedeMontar && elemento) {
     montajes.push({ contenedor, elemento, motor: "react" });
     contenedor.innerHTML = "";
-    ReactDOM.createRoot(contenedor).render(elemento);
+    const raiz = ReactDOM.createRoot(contenedor);
+    const renderizar = () => raiz.render(elemento);
+    // Quien monta restaura después posición y foco. createRoot.render programa
+    // el trabajo: sin confirmar aquí, esos consumidores ven el contenedor vacío.
+    if (typeof ReactDOM.flushSync === "function") ReactDOM.flushSync(renderizar);
+    else renderizar();
     return true;
   }
 
@@ -145,6 +150,9 @@ export function montarFueraDeLaPantalla(contenedor, elemento) {
   montajesDelMarco.push({ contenedor, elemento });
   if (!puedeMontar) return false;
   contenedor.innerHTML = "";
-  ReactDOM.createRoot(contenedor).render(elemento);
+  const raiz = ReactDOM.createRoot(contenedor);
+  const renderizar = () => raiz.render(elemento);
+  if (typeof ReactDOM.flushSync === "function") ReactDOM.flushSync(renderizar);
+  else renderizar();
   return true;
 }

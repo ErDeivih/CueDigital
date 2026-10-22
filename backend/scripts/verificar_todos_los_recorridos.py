@@ -31,6 +31,7 @@ LOS_RECORRIDOS = [
     ("los estados de fallo", "verificar_los_estados_de_fallo.py"),
     ("los enlaces de las tierras", "verificar_los_enlaces_de_las_tierras.py"),
     ("las tres anchuras", "verificar_las_anchuras_de_las_tierras.py"),
+    ("volver de la ficha", "medir_la_vuelta_de_la_ficha.py"),
     ("el tacto y el foco", "medir_el_tacto_y_el_foco.py"),
     ("el contraste", "medir_el_contraste.py"),
     ("el zoom y lo que se anuncia", "medir_el_zoom_y_lo_que_se_anuncia.py"),

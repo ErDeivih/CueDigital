@@ -1541,6 +1541,7 @@ function apuntarLaDireccion(listo) {
   const direccion = escribirLaDireccion(clave, parametros);
   if (!direccion) return;
   estado.pantalla = clave;
+  estado.ultimaDireccion = direccion;
   if (window.location.hash === direccion) return;
   // `pushState` y no `location.hash = …`: escribir el fragmento a mano dispara `hashchange`, que es lo
   // que se usa para «atrás» y «adelante», y volveríamos a abrir la misma pantalla en un bucle.
@@ -1571,22 +1572,13 @@ function recordarPorDondeIba() {
 }
 
 /** Y si se vuelve **exactamente a la misma lista**, se devuelve al sitio en el que estaba. */
-// ***El scroll lo lleva la aplicacion, no el navegador*** (22/10/2026): *con `scrollRestoration` en `auto` -lo que
-// trae el navegador-, **cada cambio de fragmento es una navegacion**, y el navegador **restaura su propia posicion
-// despues** de que la aplicacion haya bajado a la suya: la deja a 0. Se vio con el instrumento -`"casa": true`,
-// `scroll: 320`, una sola llamada, y `scrollY = 0`-, y se descarto que fuera la altura. **En `manual`, la unica voz es
-// esta.***
+// La navegacion interna restaura su propia posicion tras confirmar el montaje.
 if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
 
 function volverAdondeIba() {
   const clave = estado.pantalla;
   const vista = clave && TABLA_DE_LA_PANTALLA[clave] ? recupera(estado.vistas, clave) : null;
   if (vista && vista.direccion === window.location.hash && vista.scroll) {
-    // ***Y se baja*** (22/10/2026): *la condicion **se cumple** -se instrumento y dio `"casa": true`-, y `scrollTo`
-    // **se llama**… y **la pagina se queda a 0**: se sono a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos, y siempre 0. Se
-    // probo a bajar **despues de pintar** -`requestAnimationFrame`, y luego esperando a que la pagina tuviera altura-,
-    // y **tampoco**. **Queda una tercera causa, sin identificar**: algo devuelve la pagina a 0 despues de bajarla.
-    // *Se deja la forma sencilla, que es la que estaba, sin anadir codigo que no se ha comprobado que sirva.*
     window.scrollTo(0, vista.scroll);
     return;
   }
@@ -6160,7 +6152,7 @@ async function entrar(modo) {
  * prueba que comprueba que las dos no se separan (si se separan, o el móvil no se descarga lo nuevo, o el
  * número que se enseña no es el de verdad).
  */
-const VERSION_DE_LA_APLICACION = "2026-10-21-78";
+const VERSION_DE_LA_APLICACION = "2026-10-22-79";
 
 function pintarPie() {
   const pie = document.getElementById("pie");

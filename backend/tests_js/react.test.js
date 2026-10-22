@@ -8460,3 +8460,20 @@ test("un fallo de ventas no se pinta como «no has vendido nada»", async () => 
   assert.match(sinFallo, /Todavía no has vendido nada/, sinFallo.slice(0, 300));
 });
 
+
+test("montar confirma el contenido antes de restaurar posicion y foco", () => {
+  const anterior = globalThis.ReactDOM;
+  const contenedor = { innerHTML: "pantalla anterior" };
+  let confirmar;
+  globalThis.ReactDOM = {
+    createRoot: () => ({ render: () => { confirmar = () => { contenedor.innerHTML = "lista lista"; }; } }),
+    flushSync: (renderizar) => { renderizar(); confirmar(); },
+  };
+  try {
+    assert.equal(montarEn(contenedor, { type: "section" }), true);
+    assert.equal(contenedor.innerHTML, "lista lista", "el consumidor recibe un contenedor vacio");
+  } finally {
+    if (anterior === undefined) delete globalThis.ReactDOM;
+    else globalThis.ReactDOM = anterior;
+  }
+});
