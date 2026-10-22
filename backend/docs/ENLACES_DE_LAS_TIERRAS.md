@@ -174,5 +174,25 @@ está: **el scroll no se guardaba nunca en la pantalla donde de verdad hay que g
 ***Corregido***: *`tierras_mapa` entra en la tabla (la pantalla `mapa` **no**, que se abre de cero y se centra sola, y su
 comentario lo dice).*
 
-***Y aun así el scroll sigue volviendo a 0*** *en la medición: **queda otra causa que no se ha identificado**. El
-defecto de la tabla era real y está arreglado; el efecto completo **no se ha conseguido**, y se dice.*
+***Y exponiendo el estado se encontró la segunda causa*** (22/10/2026): *`recordarPorDondeIba()` guardaba **la
+dirección de la pantalla que llegaba, no la que se dejaba**.*
+
+***El diagnóstico, tal cual salió***:
+
+    {"tierras_mapa":{"direccion":"#/tierras/1?...","scroll":320}}
+                            ^ la FICHA, no la lista
+
+*Porque leía `window.location.hash` **cuando el hash ya había cambiado** —`hashchange` se dispara **después** de
+escribir el fragmento—: guardaba **la pantalla vieja con la dirección nueva**, y al volver la condición de
+`volverAdondeIba` —«volver **a la misma** dirección»— **no casaba nunca**.*
+
+***Corregido***: *se guarda `estado.ultimaDireccion`, la última dirección que **puso la propia aplicación**, que sí
+describe la pantalla que se deja. **El estado guardado queda bien**:
+
+    {"tierras_mapa":{"direccion":"#/tierras/mapa?campana=2026&finca=1&q=VEGA","scroll":320}}
+
+***Y aun así el scroll sigue volviendo a 0***: *con la dirección y el píxel ya correctos, **`scrollTo` no llega a
+ejecutarse** — se sondeó el scroll a los 0,3, 0,6, 1, 1,5, 2,5 y 4 segundos, y **siempre 0**, así que no es que se
+restaure y se pierda: **es que la condición sigue sin cumplirse**. **Queda una tercera causa, sin identificar.***
+
+***Dos defectos reales encontrados y arreglados, y el efecto todavía no se ve.*** *Se entrega así.*

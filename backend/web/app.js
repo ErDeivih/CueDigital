@@ -1546,6 +1546,9 @@ function apuntarLaDireccion(listo) {
   // que se usa para «atrás» y «adelante», y volveríamos a abrir la misma pantalla en un bucle.
   if (estado.completando) window.history.replaceState({ direccion }, "", direccion);
   else window.history.pushState({ direccion }, "", direccion);
+  // ***Y se apunta cual es la direccion de la pantalla que esta puesta*** (22/10/2026): *es la que hay que guardar
+  // al dejarla, porque al dejar de estar puesta la barra ya lleva otra.*
+  estado.ultimaDireccion = direccion;
 }
 
 /** Apunta por dónde iba en la lista que se está dejando, para poder volver a su sitio. */
@@ -1553,7 +1556,16 @@ function recordarPorDondeIba() {
   const clave = estado.pantalla;
   if (!clave || !TABLA_DE_LA_PANTALLA[clave]) return;
   estado.vistas = recuerda(estado.vistas, clave, {
-    direccion: window.location.hash,
+    // ***La direccion que se guarda es la de la pantalla que se DEJA*** (22/10/2026): *aqui se leia
+    // `window.location.hash`, y cuando esto corre **el hash ya ha cambiado** -`hashchange` se dispara **despues**
+    // de escribir el fragmento-, asi que se guardaba **la pantalla vieja con la direccion nueva**. Se vio
+    // exponiendo el estado: `{"tierras_mapa":{"direccion":"#/tierras/1?...","scroll":320}}` -la ficha, no la
+    // lista-.* ***Y por eso al volver no casaba nunca***: *la condicion de `volverAdondeIba` es volver **a la misma
+    // direccion**, y la guardada era otra.*
+    //
+    // *Se guarda **la ultima direccion que la propia aplicacion puso** -`estado.ultimaDireccion`-, no la de la
+    // barra: esa es la que describe la pantalla que se deja.*
+    direccion: estado.ultimaDireccion || window.location.hash,
     scroll: window.scrollY || 0,
   });
 }
