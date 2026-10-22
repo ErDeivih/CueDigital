@@ -300,3 +300,144 @@ La rama está publicada con CI configurada para `integracion/**`, además de `ma
 **No se ha verificado el resultado de GitHub Actions ni ejecutado Windows desde este entorno.**
 Los comandos para repetir las suites son los de la sección anterior; la regresión nueva necesita
 Python y Node, disponibles en el setup y en la matriz CI. No se ha hecho merge en principal.
+
+## Revisión independiente de la entrega 99e0873 — 22/10/2026
+
+Se incorporó por avance rápido la entrega publicada del ejecutor, sin sobrescribir cambios.
+Esta revisión no certifica las 54 rondas por sus resúmenes. Contrasta código, imágenes e
+instrumentos, aplica una corrección acotada y distingue los pendientes observados.
+
+### Scroll: causa medida y corrección aplicada
+
+El medidor anterior devolvía salida 0 incluso al imprimir que el scroll no se conservaba.
+También usaba `nav.abrir` entre pantallas; ese ayudante recarga el documento y reinicia el
+estado del módulo. Ese recorrido no acreditaba el regreso dentro de una sesión SPA.
+
+Se instrumentó `scrollTo` en un navegador temporal, sin exponer estado privado en producción:
+
+| Momento de restaurar 320 px | Antes | Después |
+|---|---|---|
+| Hijos de `#pantalla` | 0 | 11 |
+| Altura de documento | 700 | 4124 |
+| Altura de viewport | 700 | 700 |
+| Posición tras `scrollTo` | 0 | 320 |
+
+`createRoot.render` todavía no había confirmado el DOM cuando el llamador intentaba restaurar.
+`montarEn` y el marco ahora confirman con `ReactDOM.flushSync`; después se restaura posición/foco.
+Se actualiza además la última dirección incluso cuando el hash ya coincide, como al volver atrás.
+No se añadió un temporizador que adivinase cuándo habría contenido. Caché/versión: `2026-10-22-79`.
+
+La nueva regresión usa una sola sesión/documento, dos anchuras (1440/390), dos vueltas,
+Atrás/Adelante y control negativo al cambiar filtro. **16 casos, 0 fallos**. Con el montaje anterior,
+el mismo instrumento da **6 fallos de 16** y salida 1. Se añade al andador, que ahora enumera
+15 recorridos. Una regresión JS comprueba que el contenido está confirmado al devolver el montaje.
+
+### Visión: hecha, con cambios solicitados
+
+Se examinaron las quince imágenes originales y las quince corregidas. Las originales tenían
+cinco «inicios» que eran páginas de dirección inválida. Los archivos 320/390 medían ambos 500 px
+de ancho; 1024 medía 1008 y no activaba el breakpoint de escritorio. El capturador ahora fija
+viewport por CDP, verifica dimensiones y exige identidad de pantalla. Se regeneraron los quince
+PNG con medidas exactas y se revisaron. No son imágenes de datos reales.
+
+Resultado: **D05 CAMBIOS_SOLICITADOS**, con tabla firmada en
+[revisión con visión](../backend/docs/REVISION_CON_VISION.md):
+
+- C1: textos solapados/recortados en la cabecera a 1024.
+- C2: filtros de tierras ocupan toda la primera vista; no aparecen los resultados ni a 1440×900.
+- A1: acceso «He hecho un trabajo» duplicado antes y dentro de las acciones de inicio.
+
+La marca se reconoce y el cuaderno vacío es legible en las capturas revisadas. Eso no aprueba
+la aplicación completa: faltan estados poblados, situaciones de fallo y pruebas con usuarios.
+Las medidas heredadas de tacto/contraste/zoom que usaban ruta inválida o solo tamaño de ventana
+no acreditan la pantalla y viewport declarados. Deben repetirse con controles de identidad.
+
+### D01: cinco casos pasan, dos respuestas tardías siguen cruzando contexto
+
+Se ejecutó el diagnóstico convertido en regresiones: los cinco casos anteriores pasan. Aun así,
+se reprodujeron dos casos nuevos sobre funciones originales en VM, con promesas controladas:
+
+1. A inicia `enviarOApuntar`; entra B; llega el 200 de A. Se guarda el contenido de A bajo
+   `cuedigital.ultimo.2:2`, porque la clave se calcula al recibir la respuesta.
+2. El vaciado de A espera un POST; entra B; llega el 422. El rechazo de A se guarda en
+   `cuedigital.rechazados.2:2`, por la misma lectura tardía del contexto.
+
+Son reproducciones de lógica cliente con colaboradores controlados, no recorridos de UI ni una
+filtración de servidor demostrada. Las claves locales y los datos sí quedan cruzados. D01 sigue
+**ABIERTO** hasta capturar también las claves de persistencia y proteger la actualización del estado
+visible. Pasar las regresiones anteriores no cierra estos dos casos. Evidencia en el fichero de
+reproducciones; el encargo actualizado define aceptación y siguiente trabajo para un solo ejecutor.
+
+### D07: la medición de navegación no demuestra ausencia de retención
+
+El medidor invoca `nav.abrir` en cada transición, que fuerza documentos nuevos. Comparar sus
+nodos/MB no prueba liberación de memoria en una sesión SPA. Además, siguen arrays de montajes
+sin límite y raíces nuevas por render en `montar.js`. Esto identifica un riesgo y una prueba
+insuficiente; no cuantifica aquí una fuga real. **D07 EN_REVISION**: medir con `timeOrigin`
+constante, acciones de navegación dentro de la misma sesión y política de GC documentada.
+Detalles en [rendimiento](../backend/docs/RENDIMIENTO.md).
+
+### Continuidad y límites
+
+D04 tiene el scroll corregido, pero su jerarquía visual sigue pendiente. D05 tiene revisión hecha,
+con cambios solicitados. D06 no puede cerrarse por copiar/restaurar SQLite: revocación, límites de
+acceso y gestión de secretos/copias también necesitan código y pruebas locales antes del despliegue.
+D08 no tiene corpus real autorizado ni decisión de proveedor. No se declara producto comercializable.
+
+La suite completa y el humo de esta revisión se registran al finalizar; los números declarados por
+el ejecutor no se reutilizan como resultados independientes. No se ejecutan aquí Windows,
+GitHub Actions, un despliegue HTTPS ni PostgreSQL. `main` y `principal` permanecen sin fusionar.
+
+**Dos comprobaciones adicionales D01 de concurrencia local:** con el dueño que construye la app
+(cuenta + instalación compartida), dos solicitudes sucesivas al lease reciben ambas `turno: true`.
+La exclusión no distingue procesadores/pestañas. Además, intercalando de forma controlada la segunda
+escritura entre la lectura y escritura de la primera, dos intenciones dejan **un único pendiente**.
+Los IDs distintos no resuelven la actualización no transaccional del mismo array JSON. Son pruebas
+de funciones con almacén controlado, no dos navegadores físicos; reproducen la intercalación que
+el contrato debe soportar. D01 requiere persistencia/coordinación que conserve ambas intenciones,
+además de claves de respuesta estables. Evidencia adicional en el fichero de reproducciones.
+
+
+### Carrera PAC encontrada por la suite completa y corregida
+
+La primera ejecución independiente terminó con **1 fallo, 5.618 superadas y 2 omitidas**:
+`test_dos_guardados_a_la_vez_no_pisan_ninguna_version` devolvió IDs `{1, 2}` para el mismo contenido.
+No se ignoró el fallo ni se aceptó un reintento de la suite como prueba de arreglo.
+
+La consulta de huella podía devolver vacío; otra petición confirmaba su foto; entonces `max(version)`
+ya veía la versión nueva y creaba la siguiente, sin colisión que obligase a comprobar otra vez la
+huella. Mover la comprobación dentro del bucle no bastaba. Se lee ahora **primero max y después huella**:
+si otra foto confirma después de comprobar la huella, el número leído antes entra en conflicto y
+se reintenta; si confirma antes, se encuentra la huella. Se conserva el índice y todo el historial,
+sin migración ni eliminación de fotos previas.
+
+La prueba existente se hizo determinista: pausa la primera petición antes de leer max, deja que
+la segunda confirme y luego libera la primera. **Falla con el código de 99e0873 y pasa con el arreglo**.
+También mantiene la comprobación de que cambiar el contenido crea una versión nueva. Las 16 pruebas
+específicas de fotos y datos desconocidos pasan. La suite completa se ejecuta de nuevo tras corregir.
+
+
+### Cierre verificado de esta entrega — 22/10/2026
+
+Código de scroll en `95b7b94`, corrección PAC en `66f3232`; después solo captura/evidencia y documentación.
+La segunda ejecución Python completa, tras el arreglo PAC, terminó sin fallos:
+
+| Comprobación local | Resultado |
+|---|---|
+| Python | **5.619 superadas, 2 omitidas**, 7 avisos; 5.621 recogidas; 6 min 47 s |
+| JavaScript | **1.173 superadas**, 0 fallos, 0 omisiones |
+| Humo | **483 correctas**, salida 0 |
+| Scroll, navegación SPA | **16/16**; el montaje anterior falla 6 casos con el mismo instrumento |
+| Recorrido PAC después del arreglo | **16/16** |
+| Flujos tierra / compra / dinero / papel | **10/10, 7/7, 7/7, 5/5** |
+| Pruebas específicas PAC | **16 superadas**; prueba de intercalación falla con el orden anterior |
+| Ruff, ESLint y dependencias (`pip check`) | Correctos |
+| Contrato visual oficial | 0 errores, 0 avisos |
+| Capturas | 15 regeneradas, dimensiones exactas, todas vistas; cambios solicitados |
+
+Las dos omisiones son los escenarios de saldo y OCR ya descritos; no se presentan como comprobados.
+No se ha repetido aquí todo el andador: se comprobaron estos recorridos y los que incluye pytest;
+15 es el número de entradas del andador actualizado, no quince ejecuciones independientes certificadas.
+Los nuevos casos D01 están reproducidos y pendientes de arreglo: las suites existentes no los cierran.
+La revisión visual no es una aprobación de D05 ni una prueba con usuarios. D07 necesita una medición
+válida de sesión continua. Windows, PostgreSQL y el resultado de GitHub Actions no se verificaron aquí.

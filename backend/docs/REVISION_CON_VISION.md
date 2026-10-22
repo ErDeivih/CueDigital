@@ -1,91 +1,82 @@
-# La revisión con visión: la hoja para quien pueda mirarla
+# Revisión visual independiente — 22/10/2026
 
-> **Para qué es este documento.** D05 pide una revisión **visual** de las capturas. ***Este modelo no ve imágenes***, así
-> que el encargo manda dejarlo **EN_REVISION** hasta que lo mire alguien que sí pueda. Esto es **la hoja de revisión**:
-> las capturas que hay, **qué hay que mirar en cada una**, y el resultado que da el revisor. **Convertir un bloqueo en
-> una tarea de diez minutos es lo único útil que se puede hacer desde aquí.**
+**Revisor: Codex, con lectura de imágenes. Resultado D05: CAMBIOS_SOLICITADOS.**
+Se han visto las quince capturas originales y las quince corregidas; no se aprueba todavía D05.
+Esto revisa las primeras vistas de tres pantallas con datos ficticios, no todas las funciones,
+una prueba de usabilidad con agricultores ni una auditoría de accesibilidad completa.
 
----
+## Evidencia corregida
 
-## 1 · Por qué está EN_REVISION, con la prueba
+Las cinco imágenes originales llamadas `inicio` mostraban «Esa dirección no lleva a ninguna parte»:
+el capturador abría `#/inicio`, que no es la dirección de inicio. Además, sus tamaños reales eran:
 
-*El arnés tiene una herramienta para leer imágenes —`read_image`—, y **la probé** (22/10/2026):*
-
-```
-Error: cannot read "…/inicio-1440x900.png" as an image:
-model "deepseek-v4-flash-vision-exp" does not declare image input;
-switch to an image-capable model to read images
-```
-
-***No es una suposición: es lo que contesta el programa.*** *La revisión **no se ha hecho**, y **no se puede hacer aquí**.*
-
----
-
-## 2 · Las capturas que hay
-
-*En `docs/capturas-de-anchuras/`, **quince**: cinco anchuras por **tres pantallas**.*
-
-| pantalla | anchuras |
+| Etiqueta original | PNG real |
 |---|---|
-| **inicio** | 320 · 390 · 712 · 1024 · 1440 |
-| **tierras** | 320 · 390 · 712 · 1024 · 1440 |
-| **cuaderno** | 320 · 390 · 712 · 1024 · 1440 |
+| 320×700 | 500×605 |
+| 390×844 | 500×749 |
+| 712×900 | 696×805 |
+| 1024×768 | 1008×673 |
+| 1440×900 | 1424×805 |
 
-*(Cada una: `<pantalla>-<ancho>x<alto>.png`.)*
+Constructor de ventana no equivale a viewport. El capturador ahora usa `nav.medir`, abre `#/`,
+exige un elemento propio de cada pantalla y comprueba `innerWidth/innerHeight` antes de guardar.
+Se sustituyeron las quince imágenes por capturas de esas rutas, con dimensiones PNG exactas,
+y se revisaron visualmente después. Ubicación real desde la raíz: `backend/docs/capturas-de-anchuras/`.
 
----
+## Resultado por captura
 
-## 3 · Qué hay que mirar en cada una
+**C:** cambios necesarios. **A:** anotación de jerarquía. **V:** conforme para el estado mostrado,
+con las limitaciones de esta revisión. Firma de todas las celdas: Codex, 22/10/2026.
 
-***Lo que ya está medido con instrumentos*** *—para que el revisor no repita trabajo—:*
+| Pantalla | 320×700 | 390×844 | 712×900 | 1024×768 | 1440×900 |
+|---|---|---|---|---|---|
+| Inicio | A1 | A1 | A1 | C1, A1 | A1 |
+| Tierras | C2 | C2 | C2 | C1, C2 | C2 |
+| Cuaderno | V | V | V | C1 | V |
 
-| lo que dice el encargo | cómo se midió | resultado |
-|---|---|---|
-| **ningún texto por debajo de 15 px** | *`medir_el_contraste.py`, midiendo el tamaño real* | ✅ |
-| **ningún control por debajo de 44×44** | *`medir_el_tacto_y_el_foco.py`, a 390* | ✅ *0 por debajo* |
-| **contraste WCAG AA** | *`medir_el_contraste.py`* | ✅ *el peor, 6,3:1; ninguno por debajo de 4,5* |
-| **sin desbordamiento horizontal al 200 %** | *`medir_el_zoom_y_lo_que_se_anuncia.py`* | ✅ |
-| **el foco se ve con Tab** | *`medir_el_tacto_y_el_foco.py`* | ✅ *`BUTTON solid 3px rgb(13, 43, 24)`* |
-| **el móvil con tarjetas, no tabla** | *`verificar_las_anchuras_de_las_tierras.py`* | ✅ *1440: 3 filas · 1024 y 390: 3 tarjetas* |
+Cada celda corresponde a `<pantalla>-<ancho>x<alto>.png` en la carpeta enlazada:
+[inicio](capturas-de-anchuras/inicio-390x844.png),
+[tierras](capturas-de-anchuras/tierras-1440x900.png),
+[cuaderno](capturas-de-anchuras/cuaderno-320x700.png).
 
-***Lo que solo se puede juzgar mirando*** —*y es lo que se pide al revisor—:*
+### C1 — Cabecera de escritorio a 1024
 
-### Para cada captura
+Los textos de finca/campaña se superponen y el contexto de cuenta se recorta. La cabecera no
+conserva una jerarquía legible al entrar en el breakpoint de escritorio. La captura exacta a
+1024 sí activa el marco; la antigua de 1008 no lo hacía.
 
-1. **¿Se entiende qué pantalla es, sin leer el menú?** *¿el título y lo importante están claros y arriba?*
-2. **¿La jerarquía es la del diseño?** *¿lo principal es lo más grande, y lo secundario se distingue sin competir?*
-3. **¿Hay algo que se corte, se solape o se salga?** *texto partido, botones pisados, tarjetas que se montan.*
-4. **¿Queda sitio vacío incómodo o apretado donde no debería?**
-5. **¿Parece CueDigital?** *—la marca, la paleta, la tipografía— **o parece un formulario cualquiera**. La especificación
-   de marca está en `docs/ESPEC_MARCA_UX_2026-10-19.md`.*
-6. **En las de 320 y 390, además**: *¿se lee sin hacer zoom? ¿los botones se alcanzan con el pulgar? ¿el texto no queda
-   diminuto aunque cumpla los 15 px?*
-7. **Comparando las cinco anchuras de una misma pantalla**: *¿la misma pantalla, más estrecha, o **otra pantalla**?*
+**Aceptación:** a 1024, 1100 y 1440 no hay intersecciones de texto ni controles tapados; cuenta,
+finca y campaña se identifican, con nombres largos. Reorganizar o abreviar con etiqueta accesible,
+sin reducir el suelo tipográfico ni el área de los controles. Repetir con zoom de escritorio real.
 
----
+### C2 — Tierras: los resultados llegan demasiado tarde
 
-## 4 · El resultado, para rellenar
+En las cinco primeras vistas se ven sobre todo explicación y filtros. Ni a 1440×900 aparece
+una tierra: búsqueda, cuatro grupos de opciones y agrupación empujan tabla/tarjetas y mapa hacia
+abajo. Tener tarjetas más abajo no cumple por sí solo la experiencia de despacho ni la de campo.
 
-*Una tabla por pantalla. **El revisor escribe y firma**; esto es lo que falta para sacar D05 de EN_REVISION.*
+**Aceptación:** búsqueda y contexto visibles; filtros avanzados plegables; filtros activos y
+acción de quitarlos reconocibles; primeras tierras visibles sin atravesar todas las opciones.
+En escritorio tabla/mapa coordinados; en móvil tarjetas legibles. Mantener orden, selección,
+exportación y restauración de contexto. Probar tres y 64 tierras, filtros activos, vacío y fallo.
+No resolverlo reduciendo letra o botones. Ver el contrato D04 existente.
 
-| pantalla | 320 | 390 | 712 | 1024 | 1440 | quién | cuándo |
-|---|---|---|---|---|---|---|---|
-| **inicio** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | | |
-| **tierras** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | | |
-| **cuaderno** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | | |
+### A1 — Inicio: acción duplicada
 
-*⬜ sin revisar · ✅ conforme · ✍️ con anotación (se escribe debajo qué)*
+«HE HECHO UN TRABAJO» aparece antes de la pregunta y otra vez entre las seis acciones. En móvil
+consume altura y compite con la acción principal. En escritorio se repite también entre los
+atajos del panel. Resolver la duplicación conservando las seis acciones y su orden contractual;
+si se mantiene un acceso adicional, justificar una tarea distinta y comprobar comprensión.
 
-### Anotaciones
+## Marca y lectura
 
-*(Aquí van las que salgan, con la captura a la que se refieren.)*
+Sí se reconoce CUE Digital: símbolo, verde propio, tipografía consistente y contraste visual
+claro. En móvil de 320/390 el nombre ocupa dos líneas, pero no se ve cortado. Las tarjetas del
+cuaderno vacío distinguen tarea pendiente y acción; no se han visto capturas de un cuaderno
+poblado en esta serie. El menú de escritorio sigue largo y mezcla nombres con frases: necesita
+la revisión de arquitectura de información ya especificada, no otra plantilla visual.
 
----
-
-## 5 · Y lo que **no** es esta hoja
-
-***No es una revisión hecha.*** *Es la lista para hacerla. **D05 sigue EN_REVISION**, y seguirá hasta que alguien con
-ojos —y con la marca en la cabeza— rellene la tabla de arriba.*
-
-***Y no sustituye a las medidas***: *el contraste, el tacto y el zoom **ya están medidos**; la revisión añade lo que un
-instrumento no ve: **si la pantalla se entiende**.*
+Esta lectura no certifica las medidas antiguas de contraste, tacto o zoom. Hay instrumentos que
+usan `#/inicio` o no fijan viewport; repetir sus medidas con identidad de pantalla, dimensiones
+reales y controles positivos. Pellizco (`visualViewport.scale`) no sustituye reflujo con zoom
+de escritorio. No afirmar cumplimiento WCAG completo ni usabilidad real por estas capturas.

@@ -62,3 +62,21 @@ vez, para que las pantallas no esperen—. **Lo que no se ha medido es cuánto t
 
 ***Y lo que no se puede decir***: *que la aplicación sea rápida. **No se ha medido el tiempo**, ni el coste de cada
 petición, ni una sesión larga de verdad.*
+
+
+## Revisión independiente — 22/10/2026: D07 EN_REVISION
+
+El instrumento `medir_el_arranque_y_la_navegacion.py` navega con `abrir`, que llama a
+`NavegadorDeVerdad.abrir`. Ese ayudante fuerza un documento nuevo pasando por `about:blank`
+cuando solo cambia el fragmento. Por tanto, comparar 307 nodos/6 MB antes y después no prueba
+que una sesión SPA libere raíces o memoria: se han reiniciado módulos y sus referencias.
+Además `montar.js` sigue creando raíces nuevas y guardando montajes en arrays sin límite.
+Esto identifica una limitación del instrumento y un riesgo del ciclo de vida; no cuantifica
+por sí solo una fuga de memoria en producción.
+
+Siguiente prueba: mantener constante `performance.timeOrigin`, navegar por acciones reales
+o hashes sin Page.navigate, recorrer al menos 100 transiciones, volver al mismo estado y
+comparar nodos/raíces/heap con límites razonados y condiciones de GC documentadas. Separar
+arranque frío, navegación y memoria. No volver a cerrar D07 con números redondeados de
+documentos distintos. Luego corregir propiedad/desmontaje de raíces y trazas de producción
+con regresiones, conservando foco, scroll y comportamiento de las pantallas.

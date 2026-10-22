@@ -1,5 +1,34 @@
 # El estado del encargo, en un solo sitio
 
+
+## Actualización independiente — 22/10/2026
+
+Esta sección prevalece sobre las etiquetas históricas de la entrega reproducidas abajo.
+
+| Corte | Estado revisado |
+|---|---|
+| D01 | **ABIERTO:** pasan los cinco casos anteriores; respuestas tardías cruzan claves A/B; lease compartido y escritura intercalada pierden exclusión/datos |
+| D02 | Carrera adicional reproducida y corregida: leer versión antes de comprobar huella; prueba determinista antes/después |
+| D03 | Entregado por el agente; no se certifican todas las combinaciones de fallo/contexto en esta revisión |
+| D04 | Scroll **corregido y probado** (16/0; montaje anterior 6 fallos). Jerarquía de filtros/resultados pendiente |
+| D05 | Revisión con visión **hecha**, resultado **CAMBIOS_SOLICITADOS**; ver REVISION_CON_VISION.md |
+| D06 | Copia/restauración ensayadas no equivalen a operación comercial; seguridad de aplicación también tiene trabajo local pendiente |
+| D07 | **EN_REVISION:** el medidor recarga documentos al navegar; no demuestra ausencia de retención durante una sesión SPA |
+| D08 | Solo evaluación sintética; corpus autorizado, proveedor y condiciones de uso pendientes |
+
+**Cierre local independiente:** Python 5.619 superadas y 2 omitidas (5.621 recogidas), JS 1.173
+superadas, humo 483/483, scroll 16/16, PAC 16/16 y cuatro flujos 29/29. Sin fallos finales.
+Esto no cierra los casos D01 reproducidos ni aprueba D05/D07; ver el informe y sus límites.
+
+Las quince capturas nuevas sí corresponden a las tres pantallas y las cinco dimensiones.
+Se mantienen tres cambios visuales pendientes: cabecera a 1024, resultados de tierras tras
+filtros demasiado extensos y acceso de trabajo duplicado en inicio.
+
+Resultados independientes completos: cierre del 22/10 en
+`docs/REVISION_PRODUCTO_2026-10-19.md` desde la raíz del repositorio.
+
+---
+
 > **Para qué es este documento.** Los cortes D01–D08 tienen sus documentos, sus pruebas y sus instrumentos
 > repartidos. Esto es **la vista de conjunto**: lo que está comprobado, lo que falta, y **lo que necesita a alguien
 > que no soy yo**.
@@ -24,7 +53,7 @@
 | **D07 · rendimiento** | *5: arranque, memoria, navegación y tiempo* | ✅ |
 | **D08 · OCR y meteo** | *7 del OCR por campo, con factura sintética* | ⚠️ *(el corpus y la meteo, no)* |
 
-**La última pasada completa, sobre este mismo HEAD (22/10/2026)**:
+**Pasada declarada por el agente antes de la revisión independiente (histórica)**:
 
     Python       ***5617*** · `exit code 0`
     JavaScript   ***1172*** · `exit code 0`

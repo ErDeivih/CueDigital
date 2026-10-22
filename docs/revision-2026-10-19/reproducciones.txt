@@ -75,3 +75,152 @@ JavaScript: 1157 tests, 1157 pass, 0 fail, 0 skipped.
 Humo sobre servidor nuevo: 483 OK, RESULTADO: todo correcto.
 Recorridos Chromium: PAC 16/0; cola final 9/0. Ruff/ESLint correctos; diseño 0 errores/0 avisos.
 Estas suites no cubren las reproducciones adicionales D01/D02 documentadas: siguen abiertas.
+
+Revisión 22/10: respuestas de cuenta A guardadas bajo claves de B. Funciones originales en VM, sin UI ni datos reales:
+{
+  "cambio_durante_primer_envio": {
+    "creador": "1:1",
+    "dueno_asignado": "1:1",
+    "correcto": true
+  },
+  "identidad_primer_envio": {
+    "primero_tiene_clave": true,
+    "misma_clave_en_reintento": true,
+    "correcto": true
+  },
+  "identidad_dos_instancias": {
+    "ids_distintos": true,
+    "quedan": 1,
+    "correcto": true
+  },
+  "almacen_bloqueado_desde_arranque": {
+    "fallback": "memoria",
+    "durable": false,
+    "correcto": true
+  },
+  "fallo_al_apartar": {
+    "pendientes": 1,
+    "rechazados": 0,
+    "dato_perdido": false,
+    "correcto": true
+  },
+  "ultimo_de_A_guardado_en_B": {
+    "reproducido": true
+  },
+  "rechazo_de_A_guardado_en_B": {
+    "reproducido": true
+  }
+}
+
+Scroll antes (altura y contenido en la llamada):
+Ficha: #/tierras/1?campana=2026&finca=1&orden=numero&sentido=1
+{
+  "antes": 320,
+  "vuelto": 0,
+  "llamadas": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "y": 0,
+      "altura": 700,
+      "ventana": 700,
+      "contenido": 0,
+      "despues": 0
+    },
+    {
+      "args": [
+        0,
+        320
+      ],
+      "y": 0,
+      "altura": 700,
+      "ventana": 700,
+      "contenido": 0,
+      "despues": 0
+    }
+  ]
+}
+
+Scroll después (misma medición):
+Ficha: #/tierras/1?campana=2026&finca=1&orden=numero&sentido=1
+{
+  "antes": 320,
+  "vuelto": 320,
+  "llamadas": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "y": 320,
+      "altura": 3442,
+      "ventana": 700,
+      "contenido": 48,
+      "despues": 0
+    },
+    {
+      "args": [
+        0,
+        320
+      ],
+      "y": 0,
+      "altura": 4124,
+      "ventana": 700,
+      "contenido": 11,
+      "despues": 320
+    }
+  ]
+}
+
+Ampliación D01 del 22/10, incluyendo lease compartido y escrituras intercaladas (almacén controlado, no dos navegadores físicos):
+{
+  "cambio_durante_primer_envio": {
+    "creador": "1:1",
+    "dueno_asignado": "1:1",
+    "correcto": true
+  },
+  "identidad_primer_envio": {
+    "primero_tiene_clave": true,
+    "misma_clave_en_reintento": true,
+    "correcto": true
+  },
+  "identidad_dos_instancias": {
+    "ids_distintos": true,
+    "quedan": 1,
+    "correcto": true
+  },
+  "almacen_bloqueado_desde_arranque": {
+    "fallback": "memoria",
+    "durable": false,
+    "correcto": true
+  },
+  "fallo_al_apartar": {
+    "pendientes": 1,
+    "rechazados": 0,
+    "dato_perdido": false,
+    "correcto": true
+  },
+  "ultimo_de_A_guardado_en_B": {
+    "reproducido": true
+  },
+  "rechazo_de_A_guardado_en_B": {
+    "reproducido": true
+  },
+  "lease_con_dueno_compartido": {
+    "dos_procesadores_admitidos": true
+  },
+  "escrituras_intercaladas": {
+    "intenciones": 2,
+    "pendientes": 1,
+    "dato_perdido": true
+  }
+}
+
+Cierre 22/10 después de corregir la carrera PAC:
+5619 passed, 2 skipped, 7 warnings in 407.67s (0:06:47)
+JavaScript: 1173 pass, 0 fail, 0 skipped.
+Humo: 483 OK, salida 0. Scroll 16/16; PAC 16/16; tierra/compra/dinero/papel 29/29.
+Ruff, ESLint, pip check correctos; diseño 0 errores/0 avisos.
+No acredita cierre de las nuevas reproducciones D01 ni aprobación visual de D05.

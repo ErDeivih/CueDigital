@@ -11,6 +11,7 @@ Uso:  python scripts/capturar_las_anchuras.py [carpeta]
 from __future__ import annotations
 
 import base64
+import json
 import pathlib
 import sys
 import time
@@ -22,7 +23,12 @@ from navegador_cdp import NavegadorDeVerdad  # noqa: E402
 from verificar_los_permisos_por_rol import _llamar, _poner_la_sesion, _una_cuenta_nueva  # noqa: E402
 
 LAS_ANCHURAS = ((320, 700), (390, 844), (712, 900), (1024, 768), (1440, 900))
-LAS_PANTALLAS = (("inicio", "#/inicio"), ("tierras", "#/tierras/mapa"), ("cuaderno", "#/cuaderno"))
+LAS_PANTALLAS = (("inicio", "#/"), ("tierras", "#/tierras/mapa"), ("cuaderno", "#/cuaderno"))
+LAS_SENALES = {
+    "inicio": '[data-accion="inicio"][data-ir="mi_cuaderno"]',
+    "tierras": '#t06_buscar',
+    "cuaderno": '[data-accion="inicio"][data-ir="echar_producto"]',
+}
 
 
 def el_texto(nav) -> str:
@@ -66,9 +72,23 @@ def main() -> int:
             )
         for ancho, alto in LAS_ANCHURAS:
             with NavegadorDeVerdad(ancho=ancho, alto=alto) as nav:
+                nav.medir(ancho, alto)
                 _poner_la_sesion(nav, direccion, cuenta["token"])
                 for nombre, camino in LAS_PANTALLAS:
                     abrir(nav, direccion, camino)
+                    if not nav.esperar(
+                        "document.querySelector('#pantalla ' + "
+                        + json.dumps(LAS_SENALES[nombre]) + ") !== null",
+                        segundos=20,
+                    ):
+                        raise RuntimeError(f"No se ha abierto {nombre}: {el_texto(nav)[:200]}")
+                    medida = nav.evaluar("({ancho: innerWidth, alto: innerHeight})")
+                    if medida != {"ancho": ancho, "alto": alto}:
+                        raise RuntimeError(f"Viewport distinto del solicitado: {medida}")
+                    if nombre == "cuaderno" and not nav.evaluar(
+                        "document.querySelector('#pantalla h1')?.textContent.trim() === 'Mi cuaderno'"
+                    ):
+                        raise RuntimeError("La captura de cuaderno no contiene su título")
                     crudo = base64.b64decode(nav.orden("Page.captureScreenshot", {"format": "png"})["data"])
                     destino = la_carpeta / f"{nombre}-{ancho}x{alto}.png"
                     destino.write_bytes(crudo)

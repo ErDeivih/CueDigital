@@ -1,5 +1,10 @@
 # La revisión visual de D05, y su estado
 
+> **Actualización independiente 22/10:** la revisión con visión ya está hecha en
+> [REVISION_CON_VISION.md](REVISION_CON_VISION.md). Resultado: **CAMBIOS_SOLICITADOS**.
+> Las capturas originales tenían rutas/tamaños incorrectos y han sido sustituidas.
+> Las afirmaciones y medidas históricas de abajo no constituyen aprobación visual.
+
 > **Estado: EN_REVISION.** *Las capturas están hechas y las medidas sin vista, también. **La revisión con visión
 > no se ha podido hacer**: el modelo de esta sesión **no acepta imágenes** — contesta «does not declare image
 > input» —, y el encargo dice, con estas palabras: «si el modelo no ve imágenes, mantener **EN_REVISION** hasta que

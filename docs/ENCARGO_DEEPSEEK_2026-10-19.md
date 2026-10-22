@@ -2,6 +2,53 @@
 
 Fecha: 19/10/2026. Objetivo: cerrar fiabilidad y experiencia para un piloto comercial verificable.
 
+## Prioridad vigente tras revisión independiente — 22/10/2026
+
+**Un solo agente ejecutor**, sobre la misma rama integrada y conservando trabajo posterior.
+La entrega `99e0873` está incorporada. No repetir sus 54 rondas ni buscar el ZIP.
+Los estados de la entrega del implementador no sustituyen esta revisión.
+
+1. **D01, P0: respuestas que llegan tras cambiar de cuenta.** Los cinco casos de cola anteriores
+   pasan ahora. Se reprodujeron otros dos con promesas controladas: A inicia POST; entra B;
+   la respuesta 200 de A termina guardando `cuedigital.ultimo.2:2` con datos de A. Y un 422
+   del vaciado de A termina en `cuedigital.rechazados.2:2`. Capturar también las claves de
+   persistencia antes del primer await; no derivarlas de la sesión actual al terminar.
+   Actualizar el estado visible solo si sigue perteneciendo al contexto de origen. Probar
+   éxito, rechazo, almacenamiento fallido, cambio de finca y retorno posterior del dueño.
+   Ver evidencias en `docs/revision-2026-10-19/reproducciones.txt`.
+   **Concurrencia local también reproducida:** dos procesadores de la misma cuenta/instalación
+   reciben ambos `turno: true`: el dueño del lease es compartido y se considera reentrante.
+   Una intercalación controlada de dos `apuntar` deja solo un pendiente porque ambos reescriben
+   el array leído. Usar identidad de procesador/pestaña y persistencia transaccional o coordinación
+   que conserve ambas intenciones. Probar dos escrituras intercaladas, reinicio y caducidad;
+   desduplicar en servidor no recupera un comando que se perdió antes de enviarse.
+2. **D04/D05, P1: aplicar la revisión con visión**, ya hecha en
+   `backend/docs/REVISION_CON_VISION.md`. Cabecera a 1024 sin solapes; resultados de tierras
+   visibles con filtros avanzados plegables; resolver el acceso de trabajo duplicado sin
+   cambiar las seis acciones contractuales. Capturas nuevas con viewport real y comprobación
+   de identidad de pantalla. No basta con que el ancho de documento no desborde.
+3. **D07: corregir primero el instrumento.** No usar `nav.abrir` en cada transición: recarga
+   el documento y borra precisamente la memoria que se quiere medir. Exigir timeOrigin
+   constante y verificar sesión SPA; después resolver ciclo de vida de raíces y trazas.
+4. **D06 local:** límites de acceso, revocación de sesiones y gestión de secretos/copias no
+   requieren esperar a un proveedor para escribir y probar el código. Separar este trabajo
+   de la validación de un despliegue concreto, que sí necesita su entorno definido.
+5. Continuar el resto del encargo con criterios y evidencia; D08 necesita material autorizado.
+
+También se corrigió una carrera PAC descubierta por la suite completa: el guardado miraba
+la huella y después el máximo de versión; otra foto podía confirmarse entre ambas consultas
+y terminar en dos IDs para el mismo contenido. Ahora lee primero la versión y después la
+huella; el índice de versión obliga a reintentar si una confirmación posterior se intercala.
+La prueba fuerza esa secuencia con eventos, falla con el código anterior y pasa con el nuevo.
+No repetir el arreglo ni sustituir esa prueba por rondas aleatorias que eventualmente pasen.
+
+El scroll se ha corregido en esta revisión: React confirma el contenido antes de restaurar
+posición. `medir_la_vuelta_de_la_ficha.py` ahora falla si no se conserva y pasa 16/16 a
+1440 y 390; con el montaje anterior falla 6 casos. No volver al diagnóstico de «alguien escribe
+cero después» sin una reproducción nueva. La revisión visual ya no necesita otro modelo:
+está hecha y solicita cambios concretos. Las medidas antiguas sobre rutas inválidas o
+ventanas distintas no acreditan los tamaños declarados; repetirlas con controles positivos.
+
 ## Entrega integrada y revisión independiente — 21/10/2026
 
 La rama `integracion/cloud-estabilizacion-2026-10-21` conserva la entrega cloud y los diez commits

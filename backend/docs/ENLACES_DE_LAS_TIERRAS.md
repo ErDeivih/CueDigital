@@ -215,3 +215,26 @@ describe la pantalla que se deja. **El estado guardado queda bien**:
 
 ***Dos defectos reales encontrados y arreglados, y el efecto todavía no se ve.*** *Se deja la forma sencilla —sin código
 que no se haya comprobado que sirva— y se entrega así.*
+
+
+## Cierre independiente del scroll — 22/10/2026
+
+El diagnóstico anterior quedó superado por una medición de altura/contenido en la llamada real:
+`scrollTo(0, 320)` se ejecutaba con `#pantalla` vacío, `scrollHeight=700` e `innerHeight=700`.
+`createRoot.render` programa el dibujo; no lo confirma antes de devolver. El navegador limitaba
+la posición a cero porque todavía no había contenido desplazable. No se midió una escritura
+posterior de cero que invalidase una restauración correcta.
+
+`montarEn` y el marco confirman ahora el render con `ReactDOM.flushSync` antes de que el llamador
+restaure posición y foco. Tras el cambio, en la misma llamada había contenido y altura 4124;
+la posición pasó de 0 a 320 y permaneció en 320. La última dirección también se actualiza cuando
+el hash ya coincide, como ocurre al volver con Atrás.
+
+La nueva regresión usa navegación SPA sin recargar el módulo, dos vueltas, Atrás/Adelante,
+filtros y control negativo con búsqueda diferente. **16 comprobaciones, 0 fallos** a 1440 y 390.
+Con el montaje anterior, el MISMO instrumento da **6 fallos de 16** y salida 1. El medidor viejo
+recargaba la página durante el recorrido y no fallaba por perder scroll: su salida 0 no acreditaba
+este requisito. La regresión se añade al andador de recorridos; ya son 15 entradas.
+
+Queda pendiente C2 de la revisión visual: primera vista útil de tabla/mapa/tarjetas y filtros.
+Cerrar el scroll no cierra toda la aceptación visual D04.
