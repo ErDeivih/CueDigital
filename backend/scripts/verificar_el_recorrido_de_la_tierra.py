@@ -140,6 +140,40 @@ def main() -> int:
                 "***la tierra sale en la lista, con su nombre***",
                 las_tierras,
             )
+            # ***Y el registro, por su ID, con la direccion de verdad***: *`react/rutas.js` dice que las
+            # direcciones son **de camino**, no de consulta -`#/tierras/12`, `#/cuaderno/<id>`-, y su comentario
+            # lo explica: «`#/tierras/12` funciona siempre -recargando, abriendo un enlace directo, sin
+            # cobertura». **Las formas `#/tierra?id=` y `#/tierra/1` que se probaron antes no son las suyas**, y
+            # por eso «no llevaban a ninguna parte».*
+            la_ficha = abrir(nav, direccion, f"#/tierras/{la_tierra_id}")
+            fallos += not comprobar(
+                "LA VEGA DEL MOLINO" in la_ficha and "no lleva a ninguna parte" not in la_ficha,
+                f"***`#/tierras/{la_tierra_id}` abre la ficha de la tierra***",
+                la_ficha,
+            )
+            # *Y aguanta la recarga: se abre otra vez, igual.*
+            la_ficha_otra_vez = abrir(nav, direccion, f"#/tierras/{la_tierra_id}")
+            fallos += not comprobar(
+                la_ficha_otra_vez == la_ficha,
+                "***y al recargarla, lo mismo: el enlace es permanente***",
+                la_ficha_otra_vez,
+            )
+            # ***Y el apunte, por el suyo.***
+            if el_trabajo_id:
+                el_apunte = abrir(nav, direccion, f"#/cuaderno/{el_trabajo_id}")
+                fallos += not comprobar(
+                    "no lleva a ninguna parte" not in el_apunte
+                    and ("LA VEGA DEL MOLINO" in el_apunte or "PRODUCTO DE LA PRUEBA" in el_apunte),
+                    f"***`#/cuaderno/{el_trabajo_id}` abre el apunte***",
+                    el_apunte,
+                )
+                el_apunte_otro = abrir(nav, direccion, f"#/cuaderno/{el_trabajo_id}")
+                fallos += not comprobar(
+                    el_apunte_otro == el_apunte,
+                    "***y tambien aguanta la recarga***",
+                    el_apunte_otro,
+                )
+
             # ***Y las dos reglas del cuaderno, que el recorrido destapo por accidente***: *sin producto
             # registrado y sin justificacion, el cuaderno **no deja apuntar el tratamiento**. Son reglas de la Junta
             # -un tratamiento sin producto identificable no vale-, y **comprobarlas es mas valioso que la parte del
@@ -187,7 +221,7 @@ def main() -> int:
                 str(el_aviso_sin_justificar),
             )
 
-    print(f"\nComprobaciones: 6   Fallos: {fallos}")
+    print(f"\nComprobaciones: 10   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

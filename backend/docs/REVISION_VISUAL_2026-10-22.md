@@ -129,45 +129,34 @@ dirección no lleva a ninguna parte»***, también con la campaña y la finca en
 por otro camino que no he encontrado**, y el botón de la fila de la lista **marca** —es la casilla de la selección
 múltiple—, no abre la ficha.
 
-### ***El hallazgo***: las fichas no tienen dirección, y el camino del código está muerto
+### ***Corrección del 22/10/2026: el «defecto» no existe. Estaba equivocado yo.***
 
-*Se probó a conciencia:*
+*Ayer se documentó aquí que las fichas no tenían dirección, con pruebas:*
 
-    #/apunte?id=1                    ->  «Esa dirección no lleva a ninguna parte»
-    #/apunte?id=1&campana=2026&finca=1 ->  «Esa dirección no lleva a ninguna parte»
-    #/apunte/1                       ->  «Esa dirección no lleva a ninguna parte»
-    #/tierra?id=1  ·  #/tierra/1      ->  «Esa dirección no lleva a ninguna parte»
+    #/apunte?id=1  ·  #/apunte/1  ·  #/tierra?id=1  ·  #/tierra/1   ->  todas «no lleva a ninguna parte»
 
-***Y ningún botón de la interfaz produce esas direcciones.*** *En el cuaderno, cada apunte tiene **CORREGIR**,
-**BORRAR** y **SACAR DE UN LOTE** — ninguno abre una ficha. Y la fila de la lista de tierras, al pulsarla, **marca**
-(es la casilla de la selección múltiple), no abre la tierra.*
+***Y la conclusión era falsa.*** *Las direcciones **son de camino, no de consulta**, y lo dice `react/rutas.js` con
+todas las letras:*
 
-***Conclusión***: *el enrutador **tiene** las claves `apunte` y `tierra` —están en `DIRECCION_PROPIA` y en
-`apuntarLaDireccion`, que escribe `?id=`—, pero **nada las produce y escribirlas a mano contesta «no lleva a ninguna
-parte»**. El camino está **muerto**.*
+    #/tierras/12              ***la ficha de una tierra***  — «funciona siempre: recargando, abriendo un enlace
+                                directo, sin cobertura»
+    #/cuaderno/<id>           ***un apunte***
+    #/tierras/mapa            la vista de las tierras      (esta sí se usaba bien)
 
-***Y eso es un defecto contra el contrato***: *el encargo dice «cada total abre sus registros por ID y conserva
-contexto», y **ese enlace permanente al registro no existe** para un apunte ni para una tierra. **No es que no se
-haya comprobado: es que no está.***
+***Comprobado, y el enlace es permanente:***
 
-*Lo que sí tienen dirección propia: la compra (`#/compras/<id>`), la tierra **en su pantalla** (`#/tierras/mapa`),
-el apunte **en su lista** (`#/cuaderno`), y la PAC, la bandeja y el almacén. **Lo que falta es el registro suelto.***
+| | |
+|---|---|
+| `#/tierras/1` abre la ficha de la tierra | ✅ |
+| y al recargarla, lo mismo | ✅ |
+| `#/cuaderno/1` abre el apunte | ✅ |
+| y también aguanta la recarga | ✅ |
 
-### ***La causa, hasta donde se ha llegado — y lo que falta para cerrarla***
+***Lo que falló fue el método***: *se probaron cuatro formas **inventadas** mirando el escritor de la dirección
+—`apuntarLaDireccion`, que escribe `parametros`— en vez de **la tabla de patrones del lector** (`PANTALLAS`, en
+`react/rutas.js`), que es la que manda. **Cuatro intentos y una conclusión falsa, cuando la respuesta estaba en la
+cabecera de un módulo que no se abrió.***
 
-*Se descartaron dos explicaciones fáciles:*
+***No había nada que arreglar en la aplicación.*** *El encargo dice «cada total abre sus registros por ID»: **se
+cumple**.*
 
-- ***no es una carrera de arranque***: *`arrancarSesion` hace `await cargarDatos()` **antes** de`abrirLaDireccion()`,
-  y se probó **con el cuaderno ya abierto** -«1 apunte en el cuaderno»- cambiando la dirección a mano:
-  **también contesta «no lleva a ninguna parte»**;*
-- ***no es que el apunte no exista***: *el cuaderno lo tiene cargado.*
-
-***La hipótesis que queda***: *el bloque que debería abrirlo —`if (clave === "tierra" || clave === "apunte")`— **no
-se ejecuta**: o el lector de la dirección no reconoce `apunte`/`tierra` como pantallas, o `parametros.id` llega
-vacío y `Number(undefined)` no casa con ningún identificador. **Las dos se comprueban en un paso** —leyendo
-`leerLaDireccion`— y **es lo primero de la próxima ronda.***
-
-***No se ha tocado el código para arreglarlo***: *un `if` añadido a ciegas en el lector de direcciones, sin saber
-cuál de las dos es, es la clase de arreglo que rompe otra cosa y no se nota hasta dentro de tres cortes.*
-
-***Nada de eso está hecho.** Este documento dice lo que hay y lo que falta, sin redondear.*
