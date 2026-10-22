@@ -217,3 +217,37 @@ un píxel**. La separación está comprobada —subir no escribe, leer propone, 
 «papel → propuesta → confirmación» no se ha andado entero**: falta un lector de verdad.*
 
 *El encargo lo prevé: «las pruebas que requieren proveedor… permanecen separadas y documentadas». **Esta lo está.***
+
+---
+
+## 7 · El segundo recorrido: compra → recepción → lote → gasto → pago
+
+*`scripts/verificar_el_recorrido_de_la_compra.py`. **El más largo de los cuatro, andado entero por las puertas de
+verdad.***
+
+| paso | puerta | |
+|---|---|---|
+| **la compra** | `POST /api/facturas` (*multipart: los datos y el papel*) | **201** ✅ |
+| **el artículo y su lote** | `POST /api/almacen/articulos` · `/lotes` | **201** ✅ |
+| **la recepción** | `POST /api/almacen/recepciones` | **201** ✅ |
+| **el gasto** | `POST /api/gastos` | **201** ✅ |
+| **el pago** | `POST /api/gastos/pagos` | **201** ✅ |
+
+***La cadena entera, de la compra al pago.***
+
+### ***Y dos errores que enseñaron la forma, en vez de estorbar***
+
+*Los dos primeros intentos fallaron, y **los mensajes decían exactamente qué hacer**:*
+
+- *`«Un albarán sin decir qué venía no apunta nada. Escribe al menos una cosa: qué producto, cuánto y de qué lote.»`*
+  → *el albarán lleva **líneas**, no datos sueltos en la raíz;*
+- *`«"fitosanitarios" no es ninguna de las categorías que hay (abono, fitosanitario, semilla, gasoleo…). Elige una de
+  la lista o apúntalo como "Otra cosa" y escribe en el concepto lo que fue.»`* → *`fitosanitario`, **singular**.
+
+***Eso es lo que el encargo llama «revisar también el texto de ayuda, vacío, error»: un error que dice qué hacer.***
+
+### ***Lo que NO se ha añadido, y por qué***
+
+***La compra abierta en el navegador*** *(`#/compras/<id>`, que la tabla de patrones sí tiene). El guion se quedó en
+las cinco puertas: **la comprobación del navegador no se llegó a añadir** —un ancla que no casó, y el fichero quedó
+intacto y verde—. **Queda pendiente**, y es lo único que le falta a este recorrido.*
