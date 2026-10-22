@@ -1,5 +1,37 @@
 # Rendimiento: lo medido
 
+## ***0 · La medición válida, y por qué la anterior no lo era*** (22/10/2026)
+
+***La primera versión de este documento no valía.*** *Su medidor navegaba con `nav.abrir(<URL completa>)` en cada
+transición: **recargaba el documento** y borraba precisamente la memoria que decía medir. Lo señaló la revisión
+independiente. Un número sacado así **no dice nada de la aplicación**: dice cómo estaba el instrumento.*
+
+***Y ahora se demuestra que no hay recarga***, que es la mitad del trabajo: *`performance.timeOrigin` **no se mueve** en
+las dieciocho transiciones y `performance.getEntriesByType("navigation")` tiene **una sola** entrada.*
+
+| medida | valor |
+|---|---|
+| **navegaciones de documento** | **1** *(solo la carga inicial)* |
+| **`timeOrigin`** | *el mismo en las 18 transiciones* |
+| **tiempo hasta tener pantalla** | **3,5 s** |
+| **`domContentLoaded` / `load`** | **132 ms** / **132 ms** |
+| **peticiones al abrir** | **35** distintas |
+| **nodos al principio** | **307** |
+| **nodos tras 18 pantallas** | **289** |
+| **nodos al volver al principio** | **307** |
+| **memoria** | **6 MB** → **9 MB** (***+3***) |
+
+***Lo que dice, y lo que no***: *no hay recarga, **no se queda nada** al volver al principio y la memoria crece tres
+megas en dieciocho pantallas. **No dice que la aplicación sea rápida** —no hay con qué compararlo— ni lo que pasa en
+media hora de uso real.*
+
+***Lo que sigue sin medirse***: *el **ciclo de vida de las raíces** de React -cuántos montajes y desmontajes, y si alguna
+raíz se queda sin desmontar- y **las trazas**. Lo que sí se mide es **su efecto**: los nodos vuelven a 307.*
+
+---
+
+
+
 > **Para qué es este documento.** D07 pide «medir navegación prolongada, peticiones de arranque y memoria». Esto es lo
 > que se ha medido, con qué, y **lo que no se ha medido**. *Un número no es un veredicto: `35` peticiones al abrir
 > puede estar bien o mal, y solo se sabe con lo que cada una cuesta.*
