@@ -36,8 +36,18 @@ teniendo un papel subido. **Una comprobación que no encuentra nada que comproba
 copia -el WAL, la coherencia, la vuelta atrás restaurando la copia- y que **el esquema** se puede reconstruir dos veces
 sin cambiar nada (`reconstruir_para_poder_decir_no_se` **es idempotente**, y hay una prueba que lo dice).*
 
-***Lo que NO está probado, y se intentó el 22/10***: *que pasar `migrar_zona_de_nitratos.py` **dos veces deje los
-datos iguales**.*
+***Y la idempotencia de la MIGRACIÓN DE DATOS, probada*** (22/10/2026):
+
+*`tests/test_la_migracion_de_los_nitratos_es_idempotente.py` pasa `migrar_zona_de_nitratos.py` **dos veces** sobre una
+base con el **esquema de una instalación vieja**, y comprueba que **la segunda no cambia nada**.*
+
+***Reutiliza las herramientas de la suite de aceptación*** —`_motor_con_las_columnas_todavia_obligatorias` y
+`_meter_una_finca_de_verdad`—, **no las copia**: *el esquema viejo se construye de verdad, con la columna `NOT NULL` y
+los «no» inventados dentro.*
+
+***Y hubo que entender el caso***: *con la tierra diciendo «no», el «no» del tratamiento **es legítimo** y la migración
+**no lo toca** -se probó, y no movía ninguna fila-. **El defecto existía cuando el «no» lo puso el programa, no el
+agricultor**: el caso es la tierra que **no lo sabe**.*
 
 ***Y se intentó, y no salió***: *la prueba se montó sobre una base **nueva**, y en una base nueva **la columna que la
 migración arregla ya existe bien**: *la migración trabaja sobre una base **vieja**, con la columna `NOT NULL` y los
