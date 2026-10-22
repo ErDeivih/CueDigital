@@ -61,6 +61,22 @@ número —. **Eso solo lo ve quien mira**, y es otra vez la revisión con visi�
 es una dirección** —el inicio es la raíz— y **el menú vive fuera de `#pantalla`**, así que medir su texto no dice
 nada; hay que mirar su propio botón.*
 
+### El zoom al 200 % y lo que se anuncia (`scripts/medir_el_zoom_y_lo_que_se_anuncia.py`)
+
+| medida | inicio | tierras | cuaderno |
+|---|---|---|---|
+| **al 200 %**, ¿hay que arrastrar la página? | **no** | **no** | **no** |
+| **el zoom se aplicó** (`visualViewport.scale`) | **2,00** | **2,00** | **2,00** |
+| **lo que se pulsa, sin nombre** | **0** | **0** | **0** |
+| **campos sin etiqueta** | **0** | **0** | **0** |
+| **zonas `aria-live`** | 3 | 3 | 3 |
+
+***Y el detalle que salva la comprobación***: *se mide **la escala de verdad** —`visualViewport.scale`— porque **un
+zoom que no se aplica deja la comprobación vacía**: *si la página no cambia, decir «no se desborda» no prueba nada.*
+
+***Lo que esto no comprueba***: *que el lector de pantalla **lea bien** lo que anuncia —el orden, el tono, si
+interrumpe—. Eso necesita un lector de verdad, y no está hecho.*
+
 ---
 
 ## 2 · Lo que NO está hecho, y no se puede dar por bueno
@@ -77,9 +93,10 @@ visión sobre ellas. **Hasta entonces, D05 no está cerrado.**
 
 ## 3 · Y lo que el encargo pide además, que sigue pendiente
 
-- **el zoom al 200 %**;
+- ~~el zoom al 200 %~~ — **HECHO** (*sin desbordamiento, y con la escala comprobada*);
 - ~~Escape y foco de regreso~~ — **HECHO** (con el menú del móvil, que es lo que tapa la pantalla);
-- **lector de pantalla** (*que los `aria-live` y las etiquetas se anuncien como toca*);
+- **lector de pantalla de verdad** (*que se anuncie bien*: *los nombres y las etiquetas están medidos —0 sin
+  nombre, 0 sin etiqueta, 3 zonas vivas—, pero **que se lean bien necesita un lector real**);
 - ~~contraste medido~~ — **HECHO** (*no a ojo: la relación calculada sobre los colores reales*);
 - y **los cuatro recorridos completos** de D05: *tierra → trabajo → consumo; compra → recepción → lote → gasto →
   pago; venta → factura → cobro parcial → pendiente; papel → propuesta → confirmación/rectificación*, **cada total
