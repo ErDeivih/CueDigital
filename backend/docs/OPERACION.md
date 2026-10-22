@@ -32,8 +32,20 @@ teniendo un papel subido. **Una comprobación que no encuentra nada que comproba
 *Hay migraciones concretas —`migrar_contactos.py`, `migrar_zona_de_nitratos.py`— **y cada una tiene su
 `deshacer_la_migracion.py`**.*
 
-***Lo que NO está probado***: *que sean **idempotentes** —que pasarlas dos veces deje lo mismo— ni que la vuelta
-atrás se haya ensayado sobre una copia real. **El encargo lo pide; aquí no está hecho.***
+***Lo que SÍ está probado***: *la suite `tests/test_aceptacion_copia_y_migracion.py` prueba **la mecánica** de la
+copia -el WAL, la coherencia, la vuelta atrás restaurando la copia- y que **el esquema** se puede reconstruir dos veces
+sin cambiar nada (`reconstruir_para_poder_decir_no_se` **es idempotente**, y hay una prueba que lo dice).*
+
+***Lo que NO está probado, y se intentó el 22/10***: *que pasar `migrar_zona_de_nitratos.py` **dos veces deje los
+datos iguales**.*
+
+***Y se intentó, y no salió***: *la prueba se montó sobre una base **nueva**, y en una base nueva **la columna que la
+migración arregla ya existe bien**: *la migración trabaja sobre una base **vieja**, con la columna `NOT NULL` y los
+«no» inventados dentro.* **Para probarlo hay que construir el esquema viejo a mano** —que es exactamente lo que hace
+`test_aceptacion_copia_y_migracion.py` con su `_el_esquema_de_las_26_tablas`—, **y no se reutilizó a tiempo**.
+
+***La prueba se quitó en vez de dejarla saltando.*** *Una prueba que se salta siempre no prueba nada y da la falsa
+sensación de que algo está cubierto.* **Queda como pendiente, con el camino escrito.**
 
 ---
 
