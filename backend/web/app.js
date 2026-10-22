@@ -30,6 +30,8 @@ import {
   // *Una pestana a la vez para vaciar la cola.*
   pedirElTurno,
   soltarElTurno,
+  laClaveConDueno,
+  esDelMismoContexto,
   // *Un id de comando que no se repite entre pestañas ni reinicios.*
   unIdDeComando,
   diasDeEspera,
@@ -371,6 +373,38 @@ function laInstalacion() {
     }
   }
   return la;
+}
+
+const CLAVE_PROCESADOR = "cuedigital.procesador";
+let elProcesadorDeEstaPestana = null;
+
+/**
+ * ***El id de ESTA pestaña*** (22/10/2026, D01).
+ *
+ * *El dueño del turno era `cuenta:instalación`, **compartido por todas las pestañas de la misma cuenta** — y el lease
+ * lo daba por reentrante, así que **dos pestañas recibían las dos `turno: true`** y vaciaban a la vez. Lo reprodujo la
+ * revisión independiente.*
+ *
+ * ***Y el procesador es la pestaña, no la instalación***: *`sessionStorage` **no se comparte entre pestañas** -cada una
+ * tiene el suyo- y **sí sobrevive a una recarga de la misma pestaña**, que es lo que hace falta: si se recarga a mitad,
+ * la pestaña sigue siendo la misma y puede renovar su turno.*
+ */
+function elProcesador() {
+  if (elProcesadorDeEstaPestana) return elProcesadorDeEstaPestana;
+  try {
+    const elGuardado = globalThis.sessionStorage && globalThis.sessionStorage.getItem(CLAVE_PROCESADOR);
+    if (elGuardado) {
+      elProcesadorDeEstaPestana = elGuardado;
+      return elGuardado;
+    }
+    const elNuevo = unIdDeComando();
+    globalThis.sessionStorage.setItem(CLAVE_PROCESADOR, elNuevo);
+    elProcesadorDeEstaPestana = elNuevo;
+  } catch (error) {
+    // *Sin `sessionStorage` -modo privado de algunos navegadores- se usa el de esta carga: no se comparte con nadie.*
+    elProcesadorDeEstaPestana = unIdDeComando();
+  }
+  return elProcesadorDeEstaPestana;
 }
 
 /**
@@ -820,8 +854,17 @@ async function enviarOApuntar(ruta, datos, tipo, guardarComoUltimo = true) {
     if (respuesta.ok) {
       const cuerpo = await respuesta.json();
       if (guardarComoUltimo) {
-        guardar(laClaveDe(CLAVE_ULTIMO), { tipo, datos });
-        estado.ultimo = { tipo, datos };
+        // ***Con el dueño capturado al EMPEZAR, no con la sesión de ahora*** (22/10/2026, D01). *La revisión lo
+        // reprodujo: **A inicia el POST, entra B, y la respuesta 200 de A guardaba `cuedigital.ultimo.2:2` con los
+        // datos de A** — y además los pintaba en la pantalla de B.*
+        //
+        // *Sin sesión al empezar se usa la clave de la instalación, que no la comparte nadie: es lo que ya hacía
+        // `laClaveDe` en ese caso.*
+        const laClaveDelUltimo = laClaveConDueno(CLAVE_ULTIMO, laSesion) || laClaveDe(CLAVE_ULTIMO);
+        guardar(laClaveDelUltimo, { tipo, datos });
+        // *Y el estado visible **solo si el contexto de origen sigue siendo el de ahora**: si entró otra cuenta, la
+        // respuesta de la primera no se le enseña.*
+        if (esDelMismoContexto(laSesion, laSesionDeAhora())) estado.ultimo = { tipo, datos };
       }
       return { ok: true, datos: cuerpo };
     }
@@ -877,7 +920,11 @@ async function mandarPendientes() {
     return;
   }
 
-  const rechazados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
+  // ***Y la clave de los rechazos, capturada AQUÍ*** (22/10/2026, D01): *antes se **leía** con una clave y se
+  // **guardaba** con otra, porque `laClaveDe` pregunta por la sesión de ese instante. Si entra B a mitad del vaciado,
+  // el 422 de A acababa en **`cuedigital.rechazados.2:2`** — el rechazo de uno, en la libreta del otro.*
+  const laClaveRechazados = laClaveConDueno(CLAVE_RECHAZADOS, laSesionDeAhora()) || laClaveDe(CLAVE_RECHAZADOS);
+  const rechazados = leer(laClaveRechazados, []);
   let algoMandado = false;
   // ***Solo lo de ESTA cuenta*** (19/10/2026): *antes se mandaba **todo** con el vale que hubiera, y un apunte
   // apuntado en una finca acababa escrito en otra. Lo de otras cuentas **se queda esperando** a que entre su
@@ -894,7 +941,9 @@ async function mandarPendientes() {
   // ya desduplica por la clave de reenvío, pero sin esto **las mismas peticiones salían dos veces** y el trabajo se
   // repartía de forma impredecible.*
   const elDuenoDelTurno = `${laDelPrincipio || "sin-sesion"}:${laInstalacion()}`;
-  const { turno } = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno });
+  // ***Y con el procesador*** (22/10/2026, D01): *el dueño solo no distingue dos pestañas de la misma cuenta, y las dos
+  // recibían el turno. Con la identidad de esta pestaña, la segunda espera -o lo toma cuando caduca-.*
+  const { turno } = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
   if (!turno) {
     // *Otra pestaña está vaciando: **no se manda nada**, y lo que hay sigue en la cola.*
     pintarAvisoPendientes();
@@ -949,8 +998,8 @@ async function mandarPendientes() {
         // `rechazados: 0`, `dato_perdido: true`.*
         //
         // *Se comprueba **leyendo**, que es lo único que dice la verdad. Si no quedó, se deja en la cola.*
-        guardar(laClaveDe(CLAVE_RECHAZADOS), rechazados);
-        const losGuardados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
+        guardar(laClaveRechazados, rechazados);
+        const losGuardados = leer(laClaveRechazados, []);
         if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
           break;
         }
@@ -970,7 +1019,7 @@ async function mandarPendientes() {
   } finally {
     // ***Y se suelta el turno SIEMPRE*** (21/10/2026): *también si se sale por un `break` o revienta algo. Si no,
     // la cola quedaría parada hasta que caducara el turno, y eso el agricultor lo ve como «no se manda nada».*
-    soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno });
+    soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
     pintarAvisoPendientes();
   }
 }

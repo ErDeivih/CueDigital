@@ -227,8 +227,15 @@ export function crearCola(almacen, opciones = {}) {
             ? { ...apunte.datos, clave_de_reenvio: idLocal }
             : apunte.datos,
       };
-      lista.push(conId);
-      const guardado = escribir(lista);
+      // ***Se relee JUSTO ANTES de escribir*** (22/10/2026, D01): *esto hacía leer → añadir → escribir, y si otra
+      // pestaña apuntaba **entre la lectura y la escritura**, su intención **desaparecía** porque aquí se escribía el
+      // array leído antes. La revisión lo reprodujo con un almacén controlado: **dos intenciones, un pendiente**.*
+      //
+      // *Volver a leer aquí -y añadir sobre lo fresco- conserva las dos. Y si la nuestra ya está (dos llamadas con el
+      // mismo `id_local`), no se duplica.*
+      const loFresco = leer();
+      const yaEsta = loFresco.some((uno) => uno && uno.id_local === idLocal);
+      const guardado = escribir(yaEsta ? loFresco : [...loFresco, conId]);
       // ***`guardado` y `durable` son dos cosas distintas*** (21/10/2026): *en memoria **se escribe** -no lanza- y
       // **se pierde al cerrar**. Devolver solo `guardado` era la mentira reproducida: el agricultor leía «guardado
       // en el móvil» y no había nada. **Quien prometa guardado tiene que mirar los dos.***
@@ -320,6 +327,37 @@ export function sesionDelToken(token) {
 }
 
 /**
+ * ***La clave de un dato local, con el dueño que se capturó AL EMPEZAR*** (22/10/2026, D01).
+ *
+ * *La revisión independiente reprodujo esto: **A inicia el POST, entra B, y la respuesta 200 de A termina guardando
+ * `cuedigital.ultimo.2:2` con datos de A** — y un 422 del vaciado de A acababa en `cuedigital.rechazados.2:2`.*
+ *
+ * ***El motivo***: *la clave se hacía con `laSesionDeAhora()` **cuando la respuesta llegaba**, no con el dueño del
+ * origen. Entre el envío y la respuesta puede entrar otra cuenta, y entonces el dueño ya no es el mismo.*
+ *
+ * ***La regla***: *la clave sale de **un dueño que se pasa**, capturado antes del primer `await`. **Sin dueño no hay
+ * clave** (`null`): es mejor no guardarlo que meterlo en un cubo compartido — la misma decisión que ya se tomó con el
+ * borrador.*
+ */
+export function laClaveConDueno(claveBase, dueno) {
+  if (!dueno) return null;
+  return `${claveBase}.${dueno}`;
+}
+
+/**
+ * ***¿Sigue siendo el mismo contexto?*** (22/10/2026, D01).
+ *
+ * *El encargo: «actualizar el estado visible **solo si sigue perteneciendo al contexto de origen**».*
+ *
+ * *Un 200 que llega tarde no puede pintar el «último apunte» de A en la pantalla de B, ni dar por bueno un rechazo de
+ * otro. **Sin dueño de origen no se toca nada**: no se sabe de quién era.*
+ */
+export function esDelMismoContexto(duenoDelOrigen, sesionDeAhora) {
+  if (!duenoDelOrigen) return false;
+  return duenoDelOrigen === sesionDeAhora;
+}
+
+/**
  * ***El turno para vaciar la cola: una pestaña a la vez*** (21/10/2026).
  *
  * *El encargo: «evitar dos procesadores concurrentes de la cola en eventos `online`, arranque y varias pestañas.
@@ -336,18 +374,33 @@ export function sesionDelToken(token) {
  * ***Si no se puede escribir el turno, se deja pasar***: *bloquear el envío porque el almacén no deja anotar quién
  * manda sería peor que mandar dos veces -y el servidor desduplica igualmente-.*
  */
-export function pedirElTurno(almacen, { clave = "cuedigital.cola.turno", dueno, ahora = Date.now(), duraMs = 30000 } = {}) {
+export function pedirElTurno(
+  almacen,
+  { clave = "cuedigital.cola.turno", dueno, procesador, ahora = Date.now(), duraMs = 30000 } = {},
+) {
   try {
     const bruto = almacen.getItem(clave);
     if (bruto) {
       const elTurno = JSON.parse(bruto);
-      // *Si es de otro y **no ha caducado**, no es nuestro.*
-      if (elTurno && elTurno.dueno && elTurno.dueno !== dueno && Number(elTurno.caduca) > ahora) {
-        return { turno: false, dueno: elTurno.dueno, caduca: Number(elTurno.caduca) };
+      // ***El dueño compartido NO basta*** (22/10/2026, D01). *Lo reprodujo la revisión: **dos procesadores de la
+      // misma cuenta e instalación recibían los dos `turno: true`**, porque el dueño era `cuenta:instalación` —el
+      // mismo para dos pestañas— y el lease lo daba por reentrante.*
+      //
+      // *Se compara también el **procesador**, que es la identidad de la pestaña. Un turno sin procesador es de una
+      // versión anterior y **no dice de qué pestaña es**: se trata como de otra y caduca solo.*
+      const deOtroProcesador = elTurno.procesador !== procesador;
+      const deOtroDueno = Boolean(elTurno.dueno) && elTurno.dueno !== dueno;
+      if (Number(elTurno.caduca) > ahora && (deOtroDueno || deOtroProcesador)) {
+        return {
+          turno: false,
+          dueno: elTurno.dueno,
+          procesador: elTurno.procesador,
+          caduca: Number(elTurno.caduca),
+        };
       }
     }
     // *Se toma -o se renueva, si ya era nuestro-.*
-    almacen.setItem(clave, JSON.stringify({ dueno, caduca: ahora + duraMs }));
+    almacen.setItem(clave, JSON.stringify({ dueno, procesador, caduca: ahora + duraMs }));
     return { turno: true };
   } catch (error) {
     return { turno: true, sinAlmacen: true };
@@ -355,11 +408,12 @@ export function pedirElTurno(almacen, { clave = "cuedigital.cola.turno", dueno, 
 }
 
 /** ***Soltar el turno***, y **solo si es nuestro**: *no se le quita a otra pestaña lo que no es nuestro.* */
-export function soltarElTurno(almacen, { clave = "cuedigital.cola.turno", dueno } = {}) {
+export function soltarElTurno(almacen, { clave = "cuedigital.cola.turno", dueno, procesador } = {}) {
   try {
     const bruto = almacen.getItem(clave);
     const elTurno = bruto ? JSON.parse(bruto) : null;
-    if (elTurno && elTurno.dueno === dueno) almacen.removeItem(clave);
+    // *Y solo el suyo: el mismo dueño **con otro procesador** es otra pestaña, y no se le quita.*
+    if (elTurno && elTurno.dueno === dueno && elTurno.procesador === procesador) almacen.removeItem(clave);
   } catch (error) {
     // *Si no se puede soltar, **caduca solo**: no se queda bloqueada la cola.*
   }
