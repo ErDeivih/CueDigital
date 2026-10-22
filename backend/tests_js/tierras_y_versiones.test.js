@@ -398,9 +398,14 @@ async function cargarVersiones() {
 
 async function htmlDeLasTierras(cambios = {}) {
   const { PantallaTierrasDeLaExplotacion } = await cargarTierras();
-  return globalThis.ReactDOMServer.renderToStaticMarkup(
+  const elHtml = globalThis.ReactDOMServer.renderToStaticMarkup(
     React.createElement(PantallaTierrasDeLaExplotacion, propiedades(cambios)),
   );
+  // ***Las tarjetas del movil se quitan aqui*** (22/10/2026): *la pantalla tiene **dos formas** -la tabla del
+  // ordenador y las **tarjetas** del movil-, y **las dos llevan lo mismo a proposito**: una casilla por tierra, sus
+  // botones y su nombre. **Estas pruebas son de la TABLA**; si se cuentan las dos formas, todo sale **el doble**, que
+  // no es un defecto. Las tarjetas tienen las suyas, aparte.*
+  return elHtml.replace(/<ul class="lista solo-movil t06-tarjetas">[\s\S]*?<\/ul>/, "");
 }
 
 async function htmlDeLasVersiones(cambios = {}) {
@@ -645,9 +650,14 @@ test("agrupar por lo sembrado y por pueblo deja las que no lo tienen al final", 
 test("la selección múltiple marca las tierras que se han elegido, y solo esas", async () => {
   const html = await htmlDeLasTierras({ marcadas: [1, 3] });
 
-  const casillas = etiquetasCon(html, "input", "t06-casilla").length
-    ? etiquetasCon(html, "input", "t06-casilla")
-    : [...html.matchAll(/<input\b([^>]*data-accion="t06-marcar"[^>]*)>/g)].map((uno) => uno[1]);
+  // ***Solo la tabla*** (22/10/2026): *la pantalla tiene **dos formas** -la tabla del ordenador y las **tarjetas del
+  // movil**-, y **las dos llevan una casilla por tierra a proposito**: son la misma lista, mirada de dos maneras.
+  // Contar «todas las casillas del documento» daba **el doble**, que no es un defecto. **Esta prueba es de la
+  // tabla**: se corta el HTML en su cierre.*
+  const soloLaTabla = html.split("</table>")[0];
+  const casillas = etiquetasCon(soloLaTabla, "input", "t06-casilla").length
+    ? etiquetasCon(soloLaTabla, "input", "t06-casilla")
+    : [...soloLaTabla.matchAll(/<input\b([^>]*data-accion="t06-marcar"[^>]*)>/g)].map((uno) => uno[1]);
 
   const marcadas = casillas
     .filter((casilla) => /checked/.test(casilla))

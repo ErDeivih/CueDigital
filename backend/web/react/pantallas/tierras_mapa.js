@@ -483,6 +483,61 @@ function ElMapa({ textos, mapa, tierras, marcadas, elegida, mismoRecinto }) {
   `;
 }
 
+/**
+ * ***Las tarjetas del movil*** (22/10/2026, D04).
+ *
+ * *El encargo dice, con estas palabras: «**En movil: tarjetas utiles** y filtros breves». Hasta hoy esta pantalla
+ * era **una tabla a cualquier anchura**, y a 390 px una tabla de tierras se lee mal: **se midio**, y las filas
+ * seguian siendo filas a 390.*
+ *
+ * ***Las mismas tierras, la misma seleccion y los mismos botones que la tabla*** *-el `data-accion` es el mismo, y
+ * por eso el manejo de clics no cambia-, pero en tarjeta: el nombre, la referencia y lo que mide. **No es otra
+ * pantalla: es la misma lista, mirada como se puede mirar en un movil.***
+ */
+function TarjetasDeTierras({ textos, bloques, marcadas, elegida }) {
+  const t = textos.tierras || {};
+  const todas = (bloques || []).flatMap((bloque) => bloque.tierras || []);
+  const estaMarcada = (id) => (marcadas || []).some((una) => Number(una) === Number(id));
+  return html`
+    <ul className="lista solo-movil t06-tarjetas">
+      ${todas.map(
+        (tierra) => html`
+          <li className="tarjeta t06-tarjeta" key=${tierra.id} data-id=${String(tierra.id)}>
+            <label className="t06-casilla-tarjeta">
+              <input
+                type="checkbox"
+                checked=${estaMarcada(tierra.id)}
+                data-accion="t06-marcar"
+                data-id=${String(tierra.id)}
+                aria-label=${frase(t.marcar_esta)}
+              />
+            </label>
+            <button
+              type="button"
+              className="tabla-enlace"
+              data-accion="t06-elegir-fila"
+              data-id=${String(tierra.id)}
+            >
+              ${frase(tierra.alias)}
+            </button>
+            ${
+              Number(tierra.id) === Number(elegida)
+                ? html`<span className="etiqueta-estado">${frase(t.elegida || "")}</span>`
+                : null
+            }
+            ${tierra.referencia ? html`<p className="pista-campo">${frase(tierra.referencia)}</p>` : null}
+            <p className="tabla-dato">
+              ${tierra.superficie_texto
+                ? frase(tierra.superficie_texto)
+                : html`<span className="etiqueta-estado etiqueta-estado-mirar">${frase(t.sin_hectareas)}</span>`}
+            </p>
+          </li>
+        `,
+      )}
+    </ul>
+  `;
+}
+
 /** Una fila de la tabla. */
 function FilaDeLaTabla({ tierra, textos, marcada, elegida, delMismoRecinto }) {
   const t = textos.tierras || {};
@@ -724,7 +779,7 @@ export function PantallaTierrasDeLaExplotacion({
     <p className="pista-campo">${frase(marcadasTexto)}</p>
     ${
       seVen.length
-        ? html`<div className="tabla-scroll t06-tabla-scroll">
+        ? html`<div className="tabla-scroll t06-tabla-scroll solo-escritorio">
             <${TablaDeTierras}
               textos=${textos}
               bloques=${bloques}
@@ -732,7 +787,13 @@ export function PantallaTierrasDeLaExplotacion({
               elegida=${elegida}
               mismoRecinto=${mismoRecinto}
             />
-          </div>`
+          </div>
+          <${TarjetasDeTierras}
+            textos=${textos}
+            bloques=${bloques}
+            marcadas=${marcadas}
+            elegida=${elegida}
+          />`
         : html`
             <h2>${frase(t.sin_filtros_titulo)}</h2>
             <p className="pista">${frase(t.sin_filtros_pista)}</p>
