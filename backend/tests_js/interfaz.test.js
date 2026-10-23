@@ -130,6 +130,13 @@ function montarEntorno() {
         getItem: (clave) => (almacen.has(clave) ? almacen.get(clave) : null),
         setItem: (clave, valor) => almacen.set(clave, String(valor)),
         removeItem: (clave) => almacen.delete(clave),
+        // ***Y deja enumerar, como el `localStorage` de verdad*** (23/10/2026, D01): *la cola nueva guarda **una clave por
+        // intención** y necesita recorrerlas; un doble que no las da **no se parece al de verdad**, y hacía fallar
+        // pruebas por el doble y no por el código.*
+        get length() {
+          return almacen.size;
+        },
+        key: (indice) => Array.from(almacen.keys())[indice] ?? null,
       },
     },
     navigator: { onLine: true },
@@ -11777,6 +11784,38 @@ function unaFactura(cambios = {}) {
 }
 
 /** La aplicación con el almacén cargado: lo que hay, lo que ha llegado y lo que ha pasado. */
+/**
+ * ***Lo que hay pendiente en el almacén, sea cual sea la disposición*** (23/10/2026, D01).
+ *
+ * *La cola pasó de **un array en una clave** a **una clave por intención**. Las pruebas que miraban la clave vieja
+ * fallaban **por la disposición, no por lo que comprobaban** —que un apunte siga pendiente—. Esto mira **la cola**.*
+ */
+function losPendientes(entorno) {
+  const elAlmacen = entorno.window.localStorage;
+  const los = [];
+  for (let i = 0; i < (Number(elAlmacen.length) || 0); i += 1) {
+    const clave = elAlmacen.key(i);
+    if (typeof clave !== "string") continue;
+    if (clave === "cuedigital.pendientes") {
+      try {
+        const viejo = JSON.parse(elAlmacen.getItem(clave));
+        if (Array.isArray(viejo)) los.push(...viejo);
+      } catch (error) {
+        /* la cola vieja corrupta no es un apunte */
+      }
+      continue;
+    }
+    if (!clave.startsWith("cuedigital.pendiente.")) continue;
+    try {
+      const apunte = JSON.parse(elAlmacen.getItem(clave));
+      if (apunte && typeof apunte === "object") los.push(apunte);
+    } catch (error) {
+      /* corrupto: no se puede leer, pero está */
+    }
+  }
+  return los;
+}
+
 async function conElAlmacen(cambios = {}, extra = {}) {
   return cargarAplicacion(
     {
@@ -12167,7 +12206,7 @@ test("un albarán apuntado sin cobertura se queda en el móvil y se manda solo",
   );
   // Lo apuntado se queda en el móvil, con su clave de reenvío: eso es lo que hará que, cuando se mande
   // solo, el servidor no lo cuente dos veces.
-  const cola = JSON.parse(entorno.window.localStorage.getItem("cuedigital.pendientes") || "[]");
+  const cola = losPendientes(entorno);
   assert.equal(cola.length, 1, "el albarán sin cobertura no se ha guardado en el móvil");
   assert.equal(cola[0].ruta, "/api/almacen/recepciones");
   assert.ok(cola[0].datos.clave_de_reenvio, "lo que se guarda en el móvil no lleva su clave de reenvío");
@@ -15123,7 +15162,7 @@ test("un 403 no aparta una orden valida: se queda en la cola", async () => {
   // *Se le da tiempo al vaciado, que arranca cuando se sabe quien esta dentro.*
   await new Promise((resolver) => setTimeout(resolver, 120));
 
-  const laCola = entorno.window.localStorage.getItem("cuedigital.pendientes") || "";
+  const laCola = JSON.stringify(losPendientes(entorno));
   assert.ok(
     laCola.includes("p-del-403"),
     `***un 403 NO puede apartar una orden valida: tiene que quedarse en la cola***: ${laCola}`,

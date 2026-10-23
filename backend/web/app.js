@@ -33,6 +33,7 @@ import {
   laClaveConDueno,
   esDelMismoContexto,
   vaciarLaCola,
+  crearColaPorIntenciones,
   // *Un id de comando que no se repite entre pestañas ni reinicios.*
   unIdDeComando,
   diasDeEspera,
@@ -425,7 +426,27 @@ function laClaveDe(claveBase) {
   return `${claveBase}.inst.${laInstalacion()}`;
 }
 
-const cola = crearCola(ALMACEN);
+/**
+ * ***La cola, con una clave por intención*** (23/10/2026, D01 — P0).
+ *
+ * *Antes era **un array**: apuntar era leerlo, añadir y escribirlo, y **dos pestañas que apuntan a la vez se pisan** — una
+ * intención desaparece sin ruido. Y **no se arregla releyendo**: *la lectura puede devolver el valor **anterior** a la
+ * escritura del otro, así que la segunda lectura también puede ser vieja*.*
+ *
+ * *Con una clave por intención, **apuntar y quitar no leen nada**, y dos escrituras sobre claves distintas no se pueden
+ * pisar.* ***El almacén de esta aplicación sí deja enumerar*** —*es el `localStorage` de verdad, o el de memoria, que
+ * ahora también las da*—, *que es lo que hace falta para listarlas.*
+ */
+const cola = crearColaPorIntenciones(ALMACEN);
+
+// ***Y lo que había en la cola vieja se trae al arrancar*** (23/10/2026): *sin perder `id_local`, dueño, datos ni
+// `clave_de_reenvio`; **el origen no se borra hasta comprobar que están todos**, y **un JSON corrupto se conserva** en vez
+// de convertirse en una cola vacía que la siguiente escritura pisaría.*
+try {
+  cola.migrarDesde(ALMACEN);
+} catch (error) {
+  // *Si la migración no se puede hacer, la cola vieja **sigue ahí**: no se pierde nada por no poder migrar.*
+}
 
 function guardar(clave, valor) {
   try {
