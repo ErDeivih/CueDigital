@@ -1700,14 +1700,29 @@ div.tarjeta:active {
 
   /* ***Y el alto, con `height: auto`***: *la barra fija `height` a algún botón, y `min-height` no puede con un
      `height` ya puesto. Con `auto` manda el suelo.* */
+  /* ***La ruta completa, porque alguna regla mas especifica le fija el alto*** (22/10/2026, C1). *El control es
+     `BUTTON.boton.boton-principal` dentro de `.barra > .barra-acciones`, y medía **105x40**. Se nombra la ruta para
+     ganarle a la regla que lo fija, sin `!important`.* */
+  .marco .barra .barra-acciones .boton,
+  .cabecera .barra-acciones .boton,
+  .marco .barra .barra-acciones button,
+  .cabecera .barra-acciones button {
+    height: auto;
+    min-height: 44px;
+  }
+
   .marco .barra button,
   .marco .barra select,
   .marco .barra input,
+  .marco .barra a,
   .marco .barra .boton,
   .cabecera button,
   .cabecera select,
   .cabecera input,
-  .cabecera .boton {
+  .cabecera a,
+  .cabecera .boton,
+  .marco .menu button,
+  .marco .menu a {
     height: auto;
     min-height: 44px;
   }
