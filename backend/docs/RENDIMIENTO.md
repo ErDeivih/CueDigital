@@ -1,5 +1,26 @@
 # Rendimiento: lo medido
 
+## ***0 · El ciclo de vida de las raíces: se intentó y se revirtió*** (22/10/2026)
+
+***`montarEn` llama a `ReactDOM.createRoot(contenedor)` en cada montaje y nunca desmonta.*** *React avisa de eso
+—«createRoot() on a container that has already been passed to createRoot()»— y el árbol anterior se queda sin desmontar
+hasta que el recolector quiera.*
+
+***Se intentó lo correcto —una raíz por contenedor, con `WeakMap`— y se probó:*** *dos pruebas nuevas con un `ReactDOM`
+de mentira contaban las raíces, y **fallaban sin el arreglo** (comprobado metiéndolo a mano).*
+
+***Y la aplicación se rompió.*** *Con el arreglo, `tests/test_el_recorrido_de_las_reservas.py` **deja de abrir el
+formulario** —«el formulario trae el desde… ¡no!»— y sin él **pasa**. **Se apartó el cambio y se volvió a correr: verde.**
+
+***La conclusión, con la evidencia***: *alguna parte de la aplicación **cuenta con que `createRoot` vacía el
+contenedor** —el código nuevo se pinta junto a lo escrito a mano, en vez de sustituirlo—. **Cambiar esto no es un
+refactor inocente**: hay que saber qué escribe en ese contenedor antes de reutilizar la raíz.*
+
+***Se revirtió, y las dos pruebas se quitaron***: *una prueba que exige un cambio que rompe un recorrido no puede
+quedarse. **El defecto sigue ahí, ahora con el motivo por el que no se puede arreglar a ciegas.***
+
+---
+
 ## ***0 · La medición válida, y por qué la anterior no lo era*** (22/10/2026)
 
 ***La primera versión de este documento no valía.*** *Su medidor navegaba con `nav.abrir(<URL completa>)` en cada
