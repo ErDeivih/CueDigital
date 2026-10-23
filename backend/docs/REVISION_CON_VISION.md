@@ -1,3 +1,27 @@
+# La revisión con visión
+
+> ## ***22/10/2026 — las capturas son NUEVAS y la revisión anterior ya no vale***
+>
+> *Las quince capturas de `docs/capturas-de-anchuras/` **se han regenerado después de aplicar los tres cambios que
+> pidió la revisión** —la acción duplicada de Inicio (A1), los filtros que tapaban las tierras (C2) y la cabecera a 1024
+> (C1)—. **Las que revisó Codex son de antes de esos cambios**: lo que se ve en ellas ya no es lo que hace el programa.*
+>
+> ***Lo comprobado de las nuevas, que se puede comprobar sin ojos***:
+>
+> | | |
+> |---|---|
+> | **cuántas** | **15** *(tres pantallas × cinco anchuras)* |
+> | **su tamaño** | ***todas miden lo que anuncian*** *(comprobado leyendo la cabecera del PNG: 320x700, 390x844, 712x900, 1024x768 y 1440x900)* |
+> | **la identidad de la pantalla** | *el capturador la comprueba con una **señal** por pantalla (`LAS_SENALES`): que esté el botón «MI CUADERNO» en Inicio, el buscador en Tierras, el de «ECHAR PRODUCTO» en el Cuaderno* |
+>
+> ***Lo que NO se puede comprobar desde aquí***: *si la pantalla **se entiende**, si la jerarquía es la correcta y si
+> sigue pareciendo CUE Digital. **Eso necesita ojos, y esta sesión no los tiene.***
+>
+> ***Así que la revisión con visión se rehace sobre estas quince.*** *La tabla de abajo sigue siendo el sitio para
+> rellenarla.*
+
+---
+
 # Revisión visual independiente — 22/10/2026
 
 **Revisor: Codex, con lectura de imágenes. Resultado D05: CAMBIOS_SOLICITADOS.**
