@@ -101,9 +101,23 @@ def main() -> int:
                 los_controles = [c for c in las_cajas if c["control"]]
                 el_mas_bajo = min((min(c["w"], c["h"]) for c in los_controles), default=99)
                 print(f"  (letra mas pequena {la_letra:.0f} px · control mas pequeno {el_mas_bajo:.0f} px)")
-                fallos += not comprobar(la_letra >= 15, f"***y ningun texto baja de 15 px*** ({la_letra:.0f})")
+                # ***Y si algo baja del suelo, se DICE CUAL***: *un minimo sin nombre no se puede arreglar, y ademas
+                # puede ser una caja invisible o de otro sitio -un instrumento que no dice quien falla no vale-.*
+                los_bajos = [
+                    f"{c['t']!r} ({'control' if c['control'] else 'texto'} {c['letra']:.0f} px, "
+                    f"{c['w']}x{c['h']})"
+                    for c in las_cajas
+                    if (c["control"] and min(c["w"], c["h"]) < 44) or (not c["control"] and c["letra"] < 15)
+                ]
                 fallos += not comprobar(
-                    el_mas_bajo >= 44, f"***y ningun control baja de 44 px*** ({el_mas_bajo:.0f})"
+                    la_letra >= 15,
+                    f"***y ningun texto baja de 15 px*** ({la_letra:.0f})",
+                    "; ".join(los_bajos) or "ninguno",
+                )
+                fallos += not comprobar(
+                    el_mas_bajo >= 44,
+                    f"***y ningun control baja de 44 px*** ({el_mas_bajo:.0f})",
+                    "; ".join(los_bajos) or "ninguno",
                 )
 
     print(f"\nComprobaciones: 9   Fallos: {fallos}")

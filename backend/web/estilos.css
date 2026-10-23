@@ -1687,15 +1687,28 @@ div.tarjeta:active {
      identifiquen, con nombres largos… **sin reducir el suelo tipográfico ni el área de los controles**». Y en la barra
      había texto a **13 px** y un control de **40**: por debajo de los 15 y los 44 del diseño. **Se suben al suelo**; no
      se recorta nada para que quepa.* */
-  .marco .barra .pista,
-  .marco .barra small,
-  .marco .barra .etiqueta {
-    font-size: 0.9375rem;
+  /* ***El suelo se pone con `max`, no con un tamaño fijo***: *`max(0.9375rem, 1em)` **sube** lo que esté por debajo
+     de 15 px y **no toca** lo que ya es mayor. Un tamaño fijo habría encogido el nombre de la finca.* */
+  .marco .barra span,
+  .marco .barra label,
+  .marco .barra p,
+  .cabecera span,
+  .cabecera label,
+  .cabecera p {
+    font-size: max(0.9375rem, 1em);
   }
 
-  .marco .barra select,
+  /* ***Y el alto, con `height: auto`***: *la barra fija `height` a algún botón, y `min-height` no puede con un
+     `height` ya puesto. Con `auto` manda el suelo.* */
   .marco .barra button,
-  .marco .barra input {
+  .marco .barra select,
+  .marco .barra input,
+  .marco .barra .boton,
+  .cabecera button,
+  .cabecera select,
+  .cabecera input,
+  .cabecera .boton {
+    height: auto;
     min-height: 44px;
   }
 
