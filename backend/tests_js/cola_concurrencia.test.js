@@ -6,7 +6,9 @@ import {
   crearCola,
   esDelMismoContexto,
   laClaveConDueno,
+  loQueSePuedeMandar,
   pedirElTurno,
+  vaciarLaCola,
 } from "../web/nucleo.js";
 
 /**
@@ -133,4 +135,61 @@ test("un estado visible solo se toca si el contexto de origen sigue siendo el de
   );
   assert.equal(esDelMismoContexto(null, null), false, "***sin dueño de origen no se toca nada***");
   assert.equal(esDelMismoContexto("1:1", null), false, "***y si ya no hay sesión, tampoco***");
+});
+
+
+// ---------------------------------------------------------------------------
+// 4 · El reinicio, la caducidad y el retorno del dueño (22/10/2026, D01)
+// ---------------------------------------------------------------------------
+
+test("***un turno CADUCADO deja entrar a otro procesador***", () => {
+  const almacen = crearAlmacenMemoria();
+  const elDueno = "1:1:la-instalacion";
+  pedirElTurno(almacen, { dueno: elDueno, procesador: "pestana-A", ahora: 1_000_000, duraMs: 30000 });
+  // *Pasados los 30 s, el turno caduca: **un cerrojo sin caducidad es una cola parada**.*
+  const tarde = pedirElTurno(almacen, { dueno: elDueno, procesador: "pestana-B", ahora: 1_031_000, duraMs: 30000 });
+  assert.equal(tarde.turno, true, "***caducado, el siguiente entra***");
+});
+
+test("***y al recargar la pestaña no se bloquea a sí misma***", () => {
+  // *El procesador vive en `sessionStorage`: **sobrevive a la recarga de esa pestaña** y no se comparte con otra. Aquí
+  // se prueba la parte pura: el mismo procesador, veinte segundos después, renueva su turno.*
+  const almacen = crearAlmacenMemoria();
+  const elDueno = "1:1:la-instalacion";
+  pedirElTurno(almacen, { dueno: elDueno, procesador: "pestana-A", ahora: 1_000_000, duraMs: 30000 });
+  const recargada = pedirElTurno(almacen, { dueno: elDueno, procesador: "pestana-A", ahora: 1_020_000, duraMs: 30000 });
+  assert.equal(recargada.turno, true, "***una recarga de la misma pestaña no es otra pestaña***");
+});
+
+test("***cuando el dueño vuelve, sus apuntes se mandan***", async () => {
+  const cola = crearCola(crearAlmacenMemoria());
+  cola.apuntar({ tipo: "labor", ruta: "/api/trabajos", datos: { nota: "de A" }, cuenta: "1:1" });
+  cola.apuntar({ tipo: "labor", ruta: "/api/trabajos", datos: { nota: "de A, otra" }, cuenta: "1:1" });
+
+  // *B entra: **no se manda lo de A**, y lo de A no se borra.*
+  const comoB = loQueSePuedeMandar(cola, "2:2");
+  assert.equal(comoB.suyos.length, 0, "***con B dentro no sale nada de A***");
+  assert.equal(cola.tamano(), 2, "***y no se pierde: espera a su dueño***");
+
+  // *Y A vuelve.*
+  const comoA = loQueSePuedeMandar(cola, "1:1");
+  assert.equal(comoA.suyos.length, 2, "***los dos, enteros***");
+
+  const loQueSeGuarda = {};
+  const elResumen = await vaciarLaCola({
+    suyos: comoA.suyos,
+    cola,
+    claveRechazados: laClaveConDueno("cuedigital.rechazados", "1:1"),
+    api: async () => ({ ok: true, status: 200, json: async () => null }),
+    leer: (clave, porDefecto) => (clave in loQueSeGuarda ? loQueSeGuarda[clave] : porDefecto),
+    guardar: (clave, valor) => {
+      loQueSeGuarda[clave] = valor;
+    },
+    sesionDeAhora: () => "1:1",
+    sesionDelOrigen: "1:1",
+    motivoDelRechazo: () => "no",
+  });
+
+  assert.equal(elResumen.mandados, 2, "***vuelto el dueño, se mandan los dos***");
+  assert.equal(cola.tamano(), 0, "***y la cola queda vacía: se mandaron de verdad***");
 });
