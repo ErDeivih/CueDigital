@@ -131,6 +131,12 @@ export function crearAlmacenMemoria(inicial = {}) {
     removeItem: (clave) => {
       delete datos[clave];
     },
+    // ***Y deja enumerar*** (23/10/2026, D01): *una cola de **una clave por intención** necesita poder recorrer las
+    // claves, y sin esto el almacén de las pruebas no se parece al `localStorage` de verdad, que sí las da.*
+    get length() {
+      return Object.keys(datos).length;
+    },
+    key: (indice) => Object.keys(datos)[indice] ?? null,
   };
 }
 
@@ -324,6 +330,201 @@ export function sesionDelToken(token) {
     // *Un vale que no se puede leer no es una sesión: es `null`, y se trata como tal.*
     return null;
   }
+}
+
+/**
+ * ***La cola, con una clave por intención*** (23/10/2026, D01 — P0).
+ *
+ * ### ***El defecto que esto cierra, y por qué no lo cerraba releer***
+ *
+ * *La cola guardaba **un array** en una clave: apuntar era **leer el array, añadir y escribir el array**. Dos pestañas
+ * que apuntan a la vez **leen lo mismo y una pisa a la otra**, y la intención perdida **desaparece sin ruido**.*
+ *
+ * ***Y no se arregla releyendo***: *el diagnóstico de la revisión devuelve, en la lectura, **el valor anterior** a la
+ * escritura del otro — la intercalación ocurre **dentro de la lectura**—, así que la segunda lectura **también puede ser
+ * vieja**. *Releer y fusionar solo cubre la intercalación de la **primera** lectura, que es lo que probaban las pruebas
+ * anteriores.*
+ *
+ * ### ***Lo que sí lo cierra***
+ *
+ * *Cada intención vive **en su propia clave**, y:*
+ *
+ *   · **apuntar** = *`setItem` de su clave* — **sin leer nada**;
+ *   · **quitar** = *`removeItem` de su clave* — **sin leer nada**;
+ *   · **leer** = *recorrer las claves con el prefijo* — **sin escribir nada**.
+ *
+ * ***Dos escrituras sobre claves distintas no se pueden pisar***: *es la propiedad que hay que tener, y **no depende de
+ * que la lectura sea fresca**.*
+ *
+ * ***Lo que necesita del almacén***: *`getItem`, `setItem`, `removeItem` **y poder enumerar** (`length` y `key(i)`, como
+ * el `localStorage` de verdad). Sin enumerar no hay forma de listar sin volver al array compartido.*
+ */
+export function crearColaPorIntenciones(almacen, opciones = {}) {
+  const prefijo = opciones.prefijo || "cuedigital.pendiente.";
+  const reloj = opciones.reloj || (() => new Date().toISOString());
+  const esDurable = almacen.esDurable !== false;
+
+  /** *Las claves que son de esta cola.* */
+  function lasClaves() {
+    const claves = [];
+    let cuantas = 0;
+    try {
+      cuantas = Number(almacen.length) || 0;
+    } catch (error) {
+      cuantas = 0;
+    }
+    for (let i = 0; i < cuantas; i += 1) {
+      let clave = null;
+      try {
+        clave = almacen.key(i);
+      } catch (error) {
+        clave = null;
+      }
+      if (typeof clave === "string" && clave.startsWith(prefijo)) claves.push(clave);
+    }
+    return claves;
+  }
+
+  const laClaveDe = (idLocal) => `${prefijo}${idLocal}`;
+
+  return {
+    prefijo,
+
+    /**
+     * ***Lo que hay, recorriendo las claves.*** *Un valor corrupto **no se tira y no se reescribe**: se deja donde está
+     * -para poder recuperarlo- y se aparta del listado, **diciéndolo** con `corruptos`.*
+     */
+    leer() {
+      const apuntes = [];
+      for (const clave of lasClaves()) {
+        try {
+          const apunte = JSON.parse(almacen.getItem(clave));
+          if (apunte && typeof apunte === "object") apuntes.push(apunte);
+        } catch (error) {
+          // *Corrupto: **se conserva** y no se toca. La siguiente escritura es de OTRA clave.*
+        }
+      }
+      return apuntes;
+    },
+
+    /** *Las claves cuyo contenido no se puede leer: **no se pierden, pero no se pueden mandar**.* */
+    losCorruptos() {
+      const malos = [];
+      for (const clave of lasClaves()) {
+        try {
+          const apunte = JSON.parse(almacen.getItem(clave));
+          if (!apunte || typeof apunte !== "object") malos.push(clave);
+        } catch (error) {
+          malos.push(clave);
+        }
+      }
+      return malos;
+    },
+
+    tamano() {
+      return this.leer().length;
+    },
+
+    /**
+     * ***Apunta, sin leer.*** *Es lo que hace que dos apuntes a la vez **no se pisen**: la escritura es de su propia
+     * clave y no depende de lo que hubiera.*
+     */
+    apuntar(apunte) {
+      const idLocal = apunte.id_local || unIdDeComando();
+      const conId = {
+        ...apunte,
+        id_local: idLocal,
+        apuntado_en: apunte.apuntado_en || reloj(),
+        datos:
+          apunte.datos && typeof apunte.datos === "object" && !apunte.datos.clave_de_reenvio
+            ? { ...apunte.datos, clave_de_reenvio: idLocal }
+            : apunte.datos,
+      };
+      let guardado = false;
+      try {
+        almacen.setItem(laClaveDe(idLocal), JSON.stringify(conId));
+        // ***Y no se comprueba leyendo*** (23/10/2026): *una lectura puede ser **vieja** -es el defecto que se está
+        // cerrando-, así que comprobar con ella daría «no guardado» sobre algo guardado. `setItem` **no lanza** cuando
+        // guarda: si no lanza, está guardado.*
+        guardado = true;
+      } catch (error) {
+        guardado = false;
+      }
+      return { ...conId, guardado, durable: guardado && esDurable };
+    },
+
+    /** ***Quita lo suyo, y solo lo suyo***: *`removeItem` de su clave, sin leer ni reescribir lo demás.* */
+    quitar(idLocal) {
+      try {
+        almacen.removeItem(laClaveDe(idLocal));
+        return almacen.getItem(laClaveDe(idLocal)) === null;
+      } catch (error) {
+        return false;
+      }
+    },
+
+    /** *Borra lo de esta cola: **clave a clave**, enumerando.* */
+    vaciar() {
+      for (const clave of lasClaves()) {
+        try {
+          almacen.removeItem(clave);
+        } catch (error) {
+          /* si no se puede, se queda: no se finge que se ha vaciado */
+        }
+      }
+    },
+
+    /**
+     * ***Trae lo que había en la cola vieja*** (el array), **sin perder nada y sin borrarla hasta comprobarlo**.
+     *
+     * *Cada apunte pasa con **su `id_local`, su cuenta, sus datos y su `clave_de_reenvio`**, tal cual. Después se
+     * **relee uno a uno** y solo si están todos se borra el array viejo.*
+     *
+     * ***Un JSON corrupto no se convierte en una cola vacía***: *se deja el original donde está y se dice, porque
+     * **la siguiente escritura lo sobrescribiría** y lo perdido no se podría recuperar.*
+     */
+    migrarDesde(almacenViejo, claveVieja = "cuedigital.pendientes") {
+      let bruto = null;
+      try {
+        bruto = almacenViejo.getItem(claveVieja);
+      } catch (error) {
+        bruto = null;
+      }
+      if (bruto === null) return { migrados: 0, corrupto: false, borrado: false };
+      let viejos = null;
+      try {
+        viejos = JSON.parse(bruto);
+      } catch (error) {
+        // *No se toca: se conserva para poder recuperarlo a mano.*
+        return { migrados: 0, corrupto: true, borrado: false };
+      }
+      if (!Array.isArray(viejos)) return { migrados: 0, corrupto: true, borrado: false };
+      let migrados = 0;
+      for (const viejo of viejos) {
+        if (!viejo || typeof viejo !== "object") continue;
+        const elApunte = this.apuntar(viejo);
+        if (elApunte.guardado) migrados += 1;
+      }
+      // *Y solo se borra el origen si **están todos de verdad**.*
+      const losIds = viejos.filter((v) => v && typeof v === "object" && v.id_local).map((v) => String(v.id_local));
+      const estanTodos = losIds.every((id) => {
+        try {
+          return almacen.getItem(laClaveDe(id)) !== null;
+        } catch (error) {
+          return false;
+        }
+      });
+      if (estanTodos) {
+        try {
+          almacenViejo.removeItem(claveVieja);
+        } catch (error) {
+          return { migrados, corrupto: false, borrado: false };
+        }
+        return { migrados, corrupto: false, borrado: true };
+      }
+      return { migrados, corrupto: false, borrado: false };
+    },
+  };
 }
 
 /**
