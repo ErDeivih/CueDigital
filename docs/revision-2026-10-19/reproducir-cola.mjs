@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando, pedirElTurno, soltarElTurno } from '../../backend/web/nucleo.js';
+import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando, pedirElTurno, soltarElTurno, laClaveConDueno, esDelMismoContexto, vaciarLaCola } from '../../backend/web/nucleo.js';
 
 const source = fs.readFileSync(new URL('../../backend/web/app.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 function funcion(nombre) {
@@ -38,15 +38,34 @@ function preparar() {
     // revienta y el diagnóstico moria con «rechazar is not a function», que no decia nada de la cola.*
     unIdDeComando,
     // *Y el turno, que `mandarPendientes` pide desde el 21/10 para no vaciar dos pestañas a la vez.*
-    pedirElTurno, soltarElTurno,
+    pedirElTurno, soltarElTurno, laClaveConDueno, esDelMismoContexto, vaciarLaCola,
+    sessionStorage:crearAlmacenMemoria(), CLAVE_PROCESADOR:"cuedigital.procesador", elProcesadorDeEstaPestana:null,
     pintarAvisoPendientes:()=>{}, cargarDatos:async()=>{}, mensaje:x=>x,
     avisoDelServidor:x=>x?.detail||'', leer:(k,d)=>JSON.parse(almacen.getItem(k)||JSON.stringify(d)),
   });
   // ***Y las dos que dan dueno a las claves locales*** (21/10/2026): *`mandarPendientes` usa `laClaveDe` para los
   // rechazados, y sin ellas en el contexto la regresion revienta por el andamio y no por el codigo.*
-  for(const nombre of ['guardar','almacenSeguro','laSesionDeAhora','laInstalacion','laClaveDe','apuntarSinCobertura','enviarOApuntar','mandarPendientes'])
+  for(const nombre of ['guardar','almacenSeguro','laSesionDeAhora','laInstalacion','elProcesador','laClaveDe','apuntarSinCobertura','enviarOApuntar','mandarPendientes'])
     vm.runInContext(funcion(nombre),contexto);
   return contexto;
+}
+// CUE_AUDIT_CONCURRENCIA=1 node docs/revision-2026-10-19/reproducir-cola.mjs
+// Almacén controlado: intercalar después de la ÚLTIMA lectura, no solo la primera.
+if (process.env.CUE_AUDIT_CONCURRENCIA === '1' || process.argv.includes('--concurrencia')) {
+const concurrencia={};
+for (const modo of ['apuntar','quitar','turno']) {
+ const base=crearAlmacenMemoria(); let lecturas=0,interferido=false,segunda;
+ const clave=modo==='turno'?'cuedigital.cola.turno':'cuedigital.pendientes';
+ const a={esDurable:true,getItem(k){const anterior=base.getItem(k);if(k===clave && ++lecturas===(modo==='apuntar'?2:1)&&!interferido){interferido=true; if(modo==='turno')segunda=pedirElTurno(base,{dueno:'1:1:inst',procesador:'B',ahora:1000});else crearCola(base).apuntar({id_local:'B',datos:{nota:'B'}});}return anterior;},setItem:(k,v)=>base.setItem(k,v),removeItem:k=>base.removeItem(k)};
+ if(modo==='turno'){const primera=pedirElTurno(a,{dueno:'1:1:inst',procesador:'A',ahora:1000});concurrencia.turno_simultaneo={A:primera.turno,B:segunda.turno};}
+ else{const cola=crearCola(a);if(modo==='apuntar')cola.apuntar({id_local:'A',datos:{nota:'A'}});else{crearCola(base).apuntar({id_local:'confirmado',datos:{}});cola.quitar('confirmado');}concurrencia[modo]={esperados:modo==='apuntar'?['A','B']:['B'],conservados:cola.leer().map(x=>x.id_local)};}
+}
+console.log(JSON.stringify(concurrencia,null,2));
+  // Diagnóstico: exigir conservación/exclusión; 1 significa que siguen los defectos.
+  const correcto = concurrencia.apuntar.conservados.length === 2 &&
+    concurrencia.quitar.conservados.includes('B') &&
+    !(concurrencia.turno_simultaneo.A && concurrencia.turno_simultaneo.B);
+  process.exit(correcto ? 0 : 1);
 }
 const resultado={};
 {
@@ -114,6 +133,24 @@ const resultado={};
   );
   resultado.fallo_al_apartar={pendientes,rechazados:apartados,dato_perdido:false,correcto:true};
 }
+for (const status of [200, 422]) {
+  const c=preparar(); let resolver;
+  c.api=()=>new Promise(resolve=>{resolver=resolve;});
+  let envio;
+  if(status===200) envio=c.enviarOApuntar('/api/trabajos',{nota:'De A'},'labor');
+  else {
+    c.cola.apuntar({id_local:'rechazo-A',ruta:'/api/trabajos',datos:{nota:'De A'},cuenta:'1:1'});
+    envio=c.mandarPendientes();
+  }
+  c.estado.token=token(2,2);
+  resolver({ok:status===200,status,json:async()=>({detail:'No aceptado'})});
+  await envio;
+  const base=status===200?'cuedigital.ultimo':'cuedigital.rechazados';
+  assert.ok(c.almacen.getItem(base+'.1:1'), 'La respuesta debe persistir bajo A');
+  assert.equal(c.almacen.getItem(base+'.2:2'), null, 'La respuesta de A no debe persistir bajo B');
+  if(status===200) assert.equal(c.estado.ultimo, undefined, 'No pintar el último de A en B');
+  resultado['respuesta_tardia_'+status]={persistencia:'origen A',cuenta_B_intacta:true,correcto:true};
+}
 if(process.env.CUE_AUDIT_REAL){
   const config=JSON.parse(process.env.CUE_AUDIT_REAL);
   const c=preparar();c.estado.token=config.token;
@@ -134,4 +171,4 @@ if(process.env.CUE_AUDIT_REAL){
   resultado.servidor_real_respuesta_perdida={filas_creadas:mias.length,ids:mias.map(x=>x.id),correcto:true};
 }
 console.log(JSON.stringify(resultado,null,2));
-console.error('D01: los cinco casos se comportan como deben.');
+console.error('D01: cinco casos anteriores y dos respuestas tardías pasan; concurrencia se diagnostica por separado.');

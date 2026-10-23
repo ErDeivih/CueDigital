@@ -1,3 +1,42 @@
+# Revisión visual vigente — 23/10/2026
+
+**Revisor: Codex, con lectura de las 15 imágenes posteriores a A1/C2/C1, en c567cc7.**
+**Resultado: CAMBIOS_SOLICITADOS.** Se conserva la revisión del 22 como evidencia histórica;
+no describe las imágenes actuales. No es una auditoría completa de accesibilidad/usabilidad.
+
+| Pantalla | 320×700 | 390×844 | 712×900 | 1024×768 | 1440×900 |
+|---|---|---|---|---|---|
+| Inicio | Conforme al estado mostrado | Conforme | Conforme | C1 corregido visualmente | Conforme |
+| Tierras | C2 pendiente; T1 | T1 | T1 | T2 | Conforme con anotación T2 |
+| Cuaderno vacío | Conforme | Conforme | Conforme | C1 corregido visualmente | Conforme |
+
+**A1:** desaparece el acceso extra a trabajo. Se conserva el estilo propio: símbolo CUE,
+verde, bordes, iconos y lenguaje reconocibles. La cabecera a 1024 pasa a dos filas sin el
+solape anterior en estas capturas. Los nombres largos y zoom real requieren su prueba aparte.
+
+**C2, parcialmente corregido:** avanzados plegados y resultados visibles a 390, 712 y en
+escritorio. A 320×700 la captura termina en «QUITAR LA SELECCIÓN», sin tierra visible.
+Reproducción independiente con servidor y tres parcelas: primera tarjeta top=742, scroll=0,
+viewport 320×700. El instrumento del ejecutor solo comprueba 390 y escritorio, no este caso.
+Priorizar resultados y trasladar acciones secundarias, conservando selección/exportación.
+
+**T1, tarjeta móvil:** el alias («EL PRADO», «LA VEGA») usa un pequeño botón de aspecto nativo
+junto al checkbox; rompe la consistencia y ofrece un objetivo muy pequeño dentro de una tarjeta
+grande. Usar componentes/tokens propios con foco y área táctil contractual; medir el control real.
+
+**T2, tabla:** a 1024 las columnas derechas y acciones quedan fuera de la imagen y la insignia
+«Sin decir qué tiene» se comprime en varias líneas. Esto exige comprobar desplazamiento y acceso,
+no demuestra por sí solo pérdida de datos. A 1440 se ven las columnas, pero los controles de fila
+siguen muy pequeños. Probar teclado, desbordamiento perceptible, nombres largos y 64 parcelas.
+
+Las quince imágenes sí representan Inicio, Tierras y Cuaderno; sus dimensiones se comprueban
+en esta revisión. No se han revisado en esta serie cuaderno poblado, todos los estados de error,
+contraste calculado ni reflujo con zoom de escritorio. La marca debe mantenerse al corregirlos.
+
+---
+
+## Historia de la revisión del 22/10 (no es el estado vigente)
+
 # La revisión con visión
 
 > ## ***22/10/2026 — las capturas son NUEVAS y la revisión anterior ya no vale***

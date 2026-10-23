@@ -224,3 +224,127 @@ JavaScript: 1173 pass, 0 fail, 0 skipped.
 Humo: 483 OK, salida 0. Scroll 16/16; PAC 16/16; tierra/compra/dinero/papel 29/29.
 Ruff, ESLint, pip check correctos; diseño 0 errores/0 avisos.
 No acredita cierre de las nuevas reproducciones D01 ni aprobación visual de D05.
+
+
+=== Revisión independiente del 23/10/2026; código c567cc7 ===
+Diagnóstico normal, siete casos (código real app.js en VM, efectos simulados):
+{
+  "cambio_durante_primer_envio": {
+    "creador": "1:1",
+    "dueno_asignado": "1:1",
+    "correcto": true
+  },
+  "identidad_primer_envio": {
+    "primero_tiene_clave": true,
+    "misma_clave_en_reintento": true,
+    "correcto": true
+  },
+  "identidad_dos_instancias": {
+    "ids_distintos": true,
+    "quedan": 1,
+    "correcto": true
+  },
+  "almacen_bloqueado_desde_arranque": {
+    "fallback": "memoria",
+    "durable": false,
+    "correcto": true
+  },
+  "fallo_al_apartar": {
+    "pendientes": 1,
+    "rechazados": 0,
+    "dato_perdido": false,
+    "correcto": true
+  },
+  "respuesta_tardia_200": {
+    "persistencia": "origen A",
+    "cuenta_B_intacta": true,
+    "correcto": true
+  },
+  "respuesta_tardia_422": {
+    "persistencia": "origen A",
+    "cuenta_B_intacta": true,
+    "correcto": true
+  }
+}
+D01: cinco casos anteriores y dos respuestas tardías pasan; concurrencia se diagnostica por separado.
+
+Diagnóstico adicional de concurrencia, salida esperada 1 mientras siga abierto D01:
+{
+  "apuntar": {
+    "esperados": [
+      "A",
+      "B"
+    ],
+    "conservados": [
+      "A"
+    ]
+  },
+  "quitar": {
+    "esperados": [
+      "B"
+    ],
+    "conservados": []
+  },
+  "turno_simultaneo": {
+    "A": true,
+    "B": true
+  }
+}
+
+Navegador real, sesión SPA, datos temporales:
+{
+  "tierras320": {
+    "alto": 700,
+    "primeraTarjeta": 742,
+    "scroll": 0
+  },
+  "sessionStorage_con_opener": {
+    "padre": "procesador-origen",
+    "hija": "procesador-origen"
+  },
+  "antes100": {
+    "origen": 1792744588260.1,
+    "pantallas": 2,
+    "marco": 2,
+    "nodos": 270
+  },
+  "despues100": {
+    "origen": 1792744588260.1,
+    "pantallas": 102,
+    "marco": 101,
+    "nodos": 321
+  }
+}
+
+Reproducción del navegador (guardar temporal fuera del repo; ejecutar desde backend con .venv):
+import sys,json,time
+sys.path.insert(0,'scripts')
+from andar_el_recorrido_de_la_pac import el_servidor_temporal
+from navegador_cdp import NavegadorDeVerdad
+from verificar_los_permisos_por_rol import _una_cuenta_nueva,_poner_la_sesion,_llamar
+out={}
+with el_servidor_temporal() as url:
+ c=_una_cuenta_nueva(url,'revision23@prueba.local','una-clave-larga-y-facil','Revision')
+ for i in range(3):
+  _llamar(url,'/api/parcelas',token=c['token'],metodo='POST',cuerpo={'alias':f'Tierra {i}','ref_sigpac':f'47-100-0-0-{i+1}','superficie_ha':2})
+ with NavegadorDeVerdad() as n:
+  n.medir(320,700);_poner_la_sesion(n,url,c['token']);n.abrir(url+'/#/tierras/mapa',esperar=3)
+  n.esperar("document.querySelector('.t06-tarjeta') !== null")
+  out['tierras320']=n.evaluar("(()=>{const r=document.querySelector('.t06-tarjeta').getBoundingClientRect();return {alto:innerHeight,primeraTarjeta:Math.round(r.top),scroll:scrollY};})()")
+  n.evaluar("sessionStorage.setItem('cuedigital.procesador','procesador-origen');globalThis.hija=window.open('/#/','revision-hija');true")
+  n.esperar("globalThis.hija && hija.document.readyState === 'complete'")
+  out['sessionStorage_con_opener']=n.evaluar("({padre:sessionStorage.getItem('cuedigital.procesador'),hija:hija.sessionStorage.getItem('cuedigital.procesador')})")
+  n.evaluar("hija.close();true")
+  n.medir(1440,900); n.evaluar("location.hash='#/';true");n.esperar("document.querySelector('[data-accion=\"inicio\"]') !== null")
+  n.evaluar("import('/react/montar.js').then(m=>{globalThis.auditoriaMontajes=m;return true})")
+  snap="({origen:performance.timeOrigin,pantallas:auditoriaMontajes.montajes.length,marco:auditoriaMontajes.montajesDelMarco.length,nodos:document.getElementsByTagName('*').length})"
+  out['antes100']=n.evaluar(snap)
+  for i in range(100):
+   ruta='#/cuaderno' if i%2==0 else '#/'
+   n.evaluar('location.hash='+json.dumps(ruta)+';true')
+   condicion="document.querySelector('#pantalla h1')?.textContent.trim() === 'Mi cuaderno'" if i%2==0 else "document.querySelector('#pantalla [data-accion=\"inicio\"]') !== null"
+   if not n.esperar(condicion,segundos=12):raise RuntimeError('No llego a '+ruta)
+  out['despues100']=n.evaluar(snap)
+print(json.dumps(out,ensure_ascii=False,indent=2))
+
+No son pruebas de estrés multiusuario ni medida de MB retenidos.

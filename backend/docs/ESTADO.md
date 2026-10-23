@@ -1,3 +1,33 @@
+# Estado vigente revisado independientemente — 23/10/2026
+
+Corte de código revisado: `c567cc7`. Esta sección prevalece sobre las entregas históricas de abajo.
+
+| Corte | Resultado independiente |
+|---|---|
+| D01 | **ABIERTO/P0.** Cableado real de respuestas tardías 200/422 conserva claves de origen. Persisten carreras al añadir/quitar y adquirir turno; sessionStorage se copia con opener. |
+| D02/D03 | Se conserva trabajo anterior; esta revisión no certifica todas sus combinaciones. |
+| D04/D05 | A1 y cabecera C1 mejoran. Quince imágenes vistas; **CAMBIOS_SOLICITADOS**: C2 a 320, botones de tarjeta y acceso a tabla estrecha. |
+| D06 | Seguridad local y recuperación operativa pendientes; no están bloqueadas íntegramente por proveedores. |
+| D07 | Navegación SPA del medidor corregida. **ABIERTO:** raíces y referencias de montaje sin acotar; reproducción de 100 transiciones confirma crecimiento de registros. |
+| D08 | Corpus/proveedor y validación real pendientes. |
+
+El retorno del dueño y la recarga declarados por el ejecutor son pruebas de lógica con dobles;
+no equivalen a un recorrido real de autenticación entre pestañas. La limitación de la raíz React
+es trabajo local pendiente, no una dependencia de terceros. El escáner de console no audita
+retención ni demuestra ausencia de datos privados en todos los argumentos de una traza.
+
+Ver encargo vigente y pruebas reproducibles en `docs/ENCARGO_DEEPSEEK_2026-10-19.md` y
+`docs/REVISION_PRODUCTO_2026-10-19.md`, desde la raíz del repositorio.
+
+**Verificación local independiente:** Python 5.631 superadas + 2 omitidas (5.633 recogidas),
+JS 1.196 superadas, humo 483/483. Sin fallos en las suites. Diagnóstico de concurrencia
+adicional: salida 1 con tres intercalaciones defectuosas; D01 sigue abierto. Windows y
+Actions remotos no verificados en este turno. Informe y evidencia en las rutas enlazadas.
+
+---
+
+## Entregas y verificaciones históricas
+
 # El estado del encargo, en un solo sitio
 
 > ## ***Segunda tanda (22/10/2026): lo que pidió la revisión independiente***

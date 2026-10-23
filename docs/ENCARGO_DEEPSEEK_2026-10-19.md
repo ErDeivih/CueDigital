@@ -1,3 +1,86 @@
+# Prioridad vigente — revisión independiente del 23/10/2026
+
+## Goal para UN agente ejecutor
+
+La app **ya existe en este repositorio**. Continúa sobre
+`integracion/cloud-estabilizacion-2026-10-21`, desde `c567cc7` o su descendiente que incorpora
+esta revisión. Conserva los cambios posteriores. Entregar una app apta para un piloto comercial,
+con identidad CUE Digital, conservación de apuntes entre pestañas y navegación estable.
+No empezar otra app, buscar ZIP, cambiar framework ni fusionar main/principal.
+
+## Tarea y orden de ejecución
+
+1. **P0 — D01 sigue abierto: persistencia y coordinación entre pestañas.** Releer por segunda
+   vez un array no hace transaccional leer/modificar/escribir. El diagnóstico publicado se ejecuta
+   desde la raíz con `node docs/revision-2026-10-19/reproducir-cola.mjs --concurrencia`.
+   En `c567cc7` sale con 1: apuntar A/B conserva solo A; quitar un confirmado borra B recién
+   añadido; adquisiciones intercaladas de A/B devuelven turno verdadero a ambos.
+   Mantén las pruebas anteriores: solo cubrían una intercalación en la PRIMERA lectura.
+   Implementa persistencia transaccional (preferentemente IndexedDB) o una solución cuya
+   exclusión y conservación se puedan demostrar. Coordinar TODAS las mutaciones: añadir,
+   confirmar, apartar, recuperar y migrar. Otro read-back o un tercer getItem no lo resuelve.
+   Si eliges Web Locks, adaptar los consumidores a la espera y definir compatibilidad/fallo;
+   no prometer exclusión con un fallback al mismo read/modify/write de localStorage.
+   Migra los pendientes existentes sin perder id, dueño, payload o clave de reenvío; no borres
+   el origen hasta verificar persistencia del destino. JSON corrupto debe preservarse para
+   recuperación, no convertirse en una cola vacía que la siguiente escritura sobrescribe.
+   **Identidad:** sessionStorage puede copiarse al abrir una ventana con opener. Comprobado
+   en Chromium: padre e hija tienen el mismo `cuedigital.procesador`. No basta con afirmar
+   que sessionStorage nunca se comparte. Distingue procesadores activos incluso con ese origen;
+   si necesitas identidad persistente para recarga, sepárala de la identidad de ejecución.
+   **Aceptación:** dos pestañas reales, barreras de intercalación tras la última lectura,
+   apuntar/apuntar y apuntar/quitar, ventanas con opener, recarga, cierre, caducidad mientras
+   un POST está pendiente, almacenamiento lleno y retorno del dueño. Cada intención queda
+   pendiente, rechazada recuperable o confirmada; nunca desaparece. API desduplica reintentos.
+   Las respuestas tardías 200/422 de A ya pasan la revisión del cableado real: conservarlas.
+
+2. **P1 — D07: arreglar la frontera entre React y DOM manual.** No depende de un tercero.
+   Revertir un WeakMap que rompió reservas fue correcto, pero la corrección sigue siendo tarea
+   local. Inventaría TODAS las escrituras manuales sobre contenedores React y centraliza la
+   transferencia de propiedad: desmontar antes de escribir DOM manual; reutilizar solo una
+   raíz todavía válida; desmontar también al retirar contenedores. Mantener flushSync donde
+   el llamador necesita contenido confirmado para restaurar scroll/foco. No basta con cachear
+   una raíz mientras otro código borra su DOM. Acota o elimina en producción las referencias
+   fuertes de `montajes` y `montajesDelMarco`: no son console.log y el nuevo guardián no las cubre.
+   **Aceptación:** reservas, cuatro flujos principales y scroll 16/16; al menos 100 transiciones
+   SPA con timeOrigin constante, identidad de cada pantalla y final realmente asentado.
+   Registrar raíces creadas/desmontadas/activas, trazas retenidas y nodos DOM separados de
+   nodos desconectados. Si se informa heap, documentar GC y precisión; el DOM visible estable
+   no demuestra ausencia de retención. En revisión: montajes 2→102 y marco 2→101 en una sesión.
+
+3. **P1 — D04/D05: terminar C2 y el tacto de las tarjetas.** He visto las 15 imágenes nuevas;
+   cabecera C1 y duplicación A1 mejoran. No rehacerlas. A 320×700 la primera tierra sigue fuera:
+   medición real top=742 con scroll=0. Exportar/marcar/quitar consumen la primera vista.
+   Reorganizar acciones secundarias preservando búsqueda, filtros activos y selección; mostrar
+   una primera tarjeta completa sin bajar a 320×700 y 390×844. Los botones de alias de las
+   tarjetas parecen controles nativos diminutos: aplicar componentes/tokens propios, tamaño
+   táctil contractual y foco visible, sin reducir texto. A 1024 comprobar acceso a las columnas
+   derechas y acciones: la captura las corta y comprime la insignia de cultivo. Si hay scroll
+   horizontal, debe ser reconocible y accesible con teclado. Capturas y mediciones de tres/64
+   tierras, filtro activo, vacío y fallo. Mantener los seis accesos de Inicio y su orden.
+   Ver firma actual en `backend/docs/REVISION_CON_VISION.md`: CAMBIOS_SOLICITADOS.
+
+4. **D06 local:** implementar y probar límites, revocación, secretos y recuperación de copias.
+   Separar esto de pruebas en un despliegue HTTPS/Postgres concreto. D08 requiere corpus y
+   proveedor autorizado; no inventar métricas reales a partir de facturas sintéticas.
+
+## Entregas y comprobación
+
+Trabaja por cambios coherentes con regresión que falle antes y pase después; no veinte rondas
+para ajustar un selector sin diagnóstico. Tras cada entrega actualiza el estado vigente y
+continúa con el siguiente punto. No llames «punta a punta» a una función con API simulada.
+El guardián de texto de código no sustituye una prueba de comportamiento.
+
+Al cierre: Python y JS completos, humo, recorridos y diseño según AGENTS; recoger pasados,
+omitidos, fallos, duración y commit exacto. Un fallo aislado del panel no se explica por
+«máquina compartida» sin investigar: conservar evidencia y establecer causa antes de cerrarlo.
+CI en Windows y Linux debe constar con enlaces/resultados reales; una ejecución local no
+certifica GitHub Actions. No ampliar ni rebajar pruebas solo para recuperar verde.
+
+Esta prioridad prevalece sobre el encargo histórico que sigue.
+
+---
+
 # Encargo de continuidad para DeepSeek — CUE Digital
 
 Fecha: 19/10/2026. Objetivo: cerrar fiabilidad y experiencia para un piloto comercial verificable.

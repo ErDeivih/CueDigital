@@ -1,3 +1,125 @@
+# Revisión independiente vigente — 23/10/2026
+
+Código revisado: `c567cc7`, rama `integracion/cloud-estabilizacion-2026-10-21`.
+Se han leído la nueva entrega, sus cambios y las quince capturas posteriores a A1/C2/C1.
+La entrega mejora el producto, pero **no cierra D01, D05 ni D07**.
+
+## Qué queda acreditado
+
+El vaciado usa la función `vaciarLaCola` probada con efectos inyectados. Además de las pruebas
+del agente, la revisión ejecutó las funciones reales `enviarOApuntar` y `mandarPendientes`
+extraídas de app.js, con promesas y almacenamiento controlados: 200 tardío y 422 tardío
+persisten en claves de A aunque ya esté B; el 200 no cambia el último visible de B.
+Los cinco casos anteriores pasan también. El script histórico necesitaba actualizar sus
+importaciones/contexto tras la extracción del vaciado; ahora se ejecuta sobre este código.
+Esto prueba el cableado con dobles, no autenticación/API real de punta a punta.
+
+C1: la cabecera de las imágenes actuales a 1024 envuelve y ya no se pisa. A1: desaparece la
+acción extra de trabajo. C2: plegar avanzados adelanta resultados en cuatro anchuras; falta
+320. La marca sigue reconocible. Firma y tabla actuales: `backend/docs/REVISION_CON_VISION.md`.
+
+## P0: una segunda lectura no cierra la concurrencia
+
+`crearCola.apuntar` todavía hace read/modify/write de un array entero en localStorage.
+Intercalar a B DESPUÉS de la segunda lectura de A da: esperados A+B, conservado A.
+La prueba nueva del agente intercala solo en la primera lectura: por eso queda verde.
+Además, `quitar` lee el array, B añade otro apunte y A reescribe su resultado: B desaparece.
+Dos `pedirElTurno`, intercalados después de leer libre, devuelven `true` a A y B.
+La identidad de procesador resuelve el caso secuencial anterior, no la adquisición simultánea.
+
+Diagnóstico reproducible desde la raíz:
+
+```bash
+node docs/revision-2026-10-19/reproducir-cola.mjs
+# 0: cinco casos anteriores + éxito/rechazo tardíos pasan
+node docs/revision-2026-10-19/reproducir-cola.mjs --concurrencia
+# 1 en c567cc7: pierde B al añadir/quitar y concede turno a ambos
+```
+
+Es una reproducción controlada de intercalaciones de operaciones reales sobre el almacén;
+no una prueba de estrés estadística con dos navegadores. Su salida 1 es un defecto detectado,
+no un fallo ocultado de la suite. Repetir lecturas desplaza la ventana, no la elimina.
+
+Identidad de pestaña: Chromium copia sessionStorage a una ventana con opener. Con la clave
+real `cuedigital.procesador`, padre e hija leen `procesador-origen`. No es almacenamiento vivo
+compartido, pero su copia inicial basta para duplicar el identificador que `elProcesador`
+recupera sin renovarlo. La prueba de «recarga» del agente solo renueva una función con la
+misma cadena; no comprueba apertura, recarga o autenticación en el navegador.
+
+## D07: la navegación mejora; la retención sigue abierta
+
+El medidor ya usa location.hash y vigila timeOrigin. Aun así 18 transiciones, heap redondeado
+y nodos del documento no prueban ausencia de retención. Sus 3,5 segundos incluyen la espera
+fija de 3 segundos de `nav.abrir`; no son una medida aislada de tiempo real hasta pantalla.
+
+Revisión con servidor/base/adjuntos/perfil temporales, 100 transiciones Inicio/Cuaderno,
+misma performance.timeOrigin y espera de marcador propio en cada pantalla:
+
+| Registro de módulo | Antes | Después |
+|---|---:|---:|
+| montajes | 2 | 102 |
+| montajesDelMarco | 2 | 101 |
+
+Son arrays exportados por el mismo módulo que usa app.js y conservan referencias fuertes
+al contenedor/elemento. No se afirma con esto una cantidad concreta de MB retenidos ni una
+cuenta instrumentada de raíces activas. El código todavía crea una raíz por montaje sin
+unmount. El número final de nodos visibles no mide nodos desconectados.
+
+La corrección fallida del WeakMap debe guiar el trabajo, no bloquearlo: definir quién posee
+el contenedor y desmontar antes de DOM manual. Mantener scroll/foco y probar reservas.
+El guardián de console revisa patrones por línea y no cubre estos arrays; tampoco acredita
+que ningún objeto pasado a console.error contenga datos privados. No es una auditoría de logs.
+
+## D05: lectura de las quince capturas nuevas
+
+Quince PNG exactos y pantallas identificables, todas vistas. C1 y A1 mejoran; C2 a 320 sigue
+pendiente. Con tres parcelas, viewport real 320×700 y scroll 0, primera tarjeta top=742.
+La captura muestra buscar, filtros, exportar, marcar y quitar, sin ninguna tierra.
+En tarjetas el alias es un botón nativo pequeño; en tabla a 1024 se cortan columnas derechas
+y se comprime la insignia del cultivo. Revisar accesibilidad del desplazamiento y controles,
+sin confundir una imagen recortada con datos perdidos. Mantener marca, tamaño de letra y
+funciones; reorganizar acciones secundarias para que se llegue antes al contenido.
+
+## Alcance y siguiente entrega
+
+Este turno actualiza diagnóstico, revisión visual, estado y **tarea/goal para un solo agente**.
+No cambia código de producción ni declara corregida la carrera: necesita cambiar persistencia
+y sus consumidores, con migración y pruebas. Las raíces también requieren coordinar DOM
+manual/React; no es trabajo bloqueado por terceros. D06 local sigue pendiente; despliegue
+HTTPS/Postgres, OCR real e integraciones se validan en sus entornos y con material autorizado.
+
+La revisión anterior se conserva abajo como historia. El encargo vigente es la primera sección
+de `docs/ENCARGO_DEEPSEEK_2026-10-19.md`.
+
+
+### Verificación independiente de este corte (Linux, 23/10)
+
+- Python completo: **5.631 superadas, 2 omitidas, 0 fallos/errores**, 7 avisos, 426,07 s.
+  JUnit confirma 5.633 recogidas. Omitidas: saldo por exceso de pago e idioma inglés del OCR;
+  no se presenta el total recogido como total aprobado.
+- JavaScript completo: **1.196 superadas**, 0 fallos/omitidas, 67,94 s.
+- Humo con servidor temporal: **483 comprobaciones correctas**, salida 0.
+- Diagnóstico normal: cinco casos anteriores y dos respuestas tardías, **7/7**.
+- Diagnóstico adicional de concurrencia: **salida 1**, reproduce pérdida al añadir/quitar
+  y doble concesión. Esos defectos siguen abiertos aunque las suites generales estén verdes.
+- Navegador real: 320×700, copia inicial de sessionStorage con opener y 100 transiciones SPA;
+  resultados/código de reproducción en `docs/revision-2026-10-19/reproducciones.txt`.
+- Cabecera real a 1024/1100/1440: **9/9**, mínimo de texto 16 px y control 44 px.
+- Quince PNG comprobados con dimensiones exactas y vistos individualmente.
+- Comprobación de texto/inventario tras editar documentos: 1.478 superadas, 1 omitida.
+
+El panel pasó dentro de la suite completa de esta revisión; eso no establece la causa de
+su fallo anterior. No se ha repetido el agregado de 15 recorridos en este turno; sí los
+recorridos incluidos en pytest, el humo y la comprobación adicional de navegación descrita.
+CI está configurada para Ubuntu/Windows en `.github/workflows/ci.yml`; no se han consultado
+resultados remotos de Actions ni probado Windows, Postgres o despliegue HTTPS en este turno.
+No se ha usado ni modificado una base real ni adjuntos del agricultor. Producción conserva
+el código de c567cc7; los cambios de esta revisión son documentación y diagnóstico.
+
+---
+
+## Historia de revisiones anteriores
+
 # CUE Digital: revisión técnica, de producto y de experiencia
 
 Fecha: 19/10/2026. Base inspeccionada: `dc0e4a5`, checkout `/workspace/CueDigital`, rama local `work`.
