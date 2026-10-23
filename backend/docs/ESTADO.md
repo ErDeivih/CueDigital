@@ -20,10 +20,19 @@
 >
 > ***La pasada completa sobre este HEAD (22/10/2026)***:
 >
->     Python       ***5631*** · `exit code 0`
->     JavaScript   ***1193*** · `exit code 0`
+>     Python       ***5633*** · 100 % sin una sola `F`
+>     JavaScript   ***1196*** · `exit code 0`
 >     humo         ***«RESULTADO: todo correcto»***
->     recorridos   ***188 comprobaciones · 0 fallos***
+>     recorridos   ***15 recorridos · 188 comprobaciones · 0 fallos***
+>
+> ***Y las trazas de D07, acotadas***: *tres `console.error` en toda la interfaz -el de una pantalla que no se pudo
+> montar y dos de la conciliación de pagos-, **ni un `console.log`**, y un guardián que lo mantiene.*
+>
+> ***Y el ciclo de vida de las raíces, medido***: *`montarEn` crea **una raíz de React por montaje** y no desmonta la
+> anterior. Se intentó lo correcto -una por contenedor, con `WeakMap`- y **las pruebas fallaban sin el arreglo**; pero
+> **rompía el recorrido de reservas** -el formulario no se abría-, así que **se revirtió**. El motivo: alguna parte de la
+> aplicación **cuenta con que `createRoot` vacía el contenedor**. **El defecto sigue, con la razón por la que no se puede
+> arreglar a ciegas.***
 >
 > ***Lo que sigue abierto de la revisión***: *el **ciclo de vida de las raíces** de React y las **trazas** de D07 —lo que
 > se mide por su efecto, pero no por dentro—, y **la revisión con visión de las quince nuevas**.*
