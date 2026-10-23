@@ -1,5 +1,37 @@
 # El estado del encargo, en un solo sitio
 
+> ## ***Segunda tanda (22/10/2026): lo que pidió la revisión independiente***
+>
+> *La revisión de Codex encontró lo que la entrega no había visto. **Esto es lo que se ha hecho después**, con sus
+> números.*
+>
+> | lo que encontró la revisión | estado |
+> |---|---|
+> | **D01**: respuestas tardías de A guardadas bajo las claves de B | **corregido** — *claves capturadas antes del `await`, estado visible solo si el contexto sigue; **7 pruebas del vaciado** + 4 del guardián* |
+> | **D01**: dos procesadores de la misma cuenta con `turno: true` | **corregido** — *`procesador` en el lease; **3 pruebas*** |
+> | **D01**: dos `apuntar` intercalados pierden una intención | **corregido** — *se relee justo antes de escribir; **1 prueba con almacén que se intercala*** |
+> | **D01**: reinicio, caducidad y retorno del dueño | **probados** — *3 pruebas más* |
+> | **D07**: el medidor recargaba el documento | **corregido** — *navega en la SPA; `timeOrigin` y `navigation.length` **vigilados en cada transición*** |
+> | **A1**: «HE HECHO UN TRABAJO» duplicado en Inicio | **corregido** — *se fue el botón de arriba; **las seis acciones y su orden, intactas*** |
+> | **C2**: los resultados de tierras llegaban tarde | **corregido y medido** — *antes **fuera (818 de 805)**, ahora **dentro**; en el móvil, de 1122 a **dentro*** |
+> | **C1**: cabecera a 1024 con solapes | **corregido y medido** — *sin solapes a 1024/1100/1440; letra **16 px** y control **44 px*** |
+> | **capturas**: mostraban errores y tamaños falsos | **regeneradas** — *15, **todas miden lo que anuncian**, con señal de identidad por pantalla* |
+> | **la revisión con visión de las nuevas** | ⏳ ***necesita a alguien que vea*** |
+>
+> ***La pasada completa sobre este HEAD (22/10/2026)***:
+>
+>     Python       ***5631*** · `exit code 0`
+>     JavaScript   ***1193*** · `exit code 0`
+>     humo         ***«RESULTADO: todo correcto»***
+>     recorridos   ***188 comprobaciones · 0 fallos***
+>
+> ***Lo que sigue abierto de la revisión***: *el **ciclo de vida de las raíces** de React y las **trazas** de D07 —lo que
+> se mide por su efecto, pero no por dentro—, y **la revisión con visión de las quince nuevas**.*
+
+---
+
+
+
 
 ## Actualización independiente — 22/10/2026
 
