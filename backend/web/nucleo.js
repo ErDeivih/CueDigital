@@ -395,6 +395,10 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
      * -para poder recuperarlo- y se aparta del listado, **diciéndolo** con `corruptos`.*
      */
     leer() {
+      // ***Y si queda cola vieja, se trae al leer*** (23/10/2026): *migrar solo al arrancar dejaba fuera lo que apareciera
+      // después -otra pestaña con la versión anterior, o un arranque que no llegó a migrar-. **Es idempotente**: si ya está
+      // migrada, el origen no está y esto no hace nada.*
+      this.migrarSiHaceFalta(almacen);
       const apuntes = [];
       for (const clave of lasClaves()) {
         try {
@@ -483,6 +487,18 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
      * ***Un JSON corrupto no se convierte en una cola vacía***: *se deja el original donde está y se dice, porque
      * **la siguiente escritura lo sobrescribiría** y lo perdido no se podría recuperar.*
      */
+    /** *Migra la cola vieja **si queda**, y solo si queda. Lo llaman `leer` y el arranque.* */
+    migrarSiHaceFalta(almacenViejo, claveVieja = "cuedigital.pendientes") {
+      let hay = null;
+      try {
+        hay = almacenViejo && almacenViejo.getItem ? almacenViejo.getItem(claveVieja) : null;
+      } catch (error) {
+        hay = null;
+      }
+      if (hay === null || hay === undefined) return null;
+      return this.migrarDesde(almacenViejo, claveVieja);
+    },
+
     migrarDesde(almacenViejo, claveVieja = "cuedigital.pendientes") {
       let bruto = null;
       try {
@@ -492,11 +508,17 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       }
       if (bruto === null) return { migrados: 0, corrupto: false, borrado: false };
       let viejos = null;
-      try {
-        viejos = JSON.parse(bruto);
-      } catch (error) {
-        // *No se toca: se conserva para poder recuperarlo a mano.*
-        return { migrados: 0, corrupto: true, borrado: false };
+      if (Array.isArray(bruto)) {
+        // ***El almacén puede devolver el valor ya como objeto*** (23/10/2026): *el de las pruebas lo guarda tal cual, y
+        // suponer que siempre es texto convertía una cola buena en «corrupta».*
+        viejos = bruto;
+      } else {
+        try {
+          viejos = JSON.parse(bruto);
+        } catch (error) {
+          // *No se toca: se conserva para poder recuperarlo a mano.*
+          return { migrados: 0, corrupto: true, borrado: false };
+        }
       }
       if (!Array.isArray(viejos)) return { migrados: 0, corrupto: true, borrado: false };
       let migrados = 0;
