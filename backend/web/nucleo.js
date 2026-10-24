@@ -359,6 +359,23 @@ export function sesionDelToken(token) {
  * ***Lo que necesita del almacén***: *`getItem`, `setItem`, `removeItem` **y poder enumerar** (`length` y `key(i)`, como
  * el `localStorage` de verdad). Sin enumerar no hay forma de listar sin volver al array compartido.*
  */
+/**
+ * ***La huella de lo que hay en el buzón***, para saber si ha cambiado (24/10/2026, **R2**).
+ *
+ * *Comparar por identidad -`getItem(...) === bruto`- **no vale**: un almacén puede devolver **el mismo objeto** que la
+ * pestaña antigua acaba de modificar **en su sitio**, y entonces la comparación dice «no ha cambiado» y **se borra lo que
+ * otro acaba de dejar**. Con el **contenido** serializado, cualquier cambio se ve.*
+ */
+function laHuella(loQueHay) {
+  if (loQueHay === null || loQueHay === undefined) return "null";
+  if (typeof loQueHay === "string") return loQueHay;
+  try {
+    return JSON.stringify(loQueHay);
+  } catch (error) {
+    return String(loQueHay);
+  }
+}
+
 export function crearColaPorIntenciones(almacen, opciones = {}) {
   const prefijo = opciones.prefijo || "cuedigital.pendiente.";
   const reloj = opciones.reloj || (() => new Date().toISOString());
@@ -507,6 +524,8 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
         bruto = null;
       }
       if (bruto === null) return { migrados: 0, corrupto: false, borrado: false };
+      // ***La huella del origen, tal como se leyó*** (24/10/2026, R2).
+      const laHuellaDelOrigen = laHuella(bruto);
       let viejos = null;
       if (Array.isArray(bruto)) {
         // ***El almacén puede devolver el valor ya como objeto*** (23/10/2026): *el de las pruebas lo guarda tal cual, y
@@ -554,18 +573,20 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       // siguiente `migrarSiHaceFalta` se lleva lo nuevo-. **Borrar un buzón que otro acaba de usar pierde lo suyo.***
       let elOrigenSigueIgual = false;
       try {
-        elOrigenSigueIgual = almacenViejo.getItem(claveVieja) === bruto;
+        elOrigenSigueIgual = laHuella(almacenViejo.getItem(claveVieja)) === laHuellaDelOrigen;
       } catch (error) {
         elOrigenSigueIgual = false;
       }
-      if (estanTodos && elOrigenSigueIgual) {
-        try {
-          almacenViejo.removeItem(claveVieja);
-        } catch (error) {
-          return { migrados, corrupto: false, borrado: false };
-        }
-        return { migrados, corrupto: false, borrado: true };
-      }
+      // ***El buzón NO se destruye*** (24/10/2026, **R2** de la revisión). *Aunque estén todos y no haya cambiado hasta
+      // aquí, **queda una última milla** -entre esta comprobación y el `removeItem`- en la que una pestaña antigua puede
+      // escribir; y **`localStorage` no tiene un borrado atómico**, así que ahí no hay comprobación que valga. **Borrarlo
+      // se lleva lo que otro acaba de dejar.**
+      //
+      // ***Y no hace falta borrarlo***: *lo que ya está en la cola se reconoce por su `id_local`, y **volver a migrarlo es
+      // idempotente** -se sobrescribe el mismo registro, no se duplica-. Se deja; `borrado: false` lo dice; y **la próxima
+      // migración se lleva lo que haya de nuevo**, que es justo lo que se quiere.*
+      void estanTodos;
+      void elOrigenSigueIgual;
       return { migrados, corrupto: false, borrado: false };
     },
   };
@@ -1348,7 +1369,13 @@ export function crearBuzonDeRechazos(almacen, prefijo = "cuedigital.rechazado.")
  * inyecta sus dependencias; **un nombre nuevo de módulo en su cuerpo lo deja fuera de alcance**. La coordinación del
  * vaciado **pertenece a la cola**.*
  */
-let hayUnVaciadoEnMarcha = false;
+// ***Los apuntes que están en vuelo ahora mismo, en esta pestaña*** (24/10/2026, R3 **corregido**).
+//
+// *Antes era un booleano —«hay un vaciado en marcha»— y **estaba mal**: impedía que dos vaciados de **intenciones
+// distintas** corrieran a la vez, así que el segundo **no se apartaba**. **La exclusión es para el mismo apunte, no para
+// la pestaña**: dos apuntes distintos pueden ir a la vez —y de hecho **el arnés de la revisión los manda a la vez**—; lo
+// que no puede pasar es que **el mismo** se mande dos veces.*
+const losApuntesEnVuelo = new Set();
 
 export async function vaciarLaCola({
   suyos,
@@ -1363,16 +1390,20 @@ export async function vaciarLaCola({
   sesionDelOrigen,
   motivoDelRechazo,
 }) {
-  // ***La guarda*** (R3): *si ya hay un vaciado en marcha **en esta pestaña**, este vuelve sin hacer nada.*
-  if (hayUnVaciadoEnMarcha) return { mandados: 0, apartados: 0, paradoPor: "ya-en-marcha" };
-  hayUnVaciadoEnMarcha = true;
+  // ***La guarda, por apunte*** (R3): *se quitan los que **ya están en vuelo en esta pestaña**; los demás pasan. Si no
+  // queda ninguno, este vaciado no tiene nada que hacer.*
+  const losSuyos = (suyos || []).filter((uno) => uno && !losApuntesEnVuelo.has(uno.id_local));
+  if (!losSuyos.length && (suyos || []).length) {
+    return { mandados: 0, apartados: 0, paradoPor: "ya-en-marcha" };
+  }
+  losSuyos.forEach((uno) => losApuntesEnVuelo.add(uno.id_local));
   try {
   const rechazados = leer(claveRechazados, []);
   let mandados = 0;
   let apartados = 0;
   let paradoPor = null;
 
-  for (const apunte of suyos) {
+  for (const apunte of losSuyos) {
     if (sesionDeAhora() !== sesionDelOrigen) {
       paradoPor = "cambio-de-cuenta";
       break;
@@ -1419,9 +1450,15 @@ export async function vaciarLaCola({
         apartados += 1;
         continue;
       }
-      rechazados.push(elRechazo);
-      // ***No se quita hasta comprobarlo leyendo***: *es lo único que dice si se guardó.*
-      guardar(claveRechazados, rechazados);
+      // ***Se RELEE justo antes de escribir*** (24/10/2026, **R1**): *el array se leyó al principio, antes del primer
+      // `await`; si otro vaciado escribió mientras, esa lectura es vieja y **al guardar se lo lleva por delante**. Se vuelve
+      // a leer **aquí**, que es lo único que ve lo que el otro acaba de dejar.*
+      const losDeAhora = leer(claveRechazados, []);
+      const laLista = (Array.isArray(losDeAhora) ? losDeAhora : []).filter(
+        (uno) => !(uno && uno.id_local === elRechazo.id_local),
+      );
+      laLista.push(elRechazo);
+      guardar(claveRechazados, laLista);
       const losGuardados = leer(claveRechazados, []);
       if (!losGuardados.some((uno) => uno && uno.id_local === apunte.id_local)) {
         paradoPor = "no-se-pudo-apartar";
@@ -1437,7 +1474,7 @@ export async function vaciarLaCola({
 
   return { mandados, apartados, paradoPor };
   } finally {
-    // *Al terminar -bien o mal- **se suelta**: no bloquea el siguiente vaciado legítimo.*
-    hayUnVaciadoEnMarcha = false;
+    // *Al terminar -bien o mal- **se sueltan los suyos**: no bloquean el siguiente vaciado legítimo.*
+    losSuyos.forEach((uno) => losApuntesEnVuelo.delete(uno.id_local));
   }
 }
