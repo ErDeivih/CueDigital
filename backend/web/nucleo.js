@@ -624,6 +624,59 @@ export function identidadPersistente(almacen, clave = "cuedigital.procesador") {
 }
 
 /**
+ * ***El turno, dentro de una transacción*** (23/10/2026, D01 — P0).
+ *
+ * ### ***Por qué no vale el `read/modify/write` de `localStorage`***
+ *
+ * *Con un almacén que puede devolver **lecturas viejas** y sin atomicidad, **la exclusión no se puede demostrar**: los dos
+ * leen «no hay turno» y los dos escriben, y la verificación de uno ocurre **antes** de la escritura del otro. **Lo tengo
+ * medido** con el diagnóstico de la revisión: `turno_simultaneo: {A: true, B: true}`.*
+ *
+ * ***Lo que sí lo demuestra***: *leer y escribir **dentro de la misma transacción**, que es lo que dan IndexedDB —su
+ * `readwrite` sobre un registro— y, con otra forma, Web Locks.*
+ *
+ * ### ***El contrato*** *(lo que tiene que dar quien lo use)*
+ *
+ *     base.transaccion(clave, (anterior) => nuevo | undefined)
+ *
+ * *Ejecuta **leer y escribir sin que nadie se intercale** y devuelve `{ anterior, nuevo }`; `undefined` significa «no se
+ * escribe» —otro se ha quedado el turno—. **Con ese contrato, la exclusión se puede demostrar**: es lo que hacen las
+ * pruebas con una base que **serializa**.*
+ *
+ * ***Y si no hay base transaccional, esto NO se usa***: *la revisión es explícita —«no prometer exclusión con un
+ * `fallback` al mismo `read/modify/write`»—. Sin transacción, la aplicación **no dice que vacía una sola pestaña**.*
+ */
+export async function pedirElTurnoTransaccional(base, { clave, dueno, procesador, ahora = Date.now(), duraMs = 30000 } = {}) {
+  // ***Y se espera***: *la transacción es asíncrona -como la de IndexedDB-, y sin esperarla no hay resultado que mirar.*
+  const elResultado = await base.transaccion(clave, (anterior) => {
+    const vigente = anterior && Number(anterior.caduca) > ahora;
+    const esDeOtro = vigente && (anterior.dueno !== dueno || anterior.procesador !== procesador);
+    if (esDeOtro) return undefined; // *no se escribe: el turno es de otro y sigue vivo*
+    // *Se toma -o se renueva, si ya era nuestro-.*
+    return { dueno, procesador, caduca: ahora + duraMs };
+  });
+  const elQueQuedo = elResultado && elResultado.nuevo;
+  if (elQueQuedo && elQueQuedo.dueno === dueno && elQueQuedo.procesador === procesador) {
+    return { turno: true, dueno, procesador, caduca: Number(elQueQuedo.caduca) };
+  }
+  const elAnterior = (elResultado && elResultado.anterior) || null;
+  return {
+    turno: false,
+    dueno: elAnterior ? elAnterior.dueno : null,
+    procesador: elAnterior ? elAnterior.procesador : null,
+    caduca: elAnterior ? Number(elAnterior.caduca) : null,
+  };
+}
+
+/** ***Soltar el turno, en la misma transacción***: *y solo si es el nuestro.* */
+export async function soltarElTurnoTransaccional(base, { clave, dueno, procesador } = {}) {
+  await base.transaccion(clave, (anterior) => {
+    if (!anterior || anterior.dueno !== dueno || anterior.procesador !== procesador) return undefined;
+    return null; // *borrar*
+  });
+}
+
+/**
  * ***El dueño del turno***: *la cuenta, la instalación, **la pestaña persistente** y **la ejecución**.*
  *
  * *Los dos últimos son los que separan dos ventanas que compartan la misma cuenta, la misma instalación **y el mismo
