@@ -942,7 +942,29 @@ async function mandarCambio(ruta, metodo, datos) {
   }
 }
 
+/**
+ * ***R3: dos vaciados de la MISMA pestaña no pueden ir a la vez*** (24/10/2026, E3 de la revisión).
+ *
+ * *La identidad de ejecución distingue **ventanas**, pero **las llamadas de una misma ventana comparten dueño y
+ * procesador**; el turno **admite renovación del mismo procesador**, así que dos `mandarPendientes` simultáneos —el
+ * arranque y un `online`, por ejemplo— **vaciaban los dos**, con el mismo apunte dos veces en vuelo.*
+ *
+ * ***La exclusión es dentro de la pestaña***: *si ya hay un vaciado en marcha, **se devuelve el suyo** en vez de empezar
+ * otro. **No bloquea el siguiente vaciado legítimo**: al terminar, la guarda se suelta.*
+ */
+let elVaciadoEnVuelo = null;
+
 async function mandarPendientes() {
+  if (elVaciadoEnVuelo) return elVaciadoEnVuelo;
+  elVaciadoEnVuelo = elVaciadoDeVerdad();
+  try {
+    return await elVaciadoEnVuelo;
+  } finally {
+    elVaciadoEnVuelo = null;
+  }
+}
+
+async function elVaciadoDeVerdad() {
   const decision = decideQueHacer(cola, navigator.onLine);
   if (decision.accion !== "mandar") {
     pintarAvisoPendientes();

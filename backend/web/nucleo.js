@@ -522,21 +522,43 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       }
       if (!Array.isArray(viejos)) return { migrados: 0, corrupto: true, borrado: false };
       let migrados = 0;
+      let fallidos = 0;
+      const losIntentados = [];
       for (const viejo of viejos) {
-        if (!viejo || typeof viejo !== "object") continue;
-        const elApunte = this.apuntar(viejo);
-        if (elApunte.guardado) migrados += 1;
-      }
-      // *Y solo se borra el origen si **están todos de verdad**.*
-      const losIds = viejos.filter((v) => v && typeof v === "object" && v.id_local).map((v) => String(v.id_local));
-      const estanTodos = losIds.every((id) => {
-        try {
-          return almacen.getItem(laClaveDe(id)) !== null;
-        } catch (error) {
-          return false;
+        if (!viejo || typeof viejo !== "object") {
+          // ***R4*** (24/10/2026): *una entrada que no es un objeto **no se descarta en silencio**: cuenta como fallo y el
+          // origen no se borra. Antes se saltaba con `continue` y luego `every([])` daba `true`: **se borraba el origen
+          // sin haber guardado nada**.*
+          fallidos += 1;
+          continue;
         }
-      });
-      if (estanTodos) {
+        const elApunte = this.apuntar(viejo);
+        losIntentados.push(elApunte);
+        if (elApunte.guardado) migrados += 1;
+        else fallidos += 1;
+      }
+      // ***R4***: *y solo se borra el origen si **se ha intentado todo** y **todo está de verdad** — sin excluir a nadie
+      // por no tener `id_local`: `apuntar` se lo pone, y es con ese con el que se comprueba.*
+      const estanTodos =
+        fallidos === 0 &&
+        losIntentados.length === viejos.length &&
+        losIntentados.every((uno) => {
+          try {
+            return almacen.getItem(laClaveDe(uno.id_local)) !== null;
+          } catch (error) {
+            return false;
+          }
+        });
+      // ***R2*** (24/10/2026): *entre la última lectura y el `removeItem` cabe una **pestaña antigua** que escriba. Se
+      // vuelve a leer el origen y **solo se borra si es EXACTAMENTE el que se migró**; si ha cambiado, se deja -y el
+      // siguiente `migrarSiHaceFalta` se lleva lo nuevo-. **Borrar un buzón que otro acaba de usar pierde lo suyo.***
+      let elOrigenSigueIgual = false;
+      try {
+        elOrigenSigueIgual = almacenViejo.getItem(claveVieja) === bruto;
+      } catch (error) {
+        elOrigenSigueIgual = false;
+      }
+      if (estanTodos && elOrigenSigueIgual) {
         try {
           almacenViejo.removeItem(claveVieja);
         } catch (error) {
