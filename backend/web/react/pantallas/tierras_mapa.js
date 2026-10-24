@@ -775,11 +775,6 @@ export function PantallaTierrasDeLaExplotacion({
     <${AvisoDeError} texto=${aviso} />
     <${Filtros} textos=${t} filtros=${vista.filtros || {}} filtro=${filtro} />
     
-    <div className="barra-acciones">
-      <${Boton} etiqueta=${t.marcar_todas} accion="t06-marcar-todas" clase="boton-claro" />
-      <${Boton} etiqueta=${t.desmarcar_todas} accion="t06-desmarcar-todas" clase="boton-claro" />
-    </div>
-    <p className="pista-campo">${frase(marcadasTexto)}</p>
     ${
       seVen.length
         ? html`<div className="tabla-scroll t06-tabla-scroll solo-escritorio">
@@ -808,6 +803,15 @@ export function PantallaTierrasDeLaExplotacion({
     <p className="pista-campo">${(pies || []).filter(Boolean).join(" · ")}</p>
     ${/* Y aquí, debajo, la explicación de la pantalla. */ ""}
     <p className="pista t06-explica">${frase(t.explica)}</p>
+    ${/* ***Y las acciones de la selección, aquí abajo*** (23/10/2026, C2 de la revisión): *«a 320×700 la primera tierra
+         sigue fuera: **medición real top=742 con scroll=0**». Lo que la empujaba era esto -dos botones y el recuento de
+         marcadas-, que es **secundario**: las casillas están en cada tarjeta, y **marcar todas** se busca cuando ya se
+         están mirando. **La selección no se pierde: se mueve el sitio donde se ven los botones.*** */ ""}
+    <div className="barra-acciones">
+      <${Boton} etiqueta=${t.marcar_todas} accion="t06-marcar-todas" clase="boton-claro" />
+      <${Boton} etiqueta=${t.desmarcar_todas} accion="t06-desmarcar-todas" clase="boton-claro" />
+    </div>
+    <p className="pista-campo">${frase(marcadasTexto)}</p>
     ${/* ***Y cómo se agrupan, aquí abajo*** (22/10/2026, C2): *es una **opción de vista**, no un filtro, y estaba
          empujando las tierras fuera de la ventana del móvil. Quien quiera agrupar las encuentra después de verlas;
          **nadie tiene que elegir cómo agrupar antes de saber si hay algo que agrupar**.* */ ""}

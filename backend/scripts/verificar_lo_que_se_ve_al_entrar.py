@@ -49,6 +49,16 @@ LAS_OPCIONES_A_LA_VISTA = (
     "})()"
 )
 
+# ***El botón del nombre dentro de la tarjeta***: *área y letra, que es lo que la revisión vio diminuto.*
+EL_BOTON_DEL_NOMBRE = (
+    "(() => {"
+    " const b = document.querySelector('#pantalla .t06-tarjeta .tabla-enlace');"
+    " if (!b) return 'no hay';"
+    " const r = b.getBoundingClientRect(); const cs = getComputedStyle(b);"
+    " return Math.round(r.width) + 'x' + Math.round(r.height) + '|' + parseFloat(cs.fontSize).toFixed(0);"
+    "})()"
+)
+
 EL_PLIEGUE = (
     "(() => { const d = document.querySelector('#pantalla .t06-avanzados');"
     " return d ? (d.open ? 'abierto' : 'plegado') : 'no hay pliegue'; })()"
@@ -135,23 +145,46 @@ def main() -> int:
                 el_pliegue,
             )
 
-            # ---- 4 · y en el móvil, la primera tarjeta también se ve ----
-            en_la_spa(nav, "#/tierras/mapa")
-            nav.orden(
-                "Emulation.setDeviceMetricsOverride",
-                {"width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True},
-            )
-            time.sleep(1.0)
-            en_la_spa(nav, "#/tierras/mapa")
-            la_primera_movil = str(nav.evaluar(LA_PRIMERA_EN_LA_VENTANA) or "")
-            print(f"  (en el móvil, la primera: {la_primera_movil})")
-            fallos += not comprobar(
-                la_primera_movil == "dentro",
-                "***y en el móvil también se ve una tarjeta al entrar***",
-                la_primera_movil,
-            )
+            # ---- 4 · y en los móviles, la primera tarjeta también se ve ----
+            # *Los dos del diseño: **390×844 y 320×700**. La revisión midió a 320 **top=742 con scroll=0**: o sea, la
+            # primera tierra **por debajo** de la ventana.*
+            for ancho, alto in ((390, 844), (320, 700)):
+                nav.orden(
+                    "Emulation.setDeviceMetricsOverride",
+                    {"width": ancho, "height": alto, "deviceScaleFactor": 1, "mobile": True},
+                )
+                time.sleep(1.0)
+                en_la_spa(nav, "#/tierras/mapa")
+                la_primera_movil = str(nav.evaluar(LA_PRIMERA_EN_LA_VENTANA) or "")
+                print(f"  (a {ancho}x{alto}, la primera: {la_primera_movil})")
+                fallos += not comprobar(
+                    la_primera_movil == "dentro",
+                    f"***a {ancho}x{alto} se ve una tarjeta al entrar***",
+                    la_primera_movil,
+                )
+                # ***Y el botón del nombre, con el suelo del diseño.***
+                el_boton = str(nav.evaluar(EL_BOTON_DEL_NOMBRE) or "")
+                el_area, _, la_letra = el_boton.partition("|")
+                el_ancho, _, el_alto = el_area.partition("x")
+                try:
+                    los_lados = (int(el_ancho), int(el_alto))
+                    la_letra_num = float(la_letra)
+                except ValueError:
+                    los_lados = (0, 0)
+                    la_letra_num = 0
+                print(f"  (a {ancho}, el botón del nombre: {el_boton})")
+                fallos += not comprobar(
+                    min(los_lados) >= 44,
+                    f"***a {ancho} el botón del nombre llega a 44 de área*** ({el_boton})",
+                    el_boton,
+                )
+                fallos += not comprobar(
+                    la_letra_num >= 15,
+                    f"***y no se le baja la letra*** ({el_boton})",
+                    el_boton,
+                )
 
-    print(f"\nComprobaciones: 5   Fallos: {fallos}")
+    print(f"\nComprobaciones: 10   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

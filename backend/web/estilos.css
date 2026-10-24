@@ -2936,3 +2936,13 @@ body:has(.entrada-cuenta) .pie {
   border-bottom: 1px solid var(--borde);
   margin-bottom: 0.5rem;
 }
+
+/* ***El botón del nombre, en la tarjeta*** (23/10/2026, C2 de la revisión). *La revisión los vio «como controles nativos
+   diminutos»: **el suelo del diseño es 44 px de área y 15 de letra**, y un botón de texto no lo trae de serie. **No se
+   baja la letra**: se sube el área.* */
+.t06-tarjeta .tabla-enlace {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: max(0.9375rem, 1em);
+  text-align: left;
+}
