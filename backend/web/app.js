@@ -34,6 +34,11 @@ import {
   esDelMismoContexto,
   vaciarLaCola,
   crearColaPorIntenciones,
+  identidadDeEjecucion,
+  identidadPersistente,
+  duenoDelTurno,
+  pedirElTurnoTransaccional,
+  soltarElTurnoTransaccional,
   // *Un id de comando que no se repite entre pestañas ni reinicios.*
   unIdDeComando,
   diasDeEspera,
@@ -353,6 +358,8 @@ function almacenSeguro() {
     return crearAlmacenMemoria();
   }
 }
+
+import { abrirLaBase, baseDelTurno, hayIndexedDb, colaEnIndexedDb } from "./cola_en_indexeddb.js";
 
 const ALMACEN = almacenSeguro();
 const CLAVE_TOKEN = "cuedigital.token";
@@ -960,10 +967,38 @@ async function mandarPendientes() {
   // la cola en eventos `online`, arranque y varias pestañas», con un **bloqueo/lease con caducidad**. El servidor
   // ya desduplica por la clave de reenvío, pero sin esto **las mismas peticiones salían dos veces** y el trabajo se
   // repartía de forma impredecible.*
-  const elDuenoDelTurno = `${laDelPrincipio || "sin-sesion"}:${laInstalacion()}`;
+  // ***El dueño lleva la identidad de EJECUCIÓN*** (23/10/2026, D01): *`sessionStorage` **se copia al abrir una ventana con
+  // `opener`**, así que dos ventanas compartían procesador y **las dos recibían el turno**. La de ejecución vive en memoria
+  // y ninguna copia la trae.*
+  const elDuenoDelTurno = duenoDelTurno({
+    cuenta: laDelPrincipio,
+    instalacion: laInstalacion(),
+    persistente: identidadPersistente(globalThis.sessionStorage),
+    ejecucion: identidadDeEjecucion(),
+  });
   // ***Y con el procesador*** (22/10/2026, D01): *el dueño solo no distingue dos pestañas de la misma cuenta, y las dos
   // recibían el turno. Con la identidad de esta pestaña, la segunda espera -o lo toma cuando caduca-.*
-  const { turno } = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+  // ***Y se pide en una TRANSACCIÓN si hay IndexedDB*** (23/10/2026, D01): *con `localStorage` la exclusión **no se puede
+  // demostrar** -los dos leen «no hay turno» y los dos escriben-. **Sin IndexedDB no se promete**: se usa el de siempre, y
+  // la aplicación **no dice** que vacía una sola pestaña.*
+  let turno = false;
+  try {
+    if (hayIndexedDb()) {
+      const laBase = baseDelTurno(await abrirLaBase());
+      const elTurno = await pedirElTurnoTransaccional(laBase, {
+        clave: "cuedigital.cola.turno",
+        dueno: elDuenoDelTurno,
+        procesador: elDuenoDelTurno,
+        duraMs: 30000,
+      });
+      turno = elTurno.turno;
+    } else {
+      turno = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() }).turno;
+    }
+  } catch (error) {
+    // *Si la base transaccional falla, **se usa el de siempre**: mejor mandar con una exclusión no demostrada que no mandar.*
+    turno = pedirElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() }).turno;
+  }
   if (!turno) {
     // *Otra pestaña está vaciando: **no se manda nada**, y lo que hay sigue en la cola.*
     pintarAvisoPendientes();
@@ -1001,7 +1036,21 @@ async function mandarPendientes() {
   } finally {
     // ***Y se suelta el turno SIEMPRE*** (21/10/2026): *también si se sale por un `break` o revienta algo. Si no,
     // la cola quedaría parada hasta que caducara el turno, y eso el agricultor lo ve como «no se manda nada».*
-    soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+    // ***Y se suelta por la misma puerta***: *si se pidió en una transacción, se suelta en otra.*
+    try {
+      if (hayIndexedDb()) {
+        const laBase = baseDelTurno(await abrirLaBase());
+        await soltarElTurnoTransaccional(laBase, {
+          clave: "cuedigital.cola.turno",
+          dueno: elDuenoDelTurno,
+          procesador: elDuenoDelTurno,
+        });
+      } else {
+        soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+      }
+    } catch (error) {
+      soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+    }
     pintarAvisoPendientes();
   }
 }

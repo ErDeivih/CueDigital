@@ -104,6 +104,19 @@ los reintentos por `clave_de_reenvio`.*
 
 ---
 
+## 5 · El estado, al 23/10 (después de tres pasos)
+
+| pieza | estado |
+|---|---|
+| **conservación en el navegador** | **hecha** — *una clave por intención, sin leer para escribir; migración al arrancar y al leer; **enchufada** en `app.js`* |
+| **el turno** | **hecho** — *`pedirElTurnoTransaccional` sobre una transacción, **probado contra el IndexedDB de Chromium**: dos adquisiciones a la vez y **gana una**; **enchufado** en `mandarPendientes` cuando hay IndexedDB* |
+| **identidad de ejecución** | **hecha** — *en memoria, separada de la persistente, que se copia con `opener`* |
+| **el recorrido de la cola** | ⚠️ ***8 de 9***: *lee la clave vieja (`cuedigital.pendientes`), y la cola ahora guarda **una clave por intención**. **Hay que adaptar sus dos lecturas** —como ya se hizo en `tests_js/interfaz.test.js` con el ayudante `losPendientes`—; el resto del recorrido pasa* |
+| **las pruebas de aceptación** | **sin hacer** — *dos pestañas reales, `opener`, recarga, cierre, caducidad con un POST pendiente, almacenamiento lleno, retorno del dueño* |
+
+***Y lo que no se promete***: *sin IndexedDB, la aplicación **usa el turno de siempre y no dice** que vacía una sola
+pestaña.*
+
 ## 5 · Lo que este documento **no** es
 
 ***No es el arreglo.*** *Es el porqué, el cómo y el criterio — para que el siguiente intento no sea otro re-leer, que ya
