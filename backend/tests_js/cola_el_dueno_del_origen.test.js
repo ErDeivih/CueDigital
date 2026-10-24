@@ -36,7 +36,7 @@ function elTrozoDesde(laMarca) {
 
 test("el vaciado de la cola NO deriva la clave de los rechazos de la sesión de ahora", () => {
   // *La marca del vaciado: el vale fijado al empezar.*
-  const elVaciado = elTrozoDesde("async function elVaciadoDeVerdad()");
+  const elVaciado = elTrozoDesde("async function mandarPendientes()");
 
   assert.ok(
     elVaciado.includes("const laClaveRechazados"),
@@ -65,7 +65,7 @@ test("el vaciado de la cola NO deriva la clave de los rechazos de la sesión de 
 });
 
 test("el turno se pide con el procesador de esta pestaña, no solo con el dueño", () => {
-  const elVaciado = elTrozoDesde("async function elVaciadoDeVerdad()");
+  const elVaciado = elTrozoDesde("async function mandarPendientes()");
 
   assert.ok(
     /pedirElTurno\([\s\S]*?procesador:\s*elProcesador\(\)/.test(elVaciado),
