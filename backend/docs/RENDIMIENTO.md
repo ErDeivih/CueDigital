@@ -1,5 +1,35 @@
 # Rendimiento: lo medido
 
+## ***0 ter · Tercer intento: acotar las trazas — y por qué tampoco*** (24/10/2026)
+
+***Lo que pide la revisión***: *«acotar o eliminar **las referencias fuertes** de `montajes` y `montajesDelMarco`»* —que
+midió **2→102** y **2→101**—.
+
+***Lo que se intentó***: *un tope de 500 por lista, tirando **las más viejas** y conservando el orden (para no romper
+`slice(antes)` ni `[length - 1]`). Con **dos pruebas nuevas** que lo fijaban…*
+
+***Y rompió la suite***: *cinco pruebas de pantallas dejaron de encontrar lo que se les pedía a React.*
+
+***El motivo, medido***: ***las pruebas usan `montajes` como registro de TODA la ejecución*** —`montajes.slice(antes)` con
+`antes` de hace muchas pantallas—, y **la suite entera monta más de 500 veces en el mismo proceso**. *Acotar por número
+**choca con ese contrato**, no con un fallo del código.*
+
+***Se revirtió, y la suite volvió a 1221/1221.***
+
+***Las dos salidas honestas, para el siguiente***:
+
+1. ***Referencias débiles*** (`WeakRef` al contenedor y al elemento) con un control de vida: *no cambia el número de
+   entradas y suelta lo que ya no está — pero **`montajes[0].contenedor === contenedor`** lo usan las pruebas: habría que
+   ajustarlas **explicando por qué**.*
+2. ***Una traza aparte, acotada, y dejar `montajes` como registro para las pruebas***: *lo que la aplicación mira pasa a la
+   traza acotada; `montajes` se queda igual y **las pruebas no se tocan**.*
+
+***Y lo que NO hay que volver a intentar***: *cachear la raíz por contenedor —**dos veces** y las dos rompió reservas—; el
+inventario dice que **solo hay una escritura manual sobre un contenedor de React** (`replaceChildren()` en `#marco`), y el
+camino es **desmontar ahí**, no reutilizar raíces.*
+
+---
+
 ## ***0 bis · Segundo intento, con el inventario hecho — y también se revirtió*** (23/10/2026)
 
 ***El inventario*** (lo que pedía la revisión: «inventaría TODAS las escrituras manuales»): *en `app.js` hay **19
