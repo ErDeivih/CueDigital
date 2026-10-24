@@ -30,6 +30,33 @@ Actions remotos no verificados en este turno. Informe y evidencia en las rutas e
 
 # El estado del encargo, en un solo sitio
 
+> ## ***23/10/2026 — la suite de Python es intermitente, y esta medido***
+>
+> ***Cinco pruebas de recorrido distintas** han fallado **en algún momento** bajo la suite entera, y **las cinco pasan
+> corridas solas**:*
+>
+>     test_el_recorrido_del_panel · test_el_recorrido_se_anda · test_la_compra_se_anda_entera
+>     test_el_recorrido_de_la_pac · test_el_recorrido_de_las_reservas
+>
+> ***Lo que se ha descartado, con medidas***:
+>
+> | sospecha | cómo se descartó |
+> |---|---|
+> | *un `timeout` corto del `subprocess`* | *es de **900 s**: no es eso* |
+> | *que estén rotas* | *cada una **pasa sola**; y la suite entera **ha pasado limpia** (`exit code 0`) al menos una vez* |
+> | *que lo rompa un cambio de esta tanda* | *fallaron **antes y después** de los cambios, y en pruebas distintas cada vez* |
+>
+> ***Lo que se sabe del mecanismo***: *la prueba solo comprueba `returncode == 0` y **`«Fallos: 0»`** en la salida del
+> guion; cuando falla, **es el guion el que cuenta un fallo** —una pantalla que no se asentó a tiempo bajo carga—, no un
+> plazo agotado.*
+>
+> ***Y por qué importa***: *una suite que falla al azar **deja de creerse**, y eso es peor que no tenerla. **Antes de un
+> piloto hay que estabilizarla**; queda como tarea, con el mecanismo localizado y sin tapar.*
+
+---
+
+
+
 > ## ***Segunda tanda (22/10/2026): lo que pidió la revisión independiente***
 >
 > *La revisión de Codex encontró lo que la entrega no había visto. **Esto es lo que se ha hecho después**, con sus
