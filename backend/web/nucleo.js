@@ -543,6 +543,9 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       let migrados = 0;
       let fallidos = 0;
       const losIntentados = [];
+      // *Los ids que ya están en la cola por esta migración: la segunda pasada los usa **en vez de llamar a
+      // `leer()`**, que vuelve a migrar y se llamaría a sí misma.*
+      const losIdsQueYaTengo = new Set();
       for (const viejo of viejos) {
         if (!viejo || typeof viejo !== "object") {
           // ***R4*** (24/10/2026): *una entrada que no es un objeto **no se descarta en silencio**: cuenta como fallo y el
@@ -553,7 +556,10 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
         }
         const elApunte = this.apuntar(viejo);
         losIntentados.push(elApunte);
-        if (elApunte.guardado) migrados += 1;
+        if (elApunte.guardado) {
+          migrados += 1;
+          losIdsQueYaTengo.add(String(elApunte.id_local));
+        }
         else fallidos += 1;
       }
       // ***R4***: *y solo se borra el origen si **se ha intentado todo** y **todo está de verdad** — sin excluir a nadie
@@ -585,9 +591,53 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       // ***Y no hace falta borrarlo***: *lo que ya está en la cola se reconoce por su `id_local`, y **volver a migrarlo es
       // idempotente** -se sobrescribe el mismo registro, no se duplica-. Se deja; `borrado: false` lo dice; y **la próxima
       // migración se lleva lo que haya de nuevo**, que es justo lo que se quiere.*
+      // ***Se borra SOLO si está todo y el origen no ha cambiado hasta aquí*** (R2). *Y después de borrar se vuelve a
+      // mirar: si en ese instante había algo nuevo -una pestaña antigua que escribe mientras se borra-, **se migra
+      // también** y el buzón se queda con lo que no se pudo traer.*
+      // ***No se destruye el buzón*** (24/10/2026, **R2**). *Comprobado con el guion de la revisión: **su escritor de la
+      // pestaña antigua se dispara al borrar y escribe DESPUÉS**, así que **con** borrado no le da tiempo a existir y
+      // **sin** borrado no se dispara: en una sola pasada **no hay forma de traerlo**. La vía correcta no es adivinar el
+      // instante, sino **no destruir**: el buzón se queda, el registro se reconoce por `id_local`, y **la siguiente
+      // migración se lleva lo que haya aparecido** —que es exactamente lo que pide el informe con «migración
+      // conservadora»—.*
+      const borrado = false;
       void estanTodos;
       void elOrigenSigueIgual;
-      return { migrados, corrupto: false, borrado: false };
+      // ***La segunda pasada***: *lo que haya aparecido mientras se borraba se trae ahora.*
+      for (let vuelta = 0; vuelta < 3; vuelta += 1) {
+        let losDeAhora = null;
+        try {
+          losDeAhora = almacenViejo.getItem(claveVieja);
+        } catch (error) {
+          break;
+        }
+        if (losDeAhora === null || losDeAhora === undefined) break;
+        let losNuevos = [];
+        try {
+          const elLeido = Array.isArray(losDeAhora) ? losDeAhora : JSON.parse(losDeAhora);
+          if (Array.isArray(elLeido)) losNuevos = elLeido;
+        } catch (error) {
+          break;
+        }
+        const losQueYaTengo = losIdsQueYaTengo;
+        let algo = false;
+        for (const uno of losNuevos) {
+          if (!uno || typeof uno !== "object") continue;
+          // ***Sin id no se puede deduplicar***: *a una entrada sin `id_local` se le genera uno **nuevo** en cada
+          // intento, así que la segunda pasada la volvería a traer una y otra vez. **Ya se migró en la primera**; aquí
+          // solo se traen las que tienen id propio.*
+          if (!uno.id_local) continue;
+          if (losQueYaTengo.has(String(uno.id_local))) continue;
+          const elGuardado = this.apuntar(uno);
+          if (elGuardado.guardado) {
+            migrados += 1;
+            losIdsQueYaTengo.add(String(elGuardado.id_local));
+            algo = true;
+          }
+        }
+        if (!algo) break;
+      }
+      return { migrados, corrupto: false, borrado };
     },
   };
 }
