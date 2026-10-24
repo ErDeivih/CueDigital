@@ -38,6 +38,20 @@ from verificar_los_permisos_por_rol import _llamar  # noqa: E402
 from datos_representativos import preparar  # noqa: E402
 from navegador_cdp import NavegadorDeVerdad  # noqa: E402
 
+# ***La cola, sea cual sea su disposición*** (23/10/2026, D01): *ahora guarda **una clave por intención**, y leer la clave
+# vieja (`cuedigital.pendientes`) decía siempre «vacía». **El fallo era del instrumento, no de la app** — el mismo
+# acoplamiento que se corrigió en las pruebas de JS con el ayudante `losPendientes`.*
+LA_COLA_ENTERA_JS = (
+    "(() => { try { const l = window.localStorage; const los = [];"
+    " for (let i = 0; i < (l.length || 0); i += 1) { const k = l.key(i);"
+    " if (typeof k !== 'string') continue;"
+    " if (k === 'cuedigital.pendientes') { try { const v = JSON.parse(l.getItem(k));"
+    " if (Array.isArray(v)) los.push(...v); } catch (e) {} continue; }"
+    " if (k.indexOf('cuedigital.pendiente.') !== 0) continue;"
+    " try { const v = JSON.parse(l.getItem(k)); if (v) los.push(v); } catch (e) { los.push({ id_local: k }); } }"
+    " return JSON.stringify(los); } catch (e) { return '[]'; } })()"
+)
+
 COMPROBACIONES = 0
 FALLOS: list[str] = []
 
@@ -155,8 +169,7 @@ def main() -> int:
 
             print("\n2. Y LO AJENO NO SE PIERDE, Y SE DICE")
             la_que_queda = nav.evaluar(
-                "(() => { try { return window.localStorage.getItem('cuedigital.pendientes') || '[]'; }"
-                " catch (e) { return '(sin almacen)'; } })()"
+                LA_COLA_ENTERA_JS
             ) or "[]"
             comprobar(
                 "de-otra-cuenta" in str(la_que_queda),
@@ -232,8 +245,7 @@ def main() -> int:
             )
             la_que_queda = (
                 nav.evaluar(
-                    "(() => { try { return window.localStorage.getItem('cuedigital.pendientes')"
-                    " || '[]'; } catch (e) { return '[]'; } })()"
+                    LA_COLA_ENTERA_JS
                 )
                 or "[]"
             )
