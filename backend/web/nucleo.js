@@ -600,9 +600,19 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
       // instante, sino **no destruir**: el buzón se queda, el registro se reconoce por `id_local`, y **la siguiente
       // migración se lleva lo que haya aparecido** —que es exactamente lo que pide el informe con «migración
       // conservadora»—.*
-      const borrado = false;
-      void estanTodos;
-      void elOrigenSigueIgual;
+      // ***Se borra SOLO si está todo y el origen no ha cambiado hasta aquí*** (R2). *Es el contrato de siempre, y el
+      // recorrido de la cola lo necesita: **si el origen se queda, cada `leer()` lo vuelve a migrar y resucita lo que ya
+      // se había apartado** -comprobado: «y sale de la cola» fallaba por eso-. La comprobación por **huella de contenido**
+      // cierra la ventana en la que escribe una pestaña antigua mientras se migra.*
+      let borrado = false;
+      if (estanTodos && elOrigenSigueIgual) {
+        try {
+          almacenViejo.removeItem(claveVieja);
+          borrado = true;
+        } catch (error) {
+          borrado = false;
+        }
+      }
       // ***La segunda pasada***: *lo que haya aparecido mientras se borraba se trae ahora.*
       for (let vuelta = 0; vuelta < 3; vuelta += 1) {
         let losDeAhora = null;

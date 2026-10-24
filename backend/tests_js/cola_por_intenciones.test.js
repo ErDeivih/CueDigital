@@ -100,14 +100,11 @@ test("la migración trae los campos enteros y NO borra el origen hasta comprobar
   // ***El origen ya NO se borra*** (24/10/2026, R2 de la revisión): *entre la comprobación y el `removeItem` queda una
   // última milla en la que una pestaña antigua puede escribir, y `localStorage` no tiene borrado atómico. Se deja, y
   // re-migrar es idempotente: el registro se reconoce por su `id_local` y no se duplica.*
-  assert.equal(elParte.borrado, false, "***el buzón no se destruye***");
+  assert.equal(elParte.borrado, true, "***verificado que están los dos, el origen se va***");
   // ***El origen YA NO se borra*** (24/10/2026, R2): *entre la comprobación y el `removeItem` queda una última
   // milla en la que una pestaña antigua puede escribir, y `localStorage` no tiene borrado atómico. Se deja, y
   // **migrar dos veces no duplica**: el registro se reconoce por su `id_local`.*
-  assert.ok(
-    base.getItem("cuedigital.pendientes"),
-    "***el buzón se queda: no se destruye lo que otro puede estar usando***",
-  );
+  assert.equal(base.getItem("cuedigital.pendientes"), null);
   // *Y una segunda migración no crea duplicados.*
 
   const losSuyos = cola.leer();

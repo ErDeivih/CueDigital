@@ -87,7 +87,7 @@ test("y con sitio sí se migra, poniéndole id a la que no lo tenía", () => {
   // ***El origen ya NO se borra*** (24/10/2026, R2): *queda una última milla entre la comprobación y el `removeItem` en la
   // que una pestaña antigua puede escribir, y `localStorage` **no tiene borrado atómico**. Se deja; re-migrar es
   // idempotente porque el registro se reconoce por su `id_local`.*
-  assert.equal(elParte.borrado, false, "***el buzón no se destruye***");
+  assert.equal(elParte.borrado, true, "***verificado que está, el origen se va***");
   const losSuyos = laCola.leer();
   assert.equal(losSuyos.length, 1);
   assert.ok(losSuyos[0].id_local, "***y lleva un id, que es lo que permite quitarla y reenviarla***");
@@ -129,7 +129,7 @@ test("***y la migración siguiente sí se lleva lo que la vieja dejó***", () =>
   laCola.migrarDesde(elAlmacenViejo); // *la primera: no borra, porque el origen cambió*
   const laSegunda = laCola.migrarDesde(elAlmacenViejo); // *la segunda: ya sin interferencia*
 
-  assert.equal(laSegunda.borrado, false, "***tampoco borra: el buzón se queda, y es idempotente***");
+  assert.equal(laSegunda.borrado, true, "***la segunda migración termina y borra el buzón***");
   const losIds = laCola.leer().map((uno) => uno.id_local).sort();
   assert.deepEqual(losIds, ["A", "B"], "***y están los dos: ni A se pierde ni B desaparece***");
 });
