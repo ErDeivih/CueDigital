@@ -50,6 +50,18 @@ LAS_OPCIONES_A_LA_VISTA = (
 )
 
 # ***El botón del nombre dentro de la tarjeta***: *área y letra, que es lo que la revisión vio diminuto.*
+# ***La tabla a 1024***: *si desborda, **se tiene que poder recorrer con el teclado**.*
+LA_TABLA_A_LO_ANCHO = (
+    "(() => {"
+    " const d = document.querySelector('#pantalla .t06-tabla-scroll');"
+    " if (!d) return 'no hay tabla';"
+    " const desborda = d.scrollWidth > d.clientWidth + 1;"
+    " const alcanzable = d.tabIndex >= 0;"
+    " return (desborda ? 'desborda' : 'cabe') + '|' + (alcanzable ? 'teclado' : 'sin-teclado') + '|'"
+    "   + d.scrollWidth + 'x' + d.clientWidth;"
+    "})()"
+)
+
 EL_BOTON_DEL_NOMBRE = (
     "(() => {"
     " const b = document.querySelector('#pantalla .t06-tarjeta .tabla-enlace');"
@@ -145,6 +157,21 @@ def main() -> int:
                 el_pliegue,
             )
 
+            # ---- 3 bis · la tabla a 1024: si desborda, con teclado ----
+            nav.orden(
+                "Emulation.setDeviceMetricsOverride",
+                {"width": 1024, "height": 768, "deviceScaleFactor": 1, "mobile": False},
+            )
+            time.sleep(0.8)
+            en_la_spa(nav, "#/tierras/mapa")
+            la_tabla = str(nav.evaluar(LA_TABLA_A_LO_ANCHO) or "")
+            print(f"  (a 1024, la tabla: {la_tabla})")
+            fallos += not comprobar(
+                la_tabla.startswith("cabe") or la_tabla.startswith("desborda|teclado"),
+                "***a 1024 la tabla cabe, o desborda y se recorre con el teclado***",
+                la_tabla,
+            )
+
             # ---- 4 · y en los móviles, la primera tarjeta también se ve ----
             # *Los dos del diseño: **390×844 y 320×700**. La revisión midió a 320 **top=742 con scroll=0**: o sea, la
             # primera tierra **por debajo** de la ventana.*
@@ -184,7 +211,7 @@ def main() -> int:
                     el_boton,
                 )
 
-    print(f"\nComprobaciones: 10   Fallos: {fallos}")
+    print(f"\nComprobaciones: 11   Fallos: {fallos}")
     return 1 if fallos else 0
 
 

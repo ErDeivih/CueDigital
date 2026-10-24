@@ -777,7 +777,17 @@ export function PantallaTierrasDeLaExplotacion({
     
     ${
       seVen.length
-        ? html`<div className="tabla-scroll t06-tabla-scroll solo-escritorio">
+        ? html`${/* ***La tabla, alcanzable con el teclado*** (23/10/2026, C2 de la revisión): *«si hay scroll
+               horizontal, debe ser **reconocible y accesible con teclado**». Medido a 1024: **desborda (1070 de 721) y
+               no se podía recorrer** —un `div` con `overflow` **no recibe el foco**—. Con `tabIndex=0` y
+               `role="region"` con su nombre, **se enfoca con Tab y se recorre con las flechas**, y el contorno de foco
+               dice que se puede.* */ ""}
+          <div
+            className="tabla-scroll t06-tabla-scroll solo-escritorio"
+            tabIndex=${0}
+            role="region"
+            aria-label=${frase(t.tabla_etiqueta)}
+          >
             <${TablaDeTierras}
               textos=${textos}
               bloques=${bloques}
