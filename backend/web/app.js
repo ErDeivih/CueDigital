@@ -34,6 +34,7 @@ import {
   esDelMismoContexto,
   vaciarLaCola,
   crearColaPorIntenciones,
+  crearBuzonDeRechazos,
   identidadDeEjecucion,
   identidadPersistente,
   duenoDelTurno,
@@ -445,6 +446,9 @@ function laClaveDe(claveBase) {
  * ahora también las da*—, *que es lo que hace falta para listarlas.*
  */
 const cola = crearColaPorIntenciones(ALMACEN);
+
+// ***Y los rechazos, cada uno en su clave*** (24/10/2026, R1): *el array compartido perdía uno de dos simultáneos.*
+const buzonDeRechazos = crearBuzonDeRechazos(ALMACEN);
 
 // ***Y lo que había en la cola vieja se trae al arrancar*** (23/10/2026): *sin perder `id_local`, dueño, datos ni
 // `clave_de_reenvio`; **el origen no se borra hasta comprobar que están todos**, y **un JSON corrupto se conserva** en vez
@@ -1037,6 +1041,7 @@ async function elVaciadoDeVerdad() {
       suyos,
       cola,
       claveRechazados: laClaveRechazados,
+      buzon: buzonDeRechazos,
       api: (apunte) =>
         api(apunte.ruta, {
           method: "POST",

@@ -1252,10 +1252,97 @@ export function presentarMetrica(metrica, textos = {}) {
  * ***`claveRechazados` llega hecha***: *la captura quien llama **antes del primer `await`**, que es lo que impide que
  * un 422 de A acabe en la libreta de B.*
  */
+/**
+ * ***Los rechazos, cada uno en su clave*** (24/10/2026, E1 — **R1** de la revisión).
+ *
+ * ### ***El defecto***
+ *
+ * *Cada vaciado leía **una vez** el array de rechazados antes del primer `await`, le hacía `push` y lo guardaba. Dos
+ * vaciados de A y de B leían **los dos** vacío: A guardaba `[A]`, B guardaba `[B]`, y **A desaparecía** —no quedaba
+ * pendiente ni rechazado—. **La misma familia de carrera que se corrigió en pendientes**, viva en el array compartido.*
+ *
+ * ***Y no basta comprobar la propia escritura***: *el array es **un solo registro**, y dos escritores no pueden quedar los
+ * dos.*
+ *
+ * ### ***La regla***
+ *
+ * *Un rechazo es **un registro suyo** (`cuedigital.rechazado.<id_local>`): **guardar no lee nada**, así que dos rechazos
+ * de intenciones distintas **no se pueden pisar**. Y `quitar` borra **su** clave, no reescribe la lista de nadie.*
+ *
+ * ***Un rechazo conserva** dueño, payload, motivo, ruta y **la clave original** (`clave_de_reenvio`), para que
+ * **recuperar** no cree una intención duplicada.*
+ */
+export function crearBuzonDeRechazos(almacen, prefijo = "cuedigital.rechazado.") {
+  const elIdDeLaClave = (clave) => String(clave).slice(prefijo.length);
+
+  return {
+    /** ***Guarda un rechazo, sin leer.*** *Es lo que hace que dos no se pisen.* */
+    apuntar(rechazo) {
+      const elSuyo = { ...rechazo };
+      if (!elSuyo.id_local) elSuyo.id_local = unIdDeComando();
+      if (!elSuyo.datos || typeof elSuyo.datos !== "object") elSuyo.datos = {};
+      if (!elSuyo.datos.clave_de_reenvio) elSuyo.datos = { ...elSuyo.datos, clave_de_reenvio: elSuyo.id_local };
+      if (!elSuyo.apartado_en) elSuyo.apartado_en = new Date().toISOString();
+      try {
+        almacen.setItem(prefijo + elSuyo.id_local, JSON.stringify(elSuyo));
+        return { ...elSuyo, guardado: true };
+      } catch (error) {
+        return { ...elSuyo, guardado: false };
+      }
+    },
+
+    /** ***Y se quita el suyo, sin tocar el de nadie más.*** */
+    quitar(idLocal) {
+      try {
+        almacen.removeItem(prefijo + idLocal);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+
+    leer() {
+      const los = [];
+      let cuantas = 0;
+      try {
+        cuantas = Number(almacen.length) || 0;
+      } catch (error) {
+        cuantas = 0;
+      }
+      for (let i = 0; i < cuantas; i += 1) {
+        let clave = null;
+        try {
+          clave = almacen.key(i);
+        } catch (error) {
+          clave = null;
+        }
+        if (typeof clave !== "string" || !clave.startsWith(prefijo)) continue;
+        try {
+          const uno = JSON.parse(almacen.getItem(clave));
+          if (uno && typeof uno === "object") los.push({ ...uno, id_local: uno.id_local || elIdDeLaClave(clave) });
+        } catch (error) {
+          los.push({ id_local: elIdDeLaClave(clave), corrupto: true });
+        }
+      }
+      return los;
+    },
+
+    losCorruptos() {
+      return this.leer().filter((uno) => uno.corrupto === true);
+    },
+
+    tamano() {
+      return this.leer().length;
+    },
+  };
+}
+
 export async function vaciarLaCola({
   suyos,
   cola,
   claveRechazados,
+  // ***R1*** (24/10/2026): *si llega un buzón -una clave por rechazo-, se usa **él** y no el array compartido.*
+  buzon = null,
   api,
   leer,
   guardar,
@@ -1292,7 +1379,7 @@ export async function vaciarLaCola({
         break;
       }
       const cuerpo = await respuesta.json().catch(() => null);
-      rechazados.push({
+      const elRechazo = {
         id_local: apunte.id_local,
         cuenta: apunte.cuenta || null,
         tipo: apunte.tipo || null,
@@ -1301,7 +1388,21 @@ export async function vaciarLaCola({
         motivo: motivoDelRechazo(cuerpo),
         estado: respuesta.status,
         cuando: apunte.apuntado_en,
-      });
+      };
+      // ***Con buzón, cada rechazo va a SU clave*** (24/10/2026, **R1**): *guardar **no lee** y no reescribe la lista de
+      // nadie, así que **dos rechazos a la vez no se pisan** —que es lo que pasaba con el array compartido, donde uno de
+      // los dos **desaparecía**—. Y se sigue quitando el pendiente **solo después** de saber que se guardó.*
+      if (buzon) {
+        const elGuardado = buzon.apuntar(elRechazo);
+        if (!elGuardado.guardado) {
+          paradoPor = "no-se-pudo-apartar";
+          break;
+        }
+        cola.quitar(apunte.id_local);
+        apartados += 1;
+        continue;
+      }
+      rechazados.push(elRechazo);
       // ***No se quita hasta comprobarlo leyendo***: *es lo único que dice si se guardó.*
       guardar(claveRechazados, rechazados);
       const losGuardados = leer(claveRechazados, []);
