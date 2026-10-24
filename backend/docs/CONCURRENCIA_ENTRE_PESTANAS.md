@@ -104,6 +104,29 @@ los reintentos por `clave_de_reenvio`.*
 
 ---
 
+## 5 · La aceptación de dos pestañas: qué falta en el arnés
+
+*La revisión pide, para cerrar D01: **dos pestañas reales**, apuntar/apuntar y apuntar/quitar, **ventanas con `opener`**,
+recarga, cierre, **caducidad mientras un POST está pendiente**, **almacenamiento lleno** y **retorno del dueño**.*
+
+***Lo que hay***: *`scripts/navegador_cdp.py` maneja **un solo destino** —una pestaña—: `_orden` habla por un websocket y no
+lleva `sessionId`. **Con eso no se pueden manejar dos pestañas a la vez.***
+
+***Lo que hace falta, y es del arnés, no del test***:
+
+  · `Target.createTarget` para abrir la segunda (o `window.open`, que además **es la que comparte `sessionStorage`**);
+  · `Target.attachToTarget` con `flatten: true` para quedarse con su **`sessionId`**;
+  · y **`sessionId` en cada `_orden`**, para poder mandarle órdenes a una u otra.
+
+***Con eso, el guion de aceptación es el de la revisión, punto por punto***: *la primera pestaña apunta; la segunda apunta a
+la vez (con una **barrera** que se suelte **después** de la última lectura si se mide el camino viejo); `apuntar`/`quitar`;
+`opener`; recarga; cierre; caducidad con un POST pendiente; almacenamiento lleno; y el dueño que vuelve.*
+
+***Y hay una prueba que ya se puede hacer hoy sin eso***, en `scripts/verificar_la_cola_en_indexeddb.py`: *dos adquisiciones
+del turno **a la vez** contra el IndexedDB de Chromium —gana una—, dos `apuntar` a la vez —quedan los dos— y la migración.*
+
+---
+
 ## 5 · El estado, al 23/10 (después de tres pasos)
 
 | pieza | estado |
@@ -111,7 +134,7 @@ los reintentos por `clave_de_reenvio`.*
 | **conservación en el navegador** | **hecha** — *una clave por intención, sin leer para escribir; migración al arrancar y al leer; **enchufada** en `app.js`* |
 | **el turno** | **hecho** — *`pedirElTurnoTransaccional` sobre una transacción, **probado contra el IndexedDB de Chromium**: dos adquisiciones a la vez y **gana una**; **enchufado** en `mandarPendientes` cuando hay IndexedDB* |
 | **identidad de ejecución** | **hecha** — *en memoria, separada de la persistente, que se copia con `opener`* |
-| **el recorrido de la cola** | ⚠️ ***8 de 9***: *lee la clave vieja (`cuedigital.pendientes`), y la cola ahora guarda **una clave por intención**. **Hay que adaptar sus dos lecturas** —como ya se hizo en `tests_js/interfaz.test.js` con el ayudante `losPendientes`—; el resto del recorrido pasa* |
+| **el recorrido de la cola** | ✅ ***9 de 9*** — *sus dos lecturas miraban la clave vieja y ya miran **la cola entera*** (`LA_COLA_ENTERA_JS`); era el instrumento, no la app* |
 | **las pruebas de aceptación** | **sin hacer** — *dos pestañas reales, `opener`, recarga, cierre, caducidad con un POST pendiente, almacenamiento lleno, retorno del dueño* |
 
 ***Y lo que no se promete***: *sin IndexedDB, la aplicación **usa el turno de siempre y no dice** que vacía una sola
