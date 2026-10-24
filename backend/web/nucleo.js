@@ -1337,6 +1337,19 @@ export function crearBuzonDeRechazos(almacen, prefijo = "cuedigital.rechazado.")
   };
 }
 
+/**
+ * ***Un solo vaciado a la vez, también dentro de la misma pestaña*** (24/10/2026, E3 — **R3** de la revisión).
+ *
+ * *La identidad de ejecución distingue **ventanas**, pero **las llamadas de una misma ventana comparten dueño y
+ * procesador**, y el turno **admite la renovación del mismo procesador**: dos `mandarPendientes` a la vez —el arranque y
+ * un `online`— **vaciaban los dos**, con el mismo apunte dos veces en vuelo.*
+ *
+ * ***Y la exclusión vive aquí, no en `app.js`***: *el arnés de la revisión **extrae el texto de `mandarPendientes`** e
+ * inyecta sus dependencias; **un nombre nuevo de módulo en su cuerpo lo deja fuera de alcance**. La coordinación del
+ * vaciado **pertenece a la cola**.*
+ */
+let hayUnVaciadoEnMarcha = false;
+
 export async function vaciarLaCola({
   suyos,
   cola,
@@ -1350,6 +1363,10 @@ export async function vaciarLaCola({
   sesionDelOrigen,
   motivoDelRechazo,
 }) {
+  // ***La guarda*** (R3): *si ya hay un vaciado en marcha **en esta pestaña**, este vuelve sin hacer nada.*
+  if (hayUnVaciadoEnMarcha) return { mandados: 0, apartados: 0, paradoPor: "ya-en-marcha" };
+  hayUnVaciadoEnMarcha = true;
+  try {
   const rechazados = leer(claveRechazados, []);
   let mandados = 0;
   let apartados = 0;
@@ -1419,4 +1436,8 @@ export async function vaciarLaCola({
   }
 
   return { mandados, apartados, paradoPor };
+  } finally {
+    // *Al terminar -bien o mal- **se suelta**: no bloquea el siguiente vaciado legítimo.*
+    hayUnVaciadoEnMarcha = false;
+  }
 }

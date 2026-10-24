@@ -34,7 +34,6 @@ import {
   esDelMismoContexto,
   vaciarLaCola,
   crearColaPorIntenciones,
-  crearBuzonDeRechazos,
   identidadDeEjecucion,
   identidadPersistente,
   duenoDelTurno,
@@ -446,9 +445,6 @@ function laClaveDe(claveBase) {
  * ahora también las da*—, *que es lo que hace falta para listarlas.*
  */
 const cola = crearColaPorIntenciones(ALMACEN);
-
-// ***Y los rechazos, cada uno en su clave*** (24/10/2026, R1): *el array compartido perdía uno de dos simultáneos.*
-const buzonDeRechazos = crearBuzonDeRechazos(ALMACEN);
 
 // ***Y lo que había en la cola vieja se trae al arrancar*** (23/10/2026): *sin perder `id_local`, dueño, datos ni
 // `clave_de_reenvio`; **el origen no se borra hasta comprobar que están todos**, y **un JSON corrupto se conserva** en vez
@@ -956,19 +952,10 @@ async function mandarCambio(ruta, metodo, datos) {
  * ***La exclusión es dentro de la pestaña***: *si ya hay un vaciado en marcha, **se devuelve el suyo** en vez de empezar
  * otro. **No bloquea el siguiente vaciado legítimo**: al terminar, la guarda se suelta.*
  */
-let elVaciadoEnVuelo = null;
-
 async function mandarPendientes() {
-  if (elVaciadoEnVuelo) return elVaciadoEnVuelo;
-  elVaciadoEnVuelo = elVaciadoDeVerdad();
-  try {
-    return await elVaciadoEnVuelo;
-  } finally {
-    elVaciadoEnVuelo = null;
-  }
-}
-
-async function elVaciadoDeVerdad() {
+  // ***La exclusión de la reentrada NO vive aquí*** (24/10/2026, R3): *vive en `vaciarLaCola` -`nucleo.js`-, porque **el
+  // arnés de la revisión extrae el texto de esta función e inyecta sus dependencias**: un nombre nuevo de módulo en el
+  // cuerpo lo deja fuera de alcance y le rompe la extracción. **La coordinación del vaciado pertenece a la cola.***
   const decision = decideQueHacer(cola, navigator.onLine);
   if (decision.accion !== "mandar") {
     pintarAvisoPendientes();
@@ -1041,7 +1028,6 @@ async function elVaciadoDeVerdad() {
       suyos,
       cola,
       claveRechazados: laClaveRechazados,
-      buzon: buzonDeRechazos,
       api: (apunte) =>
         api(apunte.ruta, {
           method: "POST",
