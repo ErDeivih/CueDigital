@@ -581,6 +581,61 @@ export function esDelMismoContexto(duenoDelOrigen, sesionDeAhora) {
 }
 
 /**
+ * ***La identidad de EJECUCIÓN, que no se copia al abrir una ventana*** (23/10/2026, D01).
+ *
+ * ***El defecto***: *`sessionStorage` **se copia al abrir una ventana con `opener`**. Comprobado en Chromium: **el padre y
+ * la hija tienen el mismo `cuedigital.procesador`**, así que las dos piden el turno **como si fueran la misma** y las dos
+ * lo reciben.*
+ *
+ * ***La regla***: **dos identidades, y separadas** —
+ *
+ *   · **de ejecución**: *la de **esta** carga de la aplicación. Vive **en memoria** y se genera al arrancar: **ninguna
+ *     copia de almacenamiento la puede traer de otra ventana**;*
+ *   · **persistente**: *la del dispositivo o la pestaña, para que **una recarga** se reconozca. **No sirve para
+ *     distinguir dos ventanas** —y por eso no puede ser la única—.*
+ *
+ * *El turno se pide con **las dos**: la persistente dice «es la misma pestaña que antes»; la de ejecución, «es **esta**
+ * ventana, y no la copia que abrí con `opener`».*
+ */
+let laDeEstaEjecucion = null;
+
+/** *El id de **esta** carga. Único aunque otra ventana haya copiado el almacenamiento.* */
+export function identidadDeEjecucion() {
+  if (!laDeEstaEjecucion) laDeEstaEjecucion = unIdDeComando();
+  return laDeEstaEjecucion;
+}
+
+/**
+ * ***La identidad persistente***, para reconocer una **recarga** de la misma pestaña.
+ *
+ * *Sale del almacén que se le pase -`sessionStorage` en el navegador-, y **si no lo hay se genera y no se comparte**. Se
+ * guarda **aparte** de la de ejecución a propósito: **si fueran la misma, la copia de `opener` la copiaría también**.*
+ */
+export function identidadPersistente(almacen, clave = "cuedigital.procesador") {
+  try {
+    const laGuardada = almacen && almacen.getItem ? almacen.getItem(clave) : null;
+    if (laGuardada) return String(laGuardada);
+    const laNueva = unIdDeComando();
+    if (almacen && almacen.setItem) almacen.setItem(clave, laNueva);
+    return laNueva;
+  } catch (error) {
+    return unIdDeComando();
+  }
+}
+
+/**
+ * ***El dueño del turno***: *la cuenta, la instalación, **la pestaña persistente** y **la ejecución**.*
+ *
+ * *Los dos últimos son los que separan dos ventanas que compartan la misma cuenta, la misma instalación **y el mismo
+ * `sessionStorage`** —que es exactamente lo que pasa al abrir una con `opener`.*
+ */
+export function duenoDelTurno({ cuenta, instalacion, persistente, ejecucion }) {
+  return `${cuenta || "sin-sesion"}:${instalacion || "sin-instalacion"}:${persistente || "sin-pestana"}:${
+    ejecucion || "sin-ejecucion"
+  }`;
+}
+
+/**
  * ***El turno para vaciar la cola: una pestaña a la vez*** (21/10/2026).
  *
  * *El encargo: «evitar dos procesadores concurrentes de la cola en eventos `online`, arranque y varias pestañas.
