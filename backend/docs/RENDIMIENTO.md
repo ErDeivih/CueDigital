@@ -1,5 +1,34 @@
 # Rendimiento: lo medido
 
+## ***0 bis · Segundo intento, con el inventario hecho — y también se revirtió*** (23/10/2026)
+
+***El inventario*** (lo que pedía la revisión: «inventaría TODAS las escrituras manuales»): *en `app.js` hay **19
+escrituras manuales del DOM**, y **solo una toca un contenedor que React monta**:*
+
+    app.js:2655  vaciarElMarco()  ->  contenedor.replaceChildren()   sobre #marco
+
+*Las demás son sobre elementos que no son de React (`#aviso-pendientes`, `#aviso-cargas-*`, `#cabecera-texto`, un `pie`)
+y **cinco `document.body.appendChild(enlace)`** que son descargas.*
+
+***Con eso, el arreglo era acotado***: *registro de raíces por contenedor, **`desmontarDe(contenedor)` en `vaciarElMarco`
+antes del `replaceChildren()`** —el traspaso de propiedad, que es lo que faltaba en el primer intento—, reutilizar solo
+una raíz que no se haya vaciado, y **acotar `montajes` y `montajesDelMarco` a 200** (la revisión midió montajes 2→102 y
+marco 2→101).*
+
+***Y se aplicó, y se midió… y rompió dos cosas a la vez***:
+
+    el recorrido de reservas          ***sigue sin abrir el formulario*** (y además «no close frame received or sent»)
+    cinco pruebas de JS de montaje    ***fallan*** («mis cosas se le pide a React», «el dictado», «la ayuda»…)
+
+***Se revirtió, y las dos suites volvieron a verde.***
+
+***Lo que esto enseña, y es lo que hay que hacer con ello***: *el inventario **sí sirve** —dice dónde está la frontera—,
+pero **cambiar `montarEn` toca más de lo que parece**: las pruebas de montaje miran *qué* se le pide a React, y el
+recorrido de reservas depende de **cómo** se monta. **El siguiente intento tiene que empezar por esas cinco pruebas de
+montaje**, no por el registro de raíces.*
+
+---
+
 ## ***0 · El ciclo de vida de las raíces: se intentó y se revirtió*** (22/10/2026)
 
 ***`montarEn` llama a `ReactDOM.createRoot(contenedor)` en cada montaje y nunca desmonta.*** *React avisa de eso
