@@ -953,6 +953,15 @@ async function mandarCambio(ruta, metodo, datos) {
  * otro. **No bloquea el siguiente vaciado legítimo**: al terminar, la guarda se suelta.*
  */
 async function mandarPendientes() {
+  // ***Quien NO arranca el vaciado no puede soltar el turno de otro*** (25/10/2026, P1 de la revisión).
+  //
+  // *Si ya había un vaciado en marcha en esta ventana, `vaciarLaCola` sale con `ya-en-marcha` **sin tocar nada**; y el
+  // `finally` soltaba el turno **mientras el primer POST sigue pendiente**, con lo que **otra pestaña lo adquiere** y
+  // vuelve a mandar. **La propiedad del turno es de la operación que lo adquirió**, no de la llamada que pasa por aquí.*
+  //
+  // *Va **en la primera línea** a propósito: así está dentro de cualquier extracción de esta función —la del arnés de la
+  // revisión incluida—, que es lo que falló cuando la puse junto a la llamada.*
+  let elTurnoSeSuelta = true;
   // ***La exclusión de la reentrada NO vive aquí*** (24/10/2026, R3): *vive en `vaciarLaCola` -`nucleo.js`-, porque **el
   // arnés de la revisión extrae el texto de esta función e inyecta sus dependencias**: un nombre nuevo de módulo en el
   // cuerpo lo deja fuera de alcance y le rompe la extracción. **La coordinación del vaciado pertenece a la cola.***
@@ -1041,6 +1050,7 @@ async function mandarPendientes() {
       sesionDelOrigen: laDelPrincipio,
       motivoDelRechazo: (cuerpo) => avisoDelServidor(cuerpo) || mensaje("no_se_pudo"),
     });
+    if (elResumen && elResumen.paradoPor === "ya-en-marcha") elTurnoSeSuelta = false;
     if (elResumen.mandados > 0) {
       // Si lo que se ha mandado era dar de alta una parcela o un producto, las listas
       // de memoria se han quedado viejas. Se recargan sin molestar a nadie.
@@ -1051,7 +1061,7 @@ async function mandarPendientes() {
     // la cola quedaría parada hasta que caducara el turno, y eso el agricultor lo ve como «no se manda nada».*
     // ***Y se suelta por la misma puerta***: *si se pidió en una transacción, se suelta en otra.*
     try {
-      if (hayIndexedDb()) {
+      if (elTurnoSeSuelta && hayIndexedDb()) {
         const laBase = baseDelTurno(await abrirLaBase());
         await soltarElTurnoTransaccional(laBase, {
           clave: "cuedigital.cola.turno",
@@ -1059,10 +1069,10 @@ async function mandarPendientes() {
           procesador: elDuenoDelTurno,
         });
       } else {
-        soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+        if (elTurnoSeSuelta) soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
       }
     } catch (error) {
-      soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
+      if (elTurnoSeSuelta) soltarElTurno(ALMACEN, { dueno: elDuenoDelTurno, procesador: elProcesador() });
     }
     pintarAvisoPendientes();
   }
