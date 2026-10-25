@@ -411,6 +411,11 @@ export function crearColaPorIntenciones(almacen, opciones = {}) {
      * ***Lo que hay, recorriendo las claves.*** *Un valor corrupto **no se tira y no se reescribe**: se deja donde está
      * -para poder recuperarlo- y se aparta del listado, **diciéndolo** con `corruptos`.*
      */
+    // ***Y los rechazos, cada uno en su clave*** (25/10/2026, **R1**). *Va **aquí dentro** y no como nombre suelto en
+    // `app.js`: el vaciado los usa como `cola.rechazos`, y `cola` ya está en su alcance —*el arnés de la revisión lo
+    // inyecta—*, así que **el camino que usa el agricultor** deja de escribir el array compartido.*
+    rechazos: crearBuzonDeRechazos(almacen),
+
     leer() {
       // ***Y si queda cola vieja, se trae al leer*** (23/10/2026): *migrar solo al arrancar dejaba fuera lo que apareciera
       // después -otra pestaña con la versión anterior, o un arranque que no llegó a migrar-. **Es idempotente**: si ya está
