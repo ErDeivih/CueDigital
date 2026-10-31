@@ -1189,6 +1189,11 @@ const RESPUESTAS = {
     // ***La frase del boton de reintentar*** (22/10/2026): *`app.js` la pide con `mensaje("reintentar_la_carga")`;
     // sin ella en el vocabulario falso, el boton sale **en blanco** y la prueba -con razon- lo dice.*
     reintentar_la_carga: "Reintentar",
+      // ***Un 403 no es un fallo de red y un dato viejo no es un cero*** (22/10/2026, D03). Copiados de
+      // `textos.MENSAJES`: sin ellos, la pantalla de prueba enseñaría el aviso a medias.
+      no_se_pudieron_cargar: "**No se han podido cargar**:",
+      sin_permiso_para_ver: "**No tienes permiso para ver**:",
+      se_ve_lo_ultimo: "**Se está viendo lo último que se cargó**.",
       V8_dias_de_espera: "Podrás cogerla a partir del {fin}.",
       sin_cobertura: "No hay cobertura.",
       no_se_pudo: "No se ha podido mandar.",
@@ -2394,7 +2399,11 @@ function montarServidor(cambios = {}) {
       blob: async () => ({ size: 0 }),
     };
   };
-  return { fetchFalso, llamadas, llamadasConMetodo, enviados };
+  // ***Y las respuestas, para poder CAMBIARLAS entre una carga y la siguiente*** (22/10/2026, D03): *hasta
+  // aqui el servidor de mentira se montaba una vez con sus respuestas y no habia forma de que una seccion
+  // que iba bien empezara a fallar -ni al reves-, que es justo lo que hay que probar del reintento. Se
+  // devuelve la copia que lee `fetchFalso`: cambiarla aqui cambia lo que se contesta.*
+  return { fetchFalso, llamadas, llamadasConMetodo, enviados, respuestas };
 }
 
 /**
@@ -15129,6 +15138,183 @@ test("lo que no se pudo cargar se DICE en pantalla, con su reintento", async () 
     elOtro.className || "",
     /oculto/,
     `***sin fallos no se ensena nada***: ${elOtro.className} · fallaron: ${JSON.stringify(elQueVaBien.app.loQueNoSePudoCargar())}`,
+  );
+});
+
+test("sin permiso se DICE, y no se ofrece reintentar lo que no depende de la red", async () => {
+  // ***«Un 403 no se reintenta como alta sin cobertura»*** (encargo, D03). *El reintento existe porque una
+  // peticion puede volver a funcionar; un permiso que falta no vuelve por insistir, y poner el boton seria
+  // ofrecer una salida que no existe.*
+  //
+  // *Y no es un fallo de red: si se tratara como tal, el agricultor leeria «no se pudo cargar» y creeria que
+  // sus datos se han perdido, cuando lo que pasa es que esa cuenta no puede verlos.*
+  const sinPermiso = await cargarAplicacion({
+    "/api/facturas": falla({ detail: "No puedes ver esto." }, 403),
+  });
+  const comoFue = sinPermiso.app.comoFueLaCarga();
+  assert.equal(
+    comoFue.facturas,
+    "restringido",
+    `***un 403 es «no tienes permiso», no «no se pudo cargar»***: ${JSON.stringify(comoFue)}`,
+  );
+  const elTextoDelAviso = sinPermiso.entorno.nodos.get("aviso-cargas-texto");
+  const elBotonDeReintentar = sinPermiso.entorno.nodos.get("aviso-cargas-boton");
+  const loQueDice = String(elTextoDelAviso ? elTextoDelAviso.textContent : "");
+  assert.match(loQueDice, /permiso/i, `***tiene que decir que falta permiso***: ${loQueDice}`);
+  assert.equal(
+    elBotonDeReintentar ? elBotonDeReintentar.hidden : undefined,
+    true,
+    `***reintentar un 403 es pedir lo mismo para que lo vuelvan a negar***: ${loQueDice}`,
+  );
+});
+
+test("el reintento pide SOLO lo que fallo, y cuando vuelve el servidor la deja bien", async () => {
+  // ***«Conservar borrador, filtros, finca y campana al reintentar»*** (encargo, D03). *Aparte de no perder
+  // nada, el reintento no puede volver a pedir las treinta y tantas secciones: si el servidor esta a medias,
+  // volver a pedirlo todo podia tirar una seccion que ya estaba bien cargada.*
+  const caso = await cargarAplicacion({
+    "/api/facturas": falla({ detail: "El servidor se ha caido." }, 500),
+  });
+  const cuantasVeces = (ruta) => caso.servidor.llamadas.filter((pedida) => pedida === ruta).length;
+  const facturasAntes = cuantasVeces("/api/facturas");
+  const parcelasAntes = cuantasVeces("/api/parcelas");
+  assert.equal(
+    caso.app.comoFueLaCarga().parcelas,
+    "bien",
+    "la carga de tierras no habia fallado: la prueba necesita una seccion buena al lado de una rota",
+  );
+  // *Y lo roto no es un cero: quedo apuntado como fallo (o como dato viejo si ya habia uno de esta cuenta).*
+  assert.ok(
+    caso.app.loQueNoSePudoCargar().facturas,
+    `***un fallo de facturas tiene que quedar apuntado***: ${JSON.stringify(caso.app.loQueNoSePudoCargar())}`,
+  );
+
+  await pulsar(caso.entorno, "reintentar-lo-que-fallo");
+
+  assert.ok(
+    cuantasVeces("/api/facturas") > facturasAntes,
+    `***reintentar tiene que volver a pedir lo que fallo***: ${facturasAntes} -> ${cuantasVeces("/api/facturas")}`,
+  );
+  assert.equal(
+    cuantasVeces("/api/parcelas"),
+    parcelasAntes,
+    "***reintentar una seccion no puede volver a pedirlas todas***",
+  );
+  assert.equal(
+    caso.app.comoFueLaCarga().parcelas,
+    "bien",
+    "***y la marca de las que iban bien no se toca***",
+  );
+
+  // ***Y cuando el servidor vuelve, se recupera de verdad***: *sin esto, «reintentar» podria pedir la seccion
+  // y no enterarse de que ya va bien.*
+  caso.servidor.respuestas["/api/facturas"] = [unaFactura()];
+  await pulsar(caso.entorno, "reintentar-lo-que-fallo");
+  assert.equal(
+    caso.app.comoFueLaCarga().facturas,
+    "bien",
+    `***con el servidor bien, facturas tiene que quedar bien***: ${JSON.stringify(caso.app.comoFueLaCarga())}`,
+  );
+  assert.equal(
+    caso.app.loQueNoSePudoCargar().facturas,
+    undefined,
+    "***y su fallo tiene que borrarse***",
+  );
+  assert.match(
+    caso.entorno.nodos.get("aviso-cargas").className || "",
+    /oculto/,
+    "***sin nada pendiente, el aviso desaparece***",
+  );
+});
+
+test("si falla algo que ya se habia cargado, se ve lo ultimo y se dice que es de antes", async () => {
+  // *El quinto estado, que es el que mas se parece a los otros dos y no es ninguno: **ni fallo** (habia datos),
+  // **ni vacio** (no esta vacio). Si no se dijera, el agricultor veria sus facturas de ayer sin saber por que
+  // no sale la de hoy.*
+  const caso = await cargarAplicacion({ "/api/facturas": [unaFactura()] });
+  assert.equal(
+    caso.app.comoFueLaCarga().facturas,
+    "bien",
+    "la primera carga tiene que ir bien para que haya un «ultimo»",
+  );
+
+  caso.servidor.respuestas["/api/facturas"] = falla({ detail: "El servidor se ha caido." }, 500);
+  await pulsar(caso.entorno, "reintentar-direccion");
+
+  assert.equal(
+    caso.app.comoFueLaCarga().facturas,
+    "antiguo",
+    `***con un dato bueno de antes, un fallo no es un fallo: es «esto es de antes»***: ${JSON.stringify(caso.app.comoFueLaCarga())}`,
+  );
+  const loQueDice = String(caso.entorno.nodos.get("aviso-cargas-texto").textContent || "");
+  assert.match(loQueDice, /facturas/, `***tiene que decir QUE se esta viendo de antes***: ${loQueDice}`);
+  assert.match(loQueDice, /[uú]ltimo/i, `***y que es lo ultimo que se cargo***: ${loQueDice}`);
+});
+
+test("una lista vacia de verdad no es un fallo", async () => {
+  // *El control negativo de todo lo anterior: si una finca no tiene facturas **de verdad**, el servidor
+  // contesta una lista vacia y eso es una carga buena. Confundir «vacio» con «fallo» llenaria la pantalla de
+  // avisos rojos en una finca nueva.*
+  const laFincaNueva = await cargarAplicacion({});
+  assert.equal(
+    laFincaNueva.app.comoFueLaCarga().facturas,
+    "bien",
+    `***una lista vacia es una respuesta buena***: ${JSON.stringify(laFincaNueva.app.comoFueLaCarga())}`,
+  );
+  assert.equal(
+    laFincaNueva.app.loQueNoSePudoCargar().facturas,
+    undefined,
+    "***y no puede apuntarse como fallo***",
+  );
+  assert.match(
+    laFincaNueva.entorno.nodos.get("aviso-cargas").className || "",
+    /oculto/,
+    "***ni ensenar ningun aviso***",
+  );
+});
+
+test("reintentar no tira el apunte a medias del asistente", async () => {
+  // ***«Conservar borrador [...] al reintentar»*** (encargo, D03), *comprobado donde de verdad se pierde: el
+  // asistente guarda lo contestado en `estado.asistente`, y si el reintento volviera a montar la pantalla, el
+  // agricultor se encontraria otra vez al principio con la mitad de los datos escritos.*
+  //
+  // *Aqui se demuestra de dos formas: la pantalla montada no cambia con el reintento, y despues se puede
+  // seguir contestando el mismo apunte (si el borrador se hubiera tirado, no habria paso siguiente).*
+  const caso = await cargarAplicacion({
+    "/api/productos": UN_PRODUCTO,
+    "/api/facturas": falla({ detail: "El servidor se ha caido." }, 500),
+  });
+  await pulsar(caso.entorno, "inicio", { ir: "echar_producto" });
+  await pulsar(caso.entorno, "elegir", { campo: "parcela_id", valor: "1", superficie: "2.43" });
+
+  const elPaso = montajes[montajes.length - 1].elemento;
+  assert.equal(elPaso.type.name, "PantallaAsistente", "no se ha abierto el asistente");
+  const elTituloDelPaso = elPaso.props.titulo;
+  const losMontajesDeAntes = montajes.length;
+
+  await pulsar(caso.entorno, "reintentar-lo-que-fallo");
+
+  assert.equal(
+    montajes.length,
+    losMontajesDeAntes,
+    "***reintentar no puede volver a montar la pantalla: se llevaria por delante el apunte***",
+  );
+  assert.equal(
+    montajes[montajes.length - 1].elemento.props.titulo,
+    elTituloDelPaso,
+    `***y el paso tiene que ser el mismo***: ${elTituloDelPaso} -> ${montajes[montajes.length - 1].elemento.props.titulo}`,
+  );
+  assert.ok(
+    !caso.servidor.enviados.some((enviado) => enviado.metodo !== "GET"),
+    `***reintentar no guarda nada***: ${JSON.stringify(caso.servidor.enviados.filter((e) => e.metodo !== "GET"))}`,
+  );
+
+  // *Y el apunte sigue vivo: se puede contestar el paso siguiente sin volver a empezar.*
+  await pulsar(caso.entorno, "asistente-seguir");
+  assert.notEqual(
+    montajes[montajes.length - 1].elemento.props.titulo,
+    elTituloDelPaso,
+    "***el apunte se ha quedado clavado: el borrador no ha sobrevivido al reintento***",
   );
 });
 

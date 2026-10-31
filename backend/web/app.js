@@ -748,7 +748,11 @@ async function api(ruta, opciones = {}) {
     // la sesion nueva**, que no ha fallado. El encargo lo pide con estas palabras: «un 401 antiguo tampoco debe
     // cerrar una cuenta nueva que entro mientras la peticion estaba en vuelo».*
     if (hayQueCerrarLaSesion(elToken, estado.token)) salir(false);
-    throw new Error("sin permiso");
+    // ***Con su estado, para poder decir qué pasó sin adivinar*** (D03): *un 401 no es un fallo de red; la
+    // pantalla tiene que poder distinguirlo para no ofrecer «reintentar» como si fuera un corte de cobertura.*
+    const sinPermiso = new Error("sin permiso");
+    sinPermiso.status = 401;
+    throw sinPermiso;
   }
   return respuesta;
 }
@@ -780,7 +784,11 @@ async function apiJson(ruta, opciones = {}) {
       cuerpo = null;
     }
     const texto = avisoDelServidor(cuerpo) || mensaje("no_se_pudo");
-    throw new Error(texto || "No se ha podido.");
+    // ***El estado viaja con el fallo*** (D03): *sin él, la pantalla no puede separar «no hay red» de «esta
+    // cuenta no puede ver esto», y acabaría ofreciendo reintentar algo que no se va a arreglar reintentando.*
+    const noSePudo = new Error(texto || "No se ha podido.");
+    noSePudo.status = respuesta.status;
+    throw noSePudo;
   }
   return respuesta.status === 204 ? null : respuesta.json();
 }
@@ -1151,20 +1159,45 @@ function pintarAvisoPendientes() {
  */
 function pintarLoQueFallo() {
   if (!avisoCargas) return;
-  const lasQueFallaron = Object.keys(estado.cargas).filter(
-    (clave) => estado.cargas[clave] === "fallo",
-  );
-  if (lasQueFallaron.length === 0) {
+  const lasQueFallaron = [];
+  const lasViejas = [];
+  const lasQueNoPuedeVer = [];
+  for (const [clave, comoVa] of Object.entries(estado.cargas)) {
+    const nombre = clave.replace(/_/g, " ");
+    if (comoVa === "fallo") lasQueFallaron.push(nombre);
+    else if (comoVa === "antiguo") lasViejas.push(nombre);
+    else if (comoVa === "restringido") lasQueNoPuedeVer.push(nombre);
+  }
+  // *Un dato viejo o un fallo se pueden reintentar. **Un permiso que falta, no**: reintentarlo sería ofrecer
+  // una salida que no existe, y encima con el botón puesto.*
+  const hayQueReintentar = lasQueFallaron.length > 0 || lasViejas.length > 0;
+  if (!hayQueReintentar && lasQueNoPuedeVer.length === 0) {
     avisoCargas.className = "aviso oculto";
     if (avisoCargasTexto) avisoCargasTexto.textContent = "";
+    if (avisoCargasBoton) avisoCargasBoton.hidden = true;
     return;
   }
   avisoCargas.className = "aviso aviso-error";
-  const losNombres = lasQueFallaron.map((clave) => clave.replace(/_/g, " ")).join(", ");
   // ***El texto, a sus dos trozos***: *el marcado es fijo -`index.html`-, y aqui solo se escribe lo que dice y lo
   // que pone el boton. `textContent` escapa solo: no hay que escapar nada.*
-  if (avisoCargasTexto) avisoCargasTexto.textContent = `${mensaje("no_se_pudieron_cargar")} ${losNombres}`;
-  if (avisoCargasBoton) avisoCargasBoton.textContent = mensaje("reintentar_la_carga");
+  const trozos = [];
+  if (lasQueFallaron.length) {
+    trozos.push(`${mensaje("no_se_pudieron_cargar")} ${lasQueFallaron.join(", ")}`);
+  }
+  if (lasViejas.length) {
+    // *Se dice que es de antes: si no, el agricultor no sabe por qué lo que ve no coincide con lo que acaba de apuntar.*
+    trozos.push(
+      `${mensaje("no_se_pudieron_cargar")} ${lasViejas.join(", ")} ${mensaje("se_ve_lo_ultimo")}`,
+    );
+  }
+  if (lasQueNoPuedeVer.length) {
+    trozos.push(`${mensaje("sin_permiso_para_ver")} ${lasQueNoPuedeVer.join(", ")}`);
+  }
+  if (avisoCargasTexto) avisoCargasTexto.textContent = trozos.join(" ");
+  if (avisoCargasBoton) {
+    avisoCargasBoton.hidden = !hayQueReintentar;
+    avisoCargasBoton.textContent = hayQueReintentar ? mensaje("reintentar_la_carga") : "";
+  }
 }
 
 /**
@@ -1173,9 +1206,21 @@ function pintarLoQueFallo() {
  * *El encargo: «conservar borrador, filtros, finca y campaña al reintentar». **No hay que tocar nada**: el borrador,
  * los filtros y el año viven en `estado` y esto solo repite la carga. **Lo único que se pierde al reintentar es el
  * fallo**.*
+ *
+ * *Y solo se vuelve a pedir **lo que falló** (22/10/2026): pedirlo todo otra vez podía tirar una sección que sí
+ * había cargado si el servidor fallaba justo en ese momento. Las que no se piden conservan su valor y su marca.*
  */
 async function reintentarLoQueFallo() {
-  await cargarDatos().catch(() => {});
+  const solo = new Set(
+    Object.keys(estado.cargas).filter(
+      (clave) => estado.cargas[clave] === "fallo" || estado.cargas[clave] === "antiguo",
+    ),
+  );
+  if (solo.size === 0) {
+    pintarLoQueFallo();
+    return;
+  }
+  await cargarDatos({ solo }).catch(() => {});
   pintarLoQueFallo();
 }
 
@@ -6033,16 +6078,46 @@ function olvidarLaVistaDeLasTierras() {
  * pantalla no reviente**. *Quien pinte **tiene que mirar `estado.cargas`**; si no, sigue enseñando un cero que no
  * es verdad.*
  */
+const ULTIMOS_VALORES = new Map();
+
+/** El conjunto de secciones que se están pidiendo ahora, o `null` si se piden todas. *Lo usa `unaSeccion`
+ * para que un reintento de una parte no vacíe las demás.* */
+let SECCIONES_A_PEDIR = null;
+
 function unaSeccion(clave, ruta, porDefecto) {
+  // ***Lo último que se cargó bien*** (D03, 22/10/2026): *si la petición falla, la pantalla no puede
+  // enseñar un cero que no es verdad. Se guarda el valor bueno y se dice que es de antes; y se guarda con
+  // el vale de la cuenta que lo trajo, para que un cambio de cuenta no enseñe lo de la anterior.*
+  const guardado = ULTIMOS_VALORES.get(clave);
+  const deEstaCuenta = guardado && guardado.token === estado.token ? guardado.valor : undefined;
+  const loTengo = guardado && guardado.token === estado.token;
+  // *Al reintentar solo una parte, las demás secciones no se piden: se queda lo que ya había.*
+  if (SECCIONES_A_PEDIR && !SECCIONES_A_PEDIR.has(clave)) {
+    return Promise.resolve(loTengo ? deEstaCuenta : porDefecto);
+  }
+  estado.cargas[clave] = "cargando";
   return apiJson(ruta)
     .then((lo) => {
       estado.cargas[clave] = "bien";
       delete estado.porQueFallo[clave];
+      ULTIMOS_VALORES.set(clave, { token: estado.token, valor: lo });
       return lo;
     })
     .catch((fallo) => {
-      estado.cargas[clave] = "fallo";
       estado.porQueFallo[clave] = (fallo && fallo.message) || "";
+      const suEstado = Number(fallo && fallo.status);
+      if (suEstado === 401 || suEstado === 403) {
+        // *Ni reintento ni dato viejo: lo que falta es permiso. Enseñar lo anterior aquí sería enseñar la
+        // finca de otra cuenta con el nombre de esta.*
+        estado.cargas[clave] = "restringido";
+        return porDefecto;
+      }
+      if (loTengo) {
+        // *El dato es de antes, y se dice. Es distinto de «esto está vacío».*
+        estado.cargas[clave] = "antiguo";
+        return deEstaCuenta;
+      }
+      estado.cargas[clave] = "fallo";
       return porDefecto;
     });
 }
@@ -6053,11 +6128,27 @@ export function loQueNoSePudoCargar() {
   return { ...estado.porQueFallo };
 }
 
-async function cargarDatos() {
+/** ***Cómo fue cada carga***, por sección: `cargando`, `bien`, `antiguo`, `restringido` o `fallo` (D03). *Es lo
+ * que permite comprobar desde fuera que un dato viejo se distingue de un fallo y de un cero.* */
+export function comoFueLaCarga() {
+  return { ...estado.cargas };
+}
+
+async function cargarDatos(opciones = {}) {
   // *Al terminar, se dice lo que fallo. **Y al empezar se limpian las marcas** para que un fallo viejo no se quede
-  // pegado a una carga que ahora va bien.*
-  estado.cargas = {};
-  estado.porQueFallo = {};
+  // pegado a una carga que ahora va bien. Si solo se reintenta una parte, se conservan las demás marcas y sus
+  // valores: las secciones que no se piden no se tocan.*
+  const solo = opciones && opciones.solo instanceof Set ? opciones.solo : null;
+  if (solo) {
+    for (const clave of solo) {
+      estado.cargas[clave] = "cargando";
+      delete estado.porQueFallo[clave];
+    }
+  } else {
+    estado.cargas = {};
+    estado.porQueFallo = {};
+  }
+  SECCIONES_A_PEDIR = solo;
   const [
     campana,
     campanas,
@@ -6148,6 +6239,8 @@ async function cargarDatos() {
     // entera: solo lo que hay que mirar.
     unaSeccion("maquinaria_avisos", "/api/maquinaria/avisos", []),
   ]);
+  // *Ya no se está reintentando una parte: la próxima carga vuelve a pedirlas todas.*
+  SECCIONES_A_PEDIR = null;
   // **Antes de quedarse con las tierras de ahora, se olvida la vista de antes**: es lo que hace que
   // apuntar, corregir o borrar una tierra desde cualquier pantalla no deje al mapa contando las de
   // ayer (ver `olvidarLaVistaDeLasTierras`).

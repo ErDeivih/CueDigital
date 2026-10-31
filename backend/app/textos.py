@@ -376,6 +376,11 @@ MENSAJES: dict[str, str] = {
     # cargar, y ofrece reintentar. Antes, un fallo de facturas se veia como «0 facturas».*
     "no_se_pudieron_cargar": "**No se han podido cargar**:",
     "reintentar_la_carga": "Reintentar",
+    # ***Y no es lo mismo un fallo que un permiso que falta, ni que un dato de antes*** (22/10/2026, D03):
+    # *reintentar un 401/403 no arregla nada, y enseñar lo de la cuenta anterior con el nombre de esta es peor
+    # que no enseñarlo. Un dato viejo se dice que es viejo, para que no parezca que lo apuntado no se guardó.*
+    "sin_permiso_para_ver": "**No tienes permiso para ver**:",
+    "se_ve_lo_ultimo": "**Se está viendo lo último que se cargó**.",
     "apuntes_de_otra_cuenta": (
         "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "
         "apuntaste y se mandaran solas. **No se ha perdido ninguna.**"
