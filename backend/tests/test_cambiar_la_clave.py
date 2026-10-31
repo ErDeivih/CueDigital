@@ -60,6 +60,17 @@ def _clave_guardada(motor, correo: str) -> str:
         return usuario.clave_hash
 
 
+class TestLaBaseQueSeMiraEsLaMisma:
+    def test_el_guion_y_el_programa_hablan_de_la_misma_base_de_datos(self):
+        """El guion lee la dirección al ejecutarse y el programa la leyó al importarse.
+
+        Si las dos no coinciden, el guion busca un fichero que no existe mientras el programa
+        escribe en otro, y se queda sin poder cambiar la clave justo cuando hace falta. Pasó
+        (D06): `conftest.py` se importaba dos veces y elegía dos carpetas temporales distintas.
+        """
+        assert database.url_base_datos() == str(database.engine.url)
+
+
 def _ejecuta(monkeypatch, *argumentos: str, tecleado: list[str] | None = None) -> int:
     monkeypatch.setattr("sys.argv", ["cambiar_la_clave.py", *argumentos])
     if tecleado is not None:

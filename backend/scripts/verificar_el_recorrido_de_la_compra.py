@@ -199,6 +199,11 @@ def main() -> int:
         # ---- 6 · y lo que se ve: la compra, por su ID ----
         # *`#/compras/:id` esta en la tabla de patrones, y se miro antes de escribir la direccion.*
         with NavegadorDeVerdad(ancho=1440, alto=900) as nav:
+            # ***Con cobertura*** (30/10/2026): *la ficha de la compra se abre por direccion, y con
+            # `navigator.onLine === false` -lo que declara el Chrome del banco, que no tiene internet- la
+            # aplicacion hace lo correcto: dice «no lo he podido comprobar» en vez de «no existe». El recorrido
+            # pide el camino CON cobertura explicitamente, que es el que tiene que probar.*
+            nav.fingir_cobertura(True)
             _poner_la_sesion(nav, direccion, el_vale)
             la_compra_abierta = abrir(nav, direccion, f"#/compras/{la_compra_id}")
             fallos += not comprobar(

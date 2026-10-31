@@ -113,6 +113,10 @@ class Usuario(Base):
     nombre: Mapped[str] = mapped_column(String(120))
     correo: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     clave_hash: Mapped[str] = mapped_column(String(200))
+    # Versión de sesión (D06). Cada vale lleva este número; subirlo invalida de golpe todos
+    # los vales de la cuenta, que es lo que hace falta al cambiar la clave o al retirar el
+    # acceso. Las cuentas de antes de D06 se quedan en 0 sin tocar nada.
+    token_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     es_titular: Mapped[bool] = mapped_column(Boolean, default=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())

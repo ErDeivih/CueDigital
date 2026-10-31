@@ -930,6 +930,7 @@ ese campo. Está en `app/database.py` y tiene tests propios.
 | [`docs/GUIA_UI_UX.md`](docs/GUIA_UI_UX.md) | Quien diseñe una pantalla | Cómo tiene que comportarse la interfaz |
 | [`docs/UI_Y_AGENTES.md`](docs/UI_Y_AGENTES.md) | Quien quiera meter IA | Generative UI, agentes y qué se descarta, con motivos |
 | [`docs/LO_QUE_PIDE_LA_JUNTA.md`](docs/LO_QUE_PIDE_LA_JUNTA.md) | Quien planifique | Lista verificada de lo que falta para cumplir |
+| [`docs/OPERACION.md`](docs/OPERACION.md) | Quien instale, copie o restaure en un servidor | Cómo se arranca, qué variables hay que poner, cómo se copia y se restaura la base, cómo se cierran las sesiones, y qué queda pendiente antes de exponer el programa |
 | [`docs/LO_QUE_OBLIGA_LA_LEY.md`](docs/LO_QUE_OBLIGA_LA_LEY.md) | Quien toque una fecha o un texto legal | Qué obliga la ley y qué no, con las comillas literales y los enlaces al BOE |
 | [`docs/SERVICIOS_DEL_SIGPAC.md`](docs/SERVICIOS_DEL_SIGPAC.md) | Quien toque el mapa o los datos del SIGPAC | Los mapas y las **once consultas oficiales** del SIGPAC, con su dirección y qué devuelve cada una |
 | [`docs/CUADERNO_DE_LA_JUNTA.md`](docs/CUADERNO_DE_LA_JUNTA.md) | Quien toque el cuaderno digital de Castilla y León | El **Cuecyl**: sus instrucciones oficiales, sus 25 hojas hoja por hoja, y cómo se traen las tierras de ahí sin teclearlas |
@@ -1377,7 +1378,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5649 tests
+../.venv/Scripts/python.exe -m pytest          # 5690 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1221 tests

@@ -34,6 +34,13 @@ caracteres**, porque es la misma regla que aplica el alta.
 - **No borra ni cambia nada más**: ni las parcelas, ni los apuntes, ni el correo.
 - **No dice la clave vieja**: no se puede, está guardada como huella (que es como tiene que estar).
 - **No inventa un correo**: si el correo que le das no existe, lo dice y no toca nada.
+
+## Lo que sí hace desde D06: cerrar las sesiones abiertas
+
+Al cambiar la clave sube la versión de sesión de esa cuenta, y **todos los vales que
+estuvieran abiertos dejan de valer** en la siguiente petición. Es lo que convierte
+«me han cambiado la clave» en «y además he echado a quien estuviera dentro». El
+agricultor tendrá que volver a entrar con la clave nueva, y eso es lo correcto.
 """
 
 from __future__ import annotations
@@ -112,9 +119,13 @@ def main() -> int:
             return 1
 
         cuenta.clave_hash = security.hash_clave(clave)
+        # Cerrar lo que estuviera abierto (D06). Si no se sube, un vale robado antes del
+        # cambio seguiría sirviendo treinta días más, que es justo lo que este script
+        # viene a evitar.
+        cuenta.token_version = int(cuenta.token_version or 0) + 1
         sesion.commit()
         print(f"\nHecho: la clave de {cuenta.correo} es la nueva.")
-        print("Ya puedes entrar con ella. Lo demás no se ha tocado.")
+        print("Ya puedes entrar con ella. Se han cerrado las sesiones que estuvieran abiertas.")
         return 0
 
 

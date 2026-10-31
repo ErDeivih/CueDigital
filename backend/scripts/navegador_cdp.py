@@ -301,6 +301,35 @@ class NavegadorDeVerdad:
         self.orden("Page.navigate", {"url": url})
         time.sleep(esperar)
 
+    def fingir_cobertura(self, hay: bool = True) -> None:
+        """Dice si este navegador tiene cobertura, **sin depender de la red de la máquina**.
+
+        ***Por qué hace falta*** (30/10/2026): el Chrome sin ventana del banco arranca **sin salida a
+        internet**, así que se declara `navigator.onLine === false` aunque hable con el servidor local por
+        `127.0.0.1`. La aplicacion usa ese valor para decidir si manda la cola (`nucleo.decideQueHacer`) y para
+        las fichas que se abren por direccion (`abrirUnaCompra`, entre otras), asi que un recorrido que prueba
+        el camino CON cobertura se caia entero sin que hubiera nada roto en el producto.
+
+        ***Se probo antes por el protocolo*** (`Network.emulateNetworkConditions` con `offline: false`) y **no
+        sirve**: deja `navigator.onLine` en `false`. Lo que manda es la propiedad del prototipo.
+
+        Se aplica **tambien al documento que ya esta abierto**, y queda puesto para los siguientes (una recarga
+        o una navegacion no lo pierden). Vale para los dos sentidos: `hay=False` es útil para un bloque que
+        tiene que medir **el camino sin cobertura** sin depender de la suerte de la maquina que lo ejecute.
+
+        Se llama **antes** de `abrir` o de `_poner_la_sesion` (que recarga), no despues.
+        """
+        valor = "true" if hay else "false"
+        fuente = (
+            "Object.defineProperty(Navigator.prototype, 'onLine', {"
+            " configurable: true,"
+            f" get: function () {{ return {valor}; }}"
+            "});"
+        )
+        self.orden("Page.enable")
+        self.orden("Page.addScriptToEvaluateOnNewDocument", {"source": fuente})
+        self.evaluar(fuente + " Boolean(navigator.onLine)")
+
     def evaluar(self, expresion: str):
         """Ejecuta JavaScript en la página y devuelve el valor (ya convertido a algo de Python)."""
         resultado = self.orden(

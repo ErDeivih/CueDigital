@@ -20,7 +20,33 @@ import pathlib
 import shutil
 import tempfile
 
-_CARPETA_TEMPORAL = pathlib.Path(tempfile.mkdtemp(prefix="cuedigital_tests_"))
+# **Este fichero se importa DOS veces en la misma ejecución, y eso elige dos carpetas.** (D06)
+#
+# Pytest lo carga como `conftest` y, además, una docena de tests hacen `from tests.conftest import …`.
+# Como `tests/` no es un paquete (no hay `__init__.py`), esos dos nombres son **dos módulos distintos**
+# y el código de aquí se ejecuta dos veces. Cada ejecución creaba su propia carpeta temporal y volvía a
+# escribir `CUEDIGITAL_DATABASE_URL`; la segunda llegaba **después** de que `app.database` ya hubiera
+# creado su motor con la primera. Resultado: el motor escribía en la carpeta A y quien leía la variable
+# al vuelo miraba la carpeta B, vacía. Se vio con `cambiar_la_clave.main()` diciendo «No encuentro la
+# base de datos» sobre una base que existía: suspendía el test de que cambiar la clave cierra las
+# sesiones abiertas.
+#
+# Se reutiliza la carpeta de la primera carga, así las dos ejecuciones dejan el entorno igual y el motor
+# y la variable vuelven a decir lo mismo. La carpeta se guarda **en el entorno** (`CUEDIGITAL_TESTS_DIR`)
+# y no en un atributo de módulo: el entorno lo ven las dos copias del módulo y también cualquier
+# reimportación, mientras que buscar el módulo anterior en `sys.modules` depende de con qué nombre lo
+# cargó cada uno.
+#
+# Se guarda junto al **proceso** que la creó (`CUEDIGITAL_TESTS_PID`) porque hay tests que lanzan otro
+# pytest como hijo y le pasan el entorno heredado: ese hijo tiene que estrenar su propia carpeta, como
+# hacía antes, y no escribir en la del padre ni borrársela al terminar.
+_CARPETA_MARCADA = os.environ.get("CUEDIGITAL_TESTS_DIR")
+if _CARPETA_MARCADA and os.environ.get("CUEDIGITAL_TESTS_PID") == str(os.getpid()):
+    _CARPETA_TEMPORAL = pathlib.Path(_CARPETA_MARCADA)
+else:
+    _CARPETA_TEMPORAL = pathlib.Path(tempfile.mkdtemp(prefix="cuedigital_tests_"))
+    os.environ["CUEDIGITAL_TESTS_DIR"] = str(_CARPETA_TEMPORAL)
+    os.environ["CUEDIGITAL_TESTS_PID"] = str(os.getpid())
 
 # **La puerta explícita para correr TODA la suite contra el motor de producción.** (02/10/2026)
 #
@@ -68,9 +94,20 @@ os.environ["CUEDIGITAL_ITERACIONES_PBKDF2"] = "1000"
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import models  # noqa: E402
+from app import database, limites, models  # noqa: E402
 from app.database import crear_tablas, engine  # noqa: E402
 from app.main import app  # noqa: E402
+
+# El motor leyó la dirección al crearse y quien la lee al vuelo (los guiones) la lee después. Si las dos
+# no coinciden, la suite está escribiendo en una base y los guiones miran otra que no existe. Aquí se
+# para en seco y con las dos direcciones a la vista, en vez de dejar que falle un test suelto sin decir
+# por qué. Solo se puede comparar en SQLite: en PostgreSQL la dirección del motor se imprime reescrita.
+if database.url_base_datos().startswith("sqlite") and database.url_base_datos() != str(engine.url):
+    raise RuntimeError(
+        "La suite iba a escribir en una base y a leer la dirección de otra: "
+        f"variable={database.url_base_datos()!r}, motor={str(engine.url)!r}. "
+        "Es el fallo de D06: el conftest se ejecutó dos veces y eligió dos carpetas temporales."
+    )
 
 
 def _borrar_la_carpeta_temporal() -> None:
@@ -151,6 +188,21 @@ def base_limpia(base_creada):
     _vaciar_todo()
     yield
     _vaciar_todo()
+
+
+@pytest.fixture(autouse=True)
+def limites_limpios(base_limpia):
+    """Cada test empieza con los contadores de intentos a cero.
+
+    Hace falta porque el cliente de pruebas usa siempre la misma dirección
+    (`testclient`): sin esto, los fallos de entrada y las altas de un test contarían en el
+    siguiente, y una prueba que crea cuatro cuentas podría dejar la quinta sin poder
+    darse de alta por un límite que no tiene nada que ver con lo que prueba. Los límites
+    se prueban **de verdad** en `test_sesiones_y_limites.py`, que los llena a propósito.
+    """
+    limites.limpiar_todo()
+    yield
+    limites.limpiar_todo()
 
 
 def _vaciar_todo() -> None:

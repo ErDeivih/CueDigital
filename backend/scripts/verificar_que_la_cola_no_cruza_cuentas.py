@@ -127,6 +127,11 @@ def main() -> int:
 
         with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
             nav.medir(1440, 1000)
+            # ***Con cobertura*** (30/10/2026): *el Chrome sin ventana del banco no tiene salida a internet y se
+            # declara `navigator.onLine === false`, asi que la aplicacion se quedaba «esperando» y este bloque
+            # -que prueba justo el camino CON cobertura- se caia por el arnes, no por el producto. Se pide
+            # explicitamente, sin depender de la red de la maquina que lo ejecute.*
+            nav.fingir_cobertura(True)
             # ***La sesion Y la cola, puestas ANTES de la primera pagina***: *es lo que deja una sesion sin
             # cobertura, y aqui se siembra a mano para que la prueba no dependa de apagar la red.*
             nav.orden(
@@ -196,6 +201,9 @@ def main() -> int:
 
         with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
             nav.medir(1440, 1000)
+            # ***Con cobertura***, por lo mismo que el bloque 1: *el rechazo lo contesta el servidor, y sin
+            # cobertura la cola ni siquiera intenta mandar.*
+            nav.fingir_cobertura(True)
             nav.orden(
                 "Page.addScriptToEvaluateOnNewDocument",
                 {
@@ -272,8 +280,9 @@ def main() -> int:
         # ***El caso que el aviso ocultaba***: *con dos apuntes del agricultor y uno de otra cuenta, decia «1 de
         # otra cuenta» y **se callaba los dos suyos** -contaba lo que no puede mandar y ocultaba lo que si-.*
         #
-        # *Se fuerza **sin red** -el evento `offline`, que la aplicacion escucha y repinta- para que los propios no
-        # se manden y se queden en la cola, que es cuando el aviso mixto aparece.*
+        # *Se fuerza **sin cobertura** -la propiedad `navigator.onLine` y el evento `offline`, que la aplicacion
+        # escucha y repinta- para que los propios no se manden y se queden en la cola, que es cuando el aviso
+        # mixto aparece.*
         la_cola_mixta = [
             un_apunte("propio-uno", la_de_ahora),
             un_apunte("propio-dos", la_de_ahora),
@@ -282,6 +291,11 @@ def main() -> int:
 
         with NavegadorDeVerdad(ancho=1440, alto=1000) as nav:
             nav.medir(1440, 1000)
+            # ***Sin cobertura, y dicho a proposito*** (30/10/2026): *antes esto salia gratis porque el Chrome del
+            # banco no tiene internet; apoyarse en eso era una loteria -en una maquina con red, los propios se
+            # mandan y el aviso mixto no llega a verse-. Ahora el bloque pide **el camino sin cobertura** y lo
+            # mide igual en cualquier sitio.*
+            nav.fingir_cobertura(False)
             nav.orden(
                 "Page.addScriptToEvaluateOnNewDocument",
                 {

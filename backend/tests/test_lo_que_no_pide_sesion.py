@@ -48,11 +48,15 @@ primera mitad lo diría, y el 401 de la segunda no podría venir de otra cosa.
 LO QUE ESTE FICHERO **NO** HACE, Y QUEDA APUNTADO
 =================================================
 
-Lo que falta de T01 sigue faltando, y se dice aquí para que no se lea como hecho:
+Lo que falta de T01 sigue faltando en parte, y se dice aquí para que no se lea como hecho:
 
-* **El límite de peticiones** (§5.2: «¿Hay algún límite? **No hay ninguno**»). Es lo que de verdad
-  protege a las rutas que salen a internet, y incluidas las que ya piden sesión: un límite por
-  cuenta es mejor que un límite por dirección IP. Va después de cerrar las que se podían cerrar.
+* **El límite de peticiones** (§5.2: «¿Hay algún límite? **No hay ninguno**»). Desde el 19/10/2026
+  (D06) **sí hay tope en las tres puertas de entrada** —entrar con clave, darse de alta y entrar con
+  el certificado—: está en `app/limites.py` y se prueba de verdad en
+  `tests/test_sesiones_y_limites.py`, contando por dirección y, al entrar, también por cuenta. **Lo
+  que sigue faltando es un tope por cuenta para el resto de rutas**, incluidas las que ya piden
+  sesión: es lo que de verdad protege a las rutas que salen a internet (SIGPAC, mapa, IUWS), porque
+  quien tiene una cuenta puede llamarlas en serie sin que nada lo frene.
 * **`GET /api/mapa/imagen` no puede pedir sesión** tal y como está la pantalla: se pide con un
   `<img src>` y un `<img>` no manda cabeceras. Para cerrarla hay que cambiar antes la pantalla a
   `fetch` + memoria, y su caché **se vacía entera al llenarse**, cosa que desde fuera se puede

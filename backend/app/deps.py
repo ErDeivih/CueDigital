@@ -40,6 +40,15 @@ def usuario_actual(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Esa cuenta no está activa. Vuelve a entrar.",
         )
+    # **Y la versión de sesión** (D06): cambiar la clave o retirar el acceso sube este
+    # número, y todos los vales anteriores dejan de valer aunque les quede fecha. Los
+    # vales de antes de D06 no traen `tv`; se leen como 0 para que nadie se quede fuera
+    # al actualizar.
+    if int(datos.get("tv", 0)) != int(usuario.token_version or 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Te hemos desconectado por seguridad. Vuelve a entrar.",
+        )
     # El token dice a qué finca pertenece: si no coincide con la del usuario, el
     # token es viejo o está manipulado.
     if usuario.explotacion_id != int(datos["eid"]):

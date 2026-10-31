@@ -342,6 +342,14 @@ AYUDA: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MENSAJES: dict[str, str] = {
+    # ***Cuando alguien llama demasiadas veces a la puerta*** (D06, 19/10/2026): *los límites de `app/limites.py`
+    # contestan 429 con estas palabras. Dicen **qué pasa y qué hacer**, que es la regla de la casa: esperar un poco,
+    # y si de verdad no se puede entrar, la salida está en el ordenador donde vive el programa. No lleva la palabra
+    # «sesión» ni la palabra «error», como todo lo que lee el agricultor.*
+    "demasiados_intentos": (
+        "Demasiados intentos seguidos desde este sitio. Espera unos minutos y vuelve a probar. "
+        "Si no puedes entrar, cambia la clave desde el ordenador donde está el programa."
+    ),
     # ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026): *antes se mandaba toda la cola con
     # la sesion abierta, y un apunte de una finca acababa escrito en otra. Lo de otra cuenta **se queda** -no se
     # pierde- esperando a que su dueno entre, y se dice con estas palabras.*

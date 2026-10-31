@@ -16,7 +16,8 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando, pedirElTurno, soltarElTurno, laClaveConDueno, esDelMismoContexto, vaciarLaCola } from '../../backend/web/nucleo.js';
+import { crearCola, crearAlmacenMemoria, sesionDelToken, loQueSePuedeMandar, decideQueHacer, unIdDeComando, pedirElTurno, soltarElTurno, laClaveConDueno, esDelMismoContexto, vaciarLaCola, crearColaPorIntenciones, pedirElTurnoTransaccional, duenoDelTurno, identidadPersistente, identidadDeEjecucion, soltarElTurnoTransaccional } from '../../backend/web/nucleo.js';
+import { hayIndexedDb, abrirLaBase, baseDelTurno } from '../../backend/web/cola_en_indexeddb.js';
 
 const source = fs.readFileSync(new URL('../../backend/web/app.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 function funcion(nombre) {
@@ -39,6 +40,12 @@ function preparar() {
     unIdDeComando,
     // *Y el turno, que `mandarPendientes` pide desde el 21/10 para no vaciar dos pestañas a la vez.*
     pedirElTurno, soltarElTurno, laClaveConDueno, esDelMismoContexto, vaciarLaCola,
+    // ***Y el dueño completo*** (D01): *`mandarPendientes` lo captura **antes** de esperar, con la pestaña
+    // persistente y la ejecución; sin estas en el contexto revienta el andamio (`duenoDelTurno is not defined`)
+    // y no el código. En Node no hay `indexedDB`, así que `hayIndexedDb()` es falso y se usa el turno de
+    // `localStorage` —el camino de reserva, que también hay que probar—.*
+    duenoDelTurno, identidadPersistente, identidadDeEjecucion, soltarElTurnoTransaccional,
+    hayIndexedDb, abrirLaBase, baseDelTurno,
     sessionStorage:crearAlmacenMemoria(), CLAVE_PROCESADOR:"cuedigital.procesador", elProcesadorDeEstaPestana:null,
     pintarAvisoPendientes:()=>{}, cargarDatos:async()=>{}, mensaje:x=>x,
     avisoDelServidor:x=>x?.detail||'', leer:(k,d)=>JSON.parse(almacen.getItem(k)||JSON.stringify(d)),
@@ -50,16 +57,98 @@ function preparar() {
   return contexto;
 }
 // CUE_AUDIT_CONCURRENCIA=1 node docs/revision-2026-10-19/reproducir-cola.mjs
-// Almacén controlado: intercalar después de la ÚLTIMA lectura, no solo la primera.
+// ***Lo que usa la aplicación*** (23/10/2026, D01): la cola es *una clave por intención*
+// (`crearColaPorIntenciones`) y el turno se pide *dentro de una transacción*
+// (`pedirElTurnoTransaccional`, con IndexedDB en el navegador). El array compartido
+// (`crearCola`) y el turno con lectura/escritura sueltos ya no son el camino del agricultor;
+// sus pruebas siguen en `tests_js/cola_*.test.js`.
+// *La barrera se pone **después de la última lectura** y, en la cola por intenciones, **justo
+// antes de mi escritura**: es el instante en que el otro puede escribir de verdad.*
 if (process.env.CUE_AUDIT_CONCURRENCIA === '1' || process.argv.includes('--concurrencia')) {
 const concurrencia={};
-for (const modo of ['apuntar','quitar','turno']) {
- const base=crearAlmacenMemoria(); let lecturas=0,interferido=false,segunda;
- const clave=modo==='turno'?'cuedigital.cola.turno':'cuedigital.pendientes';
- const a={esDurable:true,getItem(k){const anterior=base.getItem(k);if(k===clave && ++lecturas===(modo==='apuntar'?2:1)&&!interferido){interferido=true; if(modo==='turno')segunda=pedirElTurno(base,{dueno:'1:1:inst',procesador:'B',ahora:1000});else crearCola(base).apuntar({id_local:'B',datos:{nota:'B'}});}return anterior;},setItem:(k,v)=>base.setItem(k,v),removeItem:k=>base.removeItem(k)};
- if(modo==='turno'){const primera=pedirElTurno(a,{dueno:'1:1:inst',procesador:'A',ahora:1000});concurrencia.turno_simultaneo={A:primera.turno,B:segunda.turno};}
- else{const cola=crearCola(a);if(modo==='apuntar')cola.apuntar({id_local:'A',datos:{nota:'A'}});else{crearCola(base).apuntar({id_local:'confirmado',datos:{}});cola.quitar('confirmado');}concurrencia[modo]={esperados:modo==='apuntar'?['A','B']:['B'],conservados:cola.leer().map(x=>x.id_local)};}
+
+/** *Un almacén donde el otro escribe **antes** de que llegue mi escritura.* */
+function unAlmacenDondeElOtroEscribeAntes(base, cuando, escribirElOtro) {
+  return {
+    esDurable: true,
+    get length() { return base.length; },
+    key: (i) => base.key(i),
+    getItem: (k) => base.getItem(k),
+    setItem(k, v) {
+      if (cuando.setItem) { cuando.setItem = false; escribirElOtro(); }
+      base.setItem(k, v);
+    },
+    removeItem(k) {
+      if (cuando.removeItem) { cuando.removeItem = false; escribirElOtro(); }
+      return base.removeItem(k);
+    },
+  };
 }
+
+/** *Una base que **serializa** las transacciones, como el `readwrite` de IndexedDB.* */
+function unaBaseTransaccional() {
+  const registros = new Map();
+  let ocupada = false;
+  const espera = [];
+  async function sinIntercalar(trabajo) {
+    if (ocupada) await new Promise((seguir) => espera.push(seguir));
+    ocupada = true;
+    try { return trabajo(); } finally {
+      ocupada = false;
+      const siguiente = espera.shift();
+      if (siguiente) siguiente();
+    }
+  }
+  return {
+    transaccion(clave, decidir) {
+      return sinIntercalar(() => {
+        const anterior = registros.has(clave) ? registros.get(clave) : null;
+        const nuevo = decidir(anterior);
+        if (nuevo === undefined) return { anterior, nuevo: undefined };
+        if (nuevo === null) registros.delete(clave); else registros.set(clave, nuevo);
+        return { anterior, nuevo };
+      });
+    },
+  };
+}
+
+// 1. Apuntar / apuntar: el otro escribe entre mi última lectura y mi escritura.
+{
+  const base = crearAlmacenMemoria();
+  const almacen = unAlmacenDondeElOtroEscribeAntes(base, { setItem: true }, () => {
+    crearColaPorIntenciones(base).apuntar({ id_local: 'B', datos: { nota: 'B' } });
+  });
+  const cola = crearColaPorIntenciones(almacen);
+  cola.apuntar({ id_local: 'A', datos: { nota: 'A' } });
+  concurrencia.apuntar = { esperados: ['A','B'], conservados: cola.leer().map((x) => x.id_local).sort() };
+}
+
+// 2. Quitar un confirmado: el otro apunta lo suyo justo antes de mi `removeItem`.
+{
+  const base = crearAlmacenMemoria();
+  crearColaPorIntenciones(base).apuntar({ id_local: 'confirmado', datos: {} });
+  const almacen = unAlmacenDondeElOtroEscribeAntes(base, { removeItem: true }, () => {
+    crearColaPorIntenciones(base).apuntar({ id_local: 'B', datos: { nota: 'B' } });
+  });
+  const cola = crearColaPorIntenciones(almacen);
+  cola.quitar('confirmado');
+  concurrencia.quitar = { esperados: ['B'], conservados: cola.leer().map((x) => x.id_local).sort() };
+}
+
+// 3. Turno simultáneo: dos adquisiciones dentro de transacciones serializadas.
+{
+  const base = unaBaseTransaccional();
+  const [primera, segunda] = await Promise.all([
+    pedirElTurnoTransaccional(base, { clave: 'cuedigital.cola.turno', dueno: '1:1:inst', procesador: 'A', ahora: 1000 }),
+    pedirElTurnoTransaccional(base, { clave: 'cuedigital.cola.turno', dueno: '1:1:inst', procesador: 'B', ahora: 1000 }),
+  ]);
+  concurrencia.turno_simultaneo = {
+    A: primera.turno,
+    B: segunda.turno,
+    procesador_del_perdedor: primera.turno ? segunda.procesador : primera.procesador,
+  };
+}
+
 console.log(JSON.stringify(concurrencia,null,2));
   // Diagnóstico: exigir conservación/exclusión; 1 significa que siguen los defectos.
   const correcto = concurrencia.apuntar.conservados.length === 2 &&

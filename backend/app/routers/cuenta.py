@@ -13,11 +13,25 @@ from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import accesos, certificados, models, security, textos
+from .. import accesos, certificados, limites, models, security, textos
 from ..deps import Db, UsuarioActual
 from ..schemas import EntrarEntrada, ExplotacionSalida, RegistroEntrada, TokenSalida
 
 router = APIRouter(prefix="/api/cuenta", tags=["cuenta"])
+
+
+def _demasiados_intentos(segundos: int) -> HTTPException:
+    """La respuesta de «espera». `Retry-After` dice cuántos segundos, como manda el protocolo.
+
+    El texto se pide a `textos.mensaje` para que sea el mismo en las tres puertas y para
+    que pase por el test que impide la jerga.
+    """
+    return HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail=textos.mensaje("demasiados_intentos"),
+        headers={"Retry-After": str(segundos)},
+    )
+
 
 
 def _con_nif_normalizado(valores: dict) -> dict:
@@ -33,7 +47,15 @@ def _con_nif_normalizado(valores: dict) -> dict:
 
 
 @router.post("/registro", response_model=TokenSalida, status_code=status.HTTP_201_CREATED)
-def registrar(datos: RegistroEntrada, db: Db) -> TokenSalida:
+def registrar(request: Request, datos: RegistroEntrada, db: Db) -> TokenSalida:
+    # El alta se limita **antes de tocar la base y antes de calcular la huella de la
+    # clave**: lo caro de esta puerta es la huella, y no se le regala a quien llama en
+    # serie. Se apunta cada llamada, no solo las que acaban en cuenta (ver `limites.py`).
+    clave_de_alta = limites.clave_de_alta(request)
+    if not limites.ALTAS_POR_DIRECCION.puede(clave_de_alta):
+        raise _demasiados_intentos(limites.VENTANA_DE_ALTAS_SEGUNDOS)
+    limites.ALTAS_POR_DIRECCION.apunta(clave_de_alta)
+
     correo = datos.correo.strip().lower()
     if db.scalar(select(models.Usuario).where(models.Usuario.correo == correo)) is not None:
         raise HTTPException(
@@ -93,7 +115,9 @@ def registrar(datos: RegistroEntrada, db: Db) -> TokenSalida:
     db.commit()
 
     return TokenSalida(
-        token=security.crear_token(usuario.id, explotacion.id),
+        token=security.crear_token(
+            usuario.id, explotacion.id, version=usuario.token_version or 0
+        ),
         usuario_id=usuario.id,
         explotacion_id=explotacion.id,
         nombre=usuario.nombre,
@@ -101,12 +125,18 @@ def registrar(datos: RegistroEntrada, db: Db) -> TokenSalida:
 
 
 @router.post("/entrar", response_model=TokenSalida)
-def entrar(datos: EntrarEntrada, db: Db) -> TokenSalida:
+def entrar(request: Request, datos: EntrarEntrada, db: Db) -> TokenSalida:
     correo = datos.correo.strip().lower()
+    # Los fallos se cuentan por la dirección y por el correo a la vez. Así no vale ni
+    # cambiar de correo desde el mismo sitio ni probar el mismo correo desde muchos.
+    if limites.demasiadas_entradas(request, correo):
+        raise _demasiados_intentos(limites.VENTANA_DE_ENTRADA_SEGUNDOS)
+
     usuario = db.scalar(select(models.Usuario).where(models.Usuario.correo == correo))
     # Se comprueba la clave aunque el usuario no exista, para no revelar qué correos
     # están dados de alta.
     if usuario is None or not security.verificar_clave(datos.clave, usuario.clave_hash):
+        limites.apuntar_fallo_de_entrada(request, correo)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="El correo o la clave no son correctos. Vuelve a probar.",
@@ -114,8 +144,14 @@ def entrar(datos: EntrarEntrada, db: Db) -> TokenSalida:
     if not usuario.activo:
         raise HTTPException(status_code=403, detail="Esa cuenta no está activa.")
 
+    # Ha entrado: se borra lo apuntado, para que quien se equivoca tres veces y acierta
+    # a la cuarta no arrastre esos tres fallos el resto del día.
+    limites.olvidar_fallos_de_entrada(request, correo)
+
     return TokenSalida(
-        token=security.crear_token(usuario.id, usuario.explotacion_id),
+        token=security.crear_token(
+            usuario.id, usuario.explotacion_id, version=usuario.token_version or 0
+        ),
         usuario_id=usuario.id,
         explotacion_id=usuario.explotacion_id,
         nombre=usuario.nombre,
@@ -196,6 +232,13 @@ def estado_del_certificado(request: Request) -> dict:
 @router.post("/entrar-con-certificado", response_model=TokenSalida)
 def entrar_con_certificado(request: Request, db: Db) -> TokenSalida:
     """Entra sin teclear nada, usando el certificado de la conexión."""
+    # Esta puerta no tiene clave que adivinar, pero sí trabajo detrás (buscar la finca,
+    # apuntar en la auditoría) y se puede llamar en bucle. Se limita el ritmo por sitio.
+    clave_de_certificado = limites.clave_de_certificado(request)
+    if not limites.CERTIFICADOS_POR_DIRECCION.puede(clave_de_certificado):
+        raise _demasiados_intentos(limites.VENTANA_DE_CERTIFICADO_SEGUNDOS)
+    limites.CERTIFICADOS_POR_DIRECCION.apunta(clave_de_certificado)
+
     certificado = certificados.certificado_de_peticion(request)
     if certificado is None:
         # O no hay certificado, o la instalación no está configurada para creerse las
@@ -240,7 +283,9 @@ def entrar_con_certificado(request: Request, db: Db) -> TokenSalida:
     db.commit()
 
     return TokenSalida(
-        token=security.crear_token(usuario.id, explotacion.id),
+        token=security.crear_token(
+            usuario.id, explotacion.id, version=usuario.token_version or 0
+        ),
         usuario_id=usuario.id,
         explotacion_id=explotacion.id,
         nombre=usuario.nombre,

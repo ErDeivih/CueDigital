@@ -376,6 +376,39 @@ def _hay_dinero(texto: str) -> bool:
     return "EUR" in texto or "\u20ac" in texto
 
 
+def _esperar_el_dinero(nav, segundos: float = 25.0) -> bool:
+    """***Espera a que el panel ACABE de pintarse*** y dice si el dinero llego (04/11/2026).
+
+    *El dinero no viene con la pantalla: llega **despues**, con `/api/panel`, y se pinta en la metrica
+    `gastos`. Mirar `innerText` en cuanto hay armazon **media la carrera de carga, no el permiso**: el
+    bloque 1 la ganaba porque venia de una pantalla ya caliente y el bloque 4 la perdia al cambiar de
+    cuenta, y el recorrido se ponia rojo por «vuelto al titular, el dinero reaparece» sin que nada
+    estuviera mal. Se espera a la metrica que lleva el dinero, y **se mira lo que hay**.*
+
+    *Si la metrica no llega en el plazo, se devuelve lo que se ve: **no se da por bueno**.*
+    """
+    nav.esperar(
+        "document.querySelector('#pantalla [data-metrica=\"gastos\"]') !== null",
+        segundos=segundos,
+    )
+    return _hay_dinero(_el_dinero_en_la_pantalla(nav))
+
+
+def _esperar_las_metricas(nav, segundos: float = 25.0) -> bool:
+    """***Espera a que el panel este pintado antes de decir que falta algo*** (04/11/2026).
+
+    *Decir «no ve el dinero» mirando una pantalla a medio pintar no es haber mirado: es no haber
+    esperado. Se espera al bloque de metricas -que el ayudante y la consulta si reciben, con la
+    superficie-. Si no llega, **se sigue mirando lo que hay y se deja dicho**: el permiso no se toca,
+    porque si `/api/panel` estuviera roto el dinero del titular tampoco apareceria y el bloque 1 lo
+    habria cantado.*
+    """
+    llego = nav.esperar("document.querySelector('#pantalla .las-metricas') !== null", segundos=segundos)
+    if not llego:
+        print("        (el panel no llego a pintar sus metricas: se mira lo que hay, y se dice)")
+    return llego
+
+
 def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
     print(f"== Los permisos por rol, andados en un navegador  ({direccion}) ==")
     escenario = preparar(direccion)
@@ -625,9 +658,13 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
 
             # *Y el dinero.*
             nav.abrir(f"{direccion}/", esperar=2.5)
-            nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
+            ha_llegado_el_dinero = _esperar_el_dinero(nav)
             el_texto_del_titular = _el_dinero_en_la_pantalla(nav)
-            comprobar(_hay_dinero(el_texto_del_titular), "***y el titular SI ve el dinero en su panel***", encontre=el_texto_del_titular[:400])
+            comprobar(
+                ha_llegado_el_dinero,
+                "***y el titular SI ve el dinero en su panel***",
+                encontre=el_texto_del_titular[:400],
+            )
 
             # ---------------------------------------------------------------------------------------------------
             print("\n2. EL AYUDANTE  -puede apuntar, y el dinero no le llega-")
@@ -666,7 +703,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
                     encontre=f"ofrecidas: {sorted(las_del_ayudante)}",
                 )
             nav.abrir(f"{direccion}/", esperar=2.5)
-            nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
+            _esperar_las_metricas(nav)
             comprobar(not _hay_dinero(_el_dinero_en_la_pantalla(nav)), "***ni lo ve en la pantalla***")
 
             # ---------------------------------------------------------------------------------------------------
@@ -702,7 +739,7 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
                         encontre=f"ofrecidas: {sorted(las_de_la_consulta)}",
                     )
                 nav.abrir(f"{direccion}/", esperar=2.5)
-                nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
+                _esperar_las_metricas(nav)
                 comprobar(not _hay_dinero(_el_dinero_en_la_pantalla(nav)), "***y no ve el dinero en la pantalla***")
 
                 # -----------------------------------------------------------------------------------------------
@@ -734,8 +771,13 @@ def andar(direccion: str, base_de_datos: pathlib.Path | None) -> int:
             # *Se vuelve al titular **en el mismo navegador**, sin cerrarlo: es el cambio de cuenta.*
             _poner_la_sesion(nav, direccion, los_vales["titular"])
             nav.abrir(f"{direccion}/", esperar=2.5)
-            nav.esperar("document.querySelector('#pantalla').innerText.length > 200", segundos=25)
-            comprobar(_hay_dinero(_el_dinero_en_la_pantalla(nav)), "***vuelto al titular, el dinero reaparece***", encontre=_el_dinero_en_la_pantalla(nav)[:300])
+            ha_reaparecido_el_dinero = _esperar_el_dinero(nav)
+            el_texto_del_titular = _el_dinero_en_la_pantalla(nav)
+            comprobar(
+                ha_reaparecido_el_dinero,
+                "***vuelto al titular, el dinero reaparece***",
+                encontre=el_texto_del_titular[:300],
+            )
 
             # *Y el cambio de EXPLOTACION: el ayudante tiene dos -la suya y la del titular-.*
             codigo, suya = _llamar(direccion, "/api/cuenta/yo", token=los_vales["ayudante"])

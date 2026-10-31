@@ -118,7 +118,9 @@ def cambiar_de_finca(
     )
     db.commit()
     return TokenSalida(
-        token=security.crear_token(usuario.id, finca.id),
+        token=security.crear_token(
+            usuario.id, finca.id, version=usuario.token_version or 0
+        ),
         usuario_id=usuario.id,
         explotacion_id=finca.id,
         nombre=usuario.nombre,
