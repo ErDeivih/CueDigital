@@ -6,9 +6,11 @@
 midió `top=742`-, **cuántas hay**, si el pliegue de los avanzados está **abierto cuando hay filtro**, y que el vacío lo
 **diga** en vez de quedarse en blanco.*
 
-*Las capturas van a `docs/capturas-de-anchuras/estados/`, para poder mirarlas.*
+*Las capturas se piden con `--capturas` y van a `docs/capturas-de-anchuras/estados/`, para poder mirarlas. **Por
+defecto no se escribe nada**: este guion entra en la puerta que los pasa todos, y esa puerta corre sobre el árbol
+candidato, que no puede cambiar por el camino.*
 
-Uso:  python scripts/verificar_los_estados_de_las_tierras.py
+Uso:  python scripts/verificar_los_estados_de_las_tierras.py [--capturas]
 """
 
 from __future__ import annotations
@@ -25,6 +27,9 @@ from navegador_cdp import NavegadorDeVerdad  # noqa: E402
 from verificar_los_permisos_por_rol import _llamar, _poner_la_sesion, _una_cuenta_nueva  # noqa: E402
 
 LA_CARPETA = pathlib.Path("docs", "capturas-de-anchuras", "estados")
+
+# ***Las capturas, solo si se piden.*** *La puerta las mide sin dejar papeles en el árbol.*
+LAS_CAPTURAS = "--capturas" in sys.argv
 
 LA_PRIMERA_EN_LA_VENTANA = (
     "(() => {"
@@ -80,6 +85,8 @@ def en_la_spa(nav, camino: str) -> str:
 
 
 def la_captura(nav, nombre: str) -> None:
+    if not LAS_CAPTURAS:
+        return
     LA_CARPETA.mkdir(parents=True, exist_ok=True)
     el_crudo = base64.b64decode(nav.orden("Page.captureScreenshot", {"format": "png"})["data"])
     (LA_CARPETA / nombre).write_bytes(el_crudo)
@@ -154,7 +161,8 @@ def main() -> int:
                 la_captura(nav, f"tierras-64-{ancho}x{alto}.png")
 
     print(f"\nComprobaciones: 6   Fallos: {fallos}")
-    print(f"\nLas capturas, en {LA_CARPETA}")
+    if LAS_CAPTURAS:
+        print(f"\nLas capturas, en {LA_CARPETA}")
     return 1 if fallos else 0
 
 

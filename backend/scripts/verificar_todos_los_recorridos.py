@@ -31,6 +31,14 @@ LOS_RECORRIDOS = [
     ("los estados de fallo", "verificar_los_estados_de_fallo.py"),
     ("los enlaces de las tierras", "verificar_los_enlaces_de_las_tierras.py"),
     ("las tres anchuras", "verificar_las_anchuras_de_las_tierras.py"),
+    # ***Y lo que pide la aceptación de C2, que hasta ahora se medía fuera de la puerta*** (31/10/2026): *que **al
+    # entrar se vea una tierra** -a 1024, 390 y 320, que es donde la revisión midió `top=742`-, que los grupos
+    # avanzados estén plegados sin filtro y **se abran solos** cuando lo hay, y que el botón del nombre llegue a 44 sin
+    # bajarle la letra. Sin ellos, dos guiones medían pero **nadie los exigía**.*
+    ("lo que se ve al entrar", "verificar_lo_que_se_ve_al_entrar.py"),
+    # *Los estados -tres, 64, filtro, vacío y fallo-, **sin capturas**: la puerta no escribe en el árbol candidato.
+    # Para mirarlas, el mismo guion con `--capturas`.*
+    ("los estados de las tierras", "verificar_los_estados_de_las_tierras.py"),
     ("volver de la ficha", "medir_la_vuelta_de_la_ficha.py"),
     ("el tacto y el foco", "medir_el_tacto_y_el_foco.py"),
     ("el contraste", "medir_el_contraste.py"),
