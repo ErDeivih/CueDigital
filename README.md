@@ -73,6 +73,31 @@ Sin él, la aplicación no arranca con una dirección de PostgreSQL (dirá que n
 Y para comprobar que arranca de verdad contra PostgreSQL hay un guion que levanta un servidor
 desechable y lo mide: `scripts/sonda_postgresql.py` (no toca `cuedigital.db`).
 
+### Vista previa con datos de demostración
+
+Para enseñar el programa sin acercarse a los datos de una explotación de verdad:
+
+```bash
+cd backend
+python scripts/vista_previa.py                 # http://127.0.0.1:8000
+python scripts/vista_previa.py --puerto 8123   # otro puerto
+```
+
+- Arranca en **127.0.0.1** con una base y una carpeta de adjuntos de demostración en
+  `backend/datos/vista-previa/` (fuera del repositorio). **No usa `cuedigital.db` ni
+  PostgreSQL**, y borra del entorno cualquier dirección de base, carpeta de adjuntos o modo
+  de producción que hubiera puesta.
+- Si falta el entorno, lo prepara: crea `.venv` la primera vez e instala `requirements.txt`.
+  Después no vuelve a instalar nada si ya está.
+- El puerto también se puede dar con `PORT`, que es lo que usan los portales. Manda el
+  argumento.
+- **No termina hasta que se pare**: Ctrl+C, o una señal, y sale con código 0. Si no puede
+  arrancar, sale con otro código y dice por qué.
+- Los datos de la vista previa se pueden borrar enteros: `backend/datos/vista-previa/`.
+
+La puerta que lo comprueba, con un puerto y una carpeta temporales, es
+`node tests_js/_probar-vista-previa.mjs` desde `backend/`.
+
 ### Entrar con el certificado digital
 
 El programa **no valida el certificado**: eso lo hace el servidor web que tiene delante.
@@ -1378,7 +1403,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5690 tests
+../.venv/Scripts/python.exe -m pytest          # 5692 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1226 tests
@@ -1493,6 +1518,7 @@ backend/
 │   â””â”€â”€ fixtures/          Firmas y recintos DE VERDAD, para no probar contra inventos
 ├── tests_js/              Tests de JavaScript
 ├── package.json           Solo para que Node lea los .js como módulos. No hay npm.
+├── scripts/vista_previa.py  Arranca una vista previa con datos de demostración, sin tocar los de verdad
 └── scripts/humo.py        Recorrido completo contra un servidor de verdad
 DESIGN.md                  El contrato de diseño (lo lee un agente antes de tocar la UI)
 docs/
