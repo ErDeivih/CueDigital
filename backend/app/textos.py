@@ -380,6 +380,11 @@ MENSAJES: dict[str, str] = {
     # *reintentar un 401/403 no arregla nada, y enseñar lo de la cuenta anterior con el nombre de esta es peor
     # que no enseñarlo. Un dato viejo se dice que es viejo, para que no parezca que lo apuntado no se guardó.*
     "sin_permiso_para_ver": "**No tienes permiso para ver**:",
+    # ***Un dato viejo no es un dato que no se ha cargado*** (01/11/2026): *se decia «No se han podido cargar»
+    # tambien cuando la seccion si se habia cargado y lo que fallaba era la ultima actualizacion. El agricultor
+    # leia que no habia nada cuando estaba viendo lo de ayer. Ahora se dice que no se ha podido **actualizar**,
+    # y la frase de despues aclara que se ve lo ultimo, para que las dos no se contradigan.*
+    "no_se_pudo_actualizar": "**No se ha podido actualizar**:",
     "se_ve_lo_ultimo": "**Se está viendo lo último que se cargó**.",
     "apuntes_de_otra_cuenta": (
         "Hay {cuantas} cosas apuntadas de **otra cuenta**. No se mandan con esta: entra en la cuenta en la que las "

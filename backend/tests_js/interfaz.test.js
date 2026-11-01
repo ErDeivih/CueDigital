@@ -1194,6 +1194,10 @@ const RESPUESTAS = {
       no_se_pudieron_cargar: "**No se han podido cargar**:",
       sin_permiso_para_ver: "**No tienes permiso para ver**:",
       se_ve_lo_ultimo: "**Se está viendo lo último que se cargó**.",
+      // ***Un dato viejo no es un fallo de carga*** (01/11/2026): *la rama de «antiguo» decía «No se han podido
+      // cargar» y luego «se está viendo lo último», que se contradice. Ahora tiene su propio texto, copiado de
+      // `textos.MENSAJES` como los demás.*
+      no_se_pudo_actualizar: "**No se ha podido actualizar**:",
       V8_dias_de_espera: "Podrás cogerla a partir del {fin}.",
       sin_cobertura: "No hay cobertura.",
       no_se_pudo: "No se ha podido mandar.",
@@ -15249,6 +15253,14 @@ test("si falla algo que ya se habia cargado, se ve lo ultimo y se dice que es de
   const loQueDice = String(caso.entorno.nodos.get("aviso-cargas-texto").textContent || "");
   assert.match(loQueDice, /facturas/, `***tiene que decir QUE se esta viendo de antes***: ${loQueDice}`);
   assert.match(loQueDice, /[uú]ltimo/i, `***y que es lo ultimo que se cargo***: ${loQueDice}`);
+  // ***Y no puede decir que no se ha cargado*** (01/11/2026): *la seccion si estaba cargada; lo que fallo fue
+  // actualizarla. Decir «No se han podido cargar» y «se esta viendo lo ultimo» en la misma frase deja al
+  // agricultor sin saber si tiene datos o no.*
+  assert.doesNotMatch(
+    loQueDice,
+    /No se han podido cargar/,
+    `***un dato de antes no es un dato que falta***: ${loQueDice}`,
+  );
 });
 
 test("una lista vacia de verdad no es un fallo", async () => {

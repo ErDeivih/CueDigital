@@ -1187,7 +1187,7 @@ function pintarLoQueFallo() {
   if (lasViejas.length) {
     // *Se dice que es de antes: si no, el agricultor no sabe por qué lo que ve no coincide con lo que acaba de apuntar.*
     trozos.push(
-      `${mensaje("no_se_pudieron_cargar")} ${lasViejas.join(", ")} ${mensaje("se_ve_lo_ultimo")}`,
+      `${mensaje("no_se_pudo_actualizar")} ${lasViejas.join(", ")} ${mensaje("se_ve_lo_ultimo")}`,
     );
   }
   if (lasQueNoPuedeVer.length) {
