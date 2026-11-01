@@ -539,15 +539,11 @@ podría cambiar el significado del plan.
 
 ## 5. Lo que hace falta, y de quién depende
 
-### De David
-
-| Qué | Para qué |
-|---|---|
-| **El nombre comercial del software** | Va en la dirección de `comunicacion` y tiene que estar registrado en el interfaz |
-| **El dominio y el servidor** | El CN del certificado. El interfaz autoriza por dominio |
-| **El certificado de dominio** (sello de entidad, con autenticación de cliente) | Todas las llamadas van firmadas con él. **Su certificado ya funciona desde este ordenador** (comprobado el 27/09/2026) |
-| **El alta en el entorno de integración** | Es lo que devuelve la Junta al contestar el formulario. **Es lo único que falta, y lo dice el interfaz con estas palabras: `Dominio del certificado no registrado en el sistema`** |
-| **El código SIEX de cada explotación** | Va en el sobre del mensaje. Cada agricultor lo tiene en sus papeles de la PAC |
+**Los dos bloqueos externos —los valores de los catálogos y el alta con el certificado— están
+con su dueño, su estado, su evidencia y su criterio de cierre en
+[`FUENTES_OFICIALES_PENDIENTES.md`](FUENTES_OFICIALES_PENDIENTES.md), apartado «Los dos bloqueos
+externos: lista canónica». Aquí no se repiten.** De David dependen además el nombre comercial, el
+dominio y el servidor, y el código SIEX de cada finca.
 
 #### Y una decisión que solo puede tomar él: de dónde sale la clave privada
 
@@ -573,13 +569,6 @@ sistema`).
 presentado. Lo que sí se ha hecho, y con su certificado, es **comprobar qué contesta** (ver la tabla de
 arriba) y **ensayar todo el flujo en el entorno de integración**, que no exige certificado para llegar
 a la aplicación.
-
-### De FEGA
-
-| Qué | Para qué |
-|---|---|
-| **Los valores de los catálogos oficiales** | Los códigos de producto, unidad, justificación, materia activa, estado fenológico y eficacia. La **estructura** ya es pública; los datos están detrás de un captcha |
-| ~~`BdcSix-DS-DiseñoCUE.xlsx`~~ | **Ya está**: v3.11.4, en `data/iuws_fuentes/`, con su esquema JSON |
 
 ### De cada agricultor
 
@@ -695,13 +684,12 @@ El cliente HTTP está escrito, y la parte que se puede probar está probada. **E
 está resuelto**: el descriptor y el esquema oficiales están en el repositorio y el paquete se
 valida contra el esquema antes de salir. Lo que falta no es programa:
 
-1. **Los valores de los catálogos.** Es el bloqueo de verdad, y es distinto de como se contaba
-   antes: el descriptor ya está, lo que no está son los **códigos**. El esquema no admite un
-   campo vacío (528 tipos, ningún `null`), así que sin ellos no hay JSON que valide.
-2. **El certificado de dominio** (sello de entidad, con autenticación de cliente), más el
-   nombre comercial y el alta en el entorno de integración. Sin ellos no hay token.
-3. **El código SIEX de cada explotación**, que lo pone cada agricultor en «Mi finca».
-4. **La autorización del titular** a la entidad habilitada.
+1. **Los dos bloqueos externos**: los valores de los catálogos y el alta con el certificado. Su
+   dueño, su estado, su evidencia y su criterio de cierre están en
+   [`FUENTES_OFICIALES_PENDIENTES.md`](FUENTES_OFICIALES_PENDIENTES.md), apartado «Los dos bloqueos
+   externos: lista canónica»; aquí no se repiten.
+2. **El código SIEX de cada explotación**, que lo pone cada agricultor en «Mi finca».
+3. **La autorización del titular** a la entidad habilitada.
 
 ### El trabajo que queda
 
@@ -719,8 +707,9 @@ valida contra el esquema antes de salir. Lo que falta no es programa:
 4. **Probar contra el entorno de integración**, bloque por bloque, mirando el `comprobarEstado`.
    Hasta hoy **no se ha hecho ni una llamada autenticada**: eso está sin verificar. (Lo que sí se ha
    hecho con el certificado de David son las dos llamadas de lectura de arriba.)
-5. **Pedir el alta en producción** — o, mejor dicho, **el alta del dominio**: es lo que el interfaz
-   contesta que falta.
+5. **Pedir el alta del dominio**: es lo que el interfaz contesta que falta. El estado de esa
+   petición está en
+   [`FUENTES_OFICIALES_PENDIENTES.md`](FUENTES_OFICIALES_PENDIENTES.md), `BLOQUEO-ALTA-DOMINIO`.
 
 ### Firmar sin sacar la clave del almacén
 

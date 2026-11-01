@@ -902,17 +902,12 @@ descriptor. Es justo la razón de no copiar los ejemplos y usar el descriptor.
 `GET /api/iuws/estado` lo dice cada vez, calculado y no escrito a mano, para que en cuanto se
 resuelva una pieza deje de aparecer:
 
-- **De David**: el nombre comercial, el dominio y el servidor, el certificado de dominio (sello
-  de entidad con autenticación de cliente), el alta en el entorno de integración y el código
-  SIEX de cada finca.
-- **De FEGA**: los **valores** de los catálogos oficiales. El descriptor dice **40 catálogos** y
-  de qué campo sale cada uno; SIEX publica sus **287** tablas y, cruzando los nombres, **15 de
-  esos 40 ya tienen tabla localizada** (con su identificador, y las 15 son públicas). Lo que
-  falta son **los datos** de cada tabla, que están detrás de un captcha. Los 25 que no coinciden
-  **no se emparejan por parecido**: se preguntan. Todo esto se ve en `GET /api/iuws/estado`.
-  Para los **campos obligatorios** de los 18 bloques hacen falta **19 catálogos**, y de esos **7
-  ya tienen tabla localizada**; el mapa entero, bloque por bloque, está en el mismo sitio
-  (`mapa_del_cuaderno`).
+**Los dos bloqueos externos —los valores de los catálogos y el alta con el certificado— tienen su
+dueño, su estado, su evidencia y su criterio de cierre en un solo sitio:
+[`docs/FUENTES_OFICIALES_PENDIENTES.md`](docs/FUENTES_OFICIALES_PENDIENTES.md), apartado «Los dos
+bloqueos externos: lista canónica». Aquí no se repiten.** De David dependen, además, el nombre
+comercial y el código SIEX de cada finca.
+
 - **De nosotros**: lo que el cuaderno **no pregunta**. El mapeo del bloque de tratamientos
   (`GET /api/iuws/estado`, apartado `mapeo_del_tratamiento`) separa las dos cosas: de sus 11
   campos oficiales, **6 se pueden mandar ya**, **3 esperan un catálogo de FEGA** y **2 dependen de

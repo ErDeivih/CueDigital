@@ -2,6 +2,40 @@
 
 Comprobación realizada el **23/09/2026**. La referencia de trabajo es el [Anexo VI, Interfaz Único Común v3.11.4](https://www.fega.gob.es/sites/default/files/files/document/2025.11.19-ANEXO%20VI.Interfaz%20%C3%9Anico%20Com%C3%BAn_V3_11_4.docx), con el descriptor Excel y el esquema JSON que lleva incrustados (copias intactas en [`data/iuws_fuentes`](../data/iuws_fuentes/LEEME.md)). En el Word se indica epígrafe y, para el Excel incrustado, hoja y fila: la paginación de Word cambia con el programa que lo abre. En los PDF se dan página y/o tabla. «No lo he encontrado» significa que no aparece en las fuentes y accesos examinados; no afirma que el organismo no lo tenga. Las respuestas sin certificado no demuestran qué ofrece un usuario dado de alta. No se ha hecho ninguna llamada autenticada ni se ha enviado ninguna consulta.
 
+## Los dos bloqueos externos: lista canónica
+
+**Este apartado es la lista canónica.** El dueño, el estado, la evidencia y el criterio de cierre
+de los dos bloqueos externos del volcado se mantienen solo aquí. Las secciones 1 a 8 de este
+documento son la comprobación y las fuentes que lo sostienen: no fijan por su cuenta otro estado,
+y si alguna frase antigua lo parece, manda esta lista. `README.md` y
+[`INTEGRACION_IUWS.md`](INTEGRACION_IUWS.md) solo enlazan aquí.
+
+### BLOQUEO-CATALOGOS-SIEX
+
+| Campo | Qué dice |
+|---|---|
+| **Identificador** | `BLOQUEO-CATALOGOS-SIEX` |
+| **Dueño** | De la respuesta: **FEGA** (valores de los catálogos SIEX). De la petición: **David**, que decide cuándo se envía la consulta y la firma |
+| **Estado** | **Abierto.** No hay valores ni equivalencia oficial. El portal público solo da la estructura de 287 tablas (141 visibles) y las filas están detrás de un captcha. No se ha enviado ninguna consulta ni se ha hecho ninguna llamada autenticada |
+| **Fuente y evidencia** | Secciones 1 a 3 de este documento; [`CATALOGOS_OFICIALES.md`](CATALOGOS_OFICIALES.md); el cruce reproducible en [`catalogos_siex.py`](../backend/app/catalogos_siex.py); el índice técnico de FEGA (actualizado el 09/09/2026) y su portal de catálogos. De los **40 catálogos** que pide el descriptor, **15** tienen tabla localizada por nombre exacto y los **25** restantes no se emparejan por parecido |
+| **Última comprobación** | **27/09/2026** (reconfirmado por el portal y por los documentos oficiales; sin cambios desde el 23/09/2026) |
+| **Criterio de cierre** | Recibir por una vía oficial los **valores y la equivalencia** de los catálogos que pide el descriptor, cargarlos y que un paquete los use sin ningún código inventado; una prueba tiene que atarlo. Mientras tanto, los campos de catálogo salen vacíos y marcados |
+| **Impacto en el producto** | Sin ellos **no se puede generar el paquete oficial**: el esquema declara 528 tipos y ninguno admite vacío, y entre los 18 bloques hay 113 campos obligatorios (19 catálogos, 7 con tabla localizada). Afecta en particular a los tratamientos (`ProblematicaFito`, `Justificaciones`, `Eficacia`), a la maquinaria y al resto de campos «validar contra catálogo». El apartado 24 del cuaderno queda a medias por esto |
+
+### BLOQUEO-ALTA-DOMINIO
+
+| Campo | Qué dice |
+|---|---|
+| **Identificador** | `BLOQUEO-ALTA-DOMINIO` |
+| **Dueño** | De la tramitación: **Castilla y León** (y FEGA, según el formulario). De la petición: **David**, que envía el formulario firmado con sus datos de empresa y su certificado |
+| **Estado** | **Abierto.** El formulario está redactado y **no se ha enviado**. El certificado de David **sí funciona** desde su ordenador (comprobado el 27/09/2026) y la clave privada no se saca del almacén; lo que falta es el **alta del dominio** en el entorno de integración. Sin ella no hay token ni ninguna llamada autenticada |
+| **Fuente y evidencia** | Sección 6 (los ocho campos del formulario) y sección 7 de este documento; [`INTEGRACION_IUWS.md`](INTEGRACION_IUWS.md); `backend/scripts/probar_iuws_con_certificado.ps1` y `backend/scripts/firmar_con_el_certificado.ps1`. El interfaz contesta con estas palabras: `Dominio del certificado no registrado en el sistema` |
+| **Última comprobación** | **28/09/2026** (se volvió a preguntar al interfaz con el certificado puesto y contestó lo mismo que el 27/09/2026) |
+| **Criterio de cierre** | Alta del dominio concedida y **una primera llamada autenticada aceptada** por el entorno de integración (token y `comprobarEstado`), con datos de una explotación autorizada; después, el alta equivalente en producción. Decidir en ese momento, con la respuesta del interfaz, si hay que mandar también la firma `data-signed` |
+| **Impacto en el producto** | El programa no llama al interfaz para nada que exija certificado y no se presenta nada; el apartado 24 del cuaderno queda a medias. La firma `data-signed` ya está hecha y verificada (27 y 28/09/2026), así que el trabajo que queda no es de programa |
+
+---
+
 ## 1. Valores de los catálogos SIEX
 
 ### Qué falta
@@ -202,7 +236,7 @@ Pedir a Castilla y León por el correo publicado en el Anexo X, con copia al cor
 
 ### Qué falta
 
-El certificado real de la empresa y una confirmación administrativa de cómo comparan el CN con el dominio inscrito; el tipo y los requisitos técnicos básicos **sí están documentados**.
+Una confirmación administrativa de cómo comparan el CN con el dominio inscrito, y el **alta del dominio** que falta (ver [`BLOQUEO-ALTA-DOMINIO`](#bloqueo-alta-dominio)). El tipo y los requisitos técnicos básicos **sí están documentados**, y el certificado de David **existe y funciona** desde su ordenador; lo que no está es el alta, no el certificado.
 
 ### Dónde se publica
 
