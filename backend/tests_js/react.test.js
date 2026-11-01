@@ -32,7 +32,15 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import vm from "node:vm";
 
-import { montajes, montarEn } from "../web/react/montar.js";
+import {
+  desmontarDe,
+  laCuentaDeLasRaices,
+  montajes,
+  montajesDelMarco,
+  montarEn,
+  montarFueraDeLaPantalla,
+  raicesActivas,
+} from "../web/react/montar.js";
 
 // ---------------------------------------------------------------------------
 // El arnés: React y htm, como los deja `index.html`
@@ -515,11 +523,19 @@ test("con ReactDOM, monta de verdad en el contenedor que se le dice", async () =
   // `createRoot` con el contenedor y a `render` con el elemento—, porque montar de verdad
   // necesita un navegador y eso se prueba en el móvil, no aquí.
   const llamadas = [];
+  const raicesCreadas = [];
   const anterior = globalThis.ReactDOM;
   globalThis.ReactDOM = {
-    createRoot: (contenedor) => ({
-      render: (elemento) => llamadas.push({ contenedor, elemento }),
-    }),
+    createRoot: (contenedor) => {
+      const raiz = {
+        render: (elemento) => llamadas.push({ contenedor, elemento }),
+        unmount: () => {
+          raiz.desmontada = true;
+        },
+      };
+      raicesCreadas.push(raiz);
+      return raiz;
+    },
   };
   try {
     const { PantallaInicio, pantallaDeInicio } = await cargarInicio();
@@ -528,19 +544,167 @@ test("con ReactDOM, monta de verdad en el contenedor que se le dice", async () =
 
     montajes.length = 0;
     assert.equal(montarEn(contenedor, elemento, {}), true, "no dice que haya montado");
+    assert.equal(raicesCreadas.length, 1, "no ha creado la raíz");
     assert.equal(llamadas.length, 1, "no se ha llamado a render");
     assert.equal(llamadas[0].contenedor, contenedor, "no ha montado en el contenedor que se le dice");
     assert.equal(llamadas[0].elemento.type, PantallaInicio);
     assert.equal(montajes[0].motor, "react");
-    // Se vacía el contenedor antes de montar: las pantallas que no están en React siguen
-    // pintándose ahí con `innerHTML`, y si no se vaciara, React montaría al lado de lo que
-    // hubiera puesto la pantalla anterior.
-    assert.equal(contenedor.innerHTML, "");
+    // Se vacía el contenedor **la primera vez**, antes de crear la raíz: lo que hubiera puesto
+    // la pantalla anterior no puede quedarse al lado de la nueva.
+    assert.equal(contenedor.innerHTML, "", "no se vacía el contenedor la primera vez");
   } finally {
     if (anterior === undefined) delete globalThis.ReactDOM;
     else globalThis.ReactDOM = anterior;
   }
 });
+
+test("al cambiar de pantalla se reutiliza la raíz, no se crea otra", async () => {
+  // Una raíz por contenedor. Crear una nueva en cada cambio deja la anterior con sus nodos y
+  // sus efectos hasta que el recolector la encuentre: en una jornada larga, una fuga.
+  const raicesCreadas = [];
+  const renders = [];
+  const anterior = globalThis.ReactDOM;
+  globalThis.ReactDOM = {
+    createRoot: (contenedor) => {
+      const raiz = {
+        contenedor,
+        render: (elemento) => renders.push({ raiz, elemento }),
+        unmount: () => {
+          raiz.desmontada = true;
+        },
+      };
+      raicesCreadas.push(raiz);
+      return raiz;
+    },
+  };
+  try {
+    const { pantallaDeInicio } = await cargarInicio();
+    const contenedor = { innerHTML: "" };
+    const primera = pantallaDeInicio(propiedades({ nombre: "Juan" }));
+    const segunda = pantallaDeInicio(propiedades({ nombre: "Ana" }));
+
+    assert.equal(montarEn(contenedor, primera, {}), true);
+    // Lo que pinta React no se puede volver a vaciar: borrar sus hijos dejaría a la raíz
+    // apuntando a unos nodos que ya no están.
+    contenedor.innerHTML = "lo que ha dibujado React";
+    assert.equal(montarEn(contenedor, segunda, {}), true);
+
+    assert.equal(raicesCreadas.length, 1, "ha creado una raíz nueva en vez de reutilizarla");
+    assert.equal(renders.length, 2, "no ha vuelto a dibujar la pantalla nueva");
+    assert.equal(renders[1].elemento.props.nombre, "Ana");
+    assert.equal(contenedor.innerHTML, "lo que ha dibujado React", "ha vaciado la raíz viva");
+    assert.equal(raicesCreadas[0].desmontada, undefined, "ha desmontado la raíz que sigue en uso");
+  } finally {
+    if (anterior === undefined) delete globalThis.ReactDOM;
+    else globalThis.ReactDOM = anterior;
+  }
+});
+
+test("una raíz cuyo contenedor ya no está en el documento se desmonta", async () => {
+  // El armazón de una página que se sustituye entera, o una pantalla retirada: su raíz no se
+  // puede quedar viva para siempre. Se retira al montar la siguiente.
+  const raicesCreadas = [];
+  const anterior = globalThis.ReactDOM;
+  globalThis.ReactDOM = {
+    createRoot: (contenedor) => {
+      const raiz = {
+        contenedor,
+        render: () => {},
+        unmount: () => {
+          raiz.desmontada = true;
+        },
+      };
+      raicesCreadas.push(raiz);
+      return raiz;
+    },
+  };
+  try {
+    const { pantallaDeInicio } = await cargarInicio();
+    const retirado = { innerHTML: "", isConnected: false };
+    const vigente = { innerHTML: "", isConnected: true };
+    montarEn(retirado, pantallaDeInicio(propiedades()), {});
+    montarEn(vigente, pantallaDeInicio(propiedades()), {});
+
+    assert.equal(raicesCreadas.length, 2, "no ha montado las dos raíces");
+    assert.equal(raicesCreadas[0].desmontada, true, "la raíz del contenedor retirado sigue viva");
+    assert.equal(raicesCreadas[1].desmontada, undefined, "ha desmontado una raíz que sigue puesta");
+  } finally {
+    if (anterior === undefined) delete globalThis.ReactDOM;
+    else globalThis.ReactDOM = anterior;
+  }
+});
+
+test("desmontar deja el contenedor sin raíz y la cuenta lo dice", async () => {
+  const raicesCreadas = [];
+  const anterior = globalThis.ReactDOM;
+  globalThis.ReactDOM = {
+    createRoot: (contenedor) => {
+      const raiz = {
+        contenedor,
+        render: () => {},
+        unmount: () => {
+          raiz.desmontada = true;
+        },
+      };
+      raicesCreadas.push(raiz);
+      return raiz;
+    },
+  };
+  try {
+    const { pantallaDeInicio } = await cargarInicio();
+    const contenedor = { innerHTML: "", isConnected: true };
+    montarEn(contenedor, pantallaDeInicio(propiedades()), {});
+    const antes = { ...laCuentaDeLasRaices };
+
+    assert.equal(desmontarDe(contenedor), true, "no ha desmontado la raíz del contenedor");
+    assert.equal(raicesCreadas[0].desmontada, true, "la raíz sigue viva");
+    assert.equal(laCuentaDeLasRaices.desmontadas, antes.desmontadas + 1, "no se ha contado");
+    assert.equal(desmontarDe(contenedor), false, "dice que ha desmontado algo que ya no estaba");
+
+    // Al volver a montar, raíz nueva y limpia.
+    montarEn(contenedor, pantallaDeInicio(propiedades()), {});
+    assert.equal(raicesCreadas.length, 2, "no ha creado una raíz nueva después de desmontar");
+  } finally {
+    if (anterior === undefined) delete globalThis.ReactDOM;
+    else globalThis.ReactDOM = anterior;
+  }
+});
+
+test("el armazón también tiene una sola raíz y se puede desmontar", async () => {
+  const raicesCreadas = [];
+  const renders = [];
+  const anterior = globalThis.ReactDOM;
+  globalThis.ReactDOM = {
+    createRoot: (contenedor) => {
+      const raiz = {
+        contenedor,
+        render: (elemento) => renders.push({ raiz, elemento }),
+        unmount: () => {
+          raiz.desmontada = true;
+        },
+      };
+      raicesCreadas.push(raiz);
+      return raiz;
+    },
+  };
+  try {
+    const contenedor = { innerHTML: "", isConnected: true };
+    const antesDelMarco = montajesDelMarco.length;
+    assert.equal(montarFueraDeLaPantalla(contenedor, { type: "div", props: {} }), true);
+    assert.equal(montarFueraDeLaPantalla(contenedor, { type: "div", props: {} }), true);
+
+    assert.equal(raicesCreadas.length, 1, "crea una raíz del armazón en cada módulo");
+    assert.equal(renders.length, 2, "no actualiza el armazón al cambiar de módulo");
+    assert.equal(montajesDelMarco.length, antesDelMarco + 2, "no apunta los montajes del armazón");
+
+    desmontarDe(contenedor);
+    assert.equal(raicesCreadas[0].desmontada, true, "no ha desmontado el armazón");
+  } finally {
+    if (anterior === undefined) delete globalThis.ReactDOM;
+    else globalThis.ReactDOM = anterior;
+  }
+});
+
 
 // ---------------------------------------------------------------------------
 // La salida de emergencia: nunca una pantalla en blanco

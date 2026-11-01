@@ -55,7 +55,7 @@ import {
   validaPaso,
   validaSuperficie,
 } from "./nucleo.js";
-import { montarEn, montarFueraDeLaPantalla } from "./react/montar.js";
+import { desmontarDe, montarEn, montarFueraDeLaPantalla } from "./react/montar.js";
 // El enrutador (T04, 02/10/2026): traduce entre la dirección del navegador y la pantalla que se está
 // viendo. Aquí solo se usa: dónde vive cada cosa lo decide él (`react/rutas.js`), y este fichero se
 // encarga de lo que sí toca el navegador (`history`, `popstate`, la posición de la lista).
@@ -2735,7 +2735,14 @@ function vaciarElMarco() {
     // pantallas son de React, y hay una prueba que lo vigila (`test_la_migracion_a_react.py`). Vaciar un
     // contenedor no es montar HTML, pero se hace con la API del DOM igualmente, que además no interpreta
     // nada: quitar hijos no puede inventarse una etiqueta.
-    if (contenedor) contenedor.replaceChildren();
+    //
+    // **Antes se desmonta la raíz de React.** Quitarle los hijos a un contenedor que tiene una raíz
+    // viva deja a React apuntando a unos nodos que ya no están, y la próxima pantalla no se dibujaría
+    // bien. Al desmontar, la entrada se olvida y el siguiente montaje del armazón crea una raíz nueva.
+    if (contenedor) {
+      desmontarDe(contenedor);
+      contenedor.replaceChildren();
+    }
   } catch (fallo) {
     // Sin `#marco` (por ejemplo, en una prueba que monta la aplicación a medias) no hay nada que vaciar.
   }

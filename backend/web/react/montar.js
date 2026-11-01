@@ -29,8 +29,49 @@
  * Cada entrada es `{ contenedor, elemento, motor }`, y `motor` dice qué ha pasado de verdad:
  * `"react"` si ReactDOM lo ha montado, y `"apuntado"` si no había ReactDOM y solo se ha
  * apuntado (que es lo que pasa en las pruebas).
+ *
+ * **Los montajes de verdad no guardan el elemento** (ver `apuntarElMontaje`): las pruebas
+ * necesitan el historial entero y corren sin ReactDOM, pero en una jornada de trabajo la
+ * pantalla se pide a React cientos de veces y quedarse con cada árbol ya dibujado es una
+ * fuga. De esos montajes se recuerdan los últimos `RECUERDO_DE_MONTAJES`, sin el elemento.
  */
 export const montajes = [];
+
+/**
+ * Cuántos montajes hechos con React se recuerdan en `montajes` para poder mirarlos desde
+ * fuera (la auditoría y el medidor de memoria). No es un número de pantallas: es cuánto
+ * historial merece la pena conservar sin retener los árboles dibujados.
+ */
+export const RECUERDO_DE_MONTAJES = 20;
+
+/**
+ * Las raíces de React que están puestas, por contenedor.
+ *
+ * Una raíz por contenedor, no una por montaje. Se probó al revés (una raíz nueva cada vez)
+ * cuando la interfaz vieja vaciaba el contenedor con `innerHTML = …`, y esa época se acabó:
+ * hoy `montar()` es el único sitio que escribe en la pantalla, y una raíz que se tira sin
+ * desmontar se queda con sus nodos, sus efectos y sus referencias hasta que el recolector
+ * de basura la encuentra. En una sesión larga eso es una fuga, y el marco se monta en cada
+ * cambio de módulo.
+ *
+ * Es un `Map` (una referencia fuerte) y no un `WeakMap` porque hay que poder recorrerlo para
+ * desmontar las raíces cuyo contenedor ya se ha retirado del documento. El número de
+ * contenedores es fijo y pequeño (`#pantalla` y `#marco`), y el barrido quita los que se
+ * van; no crece con el uso.
+ */
+const raices = new Map();
+
+/**
+ * Cuántas raíces se han creado y desmontado desde que arrancó la página. Lo mira el medidor
+ * de memoria y la auditoría: si al recorrer la aplicación `creadas - desmontadas` no se queda
+ * en el número de contenedores que hay en el documento, hay una fuga.
+ */
+export const laCuentaDeLasRaices = { creadas: 0, desmontadas: 0 };
+
+/** Las raíces que siguen puestas ahora mismo. */
+export function raicesActivas() {
+  return raices.size;
+}
 
 /**
  * Lo que se ha pedido montar **fuera de la pantalla**: hoy, el armazón (el menú y la barra de arriba).
@@ -104,34 +145,30 @@ export function avisoSinReact(contenedor, aviso = {}) {
 /**
  * Monta un elemento de React en un contenedor. Devuelve `true` si lo ha montado de verdad.
  *
- * **Cada vez que se llama se crea una raíz nueva.** Se probó a guardar la raíz y reutilizarla
- * (que es lo normal en una aplicación entera de React) y aquí no vale: la interfaz vieja sigue
- * pintando las pantallas que no se han migrado con `pintar()`, que hace `innerHTML = …` sobre
- * este mismo contenedor. Con la raíz guardada, React seguiría creyendo que su pantalla está
- * puesta, no la volvería a dibujar y el agricultor vería la pantalla anterior. Con una raíz
- * nueva se vacía el contenedor y se dibuja entero, que es lo que se espera. El precio es que
- * las raíces viejas se quedan por ahí hasta que las recoja el recolector de basura; está
- * apuntado en `docs/REACT.md` como lo que queda por resolver.
+ * **Una raíz por contenedor, y se reutiliza.** El contenedor se vacía solo la primera vez,
+ * cuando se crea la raíz: a partir de ahí sus hijos son de React, y borrarlos a mano dejaría
+ * a la raíz apuntando a unos nodos que ya no están (React intentaría actualizarlos y no
+ * encontraría dónde). Si el elemento anterior era otro, `render` lo sustituye entero, que es
+ * justo lo que se espera al cambiar de pantalla.
  */
 export function montarEn(contenedor, elemento, avisoDeEmergencia = {}) {
   const ReactDOM = globalThis.ReactDOM;
   const puedeMontar = Boolean(ReactDOM) && typeof ReactDOM.createRoot === "function";
 
-  if (puedeMontar && elemento) {
-    montajes.push({ contenedor, elemento, motor: "react" });
-    contenedor.innerHTML = "";
-    const raiz = ReactDOM.createRoot(contenedor);
-    const renderizar = () => raiz.render(elemento);
-    // Quien monta restaura después posición y foco. createRoot.render programa
-    // el trabajo: sin confirmar aquí, esos consumidores ven el contenedor vacío.
-    if (typeof ReactDOM.flushSync === "function") ReactDOM.flushSync(renderizar);
-    else renderizar();
+  if (puedeMontar && elemento && contenedor) {
+    barrerLasRaicesRetiradas();
+    montarEnSuRaiz(contenedor, elemento, ReactDOM);
+    apuntarElMontaje({ contenedor, elemento: null, motor: "react", ligero: true });
     return true;
   }
 
   // Sin ReactDOM (las pruebas) o sin pantalla que montar (los ficheros de React no han
   // llegado): se apunta y se sigue. La aplicación tiene que arrancar igual.
   montajes.push({ contenedor, elemento: elemento || null, motor: "apuntado" });
+  // Si este contenedor tenía una raíz viva, se retira antes de escribir el aviso a mano:
+  // si no, React seguiría creyendo que la pantalla está puesta sobre unos nodos que el
+  // aviso acaba de borrar.
+  desmontarDe(contenedor);
   avisoSinReact(contenedor, avisoDeEmergencia);
   return false;
 }
@@ -147,12 +184,89 @@ export function montarFueraDeLaPantalla(contenedor, elemento) {
   if (!contenedor || !elemento) return false;
   const ReactDOM = globalThis.ReactDOM;
   const puedeMontar = Boolean(ReactDOM) && typeof ReactDOM.createRoot === "function";
-  montajesDelMarco.push({ contenedor, elemento });
-  if (!puedeMontar) return false;
-  contenedor.innerHTML = "";
-  const raiz = ReactDOM.createRoot(contenedor);
+  if (!puedeMontar) {
+    // Sin ReactDOM (las pruebas) el armazón se apunta con su elemento: hay pruebas de
+    // cableado que miran las propiedades que se le pasan.
+    montajesDelMarco.push({ contenedor, elemento });
+    return false;
+  }
+  barrerLasRaicesRetiradas();
+  montarEnSuRaiz(contenedor, elemento, ReactDOM);
+  apuntarElMontaje({ contenedor, elemento: null, motor: "react", ligero: true }, montajesDelMarco);
+  return true;
+}
+
+/**
+ * Monta (o vuelve a dibujar) en la raíz que ya tiene ese contenedor, creándola la primera vez.
+ *
+ * El vaciado del contenedor ocurre **solo al crear la raíz**. No lleva `innerHTML` de
+ * pantallas: es la preparación del contenedor vacío para el primer `render`, que es otra cosa
+ * (y la prueba de la migración lo distingue).
+ */
+function montarEnSuRaiz(contenedor, elemento, ReactDOM) {
+  let raiz = raices.get(contenedor);
+  if (!raiz) {
+    contenedor.innerHTML = "";
+    raiz = ReactDOM.createRoot(contenedor);
+    raices.set(contenedor, raiz);
+    laCuentaDeLasRaices.creadas += 1;
+  }
   const renderizar = () => raiz.render(elemento);
+  // Quien monta restaura después posición y foco. createRoot.render programa
+  // el trabajo: sin confirmar aquí, esos consumidores ven el contenedor vacío.
   if (typeof ReactDOM.flushSync === "function") ReactDOM.flushSync(renderizar);
   else renderizar();
+}
+
+/**
+ * Retira la raíz de React de un contenedor, si la tiene. Devuelve `true` si había algo que retirar.
+ *
+ * Se usa antes de escribir en el contenedor por otra vía (el aviso de emergencia) y al vaciar
+ * el armazón. Desmontar quita los nodos, los efectos y las referencias; además se olvida la
+ * entrada para que el siguiente montaje cree una raíz nueva y limpia.
+ */
+export function desmontarDe(contenedor) {
+  if (!contenedor || !raices.has(contenedor)) return false;
+  const raiz = raices.get(contenedor);
+  raices.delete(contenedor);
+  try {
+    const ReactDOM = globalThis.ReactDOM;
+    const desmontar = () => raiz.unmount();
+    if (ReactDOM && typeof ReactDOM.flushSync === "function") ReactDOM.flushSync(desmontar);
+    else desmontar();
+  } finally {
+    laCuentaDeLasRaices.desmontadas += 1;
+  }
   return true;
+}
+
+/**
+ * Desmonta las raíces cuyo contenedor ya no está en el documento (por ejemplo, el armazón de
+ * una página que se ha sustituido entera). Un contenedor de pruebas de mentira no tiene
+ * `isConnected`; solo se retira cuando dice **explícitamente** `false`.
+ */
+function barrerLasRaicesRetiradas() {
+  for (const contenedor of raices.keys()) {
+    if (contenedor && contenedor.isConnected === false) desmontarDe(contenedor);
+  }
+}
+
+/**
+ * Apunta un montaje para poder mirarlo desde fuera. Los de React van **sin el elemento** y
+ * solo se recuerdan los últimos: el árbol ya dibujado lo retiene la raíz, y quedarse además
+ * con una copia en una lista que no para de crecer era parte de la fuga.
+ */
+function apuntarElMontaje(entrada, lista = montajes) {
+  lista.push(entrada);
+  let ligeros = 0;
+  for (const montaje of lista) if (montaje.ligero) ligeros += 1;
+  let sobran = ligeros - RECUERDO_DE_MONTAJES;
+  for (let i = 0; sobran > 0 && i < lista.length; ) {
+    if (lista[i].ligero) {
+      lista.splice(i, 1);
+      sobran -= 1;
+    } else {
+      i += 1;
+    }
+  }
 }

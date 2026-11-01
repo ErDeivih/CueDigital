@@ -266,9 +266,14 @@ se entera**, y este párrafo es justo eso.
 
 **Ya no hay dos interfaces: solo React.** Hasta la ronda 72 convivían, porque las pantallas sin migrar se
 pintaban con `pintar(html)` (que hacía `innerHTML = …` sobre `#pantalla`). Con el asistente, esa función se
-borró y **el único sitio que escribe en la pantalla es `montar()`**. Se sigue creando **una raíz de React
-nueva cada vez** que se cambia de pantalla, que es lo que hace que un montaje no herede nada del anterior y
-que el contenedor se vacíe solo.
+borró y **el único sitio que escribe en la pantalla es `montar()`**. Desde la ronda 74 **hay una sola raíz
+de React por contenedor y se reutiliza**: `render` sustituye la pantalla entera y el contenedor solo se vacía
+la primera vez, al crear la raíz. Antes se creaba una raíz nueva en cada cambio (porque la interfaz vieja
+borraba el DOM de debajo), y eso dejaba vivas las raíces anteriores hasta que las recogía el recolector de
+basura: medido en la revisión del 19/10, una sesión de navegación pasaba de 2 a 101 raíces y de 2 a 102
+montajes retenidos con su elemento. Ahora se desmonta al vaciar el armazón (`desmontarDe`) y se barren las
+raíces cuyo contenedor ya no está en el documento; `laCuentaDeLasRaices` y `raicesActivas()` lo dejan medir
+desde fuera.
 
 ---
 
@@ -972,7 +977,10 @@ facturas, almacén y qué hay sembrado**, y con panel, las de **tierras y almac�
 2. **React está clavado en la 18.** La 19 no publica ficheros UMD, así que hoy no se puede subir sin
    volver a compilar (y sin Node donde corre esto, no se puede compilar). Está comprobado en
    `backend/tests/test_react_vendor.py`.
-3. **Cada montaje crea una raíz de React nueva.** Es lo que hace que las dos interfaces puedan convivir
-   (ver el apartado 3), pero las raíces viejas se quedan hasta que las recoja el recolector de basura,
-   con sus escuchadores enganchados al contenedor. En una sesión normal son unas decenas; el día que se
-   migre todo habrá que hacerlo bien (una sola raíz, o desmontar la anterior).
+3. **Una raíz de React por contenedor, y se desmonta cuando se retira.** Hasta la ronda 74 se creaba una
+   raíz nueva en cada montaje (era lo que hacía que las dos interfaces pudieran convivir, ver el apartado 3),
+   y las viejas se quedaban hasta que las recogía el recolector de basura, con sus escuchadores enganchados
+   al contenedor. Ahora `montar.js` guarda la raíz por contenedor, la reutiliza y la desmonta al vaciar el
+   armazón o al barrer los contenedores que ya no están en el documento. **Los montajes hechos con React se
+   apuntan sin el elemento y solo se recuerdan los últimos** (`RECUERDO_DE_MONTAJES`): el historial completo
+   se reserva para las pruebas, que corren sin ReactDOM y necesitan ver qué se les ha pedido montar.
