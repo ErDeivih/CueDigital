@@ -1,7 +1,7 @@
 # Ficha del agente — CueDigital — documentacion de control
 
 **Id en el panel**: `cuedigital`
-**Ruta**: `F:\EspacioCodigo\CueDigital`
+**Ruta**: `F:\Proyectos\CueDigital`
 **Rama de trabajo**: `integracion/cloud-estabilizacion-2026-10-21`
 **Familia de interfaz**: A — ver `F:\Inforepositorios\indice\RECETAS-UI.md`
 
