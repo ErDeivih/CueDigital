@@ -348,3 +348,108 @@ with el_servidor_temporal() as url:
 print(json.dumps(out,ensure_ascii=False,indent=2))
 
 No son pruebas de estrés multiusuario ni medida de MB retenidos.
+
+=== 04/11/2026 · D01: el instrumento, reparado y apuntando al camino real ===
+
+`node docs/revision-2026-10-19/reproducir-cola.mjs` (modo normal) abortaba en HEAD 8b5c4af:
+
+    ReferenceError: duenoDelTurno is not defined
+        at Object.mandarPendientes (evalmachine.<anonymous>:49:27)
+
+No era un defecto de la app: era el arnes, que extrae `mandarPendientes` de app.js y no inyectaba las dependencias
+que la funcion usa desde el 23-25/10 (`duenoDelTurno`, `identidadDeEjecucion`, `identidadPersistente`, `hayIndexedDb`).
+Un `exit 1` por ReferenceError se lee como «defecto reproducido» sin serlo. Reparado: los siete casos vuelven a
+correr, con **la cola de verdad** (`crearColaPorIntenciones`) y el buzon de rechazos, no con la cola de array.
+
+`--concurrencia` medía `crearCola`, la cola de ARRAY, que la aplicacion ya no usa para apuntar (`app.js:447` usa una
+clave por intencion; `crearCola` se importa y no se usa). Su `exit 1` ya no acreditaba una perdida en el camino real.
+Ahora mide el camino real y el viejo por separado, y el veredicto es del real:
+
+    camino real: conserva las dos intenciones · cola de array (ya no enchufada): sigue perdiendo
+    · turno sin IndexedDB: sin exclusion (declarado)
+    exit code 0
+
+Salida completa de los dos modos (misma fecha, mismo HEAD):
+{
+  "cambio_durante_primer_envio": {
+    "creador": "1:1",
+    "dueno_asignado": "1:1",
+    "correcto": true
+  },
+  "identidad_primer_envio": {
+    "primero_tiene_clave": true,
+    "misma_clave_en_reintento": true,
+    "correcto": true
+  },
+  "identidad_dos_instancias": {
+    "ids_distintos": true,
+    "quedan": 1,
+    "correcto": true
+  },
+  "almacen_bloqueado_desde_arranque": {
+    "fallback": "memoria",
+    "durable": false,
+    "correcto": true
+  },
+  "fallo_al_apartar": {
+    "pendientes": 1,
+    "rechazados": 0,
+    "dato_perdido": false,
+    "correcto": true
+  },
+  "respuesta_tardia_200": {
+    "persistencia": "origen A",
+    "cuenta_B_intacta": true,
+    "correcto": true
+  },
+  "respuesta_tardia_422": {
+    "persistencia": "origen A",
+    "cuenta_B_intacta": true,
+    "correcto": true
+  }
+}
+
+--- concurrencia ---
+{
+  "historico_apuntar": {
+    "esperados": [
+      "A",
+      "B"
+    ],
+    "conservados": [
+      "A"
+    ]
+  },
+  "historico_quitar": {
+    "esperados": [
+      "B"
+    ],
+    "conservados": []
+  },
+  "historico_turno_simultaneo": {
+    "A": true,
+    "B": true
+  },
+  "apuntar_del_camino_real": {
+    "esperados": [
+      "A",
+      "B"
+    ],
+    "conservados": [
+      "A",
+      "B"
+    ]
+  },
+  "quitar_del_camino_real": {
+    "esperados": [
+      "B"
+    ],
+    "conservados": [
+      "B"
+    ]
+  }
+}
+
+Lo que este instrumento NO prueba, y se queda dicho: dos pestanas REALES, ventanas con opener, recarga, cierre,
+caducidad con un POST pendiente, almacenamiento lleno y el retorno del dueno siguen sin arnes (navegador_cdp.py
+maneja un solo destino). Eso es la tarea 3 del BACKLOG, no esto.

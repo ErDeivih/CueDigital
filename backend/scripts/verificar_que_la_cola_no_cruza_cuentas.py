@@ -55,6 +55,18 @@ LA_COLA_ENTERA_JS = (
 COMPROBACIONES = 0
 FALLOS: list[str] = []
 
+# ***Dónde vive un rechazo, sea de la forma vieja o de la nueva*** (04/11/2026, **D01-R1**).
+#
+# *El array compartido era `cuedigital.rechazados.<cuenta>`; el buzón escribe `cuedigital.rechazado.<id_local>`. Mirar
+# solo una de las dos formas daría «no se apartó» cuando sí se apartó: **el fallo sería del instrumento, no de la app**
+# -el mismo acoplamiento que ya se corrigió en la cola de pendientes con `LA_COLA_ENTERA_JS`-.*
+#
+# *El prefijo corto los coge **los dos**, porque `cuedigital.rechazados…` empieza por `cuedigital.rechazado`.*
+LAS_CLAVES_DE_RECHAZOS_JS = (
+    "Object.keys(window.localStorage)"
+    ".filter(function (k) { return k.indexOf('cuedigital.rechazado') === 0; })"
+)
+
 
 def comprobar(bien: bool, que: str, encontre: str = "") -> bool:
     global COMPROBACIONES
@@ -204,11 +216,11 @@ def main() -> int:
                         "window.localStorage.setItem('cuedigital.pendientes', "
                         + json.dumps(json.dumps(la_cola_mala))
                         + ");"
-                        # ***La clave lleva dueno desde el 21/10***: *`cuedigital.rechazados.2:2`. Se borran todos
-                        # los cubos, para que el recorrido empiece limpio.*
-                        "Object.keys(window.localStorage)"
-                        ".filter(function (k) { return k.indexOf('cuedigital.rechazados') === 0; })"
-                        ".forEach(function (k) { window.localStorage.removeItem(k); });"
+                        # ***Y se borran los rechazos de las DOS formas*** (04/11/2026, D01-R1): *la lista vieja
+                        # -`cuedigital.rechazados.2:2`- y el buzón nuevo -`cuedigital.rechazado.<id>`-, para que el
+                        # recorrido empiece limpio.*
+                        + LAS_CLAVES_DE_RECHAZOS_JS
+                        + ".forEach(function (k) { window.localStorage.removeItem(k); });"
                     )
                 },
             )
@@ -223,11 +235,11 @@ def main() -> int:
             for _intento in range(45):
                 los_rechazados = (
                     nav.evaluar(
-                        # ***Se leen TODOS los cubos de rechazados***: *la clave lleva dueno -`...rechazados.2:2`-,
-                        # y buscar solo la global daba «no se aparto» cuando sí se habia apartado.*
-                        "(() => { try { return Object.keys(window.localStorage)"
-                        ".filter(function (k) { return k.indexOf('cuedigital.rechazados') === 0; })"
-                        ".map(function (k) { return window.localStorage.getItem(k) || ''; }).join(''); }"
+                        # ***Se leen TODOS los rechazos, de las dos formas*** (04/11/2026, D01-R1): *la lista vieja,
+                        # que lleva dueño en la clave, y el buzón nuevo, que lleva una clave por rechazo. Buscar solo
+                        # una de las dos formas daba «no se apartó» cuando sí se había apartado.*
+                        "(() => { try { return " + LAS_CLAVES_DE_RECHAZOS_JS
+                        + ".map(function (k) { return window.localStorage.getItem(k) || ''; }).join(''); }"
                         " catch (e) { return ''; } })()"
                     )
                     or ""

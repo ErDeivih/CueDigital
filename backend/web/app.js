@@ -1045,6 +1045,11 @@ async function mandarPendientes() {
       suyos,
       cola,
       claveRechazados: laClaveRechazados,
+      // ***Y los rechazos van al BUZÓN, no al array compartido*** (04/11/2026, **D01-R1**): *una clave por rechazo,
+      // así que dos rechazos a la vez **no se pisan**. `claveRechazados` se queda como el camino de siempre para el
+      // día que no haya buzón: **el enchufe no se queda a medias** —se conectan las dos orillas, la escritura y la
+      // lectura (`pintarAvisoPendientes`)—, que es lo que hizo fallar el recorrido de la cola la vez anterior.*
+      buzon: cola.rechazos,
       api: (apunte) =>
         api(apunte.ruta, {
           method: "POST",
@@ -1088,7 +1093,27 @@ async function mandarPendientes() {
 
 function pintarAvisoPendientes() {
   const cuantos = cola.tamano();
-  const rechazados = leer(laClaveDe(CLAVE_RECHAZADOS), []);
+  // ***Los rechazos se leen del BUZÓN*** (04/11/2026, **D01-R1**): *una clave por rechazo, la misma que escribe el
+  // vaciado. Antes se leía la lista compartida `cuedigital.rechazados.<cuenta>`: conectar solo la escritura habría
+  // dejado a la pantalla **mintiendo** —el rechazo guardado en un sitio y el aviso mirando otro—, y eso es peor que
+  // el defecto.*
+  //
+  // ***Y lo que quedara en las listas viejas se trae primero***: *si no, el agricultor actualizaría el programa y sus
+  // rechazos de antes desaparecerían de la pantalla sin decir nada. La migración comprueba antes de borrar y conserva
+  // lo que no se puede leer.*
+  try {
+    cola.rechazos.migrarSiHaceFalta(ALMACEN);
+  } catch (error) {
+    /* *si no se puede migrar, se lee lo que haya: no se pierde nada por no poder migrar* */
+  }
+  // ***Y cada uno ve los suyos***: *el dueño va dentro del rechazo. Los que no lo llevan -de antes de que hubiera
+  // dueño- se enseñan solo cuando no hay nadie dentro, que es lo mismo que hacía la clave vieja; enseñárselos a
+  // quien esté dentro sería volver al fallo de «un rechazo de A se le enseña a B».*
+  const laCuentaDelAviso = laSesionDeAhora();
+  const rechazados = cola.rechazos
+    .leer()
+    .filter((uno) => !uno.corrupto)
+    .filter((uno) => (laCuentaDelAviso ? uno.cuenta === laCuentaDelAviso : !uno.cuenta));
   if (cuantos === 0 && rechazados.length === 0) {
     avisoPendientes.classList.add("oculto");
     avisoPendientes.className = "aviso oculto";

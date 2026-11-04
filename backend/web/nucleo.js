@@ -1420,6 +1420,145 @@ export function crearBuzonDeRechazos(almacen, prefijo = "cuedigital.rechazado.")
     tamano() {
       return this.leer().length;
     },
+
+    /**
+     * ***Trae al buzón los rechazos que quedaron en el array viejo*** (04/11/2026, **D01-R1**).
+     *
+     * *Hasta hoy, cada cuenta guardaba sus rechazos en **una lista** —`cuedigital.rechazados.<cuenta>`—, y dos
+     * vaciados a la vez **se pisaban**: uno de los dos rechazos desaparecía. El buzón nuevo escribe **una clave por
+     * rechazo**, pero lo que ya está en las listas viejas hay que traerlo o se queda invisible para siempre.*
+     *
+     * ***Las reglas son las mismas que en la migración de pendientes***: *cada rechazo pasa **con su dueño, su
+     * motivo, su ruta y su clave de reenvío**; se comprueba que está en su clave y **solo entonces** se borra la
+     * lista vieja; y si el origen **ha cambiado** entre la comprobación y el borrado —cabe una pestaña vieja
+     * escribiendo— **no se borra**. Una lista rota **se conserva**, no se convierte en «no hay rechazos».*
+     *
+     * ***Devuelve lo que ha hecho*** (`migrados`, `borradas`, `corruptos`, `fallidos`), porque un registro que no
+     * se puede comprobar no se puede dar por bueno en silencio.
+     */
+    migrarDesde(almacenViejo = null, prefijoViejo = "cuedigital.rechazados") {
+      const elSitio = almacenViejo || almacen;
+      /** ***El dueño, si la clave vieja lo lleva***: `…rechazados.1:1`. Si no, **se queda sin dueño** y no se adivina. */
+      const elDuenoDeLaClave = (clave) => {
+        const resto = String(clave).slice(String(prefijoViejo).length);
+        const elQueLlevaDueno = /^\.(\d+:\d+)$/.exec(resto);
+        return elQueLlevaDueno ? elQueLlevaDueno[1] : null;
+      };
+      const lasClavesViejas = [];
+      let cuantas = 0;
+      try {
+        cuantas = Number(elSitio.length) || 0;
+      } catch (error) {
+        cuantas = 0;
+      }
+      for (let i = 0; i < cuantas; i += 1) {
+        let clave = null;
+        try {
+          clave = elSitio.key(i);
+        } catch (error) {
+          clave = null;
+        }
+        // *El prefijo nuevo (`cuedigital.rechazado.`) **no** empieza por el viejo (`cuedigital.rechazados`).*
+        if (typeof clave === "string" && clave.startsWith(prefijoViejo)) lasClavesViejas.push(clave);
+      }
+      let migrados = 0;
+      let borradas = 0;
+      let corruptos = 0;
+      let fallidos = 0;
+      for (const clave of lasClavesViejas) {
+        let bruto = null;
+        try {
+          bruto = elSitio.getItem(clave);
+        } catch (error) {
+          bruto = null;
+        }
+        if (bruto === null || bruto === undefined) continue;
+        const laHuellaDelOrigen = laHuella(bruto);
+        let viejos = null;
+        if (Array.isArray(bruto)) {
+          viejos = bruto;
+        } else {
+          try {
+            viejos = JSON.parse(bruto);
+          } catch (error) {
+            // *No se toca: se conserva para poder recuperarlo a mano.*
+            corruptos += 1;
+            continue;
+          }
+        }
+        if (!Array.isArray(viejos)) {
+          corruptos += 1;
+          continue;
+        }
+        const elDueno = elDuenoDeLaClave(clave);
+        const losIntentados = [];
+        let fallosAqui = 0;
+        for (const viejo of viejos) {
+          if (!viejo || typeof viejo !== "object") {
+            // *Una entrada que no es un objeto no se descarta en silencio: cuenta como fallo.*
+            fallosAqui += 1;
+            continue;
+          }
+          // ***El dueño de la clave NO pisa al que ya lleva el registro***: *si el rechazo ya decía de quién era,
+          // manda él; la clave solo rellena el hueco de los antiguos, que no lo llevaban.*
+          const elApunte = this.apuntar({ ...viejo, cuenta: viejo.cuenta || elDueno });
+          losIntentados.push(elApunte);
+          if (elApunte.guardado) migrados += 1;
+          else fallosAqui += 1;
+        }
+        const estanTodos =
+          fallosAqui === 0 &&
+          losIntentados.length === viejos.length &&
+          losIntentados.every((uno) => {
+            try {
+              return elSitio.getItem(prefijo + uno.id_local) !== null;
+            } catch (error) {
+              return false;
+            }
+          });
+        // ***Y solo se borra el origen si está todo Y no ha cambiado***: *borrar una lista que otro acaba de usar
+        // perdería lo suyo; y si ha cambiado, el siguiente `migrarSiHaceFalta` se lleva lo nuevo.*
+        let elOrigenSigueIgual = false;
+        try {
+          elOrigenSigueIgual = laHuella(elSitio.getItem(clave)) === laHuellaDelOrigen;
+        } catch (error) {
+          elOrigenSigueIgual = false;
+        }
+        if (estanTodos && elOrigenSigueIgual) {
+          try {
+            elSitio.removeItem(clave);
+            borradas += 1;
+          } catch (error) {
+            /* *si no se puede borrar, se queda: la segunda pasada lo reconoce por su id y no duplica* */
+          }
+        }
+        if (fallosAqui) fallidos += 1;
+      }
+      return { migrados, borradas, corruptos, fallidos };
+    },
+
+    /** *Lo mismo, pero solo si queda alguna lista vieja: es lo que llama la pantalla antes de leer.* */
+    migrarSiHaceFalta(almacenViejo = null, prefijoViejo = "cuedigital.rechazados") {
+      const elSitio = almacenViejo || almacen;
+      let cuantas = 0;
+      try {
+        cuantas = Number(elSitio.length) || 0;
+      } catch (error) {
+        cuantas = 0;
+      }
+      for (let i = 0; i < cuantas; i += 1) {
+        let clave = null;
+        try {
+          clave = elSitio.key(i);
+        } catch (error) {
+          clave = null;
+        }
+        if (typeof clave === "string" && clave.startsWith(prefijoViejo)) {
+          return this.migrarDesde(elSitio, prefijoViejo);
+        }
+      }
+      return null;
+    },
   };
 }
 

@@ -15056,6 +15056,67 @@ test("los rechazos de una cuenta no los ve otra", async () => {
 });
 
 // ---------------------------------------------------------------------------
+// ***D01-R1: un rechazo se guarda en el buzón, y la pantalla lo lee de ahí*** (04/11/2026)
+// ---------------------------------------------------------------------------
+//
+// *El defecto que cierra esto*: *dos rechazos que llegan a la vez leían la misma lista y cada uno escribía la suya;
+// **uno de los dos desaparecía** —no quedaba pendiente ni rechazado—. El buzón escribe **una clave por rechazo**.
+//
+// *Y lo que vigila esta prueba*: **el enchufe**. Conectar solo la escritura dejó a la pantalla leyendo la lista vieja
+// y mintiendo (el recorrido de la cola pasó a 9 con 2 fallos; ver `docs/...`, commit `d8f64ad`). Aquí se comprueba
+// **la orilla que escribe y la que lee**, a la vez.*
+
+test("***un rechazo se guarda en una clave suya y la pantalla lo dice leyéndolo de ahí***", async () => {
+  const unVale = Buffer.from(JSON.stringify({ uid: 1, eid: 1 })).toString("base64url") + ".firma";
+  const elApunte = [
+    {
+      id_local: "p-rechazo-del-buzon",
+      ruta: "/api/trabajos",
+      datos: { tipo: "laboreo", clave_de_reenvio: "p-rechazo-del-buzon" },
+      cuenta: "1:1",
+      apuntado_en: "2026-10-21T08:00:00.000Z",
+    },
+  ];
+
+  const { entorno } = await cargarAplicacion(
+    { "/api/trabajos": falla({ detail: "Esa tierra no es tuya." }, 422) },
+    {
+      // *Se siembra la cola vieja (el array) para que la migración de arranque deje el pendiente en su clave.*
+      almacen: { "cuedigital.pendientes": elApunte },
+      almacenCrudo: { "cuedigital.token": unVale },
+    },
+  );
+  // *Se le da tiempo al vaciado, que arranca cuando se sabe quién está dentro.*
+  await new Promise((resolver) => setTimeout(resolver, 250));
+
+  const elAlmacen = entorno.window.localStorage;
+  const lasClaves = Array.from({ length: elAlmacen.length }, (_uno, i) => elAlmacen.key(i));
+  const lasDelBuzon = lasClaves.filter((clave) => clave.startsWith("cuedigital.rechazado."));
+  const lasDeLaLista = lasClaves.filter((clave) => clave.startsWith("cuedigital.rechazados"));
+
+  assert.equal(
+    lasDelBuzon.length,
+    1,
+    `***el rechazo tiene que quedar en SU clave, no en una lista compartida***: ${JSON.stringify(lasClaves)}`,
+  );
+  assert.match(
+    String(elAlmacen.getItem(lasDelBuzon[0])),
+    /p-rechazo-del-buzon/,
+    "***y con lo que se mandó, para poder recuperarlo***",
+  );
+  assert.deepEqual(
+    lasDeLaLista,
+    [],
+    `***la lista compartida ya no se escribe: dos rechazos a la vez se pisaban***: ${JSON.stringify(lasDeLaLista)}`,
+  );
+
+  // ***Y la pantalla lo dice, leyéndolo del buzón***: *si leyera la lista vieja, aquí no habría nada que enseñar.*
+  const elAviso = entorno.nodos.get("aviso-pendientes");
+  const loQueSeVe = `${elAviso.innerHTML || ""} ${elAviso.textContent || ""}`;
+  assert.match(loQueSeVe, /Esa tierra no es tuya/, `***el motivo tiene que llegar a la pantalla***: ${loQueSeVe}`);
+});
+
+// ---------------------------------------------------------------------------
 // ***D03: un fallo no es un cero*** (21/10/2026)
 // ---------------------------------------------------------------------------
 

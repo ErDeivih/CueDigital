@@ -12,6 +12,7 @@ justo lo que construye `test_aceptacion_copia_y_migracion.py`. **Se reutiliza, n
 from __future__ import annotations
 
 import importlib.util
+import os
 import pathlib
 import sqlite3
 import subprocess
@@ -58,14 +59,30 @@ def _las_zonas(ruta: pathlib.Path) -> list[tuple]:
 
 
 def _migrar(ruta: pathlib.Path) -> int:
-    """*Se pasa la migracion de verdad, como la pasaria quien la usara.*"""
-    return subprocess.run(  # noqa: S603
+    """*Se pasa la migracion de verdad, como la pasaria quien la usara.*
+
+    ***Y si falla, se dice por que*** (04/11/2026): *el `returncode` solo no cuenta nada; con la salida del guion
+    delante, el fallo se diagnostica sin volver a reproducirlo a mano.*
+
+    ***Y la salida del guion va en UTF-8, pase lo que pase con la consola*** (04/11/2026): *en Windows, con la
+    consola en cp1252 y la salida capturada en una tuberia, el guion **revienta al imprimir** un carácter que esa
+    página de códigos no tiene, y devuelve 1 aunque la migracion haya ido bien. **Fallaba el andamio, no el
+    código** —el mismo fallo que `AGENTS.md` avisa que pasa con los `print` con tildes—, y hacia que la suite
+    dependiera de una variable de entorno puesta a mano. Un test no puede depender del idioma de la consola.*
+    """
+    resultado = subprocess.run(  # noqa: S603
         [sys.executable, str(EL_GUION), "--base", str(ruta), "--migrar"],
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
-    ).returncode
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+    )
+    if resultado.returncode != 0:
+        print("--- el guion de la migracion ha fallado ---")
+        print("stdout:", resultado.stdout[-4000:])
+        print("stderr:", resultado.stderr[-4000:])
+    return resultado.returncode
 
 
 def test_la_migracion_de_los_nitratos_pasada_dos_veces_deja_lo_mismo(tmp_path):

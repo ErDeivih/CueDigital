@@ -81,3 +81,135 @@ test("***un rechazo corrupto no se convierte en «no hay rechazados»***", () =>
   assert.equal(elBuzon.tamano(), 1);
   assert.equal(elBuzon.losCorruptos().length, 1, "***se ve que está roto, en vez de desaparecer***");
 });
+
+// ---------------------------------------------------------------------------
+// ***Lo que quedó en la lista vieja, se trae al buzón*** (04/11/2026, D01-R1)
+// ---------------------------------------------------------------------------
+//
+// *Hasta hoy cada cuenta guardaba sus rechazos en **una lista** (`cuedigital.rechazados.<cuenta>`). Al pasar al
+// buzón, lo que ya estaba en esas listas **no puede quedarse invisible**: se migra, con la misma regla que la cola de
+// pendientes —comprobar antes de borrar, y conservar lo que no se puede leer—.*
+
+const LA_LISTA_VIEJA = JSON.stringify([
+  { id_local: "viejo-1", ruta: "/api/trabajos", datos: { nota: "una", clave_de_reenvio: "r-1" }, motivo: "no vale" },
+  { id_local: "viejo-2", ruta: "/api/gastos", cuenta: "2:2", motivo: "tampoco" },
+]);
+
+test("***una lista vieja se trae al buzón, con su dueño, y no se borra hasta comprobarla***", () => {
+  const elAlmacen = crearAlmacenMemoria({ "cuedigital.rechazados.1:1": LA_LISTA_VIEJA });
+  const elBuzon = crearBuzonDeRechazos(elAlmacen);
+
+  const elParte = elBuzon.migrarDesde();
+
+  assert.equal(elParte.migrados, 2);
+  assert.equal(elParte.borradas, 1);
+  assert.equal(elAlmacen.getItem("cuedigital.rechazados.1:1"), null, "***verificado que están, el origen se va***");
+  const losSuyos = elBuzon.leer();
+  assert.deepEqual(losSuyos.map((uno) => uno.id_local).sort(), ["viejo-1", "viejo-2"]);
+  assert.equal(
+    losSuyos.find((uno) => uno.id_local === "viejo-1").cuenta,
+    "1:1",
+    "***el dueño de la clave rellena el hueco de los que no lo llevaban***",
+  );
+  assert.equal(
+    losSuyos.find((uno) => uno.id_local === "viejo-2").cuenta,
+    "2:2",
+    "***y el dueño que ya traía el registro no se pisa***",
+  );
+  assert.equal(
+    losSuyos.find((uno) => uno.id_local === "viejo-1").datos.clave_de_reenvio,
+    "r-1",
+    "***con su clave original: recuperarlo no puede crear una intención duplicada***",
+  );
+});
+
+test("***migrar dos veces no duplica nada***", () => {
+  const elAlmacen = crearAlmacenMemoria({ "cuedigital.rechazados.1:1": LA_LISTA_VIEJA });
+  const elBuzon = crearBuzonDeRechazos(elAlmacen);
+  elBuzon.migrarDesde();
+
+  const laSegunda = elBuzon.migrarDesde();
+
+  assert.equal(laSegunda.migrados, 0, "***el origen ya no está: no hay nada que traer***");
+  assert.equal(elBuzon.tamano(), 2, "***y no se ha duplicado ni uno***");
+});
+
+test("***una lista rota se conserva y no se convierte en «no hay rechazos»***", () => {
+  const elAlmacen = crearAlmacenMemoria({ "cuedigital.rechazados.1:1": "{roto" });
+  const elBuzon = crearBuzonDeRechazos(elAlmacen);
+
+  const elParte = elBuzon.migrarDesde();
+
+  assert.equal(elParte.corruptos, 1);
+  assert.equal(elParte.borradas, 0, "***no se borra lo que no se ha podido leer***");
+  assert.equal(elAlmacen.getItem("cuedigital.rechazados.1:1"), "{roto", "***el original sigue ahí***");
+});
+
+test("***si no se puede guardar, la lista vieja NO se borra***", () => {
+  const base = crearAlmacenMemoria({ "cuedigital.rechazados.1:1": LA_LISTA_VIEJA });
+  const elRoto = {
+    esDurable: true,
+    getItem: (k) => base.getItem(k),
+    setItem: (k, v) => {
+      if (String(k).startsWith("cuedigital.rechazado.")) throw new Error("sin sitio");
+      base.setItem(k, v);
+    },
+    removeItem: (k) => base.removeItem(k),
+    get length() {
+      return base.length;
+    },
+    key: (i) => base.key(i),
+  };
+
+  const elParte = crearBuzonDeRechazos(elRoto).migrarDesde();
+
+  assert.equal(elParte.migrados, 0);
+  assert.equal(elParte.borradas, 0, "***no se borra lo que no se ha copiado***");
+  assert.equal(base.getItem("cuedigital.rechazados.1:1"), LA_LISTA_VIEJA, "***y el origen sigue entero***");
+});
+
+test("***si el origen CAMBIA entre la comprobación y el borrado, no se borra***", () => {
+  const base = crearAlmacenMemoria({ "cuedigital.rechazados.1:1": LA_LISTA_VIEJA });
+  let elPrimero = true;
+  const elQueCambiaElOrigen = {
+    esDurable: true,
+    getItem: (k) => base.getItem(k),
+    setItem: (k, v) => {
+      base.setItem(k, v);
+      // *Una pestaña vieja apunta otro rechazo justo mientras se migra.*
+      if (elPrimero) {
+        elPrimero = false;
+        base.setItem(
+          "cuedigital.rechazados.1:1",
+          JSON.stringify([...JSON.parse(LA_LISTA_VIEJA), { id_local: "recien-llegado", motivo: "nuevo" }]),
+        );
+      }
+    },
+    removeItem: (k) => base.removeItem(k),
+    get length() {
+      return base.length;
+    },
+    key: (i) => base.key(i),
+  };
+
+  const elParte = crearBuzonDeRechazos(elQueCambiaElOrigen).migrarDesde();
+
+  assert.equal(elParte.borradas, 0, "***borrar una lista que otro acaba de usar perdería lo suyo***");
+  assert.ok(
+    String(base.getItem("cuedigital.rechazados.1:1")).includes("recien-llegado"),
+    "***y lo que llegó después sigue donde estaba***",
+  );
+});
+
+test("***el buzón nuevo no se confunde con la lista vieja***", () => {
+  const elAlmacen = crearAlmacenMemoria({
+    "cuedigital.rechazado.ya": JSON.stringify({ id_local: "ya", motivo: "de antes" }),
+  });
+  const elBuzon = crearBuzonDeRechazos(elAlmacen);
+
+  const elParte = elBuzon.migrarDesde();
+
+  assert.equal(elParte.migrados, 0, "***el buzón no se migra a sí mismo***");
+  assert.equal(elBuzon.tamano(), 1);
+  assert.equal(elBuzon.leer()[0].motivo, "de antes");
+});

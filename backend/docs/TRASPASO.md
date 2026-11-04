@@ -32,6 +32,14 @@ humo         «RESULTADO: todo correcto»
 | **identidad de ejecución**, separada de la persistente (que se copia con `opener`) | `nucleo.js` → `identidadDeEjecucion`, `duenoDelTurno` | `tests_js/identidad_de_ejecucion.test.js` — 4 pruebas |
 | **turno transaccional** (exclusión de verdad) | `nucleo.js` + `web/cola_en_indexeddb.js` | `tests_js/turno_transaccional.test.js` (6) **y** `scripts/verificar_la_cola_en_indexeddb.py` — **en Chromium**: dos a la vez y **gana una** |
 | **el turno en la app**, por transacción cuando hay IndexedDB | `app.js` → `mandarPendientes` | *el recorrido de la cola, 9/9* |
+| **los rechazos, uno por clave** (R1), **enchufado en las dos orillas** y con migración de la lista vieja | `nucleo.js` → `crearBuzonDeRechazos` · `app.js` → `vaciarLaCola({ buzon: cola.rechazos })` y `pintarAvisoPendientes` | `tests_js/buzon_de_rechazos.test.js` — **11 pruebas**, 6 de ellas de la migración · `tests_js/interfaz.test.js` — *la del enchufe: se guarda en una clave propia y **la pantalla lo lee de ahí*** · el recorrido de la cola, **9/9** con el instrumento leyendo las dos formas |
+| **el instrumento de la revisión**, reparado y apuntando al camino real | `docs/revision-2026-10-19/reproducir-cola.mjs` + `reproducciones.txt` | *los siete casos vuelven a correr* · `--concurrencia` informa por separado **camino real** (conserva las dos intenciones), **cola de array** (sigue perdiendo; ya no enchufada) y **turno sin IndexedDB** (sin exclusión, declarado) · salida completa en `reproducciones.txt` |
+
+***Lo último, con fecha*** *(04/11/2026)*: *los rechazos dejan de escribirse en el array compartido —donde dos a la vez
+**se pisaban**— y pasan a un buzón de **una clave por rechazo**. La pantalla los lee de ahí, no de la lista. Lo que
+quedara en las listas viejas **se migra al arrancar**: se comprueba que está, y solo entonces se borra el origen; un
+JSON corrupto **se conserva**; y si el origen cambia entre la comprobación y el borrado —una pestaña vieja
+escribiendo— **no se borra**. El motivo y la reversibilidad están en `/DECISIONES.md`.*
 
 ### ***Lo que falta, y es lo que impide cerrar D01***
 
