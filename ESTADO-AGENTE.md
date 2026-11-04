@@ -1,9 +1,9 @@
 titulo: CueDigital — documentacion de control
 estado: en-curso
-tarea: D01-R1 cerrado (el buzon de rechazos, en las dos orillas) y el instrumento de D01 reparado
+tarea: D01-R1 cerrado; D08 con regla de decisión (dos opciones, la más barata que cumpla)
 nivel: 2
-siguiente: D01-A — aceptacion con dos pestanas reales (arnes CDP con sessionId)
-bloqueado: ¿que corpus de documentos y que proveedor para D08? (nivel 3)
+siguiente: propuesta de corpus y proveedor para D08
+bloqueado: 
 fecha: 2026-11-04
 
 ## Lo que se ha hecho en esta sesion
