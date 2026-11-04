@@ -14,7 +14,90 @@
   que toque, y `commit` + `push`. Sin push no está terminado.
 - Lo que no esté claro de alcance = **Nivel 3**: se marca aquí y se sigue con otra tarea.
 
-## Orden por valor (el primero es el que se hace)
+## Alcance nuevo (2026-11-04): el producto agrícola
+
+> David cambió el rumbo: **la interfaz anterior no le gustaba y el producto se rehace** como la
+> herramienta digital del agricultor de Castilla y León. Manda [`ALCANCE-AGRICOLA.md`](ALCANCE-AGRICOLA.md).
+> La investigación está en [`docs/INVESTIGACION-AGRICOLA.md`](docs/INVESTIGACION-AGRICOLA.md) y la
+> propuesta de pantallas en [`docs/ARQUITECTURA-DE-PANTALLAS.md`](docs/ARQUITECTURA-DE-PANTALLAS.md).
+> **Lo de abajo (D01, D07, EST…) queda en pausa** salvo lo que sirva a este alcance; **D08 quedó
+> decidido** (corpus pendiente de material de David) y no se persigue ahora.
+
+### AGR-0 · Investigación, arquitectura y primer paquete visual — **HECHO (2026-11-04)**
+
+- **Nivel**: 2.
+- **Qué hay**: cuatro líneas de investigación con **URL y fecha en cada afirmación** y lo pendiente
+  marcado (`docs/INVESTIGACION-AGRICOLA.md`: SIGPAC, PAC/subvenciones, cuaderno digital, competencia);
+  la propuesta de **11 pantallas P0 con flujos, estados y fases** (`docs/ARQUITECTURA-DE-PANTALLAS.md`);
+  el **sistema de diseño** agrícola (`designs/cue-agricola-design-system/`, contraste AA calculado) y
+  los **artboards** (`designs/cue-agricola/`) para revisar el aspecto antes de implementar.
+- **Comprobado el 04/11/2026**: `/IUWS/api/version` contesta 200 sin certificado (v3.11.4); la
+  convocatoria PAC 2026 en BOCYL (1-feb→30-abr, ampliada al 15-may); el SIGPAC publica GeoPackage por
+  provincia con licencia CC BY 4.0; la vía de CyL prohíbe la explotación comercial de su SHP.
+- **Pendiente**: la aprobación de David (AGR-1).
+
+### AGR-1 · Aprobación de David: arquitectura y aspecto — **ESPERANDO (nivel 3)**
+
+- **Nivel**: 3 (decisión de producto).
+- **Preguntas exactas**: están en el apartado 9 de `docs/ARQUITECTURA-DE-PANTALLAS.md` — navegación
+  (5 destinos en móvil y barra lateral en PC), portada «Hoy», orden de las fases, alcance de la
+  primera PAC (paquete preparatorio vs guardar también la solicitud presentada), marca/color y datos
+  de ejemplo de los artboards.
+- **Sin esto no se implementa** la interfaz: solo se prepara lo que no depende de la decisión.
+
+### AGR-2 · Armazón nuevo + «Hoy» + «Mis parcelas»
+
+- **Nivel**: 2. **Siguiente en cuanto AGR-1 esté aprobado.**
+- **Criterio**: la navegación nueva se recorre en navegador a **390, 1024 y 1440 px**, con los cuatro
+  estados (vacío, cargando, error, sin permiso), y **la interfaz anterior sigue sirviendo** hasta que
+  la nueva cubra cada recorrido.
+
+### AGR-3 · Traer las parcelas del SIGPAC en lote
+
+- **Nivel**: 2.
+- **Qué**: descarga del **GeoPackage por provincia** del FEGA (campaña actual y anterior), caché
+  local, y guardar por recinto `uso_sigpac`, `coef_regadio`, `region` y `admisibilidad` (CSP, `float |
+  None`: nulo = no consta). Licencia: CC BY 4.0 con cita al FEGA y al Catastro al distribuir recintos.
+- **Criterio**: pruebas contra el ejemplo guardado (sin internet) y humo contra el FEGA; un recinto
+  de verdad con su mapa y su ficha; ningún dato inventado donde el SIGPAC trae nulo.
+
+### AGR-4 · Correcciones documentales de la investigación
+
+- **Nivel**: 1.
+- **Qué**: las seis del apartado 8 de `docs/INVESTIGACION-AGRICOLA.md`: documentar el GeoPackage en
+  `docs/SERVICIOS_DEL_SIGPAC.md`; añadir la cita al Catastro y la regla de capas no HVD; documentar la
+  vía CyL y su restricción comercial; tipar `Recinto.admisibilidad` como `float | None` (CSP); corregir
+  la atribución del «contenido mínimo» (anexo II son 4 apartados); añadir la disposición final novena y
+  las exenciones del plan de abonado.
+
+### AGR-5 · Apuntar en 30 segundos (los 8 datos mínimos) y cola sin cobertura
+
+- **Nivel**: 2.
+- **Criterio**: un tratamiento apuntado en el móvil en 3 pantallas y ≤8 campos; se puede guardar en el
+  móvil y llega solo al recuperar la red; el apunte rechazado se aparta con su motivo; los 3 datos
+  restantes (eficacia, observaciones) se completan al cerrar el día sin invalidar el apunte.
+
+### AGR-6 · Paquete PAC: superficies, región y lo que falta
+
+- **Nivel**: 2.
+- **Criterio**: por recinto, superficie SIGPAC frente a cultivada, cultivo, región y lo que falta;
+  cargar la convocatoria como fuente versionada (hoy `la_fuente` es `null`); enlace al trámite exacto;
+  **no se presenta ni se firma desde el programa** (la vía oficial es la app de la Junta con certificado).
+
+### AGR-7 · Preguntar a la administración lo que solo ella puede contestar
+
+- **Nivel**: 3 (depende de terceros).
+- **Qué**: licencia del SHP SIGPAC de CyL (CIT); campañas históricas y cupos (FEGA); licencia PNOA
+  (IGN); especificación del `.xlsx` del Cuecyl, valores de los catálogos, volcado mensual y código de
+  DGC (Junta/FEGA). Las preguntas exactas están en el apartado 7.3 de la investigación.
+
+### AGR-8 · Exportar PDF/Excel y el Cuecyl de ida y vuelta
+
+- **Nivel**: 2.
+- **Criterio**: se exporta **lo filtrado** con fecha y fuente; el fichero del Cuecyl se lee, se rellena
+  y se vuelve a exportar sin duplicar tierras ni pisar lo escrito (`app/cuaderno_cyl.py` ya lo hace).
+
+## Trabajo anterior (en pausa, por si vuelve)
 
 ### 1. D01-R1 · El buzón de rechazos, conectado en las dos orillas — **HECHO (2026-11-04)**
 

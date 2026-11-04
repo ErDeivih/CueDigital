@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": { "v": 1, "at": "2026-11-04T19:20:00Z" },
+  "title": "CueDigital — sistema de diseño agrícola",
+  "namespace": "CueDigital",
+  "libraries": [],
+  "sections": {},
+  "groups": [],
+  "assetGroups": {},
+  "blobs": {},
+  "docs": { "readme": "project/README.md", "sections": [] },
+  "lastChange": {
+    "by": "David",
+    "at": "2026-11-04T19:20:00Z",
+    "via": "DeepSeek Harness",
+    "note": "Creación del sistema de diseño agrícola para el nuevo alcance (interfaz rehacida)."
+  }
+}

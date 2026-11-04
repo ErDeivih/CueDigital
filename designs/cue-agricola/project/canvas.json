@@ -1,0 +1,36 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-04T18:25:00Z" },
+  "title": "CueDigital — herramienta del agricultor (primer paquete visual)",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 980, "title": "Mis parcelas · escritorio", "expand": "fill" },
+    "desktop-pac.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1300, "title": "PAC y subvenciones · escritorio", "expand": "fill" },
+    "movil-inicio.dc.html": { "x": 0, "y": 1420, "w": 390, "h": 844, "title": "Hoy · móvil" },
+    "movil-apuntar.dc.html": { "x": 470, "y": 1420, "w": 390, "h": 844, "title": "Apuntar en 30 s · móvil" },
+    "movil-ficha-parcela.dc.html": { "x": 940, "y": 1420, "w": 390, "h": 844, "title": "Ficha de parcela · móvil" },
+    "tablet-parcela.dc.html": { "x": 1410, "y": 1420, "w": 1024, "h": 768, "title": "Parcela · tableta" }
+  },
+  "order": [
+    "Main.dc.html",
+    "desktop-pac.dc.html",
+    "movil-inicio.dc.html",
+    "movil-apuntar.dc.html",
+    "movil-ficha-parcela.dc.html",
+    "tablet-parcela.dc.html"
+  ],
+  "notes": {
+    "escritorio": { "x": 0, "y": -360, "text": "Escritorio", "kind": "title1", "maxW": 2960 },
+    "datos-ejemplo": { "x": 0, "y": -150, "w": 380, "text": "Datos de ejemplo — no reales", "fill": "orange" }
+  },
+  "designSystems": [
+    {
+      "title": "CueDigital — sistema de diseño agrícola",
+      "namespace": "cuedigital",
+      "artifact": "designs/cue-agricola-design-system",
+      "version": null,
+      "copiedAt": "2026-11-04T18:25:00Z"
+    }
+  ]
+}

@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>PAC y subvenciones · escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--surface-page);-webkit-font-smoothing:antialiased}
+:root{
+--surface-page:#F3F0E8;--surface-card:#FFFFFF;--surface-sunk:#E8E3D7;
+--ink:#12211A;--ink-muted:#4A5A51;
+--brand:#175C33;--brand-bright:#1E7A43;--brand-tint:#DDEBDF;
+--accent:#9A5B12;--accent-tint:#F6E7CE;
+--info:#1C4F7A;--success:#1E6B3A;--warning:#7A4A00;--warning-tint:#FDEBC8;
+--danger:#9E2B25;--danger-tint:#F8DEDB;
+--border-subtle:#D8D2C4;--border-strong:#6E6A5D;--focus:#0B63CE;
+--on-brand:#FFFFFF;
+}
+a{color:var(--ink)}a:hover{color:var(--brand)}
+button,input,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hnav:hover{background:var(--surface-sunk)}
+.hbtn:hover{background:var(--surface-sunk)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--surface-page);color:var(--ink);font-size:17px;line-height:26px">
+
+<header style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:12px 24px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
+<div>
+<div style="font-size:20px;line-height:26px;font-weight:600">Finca La Vega</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Peñaranda de Bracamonte · Salamanca</div>
+</div>
+</div>
+
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de campaña. Ahora estás en la campaña 2025/2026" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">Campaña</span>
+<span style="font-size:17px;line-height:24px;font-weight:600">2025/2026</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+
+<div style="display:flex;flex-direction:column;gap:4px;flex:1 1 260px;max-width:400px;min-width:220px">
+<label for="buscar-finca-pac" style="font-size:15px;line-height:20px;font-weight:600">Buscar en la finca</label>
+<div style="position:relative;display:flex;align-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input id="buscar-finca-pac" type="search" placeholder="Parcela, apunte o papel" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-left:auto">
+<span style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;background:var(--warning-tint);color:var(--warning);border:1px solid var(--warning);font-size:15px;line-height:20px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
+Sin cobertura
+</span>
+<button type="button" aria-label="Ver los 2 apuntes que esperan para subir" style="display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 14px;border-radius:999px;background:var(--accent-tint);color:var(--accent);border:1px solid var(--accent);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>
+2 apuntes por subir
+</button>
+<button type="button" aria-label="Tu cuenta y la finca" style="width:44px;height:44px;border-radius:999px;border:1px solid var(--border-strong);background:var(--brand-tint);color:var(--brand);font-size:17px;font-weight:700;cursor:pointer">MD</button>
+</div>
+</header>
+
+<div style="display:flex;flex:1;min-height:0;align-items:stretch">
+
+<aside aria-label="Menú de la finca" style="width:248px;flex:0 0 248px;background:var(--surface-card);border-right:1px solid var(--border-subtle);padding:16px 12px;display:flex;flex-direction:column;gap:16px">
+<nav aria-label="Secciones de la finca">
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px">
+<li><a class="hnav" href="Main.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></svg>
+Inicio
+</a></li>
+<li><a class="hnav" href="Main.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
+Parcelas
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-2-1.5-4.5-2-7-2v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2Z"/><path d="M12 6v14"/></svg>
+Cuaderno
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+Campaña
+</a></li>
+<li><a class="hnav" href="desktop-pac.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;background:var(--brand-tint);color:var(--brand);font-size:17px;line-height:24px;font-weight:600">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+<span style="flex:1;min-width:0">PAC y subvenciones</span>
+<span aria-label="Faltan 3 cosas" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--warning-tint);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600">3</span>
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+Documentos
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>
+Ajustes
+</a></li>
+</ul>
+</nav>
+
+<div style="height:1px;background:var(--border-subtle)"></div>
+
+<a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/><path d="M15.5 4.6a3.5 3.5 0 0 1 0 6.8"/></svg>
+<span style="flex:1;min-width:0">Quién entra</span>
+<span aria-label="2 ayudantes" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--surface-sunk);color:var(--ink-muted);font-size:13px;line-height:18px;font-weight:600">2</span>
+</a>
+
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;background:var(--warning-tint);border:1px solid var(--warning);border-radius:10px;padding:12px">
+<div style="display:flex;align-items:center;gap:8px;color:var(--warning);font-size:15px;line-height:20px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
+Sin cobertura ahora
+</div>
+<p style="margin:0;color:var(--warning);font-size:13px;line-height:18px">Los apuntes quedan guardados en el móvil y suben solos cuando vuelve.</p>
+</div>
+</aside>
+
+<main style="flex:1;min-width:0;padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto">
+
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+<div>
+<h1 style="margin:0;font-size:32px;line-height:38px;font-weight:700">PAC y subvenciones</h1>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Finca La Vega · Campaña 2025/2026 · Lo que vas a presentar en la Junta</p>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:999px;background:var(--warning-tint);border:1px solid var(--warning);color:var(--warning);font-size:15px;line-height:20px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v3"/><path d="M12 16.5h.01"/></svg>
+Faltan 3 cosas
+</span>
+<button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">Empezar por lo que falta</button>
+</div>
+</div>
+
+<section aria-label="Aviso de lo que falta" style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;background:var(--warning-tint);border:1px solid var(--warning);border-radius:16px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 24px"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v3"/><path d="M12 16.5h.01"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:20px;line-height:26px;font-weight:600;color:var(--warning)">Faltan 3 cosas para poder presentar</div>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--warning)">Se arreglan aquí mismo. Nada se manda a la Junta sin que lo revises antes.</p>
+</div>
+<button class="hbtn" type="button" style="height:44px;padding:0 14px;border:1px solid var(--warning);border-radius:10px;background:var(--surface-card);color:var(--warning);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ver las 3</button>
+</section>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start">
+
+<div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+
+<section aria-labelledby="lista-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px 20px 8px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+<div>
+<h2 id="lista-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Lista de comprobación</h2>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">2 de 5 hechas. Las que faltan se arreglan desde aquí.</p>
+</div>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">Se guarda solo</span>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
+<input type="checkbox" id="chk-titular" checked aria-labelledby="req-titular" style="width:24px;height:24px;flex:0 0 24px;margin:1px 0 0;accent-color:var(--brand);cursor:pointer">
+<div style="flex:1;min-width:0">
+<div id="req-titular" style="font-size:17px;line-height:26px;font-weight:600">Datos del titular y de la finca</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Nombre, NIF y número de registro están puestos.</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>Hecho</span>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ver</button>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
+<input type="checkbox" id="chk-superficie" aria-labelledby="req-superficie" style="width:24px;height:24px;flex:0 0 24px;margin:1px 0 0;accent-color:var(--brand);cursor:pointer">
+<div style="flex:1;min-width:0">
+<div id="req-superficie" style="font-size:17px;line-height:26px;font-weight:600">Superficie de cada recinto</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">El Molino no cuadra y de La Vega del Rincón no hay dato.</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>Falta</span>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Revisar</button>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
+<input type="checkbox" id="chk-cultivo" checked aria-labelledby="req-cultivo" style="width:24px;height:24px;flex:0 0 24px;margin:1px 0 0;accent-color:var(--brand);cursor:pointer">
+<div style="flex:1;min-width:0">
+<div id="req-cultivo" style="font-size:17px;line-height:26px;font-weight:600">Cultivo de esta campaña</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Puesto en las 8 parcelas de la finca.</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>Hecho</span>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ver</button>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
+<input type="checkbox" id="chk-papeles" aria-labelledby="req-papeles" style="width:24px;height:24px;flex:0 0 24px;margin:1px 0 0;accent-color:var(--brand);cursor:pointer">
+<div style="flex:1;min-width:0">
+<div id="req-papeles" style="font-size:17px;line-height:26px;font-weight:600">Papeles adjuntos</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Falta el contrato de arrendamiento de dos parcelas.</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>Falta</span>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Adjuntar</button>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0">
+<input type="checkbox" id="chk-quien" aria-labelledby="req-quien" style="width:24px;height:24px;flex:0 0 24px;margin:1px 0 0;accent-color:var(--brand);cursor:pointer">
+<div style="flex:1;min-width:0">
+<div id="req-quien" style="font-size:17px;line-height:26px;font-weight:600">Quién presenta</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Solo el titular puede presentar. Se cambia en «Quién entra».</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--info);color:var(--info);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>Solo el titular</span>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Quién entra</button>
+</div>
+</section>
+
+<section aria-labelledby="tabla-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px 20px 20px">
+<h2 id="tabla-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Superficies, recinto a recinto</h2>
+<p style="margin:2px 0 16px;font-size:13px;line-height:18px;color:var(--ink-muted)">Comparado con el SIGPAC. Donde no cuadra, se marca y se explica debajo.</p>
+
+<table style="width:100%;border-collapse:collapse;table-layout:fixed">
+<colgroup>
+<col style="width:28%">
+<col style="width:13%">
+<col style="width:14%">
+<col style="width:14%">
+<col style="width:19%">
+<col style="width:12%">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Recinto</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:right;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">SIGPAC (ha)</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:right;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Declarada (ha)</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:right;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Diferencia</th>
+<th scope="col" style="padding:0 0 8px 12px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Cultivo</th>
+<th scope="col" style="padding:0 0 8px 12px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Región</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Las Eras · recinto 1</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">12,34</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">12,34</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted)">0,00</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cereal de secano</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Salamanca</td>
+</tr>
+<tr>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">El Prado · recinto 1</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">4,10</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">4,10</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted)">0,00</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Forraje</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Salamanca</td>
+</tr>
+<tr>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">La Cañada · recinto 2</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">6,80</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">6,80</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted)">0,00</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Remolacha</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Salamanca</td>
+</tr>
+<tr>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;font-weight:600">El Molino · recinto 2</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">8,42</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">8,30</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right"><span style="display:inline-flex;align-items:center;gap:4px;color:var(--warning);font-weight:600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v3"/><path d="M12 16.5h.01"/></svg>+0,12</span></td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cereal de secano</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Salamanca</td>
+</tr>
+<tr>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">La Vega del Rincón
+<span style="display:block;font-size:13px;line-height:18px;color:var(--danger)">No se ha podido leer lo declarado</span>
+</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">5,60</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right;color:var(--danger)">sin dato</td>
+<td style="padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted)">—</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Forraje</td>
+<td style="padding:9px 0 9px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Salamanca</td>
+</tr>
+</tbody>
+</table>
+
+<div style="display:flex;align-items:flex-start;gap:12px;margin-top:16px;padding:12px;background:var(--accent-tint);border:1px solid var(--accent);border-radius:10px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 20px;margin-top:2px"><circle cx="12" cy="12" r="8"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+<p style="margin:0;flex:1;min-width:0;font-size:13px;line-height:18px;color:var(--accent)"><strong>El Molino:</strong> el SIGPAC da 8,42 ha y tú has declarado 8,30 ha. La diferencia de 0,12 ha no se sabe de dónde viene: mírala en el mapa antes de presentar. <strong>La Vega del Rincón:</strong> no se ha podido leer lo declarado; vuelve a traerlo y, si sigue sin salir, escríbelo a mano.</p>
+<button class="hbtn" type="button" style="flex:0 0 auto;height:44px;padding:0 12px;border:1px solid var(--accent);border-radius:10px;background:var(--surface-card);color:var(--accent);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Volver a traer</button>
+</div>
+</section>
+
+</div>
+
+<div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+
+<section aria-labelledby="plazos-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px 20px">
+<h2 id="plazos-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Avisos de plazo</h2>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 20px;margin-top:3px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">Solicitud única de la PAC</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Fecha: por confirmar. La publica la Junta y aquí saldrá el día.</div>
+</div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:12px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 20px;margin-top:3px"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">Tu recordatorio: 15 de noviembre</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Repasar la tabla de superficies con tiempo.</div>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="papeles-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px 20px">
+<h2 id="papeles-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Papeles adjuntos</h2>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 24px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">Contrato de arrendamiento</div>
+<div style="font-size:13px;line-height:18px;color:var(--warning)">Falta</div>
+</div>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Adjuntar</button>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 24px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">Croquis de las parcelas</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Adjunto el 12 de septiembre</div>
+</div>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ver</button>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 24px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">Justificante de la campaña pasada</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Adjunto el 4 de octubre</div>
+</div>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ver</button>
+</div>
+</div>
+<p style="margin:12px 0 0;display:flex;align-items:center;gap:6px;font-size:13px;line-height:18px;color:var(--ink-muted)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
+Trayendo los papeles de la campaña pasada…
+</p>
+</section>
+
+<section aria-labelledby="descargar-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px 20px">
+<h2 id="descargar-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Lo que pide la Junta</h2>
+<p style="margin:8px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Un fichero con lo de esta campaña, para presentarlo donde te digan. Antes de descargar, se revisa lo que falta.</p>
+<button type="button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;margin-top:12px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10"/><path d="m8 11 4 4 4-4"/><path d="M5 19h14"/></svg>
+Descargar lo que pide la Junta
+</button>
+<p style="margin:8px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">El formato está por confirmar: no se da por bueno hasta probarlo con la Junta.</p>
+</section>
+
+</div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

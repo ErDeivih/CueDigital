@@ -1,0 +1,45 @@
+<!-- @dsCard group="Cover" height=320 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: var(--surface-page); }
+  .brand { fill: var(--brand); }
+  .accent { fill: var(--accent); }
+  .bright { fill: var(--brand-bright); }
+  .block { rx: var(--radius-lg); }
+  .pill { rx: var(--radius-pill); }
+  .name {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 72px; font-weight: 700; line-height: 0.95; letter-spacing: -1px; color: var(--ink);
+  }
+  .tag {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px; line-height: 20px; color: var(--ink-muted); margin-top: 12px; max-width: 440px;
+  }
+</style>
+</head>
+<body>
+<div style="position: relative; width: 960px; height: 320px; background: var(--surface-page); overflow: hidden;">
+  <!-- derivation:
+       bloques: brand 250×196, accent 122×120 y brand-bright 122×60, los tres con radius-lg; surface-page de fondo.
+       disposición: una losa alta con dos satélites a la derecha de x=480 y una fila de píldoras debajo; nada cruza el nombre.
+       patrón: «radios grandes, amable» (README, principio 1 y radius-pill) → píldoras de surco, cuatro unidades, no cien.
+       pasos: separación de space-5 entre bloques, radius-lg en los bloques y radius-pill en los surcos; nombre a 72 px de la escala display. -->
+  <svg width="960" height="320" viewBox="0 0 960 320" aria-hidden="true" style="position: absolute; inset: 0;">
+    <rect class="brand block" x="520" y="36" width="250" height="196"></rect>
+    <rect class="accent block" x="790" y="36" width="122" height="120"></rect>
+    <rect class="bright block" x="790" y="172" width="122" height="60"></rect>
+    <rect class="brand pill" x="520" y="252" width="120" height="32"></rect>
+    <rect class="accent pill" x="656" y="252" width="88" height="32"></rect>
+    <rect class="brand pill" x="760" y="252" width="64" height="32"></rect>
+    <rect class="accent pill" x="840" y="252" width="48" height="32"></rect>
+  </svg>
+  <div style="position: absolute; left: 48px; bottom: 44px; max-width: 440px;">
+    <div class="name">CueDigital</div>
+    <div class="tag">La herramienta del agricultor de Castilla y León: cuaderno, PAC y parcelas del SIGPAC, en el bolsillo y en la oficina.</div>
+  </div>
+</div>
+</body>
+</html>

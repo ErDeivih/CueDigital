@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Parcela · tableta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--surface-page);-webkit-font-smoothing:antialiased}
+:root{
+--surface-page:#F3F0E8;--surface-card:#FFFFFF;--surface-sunk:#E8E3D7;
+--ink:#12211A;--ink-muted:#4A5A51;
+--brand:#175C33;--brand-bright:#1E7A43;--brand-tint:#DDEBDF;
+--accent:#9A5B12;--accent-tint:#F6E7CE;
+--info:#1C4F7A;--success:#1E6B3A;--warning:#7A4A00;--warning-tint:#FDEBC8;
+--danger:#9E2B25;--danger-tint:#F8DEDB;
+--border-subtle:#D8D2C4;--border-strong:#6E6A5D;--focus:#0B63CE;
+--on-brand:#FFFFFF;
+}
+a{color:var(--ink)}
+button,input,select{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hrow:hover{background:var(--surface-sunk)}
+.hbtn:hover{background:var(--surface-sunk)}
+</style>
+</helmet>
+<div style="width:1024px;height:768px;display:flex;flex-direction:column;background:var(--surface-page);color:var(--ink);font-size:17px;line-height:26px;overflow:hidden">
+
+<header style="display:flex;align-items:center;gap:16px;flex:0 0 56px;padding:0 16px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+<svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:20px;line-height:26px;font-weight:600">Finca La Vega</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Campaña 2025/2026 · Peñaranda de Bracamonte</div>
+</div>
+<span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--warning-tint);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
+Sin cobertura
+</span>
+<button type="button" aria-label="Tu cuenta y la finca" style="width:44px;height:44px;border-radius:999px;border:1px solid var(--border-strong);background:var(--brand-tint);color:var(--brand);font-size:17px;font-weight:700;cursor:pointer">MD</button>
+</header>
+
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;padding:12px 16px 16px">
+
+<section aria-labelledby="parcelas-titulo" style="display:flex;flex-direction:column;min-height:0;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px">
+<h1 id="parcelas-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Parcelas</h1>
+<p style="margin:2px 0 12px;font-size:13px;line-height:18px;color:var(--ink-muted)">8 parcelas · 54,11 ha</p>
+<div style="position:relative;display:flex;align-items:center;margin-bottom:12px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input type="search" aria-label="Buscar parcela" placeholder="Buscar parcela" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+</div>
+
+<div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">Las Eras</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">12,34 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Cereal de secano · al día</span>
+</span>
+</a>
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">El Prado</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">4,10 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Forraje · falta cerrar 2 tratamientos</span>
+</span>
+</a>
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">La Cañada</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">6,80 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Remolacha · sin apuntes</span>
+</span>
+</a>
+
+<a class="hrow" href="#" aria-current="true" style="display:flex;align-items:center;gap:8px;padding:10px 8px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--brand-tint);outline:2px solid var(--brand);outline-offset:-2px;border-radius:10px">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600;color:var(--brand)">El Molino</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">8,42 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Cereal de secano · al día</span>
+</span>
+</a>
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">Los Majuelos</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">3,25 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Barbecho · hasta marzo</span>
+</span>
+</a>
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">La Vega del Rincón</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">5,60 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Forraje · al día</span>
+</span>
+</a>
+
+<a class="hrow" href="#" style="display:flex;align-items:center;gap:8px;padding:10px 0;text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-size:17px;line-height:26px;font-weight:600">Los Llanos</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">9,15 ha</span>
+</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Cereal de secano · falta una dosis</span>
+</span>
+</a>
+</div>
+</section>
+
+<div style="display:flex;flex-direction:column;gap:16px;min-height:0">
+
+<div style="position:relative;flex:0 0 180px;background:var(--surface-sunk);border:1px solid var(--border-subtle);border-radius:16px;overflow:hidden">
+<svg role="img" aria-label="Mapa de la parcela El Molino con su lindero. Tiene 8,42 ha." viewBox="0 0 620 180" preserveAspectRatio="xMidYMid slice" style="display:block;width:100%;height:100%">
+<rect x="0" y="0" width="620" height="180" style="fill:var(--surface-sunk)"/>
+<rect x="0" y="84" width="620" height="12" style="fill:var(--border-subtle)"/>
+<polygon points="8,8 300,8 300,76 8,76" style="fill:var(--accent-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="312,8 612,8 612,76 312,76" style="fill:var(--brand-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="8,104 300,104 300,172 8,172" style="fill:var(--surface-page);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="312,104 470,104 470,172 312,172" style="fill:var(--surface-card);stroke:var(--brand);stroke-width:3"/>
+<polygon points="482,104 612,104 612,172 482,172" style="fill:var(--accent-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<line x1="312" y1="140" x2="470" y2="140" style="stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:7 5"/>
+<circle cx="391" cy="150" r="9" style="fill:var(--brand)"/>
+<circle cx="391" cy="150" r="3.5" style="fill:var(--surface-card)"/>
+<text x="40" y="44" style="font-size:15px;font-weight:600;fill:var(--ink)">Las Eras</text>
+<text x="344" y="44" style="font-size:15px;font-weight:600;fill:var(--ink)">El Prado</text>
+<text x="40" y="140" style="font-size:15px;font-weight:600;fill:var(--ink)">La Cañada</text>
+<text x="330" y="128" style="font-size:15px;font-weight:700;fill:var(--brand)">El Molino</text>
+<text x="494" y="140" style="font-size:13px;font-weight:600;fill:var(--ink)">La Serna</text>
+</svg>
+<span style="position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--surface-card);border:1px solid var(--border-strong);font-size:13px;line-height:18px;font-weight:600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+El Molino · recinto 2
+</span>
+<button class="hbtn" type="button" style="position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Ampliar el mapa</button>
+</div>
+
+<section aria-labelledby="ficha-titulo-tablet" style="flex:1;min-height:0;overflow-y:auto;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+
+<div style="display:flex;align-items:flex-start;gap:16px">
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h2 id="ficha-titulo-tablet" style="margin:0;font-size:24px;line-height:30px;font-weight:700">El Molino</h2>
+<span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--brand-tint);color:var(--success);font-size:13px;line-height:18px;font-weight:600"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+</div>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Peñaranda de Bracamonte · Salamanca · Cereal de secano</p>
+</div>
+<div style="text-align:right">
+<div style="font-size:32px;line-height:38px;font-weight:700;color:var(--accent)">8,42 ha</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Superficie del SIGPAC</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px">
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Agregado</div><div style="font-size:17px;line-height:26px">3</div></div>
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Zona</div><div style="font-size:17px;line-height:26px">12</div></div>
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Polígono</div><div style="font-size:17px;line-height:26px">7</div></div>
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Parcela</div><div style="font-size:17px;line-height:26px">142</div></div>
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Recinto</div><div style="font-size:17px;line-height:26px">2</div></div>
+<div><div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Coeficiente</div><div style="font-size:17px;line-height:26px">no consta</div></div>
+</div>
+
+<div style="display:flex;align-items:flex-start;gap:8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 20px;margin-top:2px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+<div style="font-size:17px;line-height:26px">Esta campaña: cereal de secano, sembrado el 3 de noviembre.</div>
+</div>
+
+<div style="height:1px;background:var(--border-subtle)"></div>
+
+<div>
+<div style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Lo último que has apuntado</div>
+<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted);flex:0 0 104px">14 de febrero</span>
+<span style="font-size:17px;line-height:26px;font-weight:600">Abono de cobertera · 220 kg/ha</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted);flex:0 0 104px">12 de noviembre</span>
+<span style="font-size:17px;line-height:26px;font-weight:600">Siembra · trigo, 190 kg/ha</span>
+</div>
+</div>
+</div>
+
+<a href="#" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:4px 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600">Añadir una foto o un papel</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted)">Aún no hay nada de esta parcela</span>
+</span>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+
+<div style="display:flex;align-items:center;gap:8px;margin-top:auto">
+<a href="movil-apuntar.dc.html" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 10-10a2.5 2.5 0 0 0-3.5-3.5L4.5 15.5 4 20Z"/></svg>
+Apuntar
+</a>
+<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
+Mapa
+</button>
+<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10"/><path d="m8 11 4 4 4-4"/><path d="M5 19h14"/></svg>
+Exportar
+</button>
+<a href="Main.dc.html" style="display:inline-flex;align-items:center;gap:6px;height:48px;padding:0 12px;margin-left:auto;border-radius:10px;color:var(--brand);text-decoration:none;font-size:15px;line-height:20px;font-weight:600">Volver a parcelas</a>
+</div>
+</section>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1024,"height":768}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

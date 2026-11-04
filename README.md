@@ -943,6 +943,10 @@ ese campo. Está en `app/database.py` y tiene tests propios.
 | [`docs/TRASPASO_A_OTRO_AGENTE.md`](docs/TRASPASO_A_OTRO_AGENTE.md) | Quien llegue de fuera | Qué es esto, en qué estado está y qué falta para integrarse |
 | [`docs/CORREO_LISTO_PARA_ENVIAR.md`](docs/CORREO_LISTO_PARA_ENVIAR.md) | **Quien tenga que pedir el alta** | **El correo para copiar y mandar**: el alta y las cinco consultas al FEGA |
 | [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md) | Quien tenga que decidir sobre el corpus, el OCR o la meteo | **D08 decidido**: las dos opciones de cada decisión, con coste, licencia y límite medidos (URL y fecha), y la más barata que cumple |
+| [`ALCANCE-AGRICOLA.md`](ALCANCE-AGRICOLA.md) | Quien vaya a construir el producto nuevo | **El alcance que manda desde el 04/11/2026**: la herramienta del agricultor de Castilla y León, interfaz rehacida, SIGPAC, cuaderno y PAC |
+| [`docs/INVESTIGACION-AGRICOLA.md`](docs/INVESTIGACION-AGRICOLA.md) | Quien integre con la Junta o toque normativa | **Qué exige la JCYL, qué permiten sus APIs y cómo lo resuelven los demás**, con URL y fecha en cada afirmación y lo pendiente marcado |
+| [`docs/ARQUITECTURA-DE-PANTALLAS.md`](docs/ARQUITECTURA-DE-PANTALLAS.md) | Quien implemente la interfaz nueva | **La propuesta de pantallas y flujos para aprobar**: navegación, las 11 pantallas P0, los flujos y las fases |
+| `designs/cue-agricola-design-system/` + `designs/cue-agricola/` | Quien diseñe o revise el aspecto | **El sistema de diseño agrícola** (tokens, tipografía, color con contraste medido) y los **artboards** de las pantallas |
 
 ---
 
@@ -1378,7 +1382,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5651 tests
+../.venv/Scripts/python.exe -m pytest          # 5655 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1228 tests
