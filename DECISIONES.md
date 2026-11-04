@@ -35,3 +35,39 @@ textos que ve el agricultor.
   **9 comprobaciones, 0 fallos**. La tercera sección es la que vale aquí: un apunte que el servidor
   rechaza **se aparta en su propia clave** y **la pantalla dice el motivo leyéndolo de ahí**.
 - `pytest` completo: se anota en `ESTADO-AGENTE.md` con el resultado medido, no con el que había.
+
+## 2026-11-04 · D08: se eligen las tres opciones de **coste 0 €** (corpus, OCR y meteo/satélite)
+
+**Decisión**: (1) **corpus** = facturas reales del titular y de sus proveedores, **con permiso escrito**
+(modelo en el documento); (2) **proveedor de OCR** = **Tesseract local**, que es lo que ya está
+construido; (3) **meteo y satélite** = **AEMET OpenData + Copernicus Data Space Ecosystem**.
+
+**Motivo**: la regla de coordinación del 04/11 pide **dos opciones concretas con coste, licencia y
+límite de uso, y elegir la más barata que cumpla**. Las tres decisiones están medidas contra las
+páginas oficiales ese mismo día en [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md):
+
+- corpus: la opción de 0 € **es la única que mide los seis campos críticos** (el corpus público no
+  tiene NIF ni IVA español, y FATURA es sintético);
+- OCR: Tesseract es **0 €**, Apache 2.0 permite vender el producto, no tiene límite contractual y **la
+  factura no sale del servidor**; la nube costaría 0,75 USD/año en un escenario y añade un tercero;
+- meteo/satélite: AEMET + CDSE permiten **uso comercial con atribución**, cubren las dos necesidades y
+  el uso estimado cabe con más del 95 % de margen; la alternativa comercial es **999 €/año + IVA**.
+
+**Por qué es nivel 2 y no nivel 3**: el nivel 3 se dispara cuando **las dos** opciones tienen coste
+relevante. Aquí **la más barata que cumple cuesta 0 € en las tres**, así que la elección **no
+compromete dinero**. Lo único que falta es **material que solo puede aportar David** (las facturas con
+su permiso), y eso es una petición, no una compra: está en el apartado 6 del documento.
+
+**Reversibilidad**: sí. **No cambia** el esquema de la base de datos, ni las rutas, ni los textos del
+agricultor, ni el `.env`, ni las fixtures de firma. El corpus se puede sustituir; el lector de OCR se
+puede cambiar sin tocar `facturas.py` (la puerta única `texto_del_documento` ya está separada); una
+fuente de meteo se puede cambiar guardando de nuevo su `fuente` y su `licencia`.
+
+**Lo que NO se ha hecho, a propósito**: no se ha contratado nada, no se ha pagado nada y **no se ha
+medido la precisión del OCR** con facturas de verdad, porque el corpus aún no existe. **D08 no queda
+cerrado por esta decisión**: queda elegido el camino y medido el coste.
+
+**Comprobado (2026-11-04)**
+- Las cifras y licencias con URL y fecha en el documento, y **verificadas de forma independiente** por
+  un revisor aparte (ver el registro del apartado 7 del documento).
+- `pytest` y `node --test` sobre este HEAD: se anotan en `ESTADO-AGENTE.md` con el número medido.

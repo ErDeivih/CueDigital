@@ -942,6 +942,7 @@ ese campo. Está en `app/database.py` y tiene tests propios.
 | [`docs/QUIEN_ENTRA_EN_LA_FINCA.md`](docs/QUIEN_ENTRA_EN_LA_FINCA.md) | Quien toque las cuentas o las fincas | **Varias cuentas en la misma finca**: quién manda, en qué finca estás trabajando y por qué cambiar de finca cambia el vale |
 | [`docs/TRASPASO_A_OTRO_AGENTE.md`](docs/TRASPASO_A_OTRO_AGENTE.md) | Quien llegue de fuera | Qué es esto, en qué estado está y qué falta para integrarse |
 | [`docs/CORREO_LISTO_PARA_ENVIAR.md`](docs/CORREO_LISTO_PARA_ENVIAR.md) | **Quien tenga que pedir el alta** | **El correo para copiar y mandar**: el alta y las cinco consultas al FEGA |
+| [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md) | Quien tenga que decidir sobre el corpus, el OCR o la meteo | **D08 decidido**: las dos opciones de cada decisión, con coste, licencia y límite medidos (URL y fecha), y la más barata que cumple |
 
 ---
 
@@ -1377,7 +1378,7 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5649 tests
+../.venv/Scripts/python.exe -m pytest          # 5651 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"               # 1228 tests

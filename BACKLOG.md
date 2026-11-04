@@ -126,11 +126,47 @@
 - **Aceptación**: mapeo campo por campo con «de dónde sale», lo que falta marcado como tal, y
   exportación local contra el esquema JSON oficial con prueba.
 
-### 11. D08 · OCR y meteo con corpus y proveedor autorizados — **esperando decisión (Nivel 3)**
+### 11. D08 · Corpus y proveedor — **DECIDIDO (2026-11-04): la opción de 0 € en las tres decisiones**
 
-- **Pregunta exacta**: ¿qué corpus de documentos reales (anonimizados) se autoriza, y qué proveedor
-  de OCR/meteo se contrata? Sin eso no se puede pasar de la factura sintética.
-- **Mientras tanto**: no se inventan métricas ni se simula el proveedor.
+- **Nivel**: 2 (la propuesta y la elección, con su motivo en `DECISIONES.md`). Contratar un proveedor
+  habría sido nivel 3; **no se contrata nada**.
+- **Qué se ha decidido**: **corpus** = facturas reales del titular y sus proveedores **con permiso
+  escrito** (0 €); **OCR** = Tesseract local (0 €, ya construido); **meteo y satélite** = AEMET
+  OpenData + Copernicus Data Space Ecosystem (0 €, con atribución).
+- **Por qué esas y no las otras**: la regla pide dos opciones medidas y la más barata que cumpla.
+  Documento: [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md), con las dos opciones
+  de cada decisión, coste/licencia/límite con URL y fecha (04/11/2026), el uso estimado a partir de
+  `datos_representativos.py`, tabla comparativa y elección. Verificado por un revisor independiente.
+- **Lo que sigue bloqueado y de quién**: **el material del corpus** —30 facturas (10 PDF del
+  proveedor, 10 escaneadas, 10 fotos) con **permiso escrito del emisor** y los **7 valores de patrón**
+  de cada una (210 valores)—. Es de David; **no es dinero**. Sin eso, el OCR no se puede medir y D08
+  no se cierra.
+- **Lo que ya se puede hacer sin esperar**: la tarea 12 (el instrumento listo para el corpus) y la
+  tarea 13 (meteo y satélite con el ejemplo guardado y sin clave).
+
+### 12. D08-1 · El instrumento del OCR, listo para un corpus real
+
+- **Nivel**: 1.
+- **Por qué**: `scripts/medir_el_ocr_por_campo.py` mide 7 campos sobre una factura **sintética** y llama
+  a `ocr.leer_texto` directamente; para medir de verdad tiene que aceptar un **directorio de corpus +
+  patrón JSON**, pasar por la **puerta única** (`facturas.texto_del_documento`, que separa PDF con
+  texto, escaneo y foto) y comparar con `lectura_evaluada.lo_leido_por_campo` (acertado / fallado / sin
+  leer).
+- **Aceptación**: el guion acepta corpus y patrón; informa **por campo × formato**; la factura
+  sintética sigue pasando **7/7** como humo del propio instrumento; el corpus vive **fuera del
+  repositorio**; el guion no sale a internet.
+
+### 13. D08-2 · Meteo y satélite con el ejemplo guardado, y sin clave
+
+- **Nivel**: 2 (módulo nuevo y una variable de entorno; sin tocar esquema).
+- **Por qué**: la fuente ya está elegida (AEMET + Copernicus) y se puede construir lo que no depende de
+  la clave: una llamada real, su respuesta guardada como ejemplo en `data/` y el analizador escrito
+  contra ese ejemplo, como se hizo con el SIGPAC.
+- **Aceptación**: atribución visible y en `textos.py`; el dato lleva **estado** (observado / estimado /
+  pronóstico), **fuente**, **licencia**, **fecha del dato**, **fecha de consulta** y **resolución**;
+  sin clave **se dice y se sigue** (nunca un dato inventado); pruebas **sin internet** contra el
+  ejemplo guardado y humo contra el servicio de verdad; endpoint detrás de **sesión y finca** (matriz
+  de roles en `docs/QUIEN_ENTRA_EN_LA_FINCA.md`); claves en `CUEDIGITAL_…`, nunca en el repositorio.
 
 ## Deuda anotada, no priorizada
 
