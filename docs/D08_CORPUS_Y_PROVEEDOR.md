@@ -14,6 +14,11 @@
 > `integracion/cloud-estabilizacion-2026-10-21`. Documento anterior sobre el mismo bloqueo:
 > [`../backend/docs/PENDIENTE_D08.md`](../backend/docs/PENDIENTE_D08.md).
 >
+> **Estado (noche del 04/11/2026): APARCADO por decisión de David.** No va a aportar ahora las 30
+> facturas con permiso. Este documento **se queda como está** —las dos opciones de cada decisión,
+> medidas y con su elección— y sirve cuando llegue el corpus. **D08 no bloquea nada más** y no se
+> persigue; está escrito en [`../ESPECIFICACION.md`](../ESPECIFICACION.md).
+>
 > **Cómo se lee.** Todo lo que va con enlace está **comprobado en la página oficial** el 04/11/2026.
 > Lo que es estimación se dice «estimación». Lo que no se ha podido comprobar se dice «no verificado»
 > y **no se usa para decidir**. Ninguna cifra de este documento está puesta de memoria.

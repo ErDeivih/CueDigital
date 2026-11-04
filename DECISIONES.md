@@ -71,3 +71,17 @@ cerrado por esta decisión**: queda elegido el camino y medido el coste.
 - Las cifras y licencias con URL y fecha en el documento, y **verificadas de forma independiente** por
   un revisor aparte (ver el registro del apartado 7 del documento).
 - `pytest` y `node --test` sobre este HEAD: se anotan en `ESTADO-AGENTE.md` con el número medido.
+
+## 2026-11-04 (noche) · Decisión de coordinación: **el corpus de D08 queda aparcado**
+
+**Decisión de David, no del agente**: no va a aportar ahora las 30 facturas con permiso escrito, así
+que el corpus queda **aparcado** hasta que lo traiga. Está escrito en
+[`ESPECIFICACION.md`](ESPECIFICACION.md).
+
+**Qué cambia**: **D08 no bloquea nada más**. El trabajo hecho —las dos opciones de cada decisión
+(corpus, OCR, meteo/satélite), medidas con coste, licencia y límite, todas con la opción de 0 €
+elegida— **se queda como está** en [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md)
+y sirve cuando llegue el corpus. No se busca otro corpus ni se mide el OCR.
+
+**Qué no cambia**: nada de lo ya decidido en D08, ni el `.env`, ni las fixtures, ni el estado del
+programa. La prioridad pasa a ser la aplicación del agricultor (`ALCANCE-AGRICOLA.md`).

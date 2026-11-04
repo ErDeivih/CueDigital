@@ -1,9 +1,10 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
+resumen: La aplicación se rehace para el agricultor de Castilla y León, con interfaz nueva para PC, tableta y móvil. Ya están hechas la investigación de la Junta (con fuente y fecha en cada afirmación) y la propuesta de pantallas y de aspecto para que David la apruebe; no se ha tocado código de la aplicación. El corpus de D08 queda aparcado hasta que David lo traiga y no bloquea nada.
 estado: en-curso
-tarea: alcance nuevo — investigación, arquitectura de pantallas y primer paquete visual (para aprobar)
+tarea: investigación oficial y arquitectura de pantallas hechas; esperando la aprobación para implementar
 nivel: 2
-siguiente: esperando la aprobación de David (AGR-1); después, armazón nuevo + Hoy + Mis parcelas
-bloqueado: aprobación del aspecto y de la arquitectura (AGR-1, nivel 3); y el corpus de D08 (material de David)
+siguiente: aprobación de David (AGR-1); después, armazón nuevo + Hoy + Mis parcelas
+bloqueado: la aprobación del aspecto y de la arquitectura (AGR-1, nivel 3)
 fecha: 2026-11-04
 
 ## Lo que se ha hecho en esta sesion
@@ -25,8 +26,9 @@ fecha: 2026-11-04
    noche con **contraste AA calculado y anotado**, tipografía del sistema para funcionar sin red,
    espaciado, radios y objetivos táctiles de 48 px) y canvas de artboards en `designs/cue-agricola/`
    (mis parcelas, Hoy, apuntar, ficha de parcela, PAC…) con datos de ejemplo ficticios.
-5. **D08 no se persigue**: quedó decidido y el corpus pendiente de material de David (30 facturas con
-   permiso). Anotado, sin tocarlo.
+5. **D08, aparcado por decisión de David (2026-11-04, noche)**: no aporta ahora las 30 facturas con
+   permiso. El trabajo hecho (las dos opciones medidas, todas a coste 0) se queda como está y sirve
+   cuando llegue el corpus; **no bloquea nada más**. Está escrito en `ESPECIFICACION.md`.
 
 ## La última pasada, sobre este mismo HEAD
 
@@ -41,5 +43,7 @@ fecha: 2026-11-04
   del SIGPAC en lote) y AGR-4 (correcciones documentales), que no dependen del aspecto.
 - **Preguntas a la administración** (AGR-7): licencia del SHP de CyL (CIT), campañas históricas y
   cupos (FEGA), licencia PNOA (IGN) y especificación del `.xlsx` del Cuecyl (Junta/FEGA).
+- **D08 no bloquea nada**: el corpus queda aparcado hasta que David lo traiga; el resumen de las dos
+  opciones medidas está en `docs/D08_CORPUS_Y_PROVEEDOR.md`.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni
   cambiado de rama y no se usa GitHub Actions. Push selectivo al final de la sesión.

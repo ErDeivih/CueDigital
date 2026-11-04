@@ -209,7 +209,13 @@
 - **Aceptación**: mapeo campo por campo con «de dónde sale», lo que falta marcado como tal, y
   exportación local contra el esquema JSON oficial con prueba.
 
-### 11. D08 · Corpus y proveedor — **DECIDIDO (2026-11-04): la opción de 0 € en las tres decisiones**
+### 11. D08 · Corpus y proveedor — **APARCADO (04/11/2026, noche)**; la elección de 0 € se queda escrita
+
+- **Nivel**: 2. **Decisión de David**: no va a aportar ahora las 30 facturas con permiso, así que el
+  corpus queda **aparcado**. El trabajo hecho (las dos opciones de cada decisión, medidas a coste 0)
+  **se queda como está** en [`docs/D08_CORPUS_Y_PROVEEDOR.md`](docs/D08_CORPUS_Y_PROVEEDOR.md) y sirve
+  cuando llegue el corpus. **D08 no bloquea nada más.** Escrito en `ESPECIFICACION.md`.
+- **Lo que NO se hace ahora**: ni se busca otro corpus, ni se mide el OCR, ni se persigue el asunto.
 
 - **Nivel**: 2 (la propuesta y la elección, con su motivo en `DECISIONES.md`). Contratar un proveedor
   habría sido nivel 3; **no se contrata nada**.
