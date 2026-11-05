@@ -71,14 +71,31 @@
   - **Investigación hecha** (`docs/PSD2-AGREGADORES.md`): la vía es **contratar un AISP autorizado**,
     no sacar licencia propia; 5+ candidatos con API de solo lectura y sandbox; para solo lectura no
     hace falta licencia de iniciación de pagos; consentimiento en el banco, sin ver credenciales.
-  - **Parado a propósito (nivel 3)**: **ningún candidato publica precio** (Enable Banking y
-    Powens/Unnax piden presupuesto con mínimo mensual), así que la regla «la más barata que cumpla» no
-    se puede aplicar. Hay que pedir dos presupuestos y que David apruebe el gasto. **Nada de código**
-    hasta que haya contrato.
-- [x] Cuaderno guiado: decir qué falta para que esté completo.
-  - Hecho en «Hoy»: bloque **«falta para el cuaderno»** con el número y la lista de lo que falta, **qué
-    es** y **dónde se arregla** (`GET /api/nuevo/que-falta`), sacado de lo que de verdad hay apuntado
-    (`cuaderno-cyl/que-falta` + las 8 de `iuws.QUE_FALTA`). Verificado en Chrome.
+  - **El coste, en claro (05/11 tarde)**: **ningún proveedor publica precio de producción**. Solo hay
+    una cifra: **sandbox de BBVA = 0 €**; Tink publica «por usuario/mes» sin importe y GoCardless la
+    unidad «requisición activa al mes» sin precio; los demás, presupuesto por correo. El coste anual
+    del escenario (2 cuentas, ≈30 consultas/mes) **no es calculable** sin presupuesto: no se inventa.
+  - **Parado a propósito (nivel 3)**: sin coste publicado **no se propone contratar**; hay que pedir
+    **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y **David decide el gasto**, que aún
+    no ha aprobado. Criterio de parada: si supera el coste de seguir con el extracto por fichero
+    (0 €, ya existe), no se contrata. **Nada de código de PSD2** hasta contrato.
+- [x] **Cuaderno guiado**: decir qué falta para que esté completo.
+  - Hecho en `/nuevo/`: la entrada «Cuaderno» abre una vista propia con **cuántas cosas faltan**, la
+    lista **agrupada por dónde se arregla**, cada cosa con su «dónde» y un botón que lleva a la
+    pantalla nueva cuando existe; lo que **bloquea el envío a la Junta** se dice con palabra. Si no
+    falta nada, «El cuaderno está completo». Con los datos de la finca de prueba: **29 secciones y
+    123 cosas** (las de cada tierra incluidas). Al pie, «Abrir el cuaderno de la Junta».
+- [x] **Productos y abonos con dosis por hectárea** (corrección 4 del diseño y bloque 4):
+  - Hecho en `/nuevo/`: pestañas de **productos** y **abonos** con buscador; cada producto enseña
+    **dosis máxima por hectárea con su unidad**, materia activa y plazo de seguridad; cada abono, su
+    riqueza N/P/K. «Apuntar en una tierra» con la tierra, la fecha, las hectáreas de la tierra, la
+    dosis por hectárea y **el total calculado (dosis × hectáreas) antes de guardar**; guarda con
+    `/api/tratamientos` o `/api/fertilizaciones`. Si el servidor no deja guardar, se enseña su aviso
+    en palabras de agricultor. **Verificado en Chrome**: 24 productos y el total calculado.
+- **El flujo que pidió David**, encadenado con un «siguiente paso»: **foto a la factura o al envase →
+  elegir tierra → trabajo del día → historial → calendario → filtros por tipo con cantidades**. Las
+  piezas están y ahora se enlazan: tras guardar la factura, «Elige la tierra»; en la ficha, «Ver el
+  calendario» y «Ver todos los trabajos»; tras apuntar, «Ver el trabajo de hoy».
 
 ## La ronda de David del 05/11 (tarde): lo que ha visto y pedido
 
@@ -113,6 +130,12 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       contorno dibujado** (relleno suave y línea blanca con borde oscuro), centrada y con margen; la
       ficha la enseña. Si la tierra no tiene forma, la ficha **lo dice** («no tiene forma en el
       SIGPAC») en vez de dibujar un cuadro inventado. 800×600 en unos 2 s en caliente.
+  - **Y el GeoPackage ya se abre** (05/11 tarde): `app/geopackage_sigpac.py` lee el `.gpkg` de la
+    caché **sin GDAL ni shapely** (descubre tabla y columna de geometría, descubre atributos por
+    nombre, traduce el blob GPKG/WKB a WKT) y `POST /api/sigpac/cache/{provincia}/contornos` rellena
+    `geometria`/`dibujo` de las parcelas de la finca que casan por su referencia SIGPAC, de forma
+    idempotente. 21 pruebas con un gpkg sintético. **Queda por probar con un gpkg real de 600 MB**
+    (streaming/índice) y solo admite Polygon/MultiPolygon (rechaza Z/M con su código, no los lee mal).
 - **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
   filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
   (`tierra-historial.png`, `calendario.png`, `trabajos-filtrados.png`, `factura-leida.png`).
@@ -133,6 +156,8 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-05 | **Cuaderno guiado y productos/abonos con dosis por hectárea** | Arnés de Chrome, 0 fallos (29 secciones / 123 cosas; 24 productos; total calculado); capturas `cuaderno-guiado.png` y `productos-dosis.png` |
+| 2026-11-05 | **GeoPackage del SIGPAC abierto: contornos de las parcelas** | `POST /api/sigpac/cache/{provincia}/contornos`; 21 pruebas con gpkg sintético (sin internet); lee Polygon/MultiPolygon, rechaza Z/M y tipos raros |
 | 2026-11-05 | **Apuntar el trabajo del día desde la tierra (con apero)** | Arnés de Chrome: apero del servidor, guardado y apunte en la base; `tests/test_labores_con_apero.py` (15) |
 | 2026-11-05 | **Tierra primero, historial, calendario y filtros por tipo** | Arnés de Chrome, 0 fallos (ficha con trabajo de hoy e historial; calendario con días; filtros con tierras y hectáreas); `tests/test_nuevo_historial.py` (18) |
 | 2026-11-05 | **Facturas con varias fotos, lectura y propuesta corregible** | Arnés de Chrome: foto → propuesta; captura `factura-leida.png` |

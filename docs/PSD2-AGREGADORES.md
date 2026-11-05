@@ -43,7 +43,7 @@ público y hay que pedir presupuesto.
 |---|---|---|---|---|---|---|
 | **Arcopay** (antes Afterbanks) | «Fintech española regulada por el Banco de España como Entidad de Pago y pasaportada para el resto de Europa»; licencias PSD2 de **AIS y PIS** en Europa y Reino Unido | API PSD2 de información de cuentas + **usuarios mock y bancos sandbox**; documentación SwaggerHub y widget | **No publicado** (contacto comercial) | España, Portugal, Italia, Grecia, Rumanía (+ México, Argentina, Colombia, Chile); AIS sobre cuentas corrientes | Contrato con el proveedor; sandbox con el alta | <https://www.arcopay.io/compania/> · <https://www.arcopay.io/desarrolladores/> |
 | **Powens** (incluye **Unnax**) | Powens SAS: institución de pago autorizada y supervisada por la **ACPR** (Francia), CIB 16948. Unnax Regulatory Services EDE, S.L.U.: entidad de dinero electrónico inscrita en el **Banco de España**, código 6719 | API de agregación financiera, transacciones, y **sandbox** (registro gratuito en su consola) | **No publicado** (contacto) | **1.800+ bancos** en Europa; datos de transacciones actualizados a diario; presencia en Francia, España y México | Contrato + alta de la aplicación | <https://www.powens.com/> (pie de página legal) · <https://www.powens.com/coverage/> |
-| **Tink** (grupo Visa) | Declara licencia PSD2 propia y agregar «con nuestra licencia»; **autoridad no verificada hoy** | API de agregación de cuentas; sandbox con registro en consola; 3.000+ conexiones, 19 mercados europeos | **No publicado como cifra**: la página de precios muestra plan «Standard: precio base por usuario y mes» sin importe, y «Enterprise: precio personalizado» | 19 mercados; cobertura por mercado en su documentación | Cuenta + contrato; verificación de dominio y due diligence | <https://tink.com/it/prezzi/> · <https://tink.com/about-us/> · <https://console.tink.com/signup> |
+| **Tink** (grupo Visa) | Licencia de Tink emitida por la **FSA sueca** (Finansinspektionen) y válida en la UE: así lo dice su FAQ de precios (quien no tiene licencia propia usa la de Tink; quien la tiene, sube su eIDAS) | API de agregación de cuentas; sandbox con registro en consola; 3.000+ conexiones, 19 mercados europeos | **No publicado como cifra**: plan «Standard: precio base por usuario y mes» sin importe, y «Enterprise: precio personalizado» | 19 mercados; cobertura por mercado en su documentación | Cuenta + contrato; verificación de dominio y due diligence | <https://tink.com/de/preisgestaltung/> · <https://tink.com/about-us/> · <https://console.tink.com/signup> |
 | **Enable Banking** | Actúa como entidad regulada (licencia propia); **autoridad no verificada hoy**. Ofrece modo «TPP con licencia propia» (infraestructura dedicada) para quien ya es AISP | API AIS (cuentas, saldos, movimientos) + **sandbox**; se puede probar antes de firmar contrato (producción restringida enlazando cuentas propias) | **No publicado como cifra**: precio por volumen (nº de cuentas y pagos/mes), con **factura mínima mensual**; presupuesto por correo | Consentimiento máximo típico **180 días**; historial de 90 días (límite de las cuentas); revocación desde su portal de consentimientos | Contrato + KYB de la empresa | <https://enablebanking.com/docs/faq/> · <https://enablebanking.com/> |
 | **Salt Edge** | Ofrece soluciones AIS/PSD2; **autoridad que concede su licencia: PENDIENTE de verificar** (no se ha localizado una página de precios: `/pricing` devuelve 404) | API de información de cuentas y sandbox para clientes | **No publicado** | Cobertura europea amplia; cifras concretas de España **PENDIENTE** | Contrato | <https://www.saltedge.com/> |
 | **GoCardless (Bank Account Data, ex-Nordigen)** | Proveedor de acceso a datos bancarios; **autoridad y continuidad del producto: PENDIENTE** (la página de precios de GoCardless no menciona el producto de datos; hay referencias de terceros al fin del plan gratuito que **no se usan aquí**) | API AIS documentada históricamente; sandbox | **No publicado** (no verificado) | **PENDIENTE** | Contrato | <https://gocardless.com/> |
@@ -54,11 +54,87 @@ remiten a contacto comercial. Cualquier cifra que se escriba sin presupuesto ser
 
 ---
 
+## 2 bis. El coste, en claro (comprobado el 2026-11-05)
+
+> **Regla:** primero el coste. Si no hay cifra publicada se escribe **«no publicado»** y se pide
+> presupuesto; **no se estima**. David **no ha aprobado ningún gasto**.
+
+### 2 bis.1 Lo que publica cada proveedor
+
+| Proveedor | Qué publica | Cifra | Unidad | URL (consultada 2026-11-05) |
+|---|---|---|---|---|
+| **Enable Banking** | Precio **por volumen** (nº de cuentas y pagos al mes) y **factura mínima mensual**; presupuesto por correo | **no publicado** | — | <https://enablebanking.com/docs/faq/> (pregunta «How much does it cost…») |
+| **Powens / Unnax** | **No hay página de precios** (`/pricing/` devuelve 404). Sandbox con registro gratuito; presupuesto por formulario de contacto | **no publicado** | — | <https://www.powens.com/pricing/> (404) · <https://www.powens.com/contact-us/> |
+| **Arcopay** (ex-Afterbanks) | **No hay página de precios**; presupuesto por correo (`info@arcopay.io`, en su web) | **no publicado** | — | <https://www.arcopay.io/desarrolladores/> · <https://www.arcopay.io/compania/> |
+| **Tink** | Plan **Standard**: «precio base **por usuario y mes**», **sin importe** en la página; plan Enterprise: «precio personalizado». Sandbox con registro | **no publicado** | usuario/mes (unidad publicada, sin cifra) | <https://tink.com/de/preisgestaltung/> |
+| **Salt Edge** | **No hay página de precios**: `/pricing`, `/plans` y `/pricing_plans` devuelven 404 | **no publicado** | — | <https://www.saltedge.com/pricing> (404) · <https://www.saltedge.com/plans> (404) |
+| **GoCardless Bank Account Data** (ex-Nordigen) | Unidad de facturación publicada: **«requisición activa al mes»** (una autorización del usuario = una requisición; dura como máximo 90 o 180 días; el sandbox no cuenta). **Precio por requisición: no publicado** | **no publicado** | requisición activa/mes (unidad publicada) | <https://bankaccountdata.zendesk.com/hc/en-gb/articles/11528933493916-Bank-Account-Data-API-Usage-how-is-your-usage-number-calculated> |
+| **BBVA API Market** | **Sandbox y área privada gratis** con registro; el coste de producción «depende de los servicios que se consuman y el uso que tengan, que habría que estudiar» | **0 € (sandbox)** · producción **no publicado** | registro / uso | <https://www.bbvaapimarket.com/es/> (FAQ de la portada) |
+| **Santander, CaixaBank** | No se ha localizado página de precios oficial | **no publicado** | — | — (PENDIENTE) |
+
+**Resumen:** de los siete proveedores, **ninguno publica el precio de producción**. Lo único con cifra
+es el **sandbox de BBVA API Market (0 €)**; los sandbox de los agregadores se prueban al registrarse,
+sin precio publicado. Las **unidades** de facturación sí están publicadas en dos casos: Tink
+(usuario/mes) y GoCardless (requisición activa/mes).
+
+### 2 bis.2 Los escenarios, con cantidades ciertas (no con precios inventados)
+
+Escenario de la app: **1 explotación, 2 cuentas, 1 consulta al día (≈30/mes), 12 meses, solo lectura,
+sin PIS**.
+
+| Concepto | Cantidad anual (aritmética) | Coste con cifras publicadas |
+|---|---|---|
+| Cuentas conectadas | 2 cuentas × 12 meses = **24 cuentas-mes** | **No calculable**: nadie publica €/cuenta/mes |
+| Consultas | 30/mes × 12 = **360 consultas/año** | **No calculable**: nadie publica €/consulta |
+| Requisiciones (GoCardless) | **12/año** si las dos cuentas son del mismo banco; **24/año** si son de dos bancos | **No calculable**: no publica €/requisición activa |
+| Sandbox / pruebas | 1 entorno | **0 € en BBVA API Market**; en los agregadores, prueba al registrarse (sin precio publicado) |
+| Alta, contrato y DPA | 1 | **No publicado** (va en el contrato) |
+| **Total anual** | — | **NO PUBLICADO. No se puede dar una cifra sin presupuesto escrito.** |
+
+> **Lo que no se hace:** no se pone un «desde X €» ni un rango orientativo. Un escenario con precios
+> supuestos sería una cifra inventada, y David todavía no ha aprobado gasto.
+
+### 2 bis.3 La pregunta exacta (dos presupuestos escritos)
+
+Se piden **dos** presupuestos, a las dos opciones de la sección 4, con este mismo escenario. Texto para
+enviar (vale para los dos, cambiando el destinatario):
+
+> Asunto: **Presupuesto AIS (solo lectura) — 2 cuentas, 30 consultas/mes**
+>
+> Hola: estamos valorando conectar cuentas bancarias **solo para leer saldos y movimientos** (sin
+> iniciación de pagos) en una aplicación de gestión agrícola en España. Escenario para el presupuesto:
+> **1 empresa, 2 cuentas bancarias en España, 1 consulta al día (≈30 al mes), 12 meses, sandbox
+> incluido, sin PIS**. Necesitamos, por escrito y con IVA desglosado: (1) qué incluye la **factura
+> mínima mensual** y cuál es su importe; (2) precio **por cuenta/mes** y **por consulta** (o por
+> requisición activa al mes, si es su unidad); (3) **coste de alta** e integración; (4) **DPA**
+> (encargado de tratamiento) y condiciones RGPD; (5) **cobertura de bancos españoles** (BBVA,
+> Santander, CaixaBank, Bankinter, cajas rurales y cooperativas); (6) **límites** de peticiones y
+> frecuencia de actualización; (7) plazo de contratación y condiciones de **revocación** del
+> consentimiento. Gracias.
+
+Destinatarios:
+- **Enable Banking:** `info@enablebanking.com` (publicado en su FAQ).
+- **Powens / Unnax:** formulario <https://www.powens.com/contact-us/> (no hay correo comercial
+  publicado).
+- Si se quiere una tercera referencia: **Arcopay**, `info@arcopay.io`.
+
+### 2 bis.4 Decisión y criterio de parada
+
+1. **Sin coste publicado no se propone contratar.** No hay propuesta económica que llevar a David.
+2. **Dos presupuestos escritos** (Enable Banking y Powens/Unnax) y **decide David**. Este documento
+   no aprueba gasto.
+3. **Criterio de parada:** si el coste anual supera el de **seguir con la importación de extracto por
+   fichero** —que ya existe y cuesta **0 €**—, **no se contrata**. La conexión PSD2 ahorra teclear,
+   no aporta un dato que hoy falte.
+4. **Nada de código de PSD2** hasta que haya contrato firmado y aprobación de David.
+
+---
+
 ## 3. Bancos españoles con API propia
 
 | Banco | Qué hay verificado | Estado |
 |---|---|---|
-| **BBVA** (BBVA API Market) | Existe un portal oficial de APIs para empresas: <https://ei.bbva.es/eu/empresas/bbva-api.html>. **No se ha podido leer su catálogo** (página servida en euskera/redirecciones) ni confirmar qué API de AIS ofrece ni sus condiciones | **PENDIENTE** |
+| **BBVA** (BBVA API Market) | Portal oficial con **APIs normativas PSD2** y de conciliación (`Reconciliation`); **sandbox y área privada gratis con registro** (no hace falta ser cliente); el coste de producción «depende de los servicios que se consuman y el uso», y hay que estudiarlo. Qué API concreta de **AIS** ofrece a terceros: **PENDIENTE** | Portal y condiciones: **VERIFICADO** · AIS concreta: **PENDIENTE** · precio de producción: **no publicado** |
 | **Santander**, **CaixaBank** y resto | Tienen iniciativas de *open banking* para terceros, pero **no se ha verificado en fuente oficial** qué API de AIS ofrecen, con qué licencia ni con qué límites. Solo fuentes de terceros, que no se usan | **PENDIENTE** |
 
 **Lo importante, y esto sí está verificado:** conectar **directamente** con cada banco exige ser
@@ -110,9 +186,9 @@ mantenimiento. La vía es **un agregador AISP**.
 | Sandbox | Sí, autoservicio antes de contrato | Sí, registro |
 | Cobertura España | PENDIENTE de confirmar por banco | 1.800+ bancos UE |
 
-**No se puede elegir «la más barata que cumpla» porque ninguna de las dos publica precio.** Las dos
-implican contrato y factura mínima, así que el coste es **relevante y desconocido**. Por la regla
-acordada, esto es **nivel 3: paro y pregunto**.
+**No se puede elegir «la más barata que cumpla» porque ninguna de las dos publica precio** (comprobado
+otra vez el 2026-11-05 en la sección **2 bis**). Las dos implican contrato y factura mínima, así que el
+coste es **relevante y desconocido**. Por la regla acordada, esto es **nivel 3: paro y pregunto**.
 
 **La pregunta concreta (para llevar a los dos):** precio anual para este escenario marcado como
 supuesto: **1 explotación, 2 cuentas bancarias, 1 consulta al día (≈30 al mes), 12 meses**, sin
@@ -200,7 +276,7 @@ aprobación de David, PSD2 no entra en el código**.
 
 | # | Qué | De quién | Estado |
 |---|---|---|---|
-| 1 | Presupuesto con el escenario de uso (2 cuentas, 30 consultas/mes) | Enable Banking y Powens/Unnax | **PENDIENTE (nivel 3)** |
+| 1 | **Dos presupuestos escritos** con el escenario de uso (2 cuentas, ≈30 consultas/mes, 12 meses; texto listo en **2 bis.3**) | Enable Banking y Powens/Unnax | **PENDIENTE (nivel 3)** |
 | 2 | Contrato de servicios AIS y **DPA** | Proveedor elegido | PENDIENTE |
 | 3 | Alta de la aplicación (KYB, verificación de dominio) | Proveedor | PENDIENTE |
 | 4 | Confirmar cobertura de los bancos que usan los agricultores | Proveedor | PENDIENTE |
@@ -218,11 +294,18 @@ aprobación de David, PSD2 no entra en el código**.
 | 4 accesos/24 h si el usuario no pide activamente la información | <https://www.eba.europa.eu/single-rule-book-qa/qna/view/publicId/2018_4210> | 2026-11-05 | VERIFICADO |
 | Arcopay: entidad de pago española (Banco de España), licencias AIS/PIS, sandbox | <https://www.arcopay.io/compania/> | 2026-11-05 | VERIFICADO |
 | Powens/Unnax: ACPR CIB 16948 y Banco de España código 6719 | <https://www.powens.com/> | 2026-11-05 | VERIFICADO |
-| Tink: licencia propia declarada; plan «por usuario y mes» sin cifra | <https://tink.com/it/prezzi/> | 2026-11-05 | VERIFICADO lo publicado; cifra **NO PUBLICADA** |
-| Enable Banking: sandbox antes de contrato; precio por volumen con mínimo mensual; consentimiento máximo típico 180 días | <https://enablebanking.com/docs/faq/> | 2026-11-05 | VERIFICADO |
-| Salt Edge / GoCardless: AIS y precios | — | 2026-11-05 | **PENDIENTE** |
-| APIs propias de BBVA/Santander/CaixaBank para AIS | <https://ei.bbva.es/eu/empresas/bbva-api.html> | 2026-11-05 | **PENDIENTE** |
+| Tink: licencia emitida por la **FSA sueca**; plan «por usuario y mes» sin cifra | <https://tink.com/de/preisgestaltung/> | 2026-11-05 | VERIFICADO lo publicado; cifra **NO PUBLICADA** |
+| Enable Banking: sandbox antes de contrato; precio por volumen con mínimo mensual; consentimiento máximo típico 180 días | <https://enablebanking.com/docs/faq/> | 2026-11-05 | VERIFICADO; precio **NO PUBLICADO** |
+| Powens/Unnax: sin página de precios (`/pricing/` devuelve 404); sandbox con registro | <https://www.powens.com/pricing/> | 2026-11-05 | **NO PUBLICADO** |
+| Salt Edge: sin página de precios (`/pricing`, `/plans`, `/pricing_plans` → 404) | <https://www.saltedge.com/pricing> | 2026-11-05 | **NO PUBLICADO** |
+| GoCardless Bank Account Data: unidad de facturación «requisición activa al mes»; GoCardless Ltd autorizada por la **FCA** (PSR 2017, nº 597190) | <https://bankaccountdata.zendesk.com/hc/en-gb/articles/11528933493916-Bank-Account-Data-API-Usage-how-is-your-usage-number-calculated> · <https://bankaccountdata.zendesk.com/hc/en-gb/categories/17222350058268-FAQ> | 2026-11-05 | Unidad y licencia VERIFICADAS; precio **NO PUBLICADO** |
+| BBVA API Market: sandbox y área privada gratis con registro; producción según uso | <https://www.bbvaapimarket.com/es/> | 2026-11-05 | VERIFICADO (sandbox 0 €); producción **NO PUBLICADO** |
+| APIs propias de Santander/CaixaBank para AIS | — | 2026-11-05 | **PENDIENTE** |
 
-**No verificado (no se rellena):** precios de cualquier proveedor; cobertura exacta de bancos
-españoles de Tink, Salt Edge y Enable Banking; límites numéricos de peticiones; condiciones de las
-APIs propias de los bancos; autoridad supervisora de Tink, Salt Edge y Enable Banking.
+**No verificado (no se rellena):** **ningún precio de producción** de ningún proveedor; cobertura
+exacta de bancos españoles de Tink, Salt Edge y Enable Banking; límites numéricos de peticiones;
+condiciones de las APIs propias de Santander y CaixaBank; autoridad supervisora de Salt Edge y Enable
+Banking; qué API concreta de AIS ofrece BBVA a terceros. **Lo que sí queda cerrado:** quien concede la
+licencia a Arcopay (Banco de España), Powens/Unnax (ACPR y Banco de España), Tink (FSA sueca) y
+GoCardless (FCA); la unidad de facturación de Tink y de GoCardless; y que el sandbox de BBVA API
+Market es gratis.

@@ -33,6 +33,7 @@ export const textos = {
     calendario: "Calendario",
     trabajos: "Trabajos",
     facturas: "Facturas",
+    productos: "Productos",
     cuaderno: "Cuaderno",
     mas: "Más",
     campana: "Campaña",
@@ -200,6 +201,62 @@ export const textos = {
     cuaderno: "Cuaderno",
     ajustes: "Ajustes",
     intro: "Lo demás de la finca.",
+  },
+  productos: {
+    titulo: "Productos y abonos",
+    intro: "Lo que hay en la finca, con su dosis máxima por hectárea.",
+    productos: "Productos",
+    abonos: "Abonos",
+    buscar: "Buscar por nombre",
+    buscarPista: "Nombre o materia activa",
+    dosisMaxima: "Dosis máxima",
+    porHectarea: "por hectárea",
+    plazo: "Plazo de seguridad",
+    dias: "días",
+    riqueza: "Riqueza",
+    materiaActiva: "Materia activa",
+    aplicar: "Apuntar en una tierra",
+    tierra: "Tierra",
+    fecha: "Fecha",
+    hectareas: "Hectáreas",
+    dosis: "Dosis por hectárea",
+    total: "Total calculado",
+    guardar: "Guardar el apunte",
+    guardando: "Guardando…",
+    guardado: "Apunte guardado",
+    noSeGuardo: "No se ha podido guardar. Prueba otra vez.",
+    cargando: "Trayendo productos y abonos…",
+    noDisponible: "Los productos y abonos todavía no están en la pantalla nueva.",
+    sinProductos: "No hay productos guardados.",
+    sinAbonos: "No hay abonos guardados.",
+    sinDosis: "Escribe la dosis por hectárea.",
+    sinSuperficie: "Escribe las hectáreas de la tierra.",
+    sinTierra: "Elige la tierra.",
+    cerrar: "Cerrar",
+    verTrabajo: "Ver el trabajo del día",
+    sinCoincidencias: "No hay nada con ese nombre.",
+  },
+  cuaderno: {
+    titulo: "Cuaderno",
+    intro: "Lo que falta para que el registro esté completo, y dónde se arregla cada cosa.",
+    faltan: "Faltan {n} cosas",
+    faltaUna: "Falta 1 cosa",
+    completo: "El cuaderno está completo.",
+    bloquea: "Bloquea el envío a la Junta",
+    arreglar: "Arreglar",
+    abrirJv: "Abrir el cuaderno de la Junta",
+    cargando: "Mirando lo que falta…",
+    noDisponible: "El cuaderno todavía no está en la pantalla nueva.",
+    seccion: "Sección",
+    dondeSeArregla: "Se arregla en",
+    sinItems: "No hay nada que arreglar aquí.",
+  },
+  siguiente: {
+    eligeTierra: "Elige la tierra",
+    verCalendario: "Ver el calendario",
+    verTrabajos: "Ver todos los trabajos",
+    verHoy: "Ver el trabajo de hoy",
+    verDelDia: "Ver el trabajo del día",
   },
   apuntar: {
     titulo: "Apuntar un trabajo",
@@ -744,7 +801,7 @@ export function normalizaQueFalta(datos) {
   for (const fila of filas) {
     if (typeof fila === "string") {
       const que = fila.trim();
-      if (que) limpias.push({ que, donde: null, enlace: null });
+      if (que) limpias.push({ que, donde: null, bloquea: false, enlace: null });
       continue;
     }
     if (!fila || typeof fila !== "object") continue;
@@ -753,6 +810,7 @@ export function normalizaQueFalta(datos) {
     limpias.push({
       que: String(que).trim(),
       donde: fila.donde ?? fila.pantalla ?? null,
+      bloquea: Boolean(fila.bloquea ?? fila.bloqueante ?? false),
       enlace: fila.enlace ?? fila.url ?? null,
     });
   }
@@ -1361,4 +1419,165 @@ export function elAperoSeGuardaEnLabores(esquema) {
     esquema.components.schemas.LaborEntrada &&
     esquema.components.schemas.LaborEntrada.properties;
   return Boolean(propiedades && propiedades.subtipo);
+}
+
+// ---------------------------------------------------------------------------
+// Los productos, los abonos y la dosis por hectárea
+// ---------------------------------------------------------------------------
+
+function laLista(datos, clave) {
+  if (Array.isArray(datos)) return datos;
+  if (datos && Array.isArray(datos[clave])) return datos[clave];
+  if (datos && Array.isArray(datos.items)) return datos.items;
+  return [];
+}
+
+/** Los productos que sirve el servidor, con su dosis máxima y su unidad. */
+export function normalizaProductos(datos) {
+  return laLista(datos, "productos")
+    .filter((producto) => producto && (producto.nombre_comercial || producto.nombre))
+    .map((producto) => ({
+      id: producto.id ?? null,
+      nombre: producto.nombre_comercial || producto.nombre,
+      materiaActiva: producto.materia_activa || null,
+      dosisMaxima: numeroDe(producto.dosis_maxima),
+      unidad: producto.unidad_dosis || null,
+      plazo: numeroDe(producto.plazo_seguridad_dias),
+      autorizado: producto.autorizado ?? null,
+    }));
+}
+
+/** Los abonos que sirve el servidor, con su riqueza. `null` es «no consta», no un cero. */
+export function normalizaAbonos(datos) {
+  return laLista(datos, "fertilizantes")
+    .filter((abono) => abono && abono.nombre)
+    .map((abono) => ({
+      id: abono.id ?? null,
+      nombre: abono.nombre,
+      tipo: abono.tipo || null,
+      n: numeroDe(abono.riqueza_n),
+      p: numeroDe(abono.riqueza_p),
+      k: numeroDe(abono.riqueza_k),
+    }));
+}
+
+/** «N 27 % · P 0 % · K 0 %», con lo que consta y sin inventar ceros. */
+export function riquezaEnTexto(abono) {
+  if (!abono) return null;
+  const partes = [];
+  for (const [letra, valor] of [
+    ["N", abono.n],
+    ["P", abono.p],
+    ["K", abono.k],
+  ]) {
+    if (valor !== null && valor !== undefined) partes.push(`${letra} ${formateaNumero(valor)} %`);
+  }
+  return partes.length ? partes.join(" · ") : null;
+}
+
+/** «1,5 L/ha», o `null` si no consta la dosis máxima. */
+export function dosisMaximaEnTexto(producto) {
+  if (!producto || producto.dosisMaxima === null || producto.dosisMaxima === undefined) return null;
+  return `${formateaNumero(producto.dosisMaxima)}${producto.unidad ? ` ${producto.unidad}` : ""}`;
+}
+
+/**
+ * El total que se va a echar: dosis por hectárea × hectáreas. **Sin mezclar unidades**: si la
+ * dosis viene por hectárea, el total sale en su unidad base (kg o L); si ya viene como total, no
+ * se multiplica por nada. Sin hectáreas no hay total que enseñar.
+ */
+export function totalDeLaAplicacion(dosis, hectareas, unidadDosis) {
+  const cantidad = numeroDe(dosis);
+  if (cantidad === null) return null;
+  const unidad = String(unidadDosis ?? "").trim();
+  const porHectarea = /\/\s*ha/i.test(unidad);
+  if (!porHectarea) {
+    return { cantidad, unidad: unidad || "" };
+  }
+  const superficie = numeroDe(hectareas);
+  if (superficie === null || superficie <= 0) return null;
+  const base = unidad.replace(/\/\s*ha/i, "").trim();
+  return { cantidad: redondea(cantidad * superficie, 3), unidad: base };
+}
+
+/** La puerta a la que se manda cada apunte. */
+export function rutaDeLaAplicacion(tipo) {
+  return tipo === "abono" ? "/api/fertilizaciones" : "/api/tratamientos";
+}
+
+/** El cuerpo del tratamiento (producto) tal y como lo espera el servidor. */
+export function cuerpoDelTratamiento({ campanaId, tierraId, fecha, productoId, dosis, unidadDosis, hectareas } = {}) {
+  return {
+    campana_id: campanaId ?? null,
+    tipo: "parcela",
+    fecha: fecha || fechaDeHoyISO(),
+    parcela_id: tierraId ?? null,
+    producto_id: productoId ?? null,
+    dosis: numeroDe(dosis),
+    unidad_dosis: unidadDosis || "L/ha",
+    superficie_tratada_ha: numeroDe(hectareas),
+  };
+}
+
+/** El cuerpo del abono, con los kilos por hectárea y el total que sale de ellos. */
+export function cuerpoDeLaFertilizacion({ campanaId, tierraId, fecha, fertilizanteId, hectareas, dosisPorHa, unidad } = {}) {
+  const superficie = numeroDe(hectareas);
+  const dosis = numeroDe(dosisPorHa);
+  return {
+    campana_id: campanaId ?? null,
+    fecha: fecha || fechaDeHoyISO(),
+    parcela_id: tierraId ?? null,
+    superficie_ha: superficie,
+    fertilizante_id: fertilizanteId ?? null,
+    kg_ha_producto: dosis,
+    unidad_del_producto: unidad || "kg",
+    cantidad_total_kg: superficie !== null && dosis !== null ? redondea(superficie * dosis, 3) : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// El cuaderno guiado: lo que falta, agrupado por dónde se arregla
+// ---------------------------------------------------------------------------
+
+/** Lo que falta, **agrupado por dónde se arregla**, sin reordenar lo que manda el servidor. */
+export function agruparLoQueFalta(items) {
+  const secciones = new Map();
+  for (const item of Array.isArray(items) ? items : []) {
+    if (!item || !item.que) continue;
+    const donde = String(item.donde ?? "").trim() || textos.cuaderno.seccion;
+    if (!secciones.has(donde)) secciones.set(donde, []);
+    secciones.get(donde).push(item);
+  }
+  return [...secciones.entries()].map(([donde, suyos]) => ({
+    donde,
+    n: suyos.length,
+    items: suyos,
+    bloquea: suyos.some((item) => Boolean(item.bloquea)),
+  }));
+}
+
+/**
+ * Los avisos que el servidor escribe **en palabras de agricultor** cuando no deja guardar algo
+ * (una etiqueta que no reconoce, una dosis fuera de lo autorizado…). Se enseñan tal cual; si no
+ * hay ninguno, la pantalla dice lo suyo.
+ */
+export function mensajesDeLaRespuesta(detalle) {
+  const cuerpo = detalle && typeof detalle === "object" && detalle.detail !== undefined ? detalle.detail : detalle;
+  if (!cuerpo) return [];
+  if (typeof cuerpo === "string") return [cuerpo.trim()].filter(Boolean);
+  if (Array.isArray(cuerpo)) {
+    return cuerpo.map((uno) => mensajesDeLaRespuesta(uno)).flat().filter(Boolean);
+  }
+  if (typeof cuerpo === "object") {
+    const mensajes = [];
+    if (typeof cuerpo.mensaje === "string" && cuerpo.mensaje.trim()) mensajes.push(cuerpo.mensaje.trim());
+    if (Array.isArray(cuerpo.avisos)) {
+      for (const aviso of cuerpo.avisos) {
+        const texto = aviso && (aviso.mensaje || aviso.texto);
+        if (texto && String(texto).trim()) mensajes.push(String(texto).trim());
+      }
+    }
+    return [...new Set(mensajes)];
+  }
+  return [];
 }

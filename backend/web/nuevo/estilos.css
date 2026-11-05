@@ -665,6 +665,18 @@ button {
   overflow: auto;
 }
 
+.pantalla-cuaderno > .tarjeta,
+.pantalla-productos > .tarjeta,
+.pantalla-productos > .trabajos-lista,
+.pantalla-cuaderno > .que-falta {
+  margin-top: var(--space-4);
+}
+
+.pantalla-productos .trabajo .boton {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+}
+
 .tierra:hover {
   background: var(--surface-sunk);
 }

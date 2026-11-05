@@ -122,14 +122,19 @@
 - **Lo que falta para cerrar el recorrido entero**: enlazar Cuaderno, Campaña y PAC a pantallas nuevas
   (hoy llevan a la app vieja) y retirar cada pantalla vieja cuando la nueva la cubra. Va en AGR-15.
 
-### AGR-15 · La segunda mitad de SIGPAC: abrir el GeoPackage e importar sus recintos
+### AGR-15 · La segunda mitad de SIGPAC: abrir el GeoPackage e importar sus recintos — **HECHO EL CONTORNO (2026-11-05); FALTA PROBAR EL FICHERO REAL**
 
 - **Nivel**: 2.
-- **Qué**: leer el `.gpkg` descargado (SQLite: tabla de recintos, geometría y atributos), convertir WKT
-  y meter los recintos en la finca con su uso, coeficiente, región y admisibilidad; duplicados por
-  clave de recinto; streaming a fichero en vez de 628 MB en memoria; purga y límite de tamaño.
-- **Criterio**: importar una provincia de prueba (fichero pequeño) sin duplicar y sin tocar datos de
-  otra finca; probado sin internet contra un `.gpkg` guardado de ejemplo.
+- **Hecho**: `app/geopackage_sigpac.py` lee el `.gpkg` de la caché sin GDAL/shapely (descubre tabla y
+  columna de geometría, atributos por nombre normalizado, blob GPKG/WKB → WKT; Polygon y MultiPolygon,
+  rechaza Z/M y tipos raros con su código), casa los nombres de provincia/municipio de la parcela con
+  los códigos del catálogo y `POST /api/sigpac/cache/{provincia}/contornos` rellena `geometria`/`dibujo`
+  de las parcelas de la finca, idempotente, con auditoría solo si cambia y aislamiento por finca.
+  **Evidencia**: `tests/test_geopackage_sigpac.py` (21, gpkg sintético, sin internet).
+- **Falta**: probar con el **gpkg real de 600 MB** (tiempo/memoria/índice; hoy se consulta por códigos
+  con tope, sin streaming) y decidir si el ZIP se guarda extraído; no escribe `superficie_sigpac_ha`,
+  uso ni coeficiente (sería tocar datos catastrales desde un contorno: otra tarea).
+- **Criterio**: importar una provincia de prueba sin duplicar y sin tocar datos de otra finca.
 
 ### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC) — **EN CURSO (2026-11-05)**
 
@@ -139,6 +144,11 @@
   superficie; lo del SIGPAC se muestra), **importar el cuaderno de un cliente** (sube el Cuecyl,
   reconoce las parcelas, las crea sin duplicar y rellena el titular de la finca), **mapa coloreado por
   uso/cultivo con leyenda**, tarjetas de **gastos y ventas** y bloque **«qué falta»** en «Hoy».
+- **Hecho después (05/11 tarde)**: **cuaderno guiado** en vista propia (cuántas cosas faltan, agrupadas
+  por dónde se arregla, con botón a la pantalla y «bloquea el envío» dicho con palabra), **productos y
+  abonos con dosis por hectárea** (dosis máxima + unidad, riqueza N/P/K, total calculado antes de
+  apuntar y guardado en tratamientos/fertilizaciones) y el **flujo encadenado** factura → tierra →
+  trabajo del día → historial → calendario → filtros con «siguiente paso».
 - **Evidencia**: `backend/scripts/comprobar_el_armazon_nuevo.py` en Chrome **0 fallos** (búsqueda →
   recinto dibujado → añadido 64→65; cuaderno subido 65→72); capturas en `docs/capturas-nuevo/`;
   `tests/test_nuevo_importar.py` (12) y `tests/test_sigpac_buscar_puntos.py` (3).
@@ -169,10 +179,13 @@
   cinco candidatos con API de solo lectura y sandbox (Arcopay/ex-Afterbanks, Powens/Unnax, Tink,
   Enable Banking, Salt Edge/GoCardless), las dos opciones medidas (Enable Banking y Powens/Unnax) y
   el límite duro: **nunca operar, nunca iniciar pagos, nunca guardar credenciales**.
-- **Por qué está parado**: **ningún candidato publica precio** (presupuesto con mínimo mensual), así
-  que la regla «la más barata que cumpla» no se puede aplicar con datos. Hace falta pedir dos
-  presupuestos (1 explotación, 2 cuentas, 1 consulta/día, 12 meses, sin PIS, con sandbox y DPA) y que
-  David apruebe el gasto. **No se escribe código de PSD2 hasta que haya contrato firmado.**
+- **Por qué está parado**: **ningún proveedor publica precio de producción** (05/11 tarde, sección «El
+  coste, en claro» de `docs/PSD2-AGREGADORES.md`): solo hay una cifra (sandbox de BBVA, 0 €); Tink
+  publica «por usuario/mes» sin importe y GoCardless la unidad «requisición activa al mes» sin precio;
+  los demás piden presupuesto por correo. Así que la regla «la más barata que cumpla» no se puede
+  aplicar con datos: hay que pedir **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y que
+  **David apruebe el gasto** (que aún no ha aprobado). **No se escribe código de PSD2 hasta que haya
+  contrato firmado.**
 - **Criterio de parada segundo**: si el coste anual supera lo que cuesta seguir con la importación de
   extracto por fichero (ya existe y es gratis), no se contrata.
 

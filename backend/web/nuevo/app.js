@@ -29,6 +29,7 @@ import {
   ALTO_MAPA,
   ANCHO_MAPA,
   CLAVE_TOKEN,
+  agruparLoQueFalta,
   agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
@@ -41,9 +42,12 @@ import {
   colorDeTierra,
   colorDeUso,
   cuerpoDeLaFactura,
+  cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
+  cuerpoDelTratamiento,
   datosDelPanel,
   decidirEstado,
+  dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
   etiquetaCampana,
   etiquetaDeTrabajo,
@@ -53,12 +57,15 @@ import {
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  mensajesDeLaRespuesta,
   mesEnPalabras,
   municipioDeTierra,
   nombreDeMes,
+  normalizaAbonos,
   normalizaAperos,
   normalizaCalendario,
   normalizaImportacion,
+  normalizaProductos,
   normalizaPropuestaDeFactura,
   normalizaQueFalta,
   normalizaResumen,
@@ -73,11 +80,14 @@ import {
   referenciasDeTexto,
   rejillaDelMes,
   relacionDeTipos,
+  riquezaEnTexto,
   rutaDeAnillo,
+  rutaDeLaAplicacion,
   sinMapa,
   sumaDeHectareas,
   textos,
   textoRelleno,
+  totalDeLaAplicacion,
   urlDeMiniatura,
   urlDelMapa,
 } from "./modelo.js";
@@ -110,6 +120,10 @@ const RUTA_QUE_FALTA_DE_TRABAJOS = "/api/trabajos/que-falta";
 const RUTA_LABORES = "/api/labores";
 const RUTA_TRABAJO_HECHO = "/api/trabajos";
 const RUTA_OPENAPI = "/openapi.json";
+const RUTA_PRODUCTOS = "/api/productos";
+const RUTA_FERTILIZANTES = "/api/fertilizantes";
+const RUTA_TRATAMIENTOS = "/api/tratamientos";
+const RUTA_FERTILIZACIONES = "/api/fertilizaciones";
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
 const LADO_MINIMO = 0.0008;
@@ -211,7 +225,11 @@ async function pedir(ruta, opciones = {}) {
     return { estado: "sin-permiso" };
   }
   if (respuesta.status === 404 || respuesta.status === 405) return { estado: "no-disponible" };
-  if (!respuesta.ok) return { estado: "error", codigo: respuesta.status };
+  if (!respuesta.ok) {
+    // El servidor escribe sus avisos en palabras de agricultor: se recogen para poder enseñarlos.
+    const cuerpo = await respuesta.json().catch(() => null);
+    return { estado: "error", codigo: respuesta.status, detalle: cuerpo };
+  }
   try {
     return { estado: "ok", datos: await respuesta.json() };
   } catch (fallo) {
@@ -498,6 +516,8 @@ function BarraLateral({ vista, ir }) {
   const claseApuntar = claseNav(vista === "apuntar");
   const claseCalendario = claseNav(vista === "calendario");
   const claseTrabajos = claseNav(vista === "trabajos");
+  const claseProductos = claseNav(vista === "productos");
+  const claseCuaderno = claseNav(vista === "cuaderno");
   const claseFacturas = claseNav(vista === "facturas");
 
   return html`<nav className="barra-lateral" data-nav-lateral aria-label="Secciones">
@@ -523,14 +543,18 @@ function BarraLateral({ vista, ir }) {
         <span className="nav__icono"><${Icono} nombre="cuaderno" /></span>
         ${textos.nav.trabajos}
       </button>
+      <button type="button" className=${claseProductos} data-destino="productos" onClick=${() => ir("productos")} aria-current=${vista === "productos" ? "page" : undefined}>
+        <span className="nav__icono"><${Icono} nombre="pac" /></span>
+        ${textos.nav.productos}
+      </button>
       <button type="button" className=${claseFacturas} data-destino="facturas" onClick=${() => ir("facturas")} aria-current=${vista === "facturas" ? "page" : undefined}>
         <span className="nav__icono"><${Icono} nombre="documentos" /></span>
         ${textos.nav.facturas}
       </button>
-      <a className="nav__enlace" href="/" data-destino="cuaderno">
+      <button type="button" className=${claseCuaderno} data-destino="cuaderno" onClick=${() => ir("cuaderno")} aria-current=${vista === "cuaderno" ? "page" : undefined}>
         <span className="nav__icono"><${Icono} nombre="cuaderno" /></span>
         ${textos.nav.cuaderno}
-      </a>
+      </button>
       <a className="nav__enlace" href="/">
         <span className="nav__icono"><${Icono} nombre="pac" /></span>
         ${textos.nav.pac}
@@ -1920,7 +1944,7 @@ function Miniatura({ tierra }) {
   />`;
 }
 
-function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, alVerLaTierra }) {
+function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, alVerLaTierra, alIr }) {
   const opciones = usarOpcionesDeTrabajo();
   const [tierraId, setTierraId] = useState(tierraInicial || (tierras[0] ? tierras[0].id : null));
   const [apero, setApero] = useState(null);
@@ -1988,7 +2012,8 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
       return;
     }
     setFase(resultado.estado === "sin-permiso" ? "sin-permiso" : "error");
-    setAviso(textos.apuntar.noSeGuardo);
+    const avisosDelServidor = resultado.estado === "sin-permiso" ? [] : mensajesDeLaRespuesta(resultado.detalle);
+    setAviso(avisosDelServidor.length ? avisosDelServidor.join(" · ") : textos.apuntar.noSeGuardo);
   };
 
   const cabecera = html`<header className="pagina__cabecera">
@@ -2045,7 +2070,10 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
     ? html`<section className="tarjeta" data-apuntar-resultado="guardado" aria-labelledby="apuntar-guardado">
         <h2 className="tarjeta__titulo" id="apuntar-guardado">${textos.apuntar.guardado}</h2>
         <p className="pagina__dato">${[guardado.etiqueta, guardado.tierra, fechaDe(guardado.fecha)].filter(Boolean).join(" · ")}</p>
-        <button type="button" className="boton boton--principal" onClick=${() => alVerLaTierra && alVerLaTierra(tierraId)}>${textos.apuntar.verLaTierra}</button>
+        <div className="estado__acciones">
+          <${BotonSiguiente} texto=${textos.siguiente.verHoy} alPulsar=${() => alVerLaTierra && alVerLaTierra(tierraId)} />
+          <${BotonSiguiente} texto=${textos.siguiente.verCalendario} alPulsar=${() => alIr("calendario")} />
+        </div>
       </section>`
     : null;
 
@@ -2088,7 +2116,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
   </div>`;
 }
 
-function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alApuntar }) {
+function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alApuntar, alIr }) {
   const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
   const ficha = usarPantalla(RUTA_TIERRA(tierraId), Boolean(tierraId));
   const [usaElServidor, setUsaElServidor] = useState(true);
@@ -2173,6 +2201,13 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
     </section>
 
     <${Panel} tierra=${tierra} alCerrar=${alVolver} alGuardar=${alReintentar} />
+
+    <section className="tarjeta" aria-label=${textos.siguiente.verCalendario}>
+      <div className="estado__acciones">
+        <${BotonSiguiente} texto=${textos.siguiente.verCalendario} alPulsar=${() => alIr("calendario")} />
+        <${BotonSiguiente} texto=${textos.siguiente.verTrabajos} alPulsar=${() => alIr("trabajos")} />
+      </div>
+    </section>
 
     <${BloqueDeHoy} estado=${ficha.estado} trabajos=${datos.trabajoDeHoy} alReintentar=${ficha.reintentar} />
     <${BloqueDeHistorial} estado=${ficha.estado} anios=${datos.historial} alReintentar=${ficha.reintentar} />
@@ -2373,7 +2408,7 @@ function VistaTrabajos({ tierras, alEstado }) {
 
 // ---------------------------------------------------------------- facturas
 
-function VistaFacturas({ alEstado }) {
+function VistaFacturas({ alEstado, alIr }) {
   const lista = usarPantalla(RUTA_FACTURAS, true);
   const [fotos, setFotos] = useState([]);
   const [propuesta, setPropuesta] = useState(null);
@@ -2581,6 +2616,9 @@ function VistaFacturas({ alEstado }) {
       ${resultado.extras ? html`<p className="pagina__dato">${resultado.extras} fotos guardadas en Documentos</p>` : null}
       ${resultado.extrasQueNo ? html`<p className="panel__aviso">${resultado.extrasQueNo} fotos no se han podido guardar</p>` : null}
       ${resultado.extras || resultado.extrasQueNo ? html`<p className="panel__nota">${textos.facturas.fotosDeMas}</p>` : null}
+      <div className="estado__acciones">
+        <${BotonSiguiente} texto=${textos.siguiente.eligeTierra} alPulsar=${() => alIr && alIr("tierras")} />
+      </div>
     </section>`;
   }
 
@@ -2648,6 +2686,8 @@ function VistaMas({ ir }) {
   const opciones = [
     { clave: "facturas", etiqueta: textos.mas.facturas, texto: textos.facturas.intro },
     { clave: "trabajos", etiqueta: textos.mas.trabajos, texto: textos.trabajos.filtro },
+    { clave: "productos", etiqueta: textos.nav.productos, texto: textos.productos.intro },
+    { clave: "cuaderno", etiqueta: textos.nav.cuaderno, texto: textos.cuaderno.intro },
   ];
 
   return html`<div className="pantalla-mas">
@@ -2661,14 +2701,355 @@ function VistaMas({ ir }) {
         <p className="tarjeta-dato__nota">${opcion.texto}</p>
       </button>`)}
       <a className="tarjeta tarjeta--boton" href="/">
-        <h2 className="tarjeta__titulo">${textos.mas.cuaderno}</h2>
-        <p className="tarjeta-dato__nota">${textos.hoy.abrirAppVieja}</p>
-      </a>
-      <a className="tarjeta tarjeta--boton" href="/">
         <h2 className="tarjeta__titulo">${textos.mas.ajustes}</h2>
         <p className="tarjeta-dato__nota">${textos.hoy.abrirAppVieja}</p>
       </a>
     </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- cuaderno guiado
+
+function BotonSiguiente({ texto, alPulsar }) {
+  return html`<button type="button" className="boton boton--principal" data-siguiente-paso=${texto} onClick=${alPulsar}>${texto}</button>`;
+}
+
+/** A qué pantalla lleva una sección de «lo que falta». Si no hay pantalla nueva, a la de siempre. */
+function destinoDeLaSeccion(donde) {
+  const texto = String(donde || "");
+  if (/parcela|tierra|cultivo/i.test(texto)) return "tierras";
+  if (/producto|abono|m[aá]quina|maquinaria|almac[eé]n/i.test(texto)) return "productos";
+  if (/trabajo|calendario/i.test(texto)) return "calendario";
+  return null;
+}
+
+function VistaCuaderno({ alEstado, alIr }) {
+  const pantalla = usarPantalla(RUTA_QUE_FALTA, true);
+  const items = normalizaQueFalta(pantalla.estado === "listo" ? pantalla.datos : null);
+  const secciones = agruparLoQueFalta(items);
+  const delServidor = pantalla.estado === "listo" && pantalla.datos ? pantalla.datos.faltan : null;
+  const cuantas = typeof delServidor === "number" ? delServidor : items.length;
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (pantalla.estado === "sin-permiso") alEstado("sin-permiso");
+    else if (pantalla.estado === "cargando") alEstado("cargando");
+    else if (pantalla.estado === "error" || pantalla.estado === "no-disponible") alEstado("error");
+    else alEstado("listo");
+  }, [pantalla.estado, alEstado]);
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.cuaderno.titulo}</h1>
+    <p className="pagina__dato">${textos.cuaderno.intro}</p>
+    ${pantalla.estado === "listo"
+      ? html`<p className="pagina__dato" data-que-falta-cuenta>
+          ${cuantas === 0 ? textos.cuaderno.completo : cuantas === 1 ? textos.cuaderno.faltaUna : textoRelleno(textos.cuaderno.faltan, { n: cuantas })}
+        </p>`
+      : null}
+  </header>`;
+
+  if (pantalla.estado === "sin-permiso") {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+  if (pantalla.estado === "cargando") {
+    return html`<div>${cabecera}<${EstadoCargando} mensaje=${textos.cuaderno.cargando} /></div>`;
+  }
+  if (pantalla.estado === "error" || pantalla.estado === "no-disponible") {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.cuaderno.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${pantalla.reintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.cuaderno.abrirJv}</a>
+      </div>
+    </div>`;
+  }
+
+  if (!items.length) {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.cuaderno.completo}</p>
+      <a className="boton" href="/">${textos.cuaderno.abrirJv}</a>
+    </div>`;
+  }
+
+  const bloques = secciones.map((seccion) => {
+    const destino = destinoDeLaSeccion(seccion.donde);
+    const filas = seccion.items.map((item, indice) => html`<li
+      className="que-falta__fila"
+      key=${`falta-${indice}`}
+      data-que-falta-item=${item.que}
+    >
+      <span className="que-falta__que">${item.que}</span>
+      ${item.bloquea ? html`<span className="chip chip--aviso">${textos.cuaderno.bloquea}</span>` : null}
+      <span className="que-falta__donde">${textos.cuaderno.dondeSeArregla}: ${item.donde || textos.cuaderno.seccion}</span>
+      ${destino
+        ? html`<button type="button" className="boton" onClick=${() => alIr(destino)}>${textos.cuaderno.arreglar}</button>`
+        : html`<a className="boton" href="/">${textos.cuaderno.arreglar}</a>`}
+    </li>`);
+
+    return html`<section className="tarjeta" key=${`seccion-${seccion.donde}`} data-que-falta-seccion=${seccion.donde} aria-labelledby=${`seccion-${seccion.donde}`}>
+      <h2 className="tarjeta__titulo" id=${`seccion-${seccion.donde}`}>${seccion.donde}</h2>
+      <ul className="que-falta">${filas}</ul>
+    </section>`;
+  });
+
+  return html`<div className="pantalla-cuaderno">
+    ${cabecera}
+    ${bloques}
+    <p><a className="boton" href="/">${textos.cuaderno.abrirJv}</a></p>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- productos y abonos
+
+function VistaProductos({ tierras, campana, alEstado, alIr, alVerTierra }) {
+  const listaProductos = usarPantalla(RUTA_PRODUCTOS, true);
+  const listaAbonos = usarPantalla(RUTA_FERTILIZANTES, true);
+  const productos = normalizaProductos(listaProductos.estado === "listo" ? listaProductos.datos : null);
+  const abonos = normalizaAbonos(listaAbonos.estado === "listo" ? listaAbonos.datos : null);
+
+  const [tab, setTab] = useState("productos");
+  const [busqueda, setBusqueda] = useState("");
+  const [elegido, setElegido] = useState(null);
+  const [tierraId, setTierraId] = useState(null);
+  const [fecha, setFecha] = useState(() => fechaDeHoyISO());
+  const [hectareas, setHectareas] = useState("");
+  const [dosis, setDosis] = useState("");
+  const [fase, setFase] = useState("inicial");
+  const [aviso, setAviso] = useState(null);
+  const [resultado, setResultado] = useState(null);
+
+  const cargando = listaProductos.estado === "cargando" || listaAbonos.estado === "cargando";
+  const fallo = listaProductos.estado === "error" || listaProductos.estado === "no-disponible";
+  const sinPermiso = listaProductos.estado === "sin-permiso";
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (sinPermiso) alEstado("sin-permiso");
+    else if (cargando || fase === "guardando") alEstado("cargando");
+    else if (fallo && !productos.length) alEstado("error");
+    else alEstado("listo");
+  }, [sinPermiso, cargando, fallo, fase, productos.length, alEstado]);
+
+  useEffect(() => {
+    if (!tierraId && tierras && tierras.length) setTierraId(tierras[0].id);
+  }, [tierraId, tierras]);
+
+  useEffect(() => {
+    if (tierraId === null) return;
+    const tierra = (tierras || []).find((una) => una.id === tierraId);
+    if (tierra && tierra.superficie_ha !== null && tierra.superficie_ha !== undefined) {
+      setHectareas(String(tierra.superficie_ha));
+    }
+  }, [tierraId, tierras]);
+
+  const abrirAplicador = (tipo, dato) => {
+    setElegido({
+      tipo,
+      id: dato.id,
+      nombre: dato.nombre,
+      unidad: tipo === "producto" ? dato.unidad : "kg",
+      dosisMaxima: tipo === "producto" ? dato.dosisMaxima : null,
+    });
+    setDosis(
+      tipo === "producto" && dato.dosisMaxima !== null && dato.dosisMaxima !== undefined ? String(dato.dosisMaxima) : "",
+    );
+    setFase("inicial");
+    setAviso(null);
+    setResultado(null);
+  };
+
+  const cerrarAplicador = () => {
+    setElegido(null);
+    setAviso(null);
+  };
+
+  const total = elegido ? totalDeLaAplicacion(dosis, hectareas, elegido.unidad) : null;
+  const textoDelTotal = total
+    ? `${formateaNumero(total.cantidad)}${total.unidad ? ` ${total.unidad}` : ""}`
+    : textos.tierras.panel.noConsta;
+
+  const guardar = async () => {
+    if (!elegido) return;
+    if (!tierraId) {
+      setAviso(textos.productos.sinTierra);
+      return;
+    }
+    if (!dosis.trim()) {
+      setAviso(textos.productos.sinDosis);
+      return;
+    }
+    if (!hectareas.trim()) {
+      setAviso(textos.productos.sinSuperficie);
+      return;
+    }
+    setFase("guardando");
+    setAviso(null);
+    const cuerpo =
+      elegido.tipo === "abono"
+        ? cuerpoDeLaFertilizacion({
+            campanaId: campana ? campana.id : null,
+            tierraId,
+            fecha,
+            fertilizanteId: elegido.id,
+            hectareas,
+            dosisPorHa: dosis,
+            unidad: elegido.unidad || "kg",
+          })
+        : cuerpoDelTratamiento({
+            campanaId: campana ? campana.id : null,
+            tierraId,
+            fecha,
+            productoId: elegido.id,
+            dosis,
+            unidadDosis: elegido.unidad || "L/ha",
+            hectareas,
+          });
+    const respuesta = await pedir(rutaDeLaAplicacion(elegido.tipo), conCuerpoJson(cuerpo));
+    if (respuesta.estado === "ok") {
+      const tierra = (tierras || []).find((una) => una.id === tierraId);
+      setResultado({
+        tipo: elegido.tipo,
+        nombre: elegido.nombre,
+        total: textoDelTotal,
+        tierra: tierra ? tierra.alias : "",
+        tierraId,
+      });
+      setFase("guardado");
+      setElegido(null);
+      return;
+    }
+    if (respuesta.estado === "sin-permiso") {
+      setFase("sin-permiso");
+      return;
+    }
+    // Si el servidor no deja guardarlo, dice por qué en palabras de agricultor: se enseña eso.
+    const avisosDelServidor = mensajesDeLaRespuesta(respuesta.detalle);
+    setFase("error");
+    setAviso(avisosDelServidor.length ? avisosDelServidor.join(" · ") : textos.productos.noSeGuardo);
+  };
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.productos.titulo}</h1>
+    <p className="pagina__dato">${textos.productos.intro}</p>
+  </header>`;
+
+  if (sinPermiso) {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+  if (cargando) {
+    return html`<div>${cabecera}<${EstadoCargando} mensaje=${textos.productos.cargando} /></div>`;
+  }
+  if (fallo && !productos.length && !abonos.length) {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.productos.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${listaProductos.reintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </div>`;
+  }
+
+  const buscado = busqueda.trim().toLowerCase();
+  const productosVisibles = productos.filter(
+    (producto) =>
+      !buscado ||
+      producto.nombre.toLowerCase().includes(buscado) ||
+      String(producto.materiaActiva || "").toLowerCase().includes(buscado),
+  );
+  const abonosVisibles = abonos.filter(
+    (abono) => !buscado || abono.nombre.toLowerCase().includes(buscado),
+  );
+
+  const filasDeProductos = productosVisibles.map((producto) => html`<li className="trabajo" key=${`producto-${producto.id}`} data-producto-id=${producto.id}>
+    <span className="trabajo__titulo">${producto.nombre}</span>
+    ${producto.materiaActiva ? html`<span className="trabajo__detalle">${textos.productos.materiaActiva}: ${producto.materiaActiva}</span>` : null}
+    <span className="trabajo__detalle">
+      ${textos.productos.dosisMaxima}: ${dosisMaximaEnTexto(producto) || textos.tierras.panel.noConsta}
+      ${producto.plazo !== null ? ` · ${textos.productos.plazo}: ${formateaNumero(producto.plazo)} ${textos.productos.dias}` : ""}
+    </span>
+    <button type="button" className="boton" data-aplicar-producto data-producto-id=${producto.id} onClick=${() => abrirAplicador("producto", producto)}>
+      ${textos.productos.aplicar}
+    </button>
+  </li>`);
+
+  const filasDeAbonos = abonosVisibles.map((abono) => html`<li className="trabajo" key=${`abono-${abono.id}`} data-fertilizante-id=${abono.id}>
+    <span className="trabajo__titulo">${abono.nombre}</span>
+    <span className="trabajo__detalle">${textos.productos.riqueza}: ${riquezaEnTexto(abono) || textos.tierras.panel.noConsta}</span>
+    <button type="button" className="boton" data-aplicar-producto data-fertilizante-id=${abono.id} onClick=${() => abrirAplicador("abono", abono)}>
+      ${textos.productos.aplicar}
+    </button>
+  </li>`);
+
+  const lista = tab === "productos" ? productosVisibles : abonosVisibles;
+  const filas = tab === "productos" ? filasDeProductos : filasDeAbonos;
+
+  const aplicador = elegido
+    ? html`<section className="tarjeta" aria-labelledby="aplicador-titulo">
+        <h2 className="tarjeta__titulo" id="aplicador-titulo">${elegido.nombre}</h2>
+        <div className="rejilla-campos">
+          <label className="campo">
+            <span>${textos.productos.tierra}</span>
+            <select className="campo__control" data-aplicar-tierra value=${tierraId ?? ""} onChange=${(evento) => setTierraId(Number(evento.target.value))}>
+              ${(tierras || []).map((tierra) => html`<option key=${tierra.id} value=${tierra.id}>${tierra.alias}</option>`)}
+            </select>
+          </label>
+          <label className="campo">
+            <span>${textos.productos.fecha}</span>
+            <input className="campo__control" type="date" data-aplicar-fecha value=${fecha} onChange=${(evento) => setFecha(evento.target.value)} />
+          </label>
+          <label className="campo">
+            <span>${textos.productos.hectareas}</span>
+            <input className="campo__control" type="text" inputMode="decimal" data-aplicar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
+          </label>
+          <label className="campo">
+            <span>${textos.productos.dosis}</span>
+            <input className="campo__control" type="text" inputMode="decimal" data-aplicar-dosis value=${dosis} onChange=${(evento) => setDosis(evento.target.value)} />
+          </label>
+        </div>
+        <p className="pagina__dato" data-aplicar-total=${textoDelTotal}>${textos.productos.total}: ${textoDelTotal}</p>
+        ${aviso ? html`<p className="panel__aviso">${aviso}</p>` : null}
+        <div className="estado__acciones">
+          <button type="button" className="boton boton--principal" data-aplicar-guardar onClick=${guardar} disabled=${fase === "guardando"}>
+            ${fase === "guardando" ? textos.productos.guardando : textos.productos.guardar}
+          </button>
+          <button type="button" className="boton" onClick=${cerrarAplicador}>${textos.productos.cerrar}</button>
+        </div>
+      </section>`
+    : null;
+
+  const guardado = resultado
+    ? html`<section className="tarjeta" data-aplicar-resultado="guardado" aria-labelledby="aplicado-titulo">
+        <h2 className="tarjeta__titulo" id="aplicado-titulo">${textos.productos.guardado}</h2>
+        <p className="pagina__dato">${[resultado.nombre, resultado.tierra, resultado.total].filter(Boolean).join(" · ")}</p>
+        <${BotonSiguiente} texto=${textos.siguiente.verDelDia} alPulsar=${() => alVerTierra(resultado.tierraId)} />
+      </section>`
+    : null;
+
+  return html`<div className="pantalla-productos">
+    ${cabecera}
+    <div className="filtros" role="tablist" aria-label=${textos.productos.titulo}>
+      <button type="button" className=${tab === "productos" ? "pastilla pastilla--activa" : "pastilla"} data-producto-tab="productos" aria-selected=${tab === "productos"} onClick=${() => setTab("productos")}>
+        ${textos.productos.productos} · ${productos.length}
+      </button>
+      <button type="button" className=${tab === "abonos" ? "pastilla pastilla--activa" : "pastilla"} data-producto-tab="abonos" aria-selected=${tab === "abonos"} onClick=${() => setTab("abonos")}>
+        ${textos.productos.abonos} · ${abonos.length}
+      </button>
+    </div>
+    <label className="buscador">
+      <span>${textos.productos.buscar}</span>
+      <input className="buscador__campo" type="search" data-producto-buscar value=${busqueda} placeholder=${textos.productos.buscarPista} onChange=${(evento) => setBusqueda(evento.target.value)} />
+    </label>
+    ${lista.length
+      ? html`<ul className="trabajos-lista">${filas}</ul>`
+      : html`<div className="estado">
+          <p className="estado__texto">${buscado ? textos.productos.sinCoincidencias : tab === "productos" ? textos.productos.sinProductos : textos.productos.sinAbonos}</p>
+          <a className="boton" href="/">${textos.hoy.abrirAppVieja}</a>
+        </div>`}
+    ${aplicador}
+    ${guardado}
   </div>`;
 }
 
@@ -2717,7 +3098,7 @@ function App() {
     setVista("apuntar");
   };
 
-  const necesitaTierras = ["tierras", "alta", "tierra", "apuntar", "calendario", "trabajos"].includes(vista);
+  const necesitaTierras = ["tierras", "alta", "tierra", "apuntar", "calendario", "trabajos", "productos"].includes(vista);
   const pantallaHoy = usarPantalla(RUTA_HOY, vista === "hoy");
   const pantallaTierras = usarPantalla(RUTA_TIERRAS, necesitaTierras);
   const pantallaResumen = usarPantalla(RUTA_RESUMEN, vista === "hoy");
@@ -2771,6 +3152,7 @@ function App() {
       alReintentar=${pantallaTierras.reintentar}
       alEstado=${setEstadoSecundario}
       alApuntar=${() => abrirApuntar(tierraId)}
+      alIr=${ir}
     />`;
   } else if (vista === "apuntar") {
     pantalla = html`<${VistaApuntar}
@@ -2779,17 +3161,28 @@ function App() {
       tierraInicial=${tierraId}
       alEstado=${setEstadoSecundario}
       alGuardado=${pantallaTierras.reintentar}
+      alIr=${ir}
       alVerLaTierra=${(id) => {
         setTierraId(id);
         setVista("tierra");
       }}
+    />`;
+  } else if (vista === "cuaderno") {
+    pantalla = html`<${VistaCuaderno} alEstado=${setEstadoSecundario} alIr=${ir} />`;
+  } else if (vista === "productos") {
+    pantalla = html`<${VistaProductos}
+      tierras=${tierras}
+      campana=${pantallaTierras.datos && pantallaTierras.datos.campana}
+      alEstado=${setEstadoSecundario}
+      alIr=${ir}
+      alVerTierra=${abrirTierra}
     />`;
   } else if (vista === "calendario") {
     pantalla = html`<${VistaCalendario} tierras=${tierras} alEstado=${setEstadoSecundario} />`;
   } else if (vista === "trabajos") {
     pantalla = html`<${VistaTrabajos} tierras=${tierras} alEstado=${setEstadoSecundario} />`;
   } else if (vista === "facturas") {
-    pantalla = html`<${VistaFacturas} alEstado=${setEstadoSecundario} />`;
+    pantalla = html`<${VistaFacturas} alEstado=${setEstadoSecundario} alIr=${ir} />`;
   } else if (vista === "mas") {
     pantalla = html`<${VistaMas} ir=${ir} />`;
   } else {

@@ -1,53 +1,60 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital ya cierra el bucle que pidió David: en «Mis parcelas» se pincha una tierra y se ve su ficha con la ortofoto y el contorno, el trabajo de hoy y el historial por años; desde esa misma ficha se apunta el trabajo del día con su apero (arado, cultivador, grada, rodillo, fresadora u otro), y se guarda de verdad. El calendario enseña el trabajo de cada día, los filtros por tipo dan tierras y cantidades para la trazabilidad, las facturas se hacen con fotos y se revisan antes de guardar, y cada tierra lleva su miniatura del contorno. Falta llevar a la app nueva los tratamientos, abonos, siembra y cosecha del día a día, y las pantallas propias de PAC y gastos.
+resumen: CueDigital ya tiene el cuaderno guiado que dice qué falta para que el registro esté completo, agrupado por dónde se arregla y con el botón que lleva a cada pantalla; productos y abonos con su dosis por hectárea y el total calculado antes de apuntar; y el flujo que pidió David encadenado (foto a la factura o al envase → elegir tierra → trabajo del día → historial → calendario → filtros con cantidades). Además, el GeoPackage del SIGPAC ya se abre: lee los recintos y rellena con ellos los contornos de las tierras. PSD2 sigue parado a propósito: ningún proveedor publica precio y David no ha aprobado gasto.
 estado: en-curso
-tarea: implementado el apuntar del trabajo del día desde la tierra (con la puerta del apero abierta), las miniaturas del contorno y el resto del bucle tierra → historial → calendario → filtros → facturas
+tarea: implementados el cuaderno guiado, los productos/abonos con dosis por hectárea, el flujo encadenado y la apertura del GeoPackage para los contornos
 nivel: 2
-siguiente: tratamientos, abonos, siembra y cosecha desde la app nueva (con la cola sin cobertura) y las pantallas de PAC y gastos
-bloqueado: nada duro; siguen pendientes de terceros las licencias (CIT, IGN), los formatos del expediente y del Cuecyl antiguo, y los presupuestos de PSD2
+siguiente: probar el GeoPackage con un fichero real de 600 MB, llevar tratamientos/abonos/siembra/cosecha del día a día a la app nueva, y las pantallas de PAC y gastos
+bloqueado: PSD2 (nivel 3, sin coste publicado y sin gasto aprobado); y siguen pendientes de terceros las licencias (CIT, IGN) y los formatos del expediente y del Cuecyl antiguo
 fecha: 2026-11-05
 
-## Lo que se ha hecho en esta ronda
+## Lo que se ha hecho en esta ronda (bloque 4)
 
-El bucle que pidió David está completo en `/nuevo/` y verificado en Chrome a 390, 1024 y 1440 px:
-
-1. **Tierra primero**: al pinchar una tierra se abre su ficha con la **ortofoto y el contorno**, los
-   datos del SIGPAC y del cultivo, **«Hoy en esta tierra»** y el **historial por campañas** (siembra
-   kg/ha, labores, tratamientos, abonos kg/ha y mes, cosecha kg/ha).
-2. **El trabajo del día se apunta desde la tierra** (lo nuevo de esta ronda): botón «Apuntar un
-   trabajo» en la ficha y destino «Apuntar» en la barra del móvil y en la lateral. Se elige el
-   **apero del vocabulario del servidor**, la fecha de hoy y las hectáreas de la tierra; se guarda y
-   la ficha se refresca. **Verificado en Chrome y en la API**: el apunte queda en la base con su
-   apero y la pantalla lo dice (0 fallos).
-3. **La puerta del apero, abierta**: `POST /api/labores` acepta el `subtipo` (rodillo, cultivador,
-   arado, grada, fresadora, otro), lo valida contra el catálogo (un apero inventado contesta **422
-   con la lista de los que valen**) y lo guarda en su columna; `GET /api/labores` ya lo devuelve.
-   El apero no es obligatorio, para no romper a la app vieja, y lo que ya estaba en `detalles` se
-   sigue leyendo.
-4. **Calendario** con el trabajo de cada día, **filtros por tipo** con tierras, municipio, hectáreas
-   y cantidades, y **facturas con fotos** (cámara, varias fotos, lectura, propuesta corregible,
-   guardado y «a mano» si no se lee).
-5. **El contorno se ve también al elegir tierra**: miniatura en cada fila de «Mis parcelas» y de la
-   lista de apuntar, y botón «Guardar la imagen» en la ficha.
-6. **«Vertedera» se llama «arado»** en el vocabulario del programa y no se ha traducido una palabra
-   en la otra (sería inventar). David decide si se renombra la etiqueta; aparece sola en las tres
-   puertas.
-
-**Lo que sigue en la app vieja**: tratamientos, abonos, siembra y cosecha del día a día (el trabajo
-de suelo ya está), la cola sin cobertura, PAC, gastos y facturas detalladas, y los ajustes.
+1. **Cuaderno guiado** (`/nuevo/`, «Cuaderno» en la barra): cabecera con **cuántas cosas faltan**,
+   lista **agrupada por dónde se arregla** (finca, tierras, productos y máquinas, volcado a la Junta…),
+   cada cosa con su «dónde» y el botón que lleva a esa pantalla (nueva cuando existe; a la app vieja
+   cuando aún no). Lo que **bloquea el envío a la Junta** se dice con palabra, no solo color. Si no
+   falta nada: «El cuaderno está completo». Con la finca de prueba: **29 secciones y 123 cosas**; al
+   pie, «Abrir el cuaderno de la Junta».
+2. **Productos y abonos con dosis por hectárea** (`/nuevo/`, «Productos»): pestañas de productos y
+   abonos con buscador; cada producto con **dosis máxima por hectárea y su unidad**, materia activa y
+   plazo de seguridad; cada abono con su **riqueza N/P/K**. «Apuntar en una tierra» con tierra, fecha,
+   hectáreas, dosis por hectárea y **el total calculado antes de guardar**; se guarda en
+   `/api/tratamientos` o `/api/fertilizaciones` y, si el servidor no deja, se enseña su aviso en
+   palabras de agricultor (nada de «no se ha podido»). Verificado en Chrome: 24 productos y el total.
+3. **El flujo que pidió David, encadenado**: **foto a la factura o al envase → elegir tierra →
+   trabajo del día → historial → calendario → filtros por tipo con cantidades**. Las piezas ya estaban;
+   ahora cada final propone el siguiente paso («Elige la tierra», «Ver el calendario», «Ver todos los
+   trabajos», «Ver el trabajo de hoy»), para que el agricultor no se quede sin saber qué toca.
+4. **El GeoPackage del SIGPAC, abierto** (segunda mitad de AGR-15): `app/geopackage_sigpac.py` lee el
+   `.gpkg` de la caché **sin GDAL ni shapely** (descubre la tabla y la columna de geometría, descubre
+   los atributos por su nombre, traduce el blob `GP`+WKB a WKT y anillos; Polygon y MultiPolygon; con
+   Z/M o tipos raros se para con su código en vez de leerlos mal). La puerta
+   `POST /api/sigpac/cache/{provincia}/contornos` rellena `geometria`/`dibujo` de las parcelas de la
+   finca que casan por su referencia SIGPAC, es idempotente y no toca otra finca; 21 pruebas con un
+   gpkg sintético, sin internet. **Falta probarlo con el fichero real de 600 MB** (streaming/índice) y
+   decidir si el ZIP se guarda extraído.
+5. **PSD2, sin proponer gasto**: `docs/PSD2-AGREGADORES.md` tiene ya la sección **«El coste, en
+   claro»**. Resultado: **ningún proveedor publica precio de producción**; solo hay una cifra (sandbox
+   de BBVA, 0 €); Tink publica «por usuario/mes» sin importe y GoCardless la unidad «requisición
+   activa al mes» sin precio. El coste anual del escenario **no es calculable** sin presupuesto y no se
+   inventa: se piden **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y **decide David**,
+   que no ha aprobado gasto. Sin código de PSD2 hasta contrato.
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5832 recogidas · 5830 superadas, 2 omitidas, 0 fallos
-    JavaScript   1276 superadas, 0 fallos
-    armazón nuevo en Chrome a 390/1024/1440, apuntar, ficha, calendario, filtros y factura   0 fallos
-    capturas                                            13 en docs/capturas-nuevo/
+    Python       5858 recogidas · 5856 superadas, 2 omitidas, 0 fallos
+    JavaScript   1282 superadas, 0 fallos
+    armazón nuevo en Chrome a 390/1024/1440, ficha, apuntar, calendario, filtros, facturas,
+    cuaderno guiado y productos con dosis                                            0 fallos
+    capturas                                            15 en docs/capturas-nuevo/
 
 ## Lo que sigue abierto
 
-- **El resto del apuntar**: tratamientos, abonos, siembra y cosecha desde la app nueva, y la **cola sin
-  cobertura** (guardar en el móvil y que llegue solo).
-- **PAC de años anteriores** y recintos por campaña de la Junta; las pantallas propias de PAC y gastos.
-- **PSD2**: dos presupuestos y aprobación del gasto; sin código hasta que haya contrato.
+- **Probar el GeoPackage con el fichero real** de una provincia (600 MB): tiempo, memoria y si hace
+  falta índice propio o guardar el `.gpkg` extraído.
+- **Tratamientos, abonos, siembra y cosecha del día a día** en la app nueva (el trabajo de suelo ya
+  está) y la **cola sin cobertura**.
+- **PAC de años anteriores** y recintos por campaña de la Junta; pantallas propias de PAC y gastos.
+- **PSD2**: dos presupuestos y decisión de gasto de David; después, conectar cuentas en solo lectura.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni
   cambiado de rama y no se usa GitHub Actions. Push selectivo al final de la sesión.

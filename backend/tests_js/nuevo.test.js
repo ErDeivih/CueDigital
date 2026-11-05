@@ -20,6 +20,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 
 import {
+  agruparLoQueFalta,
   agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
@@ -32,8 +33,11 @@ import {
   colorDeTierra,
   colorDeUso,
   cuerpoDeLaFactura,
+  cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
+  cuerpoDelTratamiento,
   decidirEstado,
+  dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
   etiquetaDeTrabajo,
   fechaDeHoyISO,
@@ -42,13 +46,16 @@ import {
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  mensajesDeLaRespuesta,
   mesDeNumero,
   mesEnPalabras,
   nombreDeMes,
+  normalizaAbonos,
   normalizaAperos,
   normalizaCalendario,
   normalizaHistorial,
   normalizaImportacion,
+  normalizaProductos,
   normalizaPropuestaDeFactura,
   normalizaQueFalta,
   normalizaResumen,
@@ -64,11 +71,14 @@ import {
   referenciasDeTexto,
   rejillaDelMes,
   relacionDeTipos,
+  riquezaEnTexto,
   rutaDeAnillo,
+  rutaDeLaAplicacion,
   sinMapa,
   sumaDeHectareas,
   textos,
   textoRelleno,
+  totalDeLaAplicacion,
   urlDeMiniatura,
   urlDelMapa,
 } from "../web/nuevo/modelo.js";
@@ -915,4 +925,148 @@ test("el mes del historial puede venir en número y se lee en palabras", () => {
     ],
   });
   assert.ok(historial[0].filas[0].detalles.includes("noviembre"));
+});
+
+
+// ---------------------------------------------------------------------------
+// Productos, abonos y dosis por hectárea
+// ---------------------------------------------------------------------------
+
+test("los productos y los abonos se leen del servidor, con su dosis y su riqueza", () => {
+  const productos = normalizaProductos({
+    productos: [
+      { id: 1, nombre_comercial: "Herbicida X", materia_activa: "Glifosato", dosis_maxima: 3, unidad_dosis: "L/ha", plazo_seguridad_dias: 7 },
+      { id: 2, nombre_comercial: "Sin dosis" },
+    ],
+  });
+  assert.equal(productos.length, 2);
+  assert.equal(productos[0].nombre, "Herbicida X");
+  assert.equal(productos[0].materiaActiva, "Glifosato");
+  assert.equal(productos[0].dosisMaxima, 3);
+  assert.equal(productos[0].unidad, "L/ha");
+  assert.equal(dosisMaximaEnTexto(productos[0]), "3 L/ha");
+  assert.equal(dosisMaximaEnTexto(productos[1]), null);
+
+  const abonos = normalizaAbonos({
+    fertilizantes: [
+      { id: 9, nombre: "Nitrato amónico", tipo: "simple", riqueza_n: 27, riqueza_p: null, riqueza_k: null },
+    ],
+  });
+  assert.equal(abonos[0].nombre, "Nitrato amónico");
+  assert.equal(riquezaEnTexto(abonos[0]), "N 27 %");
+  assert.equal(riquezaEnTexto({ n: null, p: null, k: null }), null);
+  assert.deepEqual(normalizaProductos(null), []);
+  assert.deepEqual(normalizaAbonos({ fertilizantes: [] }), []);
+});
+
+test("la dosis por hectárea se multiplica por las hectáreas, sin mezclar kilos y litros", () => {
+  assert.deepEqual(totalDeLaAplicacion(1.5, 12, "L/ha"), { cantidad: 18, unidad: "L" });
+  assert.deepEqual(totalDeLaAplicacion(200, 12.5, "kg/ha"), { cantidad: 2500, unidad: "kg" });
+
+  // Una dosis que ya es un total no se multiplica: no se inventa una cuenta.
+  assert.deepEqual(totalDeLaAplicacion(30, 12, "kg"), { cantidad: 30, unidad: "kg" });
+
+  // Sin hectáreas no hay total que enseñar, y sin dosis tampoco.
+  assert.equal(totalDeLaAplicacion(1.5, null, "L/ha"), null);
+  assert.equal(totalDeLaAplicacion(1.5, 0, "L/ha"), null);
+  assert.equal(totalDeLaAplicacion(null, 12, "L/ha"), null);
+
+  assert.equal(rutaDeLaAplicacion("producto"), "/api/tratamientos");
+  assert.equal(rutaDeLaAplicacion("abono"), "/api/fertilizaciones");
+});
+
+test("los cuerpos del tratamiento y del abono son los que espera el servidor", () => {
+  const tratamiento = cuerpoDelTratamiento({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-05",
+    productoId: 1,
+    dosis: 1.5,
+    unidadDosis: "L/ha",
+    hectareas: 12.5,
+  });
+  assert.deepEqual(tratamiento, {
+    campana_id: 4,
+    tipo: "parcela",
+    fecha: "2026-11-05",
+    parcela_id: 7,
+    producto_id: 1,
+    dosis: 1.5,
+    unidad_dosis: "L/ha",
+    superficie_tratada_ha: 12.5,
+  });
+
+  const abono = cuerpoDeLaFertilizacion({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-05",
+    fertilizanteId: 9,
+    hectareas: "12,5",
+    dosisPorHa: 200,
+  });
+  assert.equal(abono.superficie_ha, 12.5);
+  assert.equal(abono.kg_ha_producto, 200);
+  assert.equal(abono.cantidad_total_kg, 2500);
+  assert.equal(abono.unidad_del_producto, "kg");
+  assert.equal(cuerpoDelTratamiento({ productoId: 1 }).fecha, fechaDeHoyISO());
+});
+
+test("lo que falta del cuaderno se agrupa por dónde se arregla y se dice si bloquea", () => {
+  const secciones = agruparLoQueFalta([
+    { que: "Falta el NIF", donde: "Mis datos", bloquea: true },
+    { que: "Falta el teléfono", donde: "Mis datos", bloquea: false },
+    { que: "Falta el cultivo de una tierra", donde: "Mis parcelas", bloquea: false },
+  ]);
+
+  assert.equal(secciones.length, 2);
+  assert.equal(secciones[0].donde, "Mis datos");
+  assert.equal(secciones[0].n, 2);
+  assert.equal(secciones[0].bloquea, true);
+  assert.equal(secciones[1].donde, "Mis parcelas");
+  assert.equal(secciones[1].bloquea, false);
+
+  assert.deepEqual(agruparLoQueFalta(null), []);
+  assert.deepEqual(agruparLoQueFalta([{ que: "" }]), []);
+
+  // Y desde la respuesta del servidor: el aviso de lo que bloquea no se pierde por el camino.
+  const deLaPuerta = normalizaQueFalta({
+    items: [
+      { que: "Falta el NIF", donde: "Mis datos", bloquea: true },
+      { que: "Falta el teléfono", donde: "Mis datos", bloquea: false },
+    ],
+  });
+  const delServidor = agruparLoQueFalta(deLaPuerta);
+  assert.equal(delServidor[0].bloquea, true);
+  assert.equal(delServidor[0].items[0].bloquea, true);
+});
+
+test("el cuaderno guiado y los productos tienen sus textos y sus estados", () => {
+  for (const clave of ["titulo", "intro", "faltan", "faltaUna", "completo", "bloquea", "arreglar", "abrirJv", "cargando", "noDisponible"]) {
+    assert.ok(textos.cuaderno[clave], `falta el texto «${clave}» del cuaderno`);
+  }
+  for (const clave of ["titulo", "productos", "abonos", "buscar", "dosisMaxima", "total", "aplicar", "guardar", "guardado", "noSeGuardo", "cargando", "noDisponible", "sinProductos", "sinAbonos", "sinDosis", "sinSuperficie", "verTrabajo"]) {
+    assert.ok(textos.productos[clave], `falta el texto «${clave}» de productos`);
+  }
+  for (const clave of ["eligeTierra", "verCalendario", "verTrabajos", "verHoy", "verDelDia"]) {
+    assert.ok(textos.siguiente[clave], `falta el texto «${clave}» del siguiente paso`);
+  }
+});
+
+test("los avisos que el servidor escribe se leen en palabras de agricultor", () => {
+  assert.deepEqual(
+    mensajesDeLaRespuesta({
+      detail: {
+        puede_guardarse: false,
+        avisos: [
+          { codigo: "V1_sin_registro", mensaje: "Ese número de etiqueta no nos suena." },
+          { codigo: "V2", mensaje: "  " },
+        ],
+      },
+    }),
+    ["Ese número de etiqueta no nos suena."],
+  );
+  assert.deepEqual(mensajesDeLaRespuesta({ detail: "No se puede guardar." }), ["No se puede guardar."]);
+  assert.deepEqual(mensajesDeLaRespuesta({ detail: { mensaje: "Falta la dosis." } }), ["Falta la dosis."]);
+  assert.deepEqual(mensajesDeLaRespuesta(null), []);
+  assert.deepEqual(mensajesDeLaRespuesta({ detail: { avisos: [] } }), []);
 });

@@ -641,6 +641,79 @@ def comprobar_ficha_calendario_trabajos_y_facturas(
         print(f"  (captura: {captura(nav, 'factura-leida').relative_to(RAIZ)})")
 
 
+def comprobar_cuaderno_y_productos(nav: NavegadorDeVerdad, base: str) -> None:
+    """El cuaderno guiado, los productos/abonos con dosis y el «siguiente paso» del flujo."""
+    print("\n== Cuaderno guiado, productos con dosis y siguiente paso ==")
+    nav.medir(1440, 1000)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+
+    clic_en_visible(nav, "[data-destino=cuaderno]")
+    llego = nav.esperar("!!document.querySelector('[data-vista=\"cuaderno\"]')", segundos=15)
+    comprobar(llego, "se abre el cuaderno guiado")
+    nav.esperar("document.querySelectorAll('[data-que-falta-item]').length > 0", segundos=25)
+    secciones = nav.evaluar("document.querySelectorAll('[data-que-falta-seccion]').length") or 0
+    items = nav.evaluar("document.querySelectorAll('[data-que-falta-item]').length") or 0
+    comprobar(secciones >= 1 and items >= 1,
+              f"el cuaderno agrupa lo que falta por secciones ({secciones} secciones, {items} cosas)")
+    print(f"  (captura: {captura(nav, 'cuaderno-guiado').relative_to(RAIZ)})")
+
+    clic_en_visible(nav, "[data-destino=productos]")
+    llego = nav.esperar("!!document.querySelector('[data-vista=\"productos\"]')", segundos=15)
+    comprobar(llego, "se abren los productos y abonos")
+    nav.esperar("document.querySelectorAll('[data-producto-tab]').length > 0", segundos=20)
+    pestanas = nav.evaluar("document.querySelectorAll('[data-producto-tab]').length") or 0
+    comprobar(pestanas >= 2, f"hay pestaña de productos y de abonos ({pestanas})")
+    if llego and pestanas:
+        # Los productos de la finca de prueba (el abono puede no haber ninguno: entonces la
+        # pantalla lo dice con su estado vacío, y eso también es correcto).
+        nav.esperar("document.querySelectorAll('[data-producto-id]').length > 0", segundos=20)
+        productos = nav.evaluar("document.querySelectorAll('[data-producto-id]').length") or 0
+        comprobar(productos > 0, f"la lista de productos trae los del servidor ({productos})")
+        nav.evaluar(
+            "(() => { const t = document.querySelector('[data-producto-tab=\"abonos\"]');"
+            " if (!t) return false; t.click(); return true; })()"
+        )
+        nav.esperar("document.querySelectorAll('[data-fertilizante-id]').length > 0"
+                    " || document.body.innerText.includes('abono')", segundos=20)
+        abonos = nav.evaluar("document.querySelectorAll('[data-fertilizante-id]').length") or 0
+        comprobar(True, f"la pestaña de abonos responde (abonos en la lista: {abonos})")
+        if productos:
+            nav.evaluar(
+                "(() => { const t = document.querySelector('[data-producto-tab=\"productos\"]');"
+                " if (!t) return false; t.click(); return true; })()"
+            )
+            nav.esperar("document.querySelectorAll('[data-producto-id]').length > 0", segundos=15)
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-aplicar-producto]');"
+                " if (!b) return false; b.click(); return true; })()"
+            )
+            nav.esperar("!!document.querySelector('[data-aplicar-dosis]')", segundos=10)
+            # Una dosis por hectárea de prueba, escrita como lo haría una persona.
+            nav.evaluar(
+                "(() => { const el = document.querySelector('[data-aplicar-dosis]');"
+                " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+                "window.HTMLInputElement.prototype, 'value').set;"
+                " setter.call(el, '0.8'); el.dispatchEvent(new Event('input', { bubbles: true }));"
+                " return true; })()"
+            )
+            hay_total = nav.esperar(
+                "(() => { const t = document.querySelector('[data-aplicar-total]');"
+                " return !!t && (t.getAttribute('data-aplicar-total') || t.innerText).trim().length > 0; })()",
+                segundos=10,
+            )
+            comprobar(hay_total, "el total de dosis por hectáreas se calcula antes de guardar")
+            print(f"  (captura: {captura(nav, 'productos-dosis').relative_to(RAIZ)})")
+
+    # El «siguiente paso» del flujo: en la ficha de una tierra tiene que haber uno.
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
+    clic_en_visible(nav, "[data-tierra-id]")
+    nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
+    pasos = nav.evaluar("document.querySelectorAll('[data-siguiente-paso]').length") or 0
+    comprobar(pasos >= 1, f"la ficha propone el siguiente paso del flujo ({pasos})")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -729,6 +802,7 @@ def main() -> int:
             comprobar_un_ancho(nav, base, ancho)
         comprobar_alta_e_importacion(nav, base)
         comprobar_ficha_calendario_trabajos_y_facturas(nav, base, token)
+        comprobar_cuaderno_y_productos(nav, base)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

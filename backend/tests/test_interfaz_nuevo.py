@@ -46,6 +46,22 @@ ENGANCHES = [
     "data-apuntar-resultado",
     "data-miniatura-tierra",
     "data-guardar-imagen-tierra",
+    "data-que-falta-seccion",
+    "data-que-falta-item",
+    "data-que-falta-cuenta",
+    "data-producto-tab",
+    "data-producto-id",
+    "data-fertilizante-id",
+    "data-producto-buscar",
+    "data-aplicar-producto",
+    "data-aplicar-tierra",
+    "data-aplicar-fecha",
+    "data-aplicar-dosis",
+    "data-aplicar-hectareas",
+    "data-aplicar-total",
+    "data-aplicar-guardar",
+    "data-aplicar-resultado",
+    "data-siguiente-paso",
     "data-trabajo-de-hoy",
     "data-historial",
     "data-historial-anio",
@@ -112,6 +128,10 @@ PUERTAS = [
     "/api/labores",
     "/api/trabajos/opciones",
     "/api/trabajos/que-falta",
+    "/api/productos",
+    "/api/fertilizantes",
+    "/api/tratamientos",
+    "/api/fertilizaciones",
     "/api/sigpac/buscar",
     "/api/parcelas/desde-sigpac",
     "/api/parcelas/desde-sigpac/varias",
@@ -270,6 +290,22 @@ class TestElContratoConElArnesDeNavegador:
         # La miniatura del contorno en las listas y el guardar la imagen en la ficha.
         assert "Miniatura" in fuente
         assert "urlDeMiniatura" in fuente
+
+    def test_el_cuaderno_guiado_y_los_productos_estan(self):
+        fuente = leer("app.js")
+        assert "VistaCuaderno" in fuente
+        assert "VistaProductos" in fuente
+        assert '"cuaderno"' in fuente
+        assert '"productos"' in fuente
+        # Lo que falta se agrupa y se puede agrupar de verdad, y el total sale de dosis × hectáreas.
+        assert "agruparLoQueFalta" in fuente
+        assert "totalDeLaAplicacion" in fuente
+        assert "cuerpoDelTratamiento" in fuente
+        assert "cuerpoDeLaFertilizacion" in fuente
+        assert "rutaDeLaAplicacion" in fuente
+        # El flujo encadenado: siempre hay un siguiente paso a la vista.
+        assert "BotonSiguiente" in fuente
+        assert "data-siguiente-paso" in fuente
 
     def test_las_puertas_que_usa_la_pantalla_son_las_del_servidor(self):
         fuente = leer("app.js")

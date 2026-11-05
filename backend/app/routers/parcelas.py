@@ -20,7 +20,17 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import case, func, select
 
 from .. import schemas, superficies
-from .. import catalogos, correcciones, geo, models, servicios, sigpac, sigpac_cache, textos
+from .. import (
+    catalogos,
+    correcciones,
+    geo,
+    geopackage_sigpac,
+    models,
+    servicios,
+    sigpac,
+    sigpac_cache,
+    textos,
+)
 from .. import versiones_de_recinto as versiones_de_recinto
 from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, obtener_de_la_explotacion
 from ..schemas import (
@@ -1189,6 +1199,123 @@ def descargar_el_mapa_de_la_provincia(
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
     return {"textos": textos.SIGPAC, **ficha}
+
+
+@router.post("/sigpac/cache/{provincia}/contornos")
+def rellenar_los_contornos_del_sigpac(
+    provincia: int,
+    explotacion: ExplotacionActual,
+    db: Db,
+    puede_modificar: PuedeModificar,
+    campana: int | None = None,
+) -> dict:
+    """**Rellena el contorno de las parcelas con el mapa del SIGPAC que ya está descargado.**
+
+    Es la segunda mitad de AGR-3: lo que faltaba no era bajar el GeoPackage (eso ya lo hace
+    `POST /api/sigpac/cache/{provincia}`) sino **abrirlo** y quedarse con la forma de cada recinto.
+    El contorno se guarda en `Parcela.geometria` (WKT, longitud/latitud) y el **dibujo no se guarda**:
+    `Parcela.dibujo` se calcula del WKT con `geo.dibujo_svg`, así que rellenar la geometría lo rellena
+    solo y no puede quedarse viejo.
+
+    **Qué escribe y qué no**: solo las parcelas de **esta** finca (todas las lecturas y el guardado
+    llevan `explotacion_id`), y de ellas solo la geometría. No toca la superficie declarada, ni el
+    uso, ni el municipio: el mapa dice por dónde pasa el recinto, no cuánto se siembra en él.
+
+    **Idempotente**: repetir la llamada deja las mismas formas y no duplica nada; solo se apunta en
+    el rastro cuando algo ha cambiado de verdad.
+
+    **Errores, y por qué cada uno**: `404` si esa provincia y campaña no están en la caché (hay que
+    descargarlas primero, y no se busca otro año a escondidas); `409` si la ficha está pero el
+    fichero ha desaparecido; `422` si el GeoPackage no es el que se espera, con el motivo que diga el
+    lector; `403` sin permiso de modificar, **antes de abrir nada**.
+    """
+    campana_pedida = campana if campana is not None else dt.date.today().year
+    if not 1 <= provincia <= 52:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Esa provincia no existe: {provincia}. Los códigos del SIGPAC van del 1 al 52.",
+        )
+    ficha = sigpac_cache.ficha_guardada(provincia, campana_pedida)
+    if ficha is None:
+        # **Dos problemas distintos y dos respuestas distintas**: no haberlo descargado nunca (404,
+        # se arregla descargándolo) y que la ficha siga pero el fichero se haya ido —por un borrado de
+        # la carpeta, o porque alguien limpió— (409, se arregla volviendo a descargarlo). Se mira la
+        # ficha tal cual, sin la comprobación del fichero que hace `ficha_guardada`.
+        hay_ficha = (
+            sigpac_cache.carpeta_de_cache()
+            / sigpac_cache._nombre_de_la_ficha(provincia, campana_pedida)
+        ).is_file()
+        if hay_ficha:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Está la ficha del mapa de la provincia {provincia} de la campaña "
+                    f"{campana_pedida}, pero el fichero ya no está en la caché. Vuelve a descargarlo."
+                ),
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                f"El mapa del SIGPAC de la provincia {provincia} de la campaña {campana_pedida} "
+                "no está descargado en este servidor. Descárgalo primero "
+                f"(POST /api/sigpac/cache/{provincia}?campana={campana_pedida})."
+            ),
+        )
+    ruta = sigpac_cache.carpeta_de_cache() / str(ficha["fichero"])
+    if not ruta.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "La ficha del mapa está, pero el fichero ya no está en la caché. "
+                "Vuelve a descargarlo."
+            ),
+        )
+
+    parcelas = list(
+        db.scalars(
+            select(models.Parcela)
+            .where(models.Parcela.explotacion_id == explotacion.id)
+            .order_by(models.Parcela.alias, models.Parcela.id)
+        )
+    )
+    try:
+        resultado = geopackage_sigpac.contornos_de_las_parcelas(parcelas, ruta)
+    except geopackage_sigpac.GeopackageDesconocido as error:
+        # 422: el fichero está, pero no es el que este programa sabe leer. Se dice qué pasa y no se
+        # escribe nada; adivinar el esquema sería guardar contornos de otra cosa.
+        raise HTTPException(status_code=422, detail=str(error)) from None
+
+    por_id = {parcela.id: parcela for parcela in parcelas}
+    cambiadas = 0
+    for actualizada in resultado["actualizadas"]:
+        parcela = por_id.get(actualizada["id"])
+        if parcela is None:  # no puede pasar: las parcelas salen de esta misma consulta
+            continue
+        if parcela.geometria != actualizada["wkt"]:
+            parcela.geometria = actualizada["wkt"]
+            cambiadas += 1
+    if cambiadas:
+        db.add(
+            models.Auditoria(
+                explotacion_id=explotacion.id,
+                entidad="parcela",
+                accion="rellenar_los_contornos_del_sigpac",
+                datos={
+                    "provincia": provincia,
+                    "campana": campana_pedida,
+                    "con_forma": len(resultado["actualizadas"]),
+                    "cambiadas": cambiadas,
+                },
+            )
+        )
+        db.commit()
+    return {
+        "actualizadas": resultado["actualizadas"],
+        "sin_forma": resultado["sin_forma"],
+        "no_encontradas": resultado["no_encontradas"],
+        "sin_codigos": resultado["sin_codigos"],
+        "n": resultado["n"],
+    }
 
 
 @router.post("/sigpac/consultar")
