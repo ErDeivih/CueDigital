@@ -36,14 +36,65 @@
   provincia con licencia CC BY 4.0; la vía de CyL prohíbe la explotación comercial de su SHP.
 - **Pendiente**: la aprobación de David (AGR-1).
 
-### AGR-1 · Aprobación de David: arquitectura y aspecto — **ESPERANDO (nivel 3)**
+### AGR-1 · Aprobación de David: arquitectura y aspecto — **CERRADA (2026-11-05)**
 
-- **Nivel**: 3 (decisión de producto).
-- **Preguntas exactas**: están en el apartado 9 de `docs/ARQUITECTURA-DE-PANTALLAS.md` — navegación
-  (5 destinos en móvil y barra lateral en PC), portada «Hoy», orden de las fases, alcance de la
-  primera PAC (paquete preparatorio vs guardar también la solicitud presentada), marca/color y datos
-  de ejemplo de los artboards.
-- **Sin esto no se implementa** la interfaz: solo se prepara lo que no depende de la decisión.
+- **Nivel**: 3 (decisión de producto). **Aprobada con ocho correcciones**, que se aplican en AGR-9 y
+  están incorporadas en `docs/ARQUITECTURA-DE-PANTALLAS.md` (apartado 0).
+- Queda abierto lo que depende de terceros: el formato de importación de la PAC, los vídeos de
+  referencia de David, las regiones/importes de CyL, los valores de los catálogos y las licencias.
+
+### AGR-9 · Aplicar las ocho correcciones al canvas y la doctrina §8 — **HECHO (2026-11-05)**
+
+- **Nivel**: 2.
+- **Qué**: el canvas tiene **10 artboards** y `check` con **0 problemas**: Main «Mis tierras» con
+  tierras agrupadas por municipio, mapa por zona, zoom y selección, y el panel de la tierra con
+  **otros años**; `desktop-alta-tierras` (importar una PAC o a mano, sin prometer formatos);
+  `desktop-pac-historico` (años, evolución editable con producción y variedad, traer una PAC);
+  `movil-factura-foto` (foto fija y revisión campo a campo); `movil-productos-dosis` (dosis por
+  hectárea y total, favoritos); `movil-apuntar` (qué necesita para valer, favoritos); `movil-ficha-parcela`
+  (otros años).
+- **Doctrina §8 aplicada**: fuera «Ortofoto simulada, sin conexión», la sticky «Datos de ejemplo» y
+  todos los textos de desarrollador; barrido con 0 textos técnicos, 0 jerga, 0 sombras y 0 emoji.
+- **Para revisar**: el canvas se abre con el enlace que da el Lead; `check` no renderiza (la skill lo
+  prohíbe), así que el aspecto real lo ve David.
+
+### AGR-10 · Histórico de la PAC y evolución de una tierra
+
+- **Nivel**: 2 (la parte de canales ya está verificada; queda un formato **pendiente**).
+- **Qué**: por tierra, una tabla por campaña (año, cultivo, superficie, variedad y producción estimada
+  kg/ha), con las celdas que vienen de la administración distintas de las que se escriben; importar o
+  corregir años.
+- **Canales verificados el 05/11/2026**: exportación de **recintos por campaña 2023–2026** de la Junta
+  (texto/Excel, sin certificado), **Cuecyl `.xlsx`** de la campaña y **S-X en PDF con texto**. **No hay
+  fichero oficial de la solicitud PAC declarada**; «Documentos del expediente» y la descarga del
+  Cuecyl de años anteriores siguen pendientes.
+- **Lo que falta de motor**: que la importación del Cuecyl escriba las **versiones de recinto** de su
+  campaña (hoy crea campaña, tierras y cultivos, pero no versiones).
+- **Criterio**: lo que no consta queda vacío; el SIGPAC solo da 2025–2026 y la Junta recintos
+  2023–2026, y lo anterior se declara; se puede exportar la evolución.
+
+### AGR-11 · Productos, abonos, dosis y favoritos
+
+- **Nivel**: 2.
+- **Qué**: elegir producto/abono con la dosis por hectárea (de la etiqueta o la última vez), total
+  calculado y favoritos; la dosis no se inventa y el total se distingue de la dosis.
+- **Criterio**: un tratamiento se apunta con producto, dosis y total correctos; los favoritos se
+  guardan por finca y cuenta; sin dosis conocida, el campo queda vacío y se avisa.
+
+### AGR-12 · Facturas de fotos con revisión campo a campo
+
+- **Nivel**: 2.
+- **Qué**: foto → propuesta (proveedor, NIF, número, fecha, base, IVA, total) con revisión campo a
+  campo y el original a la vista; si no hay lector, se guarda el justificante y se teclea.
+- **Criterio**: nada se guarda sin revisar; lo no leído queda vacío; no se promete precisión (el corpus
+  de D08 está aparcado).
+
+### AGR-13 · La doctrina §8 en todos los textos nuevos
+
+- **Nivel**: 1.
+- **Qué**: ningún texto nuevo explica cómo está hecha la pantalla ni cómo se calcula un número; los
+  textos de desarrollador se borran. Los textos del agricultor siguen en `app/textos.py`.
+- **Criterio**: recorrido de textos de las pantallas nuevas y retirada de lo que no sirve para decidir.
 
 ### AGR-2 · Armazón nuevo + «Hoy» + «Mis parcelas»
 

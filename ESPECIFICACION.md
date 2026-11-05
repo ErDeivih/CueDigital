@@ -45,6 +45,26 @@ una—. Es una aportación de David, **no un gasto**. Sin eso no se mide el OCR 
 lo que sí se puede hacer mientras tanto son las tareas D08-1 y D08-2 del `BACKLOG.md`. La decisión y su
 motivo están en `DECISIONES.md`.
 
+## Aprobación del diseño (2026-11-05), con ocho correcciones
+
+David vio el sistema de diseño y los artboards y **dio el visto bueno con correcciones**. Se
+incorporan a `docs/ARQUITECTURA-DE-PANTALLAS.md` (apartado 0) y al canvas:
+
+1. **Parcelas en el mapa**: no tienen por qué estar juntas ni caber en una imagen → zoom, agrupación
+   y selección; no se supone una finca única.
+2. **Facturas de fotos**: leer la foto (OCR) y devolver una propuesta para revisar campo a campo.
+3. **Cuaderno guiado**: decir qué necesita el apunte para ser válido, qué falta y avisar sin bloquear.
+4. **Productos y abonos con dosis por hectárea** y total calculado.
+5. **Favoritos** de productos, abonos y tratamientos.
+6. **PAC y años anteriores**: importar o modificar registros para ver la evolución de una tierra,
+   con **producción estimada por hectárea** y **variedad de semilla**.
+7. **Registro de parcelas fácil**: guiado o importando la PAC de un año (los dos vídeos de referencia
+   de David se incorporan cuando los pase).
+8. **Panel de tierras con mapa**: seleccionar cada tierra y ver sus datos y sus registros de otros años.
+
+Y la **doctrina §8** (`F:\EspacioCodigo\_flujo-dsh\DOCTRINA-CALIDAD.md`): **la interfaz no habla de
+cómo está hecha**; los textos de desarrollador se borran, no se sustituyen.
+
 ## Reglas
 
 - No tocar `.env` ni las fixtures de firma.

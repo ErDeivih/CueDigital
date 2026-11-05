@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Añadir tierras · escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--surface-page);-webkit-font-smoothing:antialiased}
+:root{
+--surface-page:#F3F0E8;--surface-card:#FFFFFF;--surface-sunk:#E8E3D7;
+--ink:#12211A;--ink-muted:#4A5A51;
+--brand:#175C33;--brand-bright:#1E7A43;--brand-tint:#DDEBDF;
+--accent:#9A5B12;--accent-tint:#F6E7CE;
+--info:#1C4F7A;--success:#1E6B3A;--warning:#7A4A00;--warning-tint:#FDEBC8;
+--danger:#9E2B25;--danger-tint:#F8DEDB;
+--border-subtle:#D8D2C4;--border-strong:#6E6A5D;--focus:#0B63CE;
+--on-brand:#FFFFFF;
+}
+a{color:var(--ink)}a:hover{color:var(--brand)}
+button,input,select{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hnav:hover{background:var(--surface-sunk)}
+.hbtn:hover{background:var(--surface-sunk)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--surface-page);color:var(--ink);font-size:17px;line-height:26px">
+
+<header style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:12px 24px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de finca. Ahora estás en Finca La Vega, de 2 fincas" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:17px;line-height:22px;font-weight:600">Finca La Vega</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">2 fincas</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de campaña. Ahora estás en la campaña 2025/2026" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">Campaña</span>
+<span style="font-size:17px;line-height:24px;font-weight:600">2025/2026</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+
+<div style="display:flex;flex-direction:column;gap:4px;flex:1 1 260px;max-width:400px;min-width:220px">
+<label for="buscar-alta" style="font-size:15px;line-height:20px;font-weight:600">Buscar en la finca</label>
+<div style="position:relative;display:flex;align-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input id="buscar-alta" type="search" placeholder="Tierra, apunte o papel" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-left:auto">
+<button type="button" aria-label="Tu cuenta y la finca" style="width:44px;height:44px;border-radius:999px;border:1px solid var(--border-strong);background:var(--brand-tint);color:var(--brand);font-size:17px;font-weight:700;cursor:pointer">MD</button>
+</div>
+</header>
+
+<div style="display:flex;flex:1;min-height:0;align-items:stretch">
+
+<aside aria-label="Menú de la finca" style="width:248px;flex:0 0 248px;background:var(--surface-card);border-right:1px solid var(--border-subtle);padding:16px 12px;display:flex;flex-direction:column;gap:16px">
+<nav aria-label="Secciones de la finca">
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px">
+<li><a class="hnav" href="Main.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></svg>
+Inicio
+</a></li>
+<li><a class="hnav" href="Main.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;background:var(--brand-tint);color:var(--brand);font-size:17px;line-height:24px;font-weight:600">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
+Tierras
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-2-1.5-4.5-2-7-2v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2Z"/><path d="M12 6v14"/></svg>
+Cuaderno
+</a></li>
+<li><a class="hnav" href="movil-productos-dosis.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3h-4z"/><path d="M9 6h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><path d="M7 12h10"/></svg>
+Productos
+</a></li>
+<li><a class="hnav" href="movil-factura-foto.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+Facturas
+</a></li>
+<li><a class="hnav" href="desktop-pac.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+<span style="flex:1;min-width:0">PAC y subvenciones</span>
+<span aria-label="Faltan 3 cosas" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--warning-tint);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600">3</span>
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+Documentos
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>
+Ajustes
+</a></li>
+</ul>
+</nav>
+
+<div style="height:1px;background:var(--border-subtle)"></div>
+
+<a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/><path d="M15.5 4.6a3.5 3.5 0 0 1 0 6.8"/></svg>
+<span style="flex:1;min-width:0">Quién entra</span>
+<span aria-label="2 ayudantes" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--surface-sunk);color:var(--ink-muted);font-size:13px;line-height:18px;font-weight:600">2</span>
+</a>
+</aside>
+
+<main style="flex:1;min-width:0;padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto">
+
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+<div>
+<h1 style="margin:0;font-size:32px;line-height:38px;font-weight:700">Añadir tierras</h1>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Finca La Vega · 2025/2026</p>
+</div>
+<a href="Main.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">Volver a las tierras</a>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start">
+
+<section aria-labelledby="traer-tierras-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+<h2 id="traer-tierras-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Traerlas de la PAC de un año</h2>
+<p style="margin:2px 0 12px;font-size:13px;line-height:18px;color:var(--ink-muted)">Vienen con el municipio, el polígono, la parcela y la superficie puestos.</p>
+<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;flex:0 0 200px">
+<label for="anio-alta" style="font-size:15px;line-height:20px;font-weight:600">Año</label>
+<select id="anio-alta" style="height:44px;padding:0 10px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px">
+<option>2024/2025</option>
+<option>2023/2024</option>
+<option>2022/2023</option>
+</select>
+</div>
+<button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>
+Elegir el fichero
+</button>
+</div>
+<p style="margin:8px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Solo el titular de la finca puede añadir tierras.</p>
+</section>
+
+<section aria-labelledby="mano-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+<h2 id="mano-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Añadirlas a mano</h2>
+<ol style="margin:12px 0 0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:8px;font-size:17px;line-height:26px">
+<li>Nombre de la tierra</li>
+<li>Municipio</li>
+<li>Superficie</li>
+</ol>
+<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;margin-top:12px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">Empezar a mano</button>
+</section>
+
+</div>
+
+<section aria-labelledby="encontradas-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+<div>
+<h2 id="encontradas-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Tierras que se han encontrado: 6</h2>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">El nombre de cada tierra se puede poner después.</p>
+</div>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Quitar las que no quiera</button>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding:8px 12px;background:var(--warning-tint);border:1px solid var(--warning);border-radius:10px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 20px"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v3"/><path d="M12 16.5h.01"/></svg>
+<p style="margin:0;flex:1;min-width:0;font-size:15px;line-height:20px;font-weight:600;color:var(--warning)">1 hoja no se ha podido leer. Prueba con otro fichero o añádelas a mano.</p>
+<button class="hbtn" type="button" style="height:44px;padding:0 12px;border:1px solid var(--warning);border-radius:10px;background:var(--surface-card);color:var(--warning);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Elegir otro fichero</button>
+</div>
+
+<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:12px">
+<colgroup>
+<col style="width:48px">
+<col style="width:26%">
+<col style="width:10%">
+<col style="width:10%">
+<col style="width:10%">
+<col style="width:12%">
+<col style="width:24%">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)"><span style="position:absolute;left:-9999px">Añadir</span></th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Municipio</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Polígono</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Parcela</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Recinto</th>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:right;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Superficie</th>
+<th scope="col" style="padding:0 0 8px 12px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle)"><input type="checkbox" checked aria-label="Añadir la tierra de Peñaranda de Bracamonte, polígono 7, parcela 142" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Peñaranda de Bracamonte</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">7</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">142</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">2</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">8,42 ha</td>
+<td style="padding:6px 0 6px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cereal de secano</td>
+</tr>
+<tr>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle)"><input type="checkbox" checked aria-label="Añadir la tierra de Peñaranda de Bracamonte, polígono 7, parcela 88" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Peñaranda de Bracamonte</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">7</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">88</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">1</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">12,34 ha</td>
+<td style="padding:6px 0 6px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cereal de secano</td>
+</tr>
+<tr>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle)"><input type="checkbox" checked aria-label="Añadir la tierra de Peñaranda de Bracamonte, polígono 7, parcela 91" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Peñaranda de Bracamonte</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">7</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">91</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">1</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">6,80 ha</td>
+<td style="padding:6px 0 6px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Remolacha</td>
+</tr>
+<tr>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle)"><input type="checkbox" checked aria-label="Añadir la tierra de Cantalapiedra, polígono 12, parcela 5" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cantalapiedra</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">12</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">5</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">1</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">4,10 ha</td>
+<td style="padding:6px 0 6px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Forraje</td>
+</tr>
+<tr>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle)"><input type="checkbox" checked aria-label="Añadir la tierra de Cantalapiedra, polígono 12, parcela 9" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Cantalapiedra</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">12</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">9</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">2</td>
+<td style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;text-align:right">3,25 ha</td>
+<td style="padding:6px 0 6px 12px;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px">Barbecho</td>
+</tr>
+<tr>
+<td style="padding:6px 0"><input type="checkbox" checked aria-label="Añadir la tierra de Bóveda del Río Almar, polígono 2, parcela 33" style="width:24px;height:24px;accent-color:var(--brand);cursor:pointer"></td>
+<td style="padding:6px 0;font-size:17px;line-height:26px">Bóveda del Río Almar</td>
+<td style="padding:6px 0;font-size:17px;line-height:26px">2</td>
+<td style="padding:6px 0;font-size:17px;line-height:26px">33</td>
+<td style="padding:6px 0;font-size:17px;line-height:26px">1</td>
+<td style="padding:6px 0;font-size:17px;line-height:26px;text-align:right">5,60 ha</td>
+<td style="padding:6px 0 6px 12px;font-size:17px;line-height:26px">Forraje</td>
+</tr>
+</tbody>
+</table>
+
+<div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+<button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">Añadir las 6 tierras</button>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">Se pueden quitar después una por una.</span>
+</div>
+</section>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

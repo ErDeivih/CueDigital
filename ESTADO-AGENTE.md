@@ -1,34 +1,34 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: La aplicación se rehace para el agricultor de Castilla y León, con interfaz nueva para PC, tableta y móvil. Ya están hechas la investigación de la Junta (con fuente y fecha en cada afirmación) y la propuesta de pantallas y de aspecto para que David la apruebe; no se ha tocado código de la aplicación. El corpus de D08 queda aparcado hasta que David lo traiga y no bloquea nada.
+resumen: David aprobó el diseño con ocho correcciones. Ya están aplicadas en la arquitectura y en los 10 artboards, y la investigación de la Junta se ha ampliado con la vía real para importar las tierras (la consulta de recintos por campaña 2023-2026 y el Cuecyl). Todavía no hay implementación de la aplicación: lo siguiente es el armazón nuevo con «Hoy» y «Mis tierras». El corpus de D08 sigue aparcado y no bloquea nada.
 estado: en-curso
-tarea: investigación oficial y arquitectura de pantallas hechas; esperando la aprobación para implementar
+tarea: correcciones de David aplicadas al diseño y a la arquitectura; investigación de importación ampliada
 nivel: 2
-siguiente: aprobación de David (AGR-1); después, armazón nuevo + Hoy + Mis parcelas
-bloqueado: la aprobación del aspecto y de la arquitectura (AGR-1, nivel 3)
-fecha: 2026-11-04
+siguiente: AGR-2 (armazón nuevo + Hoy + Mis tierras), y después AGR-10, AGR-11 y AGR-12
+bloqueado: nada duro; quedan pendientes de terceros las licencias (CIT, IGN), los formatos del expediente y del Cuecyl de años anteriores, y los dos vídeos de referencia de David
+fecha: 2026-11-05
 
 ## Lo que se ha hecho en esta sesion
 
-1. **Alcance nuevo leído y asumido**: `ALCANCE-AGRICOLA.md` manda. El producto pasa a ser la
-   herramienta del agricultor de Castilla y León (cuaderno, PAC y subvenciones, parcelas del SIGPAC),
-   con interfaz nueva para PC, tableta y móvil. No se reescribe el backend.
-2. **Investigación oficial** (`docs/INVESTIGACION-AGRICOLA.md`): cuatro líneas independientes —
-   SIGPAC, PAC/subvenciones, cuaderno digital y competencia— con **URL y fecha en cada afirmación** y
-   lo pendiente marcado. Seis hallazgos que cambian el plan, entre ellos: el SIGPAC se puede traer
-   entero (GeoPackage por provincia, CC BY 4.0 con uso comercial); **la PAC no se presenta desde un
-   fichero** (se cumplimenta y firma en la app de la Junta, sin API pública localizada); y el mínimo
-   legal de un tratamiento son **11 datos**, de los que 8 no se pueden deducir.
-3. **Arquitectura de pantallas** (`docs/ARQUITECTURA-DE-PANTALLAS.md`): navegación (5 destinos en
-   móvil, barra lateral en PC), **11 pantallas P0** con contenido, acciones, los cuatro estados y de
-   qué datos viven, los flujos (alta desde SIGPAC, apunte en 30 s, campaña, PAC) y las fases de
-   entrega. **Para que David la apruebe antes de implementar.**
-4. **Primer paquete visual**: sistema de diseño `designs/cue-agricola-design-system/` (paleta de día y
-   noche con **contraste AA calculado y anotado**, tipografía del sistema para funcionar sin red,
-   espaciado, radios y objetivos táctiles de 48 px) y canvas de artboards en `designs/cue-agricola/`
-   (mis parcelas, Hoy, apuntar, ficha de parcela, PAC…) con datos de ejemplo ficticios.
-5. **D08, aparcado por decisión de David (2026-11-04, noche)**: no aporta ahora las 30 facturas con
-   permiso. El trabajo hecho (las dos opciones medidas, todas a coste 0) se queda como está y sirve
-   cuando llegue el corpus; **no bloquea nada más**. Está escrito en `ESPECIFICACION.md`.
+1. **Aprobación del diseño, con ocho correcciones** (2026-11-05). Están escritas en
+   `ESPECIFICACION.md` y aplicadas en `docs/ARQUITECTURA-DE-PANTALLAS.md` (apartado 0) y en el canvas.
+2. **Canvas actualizado: 10 artboards, `check` con 0 problemas.** «Mis tierras» ya no finge que todo
+   cabe en una imagen: tierras **agrupadas por municipio** con su total, mapa **por zona**, zoom,
+   «ver la tierra entera» y selección lista ↔ mapa ↔ panel, con los **otros años** de cada tierra.
+   Nuevas: **alta de tierras** (importar una PAC o a mano), **PAC histórico** (años, evolución
+   editable con producción kg/ha y variedad, traer una PAC), **factura de foto** (foto fija + revisión
+   campo a campo), **productos y abonos con dosis por hectárea** y total, con **favoritos**. El
+   cuaderno de apuntar dice **qué le falta para valer** y que se puede guardar y completar luego.
+3. **Doctrina §8 aplicada**: fuera los textos de desarrollador («Ortofoto simulada, sin conexión», la
+   sticky «Datos de ejemplo», explicaciones de cálculo y avisos internos). Barrido: 0 textos técnicos,
+   0 jerga prohibida, 0 sombras/degradados, 0 emoji; tokens del sistema intactos.
+4. **Investigación ampliada** (`docs/INVESTIGACION-AGRICOLA.md`, apartado 9 bis), con URL y fecha
+   2026-11-05: la **consulta pública de recintos SIGPAC de la Junta por campaña 2023–2026** (descarga
+   a texto/Excel, sin certificado, con uso, superficie, CSP, coeficiente de regadío y región) es la
+   vía real para «se añaden solas»; el **Cuecyl `.xlsx`** de cada campaña se puede leer; **no hay
+   fichero oficial de la solicitud PAC declarada** (la app la firma con certificado y reimporta el año
+   anterior dentro de ella). También: webinars y demos oficiales de la Junta, el formulario **S-X**, y
+   los riesgos probados (recintos renombrados/partidos, NIF del propietario, CSP provisional).
+5. **D08 sigue aparcado** por decisión de David: no se persigue y no bloquea.
 
 ## La última pasada, sobre este mismo HEAD
 
@@ -37,13 +37,11 @@ fecha: 2026-11-04
 
 ## Lo que sigue abierto
 
-- **AGR-1, esperando a David**: aprobar (o corregir) la arquitectura y el aspecto. Las preguntas
-  exactas están en el apartado 9 de `docs/ARQUITECTURA-DE-PANTALLAS.md`.
-- Sin esa aprobación **no se implementa** la interfaz; mientras, se pueden hacer AGR-3 (traer parcelas
-  del SIGPAC en lote) y AGR-4 (correcciones documentales), que no dependen del aspecto.
-- **Preguntas a la administración** (AGR-7): licencia del SHP de CyL (CIT), campañas históricas y
-  cupos (FEGA), licencia PNOA (IGN) y especificación del `.xlsx` del Cuecyl (Junta/FEGA).
-- **D08 no bloquea nada**: el corpus queda aparcado hasta que David lo traiga; el resumen de las dos
-  opciones medidas está en `docs/D08_CORPUS_Y_PROVEEDOR.md`.
+- **AGR-2, lo siguiente**: armazón nuevo + «Hoy» + «Mis tierras», con los estados y a 390/1024/1440.
+- **AGR-10/11/12**, ya con el diseño aprobado: histórico y evolución; productos/dosis/favoritos;
+  facturas de foto con revisión campo a campo. Y **AGR-13**: la doctrina §8 en los textos nuevos.
+- **Pendiente de terceros**: licencia del SHP de CyL (CIT) y de la ortofoto PNOA (IGN); formato de
+  «Documentos del expediente» y descarga del Cuecyl de años anteriores; los **dos vídeos** de
+  referencia de David sobre el registro de parcelas; valores de los catálogos oficiales.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni
   cambiado de rama y no se usa GitHub Actions. Push selectivo al final de la sesión.

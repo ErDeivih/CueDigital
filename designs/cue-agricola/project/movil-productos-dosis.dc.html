@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Productos y abonos · móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--surface-page);-webkit-font-smoothing:antialiased}
+:root{
+--surface-page:#F3F0E8;--surface-card:#FFFFFF;--surface-sunk:#E8E3D7;
+--ink:#12211A;--ink-muted:#4A5A51;
+--brand:#175C33;--brand-bright:#1E7A43;--brand-tint:#DDEBDF;
+--accent:#9A5B12;--accent-tint:#F6E7CE;
+--info:#1C4F7A;--success:#1E6B3A;--warning:#7A4A00;--warning-tint:#FDEBC8;
+--danger:#9E2B25;--danger-tint:#F8DEDB;
+--border-subtle:#D8D2C4;--border-strong:#6E6A5D;--focus:#0B63CE;
+--on-brand:#FFFFFF;
+}
+a{color:var(--ink)}
+button,input,select{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hfila:hover{background:var(--surface-sunk)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;display:flex;flex-direction:column;background:var(--surface-page);color:var(--ink);font-size:19px;line-height:28px;overflow:hidden">
+
+<header style="display:flex;align-items:center;gap:8px;padding:2px 12px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+<a href="movil-apuntar.dc.html" aria-label="Volver al apunte" style="width:48px;height:48px;flex:0 0 48px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;text-decoration:none;color:var(--ink)">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+</a>
+<div style="flex:1;min-width:0">
+<div style="font-size:20px;line-height:26px;font-weight:600">Productos y abonos</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Elige y pon la dosis</div>
+</div>
+</header>
+
+<div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;line-height:26px;font-weight:600">El Molino</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">8,42 ha · Cereal de secano</div>
+</div>
+<button type="button" aria-label="Cambiar de tierra" style="height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Cambiar</button>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:4px;padding:12px 16px 8px">
+<label for="buscar-producto" style="font-size:15px;line-height:20px;font-weight:600">Buscar producto</label>
+<div style="position:relative;display:flex;align-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input id="buscar-producto" type="search" placeholder="Nombre del producto" style="width:100%;height:48px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:19px;line-height:28px">
+</div>
+</div>
+
+<div style="flex:1;min-height:0;overflow-y:auto">
+
+<div style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;padding:6px 12px;background:var(--surface-sunk);border-bottom:1px solid var(--border-strong)">
+<span aria-hidden="true"></span>
+<span style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Producto</span>
+<span style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted);text-align:right">Por hectárea</span>
+<span style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted);text-align:right">Total</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:6px;padding:8px 12px 4px;background:var(--surface-card)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8Z"/></svg>
+<span style="font-size:15px;line-height:20px;font-weight:600">Favoritos</span>
+</div>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8Z"/></svg>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Glifosato 36 %</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">2 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">16,84 L</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8Z"/></svg>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Abono 15-15-15</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">350 kg/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">2.947 kg</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8Z"/></svg>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Azufre micronizado</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">25 kg/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">210,5 kg</span>
+</a>
+
+<div style="display:flex;align-items:center;gap:6px;padding:10px 12px 4px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+<span style="font-size:15px;line-height:20px;font-weight:600">Tratamientos</span>
+</div>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Herbicida de hoja ancha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">1,5 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">12,6 L</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Herbicida de gramíneas</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">0,8 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">6,74 L</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Fungicida de hoja</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">0,5 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">4,21 L</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Insecticida de pulgón</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">0,3 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">2,53 L</span>
+</a>
+
+<div style="display:flex;align-items:center;gap:6px;padding:10px 12px 4px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+<span style="font-size:15px;line-height:20px;font-weight:600">Abonos</span>
+</div>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Abono cobertera 27 %</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">220 kg/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">1.852 kg</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Abono foliar</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">2 L/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">16,84 L</span>
+</a>
+
+<a class="hfila" href="movil-apuntar.dc.html" style="display:grid;grid-template-columns:24px minmax(0,1fr) 92px 96px;align-items:center;gap:8px;min-height:48px;padding:0 12px;background:var(--surface-card);text-decoration:none;color:var(--ink)">
+<span aria-hidden="true"></span>
+<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Estiércol de vacuno</span>
+<span style="font-size:17px;line-height:26px;text-align:right;color:var(--ink-muted);white-space:nowrap">12.000 kg/ha</span>
+<span style="font-size:17px;line-height:26px;text-align:right;font-weight:600;white-space:nowrap">101.040 kg</span>
+</a>
+
+</div>
+
+<footer style="display:flex;flex-direction:column;gap:4px;padding:12px 16px 10px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">
+<a href="movil-apuntar.dc.html" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);text-decoration:none;font-size:19px;line-height:28px;font-weight:600">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 10-10a2.5 2.5 0 0 0-3.5-3.5L4.5 15.5 4 20Z"/></svg>
+Usar en el apunte
+</a>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

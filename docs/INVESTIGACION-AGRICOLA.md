@@ -455,7 +455,87 @@ que dos filas son el mismo dueño.
 
 ---
 
-## 10 · Siguientes pasos ejecutables
+## 9 bis · Correcciones de David (2026-11-05): lo verificado después
+
+David aprobó el diseño con ocho correcciones. Las que necesitan fuente oficial (importar PAC de otros
+años, evolución de una tierra y registro fácil de parcelas) se han investigado aparte el **2026-11-05**.
+Esto es lo nuevo, con su URL y su fecha.
+
+### 9 bis.1 La vía que sí existe para «se añaden solas»: la consulta de recintos de la Junta
+
+| Afirmación | Fuente oficial | Fecha | Estado |
+|---|---|---|---|
+| **Consulta pública de recintos SIGPAC de Castilla y León, por campaña 2023, 2024, 2025 y 2026, sin certificado**, con **descarga a fichero de texto y a Excel** | <https://consultas.ayg.jcyl.es/spac/spacrecintos00c.jsp?tipoConsulta=y_cyl&cCampana=2026> (y `cCampana=2025`, `2024`, `2023`) | 05/11/2026 | **VERIFICADO** (consulta y descarga hechas) |
+| La exportación trae: PROVINCIA, MUNICIPIO, AGREGADO, ZONA, POLÍGONO, PARCELA, RECINTO, **CÓD. USO**, descripción del uso, **SUPERFICIE**, **CAP**, **COEF. REGADÍO**, PEND. MEDIA, ALTITUD, LIC, ZEPA, ZVN, PASTOS PERMANENTES, SENSIBLE, ZONA DESFAVORECIDA, FRANJAS, OLIVAR DESVENTAJA, BANCALES y **REGIÓN** | misma página, botones «Descargar a Fichero Texto» / «Descargar a Excel» | 05/11/2026 | **VERIFICADO** (separador `;` y tabuladores) |
+| El recinto de ejemplo (`37/70/0/0/503/51/1`) sale **4,90 ha, uso TA, CAP en blanco, coef. regadío 0, pendiente 1,0, altitud 837** — coincide con el FEGA | misma página | 05/11/2026 | **VERIFICADO** |
+| Los enlaces a esas consultas por campaña los publica la Junta | <https://pac.jcyl.es/web/jcyl/PAC/es/Plantilla100/1284204326541/_/_/_?rendermode=previewnoinsite> | 05/11/2026 | **VERIFICADO** |
+| **CSP/CAP**: en pantalla se llama **CSP** y en la exportación **CAP**; un valor con `(*)` es **provisional** (recinto no declarado en las 5 campañas anteriores) y en el visor sale como **0** | <https://pac.jcyl.es/web/jcyl/PAC/es/Plantilla100/1284204326541/_/_/_?rendermode=previewnoinsite> | 05/11/2026 | **VERIFICADO** |
+| Existen consultas de **«recintos renombrados»** por campaña y de **«parcelas depuradas»** (2022–2025); las segundas exigen identificación | <https://pac.jcyl.es/web/jcyl/PAC/es/Plantilla100/1284260116606/_/_/_?rendermode=previewnoinsite> · <https://consultas.ayg.jcyl.es/adsu/inicio.jsp?tipoConsulta=1&cCampana=2026> | 05/11/2026 | **VERIFICADO** que existen; formato de salida → **PENDIENTE** |
+
+**Consecuencia**: el alta «importando» **no depende de que la Junta publique un fichero de la
+solicitud**. Se puede importar la **exportación de recintos por campaña** (2023–2026), que trae
+recintos, superficies, uso, región y coeficientes. **No trae el cultivo declarado**; eso viene del
+Cuecyl o lo teclea el agricultor.
+
+### 9 bis.2 ¿Se puede importar «la PAC» de otro año? **PARCIALMENTE**
+
+| Qué | ¿Hay fichero oficial? | Estado |
+|---|---|---|
+| **Recintos de una campaña (2023–2026)** | **Sí**: exportación texto/Excel de la consulta de la Junta | **VERIFICADO** |
+| **Cuaderno Cuecyl de una campaña** | **Sí, el `.xlsx`** (lo lee el programa); que el agricultor pueda descargar el de años anteriores → **PENDIENTE** | El cuaderno es «uno por campaña» (**VERIFICADO**, manual del Cuecyl pág. 6) |
+| **Cultivos declarados de campañas anteriores** | Solo la **campaña anterior** en el GeoPackage del FEGA; más atrás, no | **VERIFICADO** (el servicio son 2 campañas) |
+| **La solicitud PAC declarada (PDF/CSV)** | **No hay exportación documentada**; la app cumple y firma con certificado y **reimporta el año anterior dentro de ella** | **VERIFICADO** que es la única vía; «Documentos del expediente» (campañas 2011–2026) existe pero **exige certificado/Cl@ve** y su formato es **PENDIENTE** |
+| **Carpeta Ciudadana / sede** | Resumen de tramitación y acuse de recibo en PDF tras presentar | **VERIFICADO** que existe; que esté ahí la solicitud → **PENDIENTE** |
+
+**Cómo se lee un año anterior, entonces**: (1) **Cuecyl `.xlsx`** de esa campaña, que ya se lee
+(`app/cuaderno_cyl.py`: hoja 2.1 con referencia SIGPAC, municipio, cultivo, superficie, ecorégimen y
+sistema; la campaña se saca del propio fichero, `cuaderno_cyl.py:588`); (2) **exportación de recintos
+por campaña** de la Junta; (3) si aporta el **PDF de la solicitud (formulario S-X)**, se lee si trae
+texto —el S-X lleva referencia SIGPAC, **NIF del propietario**, superficie, uso, tenencia y cultivo—,
+y si es un escaneo se teclea: no se inventa.
+
+### 9 bis.3 Qué parte de la evolución de una tierra se puede reconstruir
+
+- **Sin el agricultor**: geometría, uso, superficie, **región** y **coeficientes** del recinto de
+  **2023 a 2026** (consulta de la Junta) y **2025–2026** por el GeoPackage del FEGA, más los **cultivos
+  declarados de la campaña anterior**.
+- **Solo con sus datos**: cultivos declarados de hace más de una campaña, superficies declaradas,
+  ecorégiMenes, ayudas pedidas/cobradas y **todo lo anterior a 2023**. Vías: Cuecyl de cada campaña,
+  PDF de la solicitud, «Documentos del expediente».
+- **Regla**: un año sin dato **no es «no sembró»**: es **no consta** (`None`), y así se enseña.
+
+### 9 bis.4 Registro fácil de parcelas: guiado y materiales oficiales
+
+| Afirmación | Fuente oficial | Fecha | Estado |
+|---|---|---|---|
+| Consulta y descarga de recintos por campaña (la vía de importación de 9 bis.1) | <https://consultas.ayg.jcyl.es/spac/spacrecintos00c.jsp?tipoConsulta=y_cyl&cCampana=2026> | 05/11/2026 | **VERIFICADO** |
+| El **visor oficial del FEGA** permite ver la ficha del recinto al clicar la capa RECINTO y **descargar la geometría** de la selección (GeoJSON, GML o Shapefile) | <https://sigpac.mapa.gob.es/fega/visor/help/353Recinto.html> · <https://sigpac.mapa.es/fega/visor/help/3101Geometrias.html> | 05/11/2026 | **VERIFICADO** |
+| **Webinars oficiales** de CyL Digital (10/12/2025, ~2 h 30): uno con capítulos de **búsqueda de parcelas en SIGPAC (1:42:49)**, **descarga de geometría (1:48:40)** y Oficina Virtual de la PAC (1:41:32); otro con **Cuecyl** (1:41:59) y acceso por Sede (1:45:12) | <https://www.youtube.com/watch?v=QtTrZc3Rci4> · <https://www.youtube.com/watch?v=irB5CwxF8JE> · página de CyL Digital | 05/11/2026 | **VERIFICADO** (capítulos; no vistos enteros) |
+| **Ocho demos oficiales del Cuecyl** (crear UHC, siembra, tratamiento fitosanitario, tratamiento de semilla, postcosecha, plan de nutrientes, fertilización, fertirrigación) y **manual de enero de 2025** | <https://agriculturaganaderia.jcyl.es/web/es/cuaderno-digital-explotacion-agricola.html> · <https://agriculturaganaderia.jcyl.es/web/jcyl/binarios/198/91/Instrucciones_cumplimentaci%C3%B3n_Cuecyl_ene%202025.pdf> | 05/11/2026 | **VERIFICADO** |
+| **No existe vídeo oficial del visor nacional del FEGA** (los de YouTube son de terceros) ni vídeo oficial de «cómo dar de alta tus parcelas» más allá de los capítulos del webinar | — | 05/11/2026 | **VERIFICADO** que no se ha localizado; los de terceros **no se usan** como fuente |
+
+**Procedimiento recomendado** (el de la arquitectura): alta **guiada** por los siete códigos o tocando
+el mapa, con confirmación antes de aceptar; o **importación** de la exportación de recintos por campaña
+(o del Cuecyl, o del S-X con texto). Las dos vías comprueban duplicados y no pisan lo que ya hay.
+
+### 9 bis.5 Riesgos comprobados (y cómo se tratan)
+
+1. **Duplicar recintos**: importar dos veces el mismo lote. El programa ya lo evita con la clave de
+   recinto y el plan de importación repetible (`app/versiones_de_recinto.py`, T05, 45 pruebas); la
+   importación nueva usa la misma clave. El S-X repite líneas si se sube dos veces: se avisa.
+2. **Tierras de otra persona**: el código SIGPAC **no dice de quién es**; el **S-X sí trae el NIF del
+   propietario** y el régimen de tenencia, y la PAC marca recintos con incidencia **231
+   «Disponibilidad no acreditada»**. Se avisa, no se bloquea.
+3. **Recintos partidos**: la Junta tipifica la **partición de recinto** (tipos 2, 4 y 8: cambio de uso,
+   de secano/regadío y de coeficiente) y la importación puede insertar **varias líneas** si un recinto
+   se dividió. Un recinto del año pasado puede ser dos hoy.
+4. **Cambios entre campañas**: **recintos renombrados** (consulta 2023–2026), concentración parcelaria
+   y actualización anual del SIGPAC (el FEGA solo sirve **dos campañas**). El histórico de más de dos
+   campañas no es HVD y su reutilización es distinta.
+5. **Un 0 que no es un dato**: los recintos no declarados en 5 campañas llevan CSP provisional `(*)` y
+   el visor los muestra como 0; el CAP vacío de un labor es «no aplica», no 0. Se guarda **nulo**.
+
+
 
 | # | Tarea | Nivel | Qué desbloquea |
 |---|---|---|---|

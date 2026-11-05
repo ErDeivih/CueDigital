@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>PAC y años anteriores · escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--surface-page);-webkit-font-smoothing:antialiased}
+:root{
+--surface-page:#F3F0E8;--surface-card:#FFFFFF;--surface-sunk:#E8E3D7;
+--ink:#12211A;--ink-muted:#4A5A51;
+--brand:#175C33;--brand-bright:#1E7A43;--brand-tint:#DDEBDF;
+--accent:#9A5B12;--accent-tint:#F6E7CE;
+--info:#1C4F7A;--success:#1E6B3A;--warning:#7A4A00;--warning-tint:#FDEBC8;
+--danger:#9E2B25;--danger-tint:#F8DEDB;
+--border-subtle:#D8D2C4;--border-strong:#6E6A5D;--focus:#0B63CE;
+--on-brand:#FFFFFF;
+}
+a{color:var(--ink)}a:hover{color:var(--brand)}
+button,input,select{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hnav:hover{background:var(--surface-sunk)}
+.hbtn:hover{background:var(--surface-sunk)}
+.hfila:hover{background:var(--surface-sunk)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--surface-page);color:var(--ink);font-size:17px;line-height:26px">
+
+<header style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:12px 24px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de finca. Ahora estás en Finca La Vega, de 2 fincas" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:17px;line-height:22px;font-weight:600">Finca La Vega</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">2 fincas</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de campaña. Ahora estás en la campaña 2025/2026" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">Campaña</span>
+<span style="font-size:17px;line-height:24px;font-weight:600">2025/2026</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+
+<div style="display:flex;flex-direction:column;gap:4px;flex:1 1 260px;max-width:400px;min-width:220px">
+<label for="buscar-historico" style="font-size:15px;line-height:20px;font-weight:600">Buscar en la finca</label>
+<div style="position:relative;display:flex;align-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input id="buscar-historico" type="search" placeholder="Tierra, apunte o papel" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-left:auto">
+<span style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;background:var(--warning-tint);color:var(--warning);border:1px solid var(--warning);font-size:15px;line-height:20px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
+Sin cobertura
+</span>
+<button type="button" aria-label="Tu cuenta y la finca" style="width:44px;height:44px;border-radius:999px;border:1px solid var(--border-strong);background:var(--brand-tint);color:var(--brand);font-size:17px;font-weight:700;cursor:pointer">MD</button>
+</div>
+</header>
+
+<div style="display:flex;flex:1;min-height:0;align-items:stretch">
+
+<aside aria-label="Menú de la finca" style="width:248px;flex:0 0 248px;background:var(--surface-card);border-right:1px solid var(--border-subtle);padding:16px 12px;display:flex;flex-direction:column;gap:16px">
+<nav aria-label="Secciones de la finca">
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px">
+<li><a class="hnav" href="Main.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></svg>
+Inicio
+</a></li>
+<li><a class="hnav" href="Main.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
+Tierras
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-2-1.5-4.5-2-7-2v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2Z"/><path d="M12 6v14"/></svg>
+Cuaderno
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3h-4z"/><path d="M9 6h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><path d="M7 12h10"/></svg>
+Productos
+</a></li>
+<li><a class="hnav" href="movil-factura-foto.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+Facturas
+</a></li>
+<li><a class="hnav" href="desktop-pac.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;background:var(--brand-tint);color:var(--brand);font-size:17px;line-height:24px;font-weight:600">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+<span style="flex:1;min-width:0">PAC y subvenciones</span>
+<span aria-label="Faltan 3 cosas" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--warning-tint);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600">3</span>
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+Documentos
+</a></li>
+<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>
+Ajustes
+</a></li>
+</ul>
+</nav>
+
+<div style="height:1px;background:var(--border-subtle)"></div>
+
+<a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/><path d="M15.5 4.6a3.5 3.5 0 0 1 0 6.8"/></svg>
+<span style="flex:1;min-width:0">Quién entra</span>
+<span aria-label="2 ayudantes" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--surface-sunk);color:var(--ink-muted);font-size:13px;line-height:18px;font-weight:600">2</span>
+</a>
+
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;background:var(--warning-tint);border:1px solid var(--warning);border-radius:10px;padding:12px">
+<div style="display:flex;align-items:center;gap:8px;color:var(--warning);font-size:15px;line-height:20px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
+Sin cobertura ahora
+</div>
+<p style="margin:0;color:var(--warning);font-size:13px;line-height:18px">Los apuntes quedan guardados en el móvil y suben solos cuando vuelve.</p>
+</div>
+</aside>
+
+<main style="flex:1;min-width:0;padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto">
+
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+<div>
+<h1 style="margin:0;font-size:32px;line-height:38px;font-weight:700">PAC y años anteriores</h1>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Finca La Vega · 2025/2026</p>
+</div>
+<a href="desktop-pac.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+Ir a la PAC de este año
+</a>
+</div>
+
+<div style="display:grid;grid-template-columns:380px minmax(0,1fr);gap:24px;align-items:start">
+
+<section aria-labelledby="anios-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+<h2 id="anios-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Años</h2>
+<div style="display:flex;flex-direction:column;gap:4px;margin-top:12px">
+<a class="hfila" href="#" aria-current="true" style="display:flex;align-items:center;gap:12px;height:60px;padding:0 12px;border-radius:10px;background:var(--brand-tint);text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0;font-size:17px;line-height:26px;font-weight:600;color:var(--brand)">2025/2026</span>
+<span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--brand);color:var(--brand);font-size:13px;line-height:18px;font-weight:600">Este año</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+<a class="hfila" href="#" style="display:flex;align-items:center;gap:12px;height:60px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0;font-size:17px;line-height:26px;font-weight:600">2024/2025</span>
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>Presentada</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+<a class="hfila" href="#" style="display:flex;align-items:center;gap:12px;height:60px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0;font-size:17px;line-height:26px;font-weight:600">2023/2024</span>
+<span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--info);color:var(--info);font-size:13px;line-height:18px;font-weight:600">Traída</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+<a class="hfila" href="#" style="display:flex;align-items:center;gap:12px;height:60px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink)">
+<span style="flex:1;min-width:0;font-size:17px;line-height:26px;font-weight:600">2022/2023</span>
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>Falta</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+</div>
+</section>
+
+<div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+
+<section aria-labelledby="evolucion-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+<div>
+<h2 id="evolucion-titulo" style="margin:0;font-size:24px;line-height:30px;font-weight:700">El Molino</h2>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Peñaranda de Bracamonte · 8,42 ha</p>
+</div>
+<button class="hbtn" type="button" aria-haspopup="listbox" aria-expanded="false" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Cambiar de tierra</button>
+</div>
+
+<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:16px">
+<colgroup>
+<col style="width:120px">
+<col style="width:200px">
+<col style="width:110px">
+<col style="width:140px">
+<col style="width:130px">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" style="padding:0 0 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Campaña</th>
+<th scope="col" style="padding:0 0 8px 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Cultivo</th>
+<th scope="col" style="padding:0 0 8px 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Superficie (ha)</th>
+<th scope="col" style="padding:0 0 8px 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Producción estimada (kg/ha)</th>
+<th scope="col" style="padding:0 0 8px 8px;border-bottom:1px solid var(--border-strong);text-align:left;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Variedad de semilla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;font-weight:600">2025/2026</td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><select aria-label="Cultivo de 2025/2026" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"><option selected>Cereal de secano</option><option>Remolacha</option><option>Girasol</option><option>Forraje</option><option>Barbecho</option></select></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Superficie de 2025/2026 en hectáreas" type="text" inputmode="decimal" value="8,42" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Producción estimada de 2025/2026 en kilos por hectárea" type="text" inputmode="decimal" value="4.900" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Variedad de semilla de 2025/2026" type="text" value="Adelanto" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+</tr>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;font-weight:600">2024/2025</td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><select aria-label="Cultivo de 2024/2025" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"><option>Cereal de secano</option><option selected>Remolacha</option><option>Girasol</option><option>Forraje</option><option>Barbecho</option></select></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Superficie de 2024/2025 en hectáreas" type="text" inputmode="decimal" value="8,40" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Producción estimada de 2024/2025 en kilos por hectárea" type="text" inputmode="decimal" value="61.500" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Variedad de semilla de 2024/2025" type="text" value="Belga" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+</tr>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;font-weight:600">2023/2024</td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><select aria-label="Cultivo de 2023/2024" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"><option selected>Cereal de secano</option><option>Remolacha</option><option>Girasol</option><option>Forraje</option><option>Barbecho</option></select></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Superficie de 2023/2024 en hectáreas" type="text" inputmode="decimal" value="8,42" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Producción estimada de 2023/2024 en kilos por hectárea" type="text" inputmode="decimal" value="4.600" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Variedad de semilla de 2023/2024" type="text" value="Camarote" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+</tr>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:17px;line-height:26px;font-weight:600">2022/2023</td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><select aria-label="Cultivo de 2022/2023" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"><option>Cereal de secano</option><option>Remolacha</option><option selected>Girasol</option><option>Forraje</option><option>Barbecho</option></select></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Superficie de 2022/2023 en hectáreas" type="text" inputmode="decimal" value="8,10" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Producción estimada de 2022/2023 en kilos por hectárea" type="text" inputmode="decimal" value="1.150" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px;border-bottom:1px solid var(--border-subtle)"><input aria-label="Variedad de semilla de 2022/2023" type="text" value="Peredovic" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+</tr>
+<tr>
+<td style="padding:8px 0;font-size:17px;line-height:26px;font-weight:600">2021/2022</td>
+<td style="padding:8px 0 8px 8px"><select aria-label="Cultivo de 2021/2022" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"><option selected>Cereal de secano</option><option>Remolacha</option><option>Girasol</option><option>Forraje</option><option>Barbecho</option></select></td>
+<td style="padding:8px 0 8px 8px"><input aria-label="Superficie de 2021/2022 en hectáreas" type="text" inputmode="decimal" value="8,42" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px"><input aria-label="Producción estimada de 2021/2022 en kilos por hectárea" type="text" inputmode="decimal" value="4.300" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+<td style="padding:8px 0 8px 8px"><input aria-label="Variedad de semilla de 2021/2022" type="text" value="Adelanto" style="width:100%;height:44px;padding:0 8px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px"></td>
+</tr>
+</tbody>
+</table>
+
+<div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+<button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">Guardar los cambios</button>
+</div>
+</section>
+
+<section aria-labelledby="traer-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px">
+<h2 id="traer-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Traer la PAC de un año</h2>
+<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px">
+<div style="display:flex;flex-direction:column;gap:4px;flex:0 0 200px">
+<label for="anio-traer" style="font-size:15px;line-height:20px;font-weight:600">Año</label>
+<select id="anio-traer" style="height:44px;padding:0 10px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);font-size:17px;line-height:24px">
+<option>2024/2025</option>
+<option>2023/2024</option>
+<option>2022/2023</option>
+<option>2021/2022</option>
+</select>
+</div>
+<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>
+Elegir el fichero
+</button>
+</div>
+<p style="margin:8px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Si el fichero no se puede leer, se puede escribir a mano en la tabla.</p>
+</section>
+
+</div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

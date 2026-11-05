@@ -12,6 +12,26 @@
 > código que ya existe (`backend/app/`) y la comparación de competencia del 2026-11-04.
 >
 > **Lo que NO es**: código. Ni una pantalla implementada, ni una migración, ni un cambio de la API.
+>
+> **Estado: APROBADA CON CORRECCIONES (2026-11-05).** David vio el canvas y dio el visto bueno con
+> ocho correcciones, más la regla de la doctrina §8 (*la interfaz no habla de cómo está hecha*). Este
+> documento ya las incorpora; el detalle de dónde cae cada una está en el apartado 0.
+
+---
+
+## 0 · Las correcciones de David (2026-11-05), y dónde caen
+
+| # | Corrección | Dónde se resuelve |
+|---|---|---|
+| 1 | **Las parcelas no tienen por qué estar juntas** ni caber en una imagen | S02 y S09: zoom, agrupación y selección; nunca se supone una finca única |
+| 2 | **Leer facturas de fotos** (OCR) para sacar los datos | S08 y S12: foto → propuesta leída, revisión campo a campo, original a la vista |
+| 3 | **Cuaderno guiado**: decir qué necesita para rellenarlo | S04: campos obligatorios, qué falta, avisos que no bloquean |
+| 4 | **Productos y abonos con dosis por hectárea** | S12: lista, proporción por hectárea y total |
+| 5 | **Favoritos** de productos, abonos y tratamientos | S12: en los selectores y en apuntar |
+| 6 | **PAC y años anteriores**: importar o modificar, evolución de la tierra, producción estimada y variedad | S07-bis (histórico) y S03 (ficha con «otros años») |
+| 7 | **Registro de parcelas fácil**: guiado o importando una PAC | S02-bis (alta guiada) y S07-bis |
+| 8 | **Panel de tierras con mapa**: seleccionar cada tierra y ver sus datos y otros años | S02: lista ↔ mapa ↔ panel ↔ años |
+| 9 | **Doctrina §8**: la interfaz no habla de cómo está hecha | Principio 11 y la regla de textos del apartado 6 |
 
 ---
 
@@ -37,6 +57,9 @@
    legales van con su fuente y su fecha o no se enseñan.
 10. **La exportación está al lado de la lista**, no escondida en ajustes: el agricultor exporta
     cuando se lo piden, no cuando navega.
+11. **La interfaz no habla de cómo está hecha** (doctrina §8, 2026-11-05): nada de detalles técnicos,
+    ni de cómo se calcula un número, ni avisos internos, ni textos de relleno. Lo que no le sirve al
+    agricultor para decidir o actuar **se borra, no se sustituye por otro texto**.
 
 ---
 
@@ -104,11 +127,37 @@ datos vive.
   las acciones.
 - **Acciones**: buscar, filtrar, ordenar, seleccionar varias (para exportar o preparar PAC),
   tocar el recinto, abrir ficha, **traer parcelas del SIGPAC**, exportar la vista.
+- **Parcelas dispersas (corrección 1 y 8)**: la finca **no se supone junta**. El mapa tiene **zoom**
+  (rueda, botones y pellizco), **«ver todas»** para volver al encuadre que abarca todas las tierras, y
+  **agrupación** por municipio o cultivo cuando hay muchas. La **selección** va en los dos sentidos:
+  tocar una fila centra y resalta su recinto; tocar un recinto selecciona su fila. Si hay tierras en
+  municipios distintos, se dice en la cabecera («4 municipios») y el mapa lo asume.
+- **Panel de tierras (corrección 8)**: lista a la izquierda, mapa a la derecha y, debajo o al lado, el
+  **panel de la tierra seleccionada** con sus datos del SIGPAC, su campaña actual y **sus registros de
+  otros años** (con un acceso «ver años»).
 - **Estados**: vacío con el botón de importar; cargando (esqueleto de filas, no spinner ciego);
   error de red conservando lo ya cargado + reintento; sin permiso (ver finca ó 404, nunca datos de
   otra finca).
 - **Datos**: `Parcela`, `VersionDeRecinto` (identidad y versiones del recinto), catálogos SIGPAC
   (`data/sigpac/`), `Campana`.
+
+### P0 · S02-bis — Alta de parcelas, fácil (corrección 7)
+
+- **Para qué**: que el agricultor tenga sus parcelas sin pelearse con códigos.
+- **Dos caminos, el mismo destino**:
+  1. **Guiado**: elige municipio → busca por polígono/parcela/recinto o toca en el mapa → se le enseña
+     **qué ha encontrado y su superficie antes de aceptar** (un dedo en una linde es otra parcela) →
+     confirma y se añade. Si ya la tiene, se avisa y no se duplica.
+  2. **Importando lo que sí existe (verificado el 05/11/2026)**: la **exportación de recintos por
+     campaña** de la Junta (2023–2026, texto o Excel, sin certificado), el **Cuecyl `.xlsx`** de una
+     campaña (el programa ya lo lee) o el **PDF del formulario S-X** cuando trae texto. Se añaden solas
+     las tierras que falten, se avisa de lo que no se ha podido leer y **nunca se pisa una tierra
+     existente**. Si no hay fichero, se mete a mano con el paquete preparatorio.
+- **Estados**: vacío, cargando, error de lectura (con «meterlo a mano»), recinto ya añadido, sin permiso.
+- **Límite declarado**: **no existe un fichero oficial de la solicitud PAC declarada**; la app de la
+  Junta la cumplimenta y firma con certificado y reimporta el año anterior dentro de ella. Los formatos
+  de «Documentos del expediente» y la descarga del Cuecyl de años anteriores están **pendientes de
+  verificar**. Los vídeos de referencia que tiene David se incorporan cuando los pase.
 
 ### P0 · S03 — Ficha de parcela (las tres densidades)
 
@@ -123,6 +172,9 @@ datos vive.
   - **Actividad** (línea de tiempo): tratamiento, labor, siembra, fertilización, foto, documento.
   - **PAC**: si está incluida en la solicitud, con qué cultivo/región y qué le falta.
   - **Documentos y fotos** de esa tierra.
+  - **Otros años** (corrección 6): una tabla corta por campaña —año, cultivo, superficie, **variedad
+    de semilla** y **producción estimada (kg/ha)**—, con las celdas que el agricultor puede rellenar o
+    corregir. Lo que no consta se queda vacío («no consta»), no en cero.
 - **Acciones**: apuntar en esta parcela, ver histórico completo, abrir el mapa, preparar la PAC,
   exportar la ficha (PDF), editar alias (no los datos del SIGPAC, que son de la administración).
 - **Estados**: los cuatro; el vacío de «actividad» dice qué se puede apuntar y ofrece el botón.
@@ -143,10 +195,27 @@ datos vive.
 - **Reglas**: el botón de guardar siempre visible; **guardar y apuntar otro**; lo apuntado sin
   cobertura se queda en la cola con su estado; no se bloquea por un campo opcional; si falta algo
   legal se avisa **antes** de guardar y se puede completar luego; nunca se inventa la dosis.
+- **Cuaderno guiado (corrección 3)**: antes de guardar, un panel dice **qué necesita el apunte para
+  ser válido** (los datos con nombre y número), **qué falta** y qué se puede completar después, con el
+  botón que lleva a cada cosa. Ejemplo: «Para que valga, faltan el producto y la dosis» → «Poner el
+  producto» / «Poner la dosis» / «Guardar y completar luego». **No bloquea por un dato opcional** y
+  nunca inventa la dosis.
 - **Estados**: guardando (con progreso real), guardado en el móvil, guardado en el servidor,
   rechazado por el servidor (con el motivo y el botón para arreglarlo), sin permiso.
 - **Datos**: `TratamientoFitosanitario`, `Labor`, `RegistroFertilizacion`, `Siembra`; catálogo
   oficial de productos (ver investigación; hoy hay `ProductoFitosanitario` y `Fertilizante`).
+
+### P0 · S12 — Productos, abonos, dosis y favoritos (móvil y PC)
+
+- **Para qué**: elegir bien lo que se echa, sin teclear de más (correcciones 4 y 5).
+- **Enseña**: lista de **productos y abonos** con buscador y **favoritos** (tus productos, abonos y
+  tratamientos de siempre) y «los que has usado hace poco»; al elegir uno, la **dosis por hectárea**
+  de la etiqueta o la última usada, con su unidad, y el **total** para la superficie.
+- **Acciones**: marcar/desmarcar favorito, elegir producto, cambiar dosis y unidad, ver el total,
+  guardar. La dosis **no se inventa**: si no hay dato, el campo queda vacío y se avisa.
+- **Estados**: vacío («aún no tienes productos» + botón), cargando, error, sin permiso.
+- **Datos**: `ProductoFitosanitario` (incluye `dosis_maxima` y `unidad_dosis`), `Fertilizante`,
+  `Semilla`; los favoritos son nuevos (tabla por finca y cuenta).
 
 ### P0 · S05 — Cuaderno (las tres densidades)
 
@@ -195,6 +264,30 @@ datos vive.
 - **Datos**: `Subvencion`, `FotoDeLaPac`, `ParcelaCultivo`, `DocumentoAnexo`; lo que publique la
   Junta (ver investigación: **pendiente** de verificar el modelo de solicitud y los ficheros).
 
+### P0 · S07-bis — Histórico de la PAC y evolución de una tierra (PC y tableta)
+
+- **Para qué**: ver cómo ha cambiado una tierra año a año y guardar lo que el agricultor sabe
+  (corrección 6).
+- **Enseña**: selector de campaña; **importar o corregir** los datos de otros años desde lo que está
+  verificado (exportación de **recintos por campaña** de la Junta 2023–2026, **Cuecyl `.xlsx`** de la
+  campaña o **S-X en PDF con texto**) o a mano; tabla por tierra con **campaña, cultivo, superficie,
+  variedad de semilla y producción estimada (kg/ha)**; las celdas que se pueden escribir se
+  distinguen de las que vienen de la administración.
+- **Acciones**: importar año, corregir un dato, marcar que una superficie cambió, exportar la
+  evolución, abrir la tierra en el mapa.
+- **Estados**: vacío («aún no hay años guardados» + importar), cargando, error de lectura del fichero
+  (con el motivo y «meterlo a mano»), sin permiso.
+- **Motor que ya existe**: `VersionDeRecinto` guarda una versión por **tierra, campaña y fuente**
+  (`sigpac`, `cuaderno_de_la_junta`, `agricultor`, `medicion_en_campo`) con tres áreas separadas, y hay
+  API de comparación y previsualización repetible y **pantalla `#/tierras/:id/versiones`**. Lo que
+  falta es alimentarla desde el Cuecyl importado y desde la exportación de recintos por campaña.
+- **Datos**: `Campana`, `VersionDeRecinto`, `ParcelaCultivo` (variedad), `Subvencion`; la producción
+  estimada por hectárea: `PlanAbonado.produccion_esperada_kg_ha` ya existe, y para el histórico se
+  valora una tabla propia si no encaja.
+- **Límite declarado**: el FEGA publica **2025 y 2026** (dos campañas; los cultivos declarados solo de
+  la anterior) y la Junta da **recintos de 2023 a 2026**. **Lo anterior a 2023 solo puede venir de los
+  datos que aporte el agricultor.** Un año sin dato es «no consta», no «no sembró».
+
 ### P0 · S08 — Documentos y fotos (bandeja + visor)
 
 - **Para qué**: los papeles del agricultor, con su original siempre a la vista.
@@ -202,6 +295,12 @@ datos vive.
   miniatura, quién lo subió, a qué está vinculado; visor con el original y la propuesta al lado
   (lo que ya existe: revisión original/propuesta).
 - **Acciones**: subir (cámara/galería/PDF), clasificar, vincular a parcela/apunte/gasto, buscar.
+- **Facturas de fotos (corrección 2)**: una **foto** de la factura se lee y devuelve una **propuesta**
+  —proveedor, NIF, número, fecha, base, IVA y total— con **revisión campo a campo** (bien / mal / sin
+  leer), el **original siempre a la vista** y el botón de confirmar. Nada se da por bueno solo; la
+  aritmética (cantidad × precio, base + IVA = total) se comprueba y, si no cuadra, se dice. Si el
+  lector no está instalado, se guarda el justificante y se teclea: **no se inventa lo que pone el
+  papel**. La frase «la lectura es una propuesta, no un dato» es la regla de este bloque.
 - **Estados**: vacío con «haz una foto», cargando, error de lectura («no se ha podido leer; se
   guarda igual y se teclea»), sin permiso.
 - **Datos**: `DocumentoAnexo`, `VinculoDeDocumento`, `Factura`, `Analitica`.
@@ -210,7 +309,9 @@ datos vive.
 
 - **Para qué**: elegir la parcela tocándola y ver la finca entera.
 - **Enseña**: ortofoto (IGN) y linderos (SIGPAC), cultivo declarado, capas que existan (nitratos,
-  Red Natura, pastos… solo las verificadas); GPS; búsqueda por municipio/polígono/parcela/recinto.
+  Red Natura, pastos… solo las verificadas); GPS; búsqueda por municipio/polígono/parcela/recinto;
+  **zoom** y **«ver todas»**; **agrupación** cuando hay muchas parcelas y **parcelas dispersas** en
+  municipios distintos (corrección 1): el mapa no supone una finca junta.
 - **Acciones**: tocar recinto (muestra qué ha encontrado y su superficie **antes** de darlo por
   bueno), centrar, volver a la lista, apuntar en lo tocado.
 - **Estados**: cargando imagen (con la del recinto ya dibujada), error de red (los linderos guardados
@@ -349,12 +450,19 @@ permiso dice **quién** y **dónde** se pide.
 | Cola sin cobertura | `web/nucleo.js` (`crearColaPorIntenciones`, buzón de rechazos) | Apuntar sin cobertura |
 
 **Falta construir** (lo que la investigación tiene que confirmar antes de tocar):
-1. **Alta de parcelas desde el SIGPAC en lote** (descarga por municipio, no solo consulta por punto).
-2. **Catálogo verificado de productos** (fitosanitarios y fertilizantes) y tipos de labor/siembra.
-3. **Modelo de la solicitud PAC** y formatos de fichero que acepta la Junta (ver
-   `INVESTIGACION-AGRICOLA.md`: pendiente).
-4. **Convocatorias y plazos de subvenciones** con calendario oficial.
-5. **Tareas y maquinaria** dentro de la ficha (P1).
+1. **Alta de parcelas desde el SIGPAC en lote** (GeoPackage por provincia) y **alta guiada**; el mapa
+   con parcelas dispersas (zoom, agrupación, selección).
+2. **Favoritos** de productos, abonos y tratamientos (tabla nueva por finca y cuenta) y el flujo de
+   **dosis por hectárea** con total calculado (los campos de dosis ya existen en el modelo).
+3. **Histórico de la PAC** por años y la **producción estimada por hectárea** (la variedad y la
+   producción esperada ya existen en el modelo; falta la vista y, si no encaja, la tabla).
+4. **Catálogo verificado de productos** (fitosanitarios y fertilizantes) y tipos de labor/siembra.
+5. **Importador de los canales verificados** (recintos por campaña de la Junta 2023–2026, Cuecyl
+   `.xlsx` y S-X con texto) y el eslabón que hoy falta: **que la importación del Cuecyl escriba las
+   versiones de su campaña**. El formato de «Documentos del expediente» y la descarga del Cuecyl de
+   años anteriores siguen **pendientes de verificar** (ver `INVESTIGACION-AGRICOLA.md`).
+6. **Convocatorias y plazos de subvenciones** con calendario oficial.
+7. **Tareas y maquinaria** dentro de la ficha (P1).
 
 ---
 
@@ -362,11 +470,12 @@ permiso dice **quién** y **dónde** se pide.
 
 | Fase | Qué entra | Criterio de aceptación |
 |---|---|---|
-| **F1** | Sistema de diseño + artboards (este paquete) | David aprueba aspecto y arquitectura |
-| **F2** | Armazón nuevo: navegación móvil/tableta/PC, barra, estados base, Hoy y Mis parcelas con datos reales de la explotación de prueba | Se recorre en navegador a 390/1024/1440; vacío/error/sin permiso |
-| **F3** | Ficha de parcela + mapa selector + traer parcelas del SIGPAC | Se dan de alta 3 recintos de verdad con su mapa y se ven en la ficha |
-| **F4** | Apuntar en 30 s (los cuatro tipos) + cola sin cobertura + cuaderno | Un apunte de prueba hecho con el móvil sin cobertura llega al servidor solo |
-| **F5** | Campaña + PAC (checklist, superficies, documentación) | La solicitud de prueba queda lista salvo lo que esté pendiente de verificar |
+| **F1** | Sistema de diseño + artboards | **Aprobado con correcciones el 2026-11-05**; el canvas se actualiza con ellas |
+| **F2** | Armazón nuevo: navegación móvil/tableta/PC, estados base, **Hoy** y **Mis parcelas** con el **panel de tierras**, el mapa con **zoom, agrupación y selección** y parcelas **dispersas** | Se recorre en navegador a 390/1024/1440; vacío/error/sin permiso; una explotación de prueba con tierras en **2 municipios** |
+| **F3** | Ficha de parcela + mapa selector + **alta guiada de parcelas** (SIGPAC) y el **alta importando** (con lo que esté verificado) | Se dan de alta 3 recintos de verdad; no se duplica ninguno; las tierras dispersas se ven y se seleccionan |
+| **F4** | **Apuntar en 30 s guiado** (dice qué falta), los cuatro tipos, **productos/abonos con dosis por hectárea y favoritos**, cola sin cobertura y cuaderno | Un apunte hecho sin cobertura llega solo; la dosis y el total cuadran; el panel dice qué falta sin bloquear |
+| **F4-bis** | **Facturas de fotos** con lectura y revisión campo a campo | Una foto de factura devuelve propuesta y se corrige campo a campo; nada se guarda sin revisar |
+| **F5** | Campaña + **PAC, histórico de años, evolución de una tierra, producción estimada y variedad** | La tabla de evolución se puede rellenar y exportar; la PAC queda preparada salvo lo pendiente de verificar |
 | **F6** | Exportar (PDF/Excel) y Cuecyl | Se exporta lo filtrado y se puede leer |
 
 Cada fase conserva las pruebas del flujo y **no deja la aplicación a medias**: la interfaz anterior
@@ -374,25 +483,24 @@ sigue sirviendo hasta que la nueva cubra cada recorrido, o se retira pantalla a 
 
 ---
 
-## 9 · Lo que David tiene que aprobar (o corregir)
+## 9 · Aprobado con correcciones: qué queda cerrado y qué sigue abierto
 
-1. **La navegación**: barra inferior de 5 en el móvil (Hoy, Parcelas, Apuntar, Cuaderno, Más) y
-   barra lateral en el PC. ¿Falta o sobra algún destino?
-2. **La portada «Hoy»**: finca delante, un solo botón principal y «te falta para la PAC». ¿Es lo que
-   quiere ver al abrir?
-3. **El orden de las fases**: primero el armazón y las parcelas (F2–F3), luego el apunte (F4),
-   luego campaña/PAC (F5) y exportar (F6). ¿Se empieza por PC o por móvil? La propuesta empieza por
-   el armazón común y las parcelas, que sirven a los dos.
-4. **El alcance de la primera PAC**: la vía oficial **no admite un fichero de solicitud** (se
-   cumplimenta en la aplicación de la Junta y se firma con certificado), así que la propuesta es
-   **paquete preparatorio + lista de comprobación + superficies + documentación + enlace al trámite**.
-   ¿Se queda ahí, o quiere también guardar la solicitud presentada (transcripción) para comparar
-   2025/2026/2027 y detectar cambios del SIGPAC? Lo segundo es más trabajo y necesita que él aporte
-   la solicitud de años anteriores.
-5. **La marca y el color**: verde de la casa + tierra, tipografía del sistema (funciona sin red).
-   ¿Mantiene el nombre «CueDigital» y el símbolo? No hay logo nuevo: se usan tipografía y color.
-6. **Los datos de ejemplo de los artboards** son ficticios (Finca La Vega, etc.): ¿los usa para
-   revisar o prefiere los suyos (sin datos personales en el repositorio)?
+**Cerrado por David (2026-11-05)**: la navegación, la portada «Hoy», el orden de las fases, la marca
+y el color, y el uso de datos de ejemplo en los artboards. Y las ocho correcciones del apartado 0, ya
+incorporadas aquí y en el canvas.
+
+**Lo que sigue abierto y depende de terceros o de una comprobación** (no se decide a ciegas):
+1. **El formato para importar una PAC de otros años**: está **pendiente de verificación** (ver
+   `INVESTIGACION-AGRICOLA.md`). Si no hay fichero, se importa a mano con el paquete preparatorio y se
+   dice claro.
+2. **Los vídeos de referencia de David** sobre cómo conseguir las parcelas del SIGPAC: se incorporan
+   cuando los pase; hasta entonces, el alta guiada es la vía verificada.
+3. **Regiones e importes de la PAC de CyL** y el **coeficiente de admisibilidad de pastos**: están en
+   la Orden y anexos en PDF, sin verificar todavía; se enseñan como «por confirmar» hasta cargarlos.
+4. **Los valores de los catálogos oficiales** de productos, abonos y tipos de labor: estructura sí,
+   valores no (captcha); se usa catálogo propio marcando lo que no consta.
+5. **La licencia del SHP de CyL y de la ortofoto PNOA**: pendientes de respuesta por escrito; mientras,
+   GeoPackage del FEGA y visualización de los WMS de la Junta.
 
 ---
 
@@ -417,6 +525,17 @@ sigue sirviendo hasta que la nueva cubra cada recorrido, o se retira pantalla a 
   criterio nº 1 del usuario). Cada fase pasa la prueba del apunte sin red.
 - **La interfaz anterior sigue viva** hasta que la nueva cubra sus recorridos: no se deja al
   agricultor con una pantalla a medias.
+- **La evolución de una tierra tiene un límite**: el SIGPAC publica **2025 y 2026** (dos campañas) y
+  la consulta de la Junta da **recintos de 2023 a 2026** (verificado el 05/11/2026). **Lo anterior a
+  2023 solo puede venir de los datos que aporte el agricultor**; no se reconstruye de la nada ni se
+  inventa. Y **no hay fichero oficial de la solicitud PAC declarada**: si no hay Cuecyl o S-X con
+  texto, se mete a mano con el paquete preparatorio.
+- **Leer una factura de una foto no es aprobar la lectura**: la propuesta se revisa campo a campo y
+  la precisión sobre facturas reales sigue **sin medir** (el corpus de D08 está aparcado). No se
+  promete un porcentaje.
+- **La doctrina §8 manda en los textos**: si un texto no ayuda al agricultor a decidir o actuar, se
+  borra; no se sustituye por otro. Y nada de explicar cómo está hecha la pantalla o cómo se calcula
+  un número.
 
 ---
 

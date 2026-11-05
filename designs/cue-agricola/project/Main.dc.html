@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Mis parcelas · escritorio</title>
+<title>Tierras y mapa · escritorio</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -32,13 +32,14 @@ button,input,select{font-family:inherit}
 
 <header style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:12px 24px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
 
-<div style="display:flex;align-items:center;gap:12px">
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
-<div>
-<div style="font-size:20px;line-height:26px;font-weight:600">Finca La Vega</div>
-<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Peñaranda de Bracamonte · Salamanca</div>
-</div>
-</div>
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de finca. Ahora estás en Finca La Vega, de 2 fincas" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
+<svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29V9"/><path d="M16 9c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 9c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/><path d="M16 18c-4.5 0-7 3-7 7 4.5 0 7-2.5 7-7Z"/><path d="M16 18c4.5 0 7 3 7 7-4.5 0-7-2.5-7-7Z"/></svg>
+<span style="display:flex;flex-direction:column">
+<span style="font-size:17px;line-height:22px;font-weight:600">Finca La Vega</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">2 fincas</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
 
 <button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar de campaña. Ahora estás en la campaña 2025/2026" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer;text-align:left">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
@@ -53,7 +54,7 @@ button,input,select{font-family:inherit}
 <label for="buscar-finca" style="font-size:15px;line-height:20px;font-weight:600">Buscar en la finca</label>
 <div style="position:relative;display:flex;align-items:center">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-<input id="buscar-finca" type="search" placeholder="Parcela, apunte o papel" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+<input id="buscar-finca" type="search" placeholder="Tierra, apunte o papel" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
 </div>
 </div>
 
@@ -81,15 +82,19 @@ Inicio
 </a></li>
 <li><a class="hnav" href="Main.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;background:var(--brand-tint);color:var(--brand);font-size:17px;line-height:24px;font-weight:600">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
-Parcelas
+Tierras
 </a></li>
 <li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-2-1.5-4.5-2-7-2v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2Z"/><path d="M12 6v14"/></svg>
 Cuaderno
 </a></li>
-<li><a class="hnav" href="#" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-Campaña
+<li><a class="hnav" href="movil-productos-dosis.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3h-4z"/><path d="M9 6h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><path d="M7 12h10"/></svg>
+Productos
+</a></li>
+<li><a class="hnav" href="movil-factura-foto.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+Facturas
 </a></li>
 <li><a class="hnav" href="desktop-pac.dc.html" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:17px;line-height:24px">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
@@ -114,221 +119,202 @@ Ajustes
 <span style="flex:1;min-width:0">Quién entra</span>
 <span aria-label="2 ayudantes" style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--surface-sunk);color:var(--ink-muted);font-size:13px;line-height:18px;font-weight:600">2</span>
 </a>
-
-<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;background:var(--warning-tint);border:1px solid var(--warning);border-radius:10px;padding:12px">
-<div style="display:flex;align-items:center;gap:8px;color:var(--warning);font-size:15px;line-height:20px;font-weight:600">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 18a4 4 0 0 1-.6-7.95 5.5 5.5 0 0 1 9.6-2.7"/><path d="M17.7 8.3A4.5 4.5 0 0 1 18 18H9"/><path d="M3 3l18 18"/></svg>
-Sin cobertura ahora
-</div>
-<p style="margin:0;color:var(--warning);font-size:13px;line-height:18px">Los apuntes quedan guardados en el móvil y suben solos cuando vuelve.</p>
-</div>
 </aside>
 
-<main style="flex:1;min-width:0;padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto">
+<main style="flex:1;min-width:0;padding:24px;display:flex;flex-direction:column;overflow:auto">
 
-<div style="display:grid;grid-template-columns:460px minmax(0,1fr);gap:24px;min-height:0;flex:1;align-items:stretch">
+<div style="display:grid;grid-template-columns:440px minmax(0,1fr);gap:24px;min-height:0;flex:1;align-items:stretch">
 
-<section aria-labelledby="titulo-parcelas" style="display:flex;flex-direction:column;min-height:0;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;overflow:hidden">
+<section aria-labelledby="tierras-titulo" style="display:flex;flex-direction:column;min-height:0;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;overflow:hidden">
 
-<div style="padding:24px 24px 16px;display:flex;flex-direction:column;gap:16px">
+<div style="padding:20px 20px 12px;display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
 <div>
-<h1 id="titulo-parcelas" style="margin:0;font-size:32px;line-height:38px;font-weight:700">Mis parcelas</h1>
-<p style="margin:4px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">8 parcelas · 54,11 ha · Campaña 2025/2026</p>
+<h1 id="tierras-titulo" style="margin:0;font-size:32px;line-height:38px;font-weight:700">Mis tierras</h1>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">8 tierras · 52,76 ha · 3 municipios</p>
 </div>
-<button type="button" aria-label="Añadir otra parcela" style="width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer">
+<a href="desktop-alta-tierras.dc.html" aria-label="Añadir tierras" style="width:48px;height:48px;flex:0 0 48px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);text-decoration:none">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-</button>
+</a>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:4px">
-<label for="buscar-parcela" style="font-size:15px;line-height:20px;font-weight:600">Buscar parcela</label>
+<label for="buscar-tierra" style="font-size:15px;line-height:20px;font-weight:600">Buscar tierra</label>
 <div style="position:relative;display:flex;align-items:center">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;left:12px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-<input id="buscar-parcela" type="search" placeholder="Nombre, municipio o recinto" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
+<input id="buscar-tierra" type="search" placeholder="Nombre, municipio o cultivo" style="width:100%;height:44px;padding:0 12px 0 40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px">
 </div>
 </div>
 
-<div role="group" aria-label="Filtros de parcelas" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<div role="group" aria-label="Filtros de la lista" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por uso. Ahora se ven todos" style="display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-Uso: todos
+Uso
 </button>
 <button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por estado. Ahora se ven todos" style="display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-Estado: todos
+Estado
 </button>
 <button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar la campaña de la lista" style="display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-Campaña 2025/2026
+2025/2026
 </button>
 </div>
-</div>
 
-<div style="display:flex;align-items:center;gap:8px;padding:8px 24px;background:var(--surface-sunk);border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle);color:var(--ink-muted);font-size:13px;line-height:18px">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
-Trayendo el lindero de 2 parcelas del SIGPAC…
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Agrupar por</span>
+<button type="button" aria-pressed="true" style="display:inline-flex;align-items:center;height:44px;padding:0 14px;border:1px solid var(--brand);border-radius:999px;background:var(--brand-tint);color:var(--brand);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Municipio</button>
+<button type="button" aria-pressed="false" style="display:inline-flex;align-items:center;height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">Cultivo</button>
+</div>
 </div>
 
 <div style="flex:1;min-height:0;overflow-y:auto">
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">Las Eras</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">12,34 ha</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 20px;background:var(--surface-sunk);border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle)">
+<span style="font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.04em">PEÑARANDA DE BRACAMONTE</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">4 tierras · 30,66 ha</span>
+</div>
+
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Las Eras</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cereal de secano · al día · sembrado el 12/11</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Peñaranda de Bracamonte · Cereal de secano · sembrado el 12/11</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">12,34 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">El Prado</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">4,10 ha</span>
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--accent)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Cañada</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Remolacha · sin apuntes de esta campaña</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cantalapiedra · Forraje · 2 tratamientos sin cerrar</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>Falta algo</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">6,80 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">La Cañada</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">6,80 ha</span>
+<a class="hrow" href="#" aria-current="true" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 16px;text-decoration:none;color:var(--ink);background:var(--brand-tint);outline:2px solid var(--brand);outline-offset:-2px">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;color:var(--brand);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">El Molino</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cereal de secano · al día · sembrado el 3/11</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Peñaranda de Bracamonte · Remolacha · sin apuntes de esta campaña</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--accent);color:var(--accent);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--accent)"></span>Sin apuntes</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">8,42 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">Los Majuelos</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">3,25 ha</span>
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Fuente</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Forraje · al día · regado el 2/06</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cantalapiedra · Barbecho · en barbecho hasta marzo</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">3,10 ha</span>
 </a>
 
-<a class="hrow" href="#" aria-current="true" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--brand-tint);outline:2px solid var(--brand);outline-offset:-2px">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600;color:var(--brand)">El Molino</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">8,42 ha</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 20px;background:var(--surface-sunk);border-bottom:1px solid var(--border-subtle)">
+<span style="font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.04em">CANTALAPIEDRA</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">3 tierras · 16,50 ha</span>
+</div>
+
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">El Prado</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Forraje · falta algo · 2 tratamientos sin cerrar</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Peñaranda de Bracamonte · Cereal de secano · sembrado el 3/11</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">4,10 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">La Vega del Rincón</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">5,60 ha</span>
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Los Majuelos</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Barbecho · al día · hasta marzo</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bóveda del Río Almar · Forraje · regado el 2/06</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">3,25 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">Los Llanos</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">9,15 ha</span>
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Los Llanos</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cereal de secano · falta algo · una dosis sin poner</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cantalapiedra · Cereal de secano · 1 tratamiento sin la dosis puesta</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--warning);color:var(--warning);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--warning)"></span>Falta algo</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">9,15 ha</span>
 </a>
 
-<a class="hrow" href="#" style="display:flex;align-items:center;gap:12px;padding:14px 24px;text-decoration:none;color:var(--ink);background:var(--surface-card)">
-<span style="flex:1;min-width:0">
-<span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-<span style="font-size:17px;line-height:26px;font-weight:600">El Soto</span>
-<span style="font-size:17px;line-height:26px;font-weight:600;white-space:nowrap">4,45 ha</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 20px;background:var(--surface-sunk);border-bottom:1px solid var(--border-subtle)">
+<span style="font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.04em">BÓVEDA DEL RÍO ALMAR</span>
+<span style="font-size:13px;line-height:18px;color:var(--ink-muted)">1 tierra · 5,60 ha</span>
+</div>
+
+<a class="hrow" href="#" style="display:grid;grid-template-columns:8px minmax(0,1fr) 74px;align-items:center;gap:10px;min-height:62px;padding:8px 20px;border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--ink);background:var(--surface-card)">
+<span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>
+<span style="min-width:0">
+<span style="display:block;font-size:17px;line-height:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Vega del Rincón</span>
+<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Forraje · al día · regado el 2/06</span>
 </span>
-<span style="display:block;font-size:13px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Nava de Sotrobal · Remolacha · sembrado el 20/03</span>
-</span>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface-card);border:1px solid var(--success);color:var(--success);font-size:13px;line-height:18px;font-weight:600;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="font-size:17px;line-height:26px;font-weight:600;text-align:right;white-space:nowrap">5,60 ha</span>
 </a>
 
+<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;color:var(--ink-muted);font-size:13px;line-height:18px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
+Trayendo 2 tierras más…
+</div>
 </div>
 </section>
 
 <div style="display:flex;flex-direction:column;gap:24px;min-height:0">
 
-<section aria-labelledby="titulo-mapa" style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;overflow:hidden">
+<section aria-labelledby="mapa-titulo" style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;overflow:hidden">
 
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--border-subtle)">
-<div>
-<h2 id="titulo-mapa" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Mapa de la finca</h2>
-<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Ortofoto de ejemplo · los linderos son los del SIGPAC</p>
-</div>
-<ul style="list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;line-height:18px;color:var(--ink-muted)">
-<li style="display:flex;align-items:center;gap:6px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:6px;background:var(--accent-tint);border:1px solid var(--border-strong)"></span>Cereal</li>
-<li style="display:flex;align-items:center;gap:6px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:6px;background:var(--brand-tint);border:1px solid var(--border-strong)"></span>Forraje</li>
-<li style="display:flex;align-items:center;gap:6px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:6px;background:var(--surface-card);border:1px solid var(--border-strong)"></span>Elegida</li>
-</ul>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--border-subtle)">
+<h2 id="mapa-titulo" style="margin:0;font-size:20px;line-height:26px;font-weight:600">Mapa</h2>
+<button type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Cambiar la zona del mapa. Ahora se ve Peñaranda de Bracamonte" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:15px;line-height:20px;font-weight:600;cursor:pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+Peñaranda de Bracamonte · 4 tierras
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+</button>
 </div>
 
 <div style="position:relative;flex:1;min-height:0;background:var(--surface-sunk)">
-<svg role="img" aria-label="Mapa de los recintos de la finca. Está elegida la parcela El Molino, de 8,42 ha." viewBox="0 0 720 520" preserveAspectRatio="xMidYMid slice" style="display:block;width:100%;height:100%">
-<rect x="0" y="0" width="720" height="520" style="fill:var(--surface-sunk)"/>
-<rect x="0" y="238" width="720" height="18" style="fill:var(--border-subtle)"/>
-<line x1="0" y1="247" x2="720" y2="247" style="stroke:var(--surface-card);stroke-width:2"/>
-<rect x="346" y="0" width="12" height="238" style="fill:var(--border-subtle)"/>
-<rect x="560" y="256" width="8" height="264" style="fill:var(--border-subtle)"/>
+<svg role="img" aria-label="Mapa de las tierras de Peñaranda de Bracamonte. Está elegida El Molino, de 8,42 ha." viewBox="0 0 700 400" preserveAspectRatio="xMidYMid slice" style="display:block;width:100%;height:100%">
+<rect x="0" y="0" width="700" height="400" style="fill:var(--surface-sunk)"/>
+<rect x="0" y="182" width="700" height="12" style="fill:var(--border-subtle)"/>
+<line x1="0" y1="188" x2="700" y2="188" style="stroke:var(--surface-card);stroke-width:2"/>
+<rect x="288" y="0" width="8" height="182" style="fill:var(--border-subtle)"/>
 
-<polygon points="16,16 340,16 340,228 16,228" style="fill:var(--accent-tint);stroke:var(--border-strong);stroke-width:1.5"/>
-<polygon points="366,16 704,16 704,228 366,228" style="fill:var(--brand-tint);stroke:var(--border-strong);stroke-width:1.5"/>
-<polygon points="16,266 340,266 340,504 16,504" style="fill:var(--surface-page);stroke:var(--border-strong);stroke-width:1.5"/>
-<polygon points="572,266 704,266 704,380 572,380" style="fill:var(--brand-tint);stroke:var(--border-strong);stroke-width:1.5"/>
-<polygon points="572,400 704,400 704,504 572,504" style="fill:var(--accent-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="20,20 270,20 270,160 20,160" style="fill:var(--accent-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="296,20 660,20 660,160 296,160" style="fill:var(--brand-tint);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="20,210 268,210 268,380 20,380" style="fill:var(--surface-page);stroke:var(--border-strong);stroke-width:1.5"/>
+<polygon points="540,210 660,210 660,330 540,330" style="fill:var(--brand-tint);stroke:var(--border-strong);stroke-width:1.5"/>
 
-<polygon points="366,266 556,266 556,504 366,504" style="fill:var(--surface-card);stroke:var(--brand);stroke-width:4"/>
-<line x1="366" y1="392" x2="556" y2="392" style="stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:7 5"/>
+<polygon points="296,210 520,210 520,380 296,380" style="fill:var(--surface-card);stroke:var(--brand);stroke-width:4"/>
+<line x1="296" y1="300" x2="520" y2="300" style="stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:7 5"/>
 
-<text x="40" y="112" style="font-size:17px;font-weight:600;fill:var(--ink)">Las Eras</text>
-<text x="40" y="134" style="font-size:13px;fill:var(--ink-muted)">12,34 ha</text>
-<text x="392" y="112" style="font-size:17px;font-weight:600;fill:var(--ink)">El Prado</text>
-<text x="392" y="134" style="font-size:13px;fill:var(--ink-muted)">4,10 ha</text>
-<text x="40" y="300" style="font-size:17px;font-weight:600;fill:var(--ink)">La Cañada</text>
-<text x="40" y="322" style="font-size:13px;fill:var(--ink-muted)">6,80 ha</text>
-<text x="392" y="300" style="font-size:17px;font-weight:700;fill:var(--brand)">El Molino</text>
-<text x="392" y="322" style="font-size:13px;fill:var(--ink-muted)">8,42 ha · recinto 2</text>
-<text x="596" y="296" style="font-size:13px;font-weight:600;fill:var(--ink)">Los Majuelos</text>
-<text x="596" y="314" style="font-size:13px;fill:var(--ink-muted)">3,25 ha</text>
-<text x="596" y="430" style="font-size:13px;font-weight:600;fill:var(--ink)">La Serna</text>
-<text x="596" y="448" style="font-size:13px;fill:var(--ink-muted)">4,45 ha</text>
+<text x="44" y="80" style="font-size:17px;font-weight:600;fill:var(--ink)">Las Eras</text>
+<text x="44" y="102" style="font-size:13px;fill:var(--ink-muted)">12,34 ha</text>
+<text x="44" y="272" style="font-size:17px;font-weight:600;fill:var(--ink)">La Cañada</text>
+<text x="44" y="294" style="font-size:13px;fill:var(--ink-muted)">6,80 ha</text>
+<text x="318" y="244" style="font-size:17px;font-weight:700;fill:var(--brand)">El Molino</text>
+<text x="318" y="266" style="font-size:13px;fill:var(--ink-muted)">8,42 ha</text>
+<text x="554" y="252" style="font-size:15px;font-weight:600;fill:var(--ink)">La Fuente</text>
+<text x="554" y="272" style="font-size:13px;fill:var(--ink-muted)">3,10 ha</text>
 
-<circle cx="461" cy="470" r="11" style="fill:var(--brand)"/>
-<circle cx="461" cy="470" r="4.5" style="fill:var(--surface-card)"/>
+<circle cx="420" cy="352" r="10" style="fill:var(--brand)"/>
+<circle cx="420" cy="352" r="4" style="fill:var(--surface-card)"/>
 
 <g style="stroke:var(--ink);stroke-width:3">
-<line x1="676" y1="26" x2="676" y2="62"/>
-<path d="M676 20 668 44 676 39 684 44Z" style="fill:var(--ink);stroke:none"/>
+<line x1="28" y1="384" x2="118" y2="384"/>
+<line x1="28" y1="378" x2="28" y2="390"/>
+<line x1="118" y1="378" x2="118" y2="390"/>
 </g>
-<text x="676" y="80" text-anchor="middle" style="font-size:13px;font-weight:600;fill:var(--ink)">N</text>
-
-<g style="stroke:var(--ink);stroke-width:3">
-<line x1="28" y1="492" x2="128" y2="492"/>
-<line x1="28" y1="486" x2="28" y2="498"/>
-<line x1="128" y1="486" x2="128" y2="498"/>
-</g>
-<text x="28" y="480" style="font-size:13px;fill:var(--ink)">100 m</text>
+<text x="28" y="372" style="font-size:13px;fill:var(--ink)">100 m</text>
 </svg>
 
-<span style="position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:999px;background:var(--surface-card);border:1px solid var(--border-strong);font-size:15px;line-height:20px;font-weight:600">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-El Molino · recinto 2
+<span style="position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--surface-card);border:1px solid var(--border-strong);font-size:13px;line-height:18px;font-weight:600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+El Molino · 8,42 ha
 </span>
 
 <div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px">
@@ -338,63 +324,93 @@ El Molino · recinto 2
 <button type="button" aria-label="Alejar el mapa" style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer">
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>
 </button>
-<button type="button" aria-label="Centrar el mapa en la finca" style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer">
+<button type="button" aria-label="Ver la tierra entera" style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer">
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>
 </button>
-</div>
-
-<div style="position:absolute;bottom:12px;right:12px;display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:6px;background:var(--surface-card);border:1px solid var(--border-subtle);font-size:13px;line-height:18px;color:var(--ink-muted)">
-Ortofoto simulada, sin conexión
 </div>
 </div>
 </section>
 
-<section aria-labelledby="ficha-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+<section aria-labelledby="ficha-titulo" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
 
 <div style="display:flex;align-items:flex-start;gap:16px">
 <div style="flex:1;min-width:0">
-<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <h2 id="ficha-titulo" style="margin:0;font-size:24px;line-height:30px;font-weight:700">El Molino</h2>
-<span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--brand-tint);color:var(--success);font-size:13px;line-height:18px;font-weight:600"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
+<span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--brand-tint);color:var(--success);font-size:13px;line-height:18px;font-weight:600"><span aria-hidden="true" style="width:8px;height:8px;border-radius:999px;background:var(--success)"></span>Al día</span>
 </div>
-<p style="margin:2px 0 0;font-size:17px;line-height:26px;color:var(--ink-muted)">Peñaranda de Bracamonte · Salamanca · Cereal de secano</p>
+<p style="margin:2px 0 0;font-size:13px;line-height:18px;color:var(--ink-muted)">Peñaranda de Bracamonte · Cereal de secano</p>
 </div>
 <div style="text-align:right">
 <div style="font-size:32px;line-height:38px;font-weight:700;color:var(--accent)">8,42 ha</div>
-<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Superficie del SIGPAC</div>
+<div style="font-size:13px;line-height:18px;color:var(--ink-muted)">Superficie</div>
 </div>
-<button type="button" aria-label="Cerrar la ficha de El Molino" style="width:44px;height:44px;flex:0 0 44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);cursor:pointer">
-<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
-</button>
 </div>
 
 <div style="height:1px;background:var(--border-subtle)"></div>
 
-<dl style="margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px">
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Provincia</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">Salamanca</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Municipio</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">Peñaranda de Bracamonte</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Agregado</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">3</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Zona</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">12</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Polígono</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">7</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Parcela</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">142</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Recinto</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">2</dd></div>
-<div><dt style="font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Coeficiente</dt><dd style="margin:2px 0 0;font-size:17px;line-height:26px">1,00</dd></div>
-</dl>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px">
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Polígono</div><div style="font-size:17px;line-height:26px">7</div></div>
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Parcela</div><div style="font-size:17px;line-height:26px">142</div></div>
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Recinto</div><div style="font-size:17px;line-height:26px">2</div></div>
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Agregado</div><div style="font-size:17px;line-height:26px">3</div></div>
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Zona</div><div style="font-size:17px;line-height:26px">12</div></div>
+<div><div style="font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Coeficiente</div><div style="font-size:17px;line-height:26px">1,00</div></div>
+</div>
+
+<div>
+<h3 style="margin:0;font-size:15px;line-height:20px;font-weight:600;color:var(--ink-muted)">Otros años</h3>
+<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px">
+<colgroup>
+<col style="width:26%">
+<col style="width:32%">
+<col style="width:20%">
+<col style="width:22%">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" style="padding:0 0 4px;text-align:left;font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Campaña</th>
+<th scope="col" style="padding:0 0 4px;text-align:left;font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">Cultivo</th>
+<th scope="col" style="padding:0 0 4px;text-align:right;font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">ha</th>
+<th scope="col" style="padding:0 0 4px;text-align:right;font-size:13px;line-height:18px;font-weight:600;color:var(--ink-muted)">kg/ha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">2024/2025</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">Remolacha</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">8,40</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">61.500</td>
+</tr>
+<tr>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">2023/2024</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">Cereal</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">8,42</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">4.600</td>
+</tr>
+<tr>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">2022/2023</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px">Girasol</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">8,10</td>
+<td style="padding:4px 0;border-top:1px solid var(--border-subtle);font-size:15px;line-height:20px;text-align:right">1.150</td>
+</tr>
+</tbody>
+</table>
+</div>
 
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-<button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+<a href="movil-apuntar.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--brand);border-radius:10px;background:var(--brand);color:var(--on-brand);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 10-10a2.5 2.5 0 0 0-3.5-3.5L4.5 15.5 4 20Z"/></svg>
 Apuntar
-</button>
-<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+</a>
+<a class="hbtn" href="desktop-pac-historico.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 14px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
-Ver historial
-</button>
-<button class="hbtn" type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);font-size:17px;line-height:24px;font-weight:600;cursor:pointer">
+Años anteriores
+</a>
+<a class="hbtn" href="desktop-pac.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 14px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-card);color:var(--ink);text-decoration:none;font-size:17px;line-height:24px;font-weight:600">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
-Preparar PAC
-</button>
-<p style="margin:0 0 0 auto;font-size:13px;line-height:18px;color:var(--ink-muted)">Recinto 2 de la parcela 142 · Campaña 2025/2026</p>
+PAC
+</a>
 </div>
 </section>
 
@@ -404,7 +420,7 @@ Preparar PAC
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1080}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};
