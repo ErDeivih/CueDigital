@@ -201,6 +201,31 @@ export const textos = {
     ajustes: "Ajustes",
     intro: "Lo demás de la finca.",
   },
+  apuntar: {
+    titulo: "Apuntar un trabajo",
+    intro: "Elige la tierra y di qué has hecho. Queda en su historial.",
+    tierra: "Tierra",
+    eligiendo: "Elige la tierra",
+    que: "Qué has hecho",
+    apero: "Apero",
+    fecha: "Fecha",
+    hectareas: "Hectáreas",
+    nota: "Nota",
+    pistaDeLaNota: "Lo que quieras dejar dicho",
+    guardar: "Guardar el trabajo",
+    guardando: "Guardando…",
+    guardado: "Trabajo guardado. Ya está en la tierra.",
+    noSeGuardo: "No se ha podido guardar. Prueba otra vez.",
+    faltaNota: "Escribe en la nota qué has hecho: con «otro» hay que decirlo.",
+    sinTierra: "Elige una tierra para apuntar el trabajo.",
+    sinAperos: "Todavía no hay aperos que apuntar.",
+    cargando: "Trayendo lo que se puede apuntar…",
+    noDisponible: "Apuntar todavía no está en la pantalla nueva.",
+    verLaTierra: "Ver la tierra",
+    miniatura: "El contorno de la tierra",
+    sinMapa: "sin mapa",
+    guardarImagen: "Guardar la imagen",
+  },
   tierra: {
     volver: "Volver a las tierras",
     mapa: "El mapa de la tierra",
@@ -997,6 +1022,13 @@ export function mesEnPalabras(valor) {
   return NOMBRES_DE_MES[Number(partes[1]) - 1] || "";
 }
 
+/** El mes cuando viene como número (1–12), que es como lo manda el servidor en el historial. */
+export function mesDeNumero(valor) {
+  const numero = Number(valor);
+  if (!Number.isInteger(numero) || numero < 1 || numero > 12) return "";
+  return NOMBRES_DE_MES[numero - 1];
+}
+
 /**
  * Lo que suman las hectáreas de una lista de trabajos. **Sin mezclar**: solo cuenta el campo de
  * superficie; una cantidad en kilos o litros no suma hectáreas. Y las que no constan se cuentan
@@ -1106,7 +1138,7 @@ export function normalizaFilaDeHistorial(item, tierras = []) {
     detalles.push(formateaNumero(trabajo.cantidad));
   }
   if (trabajo.hectareas !== null) detalles.push(`${formateaNumero(trabajo.hectareas)} ${textos.tierras.panel.hectareas}`);
-  const mes = mesEnPalabras(trabajo.fecha) || nombrePropio(item && item.mes);
+  const mes = mesEnPalabras(trabajo.fecha) || mesDeNumero(item && item.mes) || nombrePropio(item && item.mes);
   if (mes) detalles.push(mes);
   return { ...trabajo, detalles, mes };
 }
@@ -1251,4 +1283,82 @@ export function cuerpoDeLaFactura(propuesta) {
     total: p.total,
     lineas,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Apuntar el trabajo del día: los aperos del servidor y el apunte
+// ---------------------------------------------------------------------------
+
+/** La fecha de hoy como la escribe el servidor: 2026-11-05. */
+export function fechaDeHoyISO(fecha = new Date()) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
+}
+
+/**
+ * Los aperos que ofrece el servidor (`subtipos_de_laboreo`), sea cual sea la puerta por la que
+ * lleguen. **No se inventa la lista**: si el servidor no manda ninguna, la pantalla lo dice.
+ */
+export function normalizaAperos(datos) {
+  const crudo = datos || {};
+  let crudos = [];
+  for (const clave of ["subtipos_de_laboreo", "aperos", "opciones", "subtipos"]) {
+    if (Array.isArray(crudo[clave])) {
+      crudos = crudo[clave];
+      break;
+    }
+  }
+  return crudos
+    .map((apero) => {
+      if (typeof apero === "string") {
+        return { clave: apero.trim(), etiqueta: nombrePropio(apero) };
+      }
+      if (!apero || typeof apero !== "object") return null;
+      const clave = apero.clave ?? apero.subtipo ?? apero.valor ?? apero.id ?? null;
+      if (!clave) return null;
+      return { clave: String(clave), etiqueta: apero.etiqueta || apero.texto || nombrePropio(clave) };
+    })
+    .filter(Boolean);
+}
+
+/** El cuerpo del apunte, tal y como lo espera la puerta de los trabajos. */
+export function cuerpoDelApunte({ campanaId, apero, fecha, tierraId, hectareas, nota } = {}) {
+  return {
+    campana_id: campanaId ?? null,
+    tipo: "laboreo",
+    subtipo: apero ?? null,
+    fecha: fecha || fechaDeHoyISO(),
+    parcela_id: tierraId ?? null,
+    superficie_ha: numeroDe(hectareas),
+    observaciones: String(nota ?? "").trim() || null,
+  };
+}
+
+/** Con «otro» hay que decir qué se hizo: se avisa, pero el apunte no se bloquea por eso. */
+export function avisoDeLaNota(apero, nota) {
+  if (apero !== "otro") return null;
+  if (String(nota ?? "").trim()) return null;
+  return textos.apuntar.faltaNota;
+}
+
+/** La miniatura del contorno de una tierra. */
+export function urlDeMiniatura(tierraId, ancho = 160, alto = 120) {
+  return `/api/mapa/tierra/${tierraId}.png?ancho=${ancho}&alto=${alto}`;
+}
+
+/**
+ * Si la puerta de siempre (`/api/labores`) admite ya el apero. Se mira en el esquema que publica
+ * el propio servidor: mandar el apero por una puerta que no lo conoce lo perdería en silencio, y
+ * eso es peor que usar la otra puerta, que sí lo guarda.
+ */
+export function elAperoSeGuardaEnLabores(esquema) {
+  const propiedades =
+    esquema &&
+    esquema.components &&
+    esquema.components.schemas &&
+    esquema.components.schemas.LaborEntrada &&
+    esquema.components.schemas.LaborEntrada.properties;
+  return Boolean(propiedades && propiedades.subtipo);
 }

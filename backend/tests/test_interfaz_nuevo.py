@@ -37,6 +37,15 @@ ENGANCHES = [
     "data-accion",
     "data-volver",
     "data-tierra-id",
+    "data-apuntar-tierra",
+    "data-apuntar-apero",
+    "data-apuntar-fecha",
+    "data-apuntar-hectareas",
+    "data-apuntar-nota",
+    "data-apuntar-guardar",
+    "data-apuntar-resultado",
+    "data-miniatura-tierra",
+    "data-guardar-imagen-tierra",
     "data-trabajo-de-hoy",
     "data-historial",
     "data-historial-anio",
@@ -100,6 +109,9 @@ PUERTAS = [
     "/api/nuevo/tierra/",
     "/api/nuevo/calendario",
     "/api/nuevo/trabajos",
+    "/api/labores",
+    "/api/trabajos/opciones",
+    "/api/trabajos/que-falta",
     "/api/sigpac/buscar",
     "/api/parcelas/desde-sigpac",
     "/api/parcelas/desde-sigpac/varias",
@@ -245,6 +257,19 @@ class TestElContratoConElArnesDeNavegador:
         assert "VistaCalendario" in fuente
         assert "VistaTrabajos" in fuente
         assert "VistaFacturas" in fuente
+
+    def test_la_vista_de_apuntar_esta_y_tiene_sus_enganches(self):
+        fuente = leer("app.js")
+        assert "VistaApuntar" in fuente
+        assert '"apuntar"' in fuente
+        # El apero se manda por la puerta de siempre y, si esa no lo conoce, por la de trabajos:
+        # mandarlo por una que lo ignora lo perdería sin decir nada.
+        assert "cuerpoDelApunte" in fuente
+        assert "elAperoSeGuardaEnLabores" in fuente
+        assert "/api/labores" in fuente
+        # La miniatura del contorno en las listas y el guardar la imagen en la ficha.
+        assert "Miniatura" in fuente
+        assert "urlDeMiniatura" in fuente
 
     def test_las_puertas_que_usa_la_pantalla_son_las_del_servidor(self):
         fuente = leer("app.js")

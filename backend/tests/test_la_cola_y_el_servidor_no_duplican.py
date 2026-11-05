@@ -26,7 +26,11 @@ def _una_labor(cliente, cuenta, campana, parcela, clave: str, **cambios):
     el_cuerpo = {
         "campana_id": campana["id"],
         "tipo": "laboreo",
-        "subtipo": "gradeo",
+        # **«grada», que es un apero del catálogo** (`trabajos.SUBTIPOS_DE_LABOREO`). Aquí ponía
+        # «gradeo», que no está en el vocabulario del programa: desde el IMP-9 (05/11/2026) la puerta
+        # valida el apero y contestaría 422 —que es justo lo que se quiere—, así que la prueba, que mide
+        # el reenvío y no el apero, usa uno que existe. Lo que se comprueba aquí sigue siendo lo mismo.
+        "subtipo": "grada",
         "fecha": "2026-10-19",
         "parcela_id": parcela["id"],
         "clave_de_reenvio": clave,

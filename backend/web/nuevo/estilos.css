@@ -615,7 +615,7 @@ button {
 
 .tierra {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
   gap: var(--space-1) var(--space-3);
   width: 100%;
   min-height: var(--toque);
@@ -625,7 +625,44 @@ button {
   border-radius: 0;
   background: var(--surface-card);
   text-align: left;
-  align-items: baseline;
+  align-items: center;
+}
+
+.tierra .miniatura {
+  grid-row: 1 / span 2;
+}
+
+.miniatura {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-sunk);
+  flex: 0 0 96px;
+}
+
+.miniatura--sin-mapa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 72px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.pantalla-apuntar > .tarjeta {
+  margin-top: var(--space-4);
+}
+
+.pantalla-apuntar .lista-tierras {
+  max-height: 320px;
+  overflow: auto;
 }
 
 .tierra:hover {

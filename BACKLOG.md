@@ -147,17 +147,18 @@
   y comprobar la búsqueda del SIGPAC **eligiendo municipio de la lista** (la referencia sí está
   verificada; los nombres devolvieron 0 recintos en la prueba).
 
-### AGR-19 · El apuntar de 30 segundos en la app nueva, y la puerta del apero que falta — **PENDIENTE (detectado 05/11)**
+### AGR-19 · El apuntar de 30 segundos en la app nueva, y la puerta del apero que falta — **EN CURSO (2026-11-05)**
 
 - **Nivel**: 2.
-- **Qué**: el alta del apunte del día a día en `/nuevo/` (hoy sigue en la app vieja), con la tierra
-  primero y los ocho datos mínimos, y la cola sin cobertura. Incluye **abrir la puerta del apero**:
-  `POST /api/labores` no acepta `subtipo` y el dato solo entra por `detalles["subtipo"]`; hay que
-  añadirlo al esquema (con su test) para que el agricultor pueda decir vertedera/arado, cultivador o
-  grada sin depender de un JSON.
+- **Hecho en la tarde del 05/11**: **la puerta del apero está abierta** —`LaborEntrada.subtipo`, la
+  regla escrita una vez (`el_problema_del_apero`), validación en `/api/labores` y en `/api/trabajos`
+  (422 con la lista de los válidos), columna guardada, `LaborSalida` devuelve el apero— y **el trabajo
+  de suelo del día se apunta desde la ficha de la tierra en `/nuevo/`** (apero del servidor, fecha de
+  hoy, hectáreas de la tierra), con la ficha refrescada. Verificado en Chrome y en la API.
+- **Falta**: **tratamientos, abonos, siembra y cosecha** desde la app nueva (siguen en la vieja), la
+  **cola sin cobertura** y el pulido de los 30 segundos/8 campos.
 - **Decisión para David**: el vocabulario del programa llama **«arado»** a lo que él llama
-  «vertedera». Se puede renombrar la etiqueta del catálogo y aparece sola en las tres puertas; no se
-  ha traducido una palabra en la otra para no inventar una equivalencia.
+  «vertedera». Se renombra la etiqueta si lo quiere; no se ha traducido una cosa en la otra.
 - **Criterio**: apunte en ≤3 pantallas y ≤8 campos, guardable sin cobertura, con su apero y su
   cantidad por hectárea; pruebas y paso en el arnés de Chrome.
 

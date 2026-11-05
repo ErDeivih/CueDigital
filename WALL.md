@@ -94,6 +94,12 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       sale la propuesta; las fotos de más se guardan como documentos.
 - [x] **Tierra primero**: al pinchar una tierra (en la lista o en el mapa) se abre su ficha con el
       **«Hoy en esta tierra»**: los trabajos de hoy sobre ella o «hoy no hay nada apuntado».
+  - **Y desde la propia tierra se apunta el trabajo del día** (nuevo, 05/11 tarde): botón «Apuntar un
+    trabajo» en la ficha y destino «Apuntar» en la barra del móvil y en la lateral. Se elige el
+    **apero del vocabulario del servidor** (rodillo, cultivador, arado, grada, fresadora, otro), la
+    fecha de hoy y las hectáreas de la tierra; se guarda y la ficha se refresca con el trabajo en
+    «Hoy en esta tierra» y en el historial. **Verificado en Chrome**: el apunte queda en la base con su
+    apero y la pantalla lo dice (0 fallos).
 - [x] **Historial de la tierra**: por campañas, con **siembra** (cultivo, variedad, dosis de semilla
       kg/ha), **labores** (vertedera —en el programa se llama **arado**—, cultivador, grada, siembra…),
       **tratamientos** (producto y dosis), **abonos con kg/ha y el mes** y **cosecha en kg/ha**. Los
@@ -115,19 +121,19 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 - **«Vertedera» no existe en el vocabulario del programa**: los aperos son rodillo, **arado**,
   cultivador, grada, fresadora y otro. Se ha dejado «arado» y **no se ha traducido una palabra en la
   otra** (sería inventar). Si quiere que se llame «vertedera», se cambia la etiqueta y sale sola en
-  las tres puertas.
-- **`POST /api/labores` no acepta el apero (`subtipo`)**: el dato solo entra por `detalles`. Es un
-  campo con columna y sin puerta propia, de la familia que el proyecto ya pagó; queda apuntado para
-  cuando se haga el apuntar de 30 segundos en la app nueva.
-- El **apuntar de cada día** («hoy he hecho esto») sigue en la app vieja: la app nueva ya enseña el
-  trabajo del día por tierra, el calendario y los filtros, pero el alta del apunte nuevo es lo
-  siguiente. Las pantallas de **PAC** y **gastos/facturas detalladas** también siguen enlazando a la
-  app vieja.
+  las tres puertas. **Ya se puede apuntar el apero desde la app nueva**: `POST /api/labores` acepta
+  `subtipo` y lo valida (un apero inventado contesta 422 con la lista de los que valen); el dato se
+  guarda en su columna y `GET /api/labores` ya lo devuelve.
+- **El apuntar de todos los días está a medias en la app nueva**: el trabajo de suelo (arado,
+  cultivador, grada, rodillo, fresadora, otro) ya se apunta desde la tierra; **tratamientos, abonos,
+  siembra y cosecha siguen en la app vieja**, y la cola sin cobertura también. Es lo siguiente.
+- Las pantallas de **PAC** y **gastos/facturas detalladas** siguen enlazando a la app vieja.
 
 ## Lo que se ha cerrado y cómo se comprueba
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-05 | **Apuntar el trabajo del día desde la tierra (con apero)** | Arnés de Chrome: apero del servidor, guardado y apunte en la base; `tests/test_labores_con_apero.py` (15) |
 | 2026-11-05 | **Tierra primero, historial, calendario y filtros por tipo** | Arnés de Chrome, 0 fallos (ficha con trabajo de hoy e historial; calendario con días; filtros con tierras y hectáreas); `tests/test_nuevo_historial.py` (18) |
 | 2026-11-05 | **Facturas con varias fotos, lectura y propuesta corregible** | Arnés de Chrome: foto → propuesta; captura `factura-leida.png` |
 | 2026-11-05 | **Contornos del SIGPAC: ortofoto + contorno dibujado** | `GET /api/mapa/tierra/{id}.png`; 23 pruebas sin internet; captura `tierra-historial.png` |

@@ -5300,6 +5300,11 @@ function cargaLabor(tipo) {
   const base = {
     campana_id: estado.campana.id,
     tipo: tipoDeVerdad,
+    // El apero de una labor de suelo (arado, cultivador, grada…). **La app nueva lo manda desde su
+    // propio formulario**; aquí se manda si el borrador lo trae (por ejemplo, al corregir un apunte
+    // que ya lo tenía), para que el campo no se pierda en silencio al pasar por el asistente viejo.
+    // El asistente de siempre no lo pregunta todavía: la pantalla que lo pregunta es la nueva.
+    subtipo: b.subtipo || null,
     fecha: b.fecha,
     parcela_id: Number(b.parcela_id) || null,
     grupo_id: b.grupo_id ? Number(b.grupo_id) : null,

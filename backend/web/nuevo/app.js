@@ -32,6 +32,7 @@ import {
   agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
+  avisoDeLaNota,
   bboxDeMunicipio,
   bboxDelConjunto,
   cajaDeLosRecintos,
@@ -40,10 +41,13 @@ import {
   colorDeTierra,
   colorDeUso,
   cuerpoDeLaFactura,
+  cuerpoDelApunte,
   datosDelPanel,
   decidirEstado,
+  elAperoSeGuardaEnLabores,
   etiquetaCampana,
   etiquetaDeTrabajo,
+  fechaDeHoyISO,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
@@ -52,6 +56,7 @@ import {
   mesEnPalabras,
   municipioDeTierra,
   nombreDeMes,
+  normalizaAperos,
   normalizaCalendario,
   normalizaImportacion,
   normalizaPropuestaDeFactura,
@@ -73,6 +78,7 @@ import {
   sumaDeHectareas,
   textos,
   textoRelleno,
+  urlDeMiniatura,
   urlDelMapa,
 } from "./modelo.js";
 
@@ -99,6 +105,11 @@ const RUTA_FACTURA_FICHERO = (id) => `/api/facturas/${id}/fichero`;
 const RUTA_DOCUMENTOS = "/api/documentos";
 const RUTA_DOCUMENTO_FICHERO = (id) => `/api/documentos/${id}/fichero`;
 const RUTA_MAPA_TIERRA = (id, ancho, alto) => `/api/mapa/tierra/${id}.png?ancho=${ancho}&alto=${alto}`;
+const RUTA_OPCIONES_DE_TRABAJOS = "/api/trabajos/opciones";
+const RUTA_QUE_FALTA_DE_TRABAJOS = "/api/trabajos/que-falta";
+const RUTA_LABORES = "/api/labores";
+const RUTA_TRABAJO_HECHO = "/api/trabajos";
+const RUTA_OPENAPI = "/openapi.json";
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
 const LADO_MINIMO = 0.0008;
@@ -484,6 +495,7 @@ function BarraLateral({ vista, ir }) {
   const esTierras = vista === "tierras" || vista === "alta" || vista === "tierra";
   const claseHoy = claseNav(vista === "hoy");
   const claseTierras = claseNav(esTierras);
+  const claseApuntar = claseNav(vista === "apuntar");
   const claseCalendario = claseNav(vista === "calendario");
   const claseTrabajos = claseNav(vista === "trabajos");
   const claseFacturas = claseNav(vista === "facturas");
@@ -498,6 +510,10 @@ function BarraLateral({ vista, ir }) {
       <button type="button" className=${claseTierras} data-destino="tierras" onClick=${() => ir("tierras")} aria-current=${esTierras ? "page" : undefined}>
         <span className="nav__icono"><${Icono} nombre="tierras" /></span>
         ${textos.nav.tierras}
+      </button>
+      <button type="button" className=${claseApuntar} data-destino="apuntar" onClick=${() => ir("apuntar")} aria-current=${vista === "apuntar" ? "page" : undefined}>
+        <span className="nav__icono"><${Icono} nombre="apuntar" /></span>
+        ${textos.nav.apuntar}
       </button>
       <button type="button" className=${claseCalendario} data-destino="calendario" onClick=${() => ir("calendario")} aria-current=${vista === "calendario" ? "page" : undefined}>
         <span className="nav__icono"><${Icono} nombre="campana" /></span>
@@ -551,10 +567,10 @@ function BarraInferior({ vista, ir }) {
       <${Icono} nombre="tierras" />
       ${textos.nav.tierras}
     </button>
-    <a className="barra-inferior__apuntar" href="/" data-destino="apuntar" aria-label=${textos.nav.apuntar}>
+    <button type="button" className="barra-inferior__apuntar" data-destino="apuntar" aria-label=${textos.nav.apuntar} onClick=${() => ir("apuntar")} aria-current=${vista === "apuntar" ? "page" : undefined}>
       <${Icono} nombre="apuntar" tamano=${20} />
       ${textos.nav.apuntar}
-    </a>
+    </button>
     <button type="button" className=${claseCalendario} data-destino="calendario" onClick=${() => ir("calendario")} aria-current=${vista === "calendario" ? "page" : undefined}>
       <${Icono} nombre="campana" />
       ${textos.nav.calendario}
@@ -1041,6 +1057,7 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras, alAbr
         data-seleccionada=${esElegida ? "si" : "no"}
         onClick=${() => alElegir(tierra)}
       >
+        <${Miniatura} tierra=${tierra} />
         <span className="tierra__alias"><span className="tierra__color" style=${{ background: color }} aria-hidden="true"></span>${tierra.alias}</span>
         <span className="tierra__hectareas">${hectareas}</span>
         ${detalle}
@@ -1829,7 +1846,249 @@ function BloqueDeHistorial({ estado, anios, alReintentar }) {
   </section>`;
 }
 
-function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado }) {
+// ---------------------------------------------------------------- apuntar
+
+let cacheDelEsquema = null;
+
+/** Si la puerta de siempre admite ya el apero; se pregunta una vez y se recuerda. */
+async function elAperoCabeEnLabores() {
+  if (cacheDelEsquema === null) {
+    cacheDelEsquema = pedir(RUTA_OPENAPI).then((respuesta) =>
+      respuesta.estado === "ok" ? elAperoSeGuardaEnLabores(respuesta.datos) : false,
+    );
+  }
+  return cacheDelEsquema;
+}
+
+/** Los aperos que ofrece el servidor: primero su puerta nueva y, si no está, la lista de siempre. */
+function usarOpcionesDeTrabajo() {
+  const [estado, setEstado] = useState("cargando");
+  const [aperos, setAperos] = useState([]);
+  const [intento, setIntento] = useState(0);
+
+  useEffect(() => {
+    const token = leerToken();
+    if (!token) {
+      setEstado("sin-permiso");
+      return undefined;
+    }
+    let vivo = true;
+    const control = new AbortController();
+    setEstado("cargando");
+
+    const peticion = (ruta) =>
+      fetch(ruta, { headers: { Authorization: `Bearer ${token}` }, signal: control.signal })
+        .then(async (respuesta) => (respuesta.ok ? respuesta.json().catch(() => null) : null))
+        .catch(() => null);
+
+    (async () => {
+      const deLaPuertaNueva = normalizaAperos(await peticion(RUTA_OPCIONES_DE_TRABAJOS));
+      if (!vivo) return;
+      if (deLaPuertaNueva.length) {
+        setAperos(deLaPuertaNueva);
+        setEstado("listo");
+        return;
+      }
+      const deSiempre = normalizaAperos(await peticion(RUTA_QUE_FALTA_DE_TRABAJOS));
+      if (!vivo) return;
+      setAperos(deSiempre);
+      setEstado(deSiempre.length ? "listo" : "vacio");
+    })();
+
+    return () => {
+      vivo = false;
+      control.abort();
+    };
+  }, [intento]);
+
+  return { estado, aperos, reintentar: () => setIntento((n) => n + 1) };
+}
+
+/** La miniatura del contorno; si no llega no se pinta un cuadro, se dice «sin mapa». */
+function Miniatura({ tierra }) {
+  const [fallo, setFallo] = useState(false);
+  if (fallo) {
+    return html`<span className="miniatura miniatura--sin-mapa">${textos.apuntar.sinMapa}</span>`;
+  }
+  return html`<img
+    className="miniatura"
+    data-miniatura-tierra=${tierra.id}
+    src=${urlDeMiniatura(tierra.id, 160, 120)}
+    alt=${textos.apuntar.miniatura}
+    loading="lazy"
+    onError=${() => setFallo(true)}
+  />`;
+}
+
+function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, alVerLaTierra }) {
+  const opciones = usarOpcionesDeTrabajo();
+  const [tierraId, setTierraId] = useState(tierraInicial || (tierras[0] ? tierras[0].id : null));
+  const [apero, setApero] = useState(null);
+  const [fecha, setFecha] = useState(() => fechaDeHoyISO());
+  const [hectareas, setHectareas] = useState("");
+  const [nota, setNota] = useState("");
+  const [fase, setFase] = useState("inicial");
+  const [aviso, setAviso] = useState(null);
+  const [guardado, setGuardado] = useState(null);
+
+  const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
+
+  useEffect(() => {
+    if (tierraInicial) setTierraId(tierraInicial);
+  }, [tierraInicial]);
+
+  useEffect(() => {
+    if (!tierra) {
+      setHectareas("");
+      return;
+    }
+    setHectareas(
+      tierra.superficie_ha === null || tierra.superficie_ha === undefined ? "" : String(tierra.superficie_ha),
+    );
+  }, [tierraId, tierras]);
+
+  useEffect(() => {
+    if (!apero && opciones.aperos.length) setApero(opciones.aperos[0].clave);
+  }, [apero, opciones.aperos]);
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (opciones.estado === "sin-permiso" || fase === "sin-permiso") alEstado("sin-permiso");
+    else if (opciones.estado === "cargando" || fase === "guardando") alEstado("cargando");
+    else if (opciones.estado === "error") alEstado("error");
+    else alEstado("listo");
+  }, [opciones.estado, fase, alEstado]);
+
+  const guardar = async () => {
+    if (!tierra) {
+      setAviso(textos.apuntar.sinTierra);
+      return;
+    }
+    // Con «otro» se dice qué se hizo: se avisa, pero el apunte no se bloquea por eso.
+    const avisoDeNota = avisoDeLaNota(apero, nota);
+    setAviso(avisoDeNota);
+    setFase("guardando");
+    const cuerpo = cuerpoDelApunte({
+      campanaId: campana ? campana.id : null,
+      apero,
+      fecha,
+      tierraId,
+      hectareas,
+      nota,
+    });
+    const conApero = await elAperoCabeEnLabores();
+    const resultado = await pedir(conApero ? RUTA_LABORES : RUTA_TRABAJO_HECHO, conCuerpoJson(cuerpo));
+    if (resultado.estado === "ok") {
+      const etiqueta = (opciones.aperos.find((uno) => uno.clave === apero) || {}).etiqueta || "";
+      setFase("guardado");
+      setNota("");
+      setAviso(null);
+      setGuardado({ fecha, etiqueta, tierra: tierra.alias });
+      if (alGuardado) alGuardado();
+      return;
+    }
+    setFase(resultado.estado === "sin-permiso" ? "sin-permiso" : "error");
+    setAviso(textos.apuntar.noSeGuardo);
+  };
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.apuntar.titulo}</h1>
+    <p className="pagina__dato">${textos.apuntar.intro}</p>
+  </header>`;
+
+  if (opciones.estado === "sin-permiso" || fase === "sin-permiso") {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+  if (opciones.estado === "cargando") {
+    return html`<div>${cabecera}<${EstadoCargando} mensaje=${textos.apuntar.cargando} /></div>`;
+  }
+  if (opciones.estado === "error") {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.apuntar.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${opciones.reintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </div>`;
+  }
+  if (opciones.estado === "vacio") {
+    return html`<div>${cabecera}<p className="estado__texto">${textos.apuntar.sinAperos}</p></div>`;
+  }
+
+  const opcionesDeTierra = (tierras || []).map((una) => {
+    const activa = una.id === tierraId;
+    return html`<button
+      type="button"
+      key=${`apuntar-tierra-${una.id}`}
+      className=${activa ? "tierra tierra--elegida" : "tierra"}
+      data-apuntar-tierra=${una.id}
+      aria-pressed=${activa}
+      onClick=${() => setTierraId(una.id)}
+    >
+      <${Miniatura} tierra=${una} />
+      <span className="tierra__alias">${una.alias}</span>
+      <span className="tierra__detalle">${una.municipio || textos.tierras.sinMunicipio}</span>
+    </button>`;
+  });
+
+  const botonesDeApero = opciones.aperos.map((uno) => html`<button
+    type="button"
+    key=${`apero-${uno.clave}`}
+    className=${apero === uno.clave ? "pastilla pastilla--activa" : "pastilla"}
+    data-apuntar-apero=${uno.clave}
+    aria-pressed=${apero === uno.clave}
+    onClick=${() => setApero(uno.clave)}
+  >${uno.etiqueta}</button>`);
+
+  const bloqueGuardado = guardado
+    ? html`<section className="tarjeta" data-apuntar-resultado="guardado" aria-labelledby="apuntar-guardado">
+        <h2 className="tarjeta__titulo" id="apuntar-guardado">${textos.apuntar.guardado}</h2>
+        <p className="pagina__dato">${[guardado.etiqueta, guardado.tierra, fechaDe(guardado.fecha)].filter(Boolean).join(" · ")}</p>
+        <button type="button" className="boton boton--principal" onClick=${() => alVerLaTierra && alVerLaTierra(tierraId)}>${textos.apuntar.verLaTierra}</button>
+      </section>`
+    : null;
+
+  return html`<div className="pantalla-apuntar">
+    ${cabecera}
+
+    <section className="tarjeta" aria-labelledby="apuntar-tierra-titulo">
+      <h2 className="tarjeta__titulo" id="apuntar-tierra-titulo">${textos.apuntar.tierra}</h2>
+      ${tierras.length
+        ? html`<div className="lista-tierras">${opcionesDeTierra}</div>`
+        : html`<p className="estado__texto">${textos.apuntar.sinTierra}</p>`}
+    </section>
+
+    <section className="tarjeta" aria-labelledby="apuntar-que-titulo">
+      <h2 className="tarjeta__titulo" id="apuntar-que-titulo">${textos.apuntar.que}</h2>
+      <div className="filtros" role="group" aria-label=${textos.apuntar.apero}>${botonesDeApero}</div>
+      <div className="rejilla-campos">
+        <label className="campo">
+          <span>${textos.apuntar.fecha}</span>
+          <input className="campo__control" type="date" data-apuntar-fecha value=${fecha} onChange=${(evento) => setFecha(evento.target.value)} />
+        </label>
+        <label className="campo">
+          <span>${textos.apuntar.hectareas}</span>
+          <input className="campo__control" type="text" inputMode="decimal" data-apuntar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
+        </label>
+      </div>
+      <label className="campo">
+        <span>${textos.apuntar.nota}</span>
+        <textarea className="campo__control campo__control--alto" rows="3" data-apuntar-nota placeholder=${textos.apuntar.pistaDeLaNota} value=${nota} onChange=${(evento) => setNota(evento.target.value)}></textarea>
+      </label>
+      ${aviso ? html`<p className="panel__aviso" data-apuntar-aviso>${aviso}</p>` : null}
+      <div className="estado__acciones">
+        <button type="button" className="boton boton--principal" data-apuntar-guardar onClick=${guardar} disabled=${fase === "guardando"}>
+          ${fase === "guardando" ? textos.apuntar.guardando : textos.apuntar.guardar}
+        </button>
+      </div>
+    </section>
+
+    ${bloqueGuardado}
+  </div>`;
+}
+
+function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alApuntar }) {
   const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
   const ficha = usarPantalla(RUTA_TIERRA(tierraId), Boolean(tierraId));
   const [usaElServidor, setUsaElServidor] = useState(true);
@@ -1895,6 +2154,22 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado }) {
     <section className="tarjeta" aria-labelledby="mapa-tierra-titulo">
       <h2 className="tarjeta__titulo" id="mapa-tierra-titulo">${textos.tierra.mapa}</h2>
       ${mapa}
+      ${usaElServidor && caja
+        ? html`<p className="estado__acciones">
+            <a
+              className="boton"
+              data-guardar-imagen-tierra
+              href=${RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA)}
+              download=${`tierra-${tierra.id}.png`}
+            >${textos.apuntar.guardarImagen}</a>
+          </p>`
+        : null}
+      <div className="estado__acciones">
+        <button type="button" className="boton boton--principal" data-accion="apuntar-trabajo" onClick=${alApuntar}>
+          <${Icono} nombre="apuntar" tamano=${20} />
+          ${textos.apuntar.titulo}
+        </button>
+      </div>
     </section>
 
     <${Panel} tierra=${tierra} alCerrar=${alVolver} alGuardar=${alReintentar} />
@@ -2437,7 +2712,12 @@ function App() {
     setVista("tierra");
   };
 
-  const necesitaTierras = ["tierras", "alta", "tierra", "calendario", "trabajos"].includes(vista);
+  const abrirApuntar = (id) => {
+    setTierraId(id);
+    setVista("apuntar");
+  };
+
+  const necesitaTierras = ["tierras", "alta", "tierra", "apuntar", "calendario", "trabajos"].includes(vista);
   const pantallaHoy = usarPantalla(RUTA_HOY, vista === "hoy");
   const pantallaTierras = usarPantalla(RUTA_TIERRAS, necesitaTierras);
   const pantallaResumen = usarPantalla(RUTA_RESUMEN, vista === "hoy");
@@ -2457,7 +2737,10 @@ function App() {
     cargando: actual.estado === "cargando",
     fallo: actual.estado === "error" || actual.estado === "no-disponible",
     sinPermiso: actual.estado === "sin-permiso",
-    hayDatos: vista === "alta" || vista === "tierra" ? Boolean(pantallaTierras.datos) : lista.length > 0,
+    hayDatos:
+      vista === "alta" || vista === "tierra" || vista === "apuntar"
+        ? Boolean(pantallaTierras.datos)
+        : lista.length > 0,
   });
 
   const vistasDeSiempre = vista === "hoy" || vista === "tierras" || vista === "alta";
@@ -2487,6 +2770,19 @@ function App() {
       alVolver=${() => ir("tierras")}
       alReintentar=${pantallaTierras.reintentar}
       alEstado=${setEstadoSecundario}
+      alApuntar=${() => abrirApuntar(tierraId)}
+    />`;
+  } else if (vista === "apuntar") {
+    pantalla = html`<${VistaApuntar}
+      tierras=${tierras}
+      campana=${pantallaTierras.datos && pantallaTierras.datos.campana}
+      tierraInicial=${tierraId}
+      alEstado=${setEstadoSecundario}
+      alGuardado=${pantallaTierras.reintentar}
+      alVerLaTierra=${(id) => {
+        setTierraId(id);
+        setVista("tierra");
+      }}
     />`;
   } else if (vista === "calendario") {
     pantalla = html`<${VistaCalendario} tierras=${tierras} alEstado=${setEstadoSecundario} />`;

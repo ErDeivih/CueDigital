@@ -1,58 +1,53 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital ya tiene las pantallas que pidió David tras ver el diseño. en «Mis parcelas», al pinchar una tierra se abre su ficha con el mapa del contorno, lo que se ha hecho hoy sobre ella y su historial por años (siembra, labores, tratamientos, abonos con kg/ha y su mes, cosecha en kg/ha). Hay calendario con el trabajo de cada día, filtros por tipo de trabajo con tierras y cantidades (trazabilidad de la explotación) y una pantalla de facturas que hace fotos, las lee, enseña la propuesta para corregirla y la guarda; si no entiende la foto, lo dice y deja escribirla a mano. En paralelo, el SIGPAC ya devuelve la ortofoto con el contorno de cada parcela dibujado. El apuntar del día a día sigue en la app vieja: es lo siguiente.
+resumen: CueDigital ya cierra el bucle que pidió David: en «Mis parcelas» se pincha una tierra y se ve su ficha con la ortofoto y el contorno, el trabajo de hoy y el historial por años; desde esa misma ficha se apunta el trabajo del día con su apero (arado, cultivador, grada, rodillo, fresadora u otro), y se guarda de verdad. El calendario enseña el trabajo de cada día, los filtros por tipo dan tierras y cantidades para la trazabilidad, las facturas se hacen con fotos y se revisan antes de guardar, y cada tierra lleva su miniatura del contorno. Falta llevar a la app nueva los tratamientos, abonos, siembra y cosecha del día a día, y las pantallas propias de PAC y gastos.
 estado: en-curso
-tarea: implementadas las seis cosas que pidió David (facturas con fotos, tierra primero, historial, calendario, filtros por tipo y contornos del SIGPAC)
+tarea: implementado el apuntar del trabajo del día desde la tierra (con la puerta del apero abierta), las miniaturas del contorno y el resto del bucle tierra → historial → calendario → filtros → facturas
 nivel: 2
-siguiente: el apuntar de 30 segundos en la app nueva (con la puerta del apero que hoy falta) y las pantallas propias de PAC, gastos y facturas detalladas
+siguiente: tratamientos, abonos, siembra y cosecha desde la app nueva (con la cola sin cobertura) y las pantallas de PAC y gastos
 bloqueado: nada duro; siguen pendientes de terceros las licencias (CIT, IGN), los formatos del expediente y del Cuecyl antiguo, y los presupuestos de PSD2
 fecha: 2026-11-05
 
 ## Lo que se ha hecho en esta ronda
 
-David vio el diseño, le gustó y pidió, por este orden: facturas con fotos, tierra primero, historial,
-calendario, filtros y la integración del SIGPAC con los contornos. Todo está en `/nuevo/` y
-**verificado en Chrome a 390, 1024 y 1440 px con 0 fallos**:
+El bucle que pidió David está completo en `/nuevo/` y verificado en Chrome a 390, 1024 y 1440 px:
 
-1. **Facturas con fotos.** Botón grande de cámara y «elegir archivo»; **varias fotos** por factura
-   (factura, envase, albarán) con vista previa y quitar; «Leer la factura» llama al lector del
-   servidor; se enseña la **propuesta campo a campo para revisar y corregir** y se guarda; las fotos
-   de más se guardan como documentos. Si el lector no está o no entiende la foto, **lo dice y abre la
-   factura a mano**: nunca se inventa un dato.
-2. **Tierra primero.** Al pinchar una tierra, su ficha con el **trabajo de hoy** sobre ella (o «hoy no
-   hay nada apuntado»), sus datos del SIGPAC y del cultivo, y el mapa de la parcela.
-3. **Historial de la tierra**, por campañas y sin rellenar años vacíos: siembra (cultivo, variedad,
-   **dosis de semilla kg/ha**), labores (arado —el «vertedera» del vocabulario del programa—,
-   cultivador, grada, siembra…), tratamientos (producto y dosis), **abonos con kg/ha y el mes** y
-   cosecha en **kg/ha**.
-4. **Calendario**: rejilla del mes con los días que tienen trabajo (número + palabra), el día elegido
-   con sus trabajos y su tierra, y navegación de mes.
-5. **Filtros por tipo de trabajo**: cada tipo con su cuenta; al elegir, las tierras con municipio,
-   hectáreas y cantidad o por hectárea, y el resumen de n y hectáreas. Trazabilidad de la explotación.
-6. **Contornos del SIGPAC**: `GET /api/mapa/tierra/{id}.png` devuelve la **ortofoto del IGN con el
-   contorno dibujado** (relleno suave, línea blanca con borde oscuro, margen del 15 %, 800×600 en unos
-   2 s); la ficha la enseña. Si la tierra no tiene forma, **se dice** en vez de dibujar un cuadro.
+1. **Tierra primero**: al pinchar una tierra se abre su ficha con la **ortofoto y el contorno**, los
+   datos del SIGPAC y del cultivo, **«Hoy en esta tierra»** y el **historial por campañas** (siembra
+   kg/ha, labores, tratamientos, abonos kg/ha y mes, cosecha kg/ha).
+2. **El trabajo del día se apunta desde la tierra** (lo nuevo de esta ronda): botón «Apuntar un
+   trabajo» en la ficha y destino «Apuntar» en la barra del móvil y en la lateral. Se elige el
+   **apero del vocabulario del servidor**, la fecha de hoy y las hectáreas de la tierra; se guarda y
+   la ficha se refresca. **Verificado en Chrome y en la API**: el apunte queda en la base con su
+   apero y la pantalla lo dice (0 fallos).
+3. **La puerta del apero, abierta**: `POST /api/labores` acepta el `subtipo` (rodillo, cultivador,
+   arado, grada, fresadora, otro), lo valida contra el catálogo (un apero inventado contesta **422
+   con la lista de los que valen**) y lo guarda en su columna; `GET /api/labores` ya lo devuelve.
+   El apero no es obligatorio, para no romper a la app vieja, y lo que ya estaba en `detalles` se
+   sigue leyendo.
+4. **Calendario** con el trabajo de cada día, **filtros por tipo** con tierras, municipio, hectáreas
+   y cantidades, y **facturas con fotos** (cámara, varias fotos, lectura, propuesta corregible,
+   guardado y «a mano» si no se lee).
+5. **El contorno se ve también al elegir tierra**: miniatura en cada fila de «Mis parcelas» y de la
+   lista de apuntar, y botón «Guardar la imagen» en la ficha.
+6. **«Vertedera» se llama «arado»** en el vocabulario del programa y no se ha traducido una palabra
+   en la otra (sería inventar). David decide si se renombra la etiqueta; aparece sola en las tres
+   puertas.
 
-**Lo que la app vieja sigue haciendo** (y no se rompe): el alta del apunte del día a día, la PAC, el
-detalle de gastos y facturas y los ajustes. El armazón nuevo enlaza a ella en esos sitios.
-
-**Un hueco encontrado y apuntado**: `POST /api/labores` **no acepta el apero (`subtipo`)**; el dato
-solo entra por `detalles`. Es un campo con columna y sin puerta, la familia de fallo que el proyecto ya
-pagó; se arregla al hacer el apuntar nuevo. Y «vertedera» no existe en el vocabulario: el equivalente
-es «arado», y no se ha traducido una palabra en la otra (decide David si se renombra).
+**Lo que sigue en la app vieja**: tratamientos, abonos, siembra y cosecha del día a día (el trabajo
+de suelo ya está), la cola sin cobertura, PAC, gastos y facturas detalladas, y los ajustes.
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5814 recogidas · 5812 superadas, 2 omitidas, 0 fallos
-    JavaScript   1270 superadas, 0 fallos
-    armazón nuevo en Chrome a 390/1024/1440, alta/importación, ficha, calendario, filtros y factura   0 fallos
-    capturas                                           12 en docs/capturas-nuevo/
+    Python       5832 recogidas · 5830 superadas, 2 omitidas, 0 fallos
+    JavaScript   1276 superadas, 0 fallos
+    armazón nuevo en Chrome a 390/1024/1440, apuntar, ficha, calendario, filtros y factura   0 fallos
+    capturas                                            13 en docs/capturas-nuevo/
 
 ## Lo que sigue abierto
 
-- **Apuntar en 30 segundos en la app nueva** (el alta del apunte, con su puerta de apero) y retirar la
-  pantalla vieja cuando cubra el recorrido.
-- **Pantallas propias de PAC**, gastos y facturas detalladas (hoy son enlaces a la app vieja).
-- **PAC de años anteriores** y recintos por campaña de la Junta.
+- **El resto del apuntar**: tratamientos, abonos, siembra y cosecha desde la app nueva, y la **cola sin
+  cobertura** (guardar en el móvil y que llegue solo).
+- **PAC de años anteriores** y recintos por campaña de la Junta; las pantallas propias de PAC y gastos.
 - **PSD2**: dos presupuestos y aprobación del gasto; sin código hasta que haya contrato.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni
   cambiado de rama y no se usa GitHub Actions. Push selectivo al final de la sesión.

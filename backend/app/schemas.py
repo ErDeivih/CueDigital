@@ -2004,6 +2004,46 @@ class InformeDeAnalisis(BaseModel):
 # --------------------------------------------------------------------------
 
 
+def el_problema_del_apero(tipo: str | None, subtipo: str | None) -> str | None:
+    """**El apero de una labor de suelo, comprobado contra el vocabulario del programa.**
+
+    Devuelve `None` si el apero vale (o si no hay) y el motivo, ya escrito, si no vale. La regla vive
+    aquí y **en un solo sitio** porque la usan las dos puertas que apuntan una labor: el alta del
+    cuaderno (`LaborEntrada`, que la comprueba al validar el cuerpo) y las puertas de los trabajos
+    (`routers/trabajos_api`, que la comprueban antes de guardar). Dos copias de esta regla serían dos
+    sitios donde puede dejar de cumplirse.
+
+    **Dos cosas que no valen, y por qué**:
+      · Un apero que no está en el catálogo (`trabajos.SUBTIPOS_DE_LABOREO`): se escribe el que vale,
+        y el mensaje **enumera los que hay** para que se pueda corregir sin adivinar.
+      · Un apero en una labor que no es de suelo: un arado en una poda **no significa nada**, y
+        guardarlo sería apuntar en el cuaderno algo que no pasó.
+
+    Y una que sí: **no venir**. El apero no es obligatorio —la app vieja no lo manda y una labor de
+    suelo sin apero es una labor de suelo que no se sabe con qué se hizo—, así que no traerlo nunca es
+    un error.
+
+    Se importa `trabajos` dentro de la función para no montar un círculo de importaciones: `schemas`
+    lo cargan casi todos los routers, y `trabajos` es lógica pura del dominio.
+    """
+    from .trabajos import SUBTIPOS_DE_LABOREO
+
+    apero = (subtipo or "").strip()
+    if not apero:
+        return None
+    if (tipo or "").strip() != "laboreo":
+        return (
+            "El apero solo se apunta en una labor de suelo (laboreo). "
+            "Quita el apero o cambia el tipo de trabajo."
+        )
+    if apero not in SUBTIPOS_DE_LABOREO:
+        return (
+            "Ese apero no es de los que se apuntan. "
+            f"Los que valen son: {', '.join(SUBTIPOS_DE_LABOREO)}."
+        )
+    return None
+
+
 class LaborEntrada(EntradaBase):
     campana_id: int
     tipo: str
@@ -2015,6 +2055,14 @@ class LaborEntrada(EntradaBase):
     variedad: str | None = None
     detalles: dict | None = None
     observaciones: str | None = None
+    # **El apero de una labor de suelo** (rodillo, cultivador, arado, grada, fresadora, otro), en su
+    # propia columna (`Labor.subtipo`) y no dentro de `detalles`. La columna existe desde el T15 y
+    # `trabajos_api._el_subtipo` la lee, pero hasta ahora este esquema **no la aceptaba**: el apero
+    # solo entraba por el JSON, del que no se puede consultar ni sumar. La app nueva lo manda aquí.
+    #
+    # Sigue **sin ser obligatorio** y, si no viene, se hereda el que estuviera en `detalles` (ver el
+    # validador de abajo): así lo apuntado antes de que hubiera puerta se sigue leyendo igual.
+    subtipo: str | None = None
     # Siembra y plantación (bloque 6 del contenido mínimo del CUE).
     cantidad_semilla_kg: float | None = Field(default=None, ge=0)
     dosis_siembra_kg_ha: float | None = Field(default=None, ge=0)
@@ -2054,11 +2102,42 @@ class LaborEntrada(EntradaBase):
     # siembra, y antes no se podía ni apuntar: un tratamiento decía su máquina y una labor no.
     equipo_id: int | None = None
 
+    @model_validator(mode="after")
+    def _el_apero_va_a_su_columna(self):
+        """Deja el apero en `subtipo`, normalizado, y **comprueba que sea de los que hay**.
+
+        Tres cosas, en este orden:
+
+          1. **Se normaliza** (sin espacios de más y con el largo de la columna): lo que se guarda es la
+             palabra del catálogo, no lo que llegue con espacios.
+          2. **Si el campo no viene, se hereda el de `detalles`** —y **sin validarlo** a propósito—: es
+             el camino de la app vieja, que apuntaba el apero dentro del JSON; empezar a rechazar lo
+             que ya estaba bien sería romper a quien no ha cambiado nada. Ahora se copia a su columna,
+             que es donde se puede consultar.
+          3. **Si el campo viene, se valida** contra el vocabulario (`el_problema_del_apero`).
+        """
+        apero = (self.subtipo or "").strip()[:30] or None
+        if apero is None:
+            de_detalles = (self.detalles or {}).get("subtipo")
+            if de_detalles:
+                apero = str(de_detalles).strip()[:30] or None
+        else:
+            problema = el_problema_del_apero(self.tipo, apero)
+            if problema:
+                raise ValueError(problema)
+        self.subtipo = apero
+        return self
+
 
 class LaborSalida(SalidaBase):
     id: int
     campana_id: int
     tipo: str
+    # El apero de una labor de suelo, **en la salida desde el IMP-9** (05/11/2026). Faltaba: el dato se
+    # guardaba en su columna y la ficha de la tierra lo enseñaba, pero `GET /api/labores` no lo devolvía,
+    # así que la propia pantalla que apunta el apero no podía leerlo de vuelta por la puerta del cuaderno.
+    # Va con `None` por defecto para no cambiar la forma de lo que ya había.
+    subtipo: str | None = None
     fecha: dt.date
     parcela_id: int | None
     # El grupo, cuando la labor es de varias parcelas a la vez. Faltaba en la salida igual que en

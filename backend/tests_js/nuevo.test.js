@@ -23,6 +23,7 @@ import {
   agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
+  avisoDeLaNota,
   bboxDelConjunto,
   bboxDeMunicipio,
   cajaDeLosRecintos,
@@ -31,15 +32,20 @@ import {
   colorDeTierra,
   colorDeUso,
   cuerpoDeLaFactura,
+  cuerpoDelApunte,
   decidirEstado,
+  elAperoSeGuardaEnLabores,
   etiquetaDeTrabajo,
+  fechaDeHoyISO,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  mesDeNumero,
   mesEnPalabras,
   nombreDeMes,
+  normalizaAperos,
   normalizaCalendario,
   normalizaHistorial,
   normalizaImportacion,
@@ -63,6 +69,7 @@ import {
   sumaDeHectareas,
   textos,
   textoRelleno,
+  urlDeMiniatura,
   urlDelMapa,
 } from "../web/nuevo/modelo.js";
 
@@ -815,4 +822,97 @@ test("las filas de trabajos del servidor traen su clave, su alias y su municipio
   assert.equal(fila.porHectarea, true);
   assert.equal(claveDeTipo(fila), "labor:vertedera");
   assert.equal(datos.tipos.length, 2);
+});
+
+
+// ---------------------------------------------------------------------------
+// Apuntar el trabajo del día desde la tierra
+// ---------------------------------------------------------------------------
+
+test("los aperos salen del servidor y no se inventan", () => {
+  const deLaLista = normalizaAperos({ subtipos_de_laboreo: ["arado", "grada", "otro"] });
+  assert.deepEqual(
+    deLaLista.map((apero) => apero.clave),
+    ["arado", "grada", "otro"],
+  );
+  assert.equal(deLaLista[0].etiqueta, "Arado");
+
+  assert.deepEqual(normalizaAperos({ aperos: [{ clave: "rodillo", etiqueta: "Rodillo" }] }), [
+    { clave: "rodillo", etiqueta: "Rodillo" },
+  ]);
+  // Sin lista del servidor no se rellena con aperos inventados: la pantalla dirá que no hay.
+  assert.deepEqual(normalizaAperos(null), []);
+  assert.deepEqual(normalizaAperos({}), []);
+});
+
+test("la fecha de hoy y el cuerpo del apunte son los que entiende el servidor", () => {
+  assert.equal(fechaDeHoyISO(new Date(2026, 10, 5)), "2026-11-05");
+  assert.equal(fechaDeHoyISO(new Date(2026, 0, 1)), "2026-01-01");
+
+  const cuerpo = cuerpoDelApunte({
+    campanaId: 3,
+    apero: "grada",
+    fecha: "2026-11-05",
+    tierraId: 7,
+    hectareas: "12,5",
+    nota: "  ",
+  });
+  assert.deepEqual(cuerpo, {
+    campana_id: 3,
+    tipo: "laboreo",
+    subtipo: "grada",
+    fecha: "2026-11-05",
+    parcela_id: 7,
+    superficie_ha: 12.5,
+    observaciones: null,
+  });
+
+  // Sin fecha se pone la de hoy y sin hectáreas queda «no consta», no un cero.
+  const minimo = cuerpoDelApunte({ campanaId: 3, apero: "otro", tierraId: 7 });
+  assert.equal(minimo.fecha, fechaDeHoyISO());
+  assert.equal(minimo.superficie_ha, null);
+  assert.equal(minimo.observaciones, null);
+});
+
+test("con «otro» apero se pide la nota, sin bloquear el apunte", () => {
+  assert.equal(avisoDeLaNota("otro", ""), textos.apuntar.faltaNota);
+  assert.equal(avisoDeLaNota("otro", "   "), textos.apuntar.faltaNota);
+  assert.equal(avisoDeLaNota("otro", "Puse el tubo"), null);
+  assert.equal(avisoDeLaNota("grada", ""), null);
+});
+
+test("la miniatura del contorno y la puerta que guarda el apero", () => {
+  assert.equal(urlDeMiniatura(7), "/api/mapa/tierra/7.png?ancho=160&alto=120");
+  assert.equal(urlDeMiniatura(12, 320, 240), "/api/mapa/tierra/12.png?ancho=320&alto=240");
+
+  // La puerta de siempre todavía no admite el apero: se usa la que sí lo guarda, no se pierde.
+  const sinSubtipo = { components: { schemas: { LaborEntrada: { properties: { tipo: {}, fecha: {} } } } } };
+  const conSubtipo = { components: { schemas: { LaborEntrada: { properties: { subtipo: {} } } } } };
+  assert.equal(elAperoSeGuardaEnLabores(sinSubtipo), false);
+  assert.equal(elAperoSeGuardaEnLabores(conSubtipo), true);
+  assert.equal(elAperoSeGuardaEnLabores(null), false);
+});
+
+test("la pantalla de apuntar tiene sus textos y sus estados", () => {
+  for (const clave of ["titulo", "tierra", "que", "fecha", "hectareas", "nota", "guardar", "guardado", "noSeGuardo", "faltaNota", "sinTierra", "sinAperos", "cargando", "noDisponible", "guardarImagen"]) {
+    assert.ok(textos.apuntar[clave], `falta el texto «${clave}» de apuntar`);
+  }
+  assert.ok(textos.apuntar.guardarImagen);
+});
+
+test("el mes del historial puede venir en número y se lee en palabras", () => {
+  assert.equal(mesDeNumero(3), "marzo");
+  assert.equal(mesDeNumero("11"), "noviembre");
+  assert.equal(mesDeNumero(13), "");
+  assert.equal(mesDeNumero(null), "");
+
+  const historial = normalizaHistorial({
+    historial: [
+      {
+        anio: 2026,
+        labores: [{ fecha: "2026-11-05", labor: "grada", titulo: "Grada", mes: 11, detalle: null }],
+      },
+    ],
+  });
+  assert.ok(historial[0].filas[0].detalles.includes("noviembre"));
 });

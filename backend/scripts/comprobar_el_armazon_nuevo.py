@@ -460,8 +460,10 @@ def crear_una_foto_de_factura() -> pathlib.Path:
     return destino
 
 
-def comprobar_ficha_calendario_trabajos_y_facturas(nav: NavegadorDeVerdad, base: str) -> None:
-    """Tierra primero, historial, calendario, filtros por tipo y facturas con foto."""
+def comprobar_ficha_calendario_trabajos_y_facturas(
+    nav: NavegadorDeVerdad, base: str, token: str
+) -> None:
+    """Tierra primero, su trabajo de hoy, apuntar desde la tierra, calendario, filtros y facturas."""
     print("\n== Tierra, historial, calendario, filtros y facturas ==")
     nav.medir(1440, 1000)
     nav.abrir(f"{base}/nuevo/", esperar=1.0)
@@ -504,6 +506,76 @@ def comprobar_ficha_calendario_trabajos_y_facturas(nav: NavegadorDeVerdad, base:
             nav.esperar("document.querySelector('[data-vista=\"tierra\"]') !== null", segundos=10)
         comprobar(tiene_imagen, "la ficha enseña la imagen de la tierra con su contorno")
         print(f"  (captura: {captura(nav, 'tierra-historial').relative_to(RAIZ)})")
+
+    # **Apuntar el trabajo del día desde la tierra**: apero del vocabulario del servidor, fecha de
+    # hoy, hectáreas de la tierra y guardado de verdad (se comprueba en la API, no solo en pantalla).
+    abrio_apuntar = clic_en_visible(nav, "[data-accion=apuntar-trabajo]") or clic_en_visible(
+        nav, "[data-destino=apuntar]"
+    )
+    llego_apuntar = abrio_apuntar and nav.esperar(
+        "!!document.querySelector('[data-vista=\"apuntar\"]')", segundos=15
+    )
+    comprobar(llego_apuntar, "se abre «Apuntar un trabajo» desde la tierra")
+    if llego_apuntar:
+        nav.esperar("document.querySelector('[data-apuntar-tierra]') !== null", segundos=20)
+        # Si se ha abierto desde la barra (sin tierra elegida), se elige la primera: el formulario
+        # necesita saber sobre qué tierra se apunta.
+        elegida = nav.evaluar(
+            "!!document.querySelector('[data-apuntar-tierra][aria-pressed=\"true\"],"
+            " [data-apuntar-tierra][data-elegida=\"si\"], [data-apuntar-tierra].tierra--elegida')"
+        )
+        if not elegida:
+            nav.evaluar(
+                "(() => { const t = document.querySelector('[data-apuntar-tierra]');"
+                " if (!t) return false; t.click(); return true; })()"
+            )
+            nav.esperar(
+                "!!document.querySelector('[data-apuntar-tierra][aria-pressed=\"true\"],"
+                " [data-apuntar-tierra][data-elegida=\"si\"], [data-apuntar-tierra].tierra--elegida')",
+                segundos=10,
+            )
+    nav.esperar("document.querySelectorAll('[data-apuntar-apero]').length > 0", segundos=25)
+    aperos = nav.evaluar("document.querySelectorAll('[data-apuntar-apero]').length") or 0
+    comprobar(aperos >= 6, f"el apero sale del vocabulario del servidor ({aperos})")
+    if llego_apuntar and aperos:
+        nav.evaluar(
+            "(() => { const a = document.querySelector('[data-apuntar-apero]');"
+            " if (!a) return false; a.click(); return true; })()"
+        )
+        nav.esperar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " return !!b && !b.disabled; })()",
+            segundos=10,
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " if (!b || b.disabled) return false; b.click(); return true; })()"
+        )
+        guardado = nav.esperar(
+            "(() => { const r = document.querySelector('[data-apuntar-resultado]');"
+            " return !!r && r.innerText.trim().length > 0; })()",
+            segundos=30,
+        )
+        comprobar(guardado, "el trabajo del día se guarda y la pantalla lo dice")
+        with httpx.Client(base_url=base, timeout=30.0) as cliente:
+            labores = cliente.get(
+                "/api/labores",
+                headers={"Authorization": f"Bearer {token}"},
+            ).json()
+        hoy = nav.evaluar("new Date().toISOString().slice(0, 10)")
+        nuevas = [
+            labor
+            for labor in (labores or [])
+            if labor.get("fecha") == hoy and labor.get("subtipo")
+        ]
+        comprobar(bool(nuevas), f"el apunte queda en la base con su apero ({len(nuevas)})")
+        print(f"  (captura: {captura(nav, 'apuntar-trabajo').relative_to(RAIZ)})")
+
+    # Las miniaturas del contorno en la lista de tierras.
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelector('[data-vista=\"tierras\"]') !== null", segundos=15)
+    miniaturas = nav.evaluar("document.querySelectorAll('[data-miniatura-tierra]').length") or 0
+    comprobar(miniaturas > 0, f"cada tierra lleva su miniatura del contorno ({miniaturas})")
 
     clic_en_visible(nav, "[data-destino=calendario]")
     llego_cal = nav.esperar("!!document.querySelector('[data-vista=\"calendario\"]')", segundos=15)
@@ -656,7 +728,7 @@ def main() -> int:
         for ancho in ANCHOS:
             comprobar_un_ancho(nav, base, ancho)
         comprobar_alta_e_importacion(nav, base)
-        comprobar_ficha_calendario_trabajos_y_facturas(nav, base)
+        comprobar_ficha_calendario_trabajos_y_facturas(nav, base, token)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

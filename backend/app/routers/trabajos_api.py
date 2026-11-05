@@ -65,6 +65,7 @@ from ..schemas import (
     SalidaDeAlmacenEntrada,
     TrabajoEntrada,
     TrabajoPrevistoEntrada,
+    el_problema_del_apero,
 )
 # **La puerta de las salidas, importada tal cual.** Es la mitad de este ticket: lo que gasta un trabajo
 # sale del almacén por donde sale todo lo demás, no por un camino nuevo. Llamarla aquí, en vez de copiar
@@ -974,6 +975,23 @@ def cancelar_un_trabajo_previsto(
 # --------------------------------------------------------------------------
 
 
+def _el_apero_del_trabajo(tipo: str | None, subtipo: str | None) -> str | None:
+    """El apero de una labor de suelo, comprobado y normalizado, **o un 422 que dice cuáles valen**.
+
+    La regla es la misma que la del alta del cuaderno y **está escrita una sola vez** en
+    `schemas.el_problema_del_apero`; aquí solo se traduce a la respuesta de la puerta. Y no es
+    obligatorio: sin apero, la labor se apunta igual (la app vieja no lo manda, y una labor de suelo
+    sin apero es una labor de suelo que no se sabe con qué se hizo).
+    """
+    problema = el_problema_del_apero(tipo, subtipo)
+    if problema is None:
+        return (subtipo or "").strip()[:30] or None
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail={"mensaje": problema, "validos": list(logica.SUBTIPOS_DE_LABOREO)},
+    )
+
+
 def _la_labor_del_trabajo(datos: TrabajoEntrada, explotacion, db) -> models.Labor:
     """Comprueba un trabajo y devuelve la labor lista para guardar, **sin guardarla**.
 
@@ -993,6 +1011,10 @@ def _la_labor_del_trabajo(datos: TrabajoEntrada, explotacion, db) -> models.Labo
         obtener_de_la_explotacion(db, models.Parcela, datos.parcela_id, explotacion.id)
     if datos.equipo_id is not None:
         obtener_de_la_explotacion(db, models.EquipoAplicacion, datos.equipo_id, explotacion.id)
+
+    # **El apero, comprobado antes de escribir nada**: si no es de los que hay, o si se cuela en una
+    # labor que no es de suelo, se para aquí y no queda una fila a medias.
+    apero = _el_apero_del_trabajo(datos.tipo, datos.subtipo)
 
     labor = models.Labor(
         explotacion_id=explotacion.id,
@@ -1015,7 +1037,10 @@ def _la_labor_del_trabajo(datos: TrabajoEntrada, explotacion, db) -> models.Labo
         # —y el subtipo lo es (§4, S05): «con nombre y número»— viva en su columna y no en un JSON de
         # texto libre, que no se puede consultar ni sumar. `_el_subtipo` lee la columna primero y
         # `detalles` después, así que los apuntes escritos antes de esto se siguen leyendo igual.
-        subtipo=(datos.subtipo or "").strip()[:30] or None,
+        #
+        # Y desde el IMP-9 (05/11/2026) **se comprueba antes** (`_el_apero_del_trabajo`): un apero que
+        # no está en el catálogo o que se cuela en una labor que no es de suelo contesta 422 aquí.
+        subtipo=apero,
     )
     if not labor.cultivo:
         # El cultivo, igual que en el resto del programa: si el apunte no lo trae, se pone el que el
