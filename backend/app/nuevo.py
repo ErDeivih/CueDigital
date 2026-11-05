@@ -44,6 +44,8 @@ import re
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from fastapi import HTTPException
+
 from . import catalogos, dinero, gastos, geo, iuws, models, superficies
 from .deps import obtener_de_la_explotacion
 
@@ -767,4 +769,702 @@ def resumen(db: Session, *, explotacion) -> dict:
         "ventas": _la_cuenta_de_las_ventas(db, explotacion, campana),
         "cuaderno": _lo_que_falta_resumido(items),
         "facturas": {"n": len(list(db.scalars(consulta_facturas)))},
+    }
+
+
+# ===========================================================================
+# IMP-6 · La ficha de la tierra, el calendario y los filtros por tipo (05/11/2026)
+# ===========================================================================
+#
+# David lo pidió en este orden: **tierra primero** (elegir la tierra y ver qué se ha hecho **hoy**
+# sobre ella), **historial** por años con las cantidades por hectárea y los meses del abono, **calendario**
+# por días y **filtros por tipo de trabajo** con las tierras y las cantidades de toda la explotación.
+#
+# **De dónde sale cada cosa, y por qué no se inventa nada**:
+#
+#   · **La labor del día** son las `Labor` (con su `tipo` y su apero en `subtipo`), que es donde el
+#     agricultor apunta «hoy he pasado el cultivador». Una cosecha **también es una labor**
+#     (`tipo="cosecha"`), y sus kilos viven en sus `detalles` (`{"producto", "cantidad_kg"}`), que es
+#     donde los deja `routers/registros._preparar_cosecha_guardable`.
+#   · **La siembra** puede estar en dos sitios: la `Labor` de tipo siembra (el trabajo del día) y la
+#     ficha de la semilla (`Siembra`, que además dice la dosis y el lote). No se suman ni se duplican:
+#     si las dos hablan del **mismo día y la misma tierra**, es el mismo hecho y se cuenta una vez
+#     (se queda la labor, que es el apunte del día, y la ficha de la semilla aporta la dosis). Está
+#     escrito abajo, en `_los_apuntes`.
+#   · **Las cantidades por hectárea no se recalculan a mano**: se usa `superficies.la_dosis_por_hectarea`,
+#     que es la única cuenta de la casa que divide una cantidad por una superficie y sabe cuándo **no**
+#     se puede (`None` si falta alguno de los dos).
+#
+# **Lo que el vocabulario del programa NO tiene, y conviene decirlo**: el apero «vertedera» no existe en
+# el catálogo del programa (`trabajos.SUBTIPOS_DE_LABOREO`: rodillo, cultivador, arado, grada, fresadora
+# y otro). El equivalente que el agricultor puede apuntar es **arado**. Aquí **no se traduce una cosa en
+# la otra** —sería inventar una equivalencia—: los filtros salen del vocabulario de verdad, y si se
+# quiere decir «vertedera» se cambia la etiqueta en el catálogo y sale sola en las tres puertas.
+
+# Las claves de los apuntes que no son labores.
+CLAVE_LABOR = "labor"
+CLAVE_SIEMBRA = "siembra"
+CLAVE_TRATAMIENTO = "tratamiento"
+CLAVE_ABONO = "abono"
+CLAVE_COSECHA = "cosecha"
+CLAVE_OTROS = "otros"
+
+# Un rango de calendario mayor que un año no es un calendario: es una consulta que devolvería miles de
+# filas para pintar una rejilla que el agricultor no puede mirar. Se dice con un 422 y su motivo.
+MAXIMO_DE_DIAS_EN_EL_CALENDARIO = 366
+
+
+def _la_etiqueta_de_un_tipo(clave: str) -> str:
+    """El nombre llano de un tipo de trabajo, **sacado del catálogo que ya existe**.
+
+    Las labores tienen su etiqueta en `catalogos.ETIQUETA_LABOR` (la misma que se enseña en la agenda
+    del cuaderno viejo) y los aperos se escriben con su propia palabra («arado», «grada»): son las que
+    el agricultor dice. **No se inventa un texto nuevo aquí**: lo que se lee en pantalla es cosa de la
+    pantalla nueva; esto es la etiqueta del dato.
+    """
+    return catalogos.ETIQUETA_LABOR.get(clave) or (clave or "").replace("_", " ").capitalize()
+
+
+def _la_suma_de_hectareas(valores: list[float | None]) -> float | None:
+    """La suma de las hectáreas, **o `None` si a algún apunte le falta**.
+
+    Es la regla de la casa (`superficies.py`): un total al que le falta un sumando no es un total más
+    pequeño, es un total que no se sabe. Así la pantalla puede decir «no lo sabemos» en vez de enseñar
+    una cifra que se queda corta.
+    """
+    if any(valor is None for valor in valores):
+        return None
+    return round(sum(float(valor) for valor in valores), 4)
+
+
+def _el_apero_de_una_labor(labor: models.Labor) -> str | None:
+    """El apero de una labor de suelo (arado, cultivador, grada…), **leído como lo lee la casa**.
+
+    El dato puede estar en la columna `Labor.subtipo` o, mientras la columna no se rellene, dentro de
+    `Labor.detalles["subtipo"]` —así lo guarda hoy el asistente—. En vez de mirar los dos sitios aquí
+    otra vez, se pregunta a la función que ya sabe hacerlo (`routers/trabajos_api._el_subtipo`): si
+    mañana cambia dónde vive, cambia en un solo sitio y estas puertas lo ven.
+    """
+    from .routers.trabajos_api import _el_subtipo
+
+    return _el_subtipo(labor)
+
+
+def _la_clave_de_una_labor(labor: models.Labor) -> str:
+    """Con qué nombre se filtra una labor: **su apero si es una labor de suelo, y si no su tipo**.
+
+    Es lo que David llama «tipo de trabajo»: un pase de cultivador se filtra por `cultivador`, no por
+    «laboreo» (que no le dice nada); una poda, por `poda`. Los valores salen del catálogo, así que si
+    mañana se añade un apero sale solo.
+    """
+    from . import trabajos
+
+    apero = _el_apero_de_una_labor(labor)
+    if labor.tipo == "laboreo" and apero in trabajos.SUBTIPOS_DE_LABOREO:
+        return apero
+    return labor.tipo or CLAVE_OTROS
+
+
+def _el_apunte_de_una_labor(labor: models.Labor) -> dict:
+    """Una labor normalizada, con lo que necesitan las tres puertas y nada inventado."""
+    clave = _la_clave_de_una_labor(labor)
+    es_cosecha = labor.tipo == CLAVE_COSECHA
+    detalles = labor.detalles if isinstance(labor.detalles, dict) else {}
+    kg = detalles.get("cantidad_kg") if es_cosecha else None
+    producto = detalles.get("producto") if es_cosecha else None
+    if clave == "riego":
+        cantidad, unidad = labor.volumen_agua, labor.unidad_agua
+    else:
+        cantidad, unidad = None, None
+    return {
+        "tipo": CLAVE_COSECHA if es_cosecha else CLAVE_LABOR,
+        "clave": CLAVE_COSECHA if es_cosecha else clave,
+        "fecha": labor.fecha,
+        "titulo": (
+            (f"Cosecha de {producto}" if producto else catalogos.ETIQUETA_LABOR.get(CLAVE_COSECHA, "Cosecha"))
+            if es_cosecha
+            else _la_etiqueta_de_un_tipo(clave)
+        ),
+        "detalle": labor.cultivo or producto or None,
+        "parcela_id": labor.parcela_id,
+        "campana_id": labor.campana_id,
+        "cantidad": kg if es_cosecha else cantidad,
+        "unidad": "kg" if es_cosecha else unidad,
+        "hectareas": labor.superficie_ha,
+        "por_hectarea": None,  # se rellena después, cuando se sabe la superficie
+        "unidad_por_hectarea": "kg/ha" if es_cosecha else None,
+        "producto": producto,
+        "materia_activa": None,
+        "dosis": None,
+        "dosis_unidad": None,
+        "kg": kg,
+        "kg_ha": None,
+        "mes": labor.fecha.month if labor.fecha else None,
+        "cultivo": labor.cultivo,
+        "variedad": labor.variedad,
+        "dosis_semilla_kg_ha": labor.dosis_siembra_kg_ha,
+        "labor_clave": clave,
+    }
+
+
+def _el_apunte_de_una_siembra(siembra: models.Siembra, semillas: dict) -> dict:
+    """La ficha de una semilla sembrada, normalizada.
+
+    **Sin fecha no entra en el historial ni en el calendario**: no se puede colocar en un día, y ponerle
+    la de hoy sería inventarse cuándo se sembró. La dosis viaja en su unidad tal y como se apuntó, y la
+    de kg/ha solo se da cuando la dosis está en kilos por hectárea (no se convierte una dosis en
+    unidades a kilos: eso sería un número inventado).
+    """
+    semilla = semillas.get(siembra.semilla_id)
+    especie = (semilla.especie if semilla is not None else None) or ""
+    variedad = (semilla.variedad if semilla is not None else None) or None
+    unidad_dosis = siembra.unidad_dosis or (semilla.unidad_dosis if semilla is not None else None)
+    dosis_kg_ha = siembra.dosis_por_ha if (unidad_dosis or "").lower() in ("kg/ha", "kg / ha") else None
+    return {
+        "tipo": CLAVE_SIEMBRA,
+        "clave": CLAVE_SIEMBRA,
+        "fecha": siembra.fecha,
+        "titulo": " · ".join(parte for parte in (especie or None, variedad) if parte) or "Siembra",
+        "detalle": f"Lote {siembra.lote_id}" if siembra.lote_id else None,
+        "parcela_id": siembra.parcela_id,
+        "campana_id": None,  # la siembra no cuelga del año; se coloca por su fecha
+        "cantidad": siembra.cantidad_total,
+        "unidad": siembra.unidad_cantidad,
+        "hectareas": siembra.superficie_ha,
+        "por_hectarea": siembra.dosis_por_ha,
+        "unidad_por_hectarea": unidad_dosis,
+        "producto": especie or None,
+        "materia_activa": None,
+        "dosis": siembra.dosis_por_ha,
+        "dosis_unidad": unidad_dosis,
+        "kg": None,
+        "kg_ha": None,
+        "mes": siembra.fecha.month if siembra.fecha else None,
+        "cultivo": especie or None,
+        "variedad": variedad,
+        "dosis_semilla_kg_ha": dosis_kg_ha,
+        "labor_clave": CLAVE_SIEMBRA,
+    }
+
+
+def _el_apunte_de_un_tratamiento(tratamiento: models.TratamientoFitosanitario) -> dict:
+    """Un tratamiento, con su producto, su dosis y la superficie tratada de ese día."""
+    return {
+        "tipo": CLAVE_TRATAMIENTO,
+        "clave": CLAVE_TRATAMIENTO,
+        "fecha": tratamiento.fecha,
+        "titulo": tratamiento.producto_nombre or tratamiento.plaga or "Producto aplicado",
+        "detalle": tratamiento.materia_activa or tratamiento.plaga or None,
+        "parcela_id": tratamiento.parcela_id,
+        "campana_id": tratamiento.campana_id,
+        "cantidad": tratamiento.cantidad_total,
+        "unidad": tratamiento.unidad_cantidad_aplicada,
+        "hectareas": tratamiento.superficie_tratada_ha,
+        "por_hectarea": tratamiento.dosis,
+        "unidad_por_hectarea": tratamiento.unidad_dosis,
+        "producto": tratamiento.producto_nombre,
+        "materia_activa": tratamiento.materia_activa,
+        "dosis": tratamiento.dosis,
+        "dosis_unidad": tratamiento.unidad_dosis,
+        "kg": None,
+        "kg_ha": None,
+        "mes": tratamiento.fecha.month if tratamiento.fecha else None,
+        "cultivo": tratamiento.cultivo,
+        "variedad": tratamiento.variedad,
+        "dosis_semilla_kg_ha": None,
+        "labor_clave": CLAVE_TRATAMIENTO,
+    }
+
+
+def _el_apunte_de_un_abono(abono: models.RegistroFertilizacion) -> dict:
+    """Un abono, con sus kilos y su dosis por hectárea **tal y como se apuntó**."""
+    return {
+        "tipo": CLAVE_ABONO,
+        "clave": CLAVE_ABONO,
+        "fecha": abono.fecha,
+        "titulo": abono.fertilizante_nombre or "Abono",
+        "detalle": abono.tipo or None,
+        "parcela_id": abono.parcela_id,
+        "campana_id": abono.campana_id,
+        "cantidad": abono.cantidad_total_kg,
+        "unidad": "kg" if abono.cantidad_total_kg is not None else None,
+        "hectareas": abono.superficie_ha,
+        "por_hectarea": abono.kg_ha_producto,
+        "unidad_por_hectarea": "kg/ha" if abono.kg_ha_producto is not None else None,
+        "producto": abono.fertilizante_nombre,
+        "materia_activa": None,
+        "dosis": abono.kg_ha_producto,
+        "dosis_unidad": "kg/ha" if abono.kg_ha_producto is not None else None,
+        "kg": abono.cantidad_total_kg,
+        "kg_ha": abono.kg_ha_producto,
+        "mes": abono.fecha.month if abono.fecha else None,
+        "cultivo": None,
+        "variedad": None,
+        "dosis_semilla_kg_ha": None,
+        "labor_clave": CLAVE_ABONO,
+    }
+
+
+def _los_apuntes(
+    db: Session,
+    explotacion_id: int,
+    *,
+    parcela_id: int | None = None,
+    desde=None,
+    hasta=None,
+    campana: models.Campana | None = None,
+) -> list[dict]:
+    """Todos los apuntes de la finca (o de una tierra) que caen en lo que se pide, normalizados.
+
+    Se junta lo que el agricultor apunta de verdad —labores, siembras, tratamientos y abonos—, se
+    descarta **lo anulado** (un apunte anulado no pasó) y se ordena por fecha. Las siembras sin fecha
+    no entran: no hay día en el que ponerlas.
+
+    **La siembra apuntada dos veces no se cuenta dos veces**: si el mismo día y en la misma tierra hay
+    una labor de tipo siembra y una ficha de semilla, es el mismo hecho visto desde dos sitios; se queda
+    la labor y la ficha aporta la dosis. Sin esa regla, el filtro de `siembra` enseñaría dos filas del
+    mismo día con la misma tierra, y eso es exactamente lo que hace desconfiar de un cuaderno.
+    """
+    parcelas = {
+        parcela.id: parcela
+        for parcela in db.scalars(
+            select(models.Parcela).where(models.Parcela.explotacion_id == explotacion_id)
+        )
+    }
+    semillas = {
+        semilla.id: semilla
+        for semilla in db.scalars(
+            select(models.Semilla).where(models.Semilla.explotacion_id == explotacion_id)
+        )
+    }
+    filas: list[dict] = []
+
+    consulta_labores = select(models.Labor).where(
+        models.Labor.explotacion_id == explotacion_id,
+        models.Labor.anulado.is_(False),
+    )
+    if parcela_id is not None:
+        consulta_labores = consulta_labores.where(models.Labor.parcela_id == parcela_id)
+    if campana is not None:
+        consulta_labores = consulta_labores.where(models.Labor.campana_id == campana.id)
+    if desde is not None:
+        consulta_labores = consulta_labores.where(models.Labor.fecha >= desde)
+    if hasta is not None:
+        consulta_labores = consulta_labores.where(models.Labor.fecha <= hasta)
+    for labor in db.scalars(consulta_labores):
+        filas.append(_el_apunte_de_una_labor(labor))
+
+    consulta_tratamientos = select(models.TratamientoFitosanitario).where(
+        models.TratamientoFitosanitario.explotacion_id == explotacion_id,
+        models.TratamientoFitosanitario.anulado.is_(False),
+    )
+    if parcela_id is not None:
+        consulta_tratamientos = consulta_tratamientos.where(
+            models.TratamientoFitosanitario.parcela_id == parcela_id
+        )
+    if campana is not None:
+        consulta_tratamientos = consulta_tratamientos.where(
+            models.TratamientoFitosanitario.campana_id == campana.id
+        )
+    if desde is not None:
+        consulta_tratamientos = consulta_tratamientos.where(
+            models.TratamientoFitosanitario.fecha >= desde
+        )
+    if hasta is not None:
+        consulta_tratamientos = consulta_tratamientos.where(
+            models.TratamientoFitosanitario.fecha <= hasta
+        )
+    for tratamiento in db.scalars(consulta_tratamientos):
+        filas.append(_el_apunte_de_un_tratamiento(tratamiento))
+
+    consulta_abonos = select(models.RegistroFertilizacion).where(
+        models.RegistroFertilizacion.explotacion_id == explotacion_id,
+        models.RegistroFertilizacion.anulado.is_(False),
+    )
+    if parcela_id is not None:
+        consulta_abonos = consulta_abonos.where(
+            models.RegistroFertilizacion.parcela_id == parcela_id
+        )
+    if campana is not None:
+        consulta_abonos = consulta_abonos.where(
+            models.RegistroFertilizacion.campana_id == campana.id
+        )
+    if desde is not None:
+        consulta_abonos = consulta_abonos.where(models.RegistroFertilizacion.fecha >= desde)
+    if hasta is not None:
+        consulta_abonos = consulta_abonos.where(models.RegistroFertilizacion.fecha <= hasta)
+    for abono in db.scalars(consulta_abonos):
+        filas.append(_el_apunte_de_un_abono(abono))
+
+    # Las siembras no cuelgan de la campaña: se colocan por su fecha, y sin fecha no se colocan.
+    consulta_siembras = select(models.Siembra).where(
+        models.Siembra.explotacion_id == explotacion_id,
+        models.Siembra.anulada.is_(False),
+        models.Siembra.fecha.is_not(None),
+    )
+    if parcela_id is not None:
+        consulta_siembras = consulta_siembras.where(models.Siembra.parcela_id == parcela_id)
+    if desde is not None:
+        consulta_siembras = consulta_siembras.where(models.Siembra.fecha >= desde)
+    if hasta is not None:
+        consulta_siembras = consulta_siembras.where(models.Siembra.fecha <= hasta)
+    if campana is not None:
+        consulta_siembras = consulta_siembras.where(
+            models.Siembra.fecha >= campana.fecha_inicio,
+            models.Siembra.fecha <= campana.fecha_fin,
+        )
+    for siembra in db.scalars(consulta_siembras):
+        filas.append(_el_apunte_de_una_siembra(siembra, semillas))
+
+    # La siembra que ya tiene su labor el mismo día, en la misma tierra, no se repite.
+    siembras_con_su_labor = {
+        (fila["parcela_id"], fila["fecha"])
+        for fila in filas
+        if fila["tipo"] == CLAVE_LABOR and fila["clave"] == CLAVE_SIEMBRA
+    }
+    filas = [
+        fila
+        for fila in filas
+        if not (
+            fila["tipo"] == CLAVE_SIEMBRA
+            and (fila["parcela_id"], fila["fecha"]) in siembras_con_su_labor
+        )
+    ]
+
+    # La dosis por hectárea de una cosecha, con la superficie de la labor o, si no la trae, la de la
+    # tierra: una cosecha se apunta sobre la tierra entera y sin ella no hay kg/ha que dar.
+    for fila in filas:
+        if fila["tipo"] == CLAVE_COSECHA:
+            superficie = fila["hectareas"]
+            if superficie is None and fila["parcela_id"] in parcelas:
+                superficie = parcelas[fila["parcela_id"]].superficie_ha
+                fila["hectareas"] = superficie
+            fila["por_hectarea"] = superficies.la_dosis_por_hectarea(
+                cantidad=fila["cantidad"], superficie_tratada_ha=superficie
+            )
+            fila["kg_ha"] = fila["por_hectarea"]
+        fila["parcela_alias"] = (
+            parcelas[fila["parcela_id"]].alias if fila["parcela_id"] in parcelas else SIN_TIERRA
+        )
+        fila["municipio"] = (
+            parcelas[fila["parcela_id"]].municipio if fila["parcela_id"] in parcelas else ""
+        )
+
+    filas.sort(key=lambda fila: (fila["fecha"], fila["tipo"], fila["parcela_id"] or 0), reverse=True)
+    return filas
+
+
+def _el_apunte_para_la_agenda(fila: dict) -> dict:
+    """Un apunte con la forma de `trabajo_de_hoy` y del calendario: lo justo para pintarlo."""
+    return {
+        "tipo": fila["tipo"],
+        "titulo": fila["titulo"],
+        "tierra_id": fila["parcela_id"],
+        "tierra_alias": fila["parcela_alias"],
+        "cantidad": fila["cantidad"],
+        "unidad": fila["unidad"],
+        "hectareas": fila["hectareas"],
+    }
+
+
+def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list[dict]:
+    """El historial de una tierra: **un elemento por año con datos, del más nuevo al más viejo**.
+
+    No se rellena un año vacío: si en 2023 no hay nada apuntado, 2023 no está. Y cada año lleva lo que
+    de verdad hay —siembra, labores, tratamientos, abonos y cosecha—, con la dosis por hectárea y el
+    mes del abono, que es lo que David pidió ver.
+
+    El año de un apunte es **el de su campaña** cuando la trae (es la campaña que eligió el agricultor)
+    y, si no, el de su fecha. Una siembra no cuelga de ninguna campaña, así que va por su fecha.
+    """
+    anios: dict[int, dict] = {}
+
+    def _del_anio(anio: int) -> dict:
+        if anio not in anios:
+            cultivo = cultivos_por_anio.get(anio) or {}
+            anios[anio] = {
+                "anio": anio,
+                "cultivo": cultivo.get("especie"),
+                "variedad": cultivo.get("variedad"),
+                "superficie_ha": cultivo.get("superficie_cultivada_ha"),
+                "siembra": None,
+                "labores": [],
+                "tratamientos": [],
+                "abonos": [],
+                "cosecha": None,
+            }
+        return anios[anio]
+
+    # Los años de los cultivos declarados también son años con datos: una tierra con su cultivo
+    # apuntado y sin labores no es un año vacío.
+    for anio, cultivo in cultivos_por_anio.items():
+        _del_anio(anio)
+
+    for fila in sorted(filas, key=lambda una: una["fecha"]):
+        anio = fila["fecha"].year if fila["fecha"] else None
+        if anio is None:
+            continue
+        elemento = _del_anio(anio)
+        if fila["tipo"] == CLAVE_COSECHA:
+            elemento["cosecha"] = {
+                "fecha": fila["fecha"].isoformat(),
+                "kg": fila["kg"],
+                "kg_ha": fila["kg_ha"],
+            }
+        elif fila["tipo"] == CLAVE_TRATAMIENTO:
+            elemento["tratamientos"].append(
+                {
+                    "fecha": fila["fecha"].isoformat(),
+                    "producto": fila["producto"],
+                    "dosis": fila["dosis"],
+                    "dosis_unidad": fila["dosis_unidad"],
+                    "materia_activa": fila["materia_activa"],
+                }
+            )
+        elif fila["tipo"] == CLAVE_ABONO:
+            elemento["abonos"].append(
+                {
+                    "fecha": fila["fecha"].isoformat(),
+                    "mes": fila["mes"],
+                    "producto": fila["producto"],
+                    "kg": fila["kg"],
+                    "kg_ha": fila["kg_ha"],
+                }
+            )
+        else:
+            # **La siembra puede venir de la labor del día o de la ficha de la semilla**, y las dos
+            # son la siembra del año: se rellena el bloque `siembra` con la primera que llegue (las
+            # filas van de más vieja a más nueva, así que es la del principio de la campaña). Y la
+            # labor se queda además en `labores`, porque para el agricultor fue un trabajo del día.
+            if fila["clave"] == CLAVE_SIEMBRA and elemento["siembra"] is None:
+                elemento["siembra"] = {
+                    "fecha": fila["fecha"].isoformat(),
+                    "cultivo": fila["cultivo"] or fila["producto"],
+                    "variedad": fila["variedad"],
+                    "dosis_semilla_kg_ha": fila["dosis_semilla_kg_ha"],
+                }
+            if fila["tipo"] == CLAVE_SIEMBRA:
+                # La ficha de la semilla no es una labor más: ya está dicha en `siembra`.
+                continue
+            elemento["labores"].append(
+                {
+                    "fecha": fila["fecha"].isoformat(),
+                    "labor": fila["labor_clave"],
+                    "titulo": fila["titulo"],
+                    "mes": fila["mes"],
+                    "detalle": fila["detalle"],
+                }
+            )
+
+    for elemento in anios.values():
+        elemento["labores"].sort(key=lambda una: una["fecha"], reverse=True)
+        elemento["tratamientos"].sort(key=lambda uno: uno["fecha"], reverse=True)
+        elemento["abonos"].sort(key=lambda uno: uno["fecha"], reverse=True)
+        # **El cultivo del año: primero el declarado y, si no lo hay, el de la siembra.** El declarado
+        # (la hoja 2.1 del cuaderno) manda; pero una tierra que solo tiene la labor de siembra apuntada
+        # también sabe qué se sembró ese año, y callarlo dejaría la cabecera del año en blanco teniendo
+        # el dato delante. No se rellena nada más: la superficie sigue siendo la del cultivo declarado.
+        if elemento["cultivo"] is None and elemento["siembra"]:
+            elemento["cultivo"] = elemento["siembra"]["cultivo"]
+            elemento["variedad"] = elemento["siembra"]["variedad"]
+
+    return [anios[anio] for anio in sorted(anios, reverse=True)]
+
+
+def la_ficha_de_la_tierra(db: Session, *, explotacion, parcela_id: int) -> dict:
+    """**La ficha de una tierra: qué se ha hecho hoy, qué se hizo los años anteriores y su resumen.**
+
+    Es la primera pantalla que David quiere: elegir la tierra y ver **el trabajo de hoy** sin buscar
+    nada. Debajo, el historial por años. Y siempre de una tierra **de esta finca**: una tierra de otra
+    contesta 404 (`obtener_de_la_explotacion`), que es la regla de la casa para no decir si un
+    identificador existe en otro cuaderno.
+    """
+    parcela = obtener_de_la_explotacion(db, models.Parcela, parcela_id, explotacion.id)
+    campana = la_campana_activa(db, explotacion.id)
+
+    # Lo de la campaña activa, para el bloque de la tierra: su cultivo y los años anteriores.
+    cultivos = _los_cultivos(db, explotacion.id).get(parcela.id, {})
+    tierra = _una_tierra(parcela, cultivos, campana)
+
+    filas = _los_apuntes(db, explotacion.id, parcela_id=parcela.id)
+    hoy = dt.date.today()
+    trabajo_de_hoy = [
+        {
+            "tipo": fila["tipo"],
+            "fecha": fila["fecha"].isoformat(),
+            "titulo": fila["titulo"],
+            "detalle": fila["detalle"],
+            "cantidad": fila["cantidad"],
+            "unidad": fila["unidad"],
+            "hectareas": fila["hectareas"],
+            "por_hectarea": fila["por_hectarea"],
+            "unidad_por_hectarea": fila["unidad_por_hectarea"],
+        }
+        for fila in filas
+        if fila["fecha"] == hoy
+    ]
+
+    # Los cultivos declarados de la tierra, por año: es el «qué se sembró» de cada campaña.
+    cultivos_por_anio: dict[int, dict] = {}
+    for fila in db.execute(
+        select(models.ParcelaCultivo, models.Campana.anio)
+        .join(models.Campana, models.Campana.id == models.ParcelaCultivo.campana_id)
+        .where(
+            models.ParcelaCultivo.explotacion_id == explotacion.id,
+            models.ParcelaCultivo.parcela_id == parcela.id,
+        )
+    ).all():
+        cultivo, anio = fila
+        cultivos_por_anio[anio] = {
+            "especie": cultivo.especie,
+            "variedad": cultivo.variedad,
+            "superficie_cultivada_ha": cultivo.superficie_cultivada_ha,
+        }
+
+    historial = _el_historial(filas, cultivos_por_anio)
+
+    fechas = [fila["fecha"] for fila in filas if fila["fecha"] is not None]
+    ultima_cosecha = next((fila for fila in filas if fila["tipo"] == CLAVE_COSECHA), None)
+    return {
+        "tierra": tierra,
+        "trabajo_de_hoy": trabajo_de_hoy,
+        "historial": historial,
+        "resumen": {
+            "n_apuntes": len(filas),
+            "primera_fecha": min(fechas).isoformat() if fechas else None,
+            "ultima_fecha": max(fechas).isoformat() if fechas else None,
+            "kg_ha_ultima_cosecha": ultima_cosecha["kg_ha"] if ultima_cosecha else None,
+        },
+    }
+
+
+def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
+    """**Qué se ha hecho cada día**, en el rango que se pida (por defecto, el mes en curso).
+
+    Solo vuelven los días con algo: el calendario ya sabe qué días están vacíos, y mandar los 31 días con
+    su lista vacía sería mandar nada. Sin `desde` ni `hasta` se mira el mes de hoy, que es el que el
+    agricultor tiene delante al abrir la agenda.
+
+    **El rango se comprueba**: un final anterior al principio y un rango de más de un año se contestan
+    con un 422 que se entiende, no con una consulta que devuelva media vida.
+    """
+    hoy = dt.date.today()
+    desde = desde or hoy.replace(day=1)
+    hasta = hasta or _el_ultimo_dia_del_mes(desde)
+    if hasta < desde:
+        raise HTTPException(
+            status_code=422,
+            detail="El último día no puede ser anterior al primero.",
+        )
+    if (hasta - desde).days > MAXIMO_DE_DIAS_EN_EL_CALENDARIO:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "El calendario no puede mirar más de un año de golpe. Elige un tramo más corto."
+            ),
+        )
+
+    filas = _los_apuntes(db, explotacion.id, desde=desde, hasta=hasta)
+    por_dia: dict[dt.date, list[dict]] = defaultdict(list)
+    for fila in filas:
+        por_dia[fila["fecha"]].append(fila)
+
+    dias = [
+        {"fecha": fecha.isoformat(), "trabajos": [_el_apunte_para_la_agenda(fila) for fila in del_dia]}
+        for fecha, del_dia in sorted(por_dia.items())
+    ]
+    por_tipo: dict[str, int] = defaultdict(int)
+    for fila in filas:
+        por_tipo[fila["tipo"]] += 1
+    return {
+        "desde": desde.isoformat(),
+        "hasta": hasta.isoformat(),
+        "dias": dias,
+        "totales": {"por_tipo": dict(por_tipo), "n": len(filas)},
+    }
+
+
+def _el_ultimo_dia_del_mes(fecha: dt.date) -> dt.date:
+    """El último día de ese mes, sin librerías de calendario y sin cuentas raras."""
+    siguiente = fecha.replace(day=28) + dt.timedelta(days=4)
+    return siguiente - dt.timedelta(days=siguiente.day)
+
+
+def trabajos(
+    db: Session, *, explotacion, tipo: str | None = None, campana_id: int | None = None
+) -> dict:
+    """**Los trabajos de la campaña, con sus tierras y sus cantidades, filtrables por tipo.**
+
+    Es la trazabilidad de toda la explotación: cada fila lleva **su tierra y su municipio**, para poder
+    contestar «¿dónde se pasó el cultivador?» sin abrir tierra por tierra.
+
+    Los tipos de la lista salen de **lo que hay apuntado** en esa campaña (con su recuento): un filtro
+    que no tiene nada no se ofrece, y así la pantalla no enseña botones muertos. Un `tipo` que el
+    programa conoce pero que este año no tiene datos devuelve la lista vacía y su resumen a cero; uno que
+    no existe en el vocabulario contesta **422 con la lista de los que valen**, no un 500.
+    """
+    from . import trabajos as el_modulo_de_trabajos
+
+    campana = la_campana_activa(db, explotacion.id, campana_id)
+    filas = _los_apuntes(db, explotacion.id, campana=campana) if campana is not None else []
+
+    # El vocabulario de tipos que el programa conoce: las labores de su catálogo, los aperos de suelo y
+    # los dos registros que no son labores.
+    vocabulario = list(catalogos.TIPOS_LABOR) + list(el_modulo_de_trabajos.SUBTIPOS_DE_LABOREO)
+    vocabulario += [CLAVE_TRATAMIENTO, CLAVE_ABONO]
+
+    if tipo is not None and tipo not in vocabulario and tipo != CLAVE_OTROS:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "mensaje": "Ese tipo de trabajo no está en el vocabulario del programa.",
+                "tipos": vocabulario,
+            },
+        )
+
+    elegidas = [fila for fila in filas if tipo is None or fila["clave"] == tipo]
+
+    cuantas: dict[str, int] = defaultdict(int)
+    for fila in filas:
+        cuantas[fila["clave"]] += 1
+    # Los tipos que se ofrecen: los que tienen algo este año, de más a menos. Y si hay apuntes cuya
+    # clave no está en el vocabulario (una labor de un tipo nuevo), se dicen como «otros».
+    tipos = [
+        {"clave": clave, "etiqueta": _la_etiqueta_de_un_tipo(clave), "n": cuantas[clave]}
+        for clave in sorted(cuantas, key=lambda una: (-cuantas[una], una))
+    ]
+
+    por_tipo: dict[str, dict] = {}
+    for fila in elegidas:
+        suyo = por_tipo.setdefault(fila["clave"], {"n": 0, "hectareas": []})
+        suyo["n"] += 1
+        suyo["hectareas"].append(fila["hectareas"])
+    resumen_por_tipo = {
+        clave: {"n": datos["n"], "hectareas": _la_suma_de_hectareas(datos["hectareas"])}
+        for clave, datos in por_tipo.items()
+    }
+
+    return {
+        "tipos": tipos,
+        "elegido": tipo,
+        "trabajos": [
+            {
+                "fecha": fila["fecha"].isoformat(),
+                "tipo": fila["clave"],
+                "titulo": fila["titulo"],
+                "tierra_id": fila["parcela_id"],
+                "tierra_alias": fila["parcela_alias"],
+                "municipio": fila["municipio"],
+                "cantidad": fila["cantidad"],
+                "unidad": fila["unidad"],
+                "hectareas": fila["hectareas"],
+                "por_hectarea": fila["por_hectarea"],
+            }
+            for fila in elegidas
+        ],
+        "resumen": {
+            "n": len(elegidas),
+            "hectareas": _la_suma_de_hectareas([fila["hectareas"] for fila in elegidas]),
+            "por_tipo": resumen_por_tipo,
+        },
     }

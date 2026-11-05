@@ -566,7 +566,12 @@ La primera entrega de **F2** ya está construida y **la app vieja sigue viva**:
 | «Hoy» (finca, contador, lo último, botón de apuntar) | `/nuevo/` | Hecho |
 | «Mis parcelas» (contador, buscador, lista por municipio, mapa real, zoom, zona, panel con otros años) | `/nuevo/` | Hecho |
 | **Alta de tierras por código y ventana del SIGPAC** (recintos resaltados con color y etiqueta, clic para elegir, alta en bloque) | `/nuevo/` | Hecho |
-| **Tierra catalogada y editable** (alias y superficie; lo del SIGPAC se muestra) | `/nuevo/` | Hecho |
+| **Tierra primero**: ficha con mapa del contorno, trabajo de hoy e historial por campañas | `/nuevo/` | Hecho |
+| **Historial**: siembra kg/ha, labores (arado, cultivador, grada…), tratamientos, abonos kg/ha y mes, cosecha kg/ha | `/nuevo/` | Hecho |
+| **Calendario** por días con sus trabajos | `/nuevo/` | Hecho |
+| **Trabajos con filtros por tipo** (tierras, municipio, hectáreas, cantidades) | `/nuevo/` | Hecho |
+| **Facturas con fotos**: cámara, varias fotos, lectura, propuesta corregible, guardado y mano si no se lee | `/nuevo/` | Hecho |
+| Contorno SIGPAC de cada parcela en la ficha | `app/mapa_de_una_tierra.py`, `/api/mapa/tierra/{id}.png` | Hecho |
 | **Importar el cuaderno del cliente** (Cuecyl `.xlsx`: reconoce las parcelas, las crea sin duplicar y rellena la finca) | `/nuevo/` | Hecho |
 | **Mapa coloreado por uso/cultivo con leyenda + ficha al clicar** | `/nuevo/` | Hecho |
 | **Gastos/ventas y «qué falta» en «Hoy»** | `/nuevo/` | Hecho (detalle en la app vieja) |

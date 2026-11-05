@@ -1231,3 +1231,163 @@ button {
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
 }
+
+/* ---- el trabajo: listas, calendario y filtros */
+
+.trabajos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.trabajo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  text-align: left;
+}
+
+.trabajo__fecha {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+
+.trabajo__titulo {
+  font-size: 19px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.trabajo__detalle {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.calendario__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.calendario__semana,
+.calendario__rejilla {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.calendario__nombre-dia {
+  text-align: center;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  padding: var(--space-1) 0;
+}
+
+.calendario__hueco {
+  min-height: var(--toque);
+}
+
+.calendario__dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--ink);
+}
+
+.calendario__numero {
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.calendario__cuenta {
+  font-size: 10px;
+  line-height: 12px;
+  color: var(--brand);
+  font-weight: 600;
+  text-align: center;
+}
+
+.calendario__dia--con-trabajo {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.calendario__dia--elegido {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.filtros {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.historial__anio {
+  padding-top: var(--space-3);
+}
+
+.historial__fila {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.historial__fila:last-child {
+  border-bottom: 0;
+}
+
+/* ---- facturas */
+
+.fotos {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: var(--space-3) 0;
+}
+
+.foto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+.foto__imagen {
+  width: 128px;
+  height: 128px;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunk);
+}
+
+.tarjeta--boton {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}

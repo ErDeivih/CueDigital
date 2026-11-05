@@ -47,6 +47,7 @@ import base64
 import json
 import pathlib
 import sys
+import tempfile
 import uuid
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -236,12 +237,32 @@ def comprobar_un_ancho(nav: NavegadorDeVerdad, base: str, ancho: int) -> None:
     comprobar(filas > 0, f"{ancho} px: hay filas de tierras ({filas})")
 
     clic_en_visible(nav, "[data-tierra-id]")
-    espera_panel = nav.esperar("document.querySelector('[data-panel]') !== null", segundos=10)
-    alias = nav.evaluar("(document.querySelector('[data-panel-alias]')||{}).textContent || ''") or ""
-    comprobar(espera_panel and bool(alias.strip()),
-              f"{ancho} px: el panel de la tierra enseña su alias ({alias!r})")
-    comprobar(bool(nav.evaluar("!!document.querySelector('[data-panel-otros-anios]')")),
-              f"{ancho} px: el panel tiene el bloque de otros años")
+    # La tierra se abre en su ficha (vista «tierra»). El panel de dentro de la lista sigue
+    # existiendo en algunas pantallas, así que se acepta cualquiera de los dos.
+    espera_ficha = nav.esperar(
+        "!!document.querySelector('[data-vista=\"tierra\"]') || !!document.querySelector('[data-panel]')",
+        segundos=15,
+    )
+    alias = nav.evaluar(
+        "(() => { const p = document.querySelector('[data-panel-alias]');"
+        " const h = document.querySelector('[data-vista=\"tierra\"] h1');"
+        " return (p && p.textContent) || (h && h.textContent) || ''; })()"
+    ) or ""
+    comprobar(espera_ficha and bool(alias.strip()),
+              f"{ancho} px: al clicar la tierra se abre su ficha con el nombre ({alias!r})")
+    otros = bool(nav.evaluar(
+        "!!document.querySelector('[data-panel-otros-anios]')"
+        " || !!document.querySelector('[data-historial-anio]')"
+    ))
+    comprobar(otros, f"{ancho} px: la ficha tiene el bloque de otros años")
+
+    # La ficha nueva tapa la lista: se vuelve a «Mis parcelas» para mirar su mapa.
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar(
+        "(() => { const raiz = document.querySelector('[data-vista=\"tierras\"]');"
+        " return !!raiz && raiz.getAttribute('data-estado') === 'listo'; })()",
+        segundos=15,
+    )
 
     # El mapa: o carga la ortofoto, o la app dice que no ha podido (nunca una caja muda).
     comprobar(bool(nav.evaluar("!!document.querySelector('[data-mapa]')")), f"{ancho} px: está el mapa")
@@ -415,6 +436,139 @@ def comprobar_alta_e_importacion(nav: NavegadorDeVerdad, base: str) -> None:
     print(f"  (captura: {captura(nav, 'alta-y-cuaderno').relative_to(RAIZ)})")
 
 
+def crear_una_foto_de_factura() -> pathlib.Path:
+    """Una foto sintética, solo para el arnés: no es una factura de verdad, es para ver el flujo."""
+    from PIL import Image, ImageDraw
+
+    destino = pathlib.Path(tempfile.gettempdir()) / "cd-factura-de-prueba.png"
+    imagen = Image.new("RGB", (900, 1200), "white")
+    lapiz = ImageDraw.Draw(imagen)
+    renglones = [
+        "FACTURA",
+        "Proveedor de Ejemplo, S.L.",
+        "NIF: B12345678",
+        "Numero: 2026/00123",
+        "Fecha: 05/11/2026",
+        "Abono 33,5%  1000 kg  0,45 EUR/kg",
+        "Base imponible: 450,00",
+        "IVA 21%: 94,50",
+        "TOTAL: 544,50 EUR",
+    ]
+    for indice, renglon in enumerate(renglones):
+        lapiz.text((60, 80 + indice * 80), renglon, fill="black")
+    imagen.save(destino)
+    return destino
+
+
+def comprobar_ficha_calendario_trabajos_y_facturas(nav: NavegadorDeVerdad, base: str) -> None:
+    """Tierra primero, historial, calendario, filtros por tipo y facturas con foto."""
+    print("\n== Tierra, historial, calendario, filtros y facturas ==")
+    nav.medir(1440, 1000)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar(
+        "(() => { const raiz = document.querySelector('[data-vista=\"tierras\"]');"
+        " return !!raiz && raiz.getAttribute('data-estado') === 'listo'"
+        " && document.querySelectorAll('[data-tierra-id]').length > 0; })()",
+        segundos=20,
+    )
+    clic_en_visible(nav, "[data-tierra-id]")
+    llego_tierra = nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
+    comprobar(llego_tierra, "al clicar la tierra se abre su ficha")
+    comprobar(bool(nav.evaluar("!!document.querySelector('[data-trabajo-de-hoy]')")),
+              "la ficha enseña el trabajo de hoy")
+    comprobar(bool(nav.evaluar("!!document.querySelector('[data-historial]')")),
+              "la ficha enseña el historial de la tierra")
+    if llego_tierra:
+        # La primera tierra de la lista puede no tener forma en el SIGPAC (y entonces la ficha lo
+        # dice, que es lo correcto). Se prueban varias hasta encontrar una con contorno dibujado.
+        tiene_imagen = False
+        for intento in range(6):
+            tiene_imagen = nav.esperar(
+                "(() => { const i = document.querySelector('[data-vista=\"tierra\"] img');"
+                " return !!i && i.complete && i.naturalWidth > 0; })()",
+                segundos=15,
+            )
+            if tiene_imagen:
+                break
+            sin_forma = "no tiene forma en el SIGPAC" in texto_visible(nav)
+            if not sin_forma:
+                break
+            clic_en_visible(nav, "[data-destino=tierras]")
+            nav.esperar("document.querySelector('[data-vista=\"tierras\"]') !== null", segundos=10)
+            nav.evaluar(
+                "(() => { const f = document.querySelectorAll('[data-tierra-id]')[" + str(intento + 1) + "];"
+                " if (!f) return false; f.click(); return true; })()"
+            )
+            nav.esperar("document.querySelector('[data-vista=\"tierra\"]') !== null", segundos=10)
+        comprobar(tiene_imagen, "la ficha enseña la imagen de la tierra con su contorno")
+        print(f"  (captura: {captura(nav, 'tierra-historial').relative_to(RAIZ)})")
+
+    clic_en_visible(nav, "[data-destino=calendario]")
+    llego_cal = nav.esperar("!!document.querySelector('[data-vista=\"calendario\"]')", segundos=15)
+    comprobar(llego_cal, "se abre el calendario")
+    dias = nav.evaluar("document.querySelectorAll('[data-dia-calendario]').length") or 0
+    comprobar(dias >= 28, f"el calendario tiene los días del mes ({dias})")
+    if dias:
+        nav.evaluar(
+            "(() => { const d = document.querySelector('[data-dia-calendario]');"
+            " if (!d) return false; d.click(); return true; })()"
+        )
+        nav.esperar("!!document.querySelector('[data-trabajo-del-dia]')", segundos=10)
+        comprobar(bool(nav.evaluar("!!document.querySelector('[data-trabajo-del-dia]')")),
+                  "al elegir un día se ven sus trabajos")
+        print(f"  (captura: {captura(nav, 'calendario').relative_to(RAIZ)})")
+
+    clic_en_visible(nav, "[data-destino=trabajos]")
+    llego_trab = nav.esperar("!!document.querySelector('[data-vista=\"trabajos\"]')", segundos=15)
+    comprobar(llego_trab, "se abre la lista de trabajos con filtros")
+    filtros = nav.evaluar("document.querySelectorAll('[data-filtro-tipo]').length") or 0
+    comprobar(filtros >= 1, f"hay filtros por tipo de trabajo ({filtros})")
+    if filtros:
+        nav.evaluar(
+            "(() => { const f = document.querySelector('[data-filtro-tipo]');"
+            " if (!f) return false; f.click(); return true; })()"
+        )
+        nav.esperar("document.querySelector('[data-trabajo-fila]') !== null ||"
+                    " document.body.innerText.includes('No hay')", segundos=15)
+        comprobar(True, "al filtrar por un tipo se enseña su lista (o que no hay)")
+    print(f"  (captura: {captura(nav, 'trabajos-filtrados').relative_to(RAIZ)})")
+
+    clic_en_visible(nav, "[data-destino=facturas]")
+    llego_fact = nav.esperar("!!document.querySelector('[data-vista=\"facturas\"]')", segundos=15)
+    comprobar(llego_fact, "se abre la pantalla de facturas")
+    hay_camara = bool(nav.evaluar("!!document.querySelector('[data-factura-foto]')"))
+    comprobar(hay_camara, "la pantalla de facturas tiene la foto y la cámara")
+    if hay_camara:
+        foto = crear_una_foto_de_factura()
+        raiz = nav.orden("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
+        nodo = nav.orden("DOM.querySelector", {"nodeId": raiz, "selector": "[data-factura-foto]"})["nodeId"]
+        if nodo:
+            nav.orden("DOM.setFileInputFiles", {"nodeId": nodo, "files": [str(foto)]})
+            nav.esperar("document.querySelectorAll('[data-vista=\"facturas\"] img').length > 0",
+                        segundos=15)
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-factura-leer]');"
+                " if (!b || b.disabled) return false; b.click(); return true; })()"
+            )
+            leida = nav.esperar(
+                "(() => document.querySelector('[data-factura-propuesta]') !== null"
+                " || document.body.innerText.includes('No se ha podido leer la factura'))()",
+                segundos=60,
+            )
+            texto = texto_visible(nav)
+            if leida and "No se ha podido leer la factura" in texto:
+                comprobar(True, "si el lector no entiende la foto, lo dice y deja escribirla a mano")
+            elif leida:
+                comprobar(True, "la factura se lee y se enseña la propuesta para revisar")
+            else:
+                comprobar(False, "la foto se queda sin respuesta: ni propuesta ni aviso")
+        else:
+            comprobar(False, "no se encuentra el campo de la foto de la factura")
+        print(f"  (captura: {captura(nav, 'factura-leida').relative_to(RAIZ)})")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -502,6 +656,7 @@ def main() -> int:
         for ancho in ANCHOS:
             comprobar_un_ancho(nav, base, ancho)
         comprobar_alta_e_importacion(nav, base)
+        comprobar_ficha_calendario_trabajos_y_facturas(nav, base)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

@@ -18,6 +18,8 @@ de abrir el fichero.
 
 from __future__ import annotations
 
+import datetime as dt
+
 from fastapi import APIRouter, File, UploadFile
 
 from .. import nuevo
@@ -97,3 +99,55 @@ def lo_que_falta_del_cuaderno(explotacion: ExplotacionActual, db: Db) -> dict:
     alta del dominio y código SIEX). Lo primero **no bloquea**; lo segundo, sí.
     """
     return nuevo.que_falta(db, explotacion=explotacion)
+
+
+# --------------------------------------------------------------------------- IMP-6 · la tierra
+
+
+@router.get("/tierra/{parcela_id}")
+def la_ficha_de_una_tierra(
+    parcela_id: int, explotacion: ExplotacionActual, db: Db
+) -> dict:
+    """**La ficha de una tierra: qué se ha hecho hoy sobre ella, su historial y su resumen.**
+
+    Es la primera pantalla que pidió David: **tierra primero**. Arriba, los apuntes de **hoy** en esa
+    tierra (la labor, la siembra, el tratamiento, el abono o la cosecha); debajo, un elemento por año
+    con datos —del más nuevo al más viejo, sin rellenar años vacíos— con las dosis por hectárea y los
+    meses del abono.
+
+    Una tierra de otra finca contesta **404** y no 403, como en todo el programa: no se dice si un
+    identificador existe en otro cuaderno. Una tierra propia sin apuntes devuelve las listas vacías y
+    el resumen a cero: no se rellena con nada.
+    """
+    return nuevo.la_ficha_de_la_tierra(db, explotacion=explotacion, parcela_id=parcela_id)
+
+
+@router.get("/calendario")
+def el_calendario_de_los_trabajos(
+    explotacion: ExplotacionActual,
+    db: Db,
+    desde: dt.date | None = None,
+    hasta: dt.date | None = None,
+) -> dict:
+    """**Qué se ha hecho cada día**, entre dos fechas (por defecto, el mes en curso).
+
+    Solo vuelven los días con algo: el calendario ya sabe qué días están vacíos. Un rango al revés o de
+    más de un año contesta **422** con su motivo, en vez de devolver miles de filas.
+    """
+    return nuevo.calendario(db, explotacion=explotacion, desde=desde, hasta=hasta)
+
+
+@router.get("/trabajos")
+def los_trabajos_de_la_campana(
+    explotacion: ExplotacionActual,
+    db: Db,
+    tipo: str | None = None,
+    campana_id: int | None = None,
+) -> dict:
+    """**Los trabajos de la campaña, con su tierra y su municipio**, y filtrables por tipo.
+
+    Los tipos que se ofrecen salen de lo que hay apuntado (con su recuento), así que no se enseña un
+    filtro que no lleva a nada. Un tipo que el programa conoce y este año no tiene datos devuelve la
+    lista vacía; uno que no existe en el vocabulario contesta **422** con la lista de los que valen.
+    """
+    return nuevo.trabajos(db, explotacion=explotacion, tipo=tipo, campana_id=campana_id)

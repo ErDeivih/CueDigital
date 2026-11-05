@@ -29,32 +29,48 @@ import {
   ALTO_MAPA,
   ANCHO_MAPA,
   CLAVE_TOKEN,
+  agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
   bboxDeMunicipio,
   bboxDelConjunto,
   cajaDeLosRecintos,
   calcularTotales,
+  claveDeTipo,
   colorDeTierra,
   colorDeUso,
+  cuerpoDeLaFactura,
   datosDelPanel,
   decidirEstado,
   etiquetaCampana,
+  etiquetaDeTrabajo,
+  filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  mesEnPalabras,
   municipioDeTierra,
+  nombreDeMes,
+  normalizaCalendario,
   normalizaImportacion,
+  normalizaPropuestaDeFactura,
   normalizaQueFalta,
   normalizaResumen,
+  normalizaTierra,
+  normalizaTrabajo,
+  normalizaTrabajos,
+  numeroDe,
   proyeccionDeAnillo,
   proyeccionDePunto,
   puntoDelMapa,
   recintosConPuntos,
   referenciasDeTexto,
+  rejillaDelMes,
+  relacionDeTipos,
   rutaDeAnillo,
   sinMapa,
+  sumaDeHectareas,
   textos,
   textoRelleno,
   urlDelMapa,
@@ -74,6 +90,15 @@ const RUTA_MAPA_PUNTO = "/api/mapa/punto";
 const RUTA_IMPORTAR = "/api/nuevo/importar-cuaderno";
 const RUTA_CUADERNO_LEER = "/api/cuaderno-cyl/leer";
 const RUTA_CUADERNO_IMPORTAR = "/api/cuaderno-cyl/importar";
+const RUTA_TIERRA = (id) => `/api/nuevo/tierra/${id}`;
+const RUTA_CALENDARIO = (desde, hasta) => `/api/nuevo/calendario?desde=${desde}&hasta=${hasta}`;
+const RUTA_TRABAJOS = (tipo) => (tipo ? `/api/nuevo/trabajos?tipo=${encodeURIComponent(tipo)}` : "/api/nuevo/trabajos");
+const RUTA_FACTURAS = "/api/facturas";
+const RUTA_FACTURAS_LEER = "/api/facturas/leer";
+const RUTA_FACTURA_FICHERO = (id) => `/api/facturas/${id}/fichero`;
+const RUTA_DOCUMENTOS = "/api/documentos";
+const RUTA_DOCUMENTO_FICHERO = (id) => `/api/documentos/${id}/fichero`;
+const RUTA_MAPA_TIERRA = (id, ancho, alto) => `/api/mapa/tierra/${id}.png?ancho=${ancho}&alto=${alto}`;
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
 const LADO_MINIMO = 0.0008;
@@ -456,8 +481,12 @@ function claseNav(activa) {
 }
 
 function BarraLateral({ vista, ir }) {
+  const esTierras = vista === "tierras" || vista === "alta" || vista === "tierra";
   const claseHoy = claseNav(vista === "hoy");
-  const claseTierras = claseNav(vista === "tierras" || vista === "alta");
+  const claseTierras = claseNav(esTierras);
+  const claseCalendario = claseNav(vista === "calendario");
+  const claseTrabajos = claseNav(vista === "trabajos");
+  const claseFacturas = claseNav(vista === "facturas");
 
   return html`<nav className="barra-lateral" data-nav-lateral aria-label="Secciones">
     <p className="barra-lateral__titulo">${textos.app.nombre}</p>
@@ -466,17 +495,25 @@ function BarraLateral({ vista, ir }) {
         <span className="nav__icono"><${Icono} nombre="hoy" /></span>
         ${textos.nav.hoy}
       </button>
-      <button type="button" className=${claseTierras} data-destino="tierras" onClick=${() => ir("tierras")} aria-current=${vista === "tierras" ? "page" : undefined}>
+      <button type="button" className=${claseTierras} data-destino="tierras" onClick=${() => ir("tierras")} aria-current=${esTierras ? "page" : undefined}>
         <span className="nav__icono"><${Icono} nombre="tierras" /></span>
         ${textos.nav.tierras}
+      </button>
+      <button type="button" className=${claseCalendario} data-destino="calendario" onClick=${() => ir("calendario")} aria-current=${vista === "calendario" ? "page" : undefined}>
+        <span className="nav__icono"><${Icono} nombre="campana" /></span>
+        ${textos.nav.calendario}
+      </button>
+      <button type="button" className=${claseTrabajos} data-destino="trabajos" onClick=${() => ir("trabajos")} aria-current=${vista === "trabajos" ? "page" : undefined}>
+        <span className="nav__icono"><${Icono} nombre="cuaderno" /></span>
+        ${textos.nav.trabajos}
+      </button>
+      <button type="button" className=${claseFacturas} data-destino="facturas" onClick=${() => ir("facturas")} aria-current=${vista === "facturas" ? "page" : undefined}>
+        <span className="nav__icono"><${Icono} nombre="documentos" /></span>
+        ${textos.nav.facturas}
       </button>
       <a className="nav__enlace" href="/" data-destino="cuaderno">
         <span className="nav__icono"><${Icono} nombre="cuaderno" /></span>
         ${textos.nav.cuaderno}
-      </a>
-      <a className="nav__enlace" href="/">
-        <span className="nav__icono"><${Icono} nombre="campana" /></span>
-        ${textos.nav.campana}
       </a>
       <a className="nav__enlace" href="/">
         <span className="nav__icono"><${Icono} nombre="pac" /></span>
@@ -485,6 +522,10 @@ function BarraLateral({ vista, ir }) {
       <a className="nav__enlace" href="/">
         <span className="nav__icono"><${Icono} nombre="documentos" /></span>
         ${textos.nav.documentos}
+      </a>
+      <a className="nav__enlace" href="/">
+        <span className="nav__icono"><${Icono} nombre="persona" /></span>
+        ${textos.mas.ajustes}
       </a>
     </div>
   </nav>`;
@@ -495,15 +536,18 @@ function claseDestino(activa, base) {
 }
 
 function BarraInferior({ vista, ir }) {
+  const esTierras = vista === "tierras" || vista === "alta" || vista === "tierra";
   const claseHoy = claseDestino(vista === "hoy", "barra-inferior__destino");
-  const claseTierras = claseDestino(vista === "tierras" || vista === "alta", "barra-inferior__destino");
+  const claseTierras = claseDestino(esTierras, "barra-inferior__destino");
+  const claseCalendario = claseDestino(vista === "calendario", "barra-inferior__destino");
+  const claseMas = claseDestino(vista === "mas" || vista === "trabajos" || vista === "facturas", "barra-inferior__destino");
 
   return html`<nav className="barra-inferior" data-nav-inferior aria-label="Los cinco destinos">
     <button type="button" className=${claseHoy} data-destino="hoy" onClick=${() => ir("hoy")} aria-current=${vista === "hoy" ? "page" : undefined}>
       <${Icono} nombre="hoy" />
       ${textos.nav.hoy}
     </button>
-    <button type="button" className=${claseTierras} data-destino="tierras" onClick=${() => ir("tierras")} aria-current=${vista === "tierras" ? "page" : undefined}>
+    <button type="button" className=${claseTierras} data-destino="tierras" onClick=${() => ir("tierras")} aria-current=${esTierras ? "page" : undefined}>
       <${Icono} nombre="tierras" />
       ${textos.nav.tierras}
     </button>
@@ -511,14 +555,14 @@ function BarraInferior({ vista, ir }) {
       <${Icono} nombre="apuntar" tamano=${20} />
       ${textos.nav.apuntar}
     </a>
-    <a className="barra-inferior__destino" href="/" data-destino="cuaderno">
-      <${Icono} nombre="cuaderno" />
-      ${textos.nav.cuaderno}
-    </a>
-    <a className="barra-inferior__destino" href="/" data-destino="mas">
+    <button type="button" className=${claseCalendario} data-destino="calendario" onClick=${() => ir("calendario")} aria-current=${vista === "calendario" ? "page" : undefined}>
+      <${Icono} nombre="campana" />
+      ${textos.nav.calendario}
+    </button>
+    <button type="button" className=${claseMas} data-destino="mas" onClick=${() => ir("mas")} aria-current=${claseMas.includes("--activo") ? "page" : undefined}>
       <${Icono} nombre="puntos" />
       ${textos.nav.mas}
-    </a>
+    </button>
   </nav>`;
 }
 
@@ -842,7 +886,7 @@ function Panel({ tierra, alCerrar, alGuardar }) {
 
 // ---------------------------------------------------------------- Mis tierras
 
-function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras }) {
+function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras, alAbrirTierra, tierraAbierta }) {
   const tierras = (datos && datos.tierras) || [];
   const municipios = (datos && datos.municipios) || [];
 
@@ -857,9 +901,9 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras }) {
 
   const [busqueda, setBusqueda] = useState("");
   const [municipio, setMunicipio] = useState("");
-  const [elegidaId, setElegidaId] = useState(null);
   const [caja, setCaja] = useState(null);
   const [campoDeColor, setCampoDeColor] = useState("uso");
+  const elegidaId = tierraAbierta || null;
 
   const municipioPorDefecto = useMemo(() => {
     const conForma = municipiosDelMapa.find((m) => Array.isArray(m.bbox) && m.bbox.length === 4);
@@ -948,14 +992,13 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras }) {
   const leyenda = leyendaDe(tierras, campoDeColor);
 
   const alElegir = (tierra) => {
-    setElegidaId(tierra.id);
     const suMunicipio = municipioDeTierra(tierra);
     if (suMunicipio && suMunicipio !== municipio) setMunicipio(suMunicipio);
+    alAbrirTierra(tierra.id);
   };
 
   const alCambiarMunicipio = (nombre) => {
     setMunicipio(nombre);
-    setElegidaId(null);
   };
 
   const alZoom = (sentido) => {
@@ -1034,9 +1077,6 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras }) {
       campo=${campoDeColor}
     />
     <${Leyenda} leyenda=${leyenda} campo=${campoDeColor} />
-    ${elegida
-      ? html`<${Panel} tierra=${elegida} alCerrar=${() => setElegidaId(null)} alGuardar=${alReintentar} campo=${campoDeColor} />`
-      : null}
   </div>`;
 
   return html`<div>
@@ -1654,11 +1694,720 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
   </div>`;
 }
 
+// ---------------------------------------------------------------- la tierra
+
+function pedirFormulario(ruta, formulario) {
+  const token = leerToken();
+  if (!token) return Promise.resolve({ estado: "sin-permiso" });
+  return fetch(ruta, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formulario })
+    .then(async (respuesta) => {
+      if (respuesta.status === 401 || respuesta.status === 403) {
+        borrarToken();
+        return { estado: "sin-permiso" };
+      }
+      if (respuesta.status === 404 || respuesta.status === 405) return { estado: "no-disponible" };
+      if (!respuesta.ok) return { estado: "error", codigo: respuesta.status };
+      try {
+        return { estado: "ok", datos: await respuesta.json() };
+      } catch (fallo) {
+        return { estado: "ok", datos: null };
+      }
+    })
+    .catch(() => ({ estado: "error" }));
+}
+
+function cajaDeLaTierra(tierra) {
+  const anillo = tierra && Array.isArray(tierra.anillo) ? tierra.anillo : [];
+  if (anillo.length >= 3) {
+    const lons = anillo.map((punto) => punto[0]);
+    const lats = anillo.map((punto) => punto[1]);
+    return cajaQueSePuedePedir([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
+  }
+  const centro = tierra && Array.isArray(tierra.centro) ? tierra.centro : null;
+  if (!centro) return null;
+  const medio = 0.002;
+  return cajaQueSePuedePedir([centro[0] - medio, centro[1] - medio, centro[0] + medio, centro[1] + medio]);
+}
+
+function FilaDeTrabajo({ trabajo, conTierra = true }) {
+  const detalles = [];
+  if (conTierra && trabajo.tierra) detalles.push(trabajo.tierra);
+  if (conTierra && trabajo.municipio) detalles.push(trabajo.municipio);
+  if (trabajo.hectareas !== null) {
+    detalles.push(`${formateaNumero(trabajo.hectareas)} ${textos.tierras.panel.hectareas}`);
+  }
+  if (trabajo.cantidad !== null) {
+    detalles.push(`${formateaNumero(trabajo.cantidad)}${trabajo.unidad ? ` ${trabajo.unidad}` : ""}`);
+  }
+
+  return html`<li className="trabajo">
+    <span className="trabajo__fecha">${fechaDe(trabajo.fecha)}</span>
+    <span className="trabajo__titulo">${trabajo.etiqueta}</span>
+    ${detalles.length ? html`<span className="trabajo__detalle">${detalles.join(" · ")}</span>` : null}
+  </li>`;
+}
+
+function BloqueDeHoy({ estado, trabajos, alReintentar }) {
+  if (estado === "cargando") {
+    return html`<section className="tarjeta" data-trabajo-de-hoy aria-labelledby="hoy-tierra-titulo">
+      <h2 className="tarjeta__titulo" id="hoy-tierra-titulo">${textos.tierra.hoy}</h2>
+      <p className="estado__texto">${textos.tierra.cargandoHoy}</p>
+    </section>`;
+  }
+  if (estado === "sin-permiso") {
+    return html`<section className="tarjeta" data-trabajo-de-hoy>
+      <h2 className="tarjeta__titulo">${textos.tierra.hoy}</h2>
+      <p className="estado__texto">${textos.comun.sinPermiso}</p>
+      <a className="boton boton--principal" data-entrar href="/">${textos.comun.entrar}</a>
+    </section>`;
+  }
+  if (estado === "error" || estado === "no-disponible") {
+    return html`<section className="tarjeta" data-trabajo-de-hoy>
+      <h2 className="tarjeta__titulo">${textos.tierra.hoy}</h2>
+      <p className="estado__texto">${textos.comun.todaviaNo}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${alReintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </section>`;
+  }
+
+  const filas = trabajos.map((trabajo, indice) => html`<${FilaDeTrabajo} key=${`hoy-${indice}`} trabajo=${trabajo} conTierra=${false} />`);
+  return html`<section className="tarjeta" data-trabajo-de-hoy=${trabajos.length} aria-labelledby="hoy-tierra-titulo">
+    <h2 className="tarjeta__titulo" id="hoy-tierra-titulo">${textos.tierra.hoy}</h2>
+    ${trabajos.length ? html`<ul className="trabajos-lista">${filas}</ul>` : html`<p className="estado__texto">${textos.tierra.sinHoy}</p>`}
+  </section>`;
+}
+
+function BloqueDeHistorial({ estado, anios, alReintentar }) {
+  const cabecera = html`<h2 className="tarjeta__titulo" id="historial-titulo">${textos.tierra.historial}</h2>`;
+
+  if (estado === "cargando") {
+    return html`<section className="tarjeta" data-historial aria-labelledby="historial-titulo">
+      ${cabecera}
+      <p className="estado__texto">${textos.tierra.cargandoHistorial}</p>
+    </section>`;
+  }
+  if (estado === "sin-permiso") {
+    return html`<section className="tarjeta" data-historial>
+      ${cabecera}
+      <p className="estado__texto">${textos.comun.sinPermiso}</p>
+      <a className="boton boton--principal" data-entrar href="/">${textos.comun.entrar}</a>
+    </section>`;
+  }
+  if (estado === "error" || estado === "no-disponible") {
+    return html`<section className="tarjeta" data-historial>
+      ${cabecera}
+      <p className="estado__texto">${textos.tierra.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${alReintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </section>`;
+  }
+
+  const bloques = anios.map((anio) => {
+    const delAnio = [anio.cultivo, anio.variedad].filter(Boolean).join(" · ");
+    const superficie = anio.superficie_ha === null || anio.superficie_ha === undefined
+      ? null
+      : `${formateaNumero(anio.superficie_ha)} ${textos.tierras.panel.hectareas}`;
+    return html`<section key=${`anio-${anio.anio}`} data-historial-anio=${anio.anio} className="historial__anio">
+      <h3 className="grupo__cabecera">
+        <span className="grupo__nombre">${anio.anio}</span>
+        <span className="grupo__cuenta">${[delAnio, superficie].filter(Boolean).join(" · ")}</span>
+      </h3>
+      ${anio.filas.map((fila, indice) => html`<article className="historial__fila" key=${`fila-${anio.anio}-${indice}`}>
+        <span className="trabajo__titulo">${fila.etiqueta}</span>
+        ${fila.detalles.length ? html`<span className="trabajo__detalle">${fila.detalles.join(" · ")}</span>` : null}
+      </article>`)}
+    </section>`;
+  });
+
+  return html`<section className="tarjeta" data-historial=${anios.length} aria-labelledby="historial-titulo">
+    ${cabecera}
+    ${anios.length ? bloques : html`<p className="estado__texto">${textos.tierra.sinHistorial}</p>`}
+  </section>`;
+}
+
+function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado }) {
+  const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
+  const ficha = usarPantalla(RUTA_TIERRA(tierraId), Boolean(tierraId));
+  const [usaElServidor, setUsaElServidor] = useState(true);
+  const datos = normalizaTierra(ficha.estado === "listo" ? ficha.datos : null, tierras);
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (ficha.estado === "sin-permiso") alEstado("sin-permiso");
+    else if (ficha.estado === "cargando") alEstado("cargando");
+    else if (ficha.estado === "error") alEstado("error");
+    else alEstado(tierra ? "listo" : "vacio");
+  }, [ficha.estado, tierra, alEstado]);
+
+  if (!tierra) {
+    return html`<div>
+      <button type="button" className="boton" data-volver onClick=${alVolver}>${textos.tierra.volver}</button>
+      <div className="estado">
+        <p className="estado__texto">${textos.tierras.sinResultados}</p>
+      </div>
+    </div>`;
+  }
+
+  const caja = cajaDeLaTierra(tierra);
+  const nombreDelMunicipio = tierra.municipio || textos.tierras.sinMunicipio;
+
+  const mapaDelCliente = caja
+    ? html`<div className="mapa__lienzo">
+        <img className="mapa__foto" data-mapa-imagen src=${urlDelMapa(caja, ANCHO_MAPA, ALTO_MAPA)} alt=${textos.tierra.mapa} />
+        <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" aria-hidden="true">
+          ${rutaDeAnillo(tierra.anillo, caja, ANCHO_MAPA, ALTO_MAPA)
+            ? html`<path className="mapa__anillo" d=${rutaDeAnillo(tierra.anillo, caja, ANCHO_MAPA, ALTO_MAPA)} style=${{ stroke: "var(--brand-bright)" }} />`
+            : null}
+        </svg>
+      </div>`
+    : html`<p className="estado__texto">${textos.tierra.sinMapa}</p>`;
+
+  const mapa = usaElServidor && caja
+    ? html`<div className="mapa__lienzo">
+        <img
+          className="mapa__foto"
+          data-mapa-imagen
+          src=${RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA)}
+          alt=${textos.tierra.mapa}
+          onError=${() => setUsaElServidor(false)}
+        />
+      </div>`
+    : mapaDelCliente;
+
+  return html`<div className="pantalla-tierra" data-tierra-id=${tierra.id}>
+    <header className="pagina__cabecera">
+      <div className="pagina__fila">
+        <div>
+          <button type="button" className="boton" data-volver onClick=${alVolver}>${textos.tierra.volver}</button>
+          <h1 className="pagina__titulo">${tierra.alias}</h1>
+          <p className="pagina__dato">
+            ${nombreDelMunicipio}
+            ${tierra.superficie_ha === null || tierra.superficie_ha === undefined ? "" : ` · ${formateaNumero(tierra.superficie_ha)} ${textos.tierras.panel.hectareas}`}
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <section className="tarjeta" aria-labelledby="mapa-tierra-titulo">
+      <h2 className="tarjeta__titulo" id="mapa-tierra-titulo">${textos.tierra.mapa}</h2>
+      ${mapa}
+    </section>
+
+    <${Panel} tierra=${tierra} alCerrar=${alVolver} alGuardar=${alReintentar} />
+
+    <${BloqueDeHoy} estado=${ficha.estado} trabajos=${datos.trabajoDeHoy} alReintentar=${ficha.reintentar} />
+    <${BloqueDeHistorial} estado=${ficha.estado} anios=${datos.historial} alReintentar=${ficha.reintentar} />
+  </div>`;
+}
+
+// ---------------------------------------------------------------- calendario
+
+function VistaCalendario({ tierras, alEstado }) {
+  const hoy = new Date();
+  const [anio, setAnio] = useState(hoy.getFullYear());
+  const [mes, setMes] = useState(hoy.getMonth() + 1);
+  const [elegido, setElegido] = useState(() => textoDeHoy(hoy));
+
+  const desde = `${anio}-${String(mes).padStart(2, "0")}-01`;
+  const hasta = `${anio}-${String(mes).padStart(2, "0")}-${String(new Date(anio, mes, 0).getDate()).padStart(2, "0")}`;
+  const pantalla = usarPantalla(RUTA_CALENDARIO(desde, hasta), true);
+  const datos = normalizaCalendario(pantalla.estado === "listo" ? pantalla.datos : null, tierras);
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (pantalla.estado === "sin-permiso") alEstado("sin-permiso");
+    else if (pantalla.estado === "cargando") alEstado("cargando");
+    else if (pantalla.estado === "error") alEstado("error");
+    else alEstado("listo");
+  }, [pantalla.estado, alEstado]);
+
+  const porFecha = new Map(datos.dias.map((dia) => [dia.fecha, dia]));
+  const celdas = rejillaDelMes(anio, mes);
+  const diaElegido = elegido ? porFecha.get(elegido) || null : null;
+
+  const cambiarMes = (paso) => {
+    const fecha = new Date(anio, mes - 1 + paso, 1);
+    setAnio(fecha.getFullYear());
+    setMes(fecha.getMonth() + 1);
+    setElegido(null);
+  };
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.calendario.titulo}</h1>
+    <div className="calendario__barra">
+      <button type="button" className="boton" data-mes-anterior aria-label=${textos.calendario.anterior} onClick=${() => cambiarMes(-1)}>
+        <${Icono} nombre="menos" tamano=${20} />
+      </button>
+      <p className="pagina__dato" data-mes-en-palabras>${nombreDeMes(anio, mes)}</p>
+      <button type="button" className="boton" data-mes-siguiente aria-label=${textos.calendario.siguiente} onClick=${() => cambiarMes(1)}>
+        <${Icono} nombre="mas" tamano=${20} />
+      </button>
+    </div>
+  </header>`;
+
+  if (pantalla.estado === "sin-permiso") {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+  if (pantalla.estado === "error" || pantalla.estado === "no-disponible") {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.calendario.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${pantalla.reintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </div>`;
+  }
+
+  const nombresDeDias = ["L", "M", "X", "J", "V", "S", "D"];
+  const celdasPintadas = celdas.map((celda, indice) => {
+    if (!celda.delMes) {
+      return html`<div className="calendario__hueco" key=${`hueco-${indice}`}></div>`;
+    }
+    const delDia = porFecha.get(celda.fecha);
+    const cuantos = delDia ? delDia.n : 0;
+    const clase = ["calendario__dia", cuantos ? "calendario__dia--con-trabajo" : "", elegido === celda.fecha ? "calendario__dia--elegido" : ""]
+      .filter(Boolean)
+      .join(" ");
+    const palabra = cuantos === 1 ? "1 trabajo" : `${cuantos} trabajos`;
+    return html`<button
+      type="button"
+      key=${`dia-${celda.fecha}`}
+      className=${clase}
+      data-dia-calendario=${celda.fecha}
+      aria-pressed=${elegido === celda.fecha}
+      onClick=${() => setElegido(celda.fecha)}
+    >
+      <span className="calendario__numero">${celda.dia}</span>
+      ${cuantos ? html`<span className="calendario__cuenta">${palabra}</span>` : null}
+    </button>`;
+  });
+
+  const filasDelDia = diaElegido && diaElegido.trabajos.length
+    ? diaElegido.trabajos.map((trabajo, indice) => html`<${FilaDeTrabajo} key=${`dia-trabajo-${indice}`} trabajo=${trabajo} conTierra=${true} />`)
+    : null;
+
+  return html`<div className="pantalla-calendario">
+    ${cabecera}
+    <section className="tarjeta" aria-label=${textos.calendario.titulo}>
+      <div className="calendario__semana">
+        ${nombresDeDias.map((nombre) => html`<span className="calendario__nombre-dia" key=${nombre}>${nombre}</span>`)}
+      </div>
+      <div className="calendario__rejilla">${celdasPintadas}</div>
+      ${datos.dias.length ? null : html`<p className="estado__texto">${textos.calendario.sinNada}</p>`}
+    </section>
+
+    <section className="tarjeta" data-trabajo-del-dia=${elegido || ""} aria-labelledby="dia-titulo">
+      <h2 className="tarjeta__titulo" id="dia-titulo">${textos.calendario.trabajosDelDia}</h2>
+      ${elegido ? html`<p className="pagina__dato">${fechaDe(elegido)}</p>` : null}
+      ${filasDelDia
+        ? html`<ul className="trabajos-lista">${filasDelDia}</ul>`
+        : html`<p className="estado__texto">${elegido ? textos.calendario.sinTrabajo : textos.calendario.eligeDia}</p>`}
+    </section>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- trabajos
+
+function VistaTrabajos({ tierras, alEstado }) {
+  const [tipo, setTipo] = useState(null);
+  const pantalla = usarPantalla(RUTA_TRABAJOS(tipo), true);
+  const datos = normalizaTrabajos(pantalla.estado === "listo" ? pantalla.datos : null, tierras);
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (pantalla.estado === "sin-permiso") alEstado("sin-permiso");
+    else if (pantalla.estado === "cargando") alEstado("cargando");
+    else if (pantalla.estado === "error") alEstado("error");
+    else alEstado("listo");
+  }, [pantalla.estado, alEstado]);
+
+  // El servidor ya ha filtrado por el tipo elegido; aquí solo se cuenta lo que ha llegado.
+  const visibles = datos.trabajos;
+  const resumen = sumaDeHectareas(visibles);
+  const conSuperficie = resumen.ha !== null && resumen.n > resumen.sinSuperficie;
+  const textoDelResumen = conSuperficie
+    ? textoRelleno(textos.trabajos.resumen, { n: visibles.length, ha: formateaNumero(resumen.ha) })
+    : textoRelleno(textos.trabajos.resumenSinHa, { n: visibles.length });
+  const notaSinSuperficie = resumen.sinSuperficie
+    ? ` · ${resumen.sinSuperficie} ${textos.trabajos.sinSuperficie}`
+    : "";
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.trabajos.titulo}</h1>
+    <p className="pagina__dato" data-trabajos-resumen=${textoDelResumen}>${textoDelResumen}${notaSinSuperficie}</p>
+  </header>`;
+
+  if (pantalla.estado === "sin-permiso") {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+  if (pantalla.estado === "error" || pantalla.estado === "no-disponible") {
+    return html`<div>
+      ${cabecera}
+      <p className="estado__texto">${textos.trabajos.noDisponible}</p>
+      <div className="estado__acciones">
+        <button type="button" className="boton" data-reintentar onClick=${pantalla.reintentar}>${textos.comun.reintentar}</button>
+        <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
+      </div>
+    </div>`;
+  }
+
+  const filtros = [
+    { clave: null, etiqueta: textos.trabajos.todos, n: datos.tipos.reduce((suma, uno) => suma + (Number(uno.n) || 0), 0) },
+  ].concat(datos.tipos);
+  const botonesDeFiltro = filtros.map((filtro) => {
+    const activo = (tipo || null) === (filtro.clave || null);
+    return html`<button
+      type="button"
+      key=${`filtro-${filtro.clave || "todos"}`}
+      className=${activo ? "pastilla pastilla--activa" : "pastilla"}
+      data-filtro-tipo=${filtro.clave || ""}
+      aria-pressed=${activo}
+      onClick=${() => setTipo(filtro.clave || null)}
+    >
+      ${filtro.etiqueta} · ${filtro.n}
+    </button>`;
+  });
+
+  const filas = visibles.map((trabajo, indice) => {
+    const detalles = [
+      trabajo.tierra || null,
+      trabajo.municipio || null,
+      trabajo.hectareas === null ? null : `${formateaNumero(trabajo.hectareas)} ${textos.tierras.panel.hectareas}`,
+      trabajo.cantidad === null ? null : `${formateaNumero(trabajo.cantidad)}${trabajo.unidad ? ` ${trabajo.unidad}` : ""}`,
+    ].filter(Boolean);
+    return html`<li className="trabajo" data-trabajo-fila key=${`trabajo-${indice}`}>
+      <span className="trabajo__fecha">${fechaDe(trabajo.fecha)}</span>
+      <span className="trabajo__titulo">${trabajo.etiqueta}</span>
+      ${detalles.length ? html`<span className="trabajo__detalle">${detalles.join(" · ")}</span>` : null}
+    </li>`;
+  });
+
+  return html`<div className="pantalla-trabajos">
+    ${cabecera}
+    <div className="filtros" role="group" aria-label=${textos.trabajos.filtro}>${botonesDeFiltro}</div>
+    ${visibles.length
+      ? html`<ul className="trabajos-lista">${filas}</ul>`
+      : html`<p className="estado__texto">${datos.trabajos.length ? textos.trabajos.sinTrabajos : textos.trabajos.sinDatos}</p>`}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- facturas
+
+function VistaFacturas({ alEstado }) {
+  const lista = usarPantalla(RUTA_FACTURAS, true);
+  const [fotos, setFotos] = useState([]);
+  const [propuesta, setPropuesta] = useState(null);
+  const [fase, setFase] = useState("inicial");
+  const [aviso, setAviso] = useState(null);
+  const [resultado, setResultado] = useState(null);
+  const urls = useRef([]);
+
+  useEffect(() => () => urls.current.forEach((url) => URL.revokeObjectURL(url)), []);
+
+  useEffect(() => {
+    if (!alEstado) return;
+    if (fase === "sin-permiso") alEstado("sin-permiso");
+    else if (fase === "leyendo" || fase === "guardando" || lista.estado === "cargando") alEstado("cargando");
+    else alEstado("listo");
+  }, [fase, lista.estado, alEstado]);
+
+  const anadirFotos = (evento) => {
+    const ficheros = Array.from(evento.target.files || []);
+    if (!ficheros.length) return;
+    const nuevas = ficheros.map((fichero) => {
+      const url = URL.createObjectURL(fichero);
+      urls.current.push(url);
+      return { id: `${fichero.name}-${fichero.lastModified}-${Math.random().toString(36).slice(2)}`, fichero, url };
+    });
+    setFotos((previas) => [...previas, ...nuevas]);
+    setAviso(null);
+    evento.target.value = "";
+  };
+
+  const quitarFoto = (id) => setFotos((previas) => previas.filter((foto) => foto.id !== id));
+
+  const leer = async () => {
+    if (!fotos.length) {
+      setAviso(textos.facturas.sinFotos);
+      return;
+    }
+    setFase("leyendo");
+    setAviso(null);
+    const formulario = new FormData();
+    formulario.append("fichero", fotos[0].fichero);
+    const respuesta = await pedirFormulario(RUTA_FACTURAS_LEER, formulario);
+    if (respuesta.estado === "ok") {
+      setPropuesta(normalizaPropuestaDeFactura(respuesta.datos));
+      setFase("revisando");
+      return;
+    }
+    if (respuesta.estado === "sin-permiso") {
+      setFase("sin-permiso");
+      return;
+    }
+    // Si el lector no está o no entiende la foto, no se deja al agricultor sin salida: se abre la
+    // factura en blanco para escribirla a mano y se dice por qué.
+    setPropuesta(normalizaPropuestaDeFactura({}));
+    setFase("revisando");
+    setAviso(textos.facturas.noSeLeyo);
+  };
+
+  const escribirAMano = () => {
+    setPropuesta(normalizaPropuestaDeFactura({}));
+    setFase("revisando");
+    setAviso(null);
+  };
+
+  const cambiarPropuesta = (clave, valor) =>
+    setPropuesta((previa) => ({ ...(previa || {}), [clave]: valor }));
+
+  const cambiarLinea = (indice, clave, valor) =>
+    setPropuesta((previa) => {
+      const lineas = (previa.lineas || []).map((linea, suyo) =>
+        suyo === indice ? { ...linea, [clave]: clave === "descripcion" ? valor : numeroDe(valor) } : linea,
+      );
+      return { ...previa, lineas };
+    });
+
+  const guardar = async () => {
+    if (!propuesta) return;
+    setFase("guardando");
+    setAviso(null);
+    const formulario = new FormData();
+    formulario.append("datos", JSON.stringify(cuerpoDeLaFactura(propuesta)));
+    if (fotos.length) formulario.append("fichero", fotos[0].fichero);
+    const respuesta = await pedirFormulario(RUTA_FACTURAS, formulario);
+    if (respuesta.estado !== "ok") {
+      setFase(respuesta.estado === "sin-permiso" ? "sin-permiso" : "error");
+      setAviso(textos.facturas.noSeGuardo);
+      return;
+    }
+
+    const guardada = respuesta.datos || {};
+    let extras = 0;
+    let extrasQueNo = 0;
+    for (const foto of fotos.slice(1)) {
+      const numero = guardada.numero_factura || guardada.id || "";
+      const documento = await pedir(
+        RUTA_DOCUMENTOS,
+        conCuerpoJson({
+          titulo: `Foto de la factura ${numero}`.trim(),
+          tipo: "factura",
+          notas: "Foto guardada al apuntar la factura",
+          fecha: guardada.fecha || null,
+        }),
+      );
+      if (documento.estado !== "ok" || !documento.datos || !documento.datos.id) {
+        extrasQueNo += 1;
+        continue;
+      }
+      const formularioDelDocumento = new FormData();
+      formularioDelDocumento.append("fichero", foto.fichero);
+      const subida = await pedirFormulario(RUTA_DOCUMENTO_FICHERO(documento.datos.id), formularioDelDocumento);
+      if (subida.estado === "ok") extras += 1;
+      else extrasQueNo += 1;
+    }
+
+    setResultado({ factura: guardada, extras, extrasQueNo, yaEstaba: Boolean(guardada.ya_estaba) });
+    setFase("guardada");
+    setPropuesta(null);
+    setAviso(null);
+    if (lista.reintentar) lista.reintentar();
+  };
+
+  const cabecera = html`<header className="pagina__cabecera">
+    <h1 className="pagina__titulo">${textos.facturas.titulo}</h1>
+    <p className="pagina__dato">${textos.facturas.intro}</p>
+  </header>`;
+
+  if (fase === "sin-permiso") {
+    return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
+  }
+
+  const previas = fotos.map((foto, indice) => html`<li className="foto" key=${foto.id}>
+    <img className="foto__imagen" src=${foto.url} alt=${`${textos.facturas.fotos} ${indice + 1}`} />
+    <button type="button" className="boton boton--icono" aria-label=${textos.facturas.quitar} onClick=${() => quitarFoto(foto.id)}>
+      <${Icono} nombre="cerrar" tamano=${20} />
+    </button>
+  </li>`);
+
+  const campos = propuesta
+    ? html`<div className="rejilla-campos">
+        <label className="campo"><span>${textos.facturas.proveedor}</span>
+          <input className="campo__control" type="text" value=${propuesta.proveedor || ""} onChange=${(evento) => cambiarPropuesta("proveedor", evento.target.value)} />
+        </label>
+        <label className="campo"><span>${textos.facturas.nif}</span>
+          <input className="campo__control" type="text" value=${propuesta.nif || ""} onChange=${(evento) => cambiarPropuesta("nif", evento.target.value)} />
+        </label>
+        <label className="campo"><span>${textos.facturas.numero}</span>
+          <input className="campo__control" type="text" value=${propuesta.numero || ""} onChange=${(evento) => cambiarPropuesta("numero", evento.target.value)} />
+        </label>
+        <label className="campo"><span>${textos.facturas.fecha}</span>
+          <input className="campo__control" type="date" value=${propuesta.fecha || ""} onChange=${(evento) => cambiarPropuesta("fecha", evento.target.value)} />
+        </label>
+        <label className="campo"><span>${textos.facturas.base}</span>
+          <input className="campo__control" type="text" inputMode="decimal" value=${propuesta.base === null ? "" : String(propuesta.base)} onChange=${(evento) => cambiarPropuesta("base", numeroDe(evento.target.value))} />
+        </label>
+        <label className="campo"><span>${textos.facturas.iva}</span>
+          <input className="campo__control" type="text" inputMode="decimal" value=${propuesta.iva === null ? "" : String(propuesta.iva)} onChange=${(evento) => cambiarPropuesta("iva", numeroDe(evento.target.value))} />
+        </label>
+        <label className="campo"><span>${textos.facturas.total}</span>
+          <input className="campo__control" type="text" inputMode="decimal" value=${propuesta.total === null ? "" : String(propuesta.total)} onChange=${(evento) => cambiarPropuesta("total", numeroDe(evento.target.value))} />
+        </label>
+      </div>`
+    : null;
+
+  const lineas = propuesta && propuesta.lineas.length
+    ? html`<div>
+        <h3 className="panel__subtitulo">${textos.facturas.lineas}</h3>
+        <ul className="trabajos-lista">
+          ${propuesta.lineas.map((linea, indice) => html`<li className="trabajo" key=${`linea-${indice}`}>
+            <input className="campo__control" type="text" value=${linea.descripcion || ""} aria-label=${textos.facturas.lineas} onChange=${(evento) => cambiarLinea(indice, "descripcion", evento.target.value)} />
+            <span className="trabajo__detalle">
+              ${linea.cantidad === null ? "" : `${formateaNumero(linea.cantidad)} ${linea.unidad || ""}`}
+              ${linea.importe === null ? "" : `${textos.facturas.total}: ${formateaNumero(linea.importe)} €`}
+            </span>
+          </li>`)}
+        </ul>
+      </div>`
+    : propuesta
+      ? html`<p className="estado__texto">${textos.facturas.sinLineas}</p>`
+      : null;
+
+  const revisar = propuesta
+    ? html`<section className="tarjeta" data-factura-propuesta aria-labelledby="propuesta-titulo">
+        <h2 className="tarjeta__titulo" id="propuesta-titulo">${textos.facturas.propuesta}</h2>
+        <p className="pagina__dato">${textos.facturas.propuestaAyuda}</p>
+        ${(propuesta.avisos || []).map((texto, indice) => html`<p className="panel__aviso" key=${`aviso-${indice}`}>${texto}</p>`)}
+        ${campos}
+        ${lineas}
+        <button type="button" className="boton boton--principal" data-factura-guardar onClick=${guardar} disabled=${fase === "guardando"}>
+          ${fase === "guardando" ? textos.facturas.guardando : textos.facturas.guardar}
+        </button>
+        ${aviso ? html`<p className="panel__aviso">${aviso}</p>` : null}
+      </section>`
+    : null;
+
+  let bloqueDelResultado = null;
+  if (resultado) {
+    const partes = [
+      resultado.factura.numero_factura || textos.facturas.guardada,
+      resultado.factura.total === null ? null : `${formateaNumero(resultado.factura.total)} €`,
+    ].filter(Boolean);
+    bloqueDelResultado = html`<section className="tarjeta" data-factura-resultado="guardada" aria-labelledby="resultado-titulo">
+      <h2 className="tarjeta__titulo" id="resultado-titulo">${textos.facturas.guardada}</h2>
+      <p className="pagina__dato">${partes.join(" · ")}</p>
+      ${resultado.yaEstaba ? html`<p className="panel__aviso">${textos.facturas.yaEstaba}</p>` : null}
+      ${resultado.extras ? html`<p className="pagina__dato">${resultado.extras} fotos guardadas en Documentos</p>` : null}
+      ${resultado.extrasQueNo ? html`<p className="panel__aviso">${resultado.extrasQueNo} fotos no se han podido guardar</p>` : null}
+      ${resultado.extras || resultado.extrasQueNo ? html`<p className="panel__nota">${textos.facturas.fotosDeMas}</p>` : null}
+    </section>`;
+  }
+
+  let bloqueDeFacturas = null;
+  if (lista.estado === "cargando") {
+    bloqueDeFacturas = html`<p className="estado__texto">${textos.facturas.cargando}</p>`;
+  } else if (lista.estado === "sin-permiso") {
+    bloqueDeFacturas = html`<p className="estado__texto">${textos.comun.sinPermiso}</p>`;
+  } else if (lista.estado === "error" || lista.estado === "no-disponible") {
+    bloqueDeFacturas = html`<p className="estado__texto">${textos.facturas.noDisponible}</p>`;
+  } else {
+    const facturas = Array.isArray(lista.datos) ? lista.datos : [];
+    bloqueDeFacturas = facturas.length
+      ? html`<ul className="trabajos-lista">${facturas.slice(0, 10).map((factura) => html`<li className="trabajo" key=${`factura-${factura.id}`}>
+          <span className="trabajo__fecha">${fechaDe(factura.fecha)}</span>
+          <span className="trabajo__titulo">${factura.proveedor || textos.tierras.panel.noConsta}</span>
+          <span className="trabajo__detalle">
+            ${factura.numero_factura ? `${factura.numero_factura} · ` : ""}
+            ${factura.total === null || factura.total === undefined ? textos.tierras.panel.noConsta : `${formateaNumero(factura.total)} €`}
+            ${factura.anulada ? ` · ${textos.facturas.anulada}` : ""}
+          </span>
+        </li>`)}</ul>`
+      : html`<p className="estado__texto">${textos.facturas.sinFacturas}</p>`;
+  }
+
+  return html`<div className="pantalla-facturas">
+    ${cabecera}
+    <div className="estado__acciones">
+      <label className="boton boton--principal boton--grande">
+        <${Icono} nombre="apuntar" />
+        ${textos.facturas.foto}
+        <input className="ojo-solo" type="file" accept="image/*" capture="environment" multiple data-factura-foto onChange=${anadirFotos} />
+      </label>
+      <label className="boton">
+        ${textos.facturas.archivo}
+        <input className="ojo-solo" type="file" accept="image/*,application/pdf" multiple data-factura-archivo onChange=${anadirFotos} />
+      </label>
+    </div>
+
+    ${fotos.length
+      ? html`<ul className="fotos" aria-label=${textos.facturas.fotos}>${previas}</ul>`
+      : html`<p className="estado__texto">${textos.facturas.sinFotos}</p>`}
+
+    <div className="estado__acciones">
+      <button type="button" className="boton boton--principal" data-factura-leer onClick=${leer} disabled=${fase === "leyendo"}>
+        ${fase === "leyendo" ? textos.facturas.leyendo : textos.facturas.leer}
+      </button>
+      <button type="button" className="boton" onClick=${escribirAMano}>${textos.facturas.aMano}</button>
+    </div>
+
+    ${aviso && !propuesta ? html`<p className="panel__aviso">${aviso}</p>` : null}
+    ${bloqueDelResultado}
+    ${revisar}
+
+    <section className="tarjeta" aria-labelledby="ultimas-titulo">
+      <h2 className="tarjeta__titulo" id="ultimas-titulo">${textos.facturas.ultimas}</h2>
+      ${bloqueDeFacturas}
+    </section>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- más
+
+function VistaMas({ ir }) {
+  const opciones = [
+    { clave: "facturas", etiqueta: textos.mas.facturas, texto: textos.facturas.intro },
+    { clave: "trabajos", etiqueta: textos.mas.trabajos, texto: textos.trabajos.filtro },
+  ];
+
+  return html`<div className="pantalla-mas">
+    <header className="pagina__cabecera">
+      <h1 className="pagina__titulo">${textos.mas.titulo}</h1>
+      <p className="pagina__dato">${textos.mas.intro}</p>
+    </header>
+    <div className="tarjetas">
+      ${opciones.map((opcion) => html`<button type="button" className="tarjeta tarjeta--boton" key=${opcion.clave} onClick=${() => ir(opcion.clave)} data-accion=${`ir-${opcion.clave}`}>
+        <h2 className="tarjeta__titulo">${opcion.etiqueta}</h2>
+        <p className="tarjeta-dato__nota">${opcion.texto}</p>
+      </button>`)}
+      <a className="tarjeta tarjeta--boton" href="/">
+        <h2 className="tarjeta__titulo">${textos.mas.cuaderno}</h2>
+        <p className="tarjeta-dato__nota">${textos.hoy.abrirAppVieja}</p>
+      </a>
+      <a className="tarjeta tarjeta--boton" href="/">
+        <h2 className="tarjeta__titulo">${textos.mas.ajustes}</h2>
+        <p className="tarjeta-dato__nota">${textos.hoy.abrirAppVieja}</p>
+      </a>
+    </div>
+  </div>`;
+}
+
 // ---------------------------------------------------------------- app
+
+function textoDeHoy(fecha) {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+}
 
 function App() {
   const [vista, setVista] = useState("hoy");
+  const [tierraId, setTierraId] = useState(null);
   const [arrancada, setArrancada] = useState(false);
+  const [estadoSecundario, setEstadoSecundario] = useState("cargando");
   const [sinCobertura, setSinCobertura] = useState(typeof navigator !== "undefined" ? !navigator.onLine : false);
 
   // El primer pintado es siempre «cargando»: la pantalla acaba de abrirse y todavía no se ha
@@ -1678,27 +2427,41 @@ function App() {
     };
   }, []);
 
+  const ir = (nueva) => {
+    setVista(nueva);
+    if (nueva !== "tierra") setTierraId(null);
+  };
+
+  const abrirTierra = (id) => {
+    setTierraId(id);
+    setVista("tierra");
+  };
+
+  const necesitaTierras = ["tierras", "alta", "tierra", "calendario", "trabajos"].includes(vista);
   const pantallaHoy = usarPantalla(RUTA_HOY, vista === "hoy");
-  const pantallaTierras = usarPantalla(RUTA_TIERRAS, vista === "tierras" || vista === "alta");
+  const pantallaTierras = usarPantalla(RUTA_TIERRAS, necesitaTierras);
   const pantallaResumen = usarPantalla(RUTA_RESUMEN, vista === "hoy");
   const pantallaQueFalta = usarPantalla(RUTA_QUE_FALTA, vista === "hoy");
 
   const actual = vista === "hoy" ? pantallaHoy : pantallaTierras;
   const datosDeLaFinca = pantallaHoy.datos || pantallaTierras.datos || null;
+  const tierras = (pantallaTierras.datos && pantallaTierras.datos.tierras) || [];
+  const municipios = (pantallaTierras.datos && pantallaTierras.datos.municipios) || [];
 
   const lista = vista === "hoy"
     ? ((pantallaHoy.datos && pantallaHoy.datos.ultimos) || [])
-    : ((pantallaTierras.datos && pantallaTierras.datos.tierras) || []);
+    : tierras;
 
-  const estadoVista = arrancada
-    ? decidirEstado({
-        conToken: actual.conToken,
-        cargando: actual.estado === "cargando",
-        fallo: actual.estado === "error" || actual.estado === "no-disponible",
-        sinPermiso: actual.estado === "sin-permiso",
-        hayDatos: vista === "alta" ? Boolean(pantallaTierras.datos) : lista.length > 0,
-      })
-    : "cargando";
+  const estadoDeLasPantallasDeSiempre = decidirEstado({
+    conToken: actual.conToken,
+    cargando: actual.estado === "cargando",
+    fallo: actual.estado === "error" || actual.estado === "no-disponible",
+    sinPermiso: actual.estado === "sin-permiso",
+    hayDatos: vista === "alta" || vista === "tierra" ? Boolean(pantallaTierras.datos) : lista.length > 0,
+  });
+
+  const vistasDeSiempre = vista === "hoy" || vista === "tierras" || vista === "alta";
+  const estadoVista = !arrancada ? "cargando" : vistasDeSiempre ? estadoDeLasPantallasDeSiempre : estadoSecundario;
 
   let pantalla = null;
   if (vista === "hoy") {
@@ -1714,15 +2477,33 @@ function App() {
       estadoVista=${estadoVista}
       datos=${pantallaTierras.datos}
       alReintentar=${pantallaTierras.reintentar}
-      alAnadirTierras=${() => setVista("tierras")}
-      alIrATierras=${() => setVista("tierras")}
+      alAnadirTierras=${() => ir("tierras")}
+      alIrATierras=${() => ir("tierras")}
     />`;
+  } else if (vista === "tierra") {
+    pantalla = html`<${VistaTierra}
+      tierraId=${tierraId}
+      tierras=${tierras}
+      alVolver=${() => ir("tierras")}
+      alReintentar=${pantallaTierras.reintentar}
+      alEstado=${setEstadoSecundario}
+    />`;
+  } else if (vista === "calendario") {
+    pantalla = html`<${VistaCalendario} tierras=${tierras} alEstado=${setEstadoSecundario} />`;
+  } else if (vista === "trabajos") {
+    pantalla = html`<${VistaTrabajos} tierras=${tierras} alEstado=${setEstadoSecundario} />`;
+  } else if (vista === "facturas") {
+    pantalla = html`<${VistaFacturas} alEstado=${setEstadoSecundario} />`;
+  } else if (vista === "mas") {
+    pantalla = html`<${VistaMas} ir=${ir} />`;
   } else {
     pantalla = html`<${VistaTierras}
       estadoVista=${estadoVista}
       datos=${pantallaTierras.datos}
       alReintentar=${pantallaTierras.reintentar}
-      alAnadirTierras=${() => setVista("alta")}
+      alAnadirTierras=${() => ir("alta")}
+      alAbrirTierra=${abrirTierra}
+      tierraAbierta=${tierraId}
     />`;
   }
 
@@ -1734,10 +2515,10 @@ function App() {
       sinCobertura=${sinCobertura}
     />
     <div className="cuerpo">
-      <${BarraLateral} vista=${vista} ir=${setVista} />
+      <${BarraLateral} vista=${vista} ir=${ir} />
       <main className="contenido" id="contenido">${pantalla}</main>
     </div>
-    <${BarraInferior} vista=${vista} ir=${setVista} />
+    <${BarraInferior} vista=${vista} ir=${ir} />
   </div>`;
 }
 

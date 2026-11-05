@@ -20,30 +20,47 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 
 import {
+  agruparPorDias,
   agruparPorMunicipio,
   ajustarBbox,
   bboxDelConjunto,
   bboxDeMunicipio,
   cajaDeLosRecintos,
   calcularTotales,
+  claveDeTipo,
   colorDeTierra,
   colorDeUso,
+  cuerpoDeLaFactura,
   decidirEstado,
+  etiquetaDeTrabajo,
+  filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  mesEnPalabras,
+  nombreDeMes,
+  normalizaCalendario,
+  normalizaHistorial,
   normalizaImportacion,
+  normalizaPropuestaDeFactura,
   normalizaQueFalta,
   normalizaResumen,
+  normalizaTierra,
+  normalizaTrabajo,
+  normalizaTrabajos,
+  numeroDe,
   paletaDeUso,
   proyeccionDeAnillo,
   proyeccionDePunto,
   puntoDelMapa,
   recintosConPuntos,
   referenciasDeTexto,
+  rejillaDelMes,
+  relacionDeTipos,
   rutaDeAnillo,
   sinMapa,
+  sumaDeHectareas,
   textos,
   textoRelleno,
   urlDelMapa,
@@ -522,4 +539,280 @@ test("el mapa se abre mirando a todos los recintos buscados, no a la finca", () 
 test("el aviso de «sin dibujo» tiene su texto, para no pintar un cuadro que nadie ha medido", () => {
   assert.ok(textos.alta.sinPuntos);
   assert.ok(textos.alta.recintosEnElMapa);
+});
+
+
+// ---------------------------------------------------------------------------
+// El trabajo: por día, por tipo, con sus hectáreas y su historial
+// ---------------------------------------------------------------------------
+
+const TRABAJOS = [
+  { id: 1, tipo: "siembra", fecha: "2026-11-12", parcela_id: 2, superficie_ha: 8.42 },
+  {
+    id: 2,
+    tipo: "labor",
+    subtipo: "vertedera",
+    fecha: "2026-11-12",
+    parcela_id: 1,
+    superficie_ha: 12.34,
+  },
+  {
+    id: 3,
+    tipo: "abono",
+    fecha: "2026-03-14",
+    parcela_id: 2,
+    kg_ha: 220,
+  },
+  { id: 4, tipo: "labor", subtipo: "grada", fecha: "2026-03-01", parcela_id: 1 },
+];
+
+test("cada trabajo se llama en palabras: siembra, vertedera, grada, abono", () => {
+  assert.equal(etiquetaDeTrabajo({ tipo: "siembra" }), "Siembra");
+  assert.equal(etiquetaDeTrabajo({ tipo: "labor", subtipo: "vertedera" }), "Vertedera");
+  assert.equal(etiquetaDeTrabajo({ tipo: "labor", subtipo: "cultivador" }), "Cultivador");
+  assert.equal(etiquetaDeTrabajo({ tipo: "grada" }), "Grada");
+  assert.equal(etiquetaDeTrabajo({ tipo: "tratamiento" }), "Tratamiento");
+  assert.equal(etiquetaDeTrabajo({}), textos.trabajos.trabajo);
+});
+
+test("un trabajo trae su tierra y su municipio aunque solo venga el id", () => {
+  const tierras = [{ id: 2, alias: "El Molino", municipio: "Cantalapiedra" }];
+  const abono = normalizaTrabajo(TRABAJOS[2], tierras);
+
+  assert.equal(abono.tierra, "El Molino");
+  assert.equal(abono.municipio, "Cantalapiedra");
+  assert.equal(abono.cantidad, 220);
+  assert.equal(abono.unidad, "kg/ha");
+  assert.equal(abono.porHectarea, true);
+  assert.equal(abono.etiqueta, "Abono");
+});
+
+test("los trabajos se agrupan por día, del más nuevo al más viejo", () => {
+  const dias = agruparPorDias(TRABAJOS.map((trabajo) => normalizaTrabajo(trabajo)));
+
+  assert.deepEqual(
+    dias.map((dia) => dia.fecha),
+    ["2026-11-12", "2026-03-14", "2026-03-01"],
+  );
+  assert.equal(dias[0].n, 2);
+});
+
+test("el mes en rejilla empieza en lunes y trae los días que tiene", () => {
+  const febrero2026 = rejillaDelMes(2026, 2);
+  assert.equal(febrero2026.length % 7, 0);
+  assert.deepEqual(
+    febrero2026.filter((celda) => celda.delMes).map((celda) => celda.dia),
+    Array.from({ length: 28 }, (_, indice) => indice + 1),
+  );
+  const primero = new Date(2026, 1, 1);
+  assert.equal(febrero2026[0].fecha === null || new Date(febrero2026[0].fecha).getDay() === 1, true);
+  assert.equal(new Date(primero).getDate(), 1);
+
+  // 2024 fue bisiesto: un test que se fía de febrero no vale para todos los años.
+  assert.equal(rejillaDelMes(2024, 2).filter((celda) => celda.delMes).length, 29);
+  assert.equal(rejillaDelMes(2026, 2)[0].fecha, null);
+});
+
+test("el mes y la fecha se dicen en castellano", () => {
+  assert.equal(nombreDeMes(2026, 11), "noviembre de 2026");
+  assert.equal(nombreDeMes(2026, 13), "");
+  assert.equal(mesEnPalabras("2026-03-14"), "marzo");
+  assert.equal(mesEnPalabras(null), "");
+});
+
+test("las hectáreas se suman sin mezclarlas con kilos ni litros", () => {
+  const resumen = sumaDeHectareas([
+    { hectareas: 2.5 },
+    { hectareas: null },
+    { hectareas: 1 },
+    { cantidad: 500, unidad: "kg/ha" },
+  ]);
+
+  assert.equal(resumen.ha, 3.5);
+  assert.equal(resumen.n, 4);
+  assert.equal(resumen.sinSuperficie, 2);
+});
+
+test("los filtros por tipo llevan su cuenta, y la vertedera es su propio tipo", () => {
+  const normalizados = TRABAJOS.map((trabajo) => normalizaTrabajo(trabajo));
+  const tipos = relacionDeTipos(normalizados);
+
+  const vertedera = tipos.find((tipo) => tipo.clave === "labor:vertedera");
+  assert.equal(vertedera.etiqueta, "Vertedera");
+  assert.equal(vertedera.n, 1);
+
+  assert.equal(filtrarPorTipo(normalizados, "labor:grada").length, 1);
+  assert.equal(filtrarPorTipo(normalizados, "labor:vertedera")[0].id, 2);
+  assert.equal(filtrarPorTipo(normalizados, null).length, 4);
+  assert.equal(claveDeTipo({ tipo: "labor", subtipo: "grada" }), "labor:grada");
+});
+
+test("el calendario y la lista de trabajos se leen de lo que manda el servidor", () => {
+  const calendario = normalizaCalendario({
+    dias: [{ fecha: "2026-11-12", trabajos: [{ id: 1, tipo: "siembra" }] }],
+    totales: { dias: 1 },
+  });
+  assert.equal(calendario.dias.length, 1);
+  assert.equal(calendario.dias[0].n, 1);
+
+  const trabajos = normalizaTrabajos({
+    tipos: [{ clave: "siembra", etiqueta: "Siembra", n: 1 }],
+    elegido: "siembra",
+    trabajos: [{ id: 1, tipo: "siembra", superficie_ha: 8.42 }],
+  });
+  assert.equal(trabajos.elegido, "siembra");
+  assert.equal(trabajos.resumen.ha, 8.42);
+  assert.equal(trabajos.tipos.length, 1);
+});
+
+test("el historial de una tierra se agrupa por años, con sus kg/ha y su mes", () => {
+  const historial = normalizaHistorial({
+    historial: [
+      { anio: 2026, tipo: "abono", fecha: "2026-03-14", kg_ha: 220, producto: "Nitrato" },
+      { anio: 2025, tipo: "siembra", cultivo: "Trigo", variedad: "Adelanto", fecha: "2025-11-03" },
+    ],
+  });
+
+  assert.deepEqual(
+    historial.map((anio) => anio.anio),
+    ["2026", "2025"],
+  );
+  const abono = historial[0].filas[0];
+  assert.equal(abono.etiqueta, "Abono");
+  assert.ok(abono.detalles.some((detalle) => detalle.includes("kg/ha")));
+  assert.ok(abono.detalles.includes("marzo"));
+  assert.ok(historial[1].filas[0].detalles.includes("Adelanto"));
+});
+
+test("la ficha de la tierra junta lo de hoy y el historial", () => {
+  const ficha = normalizaTierra(
+    {
+      trabajo_de_hoy: [{ id: 1, tipo: "siembra", fecha: "2026-11-12" }],
+      historial: [{ anio: 2025, tipo: "cosecha", kg_ha: 4900 }],
+    },
+    [],
+  );
+  assert.equal(ficha.trabajoDeHoy.length, 1);
+  assert.equal(ficha.historial.length, 1);
+});
+
+test("la propuesta de factura se revisa y se guarda con los campos del servidor", () => {
+  const propuesta = normalizaPropuestaDeFactura({
+    proveedor: "  Ferretería El Páramo ",
+    proveedor_nif: "B00000000",
+    numero_factura: "2026/00123",
+    fecha: "2026-02-18",
+    base_imponible: 312.4,
+    cuota_iva: 65.6,
+    total: 378,
+    lineas: [{ descripcion: "Herbicida", cantidad: 2, unidad: "L", precio_unitario: 15.5, importe: 31 }],
+    avisos: [],
+  });
+
+  assert.equal(propuesta.total, 378);
+  assert.equal(propuesta.fecha, "2026-02-18");
+  assert.equal(propuesta.lineas.length, 1);
+
+  const cuerpo = cuerpoDeLaFactura({ ...propuesta, proveedor: "  Ferretería  ", lineas: [...propuesta.lineas, { descripcion: "" }] });
+  assert.equal(cuerpo.proveedor, "Ferretería");
+  assert.equal(cuerpo.lineas.length, 1);
+  assert.equal(cuerpo.lineas[0].precio_unitario, 15.5);
+});
+
+test("las cuatro pantallas nuevas tienen sus textos y sus cuatro estados", () => {
+  for (const bloque of ["tierra", "calendario", "trabajos", "facturas", "mas"]) {
+    assert.ok(textos[bloque], `falta el bloque de textos «${bloque}»`);
+  }
+  assert.ok(textos.tierra.historial);
+  assert.ok(textos.calendario.sinNada);
+  assert.ok(textos.trabajos.noDisponible);
+  assert.ok(textos.facturas.noSeLeyo);
+  assert.ok(textos.facturas.fotosDeMas);
+});
+
+test("el historial del servidor viene por años y por secciones, y se lee entero", () => {
+  const historial = normalizaHistorial({
+    historial: [
+      {
+        anio: 2026,
+        cultivo: "Trigo",
+        variedad: "Adelanto",
+        superficie_ha: 12.3,
+        siembra: { fecha: "2025-11-03", cultivo: "Trigo", variedad: "Adelanto", dosis_semilla_kg_ha: 210 },
+        labores: [{ fecha: "2026-02-10", labor: "vertedera", titulo: "Vertedera", mes: "febrero" }],
+        tratamientos: [{ fecha: "2026-04-02", producto: "Herbicida X", dosis: 2, dosis_unidad: "L/ha" }],
+        abonos: [{ fecha: "2026-03-14", mes: "marzo", producto: "Nitrato", kg: 2700, kg_ha: 220 }],
+        cosecha: { fecha: "2026-07-20", kg_ha: 4900 },
+      },
+      {
+        anio: 2025,
+        cultivo: "Cebada",
+        variedad: null,
+        superficie_ha: 12.3,
+        siembra: null,
+        labores: [],
+        tratamientos: [],
+        abonos: [],
+        cosecha: null,
+      },
+    ],
+  });
+
+  const del2026 = historial[0];
+  assert.equal(del2026.anio, "2026");
+  assert.equal(del2026.cultivo, "Trigo");
+  assert.equal(del2026.variedad, "Adelanto");
+  assert.equal(del2026.filas.length, 5);
+
+  const etiquetas = del2026.filas.map((fila) => fila.etiqueta);
+  for (const esperada of ["Siembra", "Vertedera", "Tratamiento", "Abono", "Cosecha"]) {
+    assert.ok(etiquetas.includes(esperada), `falta «${esperada}»: ${etiquetas.join(", ")}`);
+  }
+
+  const abono = del2026.filas.find((fila) => fila.etiqueta === "Abono");
+  assert.ok(abono.detalles.some((detalle) => detalle.includes("220 kg/ha")));
+  assert.ok(abono.detalles.includes("marzo"));
+
+  const siembra = del2026.filas.find((fila) => fila.etiqueta === "Siembra");
+  assert.ok(siembra.detalles.includes("Trigo"));
+  assert.ok(siembra.detalles.some((detalle) => detalle.includes("210 kg/ha")));
+
+  // Un año sin apuntes no se inventa con filas: se queda con su cultivo y sin lista.
+  assert.equal(historial[1].filas.length, 0);
+});
+
+test("las filas de trabajos del servidor traen su clave, su alias y su municipio", () => {
+  const datos = normalizaTrabajos(
+    {
+      tipos: [
+        { clave: "abono", etiqueta: "Abono", n: 1 },
+        { clave: "labor:vertedera", etiqueta: "Vertedera", n: 1 },
+      ],
+      elegido: "labor:vertedera",
+      trabajos: [
+        {
+          fecha: "2026-03-14",
+          tipo: "labor:vertedera",
+          titulo: "Vertedera",
+          tierra_id: 2,
+          tierra_alias: "El Molino",
+          municipio: "Cantalapiedra",
+          hectareas: 8.42,
+          cantidad: 220,
+          unidad: "kg/ha",
+          por_hectarea: true,
+        },
+      ],
+    },
+    [{ id: 2, alias: "El Molino" }],
+  );
+
+  const fila = datos.trabajos[0];
+  assert.equal(fila.etiqueta, "Vertedera");
+  assert.equal(fila.tierra, "El Molino");
+  assert.equal(fila.municipio, "Cantalapiedra");
+  assert.equal(fila.cantidad, 220);
+  assert.equal(fila.porHectarea, true);
+  assert.equal(claveDeTipo(fila), "labor:vertedera");
+  assert.equal(datos.tipos.length, 2);
 });

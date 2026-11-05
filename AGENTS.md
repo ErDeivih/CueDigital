@@ -42,14 +42,14 @@ que pase. Si no hay test para lo que estás tocando, **escríbelo**.
 ```bash
 cd backend
 
-# Python (5766 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
+# Python (5814 tests): cálculos, registro obligatorio, textos, interfaz, contrato,
 # certificado, firma, instalaciones, plan de abono, análisis, medidas preventivas, dictado,
 # documentación anexa, el cliente del interfaz de la Junta, la comprobación de la firma,
 # varias cuentas dentro de una misma finca, las tierras en el mapa y en la tabla (T06),
 # las semillas y las siembras (T10), los contactos (T11) y la maquinaria (T14)
 ../.venv/Scripts/python.exe -m pytest
 
-# JavaScript (1256 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
+# JavaScript (1270 tests): la lógica del móvil y la interfaz, pulsando botones de verdad
 node --test "tests_js/*.test.js"
 
 # Recorrido completo contra un servidor de verdad (hay que tenerlo levantado)
@@ -727,3 +727,14 @@ Antes de continuar, leer CONTEXTO_PARA_EL_CHAT.md y DESARROLLO_EN_LA_NUBE.md.
 La cola y las revisiones independientes están en contexto_agentes/. Sus rutas Windows
 son históricas: usar las copias del checkout remoto. No probar contra datos reales.
 En Linux puede prepararse el entorno con bash .codex/setup.sh.
+
+
+## Consultar el catálogo de repositorios (no busques a mano)
+
+Antes de buscar una librería, una herramienta o una referencia, pregunta al catálogo personal de David: más de 500 fichas documentales y ~1.400 repositorios dentro de recopilaciones, con licencia real, límite y recomendación.
+
+```powershell
+python F:\Inforepositorios\consultar.py "<lo que necesitas>" -n 5 --json
+```
+
+Devuelve los mejores candidatos con su licencia y la ruta de su ficha. Abre solo esas fichas y mira la sección 9 (cuándo no elegirlo) y la 6 (licencia). Es evidencia documental: nada se ha clonado, instalado ni ejecutado. Guía: `F:\Inforepositorios\RAG.md`. Para una palabra exacta: `& F:\Inforepositorios\scripts\Buscar-Todo.ps1 -Texto <término>`.

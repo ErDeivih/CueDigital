@@ -6,6 +6,8 @@ reconoce en una foto aérea de un vistazo. Aquí está la puerta que hace eso po
 * `GET /api/mapa/estado` — qué servicios de mapa hay y qué se necesita para usarlos.
 * `GET /api/mapa/imagen` — la imagen del mapa (la foto del campo, los linderos o el cultivo
   declarado) para la zona que se está mirando.
+* `GET /api/mapa/tierra/{parcela_id}.png` — **la foto de una tierra**: su ortofoto con el contorno
+  del trozo dibujado encima, para la ficha y para la trazabilidad.
 * `POST /api/mapa/punto` — **el toque**: qué parcela del SIGPAC hay en ese punto, con todo lo que
   el SIGPAC sabe de ella (superficie, uso, pendiente, dibujo, referencia catastral y si está en
   zona de nitratos).
@@ -25,8 +27,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
-from .. import catalogos, sigpac, textos
-from ..deps import UsuarioActual
+from .. import catalogos, mapa_de_una_tierra, models, sigpac, textos
+from ..deps import Db, UsuarioActual, obtener_de_la_explotacion
 
 router = APIRouter(prefix="/api/mapa", tags=["mapa"])
 
@@ -308,3 +310,69 @@ def puntos_de_la_parcela(wkt: str | None) -> list[list[float]]:
     from .. import geo
 
     return [[lon, lat] for lon, lat in geo.puntos_de_un_wkt(wkt)]
+
+
+@router.get("/tierra/{parcela_id}.png")
+def la_foto_de_una_tierra(
+    parcela_id: int,
+    db: Db,
+    usuario: UsuarioActual,
+    ancho: int = Query(default=mapa_de_una_tierra.ANCHO_POR_DEFECTO),
+    alto: int = Query(default=mapa_de_una_tierra.ALTO_POR_DEFECTO),
+) -> Response:
+    """**La foto de una tierra**: su ortofoto con el contorno del trozo dibujado encima.
+
+    Para qué sirve, dicho por quien lo pidió (David, IMP-8): para la ficha de la tierra y para
+    **tener la imagen** de lo que se estaba mirando. Se guarda la imagen, no la foto del mapa: la
+    ortofoto es del IGN y se pide cada vez, pero el contorno es el de *su* recinto, y por eso la
+    imagen se compone aquí y se sirve como dato suyo.
+
+    **Pide sesión**, y no como las otras imágenes del mapa: `GET /api/mapa/imagen` se sirve sin
+    vale porque la pantalla la pide con un `<img src>` que no puede mandar cabeceras, y su
+    contenido es la foto pública de una zona. Esta imagen es **la forma de una tierra concreta**,
+    que es un dato del agricultor: sin sesión, 401, y si la tierra es de otra finca, 404 (nunca
+    403, para no decir si ese identificador existe en el cuaderno de otro).
+
+    Las respuestas cuando no se puede componer, y por qué no se devuelve un cuadro de relleno:
+
+      · **409** — la tierra no tiene su forma guardada. Una tierra apuntada a mano no tiene
+        polígono; dibujar un rectángulo sería mentir sobre dónde está su tierra. Se dice dónde se
+        arregla (en su ficha) y no se pide la ortofoto siquiera.
+      · **503** — la ortofoto no llega o lo que llega no es una imagen. Es el mismo caso que el
+        resto del mapa: se dice que hace falta conexión y que se puede seguir trabajando.
+      · **422** — el tamaño pedido está fuera de los topes (200–1600 de ancho, 150–1200 de alto).
+
+    Los textos de los dos primeros casos son los que ya usa el mapa (`textos.MAPA`). El de la
+    tierra sin forma se escribe aquí porque el encargo de esta puerta solo permite tocar este
+    fichero y el módulo nuevo; **cuando se pueda tocar `textos.py`, su sitio es `textos.MAPA`**
+    (regla de la casa: todo lo que lee el agricultor vive allí).
+    """
+    parcela = obtener_de_la_explotacion(db, models.Parcela, parcela_id, usuario.explotacion_id)
+
+    try:
+        contenido = mapa_de_una_tierra.imagen_de_la_tierra(parcela.geometria, ancho, alto)
+    except mapa_de_una_tierra.TamanoInvalido as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    except mapa_de_una_tierra.SinForma:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Esta tierra no tiene su forma guardada, así que no se puede dibujar su contorno. "
+                "La forma se le pone en su ficha, con el mapa, y entonces ya se puede sacar la "
+                "imagen."
+            ),
+        ) from None
+    except mapa_de_una_tierra.SinOrtofoto:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=textos.MAPA["sin_conexion"],
+        ) from None
+
+    # `private`: es una imagen de su finca, que la guarde su navegador y no una caché compartida.
+    # Diez minutos: el contorno no cambia de un minuto a otro, pero si corrige la forma de la
+    # tierra no tiene que esperar a que caduque una copia vieja (en el servidor no se cachea).
+    return Response(
+        content=contenido,
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=600"},
+    )

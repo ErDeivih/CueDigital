@@ -147,6 +147,20 @@
   y comprobar la búsqueda del SIGPAC **eligiendo municipio de la lista** (la referencia sí está
   verificada; los nombres devolvieron 0 recintos en la prueba).
 
+### AGR-19 · El apuntar de 30 segundos en la app nueva, y la puerta del apero que falta — **PENDIENTE (detectado 05/11)**
+
+- **Nivel**: 2.
+- **Qué**: el alta del apunte del día a día en `/nuevo/` (hoy sigue en la app vieja), con la tierra
+  primero y los ocho datos mínimos, y la cola sin cobertura. Incluye **abrir la puerta del apero**:
+  `POST /api/labores` no acepta `subtipo` y el dato solo entra por `detalles["subtipo"]`; hay que
+  añadirlo al esquema (con su test) para que el agricultor pueda decir vertedera/arado, cultivador o
+  grada sin depender de un JSON.
+- **Decisión para David**: el vocabulario del programa llama **«arado»** a lo que él llama
+  «vertedera». Se puede renombrar la etiqueta del catálogo y aparece sola en las tres puertas; no se
+  ha traducido una palabra en la otra para no inventar una equivalencia.
+- **Criterio**: apunte en ≤3 pantallas y ≤8 campos, guardable sin cobertura, con su apero y su
+  cantidad por hectárea; pruebas y paso en el arnés de Chrome.
+
 ### AGR-18 · PSD2 solo lectura: contratar un agregador con licencia — **INVESTIGADO (2026-11-05); BLOQUEADO (nivel 3)**
 
 - **Nivel**: 3 (contratar y aprobar gasto).

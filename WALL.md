@@ -80,10 +80,57 @@
     es** y **dónde se arregla** (`GET /api/nuevo/que-falta`), sacado de lo que de verdad hay apuntado
     (`cuaderno-cyl/que-falta` + las 8 de `iuws.QUE_FALTA`). Verificado en Chrome.
 
+## La ronda de David del 05/11 (tarde): lo que ha visto y pedido
+
+David vio el diseño («tiene buena pinta») y pidió, en su orden: **facturas con fotos**, **tierra
+primero**, **historial de la tierra**, **calendario**, **filtros por tipo** y **contornos del SIGPAC**.
+Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fallos):
+
+- [x] **Facturas con fotos**: botón grande «Hacer una foto» (cámara del móvil) y elegir archivo;
+      **varias fotos** (factura, envase, albarán) con vista previa; «Leer la factura» con el lector
+      del servidor; **propuesta campo a campo para revisar y corregir** (proveedor, NIF, número,
+      fecha, base, IVA, total, líneas); «Guardar». Si el lector no está o no entiende la foto, **lo
+      dice y deja escribirla a mano**, nunca inventa. **Verificado**: una foto sintética se lee y
+      sale la propuesta; las fotos de más se guardan como documentos.
+- [x] **Tierra primero**: al pinchar una tierra (en la lista o en el mapa) se abre su ficha con el
+      **«Hoy en esta tierra»**: los trabajos de hoy sobre ella o «hoy no hay nada apuntado».
+- [x] **Historial de la tierra**: por campañas, con **siembra** (cultivo, variedad, dosis de semilla
+      kg/ha), **labores** (vertedera —en el programa se llama **arado**—, cultivador, grada, siembra…),
+      **tratamientos** (producto y dosis), **abonos con kg/ha y el mes** y **cosecha en kg/ha**. Los
+      años sin datos no se rellenan.
+- [x] **Calendario**: rejilla del mes con los días que tienen trabajo (número + palabra, nunca solo
+      color); al pinchar un día, sus trabajos con la tierra; mes anterior y siguiente.
+- [x] **Filtros por tipo de trabajo**: botones por tipo con su cuenta; al elegir, las tierras con su
+      municipio, hectáreas y cantidad o por hectárea, y el resumen de n y hectáreas. Trazabilidad de
+      toda la explotación.
+- [x] **Contornos del SIGPAC**: `GET /api/mapa/tierra/{id}.png` devuelve la **ortofoto del IGN con el
+      contorno dibujado** (relleno suave y línea blanca con borde oscuro), centrada y con margen; la
+      ficha la enseña. Si la tierra no tiene forma, la ficha **lo dice** («no tiene forma en el
+      SIGPAC») en vez de dibujar un cuadro inventado. 800×600 en unos 2 s en caliente.
+- **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
+  filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
+  (`tierra-historial.png`, `calendario.png`, `trabajos-filtrados.png`, `factura-leida.png`).
+
+**Decisiones que David tiene que conocer:**
+- **«Vertedera» no existe en el vocabulario del programa**: los aperos son rodillo, **arado**,
+  cultivador, grada, fresadora y otro. Se ha dejado «arado» y **no se ha traducido una palabra en la
+  otra** (sería inventar). Si quiere que se llame «vertedera», se cambia la etiqueta y sale sola en
+  las tres puertas.
+- **`POST /api/labores` no acepta el apero (`subtipo`)**: el dato solo entra por `detalles`. Es un
+  campo con columna y sin puerta propia, de la familia que el proyecto ya pagó; queda apuntado para
+  cuando se haga el apuntar de 30 segundos en la app nueva.
+- El **apuntar de cada día** («hoy he hecho esto») sigue en la app vieja: la app nueva ya enseña el
+  trabajo del día por tierra, el calendario y los filtros, pero el alta del apunte nuevo es lo
+  siguiente. Las pantallas de **PAC** y **gastos/facturas detalladas** también siguen enlazando a la
+  app vieja.
+
 ## Lo que se ha cerrado y cómo se comprueba
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-05 | **Tierra primero, historial, calendario y filtros por tipo** | Arnés de Chrome, 0 fallos (ficha con trabajo de hoy e historial; calendario con días; filtros con tierras y hectáreas); `tests/test_nuevo_historial.py` (18) |
+| 2026-11-05 | **Facturas con varias fotos, lectura y propuesta corregible** | Arnés de Chrome: foto → propuesta; captura `factura-leida.png` |
+| 2026-11-05 | **Contornos del SIGPAC: ortofoto + contorno dibujado** | `GET /api/mapa/tierra/{id}.png`; 23 pruebas sin internet; captura `tierra-historial.png` |
 | 2026-11-05 | Tierras: alta por código y en la ventana del SIGPAC, resaltada, catalogada y editable | Arnés de Chrome, 0 fallos (búsqueda → recinto dibujado → añadido, 64 → 65); capturas en `docs/capturas-nuevo/` |
 | 2026-11-05 | Importar el cuaderno de un cliente y crear sus tierras sin teclear | Arnés de Chrome (subida real del `.xlsx`, 65 → 72); `tests/test_nuevo_importar.py` (12) |
 | 2026-11-05 | Mapa coloreado por uso/cultivo con leyenda y ficha al clicar | Arnés de Chrome a 390/1024/1440, 0 fallos |

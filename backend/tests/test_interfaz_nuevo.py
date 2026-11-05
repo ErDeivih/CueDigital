@@ -35,6 +35,22 @@ ENGANCHES = [
     "data-nav-inferior",
     "data-destino",
     "data-accion",
+    "data-volver",
+    "data-tierra-id",
+    "data-trabajo-de-hoy",
+    "data-historial",
+    "data-historial-anio",
+    "data-dia-calendario",
+    "data-trabajo-del-dia",
+    "data-filtro-tipo",
+    "data-trabajo-fila",
+    "data-mes-anterior",
+    "data-mes-siguiente",
+    "data-factura-foto",
+    "data-factura-leer",
+    "data-factura-propuesta",
+    "data-factura-guardar",
+    "data-factura-resultado",
     "data-buscar-codigos",
     "data-recinto-id",
     "data-recinto-marcado",
@@ -57,7 +73,6 @@ ENGANCHES = [
     "data-totales",
     "data-buscador",
     "data-municipio",
-    "data-tierra-id",
     "data-seleccionada",
     "data-mapa",
     "data-mapa-imagen",
@@ -82,10 +97,17 @@ PUERTAS = [
     "/api/nuevo/resumen",
     "/api/nuevo/que-falta",
     "/api/nuevo/importar-cuaderno",
+    "/api/nuevo/tierra/",
+    "/api/nuevo/calendario",
+    "/api/nuevo/trabajos",
     "/api/sigpac/buscar",
     "/api/parcelas/desde-sigpac",
     "/api/parcelas/desde-sigpac/varias",
     "/api/mapa/punto",
+    "/api/mapa/tierra/",
+    "/api/facturas",
+    "/api/facturas/leer",
+    "/api/documentos",
     "/api/cuaderno-cyl/leer",
     "/api/cuaderno-cyl/importar",
 ]
@@ -203,15 +225,26 @@ class TestElContratoConElArnesDeNavegador:
         for valor in ["cargando", "error", "vacio", "sin-permiso", "listo"]:
             assert f'"{valor}"' in fuente, f"falta el estado «{valor}»"
 
-    def test_los_cuatro_destinos_de_movil_estan(self):
+    def test_los_cinco_destinos_del_movil_estan(self):
         fuente = leer("app.js")
-        for destino in ["hoy", "tierras", "apuntar", "cuaderno", "mas"]:
+        for destino in ["hoy", "tierras", "apuntar", "calendario", "mas"]:
             assert f'"{destino}"' in fuente, f"falta el destino «{destino}»"
+        # El cuaderno sigue teniendo su sitio en el lateral de la tableta y del ordenador.
+        assert 'data-destino="cuaderno"' in fuente
 
     def test_la_vista_de_anadir_tierras_esta(self):
         fuente = leer("app.js")
         assert '"alta"' in fuente, "falta la vista de añadir tierras"
         assert 'data-vista=${vista}' in fuente
+
+    def test_las_vistas_de_la_tierra_el_calendario_los_trabajos_y_las_facturas_estan(self):
+        fuente = leer("app.js")
+        for vista in ["tierra", "calendario", "trabajos", "facturas", "mas"]:
+            assert f'"{vista}"' in fuente, f"falta la vista «{vista}»"
+        assert "VistaTierra" in fuente
+        assert "VistaCalendario" in fuente
+        assert "VistaTrabajos" in fuente
+        assert "VistaFacturas" in fuente
 
     def test_las_puertas_que_usa_la_pantalla_son_las_del_servidor(self):
         fuente = leer("app.js")

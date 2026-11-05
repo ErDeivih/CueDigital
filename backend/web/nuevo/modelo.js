@@ -30,6 +30,9 @@ export const textos = {
     hoy: "Hoy",
     tierras: "Tierras",
     apuntar: "Apuntar",
+    calendario: "Calendario",
+    trabajos: "Trabajos",
+    facturas: "Facturas",
     cuaderno: "Cuaderno",
     mas: "Más",
     campana: "Campaña",
@@ -189,6 +192,95 @@ export const textos = {
     noSeImporto: "No se ha podido traer el cuaderno. Prueba otra vez o ábrelo en la app de siempre.",
     otroFichero: "Elegir otro cuaderno",
     sinDatos: "Todavía no hay nada que enseñar aquí.",
+  },
+  mas: {
+    titulo: "Más",
+    facturas: "Facturas",
+    trabajos: "Trabajos",
+    cuaderno: "Cuaderno",
+    ajustes: "Ajustes",
+    intro: "Lo demás de la finca.",
+  },
+  tierra: {
+    volver: "Volver a las tierras",
+    mapa: "El mapa de la tierra",
+    datos: "Datos de la tierra",
+    hoy: "Hoy en esta tierra",
+    sinHoy: "Hoy no hay nada apuntado en esta tierra.",
+    cargandoHoy: "Trayendo lo de hoy…",
+    historial: "Historial",
+    sinHistorial: "No hay años anteriores guardados.",
+    cargandoHistorial: "Trayendo el historial…",
+    noDisponible: "El historial de la tierra todavía no está en la pantalla nueva.",
+    anio: "Año",
+    sinMapa: "Esta tierra no tiene forma en el SIGPAC: se enseñan sus datos, pero no se dibuja.",
+    abrirAppVieja: "Abrir la app de siempre",
+  },
+  calendario: {
+    titulo: "Calendario",
+    anterior: "Mes anterior",
+    siguiente: "Mes siguiente",
+    eligeDia: "Elige un día para ver el trabajo.",
+    sinTrabajo: "Ese día no hay trabajo apuntado.",
+    cargando: "Trayendo el calendario…",
+    noDisponible: "El calendario todavía no está en la pantalla nueva.",
+    diasConTrabajo: "Días con trabajo",
+    trabajosDelDia: "Trabajos del día",
+    sinNada: "No hay trabajo apuntado en este mes.",
+  },
+  trabajos: {
+    titulo: "Trabajos",
+    todos: "Todos",
+    filtro: "Filtrar por tipo",
+    trabajo: "Trabajo",
+    tierra: "Tierra",
+    municipio: "Municipio",
+    hectareas: "Hectáreas",
+    cantidad: "Cantidad",
+    porHectarea: "Por hectárea",
+    sinTrabajos: "No hay trabajos de ese tipo.",
+    sinDatos: "Todavía no hay trabajos apuntados.",
+    cargando: "Trayendo los trabajos…",
+    noDisponible: "Los trabajos todavía no están en la pantalla nueva.",
+    resumen: "{n} trabajos · {ha} ha",
+    resumenSinHa: "{n} trabajos",
+    sinSuperficie: "sin superficie",
+  },
+  facturas: {
+    titulo: "Facturas",
+    intro: "Hazle una foto a la factura, al envase o al papel que sea, y se revisa antes de guardar.",
+    foto: "Hacer una foto",
+    archivo: "Elegir una foto o un PDF",
+    fotos: "Fotos",
+    quitar: "Quitar la foto",
+    anadir: "Añadir otra foto",
+    leer: "Leer la factura",
+    leyendo: "Leyendo la factura…",
+    propuesta: "Revisa lo que dice",
+    propuestaAyuda: "Corrige lo que veas mal antes de guardarla.",
+    guardar: "Guardar la factura",
+    guardando: "Guardando…",
+    guardada: "Factura guardada",
+    noSeGuardo: "No se ha podido guardar. Prueba otra vez.",
+    noSeLeyo: "No se ha podido leer la factura. Se puede escribir a mano.",
+    aMano: "Escribirla a mano",
+    proveedor: "Proveedor",
+    nif: "NIF",
+    numero: "Número",
+    fecha: "Fecha",
+    base: "Base",
+    iva: "IVA",
+    total: "Total",
+    lineas: "Líneas",
+    sinLineas: "Sin líneas leídas.",
+    sinFotos: "Añade una foto de la factura.",
+    ultimas: "Últimas facturas",
+    sinFacturas: "Todavía no hay facturas guardadas.",
+    cargando: "Trayendo las facturas…",
+    noDisponible: "Las facturas todavía no están en la pantalla nueva.",
+    anulada: "Anulada",
+    fotosDeMas: "La factura guarda una foto. Las demás se guardan en Documentos.",
+    yaEstaba: "Esa factura ya estaba guardada.",
   },
 };
 
@@ -755,4 +847,408 @@ export function cajaDeLosRecintos(recintos) {
 
   const caja = [oeste, sur, este, norte];
   return esBboxValida(caja) ? caja : null;
+}
+
+// ---------------------------------------------------------------------------
+// Los trabajos: qué se hizo, cuándo, dónde y cuánto
+// ---------------------------------------------------------------------------
+
+const NOMBRES_DE_MES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+const TIPOS_DE_TRABAJO = {
+  siembra: "Siembra",
+  cosecha: "Cosecha",
+  tratamiento: "Tratamiento",
+  abono: "Abono",
+  fertilizacion: "Abono",
+  labor: "Labor",
+  riego: "Riego",
+  poda: "Poda",
+  otros: "Otros",
+};
+
+/** «vertedera» → «Vertedera»: una palabra que se lee, no una clave. */
+export function nombrePropio(texto) {
+  const limpio = String(texto ?? "").replace(/_/g, " ").trim();
+  if (!limpio) return "";
+  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+}
+
+/** El nombre del trabajo en palabras: siembra, vertedera, grada… */
+export function etiquetaDeTrabajo(item) {
+  const t = item || {};
+  if (t.titulo && String(t.titulo).trim()) return String(t.titulo).trim();
+  if (t.tipo && String(t.tipo).includes(":")) return nombrePropio(String(t.tipo).split(":")[1]);
+  if (t.tipo === "labor" && (t.subtipo || t.labor)) return nombrePropio(t.subtipo || t.labor);
+  if ((t.subtipo || t.labor) && !TIPOS_DE_TRABAJO[t.tipo]) return nombrePropio(t.subtipo || t.labor);
+  return TIPOS_DE_TRABAJO[t.tipo] || nombrePropio(t.tipo) || textos.trabajos.trabajo;
+}
+
+/** Un número de la pantalla: acepta 12,5 y 12.5; vacío es «no consta», nunca cero. */
+export function numeroDe(valor) {
+  if (valor === null || valor === undefined || valor === "") return null;
+  if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
+  const limpio = String(valor).trim().replace(/\./g, "").replace(",", ".");
+  const numero = Number(limpio);
+  return Number.isFinite(numero) ? numero : null;
+}
+
+/** Un trabajo, con su tierra y su municipio resueltos aunque el servidor solo mande el id. */
+export function normalizaTrabajo(item, tierras = []) {
+  const t = item || {};
+  const lista = Array.isArray(tierras) ? tierras : [];
+  const idDeTierra = t.parcela_id ?? t.tierra_id ?? t.id_tierra ?? null;
+  const encontrada = idDeTierra === null ? null : lista.find((tierra) => tierra.id === idDeTierra) || null;
+  const hectareas = numeroDe(t.hectareas ?? t.superficie_ha ?? t.ha);
+  const kgPorHa = numeroDe(
+    t.kg_ha ?? t.kilos_por_hectarea ?? t.dosis_kg_ha ?? t.dosis_semilla_kg_ha ?? (t.por_hectarea ? t.cantidad : null),
+  );
+  const dosis = numeroDe(t.dosis ?? t.cantidad);
+  const unidad = t.unidad || t.dosis_unidad || (kgPorHa !== null ? "kg/ha" : null);
+  const cantidad = kgPorHa !== null ? kgPorHa : dosis;
+  const subtipo = t.subtipo ?? t.labor ?? null;
+
+  return {
+    id: t.id ?? null,
+    fecha: t.fecha ? String(t.fecha).slice(0, 10) : null,
+    tipo: t.tipo ?? null,
+    subtipo,
+    etiqueta: etiquetaDeTrabajo(t),
+    tierra: t.tierra_alias ?? t.tierra ?? t.alias ?? (encontrada ? encontrada.alias : null),
+    municipio: t.municipio ?? (encontrada ? encontrada.municipio : null),
+    hectareas,
+    cantidad,
+    unidad,
+    porHectarea: Boolean(t.por_hectarea) || (unidad ? /\/\s*ha/.test(unidad) : false),
+    cultivo: t.cultivo ?? null,
+    variedad: t.variedad ?? null,
+    producto: t.producto ?? t.materia_activa ?? t.maquina ?? null,
+    detalle: t.detalle ?? null,
+    anulado: Boolean(t.anulado),
+  };
+}
+
+/** Los trabajos agrupados por día, del más nuevo al más viejo. */
+export function agruparPorDias(trabajos) {
+  const dias = new Map();
+  for (const trabajo of Array.isArray(trabajos) ? trabajos : []) {
+    const fecha = trabajo && trabajo.fecha ? String(trabajo.fecha).slice(0, 10) : null;
+    if (!fecha) continue;
+    if (!dias.has(fecha)) dias.set(fecha, []);
+    dias.get(fecha).push(trabajo);
+  }
+  return [...dias.entries()]
+    .map(([fecha, suyos]) => ({ fecha, trabajos: suyos, n: suyos.length }))
+    .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+}
+
+function dosCifras(valor) {
+  return String(valor).padStart(2, "0");
+}
+
+/** Las celdas del mes en rejilla, empezando en lunes. */
+export function rejillaDelMes(anio, mes) {
+  const anioNumero = Number(anio);
+  const mesNumero = Number(mes);
+  if (!Number.isFinite(anioNumero) || !Number.isFinite(mesNumero) || mesNumero < 1 || mesNumero > 12) {
+    return [];
+  }
+  const primero = new Date(anioNumero, mesNumero - 1, 1);
+  const diasDelMes = new Date(anioNumero, mesNumero, 0).getDate();
+  const desfase = (primero.getDay() + 6) % 7; // lunes = 0
+  const celdas = [];
+  const total = Math.ceil((desfase + diasDelMes) / 7) * 7;
+  for (let indice = 0; indice < total; indice += 1) {
+    const dia = indice - desfase + 1;
+    const delMes = dia >= 1 && dia <= diasDelMes;
+    const fecha = delMes
+      ? `${anioNumero}-${dosCifras(mesNumero)}-${dosCifras(dia)}`
+      : null;
+    celdas.push({ dia: delMes ? dia : null, fecha, delMes });
+  }
+  return celdas;
+}
+
+/** «noviembre de 2026». */
+export function nombreDeMes(anio, mes) {
+  const indice = Number(mes) - 1;
+  if (!NOMBRES_DE_MES[indice]) return "";
+  return `${NOMBRES_DE_MES[indice]} de ${anio}`;
+}
+
+/** El mes de una fecha, en palabras («marzo»), o vacío si no hay fecha. */
+export function mesEnPalabras(valor) {
+  if (!valor) return "";
+  const partes = String(valor).slice(0, 10).split("-");
+  if (partes.length !== 3) return "";
+  return NOMBRES_DE_MES[Number(partes[1]) - 1] || "";
+}
+
+/**
+ * Lo que suman las hectáreas de una lista de trabajos. **Sin mezclar**: solo cuenta el campo de
+ * superficie; una cantidad en kilos o litros no suma hectáreas. Y las que no constan se cuentan
+ * aparte, para poder decirlo en vez de dar un total que parece completo.
+ */
+export function sumaDeHectareas(trabajos) {
+  let total = 0;
+  let sinSuperficie = 0;
+  let n = 0;
+  for (const trabajo of Array.isArray(trabajos) ? trabajos : []) {
+    n += 1;
+    const hectareas = trabajo ? trabajo.hectareas : null;
+    if (hectareas === null || hectareas === undefined || Number.isNaN(Number(hectareas))) {
+      sinSuperficie += 1;
+      continue;
+    }
+    total += Number(hectareas);
+  }
+  return { ha: redondea(total, 2), n, sinSuperficie };
+}
+
+/** La clave con la que se filtra un trabajo: el tipo y, en las labores, también el apero. */
+export function claveDeTipo(trabajo) {
+  const t = trabajo || {};
+  if (t.tipo === "labor" && t.subtipo) return `labor:${t.subtipo}`;
+  return t.tipo || "otros";
+}
+
+/** Los tipos que hay en una lista, con su cuenta, para pintar los botones de filtro. */
+export function relacionDeTipos(trabajos) {
+  const cuenta = new Map();
+  for (const trabajo of Array.isArray(trabajos) ? trabajos : []) {
+    if (!trabajo) continue;
+    const clave = claveDeTipo(trabajo);
+    cuenta.set(clave, (cuenta.get(clave) || 0) + 1);
+  }
+  return [...cuenta.entries()]
+    .map(([clave, n]) => ({
+      clave,
+      etiqueta: clave.startsWith("labor:") ? nombrePropio(clave.slice(6)) : TIPOS_DE_TRABAJO[clave] || nombrePropio(clave),
+      n,
+    }))
+    .sort((a, b) => (b.n !== a.n ? b.n - a.n : a.etiqueta.localeCompare(b.etiqueta, "es")));
+}
+
+/** Los trabajos de un tipo (o todos, si no se elige ninguno). */
+export function filtrarPorTipo(trabajos, clave) {
+  const lista = Array.isArray(trabajos) ? trabajos : [];
+  if (!clave) return lista.slice();
+  return lista.filter((trabajo) => claveDeTipo(trabajo) === clave);
+}
+
+/** El calendario: los días que traen trabajo, con sus trabajos dentro. */
+export function normalizaCalendario(datos, tierras = []) {
+  const crudo = datos || {};
+  const dias = (Array.isArray(crudo.dias) ? crudo.dias : [])
+    .map((dia) => {
+      const fecha = dia && (dia.fecha ?? dia.dia) ? String(dia.fecha ?? dia.dia).slice(0, 10) : null;
+      const trabajos = (Array.isArray(dia && dia.trabajos) ? dia.trabajos : []).map((trabajo) =>
+        normalizaTrabajo(trabajo, tierras),
+      );
+      const n = dia && dia.n !== null && dia.n !== undefined ? Number(dia.n) : trabajos.length;
+      return fecha ? { fecha, trabajos, n } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
+  return { dias, totales: crudo.totales || null };
+}
+
+/** La lista de trabajos con su filtro y su resumen. */
+export function normalizaTrabajos(datos, tierras = []) {
+  const crudo = datos || {};
+  const trabajos = (Array.isArray(crudo.trabajos) ? crudo.trabajos : []).map((trabajo) =>
+    normalizaTrabajo(trabajo, tierras),
+  );
+  const tipos = (Array.isArray(crudo.tipos) ? crudo.tipos : []).map((tipo) => {
+    if (typeof tipo === "string") {
+      return { clave: tipo, etiqueta: nombrePropio(tipo), n: 0 };
+    }
+    const clave = tipo.clave ?? tipo.tipo ?? "otros";
+    return {
+      clave,
+      etiqueta: tipo.etiqueta || (clave.startsWith("labor:") ? nombrePropio(clave.slice(6)) : TIPOS_DE_TRABAJO[clave] || nombrePropio(clave)),
+      n: tipo.n === null || tipo.n === undefined ? 0 : Number(tipo.n),
+    };
+  });
+  const resumen = crudo.resumen && typeof crudo.resumen === "object" ? crudo.resumen : sumaDeHectareas(trabajos);
+  return {
+    tipos: tipos.length ? tipos : relacionDeTipos(trabajos),
+    elegido: crudo.elegido ?? null,
+    trabajos,
+    resumen,
+  };
+}
+
+/** Una fila del historial de una tierra, con sus cantidades y su mes. */
+export function normalizaFilaDeHistorial(item, tierras = []) {
+  const trabajo = normalizaTrabajo(item, tierras);
+  const detalles = [];
+  if (trabajo.cultivo) detalles.push(trabajo.cultivo);
+  if (trabajo.variedad) detalles.push(trabajo.variedad);
+  if (trabajo.producto && trabajo.producto !== trabajo.cultivo) detalles.push(trabajo.producto);
+  if (trabajo.detalle) detalles.push(trabajo.detalle);
+  if (trabajo.cantidad !== null && trabajo.unidad) {
+    detalles.push(`${formateaNumero(trabajo.cantidad)} ${trabajo.unidad}`);
+  } else if (trabajo.cantidad !== null) {
+    detalles.push(formateaNumero(trabajo.cantidad));
+  }
+  if (trabajo.hectareas !== null) detalles.push(`${formateaNumero(trabajo.hectareas)} ${textos.tierras.panel.hectareas}`);
+  const mes = mesEnPalabras(trabajo.fecha) || nombrePropio(item && item.mes);
+  if (mes) detalles.push(mes);
+  return { ...trabajo, detalles, mes };
+}
+
+/** Las secciones con las que el servidor cuenta el año, y con qué nombre se leen. */
+const SECCIONES_DEL_HISTORIAL = [
+  ["siembra", "siembra"],
+  ["labores", "labor"],
+  ["tratamientos", "tratamiento"],
+  ["abonos", "abono"],
+  ["cosecha", "cosecha"],
+];
+
+/** El historial agrupado por año, del más nuevo al más viejo. */
+export function normalizaHistorial(datos, tierras = []) {
+  const crudo = datos || {};
+  let filas = [];
+  if (Array.isArray(crudo.historial)) filas = crudo.historial;
+  else if (Array.isArray(crudo.anios)) filas = crudo.anios;
+
+  const porAnio = new Map();
+
+  const guardar = (anio, suyas) => {
+    if (!porAnio.has(anio)) porAnio.set(anio, { filas: [], cultivo: null, variedad: null, superficie_ha: null });
+    porAnio.get(anio).filas.push(...suyas);
+  };
+
+  for (const fila of filas) {
+    if (!fila || typeof fila !== "object") continue;
+
+    // La forma del servidor: un elemento por año, con lo de cada sección dentro.
+    const tieneSecciones = SECCIONES_DEL_HISTORIAL.some(([clave]) => fila[clave] !== undefined);
+    if (tieneSecciones && !Array.isArray(fila.trabajos) && !Array.isArray(fila.items)) {
+      const anio = String(fila.anio ?? fila.year ?? "");
+      if (!porAnio.has(anio)) {
+        porAnio.set(anio, {
+          filas: [],
+          cultivo: fila.cultivo ?? null,
+          variedad: fila.variedad ?? null,
+          superficie_ha: numeroDe(fila.superficie_ha),
+        });
+      }
+      const suyas = [];
+      for (const [clave, tipo] of SECCIONES_DEL_HISTORIAL) {
+        const contenido = fila[clave];
+        const elementos = Array.isArray(contenido) ? contenido : contenido ? [contenido] : [];
+        for (const elemento of elementos) {
+          suyas.push(normalizaFilaDeHistorial({ tipo, ...elemento }, tierras));
+        }
+      }
+      guardar(anio, suyas);
+      continue;
+    }
+
+    // Y la forma sencilla: una fila por apunte, con su año.
+    if (Array.isArray(fila.trabajos) || Array.isArray(fila.items)) {
+      const anio = String(fila.anio ?? fila.year ?? "");
+      const suyas = (fila.trabajos || fila.items || []).map((una) => normalizaFilaDeHistorial(una, tierras));
+      guardar(anio, suyas);
+      continue;
+    }
+    const anio = String(fila.anio ?? fila.year ?? fila.anio_campana ?? "");
+    guardar(anio, [normalizaFilaDeHistorial(fila, tierras)]);
+  }
+
+  return [...porAnio.entries()]
+    .map(([anio, datosDelAnio]) => ({
+      anio,
+      cultivo: datosDelAnio.cultivo,
+      variedad: datosDelAnio.variedad,
+      superficie_ha: datosDelAnio.superficie_ha,
+      filas: datosDelAnio.filas,
+    }))
+    .sort((a, b) => (a.anio < b.anio ? 1 : a.anio > b.anio ? -1 : 0));
+}
+
+/** La ficha de una tierra: lo de hoy y el historial. */
+export function normalizaTierra(datos, tierras = []) {
+  const crudo = datos || {};
+  return {
+    trabajoDeHoy: (Array.isArray(crudo.trabajo_de_hoy) ? crudo.trabajo_de_hoy : []).map((trabajo) =>
+      normalizaTrabajo(trabajo, tierras),
+    ),
+    historial: normalizaHistorial(crudo, tierras),
+    resumen: crudo.resumen || null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Las facturas: la propuesta que se revisa y el cuerpo que se guarda
+// ---------------------------------------------------------------------------
+
+/** Lo que el lector ha entendido de la factura, listo para revisarlo campo a campo. */
+export function normalizaPropuestaDeFactura(datos) {
+  const crudo = datos || {};
+  const lineas = (Array.isArray(crudo.lineas) ? crudo.lineas : []).map((linea) => ({
+    descripcion: linea.descripcion ?? linea.concepto ?? "",
+    cantidad: numeroDe(linea.cantidad),
+    unidad: linea.unidad || null,
+    precioUnitario: numeroDe(linea.precio_unitario ?? linea.precio),
+    importe: numeroDe(linea.importe),
+    numeroRegistro: linea.numero_registro || null,
+  }));
+
+  return {
+    proveedor: crudo.proveedor || "",
+    nif: crudo.proveedor_nif || "",
+    numero: crudo.numero_factura || "",
+    fecha: crudo.fecha ? String(crudo.fecha).slice(0, 10) : "",
+    base: numeroDe(crudo.base_imponible),
+    iva: numeroDe(crudo.cuota_iva),
+    tipoIva: numeroDe(crudo.tipo_iva_pct),
+    total: numeroDe(crudo.total),
+    lineas,
+    avisos: Array.isArray(crudo.avisos) ? crudo.avisos : [],
+    yaEstaba: crudo.ya_estaba ?? null,
+  };
+}
+
+/** El cuerpo que se manda al guardar: solo los campos de la factura, con lo que se ha escrito. */
+export function cuerpoDeLaFactura(propuesta) {
+  const p = propuesta || {};
+  const lineas = (Array.isArray(p.lineas) ? p.lineas : [])
+    .filter((linea) => linea && String(linea.descripcion || "").trim())
+    .map((linea) => ({
+      descripcion: String(linea.descripcion).trim(),
+      cantidad: linea.cantidad,
+      unidad: linea.unidad || null,
+      precio_unitario: linea.precioUnitario,
+      importe: linea.importe,
+      numero_registro: linea.numeroRegistro || null,
+    }));
+
+  return {
+    proveedor: String(p.proveedor || "").trim() || null,
+    proveedor_nif: String(p.nif || "").trim() || null,
+    numero_factura: String(p.numero || "").trim() || null,
+    fecha: String(p.fecha || "").trim() || null,
+    base_imponible: p.base,
+    cuota_iva: p.iva,
+    tipo_iva_pct: p.tipoIva,
+    total: p.total,
+    lineas,
+  };
 }
