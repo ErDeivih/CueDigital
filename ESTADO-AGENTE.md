@@ -1,5 +1,5 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: David aprobó el diseño con ocho correcciones. Ya están aplicadas en la arquitectura y en los 10 artboards, y la investigación de la Junta se ha ampliado con la vía real para importar las tierras (la consulta de recintos por campaña 2023-2026 y el Cuecyl). Todavía no hay implementación de la aplicación: lo siguiente es el armazón nuevo con «Hoy» y «Mis tierras». El corpus de D08 sigue aparcado y no bloquea nada.
+resumen: David aprobó el diseño con ocho correcciones. Ya están aplicadas en la arquitectura y en los 10 artboards, y la investigación de la Junta se ha ampliado con la vía real para importar las tierras (la consulta de recintos por campaña 2023-2026 y el Cuecyl). Los dos vídeos de referencia que pasó no son de SIGPAC (son tutoriales de ArcGIS Pro y QGIS), así que no se ha inventado el flujo con ellos: se le pide la referencia correcta. Todavía no hay implementación de la aplicación: lo siguiente es el armazón nuevo con «Hoy» y «Mis tierras». El corpus de D08 sigue aparcado y no bloquea nada.
 estado: en-curso
 tarea: correcciones de David aplicadas al diseño y a la arquitectura; investigación de importación ampliada
 nivel: 2
@@ -29,6 +29,14 @@ fecha: 2026-11-05
    anterior dentro de ella). También: webinars y demos oficiales de la Junta, el formulario **S-X**, y
    los riesgos probados (recintos renombrados/partidos, NIF del propietario, CSP provisional).
 5. **D08 sigue aparcado** por decisión de David: no se persigue y no bloquea.
+6. **Los dos vídeos de referencia (revisados el 2026-11-05) no son de SIGPAC**: son tutoriales en
+   inglés de **ArcGIS Pro** (segmentación de imágenes, 10:55) y de **QGIS** (shapefile y área de
+   estudio, 26:28). Se han abierto, se ha leído su ficha/descripción y se han mirado sus fotogramas;
+   **no se ha inventado el flujo** con ellos (ver `docs/INVESTIGACION-AGRICOLA.md`, apartado 9 ter).
+   El registro se queda con las dos vías verificadas y con el listón escrito: buscar por los siete
+   códigos o tocando el mapa, ver antes de aceptar y añadir; o importar. Se pide a David la referencia
+   correcta. La **doctrina y el protocolo** ya están en el proyecto (`DOCTRINA-CALIDAD.md` y
+   `PROTOCOLO-AUTONOMIA.md`, copia literal de la carpeta de flujo).
 
 ## La última pasada, sobre este mismo HEAD
 
@@ -41,7 +49,7 @@ fecha: 2026-11-05
 - **AGR-10/11/12**, ya con el diseño aprobado: histórico y evolución; productos/dosis/favoritos;
   facturas de foto con revisión campo a campo. Y **AGR-13**: la doctrina §8 en los textos nuevos.
 - **Pendiente de terceros**: licencia del SHP de CyL (CIT) y de la ortofoto PNOA (IGN); formato de
-  «Documentos del expediente» y descarga del Cuecyl de años anteriores; los **dos vídeos** de
-  referencia de David sobre el registro de parcelas; valores de los catálogos oficiales.
+  «Documentos del expediente» y descarga del Cuecyl de años anteriores; los **dos vídeos correctos de
+  SIGPAC** (los pasados el 05/11 no eran: son de ArcGIS Pro y QGIS); valores de los catálogos oficiales.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni
   cambiado de rama y no se usa GitHub Actions. Push selectivo al final de la sesión.

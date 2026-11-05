@@ -96,6 +96,19 @@
   textos de desarrollador se borran. Los textos del agricultor siguen en `app/textos.py`.
 - **Criterio**: recorrido de textos de las pantallas nuevas y retirada de lo que no sirve para decidir.
 
+### AGR-14 · Los dos vídeos de referencia del registro de parcelas — **REVISADOS (2026-11-05); no son de SIGPAC**
+
+- **Nivel**: 1 (revisión) / 3 (confirmación de David).
+- **Qué se ha hecho**: abrir los dos enlaces, leer ficha, descripción y fotogramas, y documentar qué
+  son en `docs/INVESTIGACION-AGRICOLA.md` (apartado 9 ter). **No son de SIGPAC**: son tutoriales de
+  **ArcGIS Pro** (segmentación de imágenes, 10:55) y de **QGIS** (shapefile y mapa de área de estudio,
+  26:28), en inglés. No se ha inventado el flujo con ellos.
+- **Consecuencia**: el registro se queda con las dos vías verificadas (guiado por los siete códigos o
+  tocando el mapa; importar recintos por campaña, Cuecyl o S-X), con el listón escrito en
+  `docs/ARQUITECTURA-DE-PANTALLAS.md` (S02-bis).
+- **Pendiente**: que David confirme si esos enlaces eran los que quería o pase los dos vídeos de la
+  administración sobre SIGPAC; cuando lleguen, se revisan y se ajusta el registro.
+
 ### AGR-2 · Armazón nuevo + «Hoy» + «Mis parcelas»
 
 - **Nivel**: 2. **Siguiente en cuanto AGR-1 esté aprobado.**

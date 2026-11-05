@@ -537,6 +537,59 @@ el mapa, con confirmación antes de aceptar; o **importación** de la exportaci�
 
 
 
+## 9 ter · Los dos vídeos de referencia de David (revisados el 2026-11-05)
+
+David pasó **dos enlaces** como referencia de «cómo un agricultor consigue y registra sus parcelas con
+SIGPAC». Se han abierto los dos, se ha leído su ficha y su descripción oficial y se han mirado sus
+fotogramas de portada. **Los dos enlaces no son de SIGPAC ni de la agricultura española**: son
+tutoriales de programas de SIG en inglés. Esto es lo que son, para que no se construya nada sobre una
+referencia equivocada.
+
+| Enlace | Título real y autor | Duración | Qué enseña |
+|---|---|---|---|
+| <https://www.youtube.com/watch?v=CiKsaIm-hZI> | **«How to Create Image Segmentation in ArcGIS Pro»** — canal *Terra Spatial* | **10:55** | **Segmentación de imágenes** en ArcGIS Pro: preparar una ortofoto, crear segmentos a partir del ráster, ver sus características espectrales y espaciales, interpretar el resultado y aplicarlo a la clasificación del terreno. Interfaz en inglés: panel de contenidos con las bandas del ráster y la vista del mapa antes/después de segmentar |
+| <https://www.youtube.com/watch?v=Y2WoZmNs-kI> | **«Creating Shapefile and Study Area Map for any Location \| Latest Tutorial using QGIS»** — canal *Madhuraj PK* | **26:28** | **Crear un shapefile y un mapa de área de estudio en QGIS 2024**: dibujar el polígono del área sobre un mapa base, añadir estaciones de muestreo y montar la maqueta con coordenadas, leyenda y rejilla. El ejemplo es el **Parque Nacional de Periyar (India)**, en inglés |
+
+### 9 ter.1 Por qué no sirven para lo que se pedía
+
+- **No hay SIGPAC**: ni la administración española, ni el visor del FEGA, ni la Junta de Castilla y
+  León, ni el formulario de la PAC. Son dos tutoriales de *software* de SIG (ArcGIS Pro y QGIS).
+- **No hay agricultor ni registro de parcelas**: en el primero se segmenta una imagen; en el segundo se
+  dibuja un área de estudio para un trabajo de campo; no se dan de alta recintos de una explotación.
+- **No se ha podido sacar una transcripción**: los subtítulos automáticos de YouTube devuelven vacío
+  para estos vídeos desde aquí. Lo que se describe es lo que dicen su ficha, su descripción oficial y
+  sus fotogramas de portada, no una suposición.
+
+### 9 ter.2 Lo único que sí se puede aprovechar (como idea, no como flujo)
+
+1. **Dibujar un polígono sobre un mapa y darle atributos** (el vídeo de QGIS) es la mecánica del
+   *arreglo* cuando un recinto no aparece o hay que corregirlo a mano: capa vectorial, dibujar, tabla de
+   campos, exportar. En el producto es el último recurso, después del SIGPAC.
+2. **Segmentar una imagen** (el vídeo de ArcGIS) es una técnica que algún día podría servir para
+   **proponer linderos** a partir de la ortofoto. No es para ahora: necesita imagen, proceso y
+   revisión, y no puede presentarse como «la parcela está aquí» sin que el agricultor lo confirme.
+
+### 9 ter.3 Consecuencia: el flujo de registro no cambia, y se pide la referencia correcta
+
+El registro de parcelas se queda como está diseñado, **apoyado en lo verificado** (apartado 9 bis):
+
+1. **Guiado**: el agricultor busca por **los siete códigos** (provincia/municipio/agregado, zona/
+   polígono/parcela/recinto) o **toca el mapa**; antes de aceptar se le enseña **qué ha encontrado, su
+   superficie, uso, coeficientes y región**; confirma y se añade. Si ya la tiene, se avisa; nunca se
+   duplica.
+2. **Importando**: la **exportación de recintos por campaña 2023–2026** de la Junta (texto/Excel), el
+   **Cuecyl `.xlsx`** de la campaña o el **S-X en PDF con texto**; se añaden solas las que falten y se
+   dice qué no se ha podido leer.
+
+**Pendiente, y depende de David**: que confirme si estos dos enlaces eran los que quería (por si se
+equivocó al copiarlos) o que pase los dos vídeos de la administración sobre SIGPAC; cuando lleguen, se
+miran y se ajusta el registro con su flujo real. Mientras, no se inventa el flujo a partir de dos
+tutoriales de ArcGIS y QGIS.
+
+---
+
+## 10 · Siguientes pasos ejecutables
+
 | # | Tarea | Nivel | Qué desbloquea |
 |---|---|---|---|
 | 1 | **Sistema de diseño y artboards** (hecho en este paquete: `designs/`) | 2 | Que David apruebe el aspecto |

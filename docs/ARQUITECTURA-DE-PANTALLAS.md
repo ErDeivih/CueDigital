@@ -157,7 +157,19 @@ datos vive.
 - **Límite declarado**: **no existe un fichero oficial de la solicitud PAC declarada**; la app de la
   Junta la cumplimenta y firma con certificado y reimporta el año anterior dentro de ella. Los formatos
   de «Documentos del expediente» y la descarga del Cuecyl de años anteriores están **pendientes de
-  verificar**. Los vídeos de referencia que tiene David se incorporan cuando los pase.
+  verificar**.
+- **Los dos vídeos de referencia de David (revisados el 05/11/2026)**: **no son de SIGPAC** —son dos
+  tutoriales de ArcGIS Pro y QGIS, en inglés—, así que no se ha inventado un flujo con ellos (ver
+  `INVESTIGACION-AGRICOLA.md`, apartado 9 ter). El registro se queda con las dos vías verificadas, y
+  **cuando David pase los vídeos correctos** se ajusta con su flujo real.
+- **El listón, escrito para que se cumpla**: el registro tiene que ser **al menos tan fácil como
+  esto**, y si no, no vale:
+  1. **Buscar**: por los siete códigos o tocando el mapa. **Sin teclear códigos si no se quiere**.
+  2. **Ver antes de aceptar**: qué ha encontrado, con su superficie, uso, coeficientes y región.
+  3. **Añadir** con un toque, con aviso si ya la tiene y con opción de quitar.
+  O bien: **traer un fichero** (recintos por campaña, Cuecyl o S-X), ver la lista de lo encontrado y
+  aceptar lo que falte. **Nunca más de esos tres pasos para una tierra**, y nunca pedirle que se sepa
+  un código de memoria.
 
 ### P0 · S03 — Ficha de parcela (las tres densidades)
 
