@@ -565,15 +565,23 @@ La primera entrega de **F2** ya está construida y **la app vieja sigue viva**:
 | Armazón nuevo (barra superior, lateral en tableta/PC, inferior de 5 en el móvil) | `/nuevo/` (`backend/web/nuevo/`) | Hecho |
 | «Hoy» (finca, contador, lo último, botón de apuntar) | `/nuevo/` | Hecho |
 | «Mis parcelas» (contador, buscador, lista por municipio, mapa real, zoom, zona, panel con otros años) | `/nuevo/` | Hecho |
+| **Alta de tierras por código y ventana del SIGPAC** (recintos resaltados con color y etiqueta, clic para elegir, alta en bloque) | `/nuevo/` | Hecho |
+| **Tierra catalogada y editable** (alias y superficie; lo del SIGPAC se muestra) | `/nuevo/` | Hecho |
+| **Importar el cuaderno del cliente** (Cuecyl `.xlsx`: reconoce las parcelas, las crea sin duplicar y rellena la finca) | `/nuevo/` | Hecho |
+| **Mapa coloreado por uso/cultivo con leyenda + ficha al clicar** | `/nuevo/` | Hecho |
+| **Gastos/ventas y «qué falta» en «Hoy»** | `/nuevo/` | Hecho (detalle en la app vieja) |
 | Los cuatro estados (cargando, error, vacío, sin permiso) | `/nuevo/` | Hecho |
-| API del armazón (`/api/nuevo/hoy`, `/api/nuevo/tierras`, con sesión y finca) | `app/routers/nuevo_api.py`, `app/nuevo.py` | Hecho |
-| SIGPAC: uso, coeficiente, región y admisibilidad guardados; descarga por provincia con caché | `app/sigpac_cache.py`, `app/routers/parcelas.py` | Hecho (falta abrir el GeoPackage) |
-| Cuaderno guiado, productos/dosis, facturas de foto, PAC/histórico | — | Pendiente (diseño aprobado) |
+| API del armazón (`/api/nuevo/hoy`, `/api/nuevo/tierras`, `/api/nuevo/importar-cuaderno`, `/api/nuevo/resumen`, `/api/nuevo/que-falta`) | `app/routers/nuevo_api.py`, `app/nuevo.py` | Hecho |
+| SIGPAC: uso, coeficiente, región y admisibilidad guardados; descarga por provincia con caché; `puntos` en la búsqueda | `app/sigpac_cache.py`, `app/routers/parcelas.py` | Hecho (falta abrir el GeoPackage) |
+| Pantallas propias de gastos/ingresos y de facturas; apuntar en 30 s; PAC de años anteriores | — | Pendiente (diseño aprobado) |
+| Conexión bancaria PSD2 solo lectura | — | Investigado y parado (nivel 3): `docs/PSD2-AGREGADORES.md` |
 
 **Evidencia**: `scripts/comprobar_el_armazon_nuevo.py` en Chrome a **390, 1024 y 1440 px → 0 fallos**
 (navegación que cambia con el ancho, sin scroll horizontal, 64 tierras en 5 municipios, mapa con
-imagen, panel con alias y otros años, y los cuatro estados); capturas en `docs/capturas-nuevo/`.
-Las pruebas de la pantalla nueva están en `tests/test_interfaz_nuevo.py` y `tests_js/nuevo.test.js`.
+imagen, panel con alias y otros años, los cuatro estados, y el recorrido de **alta SIGPAC** y de
+**importación del cuaderno**); capturas en `docs/capturas-nuevo/`. Las pruebas de la pantalla nueva
+están en `tests/test_interfaz_nuevo.py` y `tests_js/nuevo.test.js`.
 
-**Lo que sigue**: AGR-15 (abrir el GeoPackage e importar) y AGR-16 (cuaderno guiado y las demás
-pantallas en `/nuevo/`, enlazando Cuaderno/Campaña/PAC y retirando cada pantalla vieja al cubrirla).
+**Lo que sigue**: AGR-15 (abrir el GeoPackage e importar), la PAC y los recintos por campaña, las
+pantallas propias de gastos/facturas y el cuaderno de 30 s (AGR-16), y PSD2 cuando haya presupuesto
+aprobado (AGR-18).

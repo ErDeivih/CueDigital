@@ -34,6 +34,23 @@ ENGANCHES = [
     "data-nav-lateral",
     "data-nav-inferior",
     "data-destino",
+    "data-accion",
+    "data-buscar-codigos",
+    "data-recinto-id",
+    "data-recinto-marcado",
+    "data-anadir-seleccionados",
+    "data-mapa-recinto",
+    "data-mapa-ventana",
+    "data-importar-cuaderno",
+    "data-importar-resultado",
+    "data-leyenda-uso",
+    "data-resumen-gastos",
+    "data-resumen-ventas",
+    "data-resumen-cuaderno",
+    "data-que-falta",
+    "data-editar-alias",
+    "data-editar-superficie",
+    "data-guardar-alias",
     "data-titulo",
     "data-ultimos",
     "data-contador-tierras",
@@ -55,6 +72,22 @@ ENGANCHES = [
     "data-entrar",
     "data-reintentar",
     "data-traer-tierras",
+]
+
+# Las puertas del servidor que usa la pantalla. Si alguna cambia de dirección, esto salta
+# antes de que el agricultor vea una pantalla que no carga nada.
+PUERTAS = [
+    "/api/nuevo/hoy",
+    "/api/nuevo/tierras",
+    "/api/nuevo/resumen",
+    "/api/nuevo/que-falta",
+    "/api/nuevo/importar-cuaderno",
+    "/api/sigpac/buscar",
+    "/api/parcelas/desde-sigpac",
+    "/api/parcelas/desde-sigpac/varias",
+    "/api/mapa/punto",
+    "/api/cuaderno-cyl/leer",
+    "/api/cuaderno-cyl/importar",
 ]
 
 PALABRAS_DE_PROGRAMADOR = [
@@ -174,6 +207,16 @@ class TestElContratoConElArnesDeNavegador:
         fuente = leer("app.js")
         for destino in ["hoy", "tierras", "apuntar", "cuaderno", "mas"]:
             assert f'"{destino}"' in fuente, f"falta el destino «{destino}»"
+
+    def test_la_vista_de_anadir_tierras_esta(self):
+        fuente = leer("app.js")
+        assert '"alta"' in fuente, "falta la vista de añadir tierras"
+        assert 'data-vista=${vista}' in fuente
+
+    def test_las_puertas_que_usa_la_pantalla_son_las_del_servidor(self):
+        fuente = leer("app.js")
+        faltan = [puerta for puerta in PUERTAS if puerta not in fuente]
+        assert not faltan, f"la pantalla llama a puertas que no son las del contrato: {faltan}"
 
 
 class TestLaPantallaNoSeCompila:

@@ -52,6 +52,24 @@ export const textos = {
     ultimos: "Lo último",
     contador: "{n} tierras · {ha} ha",
     contadorSinHa: "{n} tierras",
+    gastos: "Gastos",
+    ventas: "Ventas",
+    cuaderno: "Cuaderno",
+    facturas: "Facturas",
+    faltaCuaderno: "Falta para el cuaderno",
+    queFalta: "Qué falta",
+    queFaltaVacio: "No falta nada para el cuaderno.",
+    verQueFalta: "Ver qué falta",
+    abrirAppVieja: "Abrir la app de siempre",
+    apunte: "apunte",
+    apuntes: "apuntes",
+    factura: "factura",
+    facturasCuenta: "facturas",
+    sinCerrar: "sin cerrar",
+    porPagar: "quedan {importe} por pagar",
+    cobrado: "cobrado {importe}",
+    faltan: "faltan {n} cosas",
+    faltaUna: "falta 1 cosa",
     sinUltimos: "Cuando apuntes un trabajo o un tratamiento, saldrá aquí.",
     sinTierras: "Todavía no tienes tierras. Trae las tierras para poder apuntar.",
     cargando: "Trayendo lo de hoy…",
@@ -74,6 +92,12 @@ export const textos = {
     vacio: "Todavía no tienes tierras.",
     traerTierras: "Traer tierras",
     sinMunicipio: "Sin municipio",
+    sinUso: "Sin uso",
+    sinCultivo: "Sin cultivo",
+    colorPor: "Colorear por",
+    colorPorUso: "Uso",
+    colorPorCultivo: "Cultivo",
+    leyenda: "Leyenda",
     sinResultados: "Ninguna tierra se llama así.",
     quitarBusqueda: "Ver todas",
     mapa: "Mapa",
@@ -101,7 +125,70 @@ export const textos = {
       hectareas: "ha",
       noConsta: "no consta",
       cerrar: "Cerrar la tierra",
+      editar: "Editar",
+      alias: "Nombre",
+      superficieEditable: "Superficie (ha)",
+      guardar: "Guardar cambios",
+      guardando: "Guardando…",
+      guardado: "Guardado",
+      noSeGuardo: "No se ha podido guardar. Prueba otra vez.",
+      soloEsto: "El resto de los datos del SIGPAC se enseñan, no se cambian.",
     },
+  },
+  alta: {
+    titulo: "Añadir tierras",
+    accion: "Añadir tierras",
+    intro: "Se pueden traer del SIGPAC o de un cuaderno de la Junta.",
+    porCodigo: "Por su código del SIGPAC",
+    porCodigoAyuda: "Los números del papel de la parcela. Con eso sale la lista de recintos.",
+    provincia: "Provincia",
+    municipio: "Municipio",
+    agregado: "Agregado",
+    zona: "Zona",
+    poligono: "Polígono",
+    parcela: "Parcela",
+    recintoFiltro: "Recinto (opcional)",
+    buscar: "Buscar",
+    buscando: "Buscando en el SIGPAC…",
+    sinRecintos: "No salen recintos con esos datos. Repasa los números del papel.",
+    noSePudoBuscar: "No se ha podido preguntar al SIGPAC. Prueba otra vez.",
+    recintos: "Recintos encontrados",
+    recintosCuenta: "{n} recintos",
+    recinto: "Recinto",
+    superficie: "Superficie",
+    uso: "Uso",
+    pendiente: "Pendiente",
+    sinDibujo: "sin dibujo",
+    anadirMarcados: "Añadir los marcados",
+    marcados: "{n} marcados",
+    anadiendo: "Añadiendo…",
+    anadidas: "{n} tierras añadidas",
+    conFallos: "{n} sin añadir",
+    referenciasPegadas: "O pega las referencias",
+    referenciasPista: "Una por línea, como las tengas",
+    traerPegadas: "Traer las pegadas",
+    ventana: "Ventana del SIGPAC",
+    ventanaAyuda: "Toca en el mapa para coger el recinto que es tuyo.",
+    ventanaSinMapa: "Todavía no hay una zona con la que abrir el mapa. Busca por código y añade la primera tierra.",
+    sinForma: "Este recinto no trae forma en el SIGPAC: se lista, pero no se dibuja.",
+    sinPuntos: "Esta búsqueda no trae el dibujo de los recintos. Se pueden añadir desde la lista, marcándolos.",
+    recintosEnElMapa: "{n} recintos en el mapa",
+    fichaRecinto: "Datos del recinto",
+    anadirEsta: "Añadir esta tierra",
+    importar: "Traer un cuaderno",
+    importarAyuda: "El cuaderno de la Junta de un cliente. Se leen sus tierras y se dan de alta sin escribirlas a mano.",
+    elegirFichero: "Elegir el cuaderno",
+    importando: "Trayendo el cuaderno…",
+    importado: "Cuaderno traído",
+    titular: "Titular",
+    anio: "Año",
+    tierrasEnElCuaderno: "Tierras en el cuaderno",
+    creadas: "Tierras nuevas",
+    yaEstaban: "Ya estaban",
+    sinApuntar: "Sin poder apuntar",
+    noSeImporto: "No se ha podido traer el cuaderno. Prueba otra vez o ábrelo en la app de siempre.",
+    otroFichero: "Elegir otro cuaderno",
+    sinDatos: "Todavía no hay nada que enseñar aquí.",
   },
 };
 
@@ -345,4 +432,327 @@ export function datosDelPanel(tierra) {
     { etiqueta: textos.tierras.panel.cultivo, valor: cultivo && cultivo.nombre ? cultivo.nombre : noConsta },
     { etiqueta: textos.tierras.panel.variedad, valor: cultivo && cultivo.variedad ? cultivo.variedad : noConsta },
   ];
+}
+
+// ---------------------------------------------------------------------------
+// El mapa de colores: cada uso (o cultivo) con su color y su palabra
+// ---------------------------------------------------------------------------
+
+/*
+ * Los colores salen de los tokens del sistema, no de aquí a mano: en el mapa se usan como
+ * `var(--token)` y así el día y la noche los cambian solos. Siete y no más: más colores en
+ * una foto aérea no se distinguen, y la leyenda lleva la palabra al lado para no depender
+ * del color.
+ */
+const PALETA = [
+  "var(--brand-bright)",
+  "var(--accent)",
+  "var(--info)",
+  "var(--danger)",
+  "var(--warning)",
+  "var(--surface-sunk)",
+  "var(--ink)",
+];
+
+const COLOR_SIN_DATO = "var(--ink-muted)";
+
+/** Los colores disponibles para pintar las tierras. */
+export function paletaDeUso() {
+  return PALETA.slice();
+}
+
+/** El color que le toca a un valor por su puesto en la leyenda. */
+export function colorDeUso(valor, indice = 0) {
+  if (valor === null || valor === undefined || String(valor).trim() === "") return COLOR_SIN_DATO;
+  return PALETA[Math.abs(Number(indice) || 0) % PALETA.length];
+}
+
+/** El valor por el que se colorea una tierra: su uso del SIGPAC o el cultivo del año. */
+export function valorDeColor(tierra, campo = "uso") {
+  const t = tierra || {};
+  if (campo === "cultivo") {
+    const cultivo = t.cultivo || null;
+    return cultivo && cultivo.nombre ? cultivo.nombre : null;
+  }
+  return t.uso_sigpac || null;
+}
+
+/**
+ * La leyenda: qué valores hay, cuántas tierras tiene cada uno y de qué color se pinta.
+ * Ordenada de más tierras a menos y, a igualdad, por nombre, para que no baile entre
+ * repintados. Lo que no tiene dato va al final y con su palabra («Sin uso»).
+ */
+export function leyendaDe(tierras, campo = "uso") {
+  const cuenta = new Map();
+  for (const tierra of Array.isArray(tierras) ? tierras : []) {
+    if (!tierra) continue;
+    const valor = valorDeColor(tierra, campo);
+    cuenta.set(valor, (cuenta.get(valor) || 0) + 1);
+  }
+  const sinDato = campo === "cultivo" ? textos.tierras.sinCultivo : textos.tierras.sinUso;
+  const filas = [...cuenta.entries()]
+    .map(([valor, n]) => ({
+      valor,
+      n,
+      etiqueta: valor === null ? sinDato : String(valor),
+    }))
+    .sort((a, b) => {
+      if (a.valor === null) return 1;
+      if (b.valor === null) return -1;
+      if (b.n !== a.n) return b.n - a.n;
+      return a.etiqueta.localeCompare(b.etiqueta, "es");
+    });
+
+  let indice = 0;
+  return filas.map((fila) => {
+    const color = fila.valor === null ? COLOR_SIN_DATO : PALETA[indice % PALETA.length];
+    if (fila.valor !== null) indice += 1;
+    return { ...fila, color };
+  });
+}
+
+/** El color de una tierra, buscándolo en la leyenda de su valor. */
+export function colorDeTierra(tierra, leyenda, campo = "uso") {
+  const valor = valorDeColor(tierra, campo);
+  const fila = (Array.isArray(leyenda) ? leyenda : []).find((una) => una.valor === valor);
+  return fila ? fila.color : COLOR_SIN_DATO;
+}
+
+// ---------------------------------------------------------------------------
+// El alta: referencias pegadas y lo que llega de las puertas del servidor
+// ---------------------------------------------------------------------------
+
+/** Las referencias que se han pegado, una por línea o separadas por comas o puntos y coma. */
+export function referenciasDeTexto(texto) {
+  const vistos = new Set();
+  const referencias = [];
+  for (const trozo of String(texto ?? "").split(/[\n\r,;]+/)) {
+    const limpia = trozo.trim();
+    if (!limpia || vistos.has(limpia)) continue;
+    vistos.add(limpia);
+    referencias.push(limpia);
+  }
+  return referencias;
+}
+
+/** Un importe en castellano, o `null` si no hay dato (que no es lo mismo que cero). */
+export function importeEnTexto(valor) {
+  if (valor === null || valor === undefined || valor === "") return null;
+  if (typeof valor === "number") {
+    return Number.isFinite(valor) ? `${formateaNumero(valor)} €` : null;
+  }
+  if (typeof valor === "string") {
+    const limpio = valor.trim();
+    return limpio === "" ? null : limpio;
+  }
+  if (typeof valor === "object") {
+    for (const clave of ["total", "importe", "euros", "total_eur", "valor"]) {
+      if (clave in valor) return importeEnTexto(valor[clave]);
+    }
+  }
+  return null;
+}
+
+function cuentaEnTexto(cantidad, singular, plural) {
+  if (cantidad === null || cantidad === undefined || Number.isNaN(Number(cantidad))) return null;
+  const n = Number(cantidad);
+  return n === 1 ? `${n} ${singular}` : `${n} ${plural}`;
+}
+
+/** Las tarjetas de «Hoy»: gastos, ventas, cuaderno y facturas, cada una con su cifra. */
+export function normalizaResumen(datos) {
+  const resumen = datos || {};
+  const gastos = resumen.gastos || {};
+  const ventas = resumen.ventas || {};
+  const cuaderno = resumen.cuaderno || {};
+  const facturas = resumen.facturas || {};
+
+  const porPagar = (pendiente) => {
+    if (pendiente === null || pendiente === undefined || Number(pendiente) === 0) return null;
+    const importe = importeEnTexto(pendiente);
+    return importe ? textoRelleno(textos.hoy.porPagar, { importe }) : null;
+  };
+  const loCobrado = (cobrado) => {
+    if (cobrado === null || cobrado === undefined || Number(cobrado) === 0) return null;
+    const importe = importeEnTexto(cobrado);
+    return importe ? textoRelleno(textos.hoy.cobrado, { importe }) : null;
+  };
+  const loQueFalta = () => {
+    const faltan = cuaderno.faltan;
+    if (faltan === null || faltan === undefined || Number.isNaN(Number(faltan))) return null;
+    return Number(faltan) === 1 ? textos.hoy.faltaUna : textoRelleno(textos.hoy.faltan, { n: faltan });
+  };
+
+  return {
+    gastos: {
+      importe: importeEnTexto(gastos.total ?? gastos.importe ?? gastos),
+      nota:
+        cuentaEnTexto(gastos.n ?? gastos.apuntes, textos.hoy.apunte, textos.hoy.apuntes) ??
+        porPagar(gastos.pendiente),
+    },
+    ventas: {
+      importe: importeEnTexto(ventas.total ?? ventas.importe ?? ventas),
+      nota:
+        cuentaEnTexto(ventas.n ?? ventas.ventas, textos.hoy.apunte, textos.hoy.apuntes) ??
+        loCobrado(ventas.cobrado) ??
+        porPagar(ventas.pendiente),
+    },
+    cuaderno: {
+      importe: null,
+      nota:
+        loQueFalta() ??
+        cuentaEnTexto(cuaderno.sin_cerrar, textos.hoy.sinCerrar, textos.hoy.sinCerrar),
+    },
+    facturas: {
+      importe: importeEnTexto(facturas.total),
+      nota: cuentaEnTexto(facturas.n ?? facturas.cuantas, textos.hoy.factura, textos.hoy.facturasCuenta),
+    },
+  };
+}
+
+/** «Qué falta»: una lista de qué falta y dónde se arregla, sin inventarse ninguna fila. */
+export function normalizaQueFalta(datos) {
+  let filas = [];
+  if (Array.isArray(datos)) filas = datos;
+  else if (datos && typeof datos === "object") {
+    for (const clave of ["items", "lista", "faltan", "que_falta", "ejemplos"]) {
+      if (Array.isArray(datos[clave])) {
+        filas = datos[clave];
+        break;
+      }
+    }
+  }
+
+  const limpias = [];
+  for (const fila of filas) {
+    if (typeof fila === "string") {
+      const que = fila.trim();
+      if (que) limpias.push({ que, donde: null, enlace: null });
+      continue;
+    }
+    if (!fila || typeof fila !== "object") continue;
+    const que = fila.que ?? fila.texto ?? fila.titulo ?? fila.descripcion ?? null;
+    if (!que || !String(que).trim()) continue;
+    limpias.push({
+      que: String(que).trim(),
+      donde: fila.donde ?? fila.pantalla ?? null,
+      enlace: fila.enlace ?? fila.url ?? null,
+    });
+  }
+  return limpias;
+}
+
+/**
+ * Lo que se ha traído de un cuaderno: el titular, el año y las cuentas de lo que se ha
+ * creado, de lo que ya estaba y de lo que no se ha podido apuntar. Sirve para las dos
+ * formas (la de un paso y la de leer y luego importar).
+ */
+export function normalizaImportacion(datos) {
+  const todo = datos || {};
+  const leido = todo.leido || {};
+  const importado = todo.importado || todo.importacion || {};
+
+  const lineas = Array.isArray(leido.lineas) ? leido.lineas.length : null;
+  const tierras = Array.isArray(todo.tierras) ? todo.tierras.length : null;
+  const numero = (valor) => (valor === null || valor === undefined || Number.isNaN(Number(valor)) ? null : Number(valor));
+
+  return {
+    titular: leido.titular || null,
+    anio: numero(leido.anio ?? importado.anio),
+    tierrasEnElCuaderno: numero(importado.tierras_en_el_cuaderno ?? lineas ?? tierras),
+    creadas: numero(importado.creadas),
+    yaEstaban: numero(importado.ya_estaban),
+    sinApuntar: numero(importado.sin_apuntar),
+    hectareas: numero(importado.hectareas_declaradas),
+    falta: normalizaQueFalta(todo.que_falta),
+    avisos: Array.isArray(importado.avisos) ? importado.avisos : [],
+  };
+}
+
+/** Un toque en el mapa, en coordenadas de verdad. El sur abajo, como se mira un mapa. */
+export function puntoDelMapa(x, y, caja, ancho = ANCHO_MAPA, alto = ALTO_MAPA) {
+  if (!esBboxValida(caja)) return null;
+  const [oeste, sur, este, norte] = caja;
+  const lon = oeste + (Number(x) / ancho) * (este - oeste);
+  const lat = norte - (Number(y) / alto) * (norte - sur);
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+  return [lon, lat];
+}
+
+/**
+ * Los recintos de una búsqueda que **traen su dibujo**, cada uno con su color. Los que vienen
+ * sin puntos (o con puntos que no son coordenadas) se quedan fuera del mapa: se listan, pero no
+ * se dibuja un cuadro que nadie ha medido.
+ */
+export function recintosConPuntos(recintos) {
+  const conDibujo = [];
+  for (const recinto of Array.isArray(recintos) ? recintos : []) {
+    if (!recinto) continue;
+    const puntos = [];
+    if (Array.isArray(recinto.puntos)) {
+      for (const punto of recinto.puntos) {
+        if (!Array.isArray(punto) || punto.length < 2) continue;
+        const lon = Number(punto[0]);
+        const lat = Number(punto[1]);
+        if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+        puntos.push([lon, lat]);
+      }
+    }
+    if (puntos.length < 3) continue;
+    conDibujo.push({
+      recinto: recinto.recinto,
+      referencia: recinto.referencia ?? null,
+      uso: recinto.uso || recinto.uso_sigpac || null,
+      superficie_ha: recinto.superficie_ha ?? null,
+      pendiente_pct: recinto.pendiente_pct ?? null,
+      puntos,
+    });
+  }
+  return conDibujo.map((uno, indice) => ({
+    ...uno,
+    color: colorDeUso(uno.referencia || String(uno.recinto), indice),
+  }));
+}
+
+/**
+ * La caja que abarca los dibujos de esos recintos, para abrir el mapa donde están ellos y no
+ * donde estaba la finca. Si ninguno trae puntos, `null`: no se abre en un sitio inventado.
+ */
+export function cajaDeLosRecintos(recintos) {
+  const longitudes = [];
+  const latitudes = [];
+  for (const recinto of Array.isArray(recintos) ? recintos : []) {
+    const puntos = recinto && recinto.puntos;
+    if (!Array.isArray(puntos)) continue;
+    for (const punto of puntos) {
+      if (!Array.isArray(punto) || punto.length < 2) continue;
+      const lon = Number(punto[0]);
+      const lat = Number(punto[1]);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      longitudes.push(lon);
+      latitudes.push(lat);
+    }
+  }
+  if (!longitudes.length) return null;
+
+  let oeste = Math.min(...longitudes);
+  let este = Math.max(...longitudes);
+  let sur = Math.min(...latitudes);
+  let norte = Math.max(...latitudes);
+
+  // Un recinto diminuto puede dar una caja de lado cero; el servidor no pinta una zona así.
+  const relleno = 0.001;
+  if (este - oeste < relleno) {
+    const medio = (oeste + este) / 2;
+    oeste = medio - relleno / 2;
+    este = medio + relleno / 2;
+  }
+  if (norte - sur < relleno) {
+    const medio = (sur + norte) / 2;
+    sur = medio - relleno / 2;
+    norte = medio + relleno / 2;
+  }
+
+  const caja = [oeste, sur, este, norte];
+  return esBboxValida(caja) ? caja : null;
 }

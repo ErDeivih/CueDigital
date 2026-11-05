@@ -946,6 +946,8 @@ ese campo. Está en `app/database.py` y tiene tests propios.
 | [`ALCANCE-AGRICOLA.md`](ALCANCE-AGRICOLA.md) | Quien vaya a construir el producto nuevo | **El alcance que manda desde el 04/11/2026**: la herramienta del agricultor de Castilla y León, interfaz rehacida, SIGPAC, cuaderno y PAC |
 | [`docs/INVESTIGACION-AGRICOLA.md`](docs/INVESTIGACION-AGRICOLA.md) | Quien integre con la Junta o toque normativa | **Qué exige la JCYL, qué permiten sus APIs y cómo lo resuelven los demás**, con URL y fecha en cada afirmación y lo pendiente marcado |
 | [`docs/ARQUITECTURA-DE-PANTALLAS.md`](docs/ARQUITECTURA-DE-PANTALLAS.md) | Quien implemente la interfaz nueva | **La propuesta de pantallas y flujos para aprobar**: navegación, las 11 pantallas P0, los flujos y las fases |
+| [`WALL.md`](WALL.md) | Quien coordine el producto | **Las casillas de David, copiadas del mapa de objetivos**, con lo cerrado, su evidencia y lo que falta |
+| [`docs/PSD2-AGREGADORES.md`](docs/PSD2-AGREGADORES.md) | Quien conecte los bancos | **PSD2 solo lectura**: agregadores con licencia, límites, las dos opciones medidas y por qué está parado en nivel 3 |
 | `designs/cue-agricola-design-system/` + `designs/cue-agricola/` | Quien diseñe o revise el aspecto | **El sistema de diseño agrícola** (tokens, tipografía, color con contraste medido) y los **artboards** de las pantallas |
 
 ---
@@ -1382,10 +1384,10 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5743 tests
+../.venv/Scripts/python.exe -m pytest          # 5766 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
-node --test "tests_js/*.test.js"               # 1245 tests
+node --test "tests_js/*.test.js"               # 1256 tests
 
 # Recorrido completo contra un servidor de verdad (hace falta tenerlo levantado)
 ../.venv/Scripts/python.exe scripts/humo.py http://127.0.0.1:8000

@@ -148,10 +148,16 @@ FICHEROS_CON_ACCION_POR_VARIABLE = {
 
 
 def _ficheros_del_javascript() -> list[pathlib.Path]:
+    # `web/nuevo/` es la **app nueva**, que se sirve aparte en `/nuevo/` y **no usa el manejador
+    # delegado** de la app vieja: cada botón lleva su `onClick` de React pegado (`anadir-tierras`,
+    # `buscar-codigos`…). Comprobarla contra el `data-accion` de `web/app.js` daría un falso huérfano,
+    # y de hecho lo dio cuando se añadió el alta de tierras. La app nueva tiene sus propias pruebas:
+    # `tests/test_interfaz_nuevo.py`, `tests_js/nuevo.test.js` y el recorrido de Chrome
+    # `scripts/comprobar_el_armazon_nuevo.py`, que **pulsa esos botones** de verdad.
     return [
         fichero
         for fichero in sorted(WEB.rglob("*.js"))
-        if "vendor" not in fichero.parts
+        if "vendor" not in fichero.parts and "nuevo" not in fichero.parts
     ]
 
 

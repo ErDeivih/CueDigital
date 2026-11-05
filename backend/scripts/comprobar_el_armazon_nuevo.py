@@ -267,6 +267,154 @@ def comprobar_un_ancho(nav: NavegadorDeVerdad, base: str, ancho: int) -> None:
     print(f"  (captura: {captura(nav, f'armazon-{ancho}').relative_to(RAIZ)})")
 
 
+def escribir_en_campo(nav: NavegadorDeVerdad, indice: int, valor: str) -> None:
+    """Escribe en el campo número `indice` de la rejilla de códigos, como lo haría una persona."""
+    nav.evaluar(
+        "(() => { const el = document.querySelectorAll('.rejilla-campos input')[" + str(indice) + "];"
+        " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+        "window.HTMLInputElement.prototype, 'value').set;"
+        " setter.call(el, " + json.dumps(valor) + ");"
+        " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+    )
+
+
+def comprobar_alta_e_importacion(nav: NavegadorDeVerdad, base: str) -> None:
+    """El alta de tierras (por código y con la ventana del SIGPAC) y la importación del cuaderno."""
+    print("\n== Alta de tierras e importación ==")
+    nav.medir(1440, 1000)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+    clic_en_visible(nav, "[data-destino=tierras]")
+    llego_tierras = nav.esperar(
+        "(() => { const raiz = document.querySelector('[data-vista=\"tierras\"]');"
+        " return !!raiz && raiz.getAttribute('data-estado') === 'listo'"
+        " && document.querySelectorAll('[data-tierra-id]').length > 0; })()",
+        segundos=20,
+    )
+    comprobar(llego_tierras, "se abre «Mis parcelas» para dar de alta")
+    if not llego_tierras:
+        return
+    antes = nav.evaluar("document.querySelectorAll('[data-tierra-id]').length") or 0
+    comprobar(antes == 64, f"antes de dar de alta hay 64 tierras ({antes})")
+
+    abrio_alta = clic_en_visible(nav, "[data-accion=anadir-tierras]")
+    llego = abrio_alta and nav.esperar(
+        "document.querySelector('[data-vista=\"alta\"]') !== null", segundos=15
+    )
+    comprobar(llego, "se abre «Añadir tierras»")
+    if not llego:
+        return
+
+    # Por la referencia del SIGPAC de la parcela de ejemplo (37/70/0/0/503/51). Se escribe en el
+    # recuadro de referencias, que es la forma en la que el agricultor la tiene delante.
+    escribir_en_campo(nav, 4, "503")
+    escribir_en_campo(nav, 5, "51")
+    nav.evaluar(
+        "(() => { const el = document.querySelector('[data-vista=\"alta\"] textarea');"
+        " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+        "window.HTMLTextAreaElement.prototype, 'value').set;"
+        " setter.call(el, '37:70:0:0:503:51');"
+        " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+    )
+    nav.evaluar(
+        "(() => { const b = document.querySelector('[data-buscar-codigos]');"
+        " if (!b) return false; b.click(); return true; })()"
+    )
+    hay_recintos = nav.esperar("document.querySelectorAll('[data-recinto-id]').length > 0", segundos=40)
+    cuantos = nav.evaluar("document.querySelectorAll('[data-recinto-id]').length") or 0
+    comprobar(hay_recintos, f"la búsqueda por código trae recintos ({cuantos})")
+
+    if hay_recintos:
+        dibujados = nav.evaluar("document.querySelectorAll('[data-mapa-recinto]').length") or 0
+        comprobar(dibujados > 0, f"la ventana del SIGPAC dibuja los recintos ({dibujados} en el mapa)")
+        nav.evaluar(
+            "(() => { const c = document.querySelector('[data-recinto-id] input[type=checkbox]');"
+            " if (!c) return false; c.click(); return true; })()"
+        )
+        marca = nav.esperar(
+            "(() => { const l = document.querySelector('[data-recinto-id]');"
+            " return !!l && l.getAttribute('data-recinto-marcado') === 'si'; })()",
+            segundos=10,
+        )
+        print("  diagnóstico marca:", nav.evaluar(
+            "(() => { const l = document.querySelector('[data-recinto-id]');"
+            " const b = document.querySelector('[data-anadir-seleccionados]');"
+            " return JSON.stringify({marcado: l && l.getAttribute('data-recinto-marcado'),"
+            " deshabilitado: b ? !!b.disabled : null}); })()"
+        ))
+        if not marca:
+            nav.evaluar(
+                "(() => { const l = document.querySelector('[data-recinto-id]');"
+                " if (!l) return false; l.click(); return true; })()"
+            )
+            marca = nav.esperar(
+                "(() => { const l = document.querySelector('[data-recinto-id]');"
+                " return !!l && l.getAttribute('data-recinto-marcado') === 'si'; })()",
+                segundos=10,
+            )
+        habilitado = nav.esperar(
+            "(() => { const b = document.querySelector('[data-anadir-seleccionados]');"
+            " return !!b && !b.disabled; })()",
+            segundos=10,
+        )
+        comprobar(marca, "el recinto se puede marcar")
+        comprobar(habilitado, "el botón de añadir se activa al marcar")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-anadir-seleccionados]');"
+            " if (!b || b.disabled) return false; b.click(); return true; })()"
+        )
+        anadido = nav.esperar("document.querySelector('[data-alta-resultado]') !== null", segundos=30)
+        comprobar(anadido, "la tierra marcada se añade con su aviso")
+        clic_en_visible(nav, "[data-accion=anadir-tierras]")
+        nav.esperar("document.querySelector('[data-vista=\"tierras\"]') !== null", segundos=10)
+        despues = nav.evaluar("document.querySelectorAll('[data-tierra-id]').length") or 0
+        comprobar(despues > antes, f"la lista crece tras el alta ({antes} → {despues})")
+
+    # Importar el cuaderno de ejemplo, subiéndolo al campo de fichero de verdad.
+    if not nav.evaluar("!!document.querySelector('[data-vista=\"alta\"]')"):
+        clic_en_visible(nav, "[data-accion=anadir-tierras]")
+        nav.esperar("document.querySelector('[data-vista=\"alta\"]') !== null", segundos=10)
+    fichero = str(pathlib.Path(__file__).resolve().parents[1] / "tests" / "datos"
+                  / "cuaderno_cyl_de_ejemplo.xlsx")
+    raiz = nav.orden("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
+    nodo = nav.orden("DOM.querySelector", {"nodeId": raiz, "selector": "[data-importar-cuaderno]"})["nodeId"]
+    if nodo:
+        nav.orden("DOM.setFileInputFiles", {"nodeId": nodo, "files": [fichero]})
+        importado = nav.esperar(
+            "(() => { const r = document.querySelector('[data-importar-resultado]');"
+            " return !!r && r.innerText.trim().length > 0; })()",
+            segundos=60,
+        )
+        texto = nav.evaluar(
+            "(document.querySelector('[data-importar-resultado]')||{}).innerText || ''"
+        ) or ""
+        comprobar(importado and len(texto.strip()) > 0, f"traer el cuaderno devuelve resultado ({texto[:80]!r})")
+        if importado:
+            clic_en_visible(nav, "[data-accion=anadir-tierras]")
+            nav.esperar("document.querySelector('[data-vista=\"tierras\"]') !== null", segundos=10)
+            tras_importar = nav.evaluar("document.querySelectorAll('[data-tierra-id]').length") or 0
+            comprobar(tras_importar > 0, f"las tierras del cuaderno quedan en la lista ({tras_importar})")
+    else:
+        comprobar(False, "no se encuentra el campo para subir el cuaderno")
+
+    # Mapa coloreado y tarjetas de gastos/ingresos y «qué falta».
+    comprobar(bool(nav.evaluar("!!document.querySelector('[data-leyenda-uso]')")),
+              "el mapa tiene leyenda de uso con palabra y color")
+    clic_en_visible(nav, "[data-destino=hoy]")
+    nav.esperar("document.querySelector('[data-vista=\"hoy\"]') !== null", segundos=10)
+    nav.esperar("document.querySelector('[data-resumen-gastos]') !== null", segundos=20)
+    nav.esperar("document.querySelector('[data-que-falta]') !== null", segundos=20)
+    for atributo, nombre in (
+        ("data-resumen-gastos", "gastos"),
+        ("data-resumen-ventas", "ventas"),
+        ("data-resumen-cuaderno", "cuaderno"),
+        ("data-que-falta", "qué falta"),
+    ):
+        comprobar(bool(nav.evaluar(f"!!document.querySelector('[{atributo}]')")),
+                  f"«Hoy» enseña {nombre}")
+    print(f"  (captura: {captura(nav, 'alta-y-cuaderno').relative_to(RAIZ)})")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -353,6 +501,7 @@ def main() -> int:
         la_sesion(nav, base, token)
         for ancho in ANCHOS:
             comprobar_un_ancho(nav, base, ancho)
+        comprobar_alta_e_importacion(nav, base)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

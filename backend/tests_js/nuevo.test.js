@@ -24,12 +24,24 @@ import {
   ajustarBbox,
   bboxDelConjunto,
   bboxDeMunicipio,
+  cajaDeLosRecintos,
   calcularTotales,
+  colorDeTierra,
+  colorDeUso,
   decidirEstado,
   filtrarTierras,
   formateaNumero,
+  importeEnTexto,
+  leyendaDe,
+  normalizaImportacion,
+  normalizaQueFalta,
+  normalizaResumen,
+  paletaDeUso,
   proyeccionDeAnillo,
   proyeccionDePunto,
+  puntoDelMapa,
+  recintosConPuntos,
+  referenciasDeTexto,
   rutaDeAnillo,
   sinMapa,
   textos,
@@ -305,4 +317,209 @@ test("cada pantalla tiene sus textos, y están todos los estados", () => {
   assert.ok(textos.hoy.contadorSinHa, "falta el contador para cuando no consta la superficie");
   assert.ok(textos.tierras.totalesSinHa, "faltan los totales para cuando no consta la superficie");
   assert.ok(textos.tierras.totalesUnoSinHa);
+});
+
+
+// ---------------------------------------------------------------------------
+// El alta de tierras: colores del mapa, referencias pegadas y resumen del día
+// ---------------------------------------------------------------------------
+
+test("el mapa colorea por uso y la leyenda lleva palabra y cuenta", () => {
+  const tierras = [
+    { id: 1, uso_sigpac: "Cereal", cultivo: { nombre: "Trigo" } },
+    { id: 2, uso_sigpac: "Cereal", cultivo: { nombre: "Cebada" } },
+    { id: 3, uso_sigpac: "Olivar", cultivo: null },
+    { id: 4, uso_sigpac: null, cultivo: null },
+  ];
+
+  const leyenda = leyendaDe(tierras, "uso");
+  assert.equal(leyenda[0].valor, "Cereal");
+  assert.equal(leyenda[0].n, 2);
+  assert.equal(leyenda.find((t) => t.valor === "Olivar").n, 1);
+
+  const sinUso = leyenda.find((t) => t.valor === null);
+  assert.equal(sinUso.etiqueta, textos.tierras.sinUso);
+  assert.equal(sinUso.color, "var(--ink-muted)");
+
+  // Cada uso tiene su color, y dos usos distintos no se pintan igual.
+  assert.equal(colorDeUso("Cereal", 0), paletaDeUso()[0]);
+  assert.notEqual(leyenda[0].color, leyenda.find((t) => t.valor === "Olivar").color);
+  assert.equal(colorDeTierra(tierras[0], leyenda), leyenda[0].color);
+});
+
+test("la leyenda por cultivo usa el cultivo del año; sin cultivo, un hueco con nombre", () => {
+  const tierras = [
+    { id: 1, uso_sigpac: "Cereal", cultivo: { nombre: "Trigo" } },
+    { id: 2, uso_sigpac: "Cereal", cultivo: { nombre: "Trigo" } },
+    { id: 3, uso_sigpac: "Olivar", cultivo: null },
+  ];
+
+  const leyenda = leyendaDe(tierras, "cultivo");
+  assert.equal(leyenda[0].valor, "Trigo");
+  assert.equal(leyenda[0].n, 2);
+  assert.equal(leyenda.find((t) => t.valor === null).etiqueta, textos.tierras.sinCultivo);
+});
+
+test("las referencias pegadas se parten y se limpian", () => {
+  const texto = "37:70:0:0:503:51; 37:70:0:0:503:52\n\n 37-70-0-0-503-51 ,, 42.1-2-3 ";
+  assert.deepEqual(referenciasDeTexto(texto), [
+    "37:70:0:0:503:51",
+    "37:70:0:0:503:52",
+    "37-70-0-0-503-51",
+    "42.1-2-3",
+  ]);
+  assert.deepEqual(referenciasDeTexto("   "), []);
+  assert.deepEqual(referenciasDeTexto(null), []);
+});
+
+test("los importes y las tarjetas de resumen salen en castellano", () => {
+  assert.equal(importeEnTexto(1234.5), "1.234,5 €");
+  assert.equal(importeEnTexto({ total: 987.65 }), "987,65 €");
+  assert.equal(importeEnTexto(null), null);
+  assert.equal(importeEnTexto(""), null);
+
+  const resumen = normalizaResumen({
+    gastos: { total: 1234.5, n: 3 },
+    ventas: { importe: 5000, n: 2 },
+    cuaderno: { apuntes: 12, sin_cerrar: 1 },
+    facturas: { n: 4, total: 312.4 },
+  });
+
+  assert.equal(resumen.gastos.importe, "1.234,5 €");
+  assert.equal(resumen.gastos.nota, "3 apuntes");
+  assert.equal(resumen.ventas.importe, "5.000 €");
+  assert.equal(resumen.cuaderno.nota, "1 sin cerrar");
+  assert.equal(resumen.facturas.nota, "4 facturas");
+
+  const vacio = normalizaResumen(null);
+  assert.equal(vacio.gastos.importe, null);
+  assert.equal(vacio.cuaderno.nota, null);
+});
+
+test("las tarjetas se leen con lo que manda el servidor de verdad", () => {
+  // Lo que devuelve `/api/nuevo/resumen`: importes y pendientes, y lo que falta del cuaderno.
+  const resumen = normalizaResumen({
+    gastos: { total: 1234.5, pendiente: 120 },
+    ventas: { total: 5000, cobrado: 5000, pendiente: 0 },
+    cuaderno: { faltan: 3, ejemplos: ["Falta el registro"] },
+    facturas: { n: 4 },
+  });
+
+  assert.equal(resumen.gastos.importe, "1.234,5 €");
+  assert.equal(resumen.gastos.nota, "quedan 120 € por pagar");
+  assert.equal(resumen.ventas.nota, "cobrado 5.000 €");
+  assert.equal(resumen.cuaderno.nota, "faltan 3 cosas");
+  assert.equal(resumen.facturas.nota, "4 facturas");
+});
+
+test("«qué falta» se lee con qué falta y dónde se arregla", () => {
+  const lista = normalizaQueFalta({
+    items: [
+      { que: "Falta el número de registro", donde: "Mis datos" },
+      { que: "Falta el cultivo de una tierra", donde: "Tierras" },
+    ],
+  });
+
+  assert.equal(lista.length, 2);
+  assert.equal(lista[0].que, "Falta el número de registro");
+  assert.equal(lista[0].donde, "Mis datos");
+
+  assert.deepEqual(normalizaQueFalta(null), []);
+  assert.deepEqual(normalizaQueFalta({ items: [] }), []);
+});
+
+test("lo que se ha importado de un cuaderno se cuenta para poder enseñarlo", () => {
+  const deUnaVez = normalizaImportacion({
+    leido: { titular: "Ana", anio: 2026, lineas: [{}, {}, {}] },
+    importado: { creadas: 3, ya_estaban: 1, sin_apuntar: 0, hectareas_declaradas: 12.5 },
+    que_falta: ["Falta el registro"],
+  });
+
+  assert.equal(deUnaVez.titular, "Ana");
+  assert.equal(deUnaVez.anio, 2026);
+  assert.equal(deUnaVez.creadas, 3);
+  assert.equal(deUnaVez.yaEstaban, 1);
+  assert.equal(deUnaVez.falta.length, 1);
+
+  const sinNada = normalizaImportacion(null);
+  assert.equal(sinNada.titular, null);
+  assert.equal(sinNada.creadas, null);
+});
+
+test("un toque en el mapa se traduce a coordenadas, y al revés", () => {
+  const caja = [-5.3, 41, -5, 41.3];
+  const punto = puntoDelMapa(400, 300, caja, 800, 600);
+
+  assert.equal(Math.round(punto[0] * 1000) / 1000, -5.15);
+  assert.equal(Math.round(punto[1] * 1000) / 1000, 41.15);
+
+  const vuelta = proyeccionDePunto(punto, caja, 800, 600);
+  assert.equal(Math.round(vuelta[0]), 400);
+  assert.equal(Math.round(vuelta[1]), 300);
+
+  assert.equal(puntoDelMapa(1, 1, null, 800, 600), null);
+  assert.equal(puntoDelMapa(1, 1, [0, 1, 0, 1], 800, 600), null);
+});
+
+
+// ---------------------------------------------------------------------------
+// La ventana del SIGPAC: los recintos de una búsqueda, dibujados todos
+// ---------------------------------------------------------------------------
+
+const RECINTOS_BUSCADOS = [
+  {
+    recinto: 2,
+    referencia: "37:70:0:0:503:51",
+    uso: "Cereal",
+    puntos: [
+      [-5.13, 41.11],
+      [-5.11, 41.11],
+      [-5.11, 41.13],
+      [-5.13, 41.13],
+    ],
+  },
+  { recinto: 3, referencia: "37:70:0:0:503:52", uso: "Pasto", puntos: null },
+  {
+    recinto: 4,
+    referencia: "37:70:0:0:503:53",
+    uso: "Olivar",
+    puntos: [
+      [-5.2, 41.2],
+      [-5.1, 41.2],
+      [-5.1, 41.3],
+    ],
+  },
+];
+
+test("los recintos de una búsqueda se dibujan todos, cada uno con su color", () => {
+  const dibujados = recintosConPuntos(RECINTOS_BUSCADOS);
+
+  assert.equal(dibujados.length, 2);
+  assert.deepEqual(
+    dibujados.map((recinto) => recinto.recinto),
+    [2, 4],
+  );
+  assert.equal(dibujados[0].color, paletaDeUso()[0]);
+  assert.notEqual(dibujados[0].color, dibujados[1].color);
+  assert.deepEqual(recintosConPuntos(null), []);
+  assert.deepEqual(recintosConPuntos([{ recinto: 9 }]), []);
+});
+
+test("el mapa se abre mirando a todos los recintos buscados, no a la finca", () => {
+  const caja = cajaDeLosRecintos(recintosConPuntos(RECINTOS_BUSCADOS));
+
+  assert.deepEqual(caja, [-5.2, 41.11, -5.1, 41.3]);
+
+  assert.equal(cajaDeLosRecintos([]), null);
+  assert.equal(cajaDeLosRecintos(null), null);
+
+  // Un recinto diminuto no puede dar una caja de lado cero: el servidor no pinta una zona así.
+  const diminuta = cajaDeLosRecintos([{ puntos: [[-5, 41], [-5, 41], [-5, 41]] }]);
+  assert.ok(diminuta[2] > diminuta[0]);
+  assert.ok(diminuta[3] > diminuta[1]);
+});
+
+test("el aviso de «sin dibujo» tiene su texto, para no pintar un cuadro que nadie ha medido", () => {
+  assert.ok(textos.alta.sinPuntos);
+  assert.ok(textos.alta.recintosEnElMapa);
 });

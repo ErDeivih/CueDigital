@@ -38,11 +38,13 @@ from __future__ import annotations
 
 import datetime as dt
 from collections import defaultdict
+import io
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import catalogos, geo, models, superficies
+from . import catalogos, dinero, gastos, geo, iuws, models, superficies
 from .deps import obtener_de_la_explotacion
 
 # Cuántos apuntes recientes se devuelven en «hoy», y cuántos años atrás en la ficha de una tierra.
@@ -468,4 +470,301 @@ def tierras(
         "tierras": [
             _una_tierra(parcela, cultivos.get(parcela.id, {}), campana) for parcela in las_tierras
         ],
+    }
+
+
+# ===========================================================================
+# IMP-4 · Importar el cuaderno del cliente, el resumen y «qué falta» (05/11/2026)
+# ===========================================================================
+#
+# David lo pidió por este orden: *(2) importar el cuaderno digital de un cliente y reconocer la
+# parcela automáticamente*, *(5) gastos e ingresos* y *(7) un cuaderno guiado que diga qué falta*.
+#
+# **Lo que NO se hace aquí, y es lo que más importa: repetir la lógica que ya está.** La lectura del
+# Cuecyl, la importación idempotente, las cuentas de las ventas y el informe de lo que falta llevan
+# rondas escritas y probadas; estas tres puertas **las llaman**. Si esto se copiara, un día la
+# pantalla nueva y la vieja dirían cosas distintas de la misma finca, que es el fallo que este
+# programa persigue en todas partes.
+
+# Cuántos ejemplos de lo que falta se enseñan en el resumen. El listado entero tiene su propia
+# puerta (`/api/nuevo/que-falta`), y el resumen es un resumen.
+LIMITE_DE_EJEMPLOS = 3
+
+
+def _como_si_lo_acabaran_de_subir(contenido: bytes, nombre: str | None):
+    """El fichero en la forma que espera la función de leer del cuaderno (`UploadFile`).
+
+    Hace falta porque el fichero se lee **dos veces** con la misma función de la casa: una para
+    decir qué trae (sin escribir nada) y otra para importarlo. Volver a envolver los mismos bytes es
+    más honesto que tener dos lectores: uno que enseña y otro que apunta podrían no coincidir.
+    """
+    from fastapi import UploadFile
+
+    return UploadFile(file=io.BytesIO(contenido), filename=nombre or "")
+
+
+# Los datos del titular que el cuaderno trae y que la función de la casa **no** copia a propósito
+# (`cuaderno_cyl_api._rellenar_los_huecos_del_titular`): el nombre y el NIF. El motivo escrito allí
+# sigue siendo bueno —el cuaderno escribe el NIF con el formato de su registro, «0-70922320-A», que no
+# es un DNI— y por eso aquí **se normaliza** antes de rellenarlo, en vez de copiarlo tal cual.
+#
+# **El municipio no está en esta lista, y no es un olvido**: la hoja 1.1 del cuaderno trae la
+# localidad y la provincia, que sí se copian, pero **no trae el municipio**. Deducirlo del nombre de
+# la localidad sería inventar (una localidad puede pertenecer a un municipio con otro nombre), y la
+# casa ya prohíbe deducir la provincia del nombre de un municipio (`AGENTS.md` §3.3). El municipio se
+# pide en la pantalla de la finca. Queda dicho en el informe de la tarea.
+CAMPOS_QUE_LA_CASA_NO_COPIA = ("nombre", "NIF")
+
+
+def _el_nif_del_papel(nif: str | None) -> str | None:
+    """El NIF del cuaderno en la forma de un documento: «0-70922320-A» → «70922320A».
+
+    Se quitan los guiones, los espacios y los ceros de la izquierda, que son del **formato del
+    registro de la Junta** y no del documento. Si lo que queda no tiene la forma de un NIF español
+    (nueve caracteres), se devuelve `None`: **no se rellena el NIF con algo que no lo parece**, porque
+    es el dato que identifica al titular delante de la administración.
+    """
+    limpio = re.sub(r"[^0-9A-Za-z]", "", nif or "").upper()
+    if len(limpio) > 9 and limpio[0].isdigit():
+        limpio = limpio.lstrip("0")
+    return limpio if len(limpio) == 9 else None
+
+
+def _rellenar_lo_que_la_casa_no_copia(db: Session, explotacion, generales) -> list[str]:
+    """Rellena el nombre y el NIF del titular **solo si estaban vacíos**, y dice qué ha rellenado.
+
+    Lo que el agricultor ya había escrito no se toca nunca: si él puso su nombre de una manera, manda
+    la suya. Es la misma regla que la función de la casa, aplicada a los dos campos que aquella deja
+    fuera a propósito (ver `CAMPOS_QUE_LA_CASA_NO_COPIA`).
+    """
+    rellenados: list[str] = []
+    if generales.nombre and not (explotacion.nombre or "").strip():
+        explotacion.nombre = generales.nombre.strip()
+        rellenados.append("nombre")
+    if not (explotacion.nif or "").strip():
+        nif = _el_nif_del_papel(generales.nif)
+        if nif is not None:
+            explotacion.nif = nif
+            rellenados.append("NIF")
+    if rellenados:
+        db.add(
+            models.Auditoria(
+                explotacion_id=explotacion.id,
+                entidad="explotacion",
+                entidad_id=explotacion.id,
+                accion="rellenar_el_titular_desde_el_cuaderno",
+                datos={"campos": rellenados},
+            )
+        )
+        db.commit()
+    return rellenados
+
+
+async def importar_cuaderno(db: Session, *, explotacion, fichero) -> dict:
+    """**Leer el cuaderno, rellenar la finca e importar las tierras, todo en una llamada.**
+
+    Es la puerta que hace que el agricultor nuevo no teclee nada: sube el fichero que descarga de la
+    Junta y se queda con sus tierras y con los datos de su finca puestos. Devuelve **en una sola
+    respuesta** lo que traía el fichero, lo que se ha apuntado, lo que se ha rellenado de la finca, lo
+    que falta del cuaderno y cómo ha quedado la finca en números — que es lo que la pantalla necesita
+    para decir «ya está» sin pedir nada más.
+
+    **Repetir la llamada no duplica nada**: la importación de la casa reconoce cada tierra por su
+    referencia del SIGPAC, su cultivo y sus hectáreas. Es lo que se prueba en
+    `tests/test_nuevo_importar.py`.
+    """
+    from .routers import cuaderno_cyl_api
+
+    contenido = await fichero.read()
+    nombre = fichero.filename
+
+    # 1 · Se lee, con la misma función que `/api/cuaderno-cyl/leer` (y su 422 con mensaje).
+    leido = await cuaderno_cyl_api._leer_lo_que_han_subido(
+        _como_si_lo_acabaran_de_subir(contenido, nombre)
+    )
+
+    # 2 · Se importa, con la misma función que `/api/cuaderno-cyl/importar`. El permiso de modificar
+    #     lo ha comprobado ya la dependencia de la puerta (`PuedeModificar`), por eso aquí va `None`:
+    #     no es que no se compruebe, es que se comprobó antes de abrir el fichero.
+    importado = await cuaderno_cyl_api.importar_el_cuaderno(
+        explotacion=explotacion,
+        db=db,
+        puede_modificar=None,
+        fichero=_como_si_lo_acabaran_de_subir(contenido, nombre),
+    )
+
+    # 3 · Y los dos huecos que la función de la casa no toca (nombre y NIF), con su normalización.
+    rellenados_extra = _rellenar_lo_que_la_casa_no_copia(db, explotacion, leido.generales)
+    finca_actualizada = list(importado.titular_rellenado) + rellenados_extra
+
+    # 4 · Los números y lo que falta, ya con la finca al día.
+    campana = (
+        db.get(models.Campana, importado.campana_id)
+        if importado.campana_id is not None
+        else None
+    )
+    las_tierras = _las_tierras(db, explotacion.id)
+    return {
+        "leido": {
+            "anio": leido.anio,
+            "titular": leido.generales.nombre,
+            "nif": leido.generales.nif,
+            "registro_autonomico": leido.generales.registro_autonomico or None,
+            "localidad": leido.generales.localidad or None,
+            "resumen": leido.resumen(),
+            "avisos": list(leido.avisos),
+        },
+        "importado": importado.model_dump(),
+        "finca_actualizada": finca_actualizada,
+        "que_falta": _lo_que_falta_resumido(_las_faltas(db, explotacion, campana)),
+        "tierras": {
+            "n": len(las_tierras),
+            "ha": _las_hectareas(las_tierras),
+            "municipios": len(_los_municipios(las_tierras)),
+        },
+    }
+
+
+# --------------------------------------------------------------------------- lo que falta
+
+
+def _las_faltas(db: Session, explotacion, campana: models.Campana | None) -> list[dict]:
+    """Todo lo que falta, con **dónde se arregla** y si bloquea. Ni una cosa inventada.
+
+    Son dos listas y las dos son de verdad:
+
+      1. **Lo que falta en el cuaderno** (el informe del escritor del Cuecyl): qué dato pide cada hoja
+         y no está puesto, y en qué pantalla se pone. `bloquea` es `False` porque no impide nada:
+         el agricultor puede descargar su cuaderno con huecos y rellenarlos después.
+      2. **Lo que falta para presentarlo en la Junta** (`iuws.QUE_FALTA`): los catálogos oficiales,
+         el alta del dominio, el certificado y el código SIEX. Eso **sí bloquea** el volcado, y lo
+         dice cada uno en su ficha. Aquí el «dónde se arregla» es **de quién depende**, que es lo que
+         ya dice el propio módulo (`quien`): FEGA, David o cada agricultor.
+
+    Si la finca no tiene ninguna campaña no hay cuaderno que comparar, y se devuelven solo los del
+    interfaz: **no se inventa una campaña para poder contar más cosas**.
+    """
+    from .cuaderno_cyl_exportar import escribe_el_cuaderno
+
+    items: list[dict] = []
+    if campana is not None:
+        escrito = escribe_el_cuaderno(db, explotacion, campana)
+        items.extend(
+            {"que": falta.que_falta, "donde": falta.donde_se_pone, "bloquea": False}
+            for falta in escrito.faltan
+        )
+    items.extend(
+        {"que": falta.que, "donde": falta.quien, "bloquea": falta.bloquea}
+        for falta in iuws.QUE_FALTA
+    )
+    return items
+
+
+def _lo_que_falta_resumido(items: list[dict]) -> dict:
+    """El resumen de lo que falta: cuántas hay y los primeros ejemplos, **de la misma lista**."""
+    return {
+        "faltan": len(items),
+        "ejemplos": [uno["que"] for uno in items[:LIMITE_DE_EJEMPLOS]],
+    }
+
+
+def que_falta(db: Session, *, explotacion) -> dict:
+    """**Qué le falta a esta finca para tener el cuaderno entero y para poder presentarlo.**"""
+    campana = la_campana_activa(db, explotacion.id)
+    items = _las_faltas(db, explotacion, campana)
+    return {"faltan": len(items), "items": items}
+
+
+# --------------------------------------------------------------------------- el resumen
+
+
+def _numero(valor) -> float | None:
+    """Un importe de la casa (texto decimal o `Decimal`) al número del contrato nuevo.
+
+    **El resto del programa lleva el dinero en texto decimal** a propósito (contrato §2: un `float`
+    pierde céntimos antes de entrar). El contrato de esta pantalla pide números, así que la conversión
+    se hace **aquí, una sola vez y al final**: las cuentas se hacen con `Decimal` y solo el número que
+    viaja al navegador es `float`. `None` sigue siendo `None`: un importe que no consta no es un cero.
+    """
+    cantidad = dinero.a_decimal(valor)
+    return None if cantidad is None else float(cantidad)
+
+
+def _de_la_campana(consulta, campana: models.Campana | None):
+    """Acota a la campaña cuando se está mirando un año. Sin campaña, se mira la finca entera."""
+    if campana is None:
+        return consulta
+    return consulta.where(models.Gasto.campana_id == campana.id)
+
+
+def _la_cuenta_de_los_gastos(db: Session, explotacion, campana) -> dict:
+    """Qué se ha gastado y qué queda por pagar, **con la cuenta que ya hace la pantalla de cuentas**.
+
+    Se le pasan a `gastos.cuenta_de_la_explotacion` los gastos de la campaña con lo que se ha pagado de
+    cada uno (la misma función que usa su ficha), y ella decide: si algún gasto no dice lo que costó,
+    **el total es `None`** — `gastos_sin_importe` lo cuenta y el pendiente ya lo devuelve vacío—. Sumar
+    solo los que se conocen daría una cifra más pequeña que la de verdad.
+    """
+    from . import servicios
+
+    filas = []
+    consulta = select(models.Gasto).where(models.Gasto.explotacion_id == explotacion.id)
+    for gasto in db.scalars(_de_la_campana(consulta, campana)):
+        filas.append(
+            {
+                "anulado": bool(gasto.anulado),
+                "importe": gasto.importe,
+                "pagado": servicios.lo_pagado_de_un_gasto(
+                    db, explotacion_id=explotacion.id, gasto_id=gasto.id
+                ),
+            }
+        )
+    cuenta = gastos.cuenta_de_la_explotacion(gastos=filas)
+    return {
+        "total": None if cuenta.gastos_sin_importe else _numero(cuenta.coste_conocido),
+        "pendiente": _numero(cuenta.pendiente),
+    }
+
+
+def _la_cuenta_de_las_ventas(db: Session, explotacion, campana) -> dict:
+    """Lo vendido, lo cobrado y lo que falta por cobrar, **con la cuenta de la pantalla de ventas**.
+
+    Se llama a la función del router de ventas (`_el_dinero_de_la_campana`) en vez de repetir su
+    consulta: es la que sabe que una entrega con importe pero sin facturar **no** es dinero pendiente
+    de cobro. Si alguna entrega no dice su importe, el total y el pendiente no se saben (`None`); lo
+    cobrado sí, porque un cobro siempre trae su importe.
+    """
+    from .routers import ventas_api
+
+    if campana is None:
+        return {"total": 0.0, "cobrado": 0.0, "pendiente": 0.0}
+    suyo = ventas_api._el_dinero_de_la_campana(db, explotacion, campana)
+    sin_importe = suyo["sin_importe"]
+    return {
+        "total": None if sin_importe else _numero(suyo["importe"]),
+        "cobrado": _numero(suyo["cobrado"]),
+        "pendiente": None if sin_importe else _numero(suyo["pendiente"]),
+    }
+
+
+def resumen(db: Session, *, explotacion) -> dict:
+    """**El dinero de la finca en la campaña que se está llevando, y lo que falta del cuaderno.**
+
+    Cada número va por su lado y no se suman entre ellos: lo gastado y lo vendido son dinero de signo
+    distinto y de naturaleza distinta, y el cuaderno no es dinero. Y `facturas` cuenta las facturas de
+    compra del año (las anuladas no), que es lo que el agricultor llama «tener los papeles».
+    """
+    campana = la_campana_activa(db, explotacion.id)
+    items = _las_faltas(db, explotacion, campana)
+    consulta_facturas = select(models.Factura).where(
+        models.Factura.explotacion_id == explotacion.id,
+        models.Factura.anulada.is_(False),
+    )
+    if campana is not None:
+        consulta_facturas = consulta_facturas.where(models.Factura.campana_id == campana.id)
+    return {
+        "gastos": _la_cuenta_de_los_gastos(db, explotacion, campana),
+        "ventas": _la_cuenta_de_las_ventas(db, explotacion, campana),
+        "cuaderno": _lo_que_falta_resumido(items),
+        "facturas": {"n": len(list(db.scalars(consulta_facturas)))},
     }

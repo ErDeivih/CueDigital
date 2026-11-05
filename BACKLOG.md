@@ -131,14 +131,35 @@
 - **Criterio**: importar una provincia de prueba (fichero pequeño) sin duplicar y sin tocar datos de
   otra finca; probado sin internet contra un `.gpkg` guardado de ejemplo.
 
-### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC)
+### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC) — **EN CURSO (2026-11-05)**
 
 - **Nivel**: 2.
-- **Qué**: cuaderno guiado con lo que falta para que el apunte valga; productos y abonos con dosis por
-  hectárea y favoritos; facturas de foto con revisión campo a campo; y PAC/histórico con los canales
-  verificados (recintos por campaña, Cuecyl, S-X). Enlazar Cuaderno/Campaña/PAC en el armazón nuevo.
-- **Criterio**: cada pantalla con sus cuatro estados, sus pruebas y su paso en el arnés de navegador;
-  la vieja se retira cuando la nueva cubre el recorrido.
+- **Hecho en la segunda entrega**: alta de tierras por código y en la **ventana del SIGPAC** (recintos
+  resaltados con su color y etiqueta, clic para elegir, alta en bloque), ficha editable (nombre y
+  superficie; lo del SIGPAC se muestra), **importar el cuaderno de un cliente** (sube el Cuecyl,
+  reconoce las parcelas, las crea sin duplicar y rellena el titular de la finca), **mapa coloreado por
+  uso/cultivo con leyenda**, tarjetas de **gastos y ventas** y bloque **«qué falta»** en «Hoy».
+- **Evidencia**: `backend/scripts/comprobar_el_armazon_nuevo.py` en Chrome **0 fallos** (búsqueda →
+  recinto dibujado → añadido 64→65; cuaderno subido 65→72); capturas en `docs/capturas-nuevo/`;
+  `tests/test_nuevo_importar.py` (12) y `tests/test_sigpac_buscar_puntos.py` (3).
+- **Falta**: pantallas propias de **gastos e ingresos** y de **facturas** (hoy son tarjetas y enlaces
+  a la app vieja); apuntar en 30 segundos; **importar la PAC y los recintos por campaña de la Junta**;
+  y comprobar la búsqueda del SIGPAC **eligiendo municipio de la lista** (la referencia sí está
+  verificada; los nombres devolvieron 0 recintos en la prueba).
+
+### AGR-18 · PSD2 solo lectura: contratar un agregador con licencia — **INVESTIGADO (2026-11-05); BLOQUEADO (nivel 3)**
+
+- **Nivel**: 3 (contratar y aprobar gasto).
+- **Qué hay**: `docs/PSD2-AGREGADORES.md` con el marco (AISP, consentimiento, 90 días, 4 accesos/24 h),
+  cinco candidatos con API de solo lectura y sandbox (Arcopay/ex-Afterbanks, Powens/Unnax, Tink,
+  Enable Banking, Salt Edge/GoCardless), las dos opciones medidas (Enable Banking y Powens/Unnax) y
+  el límite duro: **nunca operar, nunca iniciar pagos, nunca guardar credenciales**.
+- **Por qué está parado**: **ningún candidato publica precio** (presupuesto con mínimo mensual), así
+  que la regla «la más barata que cumpla» no se puede aplicar con datos. Hace falta pedir dos
+  presupuestos (1 explotación, 2 cuentas, 1 consulta/día, 12 meses, sin PIS, con sandbox y DPA) y que
+  David apruebe el gasto. **No se escribe código de PSD2 hasta que haya contrato firmado.**
+- **Criterio de parada segundo**: si el coste anual supera lo que cuesta seguir con la importación de
+  extracto por fichero (ya existe y es gratis), no se contrata.
 
 ### AGR-3 · Traer las parcelas del SIGPAC en lote — **HECHO PARCIAL (2026-11-05)**
 

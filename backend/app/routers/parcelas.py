@@ -1012,6 +1012,17 @@ def buscar_los_trozos(datos: BuscarRecintosEntrada, _: UsuarioActual) -> dict:
                 "region": completo.region,
                 "admisibilidad": completo.admisibilidad,
                 "tiene_dibujo": bool(completo.wkt),
+                # **Los puntos de la forma, para dibujar los recintos de una búsqueda de golpe**
+                # (IMP-4, 05/11/2026). La ventana del SIGPAC de la app nueva pinta el mapa con estos
+                # puntos en vez de pedir otra cosa: se leen con `geo.puntos_del_wkt`, **el mismo
+                # lector que usa `/api/nuevo/tierras`**, para que las dos ventanas dibujen igual. Un
+                # recinto sin forma devuelve `None` y **no una lista vacía ni un cuadro de relleno**:
+                # pintar una tierra con la forma de otra es peor que no dibujarla.
+                "puntos": [
+                    [longitud, latitud]
+                    for longitud, latitud in geo.puntos_del_wkt(completo.wkt)
+                ]
+                or None,
             }
         )
 
