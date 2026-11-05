@@ -61,6 +61,9 @@ from .routers import (
     terceros_api,
     panel_api,
     pac_api,
+    # **Las dos puertas del armazón nuevo** (`IMP-1`, 05/11/2026): la app que se sirve en `/nuevo/`
+    # no lee la pantalla vieja y pide sus datos aquí.
+    nuevo_api,
 )
 
 # Los tipos de fichero se declaran a mano A PROPÓSITO.
@@ -255,6 +258,11 @@ app.include_router(panel_api.router)
 
 # **La preparacion de la PAC** (CRM-09): *el paquete por recinto, con lo que falta dicho.*
 app.include_router(pac_api.router)
+
+# **Las dos puertas del armazón nuevo** (`IMP-1`, 05/11/2026): la app que se sirve en `/nuevo/` no lee
+# la pantalla vieja y pide sus datos aquí. Va antes del montaje de `/` porque un montaje en la raíz se
+# come cualquier ruta registrada después (ver el aviso del final del fichero).
+app.include_router(nuevo_api.router)
 
 
 @app.get("/health", tags=["sistema"])

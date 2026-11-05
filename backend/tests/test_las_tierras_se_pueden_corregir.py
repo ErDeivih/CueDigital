@@ -644,11 +644,22 @@ class TestLoQueSeCuentaAntesDeBorrar:
         """
         from app.routers import parcelas
 
+        # Los tres del SIGPAC (`coef_regadio`, `region`, `admisibilidad`, 05/11/2026) se suman a la
+        # lista por el mismo motivo que `superficie_sigpac_ha`: **son oficiales y no se editan a
+        # mano**. Están en la salida para que la ficha los enseñe, pero no en la entrada, así que el
+        # formulario de corregir no los manda de vuelta y una corrección no puede pisarlos.
         assert sorted(
             parcelas._columnas_que_una_correccion_no_toca(
                 models.Parcela, ParcelaEntrada, ParcelaSalida
             )
-        ) == ["creada_en", "geometria", "superficie_sigpac_ha"]
+        ) == [
+            "admisibilidad",
+            "coef_regadio",
+            "creada_en",
+            "geometria",
+            "region",
+            "superficie_sigpac_ha",
+        ]
         assert parcelas._columnas_que_una_correccion_no_toca(
             models.GrupoParcelas, GrupoEntrada, GrupoSalida
         ) == ["creado_automaticamente"]

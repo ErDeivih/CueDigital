@@ -358,6 +358,14 @@ class ParcelaSalida(SalidaBase):
     zona_vulnerable_nitratos: bool | None
     pendiente_pct: float | None
     uso_sigpac: str | None
+    # Los tres atributos oficiales del recinto que el SIGPAC manda y que hasta ahora se tiraban
+    # (AGR-3). Salen en la respuesta porque son la materia prima de la PAC: la región decide la
+    # ayuda redistributiva y el CSP dice si un pasto se puede cobrar. **`None` = no consta o no
+    # aplica, nunca 0**: el servicio devuelve `null` cuando no hay dato, y rellenarlo con un cero
+    # sería declarar un coeficiente que nadie ha publicado.
+    coef_regadio: float | None = None
+    region: int | None = None
+    admisibilidad: float | None = None
     # Las tres partes de la referencia del SIGPAC, cada una por su número. El agricultor las tiene
     # en el papel de su parcela, así que verlas separadas es lo que le permite comprobar que la
     # que ha traído el programa es la suya.

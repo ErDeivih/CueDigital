@@ -242,6 +242,24 @@ class Parcela(Base):
     # esta es la oficial del recinto entero. Vacío quiere decir «no lo sé», nunca 0.
     superficie_sigpac_ha: Mapped[float | None] = mapped_column(Float)
     uso_sigpac: Mapped[str | None] = mapped_column(String(80))
+    # ------------------------------------------------------------------
+    # Los tres atributos oficiales del recinto que el SIGPAC manda y que hasta ahora se tiraban
+    # (AGR-3, 05/11/2026). Se guardan tal cual vienen del servicio, sin redondear ni rellenar.
+    #
+    # **Nulo = no consta o no aplica. Nunca un 0 inventado.** El SIGPAC devuelve `null` cuando no
+    # hay dato —el ejemplo real de `data/sigpac/recinto_de_ejemplo.json` trae
+    # `"admisibilidad": null`—, y un 0 ahí no sería un número feo: afirmaría que ese recinto tiene
+    # coeficiente cero, que es una declaración. Es la misma regla que `superficie_ha` y
+    # `zona_vulnerable_nitratos` (A7/A10 de `docs/T02_VALORES_POR_DEFECTO.md`).
+    #
+    # `coef_regadio` es el coeficiente de regadío (0–100, tierras arables) y `region` la región de
+    # la PAC del recinto, que es lo que la ayuda redistributiva mira para pagar distinto. Los dos
+    # nombres son los del servicio; el tercero es el **CSP**: «coeficiente de subvencionabilidad en
+    # pastos» (0–100), que en la consulta REST se llama `admisibilidad`.
+    # Ver `docs/INVESTIGACION-AGRICOLA.md`, apartado 1.3.
+    coef_regadio: Mapped[float | None] = mapped_column(Float)
+    region: Mapped[int | None] = mapped_column(Integer)
+    admisibilidad: Mapped[float | None] = mapped_column(Float)
     # secano | regadio | **None = no lo sé** (A10 de `docs/T02_VALORES_POR_DEFECTO.md`, 05/10/2026). Nacía
     # en `"secano"`, así que **lo que no se sabía se declaraba de secano** y la exportación de la Junta
     # acababa escribiendo «S» de una tierra que puede ser de regadío. El resumen del cuaderno ya cuenta las

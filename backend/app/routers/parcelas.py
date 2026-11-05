@@ -11,6 +11,7 @@ referencia del recinto y que el resto venga solo. Ver `app/sigpac.py`.
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import unicodedata
 
@@ -19,7 +20,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import case, func, select
 
 from .. import schemas, superficies
-from .. import catalogos, correcciones, geo, models, servicios, sigpac, textos
+from .. import catalogos, correcciones, geo, models, servicios, sigpac, sigpac_cache, textos
 from .. import versiones_de_recinto as versiones_de_recinto
 from ..deps import Db, ExplotacionActual, UsuarioActual, PuedeModificar, obtener_de_la_explotacion
 from ..schemas import (
@@ -214,6 +215,13 @@ def _alta_desde_recinto(
         # Junta en su columna «Superficie SIGPAC (ha)».
         superficie_sigpac_ha=recinto.superficie,
         uso_sigpac=recinto.uso_sigpac,
+        # **Los tres atributos oficiales que el SIGPAC manda y que hasta ahora se tiraban**
+        # (AGR-3). Se copian tal cual: si el servicio los manda nulos, se guardan nulos, que es
+        # «no consta / no aplica» y no un cero inventado. La región la mira la ayuda
+        # redistributiva de la PAC y el CSP (aquí `admisibilidad`) decide si un pasto se cobra.
+        coef_regadio=recinto.coef_regadio,
+        region=recinto.region,
+        admisibilidad=recinto.admisibilidad,
         pendiente_pct=recinto.pendiente_media,
         # El sistema de explotación lo dice el agricultor en el mapa, no el SIGPAC. **Y si no lo ha
         # dicho, se queda en «no lo sé»** (A10 de `docs/T02_VALORES_POR_DEFECTO.md`): aquí ponía
@@ -233,6 +241,10 @@ def _alta_desde_recinto(
                 "ref_sigpac": parcela.ref_sigpac,
                 "superficie_ha": parcela.superficie_ha,
                 "uso_sigpac": parcela.uso_sigpac,
+                # Los tres oficiales, para que quede el rastro de qué mandó el SIGPAC ese día.
+                "coef_regadio": parcela.coef_regadio,
+                "region": parcela.region,
+                "admisibilidad": parcela.admisibilidad,
                 # Queda escrito de dónde salió cada dato que no ha puesto el agricultor, con el
                 # porcentaje de la intersección: si alguien pregunta por qué esta parcela está
                 # marcada como zona de nitratos, la respuesta está en el registro.
@@ -994,6 +1006,11 @@ def buscar_los_trozos(datos: BuscarRecintosEntrada, _: UsuarioActual) -> dict:
                 "pendiente_pct": completo.pendiente_media,
                 "altitud": completo.altitud,
                 "coeficiente_regadio": completo.coef_regadio,
+                # La región de la PAC y el CSP se enseñan al elegir el trozo: son los dos datos
+                # que después deciden una ayuda, y el agricultor tiene que poder verlos **antes**
+                # de traérselo. Vienen de la consulta del recinto, no de la lista de trozos.
+                "region": completo.region,
+                "admisibilidad": completo.admisibilidad,
                 "tiene_dibujo": bool(completo.wkt),
             }
         )
@@ -1095,6 +1112,72 @@ def estado_del_sigpac() -> dict:
         "textos": textos.SIGPAC,
         **sigpac.datos_disponibles(),
     }
+
+
+@router.get("/sigpac/cache")
+def estado_de_la_descarga_del_sigpac(_: UsuarioActual) -> dict:
+    """Qué provincias del SIGPAC están descargadas en el servidor, y con qué ficha.
+
+    Es la mitad visible de AGR-3: el FEGA publica el SIGPAC entero por provincias en GeoPackage
+    (`docs/INVESTIGACION-AGRICOLA.md` §1.2) y el programa guarda cada una con su ficha —campaña,
+    fecha de validez del nombre, bytes, sha256 y la licencia CC BY 4.0 con su cita—. Traer las
+    cuarenta parcelas de una vez sale de aquí, no de pedir un recinto por cada punto.
+
+    **Dice lo que hay, no dónde está**: la ruta de la carpeta no sale (mismo criterio que
+    `GET /api/sigpac/estado`, `docs/T01_REVISION_RUTAS_SIN_SESION.md` §3.13).
+
+    Pide sesión porque dice qué hay descargado en esta instalación, que es información de dentro
+    aunque no sea de una finca concreta.
+    """
+    return {
+        "textos": textos.SIGPAC,
+        **sigpac_cache.estado_cache(),
+    }
+
+
+@router.post("/sigpac/cache/{provincia}")
+def descargar_el_mapa_de_la_provincia(
+    provincia: int,
+    puede_modificar: PuedeModificar,
+    campana: int | None = None,
+) -> dict:
+    """Descarga y cachea el mapa del SIGPAC de una provincia (AGR-3).
+
+    **Qué baja y de dónde.** El GeoPackage oficial por provincia y campaña del FEGA
+    (`https://sigpac-hubcloud.es/geopackages/{campaña}/recintos/`). El nombre del fichero no se
+    construye a ojo: se lee el listado de la campaña y se busca el enlace de esa provincia, porque
+    la fecha de validez (`AAAAMMDD`) cambia con cada actualización y adivinarla pediría un fichero
+    que no existe. Ver `app/sigpac_cache.py` y `docs/INVESTIGACION-AGRICOLA.md` §1.2.
+
+    **Por qué pide permiso de modificar.** No es una consulta: escribe cientos de megas en el
+    servidor y se los pide al FEGA. `PuedeModificar` es la puerta de todo lo que escribe, y aquí
+    la comprobación va **antes** de salir a la red: sin permiso no se pide nada (hay test).
+
+    **La campaña es opcional** y, si no se dice, se usa el año en curso, que es lo que se quiere
+    el 99 % de las veces; la respuesta dice siempre cuál se ha usado. Si esa campaña no está
+    publicada, se contesta 404 con el motivo, no se prueba con otra a escondidas: cambiar de
+    campaña sin decirlo sería entregar datos de otro año creyendo que son de este.
+
+    Queda **sin hacer** abrir el GeoPackage y meter sus recintos: eso es la segunda mitad de
+    AGR-3. Aquí se entrega la descarga fiable, verificada y con su ficha.
+    """
+    campana_pedida = campana if campana is not None else dt.date.today().year
+    try:
+        ficha = sigpac_cache.descargar_provincia(provincia, campana_pedida)
+    except sigpac_cache.SinRed as error:
+        # 503: el servicio del FEGA no contesta o no hay red. Se dice y no se guarda nada.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)
+        ) from None
+    except sigpac_cache.SinFichero as error:
+        # 404: el listado de esa campaña no trae esa provincia. No es un fallo del programa.
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from None
+    except sigpac_cache.FicheroNoValido as error:
+        # 502: ha llegado algo, pero no es el mapa. Se dice que no se ha guardado.
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from None
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    return {"textos": textos.SIGPAC, **ficha}
 
 
 @router.post("/sigpac/consultar")

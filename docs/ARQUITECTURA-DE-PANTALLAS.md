@@ -553,3 +553,27 @@ incorporadas aquí y en el canvas.
 
 *Documento de propuesta. No implementa nada. El aspecto está en `designs/cue-agricola-design-system/`
 y `designs/cue-agricola/`; la investigación con fuentes, en `INVESTIGACION-AGRICOLA.md`.*
+
+---
+
+## 11 · Estado de implementación (2026-11-05)
+
+La primera entrega de **F2** ya está construida y **la app vieja sigue viva**:
+
+| Qué | Dónde | Estado |
+|---|---|---|
+| Armazón nuevo (barra superior, lateral en tableta/PC, inferior de 5 en el móvil) | `/nuevo/` (`backend/web/nuevo/`) | Hecho |
+| «Hoy» (finca, contador, lo último, botón de apuntar) | `/nuevo/` | Hecho |
+| «Mis parcelas» (contador, buscador, lista por municipio, mapa real, zoom, zona, panel con otros años) | `/nuevo/` | Hecho |
+| Los cuatro estados (cargando, error, vacío, sin permiso) | `/nuevo/` | Hecho |
+| API del armazón (`/api/nuevo/hoy`, `/api/nuevo/tierras`, con sesión y finca) | `app/routers/nuevo_api.py`, `app/nuevo.py` | Hecho |
+| SIGPAC: uso, coeficiente, región y admisibilidad guardados; descarga por provincia con caché | `app/sigpac_cache.py`, `app/routers/parcelas.py` | Hecho (falta abrir el GeoPackage) |
+| Cuaderno guiado, productos/dosis, facturas de foto, PAC/histórico | — | Pendiente (diseño aprobado) |
+
+**Evidencia**: `scripts/comprobar_el_armazon_nuevo.py` en Chrome a **390, 1024 y 1440 px → 0 fallos**
+(navegación que cambia con el ancho, sin scroll horizontal, 64 tierras en 5 municipios, mapa con
+imagen, panel con alias y otros años, y los cuatro estados); capturas en `docs/capturas-nuevo/`.
+Las pruebas de la pantalla nueva están en `tests/test_interfaz_nuevo.py` y `tests_js/nuevo.test.js`.
+
+**Lo que sigue**: AGR-15 (abrir el GeoPackage e importar) y AGR-16 (cuaderno guiado y las demás
+pantallas en `/nuevo/`, enlazando Cuaderno/Campaña/PAC y retirando cada pantalla vieja al cubrirla).

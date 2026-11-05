@@ -170,6 +170,20 @@ def puntos_de_un_wkt(wkt: str | None) -> list[tuple[float, float]]:
     return _puntos_de_un_wkt(wkt or "")
 
 
+def puntos_del_wkt(wkt: str | None) -> list[tuple[float, float]]:
+    """Los puntos de una geometría en `[(longitud, latitud), …]`, para pintarla donde sea.
+
+    Es el nombre que pide la interfaz nueva (`/api/nuevo/tierras`, el `anillo` de cada tierra) y hace
+    lo mismo que `puntos_de_un_wkt`, que ya estaba: los dos se apoyan en el mismo `_puntos_de_un_wkt`
+    para que no haya dos maneras de leer un WKT que un día discrepen. El nombre nuevo está pedido por
+    el contrato del armazón (`IMP-1`, 05/11/2026); el Lead decidirá si se queda uno solo.
+
+    Devuelve la lista vacía si no hay geometría: **una tierra apuntada a mano no tiene forma**, y
+    quien llama tiene que decirlo en vez de dibujar un cuadro inventado.
+    """
+    return _puntos_de_un_wkt(wkt or "")
+
+
 def _puntos_de_un_wkt(wkt: str) -> list[tuple[float, float]]:
     """Los vértices de una geometría, en orden. Se quita el que cierra el anillo si lo repite."""
     numeros = [float(n) for n in _NUMERO.findall(wkt or "")]

@@ -21,10 +21,11 @@ y los parámetros, en ese orden, son **provincia, municipio, agregado, zona, pol
 recinto**. Ese orden no está deducido: el documento lo escribe así.
 
 **Lo que devuelve el servicio es exactamente lo que guarda `Parcela`**: los siete códigos, la
-superficie en hectáreas, la pendiente media, el uso SIGPAC, la altitud y **el dibujo del trozo
-en WKT**, que es el mismo formato que usa nuestra columna `geometria`. Se puede ver una
-respuesta de verdad en `data/sigpac/recinto_de_ejemplo.json`, bajada con
-`backend/scripts/bajar_sigpac.py`.
+superficie en hectáreas, la pendiente media, el uso SIGPAC, la altitud, **el coeficiente de
+regadío, la región de la PAC y el coeficiente de subvencionabilidad en pastos (el CSP, que la
+consulta llama `admisibilidad`)** y **el dibujo del trozo en WKT**, que es el mismo formato que
+usa nuestra columna `geometria`. Se puede ver una respuesta de verdad en
+`data/sigpac/recinto_de_ejemplo.json`, bajada con `backend/scripts/bajar_sigpac.py`.
 
 Dos decisiones que conviene no deshacer:
 
@@ -538,7 +539,14 @@ class Recinto:
     srid: int | None = None
     wkt: str | None = None
     incidencias: object = None
-    admisibilidad: object = None
+    # **El CSP: «coeficiente de subvencionabilidad en pastos»** (0–100), que en la consulta REST
+    # se llama `admisibilidad`. Es `float | None` porque el servicio devuelve `null` cuando ese
+    # recinto no es pasto o no consta —el ejemplo real de `data/sigpac/recinto_de_ejemplo.json`
+    # trae `"admisibilidad": null`—, y ese nulo **no es un cero**: un 0 afirmaría que ese pasto no
+    # se puede cobrar. Estuvo tipado como `object`, sin convertir y sin documentar, y así el texto
+    # que mandara el servicio se colaba tal cual hasta la parcela.
+    # Los nombres y el significado están verificados en `docs/INVESTIGACION-AGRICOLA.md` §1.3.
+    admisibilidad: float | None = None
     crudo: dict = field(default_factory=dict)
 
     @property
@@ -612,7 +620,9 @@ def lee_recinto(cuerpo) -> Recinto | None:
         srid=entero("srid"),
         wkt=(cuerpo.get("wkt") or None),
         incidencias=cuerpo.get("incidencias"),
-        admisibilidad=cuerpo.get("admisibilidad"),
+        # El CSP se lee como número, igual que el resto. Si viene `null` o texto que no es un
+        # número, se queda en `None` («no consta»): **nunca se convierte en 0**.
+        admisibilidad=numero("admisibilidad"),
         crudo=cuerpo,
     )
 

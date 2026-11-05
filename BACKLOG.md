@@ -109,21 +109,56 @@
 - **Pendiente**: que David confirme si esos enlaces eran los que quería o pase los dos vídeos de la
   administración sobre SIGPAC; cuando lleguen, se revisan y se ajusta el registro.
 
-### AGR-2 · Armazón nuevo + «Hoy» + «Mis parcelas»
+### AGR-2 · Armazón nuevo + «Hoy» + «Mis parcelas» — **HECHO (2026-11-05), primera entrega**
 
-- **Nivel**: 2. **Siguiente en cuanto AGR-1 esté aprobado.**
-- **Criterio**: la navegación nueva se recorre en navegador a **390, 1024 y 1440 px**, con los cuatro
-  estados (vacío, cargando, error, sin permiso), y **la interfaz anterior sigue sirviendo** hasta que
-  la nueva cubra cada recorrido.
+- **Nivel**: 2. Implementado en `/nuevo/` (la app vieja sigue viva en `/`).
+- **Qué hay**: barra superior, barra lateral en tableta/PC y barra inferior de 5 en el móvil; «Hoy»
+  con finca, contador y lo último; «Mis parcelas» con contador, buscador, **lista agrupada por
+  municipio**, **mapa real** (ortofoto del IGN + linderos), zoom, selector de zona y **panel de la
+  tierra con sus otros años**; **los cuatro estados**; doctrina §8 aplicada.
+- **Evidencia**: `scripts/comprobar_el_armazon_nuevo.py` en Chrome a **390/1024/1440 px → 0 fallos**;
+  capturas en `docs/capturas-nuevo/`; `pytest tests/test_interfaz_nuevo.py` (17) y
+  `node --test tests_js/nuevo.test.js` (17) en verde.
+- **Lo que falta para cerrar el recorrido entero**: enlazar Cuaderno, Campaña y PAC a pantallas nuevas
+  (hoy llevan a la app vieja) y retirar cada pantalla vieja cuando la nueva la cubra. Va en AGR-15.
 
-### AGR-3 · Traer las parcelas del SIGPAC en lote
+### AGR-15 · La segunda mitad de SIGPAC: abrir el GeoPackage e importar sus recintos
 
 - **Nivel**: 2.
-- **Qué**: descarga del **GeoPackage por provincia** del FEGA (campaña actual y anterior), caché
-  local, y guardar por recinto `uso_sigpac`, `coef_regadio`, `region` y `admisibilidad` (CSP, `float |
-  None`: nulo = no consta). Licencia: CC BY 4.0 con cita al FEGA y al Catastro al distribuir recintos.
-- **Criterio**: pruebas contra el ejemplo guardado (sin internet) y humo contra el FEGA; un recinto
-  de verdad con su mapa y su ficha; ningún dato inventado donde el SIGPAC trae nulo.
+- **Qué**: leer el `.gpkg` descargado (SQLite: tabla de recintos, geometría y atributos), convertir WKT
+  y meter los recintos en la finca con su uso, coeficiente, región y admisibilidad; duplicados por
+  clave de recinto; streaming a fichero en vez de 628 MB en memoria; purga y límite de tamaño.
+- **Criterio**: importar una provincia de prueba (fichero pequeño) sin duplicar y sin tocar datos de
+  otra finca; probado sin internet contra un `.gpkg` guardado de ejemplo.
+
+### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC)
+
+- **Nivel**: 2.
+- **Qué**: cuaderno guiado con lo que falta para que el apunte valga; productos y abonos con dosis por
+  hectárea y favoritos; facturas de foto con revisión campo a campo; y PAC/histórico con los canales
+  verificados (recintos por campaña, Cuecyl, S-X). Enlazar Cuaderno/Campaña/PAC en el armazón nuevo.
+- **Criterio**: cada pantalla con sus cuatro estados, sus pruebas y su paso en el arnés de navegador;
+  la vieja se retira cuando la nueva cubre el recorrido.
+
+### AGR-3 · Traer las parcelas del SIGPAC en lote — **HECHO PARCIAL (2026-11-05)**
+
+- **Nivel**: 2.
+- **Qué hay**: columnas `coef_regadio`, `region` y `admisibilidad` guardadas al dar de alta desde el
+  SIGPAC; `GET /sigpac/cache` y `POST /sigpac/cache/{provincia}` con el listado del FEGA, descarga
+  verificada (ZIP con `.gpkg`), sha256, ficha con campaña/fecha/licencia y `fetch` inyectable para
+  probar sin internet; sin permiso de modificar no se llama a la red; sin red, 503; listado sin la
+  provincia, 404; lo que no es un mapa, 502.
+- **Evidencia**: `tests/test_sigpac_atributos.py` (+11) y `tests/test_sigpac_cache.py` (+22), y la
+  regresión del SIGPAC y de parcelas (203 pruebas en verde).
+- **Falta**: abrir el GeoPackage e importar (AGR-15), streaming, purga y límite de tamaño.
+
+### AGR-17 · Histórico de la PAC y evolución de una tierra
+
+- **Nivel**: 2. Hereda lo que estaba en AGR-10; canales verificados el 05/11: exportación de
+  **recintos por campaña 2023–2026** de la Junta, **Cuecyl `.xlsx`** por campaña y **S-X con texto**.
+  Lo que falta de motor: que la importación del Cuecyl escriba las versiones de su campaña.
+- **Criterio**: tabla por tierra con campaña, cultivo, superficie, variedad y producción estimada
+  (kg/ha), editable; un año sin dato queda vacío, no en cero; se exporta.
 
 ### AGR-4 · Correcciones documentales de la investigación
 

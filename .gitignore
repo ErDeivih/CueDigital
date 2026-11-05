@@ -81,6 +81,14 @@ cuedigital.db*
 # que va dentro de una carpeta que se llama `adjuntos` no se sube nunca, esté donde esté.
 adjuntos/
 
+# La caché de la descarga del SIGPAC (AGR-3, 05/11/2026): los GeoPackage por provincia que se
+# bajan del FEGA. Son **cientos de megas** por provincia y campaña (la de Salamanca, 628 MB), así
+# que no pueden viajar con el código: se descargan en cada instalación. Se puede cambiar de sitio
+# con `CUEDIGITAL_SIGPAC_CACHE`. Va anclada a la raíz por lo mismo que la de arriba: sin la barra
+# del principio, la regla taparía cualquier carpeta `datos/sigpac_cache` de dentro del proyecto,
+# pruebas incluidas.
+/datos/sigpac_cache/
+
 # Entorno
 .env
 .env.*
