@@ -41,10 +41,12 @@ import {
   claveDeTipo,
   colorDeTierra,
   colorDeUso,
+  comparativaDeAnios,
   cuerpoDeLaFactura,
   cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
   cuerpoDelTratamiento,
+  csvDeTrabajos,
   datosDelPanel,
   decidirEstado,
   dosisMaximaEnTexto,
@@ -76,6 +78,7 @@ import {
   proyeccionDeAnillo,
   proyeccionDePunto,
   puntoDelMapa,
+  queryDeTrabajos,
   recintosConPuntos,
   referenciasDeTexto,
   rejillaDelMes,
@@ -86,8 +89,10 @@ import {
   sinMapa,
   sumaDeHectareas,
   textos,
+  textoDeTotales,
   textoRelleno,
   totalDeLaAplicacion,
+  totalesDeTrabajos,
   urlDeMiniatura,
   urlDelMapa,
 } from "./modelo.js";
@@ -346,6 +351,7 @@ function usarPantalla(ruta, activa) {
   const [conToken, setConToken] = useState(Boolean(leerToken()));
   const [estado, setEstado] = useState("cargando");
   const [datos, setDatos] = useState(null);
+  const [detalle, setDetalle] = useState(null);
   const [intento, setIntento] = useState(0);
 
   useEffect(() => {
@@ -374,12 +380,17 @@ function usarPantalla(ruta, activa) {
           return;
         }
         if (!respuesta.ok) {
+          // El cuerpo del «no» trae los avisos en palabras de agricultor: se guardan para la pantalla.
+          const cuerpo = await respuesta.json().catch(() => null);
+          if (!vivo) return;
+          setDetalle(cuerpo);
           setEstado(respuesta.status === 404 || respuesta.status === 405 ? "no-disponible" : "error");
           return;
         }
         const cuerpo = await respuesta.json();
         if (!vivo) return;
         setDatos(cuerpo);
+        setDetalle(null);
         setEstado("listo");
       })
       .catch((fallo) => {
@@ -393,7 +404,7 @@ function usarPantalla(ruta, activa) {
     };
   }, [ruta, activa, intento]);
 
-  return { estado, datos, conToken, reintentar: () => setIntento((n) => n + 1) };
+  return { estado, datos, detalle, conToken, reintentar: () => setIntento((n) => n + 1) };
 }
 
 function inicialesDe(nombre) {
@@ -1864,8 +1875,43 @@ function BloqueDeHistorial({ estado, anios, alReintentar }) {
     </section>`;
   });
 
+  // La comparativa: una fila por año, con lo que se puede comparar de un vistazo. Lo que no
+  // consta se dice «no consta»: no se rellena con un cero.
+  const comparativa = comparativaDeAnios(anios);
+  const noConsta = textos.historial.noConsta;
+  const filasDeLaComparativa = comparativa.map((fila) => html`<tr key=${`comparativa-${fila.anio}`} data-historial-fila-anio=${fila.anio}>
+    <th scope="row">${fila.anio}</th>
+    <td>${[fila.cultivo, fila.variedad].filter(Boolean).join(" · ") || noConsta}</td>
+    <td>${fila.superficie_ha === null ? noConsta : `${formateaNumero(fila.superficie_ha)} ${textos.tierras.panel.hectareas}`}</td>
+    <td>${fila.abonoKgHa === null ? noConsta : `${formateaNumero(fila.abonoKgHa)} kg/ha`}</td>
+    <td>${fila.meses || noConsta}</td>
+    <td>${fila.cosechaKgHa === null ? noConsta : `${formateaNumero(fila.cosechaKgHa)} kg/ha`}</td>
+    <td>${fila.labores === null ? noConsta : fila.labores}</td>
+  </tr>`);
+
+  const tablaComparativa = comparativa.length
+    ? html`<div className="tabla-envoltura">
+        <table className="tabla" data-historial-comparativa>
+          <caption>${textos.historial.comparativa}</caption>
+          <thead>
+            <tr>
+              <th scope="col">${textos.historial.anio}</th>
+              <th scope="col">${textos.historial.cultivo}</th>
+              <th scope="col">${textos.historial.superficie}</th>
+              <th scope="col">${textos.historial.abono}</th>
+              <th scope="col">${textos.historial.mesesDeAbono}</th>
+              <th scope="col">${textos.historial.cosecha}</th>
+              <th scope="col">${textos.historial.labores}</th>
+            </tr>
+          </thead>
+          <tbody>${filasDeLaComparativa}</tbody>
+        </table>
+      </div>`
+    : html`<p className="estado__texto">${textos.historial.sinAnios}</p>`;
+
   return html`<section className="tarjeta" data-historial=${anios.length} aria-labelledby="historial-titulo">
     ${cabecera}
+    ${tablaComparativa}
     ${anios.length ? bloques : html`<p className="estado__texto">${textos.tierra.sinHistorial}</p>`}
   </section>`;
 }
@@ -2238,6 +2284,10 @@ function VistaCalendario({ tierras, alEstado }) {
   const porFecha = new Map(datos.dias.map((dia) => [dia.fecha, dia]));
   const celdas = rejillaDelMes(anio, mes);
   const diaElegido = elegido ? porFecha.get(elegido) || null : null;
+  const hoyISO = fechaDeHoyISO();
+  const todosDelMes = datos.dias.flatMap((dia) => dia.trabajos);
+  const totalesDelMes = totalesDeTrabajos(todosDelMes);
+  const textoDelMes = textoDeTotales(totalesDelMes);
 
   const cambiarMes = (paso) => {
     const fecha = new Date(anio, mes - 1 + paso, 1);
@@ -2257,6 +2307,7 @@ function VistaCalendario({ tierras, alEstado }) {
         <${Icono} nombre="mas" tamano=${20} />
       </button>
     </div>
+    <p className="pagina__dato" data-calendario-totales=${textoDelMes}>${textoDelMes}</p>
   </header>`;
 
   if (pantalla.estado === "sin-permiso") {
@@ -2280,20 +2331,33 @@ function VistaCalendario({ tierras, alEstado }) {
     }
     const delDia = porFecha.get(celda.fecha);
     const cuantos = delDia ? delDia.n : 0;
-    const clase = ["calendario__dia", cuantos ? "calendario__dia--con-trabajo" : "", elegido === celda.fecha ? "calendario__dia--elegido" : ""]
+    const esHoy = celda.fecha === hoyISO;
+    const clase = [
+      "calendario__dia",
+      cuantos ? "calendario__dia--con-trabajo" : "",
+      elegido === celda.fecha ? "calendario__dia--elegido" : "",
+      esHoy ? "calendario__dia--hoy" : "",
+    ]
       .filter(Boolean)
       .join(" ");
     const palabra = cuantos === 1 ? "1 trabajo" : `${cuantos} trabajos`;
+    const totalesDelDia = delDia ? totalesDeTrabajos(delDia.trabajos) : null;
+    const textoDelDia = totalesDelDia && cuantos ? textoDeTotales(totalesDelDia) : "";
+    const cuentaDelDia = delDia
+      ? html`<span className="calendario__cuenta">${palabra}</span>`
+      : null;
     return html`<button
       type="button"
       key=${`dia-${celda.fecha}`}
       className=${clase}
       data-dia-calendario=${celda.fecha}
+      data-dia-total=${textoDelDia}
       aria-pressed=${elegido === celda.fecha}
       onClick=${() => setElegido(celda.fecha)}
     >
       <span className="calendario__numero">${celda.dia}</span>
-      ${cuantos ? html`<span className="calendario__cuenta">${palabra}</span>` : null}
+      ${esHoy ? html`<span className="calendario__hoy">${textos.historial.hoy}</span>` : null}
+      ${cuentaDelDia}
     </button>`;
   });
 
@@ -2325,7 +2389,11 @@ function VistaCalendario({ tierras, alEstado }) {
 
 function VistaTrabajos({ tierras, alEstado }) {
   const [tipo, setTipo] = useState(null);
-  const pantalla = usarPantalla(RUTA_TRABAJOS(tipo), true);
+  const [tierraId, setTierraId] = useState("");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const ruta = queryDeTrabajos({ tipo, tierraId, desde, hasta });
+  const pantalla = usarPantalla(ruta, true);
   const datos = normalizaTrabajos(pantalla.estado === "listo" ? pantalla.datos : null, tierras);
 
   useEffect(() => {
@@ -2336,29 +2404,53 @@ function VistaTrabajos({ tierras, alEstado }) {
     else alEstado("listo");
   }, [pantalla.estado, alEstado]);
 
-  // El servidor ya ha filtrado por el tipo elegido; aquí solo se cuenta lo que ha llegado.
-  const visibles = datos.trabajos;
-  const resumen = sumaDeHectareas(visibles);
-  const conSuperficie = resumen.ha !== null && resumen.n > resumen.sinSuperficie;
-  const textoDelResumen = conSuperficie
-    ? textoRelleno(textos.trabajos.resumen, { n: visibles.length, ha: formateaNumero(resumen.ha) })
-    : textoRelleno(textos.trabajos.resumenSinHa, { n: visibles.length });
-  const notaSinSuperficie = resumen.sinSuperficie
-    ? ` · ${resumen.sinSuperficie} ${textos.trabajos.sinSuperficie}`
+  // Mientras el servidor no acote por tierra y fechas, se acota aquí sobre los mismos datos: el
+  // filtro es el mismo y la pantalla no puede enseñar de más.
+  const visibles = datos.trabajos.filter((trabajo) => {
+    if (tierraId !== "" && Number(trabajo.tierraId) !== Number(tierraId)) return false;
+    if (desde && trabajo.fecha && trabajo.fecha < desde) return false;
+    if (hasta && trabajo.fecha && trabajo.fecha > hasta) return false;
+    return true;
+  });
+  const totales = totalesDeTrabajos(visibles);
+  const textoDelResumen = textoDeTotales(totales);
+  const notaSinSuperficie = totales.sinSuperficie
+    ? ` · ${totales.sinSuperficie} ${textos.trabajos.sinSuperficie}`
     : "";
+
+  // Para la trazabilidad se puede bajar lo filtrado tal y como se está viendo.
+  const descargar = () => {
+    if (!visibles.length) return;
+    const csv = "\uFEFF" + csvDeTrabajos(visibles);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = "trabajos.csv";
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    URL.revokeObjectURL(url);
+  };
 
   const cabecera = html`<header className="pagina__cabecera">
     <h1 className="pagina__titulo">${textos.trabajos.titulo}</h1>
     <p className="pagina__dato" data-trabajos-resumen=${textoDelResumen}>${textoDelResumen}${notaSinSuperficie}</p>
+    <div className="estado__acciones">
+      <button type="button" className="boton" data-descargar-trabajos onClick=${descargar} disabled=${!visibles.length}>
+        ${textos.trabajos.descargar}
+      </button>
+    </div>
   </header>`;
 
   if (pantalla.estado === "sin-permiso") {
     return html`<div>${cabecera}<${EstadoSinPermiso} mensaje=${textos.comun.sinPermiso} /></div>`;
   }
   if (pantalla.estado === "error" || pantalla.estado === "no-disponible") {
+    const avisoDelServidor = mensajesDeLaRespuesta(pantalla.detalle).join(" · ");
     return html`<div>
       ${cabecera}
-      <p className="estado__texto">${textos.trabajos.noDisponible}</p>
+      <p className="estado__texto">${avisoDelServidor || textos.trabajos.noDisponible}</p>
       <div className="estado__acciones">
         <button type="button" className="boton" data-reintentar onClick=${pantalla.reintentar}>${textos.comun.reintentar}</button>
         <a className="boton boton--principal" href="/">${textos.hoy.abrirAppVieja}</a>
@@ -2383,6 +2475,40 @@ function VistaTrabajos({ tierras, alEstado }) {
     </button>`;
   });
 
+  const opcionesDeTierra = [{ id: "", alias: textos.trabajos.todas }].concat(tierras || []);
+  const filtrosDeTierraYFechas = html`<div className="rejilla-campos">
+    <label className="campo">
+      <span>${textos.trabajos.filtroTierra}</span>
+      <select className="campo__control" data-filtro-tierra value=${tierraId} onChange=${(evento) => setTierraId(evento.target.value)}>
+        ${opcionesDeTierra.map((tierra) => html`<option key=${`tierra-${tierra.id}`} value=${tierra.id}>${tierra.alias}</option>`)}
+      </select>
+    </label>
+    <label className="campo">
+      <span>${textos.trabajos.desde}</span>
+      <input className="campo__control" type="date" data-filtro-desde value=${desde} onChange=${(evento) => setDesde(evento.target.value)} />
+    </label>
+    <label className="campo">
+      <span>${textos.trabajos.hasta}</span>
+      <input className="campo__control" type="date" data-filtro-hasta value=${hasta} onChange=${(evento) => setHasta(evento.target.value)} />
+    </label>
+  </div>`;
+
+  const porTipo = new Map();
+  for (const trabajo of visibles) {
+    const clave = claveDeTipo(trabajo);
+    if (!porTipo.has(clave)) porTipo.set(clave, []);
+    porTipo.get(clave).push(trabajo);
+  }
+  const tarjetasDeResumen = [...porTipo.entries()].map(([clave, suyos]) => {
+    const tipoConocido = datos.tipos.find((uno) => uno.clave === clave) || null;
+    const etiqueta = tipoConocido ? tipoConocido.etiqueta : suyos[0].etiqueta;
+    return html`<article className="tarjeta-dato" key=${`resumen-${clave}`} data-resumen-tipo=${clave}>
+      <h3 className="tarjeta-dato__titulo">${etiqueta}</h3>
+      <p className="tarjeta-dato__cifra">${suyos.length}</p>
+      <p className="tarjeta-dato__nota">${textoDeTotales(totalesDeTrabajos(suyos))}</p>
+    </article>`;
+  });
+
   const filas = visibles.map((trabajo, indice) => {
     const detalles = [
       trabajo.tierra || null,
@@ -2400,6 +2526,10 @@ function VistaTrabajos({ tierras, alEstado }) {
   return html`<div className="pantalla-trabajos">
     ${cabecera}
     <div className="filtros" role="group" aria-label=${textos.trabajos.filtro}>${botonesDeFiltro}</div>
+    ${filtrosDeTierraYFechas}
+    ${tarjetasDeResumen.length
+      ? html`<div className="tarjetas" aria-label=${textos.trabajos.resumenPorTipo}>${tarjetasDeResumen}</div>`
+      : null}
     ${visibles.length
       ? html`<ul className="trabajos-lista">${filas}</ul>`
       : html`<p className="estado__texto">${datos.trabajos.length ? textos.trabajos.sinTrabajos : textos.trabajos.sinDatos}</p>`}

@@ -62,6 +62,15 @@ ENGANCHES = [
     "data-aplicar-guardar",
     "data-aplicar-resultado",
     "data-siguiente-paso",
+    "data-historial-comparativa",
+    "data-historial-fila-anio",
+    "data-dia-total",
+    "data-calendario-totales",
+    "data-filtro-tierra",
+    "data-filtro-desde",
+    "data-filtro-hasta",
+    "data-resumen-tipo",
+    "data-descargar-trabajos",
     "data-trabajo-de-hoy",
     "data-historial",
     "data-historial-anio",
@@ -306,6 +315,20 @@ class TestElContratoConElArnesDeNavegador:
         # El flujo encadenado: siempre hay un siguiente paso a la vista.
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
+
+    def test_se_pueden_comparar_anios_y_bajar_lo_filtrado(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        assert "comparativaDeAnios" in fuente
+        assert "data-historial-comparativa" in fuente
+        assert "totalesDeTrabajos" in fuente
+        assert "data-calendario-totales" in fuente
+        assert "queryDeTrabajos" in fuente
+        assert "csvDeTrabajos" in fuente
+        assert "data-descargar-trabajos" in fuente
+        # Y las cuentas viven en el modelo, no en la pantalla.
+        for funcion in ["comparativaDeAnios", "mesesEnPalabras", "totalesDeTrabajos", "queryDeTrabajos", "csvDeTrabajos"]:
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
 
     def test_las_puertas_que_usa_la_pantalla_son_las_del_servidor(self):
         fuente = leer("app.js")

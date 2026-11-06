@@ -143,11 +143,26 @@ def los_trabajos_de_la_campana(
     db: Db,
     tipo: str | None = None,
     campana_id: int | None = None,
+    parcela_id: int | None = None,
+    desde: dt.date | None = None,
+    hasta: dt.date | None = None,
 ) -> dict:
-    """**Los trabajos de la campaña, con su tierra y su municipio**, y filtrables por tipo.
+    """**Los trabajos, con su tierra y su municipio**, filtrables por tipo, tierra y fechas.
 
-    Los tipos que se ofrecen salen de lo que hay apuntado (con su recuento), así que no se enseña un
-    filtro que no lleva a nada. Un tipo que el programa conoce y este año no tiene datos devuelve la
-    lista vacía; uno que no existe en el vocabulario contesta **422** con la lista de los que valen.
+    Los tipos que se ofrecen salen de lo que hay **en lo filtrado** (con su recuento), así que no se
+    enseña un filtro que no lleva a nada y las cuentas no mezclan tierras ni fechas. Un tipo que el
+    programa conoce y no tiene datos devuelve la lista vacía; uno que no existe contesta **422** con la
+    lista de los que valen. Una tierra de otra finca, **404**. Un rango al revés o de más de un año,
+    **422**.
+
+    Las cantidades del resumen van **por unidad** (kg, m³…): nunca se suman unidades distintas.
     """
-    return nuevo.trabajos(db, explotacion=explotacion, tipo=tipo, campana_id=campana_id)
+    return nuevo.trabajos(
+        db,
+        explotacion=explotacion,
+        tipo=tipo,
+        campana_id=campana_id,
+        parcela_id=parcela_id,
+        desde=desde,
+        hasta=hasta,
+    )

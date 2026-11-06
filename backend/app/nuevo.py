@@ -1167,6 +1167,38 @@ def _el_apunte_para_la_agenda(fila: dict) -> dict:
     }
 
 
+def _el_resumen_de_un_anio(elemento: dict, n_apuntes: int) -> dict:
+    """**El resumen de un año del historial**, para poder comparar dos años de un vistazo.
+
+    Lo que dice, y lo que **no** hace:
+
+      · `abonos_kg_ha` es **la suma de las dosis por hectárea** de los abonos de ese año (una suma de
+        intensidades, no de kilos: los kilos de cada abono se ven en su fila). Si a **alguno** le
+        falta su kg/ha, la suma es **`None`**: una suma a la que le falta un sumando no es una suma,
+        es una cifra que miente por pequeña. Sin abonos es `0.0`, que es la verdad de ese año.
+      · `abonos_meses` son los meses en los que se abonó, **ordenados y sin repetir**.
+      · `cosecha_kg_ha` es el kg/ha de la cosecha del año, o `None` si no hubo o si no se sabe. **No se
+        rellena con la de otro año.**
+      · `siembra` dice si ese año tiene siembra apuntada (en la labor del día o en la ficha de la
+        semilla: las dos cuentan como la siembra del año).
+    """
+    dosis = [abono["kg_ha"] for abono in elemento["abonos"]]
+    falta_alguna = any(una is None for una in dosis)
+    abonos_kg_ha = None if falta_alguna else round(sum(float(una) for una in dosis), 4)
+    cosecha = elemento["cosecha"] or {}
+    return {
+        "n_apuntes": n_apuntes,
+        "n_labores": len(elemento["labores"]),
+        "n_tratamientos": len(elemento["tratamientos"]),
+        "abonos_kg_ha": abonos_kg_ha,
+        "abonos_meses": sorted(
+            {abono["mes"] for abono in elemento["abonos"] if abono["mes"] is not None}
+        ),
+        "cosecha_kg_ha": cosecha.get("kg_ha"),
+        "siembra": elemento["siembra"] is not None,
+    }
+
+
 def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list[dict]:
     """El historial de una tierra: **un elemento por año con datos, del más nuevo al más viejo**.
 
@@ -1178,6 +1210,9 @@ def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list
     y, si no, el de su fecha. Una siembra no cuelga de ninguna campaña, así que va por su fecha.
     """
     anios: dict[int, dict] = {}
+    # Cuántos apuntes tiene cada año, que es lo que dice el `resumen` de ese año. Se cuenta al pasar
+    # (incluida la ficha de la semilla, que es un apunte aunque no sea una labor más).
+    cuantos: dict[int, int] = defaultdict(int)
 
     def _del_anio(anio: int) -> dict:
         if anio not in anios:
@@ -1205,6 +1240,7 @@ def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list
         if anio is None:
             continue
         elemento = _del_anio(anio)
+        cuantos[anio] += 1
         if fila["tipo"] == CLAVE_COSECHA:
             elemento["cosecha"] = {
                 "fecha": fila["fecha"].isoformat(),
@@ -1267,6 +1303,9 @@ def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list
         if elemento["cultivo"] is None and elemento["siembra"]:
             elemento["cultivo"] = elemento["siembra"]["cultivo"]
             elemento["variedad"] = elemento["siembra"]["variedad"]
+        # **El resumen del año**, para poder comparar dos años de un vistazo (IMP-13). Va al final,
+        # cuando ya están todas las listas del año y sus cuentas.
+        elemento["resumen"] = _el_resumen_de_un_anio(elemento, cuantos[anio])
 
     return [anios[anio] for anio in sorted(anios, reverse=True)]
 
@@ -1338,19 +1377,45 @@ def la_ficha_de_la_tierra(db: Session, *, explotacion, parcela_id: int) -> dict:
     }
 
 
-def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
-    """**Qué se ha hecho cada día**, en el rango que se pida (por defecto, el mes en curso).
+def _las_cantidades_por_unidad(filas: list[dict]) -> dict[str, float]:
+    """**Lo que se puede sumar, por unidad**: kilos con kilos y metros cúbicos con metros cúbicos.
 
-    Solo vuelven los días con algo: el calendario ya sabe qué días están vacíos, y mandar los 31 días con
-    su lista vacía sería mandar nada. Sin `desde` ni `hasta` se mira el mes de hoy, que es el que el
-    agricultor tiene delante al abrir la agenda.
-
-    **El rango se comprueba**: un final anterior al principio y un rango de más de un año se contestan
-    con un 422 que se entiende, no con una consulta que devuelva media vida.
+    Es la regla de la casa para lo que se mide en varias unidades: **no se suman unidades distintas**
+    aunque las dos sean un número (ver `AGENTS.md` §4). Un apunte sin cantidad o sin unidad no entra
+    en ningún total: no se puede colocar en una suma que significa algo.
     """
-    hoy = dt.date.today()
-    desde = desde or hoy.replace(day=1)
-    hasta = hasta or _el_ultimo_dia_del_mes(desde)
+    totales: dict[str, float] = {}
+    for fila in filas:
+        if fila["cantidad"] is None or not fila["unidad"]:
+            continue
+        totales[fila["unidad"]] = round(
+            totales.get(fila["unidad"], 0.0) + float(fila["cantidad"]), 4
+        )
+    return totales
+
+
+def _los_totales_de_un_conjunto(filas: list[dict]) -> dict:
+    """Los totales de un conjunto de apuntes: cuántos, cuántas hectáreas y cuánto de cada unidad.
+
+    Las hectáreas van a `None` **si a algún apunte le falta la superficie**: un total al que le falta
+    un sumando no es un total (misma regla que en las superficies de la finca).
+    """
+    return {
+        "n": len(filas),
+        "hectareas": _la_suma_de_hectareas([fila["hectareas"] for fila in filas]),
+        "cantidades_por_unidad": _las_cantidades_por_unidad(filas),
+    }
+
+
+def _comprobar_el_rango(desde, hasta) -> None:
+    """Un rango de fechas que se pueda mirar: al derecho y de como mucho un año.
+
+    Un final anterior al principio y un rango de más de un año se contestan con un **422 que se
+    entiende**, no con una consulta que devuelva media vida del agricultor. Cuando solo viene uno de
+    los dos extremos no hay rango que comprobar: es una lista abierta por el otro lado.
+    """
+    if desde is None or hasta is None:
+        return
     if hasta < desde:
         raise HTTPException(
             status_code=422,
@@ -1360,9 +1425,29 @@ def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
         raise HTTPException(
             status_code=422,
             detail=(
-                "El calendario no puede mirar más de un año de golpe. Elige un tramo más corto."
+                "No se pueden mirar más de un año de golpe (366 días). Elige un tramo más corto."
             ),
         )
+
+
+def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
+    """**Qué se ha hecho cada día**, en el rango que se pida (por defecto, el mes en curso).
+
+    Solo vuelven los días con algo: el calendario ya sabe qué días están vacíos, y mandar los 31 días con
+    su lista vacía sería mandar nada. Sin `desde` ni `hasta` se mira el mes de hoy, que es el que el
+    agricultor tiene delante al abrir la agenda.
+
+    **Cada día lleva sus totales** (cuántos trabajos, cuántas hectáreas y cuánto de cada unidad) y el
+    mes lleva los suyos, además de los recuentos por tipo. Las cantidades **nunca se suman entre
+    unidades distintas**: 1.200 kg y 300 m³ son dos números en el mismo diccionario, no una suma.
+
+    **El rango se comprueba**: un final anterior al principio y un rango de más de un año se contestan
+    con un 422 que se entiende.
+    """
+    hoy = dt.date.today()
+    desde = desde or hoy.replace(day=1)
+    hasta = hasta or _el_ultimo_dia_del_mes(desde)
+    _comprobar_el_rango(desde, hasta)
 
     filas = _los_apuntes(db, explotacion.id, desde=desde, hasta=hasta)
     por_dia: dict[dt.date, list[dict]] = defaultdict(list)
@@ -1370,7 +1455,11 @@ def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
         por_dia[fila["fecha"]].append(fila)
 
     dias = [
-        {"fecha": fecha.isoformat(), "trabajos": [_el_apunte_para_la_agenda(fila) for fila in del_dia]}
+        {
+            "fecha": fecha.isoformat(),
+            "trabajos": [_el_apunte_para_la_agenda(fila) for fila in del_dia],
+            "totales": _los_totales_de_un_conjunto(del_dia),
+        }
         for fecha, del_dia in sorted(por_dia.items())
     ]
     por_tipo: dict[str, int] = defaultdict(int)
@@ -1380,7 +1469,10 @@ def calendario(db: Session, *, explotacion, desde=None, hasta=None) -> dict:
         "desde": desde.isoformat(),
         "hasta": hasta.isoformat(),
         "dias": dias,
-        "totales": {"por_tipo": dict(por_tipo), "n": len(filas)},
+        "totales": {
+            "por_tipo": dict(por_tipo),
+            **_los_totales_de_un_conjunto(filas),
+        },
     }
 
 
@@ -1391,22 +1483,55 @@ def _el_ultimo_dia_del_mes(fecha: dt.date) -> dt.date:
 
 
 def trabajos(
-    db: Session, *, explotacion, tipo: str | None = None, campana_id: int | None = None
+    db: Session,
+    *,
+    explotacion,
+    tipo: str | None = None,
+    campana_id: int | None = None,
+    parcela_id: int | None = None,
+    desde=None,
+    hasta=None,
 ) -> dict:
-    """**Los trabajos de la campaña, con sus tierras y sus cantidades, filtrables por tipo.**
+    """**Los trabajos de la finca, con sus tierras y sus cantidades, filtrables por tipo, tierra y fechas.**
 
     Es la trazabilidad de toda la explotación: cada fila lleva **su tierra y su municipio**, para poder
-    contestar «¿dónde se pasó el cultivador?» sin abrir tierra por tierra.
+    contestar «¿dónde se pasó el cultivador?» sin abrir tierra por tierra, y **el filtro se puede
+    acotar** a una tierra y a un tramo de días.
 
-    Los tipos de la lista salen de **lo que hay apuntado** en esa campaña (con su recuento): un filtro
-    que no tiene nada no se ofrece, y así la pantalla no enseña botones muertos. Un `tipo` que el
-    programa conoce pero que este año no tiene datos devuelve la lista vacía y su resumen a cero; uno que
-    no existe en el vocabulario contesta **422 con la lista de los que valen**, no un 500.
+    **El ámbito, contado bien**: con `desde`/`hasta` manda el rango de fechas (mirar el año pasado no
+    puede quedarse vacío porque la campaña activa sea esta); sin fechas se mira la campaña activa, que
+    es lo que el agricultor tiene delante. Si se pide una campaña concreta, se usa esa.
+
+    Los tipos de la lista salen de **lo que hay en el conjunto ya filtrado** (con su recuento): si se
+    mira una tierra, las cuentas son de esa tierra, y así la pantalla no ofrece un filtro que no lleva a
+    nada. Un `tipo` que el programa conoce pero que no tiene datos devuelve la lista vacía y su resumen
+    a cero; uno que no existe en el vocabulario contesta **422 con la lista de los que valen**, no un 500.
+
+    **Las cantidades van por unidad** (`kg`, `m3`, `litros`…): nunca se suman unidades distintas, porque
+    un total que mezcla kilos y litros no significa nada.
     """
     from . import trabajos as el_modulo_de_trabajos
 
-    campana = la_campana_activa(db, explotacion.id, campana_id)
-    filas = _los_apuntes(db, explotacion.id, campana=campana) if campana is not None else []
+    if parcela_id is not None:
+        # De esta finca o 404: no se dice si un identificador existe en otro cuaderno.
+        obtener_de_la_explotacion(db, models.Parcela, parcela_id, explotacion.id)
+    _comprobar_el_rango(desde, hasta)
+
+    campana: models.Campana | None = None
+    if campana_id is not None:
+        campana = la_campana_activa(db, explotacion.id, campana_id)
+    elif desde is None and hasta is None:
+        campana = la_campana_activa(db, explotacion.id)
+    # Y si hay fechas y no se ha pedido campaña, **no se acota por campaña**: el rango manda.
+
+    filas = _los_apuntes(
+        db,
+        explotacion.id,
+        parcela_id=parcela_id,
+        desde=desde,
+        hasta=hasta,
+        campana=campana,
+    )
 
     # El vocabulario de tipos que el programa conoce: las labores de su catálogo, los aperos de suelo y
     # los dos registros que no son labores.
@@ -1427,8 +1552,8 @@ def trabajos(
     cuantas: dict[str, int] = defaultdict(int)
     for fila in filas:
         cuantas[fila["clave"]] += 1
-    # Los tipos que se ofrecen: los que tienen algo este año, de más a menos. Y si hay apuntes cuya
-    # clave no está en el vocabulario (una labor de un tipo nuevo), se dicen como «otros».
+    # Los tipos que se ofrecen: los que tienen algo **en lo filtrado**, de más a menos. Y si hay apuntes
+    # cuya clave no está en el vocabulario (una labor de un tipo nuevo), se dicen como «otros».
     tipos = [
         {"clave": clave, "etiqueta": _la_etiqueta_de_un_tipo(clave), "n": cuantas[clave]}
         for clave in sorted(cuantas, key=lambda una: (-cuantas[una], una))
@@ -1436,11 +1561,16 @@ def trabajos(
 
     por_tipo: dict[str, dict] = {}
     for fila in elegidas:
-        suyo = por_tipo.setdefault(fila["clave"], {"n": 0, "hectareas": []})
+        suyo = por_tipo.setdefault(fila["clave"], {"n": 0, "hectareas": [], "filas": []})
         suyo["n"] += 1
         suyo["hectareas"].append(fila["hectareas"])
+        suyo["filas"].append(fila)
     resumen_por_tipo = {
-        clave: {"n": datos["n"], "hectareas": _la_suma_de_hectareas(datos["hectareas"])}
+        clave: {
+            "n": datos["n"],
+            "hectareas": _la_suma_de_hectareas(datos["hectareas"]),
+            "cantidades_por_unidad": _las_cantidades_por_unidad(datos["filas"]),
+        }
         for clave, datos in por_tipo.items()
     }
 
@@ -1463,8 +1593,7 @@ def trabajos(
             for fila in elegidas
         ],
         "resumen": {
-            "n": len(elegidas),
-            "hectareas": _la_suma_de_hectareas([fila["hectareas"] for fila in elegidas]),
+            **_los_totales_de_un_conjunto(elegidas),
             "por_tipo": resumen_por_tipo,
         },
     }

@@ -149,6 +149,11 @@
   abonos con dosis por hectárea** (dosis máxima + unidad, riqueza N/P/K, total calculado antes de
   apuntar y guardado en tratamientos/fertilizaciones) y el **flujo encadenado** factura → tierra →
   trabajo del día → historial → calendario → filtros con «siguiente paso».
+- **Hecho el 06/11**: **historial comparable por años** (tabla con abono total kg/ha, meses de abono en
+  palabras, cosecha kg/ha y n.º de labores; `null` → «no consta»), **calendario con totales** por día y
+  por mes sin mezclar unidades, y **filtros por tipo + tierra + fechas** con cantidades por unidad y
+  **descarga CSV** para la trazabilidad. Evidencia: `tests/test_nuevo_trazabilidad.py` (14) y arnés de
+  Chrome, 0 fallos.
 - **Evidencia**: `backend/scripts/comprobar_el_armazon_nuevo.py` en Chrome **0 fallos** (búsqueda →
   recinto dibujado → añadido 64→65; cuaderno subido 65→72); capturas en `docs/capturas-nuevo/`;
   `tests/test_nuevo_importar.py` (12) y `tests/test_sigpac_buscar_puntos.py` (3).

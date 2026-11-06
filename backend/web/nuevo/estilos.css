@@ -677,6 +677,67 @@ button {
   margin-top: var(--space-2);
 }
 
+/* ---- comparar años, totales del calendario y filtros */
+
+.tabla-envoltura {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.tabla caption {
+  text-align: left;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+  padding: var(--space-2) 0;
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.calendario__dia {
+  min-height: 64px;
+}
+
+.calendario__dia--hoy {
+  outline: 2px dashed var(--brand);
+  outline-offset: -2px;
+}
+
+.calendario__hoy {
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.pantalla-trabajos .tarjetas {
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.pantalla-trabajos .rejilla-campos {
+  margin-bottom: var(--space-3);
+}
+
 .tierra:hover {
   background: var(--surface-sunk);
 }

@@ -32,10 +32,12 @@ import {
   claveDeTipo,
   colorDeTierra,
   colorDeUso,
+  comparativaDeAnios,
   cuerpoDeLaFactura,
   cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
   cuerpoDelTratamiento,
+  csvDeTrabajos,
   decidirEstado,
   dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
@@ -49,6 +51,7 @@ import {
   mensajesDeLaRespuesta,
   mesDeNumero,
   mesEnPalabras,
+  mesesEnPalabras,
   nombreDeMes,
   normalizaAbonos,
   normalizaAperos,
@@ -67,6 +70,7 @@ import {
   proyeccionDeAnillo,
   proyeccionDePunto,
   puntoDelMapa,
+  queryDeTrabajos,
   recintosConPuntos,
   referenciasDeTexto,
   rejillaDelMes,
@@ -77,8 +81,10 @@ import {
   sinMapa,
   sumaDeHectareas,
   textos,
+  textoDeTotales,
   textoRelleno,
   totalDeLaAplicacion,
+  totalesDeTrabajos,
   urlDeMiniatura,
   urlDelMapa,
 } from "../web/nuevo/modelo.js";
@@ -1069,4 +1075,122 @@ test("los avisos que el servidor escribe se leen en palabras de agricultor", () 
   assert.deepEqual(mensajesDeLaRespuesta({ detail: { mensaje: "Falta la dosis." } }), ["Falta la dosis."]);
   assert.deepEqual(mensajesDeLaRespuesta(null), []);
   assert.deepEqual(mensajesDeLaRespuesta({ detail: { avisos: [] } }), []);
+});
+
+
+// ---------------------------------------------------------------------------
+// Comparar años, totales del calendario y bajar lo filtrado
+// ---------------------------------------------------------------------------
+
+test("los meses de abono se dicen en palabras, sin repetir y en orden", () => {
+  assert.equal(mesesEnPalabras([3, 5]), "marzo, mayo");
+  assert.equal(mesesEnPalabras(["mayo", 3, 3]), "marzo, mayo");
+  assert.equal(mesesEnPalabras([11]), "noviembre");
+  assert.equal(mesesEnPalabras([]), "");
+  assert.equal(mesesEnPalabras(null), "");
+});
+
+test("los totales por unidad no mezclan kilos con litros", () => {
+  const totales = totalesDeTrabajos([
+    { hectareas: 10, cantidad: 200, unidad: "kg/ha" },
+    { hectareas: 15.5, cantidad: 20, unidad: "kg/ha" },
+    { hectareas: 2, cantidad: 30, unidad: "L/ha" },
+    { hectareas: null, cantidad: null, unidad: null },
+  ]);
+
+  assert.equal(totales.n, 4);
+  assert.equal(totales.hectareas, 27.5);
+  assert.equal(totales.sinSuperficie, 1);
+  assert.deepEqual(totales.porUnidad, [
+    { unidad: "kg/ha", cantidad: 220 },
+    { unidad: "L/ha", cantidad: 30 },
+  ]);
+  assert.equal(textoDeTotales(totales), "4 trabajos · 27,5 ha · 220 kg/ha · 30 L/ha");
+  assert.equal(textoDeTotales({ n: 1, hectareas: 0, porUnidad: [] }), "1 trabajo");
+});
+
+test("la comparativa de años usa el resumen del servidor y, si no viene, lo cuenta", () => {
+  const conResumen = comparativaDeAnios([
+    {
+      anio: "2026",
+      cultivo: "Trigo",
+      variedad: "Adelanto",
+      superficie_ha: 12.5,
+      resumen: { n_labores: 4, abonos_kg_ha: 220, abonos_meses: [3, 5], cosecha_kg_ha: 4900 },
+      filas: [],
+    },
+  ]);
+  assert.deepEqual(conResumen[0], {
+    anio: "2026",
+    cultivo: "Trigo",
+    variedad: "Adelanto",
+    superficie_ha: 12.5,
+    abonoKgHa: 220,
+    meses: "marzo, mayo",
+    cosechaKgHa: 4900,
+    labores: 4,
+  });
+
+  // Sin resumen se cuenta de las filas del año; lo que no consta se queda en null.
+  const sinResumen = comparativaDeAnios([
+    {
+      anio: "2025",
+      filas: [
+        { tipo: "abono", cantidad: 180, unidad: "kg/ha", mes: 3, fecha: "2025-03-10" },
+        { tipo: "abono", cantidad: 40, unidad: "kg/ha", mes: "mayo", fecha: "2025-05-02" },
+        { tipo: "labor", etiqueta: "Grada" },
+        { tipo: "cosecha", cantidad: 4600, unidad: "kg/ha" },
+      ],
+    },
+  ]);
+  assert.equal(sinResumen[0].abonoKgHa, 220);
+  assert.equal(sinResumen[0].meses, "marzo, mayo");
+  assert.equal(sinResumen[0].cosechaKgHa, 4600);
+  assert.equal(sinResumen[0].labores, 1);
+  assert.equal(sinResumen[0].superficie_ha, null);
+
+  assert.deepEqual(comparativaDeAnios([]), []);
+});
+
+test("la dirección de los trabajos se compone con los filtros que hay", () => {
+  assert.equal(queryDeTrabajos({}), "/api/nuevo/trabajos");
+  assert.equal(queryDeTrabajos({ tipo: "laboreo" }), "/api/nuevo/trabajos?tipo=laboreo");
+  assert.equal(
+    queryDeTrabajos({ tipo: "laboreo", tierraId: 3, desde: "2026-01-01", hasta: "2026-06-30" }),
+    "/api/nuevo/trabajos?tipo=laboreo&parcela_id=3&desde=2026-01-01&hasta=2026-06-30",
+  );
+  assert.equal(queryDeTrabajos({ tierraId: 7 }), "/api/nuevo/trabajos?parcela_id=7");
+});
+
+test("el CSV de lo filtrado lleva sus columnas y escapa lo que molesta", () => {
+  const csv = csvDeTrabajos([
+    {
+      fecha: "2026-11-05",
+      tipo: "laboreo",
+      etiqueta: "Grada",
+      tierra: "Las Eras",
+      municipio: "Cantalapiedra",
+      hectareas: 12.5,
+      cantidad: 220,
+      unidad: "kg/ha",
+      porHectarea: true,
+    },
+    {
+      fecha: "2026-11-06",
+      tipo: "siembra",
+      etiqueta: "Siembra; trigo",
+      tierra: 'El "Molino"',
+      municipio: null,
+      hectareas: null,
+      cantidad: null,
+      unidad: null,
+      porHectarea: false,
+    },
+  ]);
+
+  const lineas = csv.trimEnd().split("\n");
+  assert.equal(lineas[0], "fecha;tipo;título;tierra;municipio;hectáreas;cantidad;unidad;por hectárea");
+  assert.equal(lineas[1], "2026-11-05;laboreo;Grada;Las Eras;Cantalapiedra;12,5;220;kg/ha;sí");
+  assert.equal(lineas[2], '2026-11-06;siembra;"Siembra; trigo";"El ""Molino""";;;;;');
+  assert.ok(csv.endsWith("\n"));
 });

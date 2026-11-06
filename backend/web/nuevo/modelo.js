@@ -327,6 +327,30 @@ export const textos = {
     resumen: "{n} trabajos · {ha} ha",
     resumenSinHa: "{n} trabajos",
     sinSuperficie: "sin superficie",
+    totalesUno: "1 trabajo",
+    totales: "{n} trabajos",
+    hectareasTotales: "{ha} ha",
+    filtroTierra: "Tierra",
+    todas: "Todas",
+    desde: "Desde",
+    hasta: "Hasta",
+    descargar: "Descargar",
+    descargando: "Preparando el archivo…",
+    sinFilasQueBajar: "No hay trabajos que descargar.",
+    resumenPorTipo: "Resumen por tipo",
+  },
+  historial: {
+    comparativa: "Años anteriores",
+    anio: "Año",
+    cultivo: "Cultivo",
+    superficie: "Superficie",
+    abono: "Abono",
+    mesesDeAbono: "Meses de abono",
+    cosecha: "Cosecha",
+    labores: "Labores",
+    noConsta: "no consta",
+    sinAnios: "Todavía no hay años anteriores que comparar.",
+    hoy: "Hoy",
   },
   facturas: {
     titulo: "Facturas",
@@ -1011,6 +1035,7 @@ export function normalizaTrabajo(item, tierras = []) {
     subtipo,
     etiqueta: etiquetaDeTrabajo(t),
     tierra: t.tierra_alias ?? t.tierra ?? t.alias ?? (encontrada ? encontrada.alias : null),
+    tierraId: idDeTierra,
     municipio: t.municipio ?? (encontrada ? encontrada.municipio : null),
     hectareas,
     cantidad,
@@ -1219,9 +1244,13 @@ export function normalizaHistorial(datos, tierras = []) {
 
   const porAnio = new Map();
 
-  const guardar = (anio, suyas) => {
-    if (!porAnio.has(anio)) porAnio.set(anio, { filas: [], cultivo: null, variedad: null, superficie_ha: null });
-    porAnio.get(anio).filas.push(...suyas);
+  const guardar = (anio, suyas, resumen = null) => {
+    if (!porAnio.has(anio)) {
+      porAnio.set(anio, { filas: [], cultivo: null, variedad: null, superficie_ha: null, resumen: null });
+    }
+    const delAnio = porAnio.get(anio);
+    delAnio.filas.push(...suyas);
+    if (resumen) delAnio.resumen = resumen;
   };
 
   for (const fila of filas) {
@@ -1237,6 +1266,7 @@ export function normalizaHistorial(datos, tierras = []) {
           cultivo: fila.cultivo ?? null,
           variedad: fila.variedad ?? null,
           superficie_ha: numeroDe(fila.superficie_ha),
+          resumen: fila.resumen ?? null,
         });
       }
       const suyas = [];
@@ -1247,7 +1277,7 @@ export function normalizaHistorial(datos, tierras = []) {
           suyas.push(normalizaFilaDeHistorial({ tipo, ...elemento }, tierras));
         }
       }
-      guardar(anio, suyas);
+      guardar(anio, suyas, fila.resumen ?? null);
       continue;
     }
 
@@ -1255,11 +1285,11 @@ export function normalizaHistorial(datos, tierras = []) {
     if (Array.isArray(fila.trabajos) || Array.isArray(fila.items)) {
       const anio = String(fila.anio ?? fila.year ?? "");
       const suyas = (fila.trabajos || fila.items || []).map((una) => normalizaFilaDeHistorial(una, tierras));
-      guardar(anio, suyas);
+      guardar(anio, suyas, fila.resumen ?? null);
       continue;
     }
     const anio = String(fila.anio ?? fila.year ?? fila.anio_campana ?? "");
-    guardar(anio, [normalizaFilaDeHistorial(fila, tierras)]);
+    guardar(anio, [normalizaFilaDeHistorial(fila, tierras)], fila.resumen ?? null);
   }
 
   return [...porAnio.entries()]
@@ -1268,6 +1298,7 @@ export function normalizaHistorial(datos, tierras = []) {
       cultivo: datosDelAnio.cultivo,
       variedad: datosDelAnio.variedad,
       superficie_ha: datosDelAnio.superficie_ha,
+      resumen: datosDelAnio.resumen,
       filas: datosDelAnio.filas,
     }))
     .sort((a, b) => (a.anio < b.anio ? 1 : a.anio > b.anio ? -1 : 0));
@@ -1580,4 +1611,158 @@ export function mensajesDeLaRespuesta(detalle) {
     return [...new Set(mensajes)];
   }
   return [];
+}
+
+// ---------------------------------------------------------------------------
+// Comparar años, contar por día y bajar lo filtrado
+// ---------------------------------------------------------------------------
+
+/** «marzo, mayo»: los meses en palabras, sin repetir y en el orden del año. */
+export function mesesEnPalabras(meses) {
+  const numeros = new Set();
+  for (const mes of Array.isArray(meses) ? meses : []) {
+    if (mes === null || mes === undefined || mes === "") continue;
+    const numero = Number(mes);
+    if (Number.isInteger(numero) && numero >= 1 && numero <= 12) {
+      numeros.add(numero);
+      continue;
+    }
+    const indice = NOMBRES_DE_MES.indexOf(String(mes).trim().toLowerCase()) + 1;
+    if (indice) numeros.add(indice);
+  }
+  return [...numeros]
+    .sort((a, b) => a - b)
+    .map((numero) => NOMBRES_DE_MES[numero - 1])
+    .join(", ");
+}
+
+/**
+ * Los totales de una lista de trabajos: cuántos, cuántas hectáreas y las cantidades **por su
+ * unidad**. Dos unidades distintas no se suman nunca: 200 kg y 30 L no son lo mismo.
+ */
+export function totalesDeTrabajos(trabajos) {
+  const lista = Array.isArray(trabajos) ? trabajos : [];
+  const porUnidad = new Map();
+  let hectareas = 0;
+  let sinSuperficie = 0;
+  for (const trabajo of lista) {
+    if (!trabajo) continue;
+    if (trabajo.hectareas === null || trabajo.hectareas === undefined) sinSuperficie += 1;
+    else hectareas += Number(trabajo.hectareas) || 0;
+
+    const cantidad = trabajo.cantidad;
+    const unidad = String(trabajo.unidad ?? "").trim();
+    if (cantidad === null || cantidad === undefined || !unidad) continue;
+    porUnidad.set(unidad, (porUnidad.get(unidad) || 0) + Number(cantidad));
+  }
+  return {
+    n: lista.length,
+    hectareas: redondea(hectareas, 2),
+    sinSuperficie,
+    porUnidad: [...porUnidad.entries()]
+      .map(([unidad, cantidad]) => ({ unidad, cantidad: redondea(cantidad, 3) }))
+      .sort((a, b) => a.unidad.localeCompare(b.unidad, "es")),
+  };
+}
+
+/** «3 trabajos · 25,5 ha · 220 kg/ha · 30 L/ha», cada unidad por su lado. */
+export function textoDeTotales(totales) {
+  const t = totales || {};
+  const partes = [];
+  if (t.n !== null && t.n !== undefined) {
+    partes.push(t.n === 1 ? textos.trabajos.totalesUno : textoRelleno(textos.trabajos.totales, { n: t.n }));
+  }
+  if (t.hectareas) partes.push(textoRelleno(textos.trabajos.hectareasTotales, { ha: formateaNumero(t.hectareas) }));
+  for (const { unidad, cantidad } of t.porUnidad || []) {
+    partes.push(`${formateaNumero(cantidad)} ${unidad}`);
+  }
+  return partes.join(" · ");
+}
+
+/**
+ * La comparativa por años: año, cultivo/variedad, superficie, abono kg/ha, meses en palabras,
+ * cosecha kg/ha y número de labores. Usa el `resumen` del servidor y, si no viene, lo cuenta de
+ * las filas del año. Lo que no consta se queda en `null`: no se rellena con un cero.
+ */
+export function comparativaDeAnios(anios) {
+  return (Array.isArray(anios) ? anios : []).map((anio) => {
+    const resumen = anio.resumen || {};
+    const filas = Array.isArray(anio.filas) ? anio.filas : [];
+    const abonos = filas.filter((fila) => fila.tipo === "abono");
+    const cosecha = filas.find((fila) => fila.tipo === "cosecha") || null;
+    const siembra = filas.find((fila) => fila.tipo === "siembra") || null;
+
+    const abonoKgHa =
+      resumen.abonos_kg_ha !== undefined
+        ? numeroDe(resumen.abonos_kg_ha)
+        : abonos.length
+          ? redondea(
+              abonos.reduce((suma, fila) => suma + (fila.cantidad === null ? 0 : Number(fila.cantidad)), 0),
+              2,
+            )
+          : null;
+
+    const meses =
+      resumen.abonos_meses !== undefined
+        ? mesesEnPalabras(resumen.abonos_meses)
+        : mesesEnPalabras(abonos.map((fila) => fila.mes || mesEnPalabras(fila.fecha)));
+
+    const cosechaKgHa =
+      resumen.cosecha_kg_ha !== undefined
+        ? numeroDe(resumen.cosecha_kg_ha)
+        : cosecha
+          ? cosecha.cantidad
+          : null;
+
+    const labores =
+      resumen.n_labores !== undefined
+        ? numeroDe(resumen.n_labores)
+        : filas.filter((fila) => fila.tipo === "labor").length;
+
+    return {
+      anio: String(anio.anio ?? ""),
+      cultivo: anio.cultivo || (siembra && siembra.cultivo) || null,
+      variedad: anio.variedad || (siembra && siembra.variedad) || null,
+      superficie_ha: numeroDe(anio.superficie_ha),
+      abonoKgHa,
+      meses,
+      cosechaKgHa,
+      labores,
+    };
+  });
+}
+
+/** La dirección de los trabajos con sus filtros, solo con los que se han puesto. */
+export function queryDeTrabajos({ tipo = null, tierraId = null, desde = null, hasta = null } = {}) {
+  const parametros = [];
+  if (tipo) parametros.push(`tipo=${encodeURIComponent(tipo)}`);
+  if (tierraId !== null && tierraId !== undefined && tierraId !== "") {
+    parametros.push(`parcela_id=${encodeURIComponent(tierraId)}`);
+  }
+  if (desde) parametros.push(`desde=${encodeURIComponent(desde)}`);
+  if (hasta) parametros.push(`hasta=${encodeURIComponent(hasta)}`);
+  return `/api/nuevo/trabajos${parametros.length ? `?${parametros.join("&")}` : ""}`;
+}
+
+/** El CSV de lo filtrado, para la trazabilidad. Separado por «;», que es lo que abre el Excel de casa. */
+export function csvDeTrabajos(trabajos) {
+  const columnas = ["fecha", "tipo", "título", "tierra", "municipio", "hectáreas", "cantidad", "unidad", "por hectárea"];
+  const escapar = (valor) => {
+    const texto = valor === null || valor === undefined ? "" : String(valor);
+    return /[;"\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
+  };
+  const filas = (Array.isArray(trabajos) ? trabajos : []).map((trabajo) =>
+    [
+      trabajo.fecha || "",
+      trabajo.tipo || "",
+      trabajo.etiqueta || "",
+      trabajo.tierra || "",
+      trabajo.municipio || "",
+      trabajo.hectareas === null || trabajo.hectareas === undefined ? "" : formateaNumero(trabajo.hectareas),
+      trabajo.cantidad === null || trabajo.cantidad === undefined ? "" : formateaNumero(trabajo.cantidad),
+      trabajo.unidad || "",
+      trabajo.porHectarea ? "sí" : "",
+    ].map(escapar),
+  );
+  return [columnas.join(";"), ...filas.map((fila) => fila.join(";"))].join("\n") + "\n";
 }

@@ -121,11 +121,23 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       kg/ha), **labores** (vertedera —en el programa se llama **arado**—, cultivador, grada, siembra…),
       **tratamientos** (producto y dosis), **abonos con kg/ha y el mes** y **cosecha en kg/ha**. Los
       años sin datos no se rellenan.
+  - **Y se pueden comparar los años** (05/11/2026): tabla **«Años anteriores»** con una fila por año
+    (año, cultivo y variedad, superficie, **abono total kg/ha**, **meses de abono en palabras**,
+    **cosecha kg/ha** y número de labores); lo que no consta se dice «no consta», nunca 0. Debajo, el
+    detalle del año. El servidor manda el resumen por año (`abonos_kg_ha` es **null** si a algún abono
+    le falta su kg/ha; los meses, ordenados y sin repetir).
 - [x] **Calendario**: rejilla del mes con los días que tienen trabajo (número + palabra, nunca solo
       color); al pinchar un día, sus trabajos con la tierra; mes anterior y siguiente.
+  - **Con totales** (05/11/2026): cada día con trabajo dice **cuántos, hectáreas y cantidades**
+    (`data-dia-total`) y el mes su **total** (`data-calendario-totales`), con **cada unidad por su
+    lado** (nunca kg + litros); el día de **hoy** va marcado con la palabra «Hoy».
 - [x] **Filtros por tipo de trabajo**: botones por tipo con su cuenta; al elegir, las tierras con su
       municipio, hectáreas y cantidad o por hectárea, y el resumen de n y hectáreas. Trazabilidad de
       toda la explotación.
+  - **Con más trazabilidad** (05/11/2026): además del tipo, **selector de tierra** y **dos fechas**;
+    las tarjetas de resumen por tipo dan n, hectáreas y **cantidades agrupadas por unidad**; y un
+    botón **«Descargar»** baja un **CSV** de lo filtrado (fecha, tipo, título, tierra, municipio,
+    hectáreas, cantidad, unidad, por hectárea), con «;» y BOM para el Excel de casa.
 - [x] **Contornos del SIGPAC**: `GET /api/mapa/tierra/{id}.png` devuelve la **ortofoto del IGN con el
       contorno dibujado** (relleno suave y línea blanca con borde oscuro), centrada y con margen; la
       ficha la enseña. Si la tierra no tiene forma, la ficha **lo dice** («no tiene forma en el
@@ -156,6 +168,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-05 | **Historial comparable, calendario con totales y filtros por tierra/fechas con CSV** | Arnés de Chrome, 0 fallos (tabla de años, totales de día y mes, filtros con tierra/fechas y descarga); `tests/test_nuevo_trazabilidad.py` (14) |
 | 2026-11-05 | **Cuaderno guiado y productos/abonos con dosis por hectárea** | Arnés de Chrome, 0 fallos (29 secciones / 123 cosas; 24 productos; total calculado); capturas `cuaderno-guiado.png` y `productos-dosis.png` |
 | 2026-11-05 | **GeoPackage del SIGPAC abierto: contornos de las parcelas** | `POST /api/sigpac/cache/{provincia}/contornos`; 21 pruebas con gpkg sintético (sin internet); lee Polygon/MultiPolygon, rechaza Z/M y tipos raros |
 | 2026-11-05 | **Apuntar el trabajo del día desde la tierra (con apero)** | Arnés de Chrome: apero del servidor, guardado y apunte en la base; `tests/test_labores_con_apero.py` (15) |

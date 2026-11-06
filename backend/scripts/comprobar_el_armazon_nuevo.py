@@ -483,6 +483,14 @@ def comprobar_ficha_calendario_trabajos_y_facturas(
     comprobar(bool(nav.evaluar("!!document.querySelector('[data-historial]')")),
               "la ficha enseña el historial de la tierra")
     if llego_tierra:
+        # La comparación de años: o filas, o el aviso de que todavía no hay años que comparar.
+        comparativa = nav.esperar(
+            "!!document.querySelector('[data-historial-comparativa]')", segundos=15
+        )
+        filas_anio = nav.evaluar("document.querySelectorAll('[data-historial-fila-anio]').length") or 0
+        comprobar(comparativa and (filas_anio >= 1 or "años anteriores" in texto_visible(nav)),
+                  f"la ficha compara los años anteriores ({filas_anio} filas)")
+    if llego_tierra:
         # La primera tierra de la lista puede no tener forma en el SIGPAC (y entonces la ficha lo
         # dice, que es lo correcto). Se prueban varias hasta encontrar una con contorno dibujado.
         tiene_imagen = False
@@ -590,6 +598,10 @@ def comprobar_ficha_calendario_trabajos_y_facturas(
         nav.esperar("!!document.querySelector('[data-trabajo-del-dia]')", segundos=10)
         comprobar(bool(nav.evaluar("!!document.querySelector('[data-trabajo-del-dia]')")),
                   "al elegir un día se ven sus trabajos")
+        totales_mes = nav.evaluar("document.querySelectorAll('[data-calendario-totales]').length") or 0
+        dias_con_total = nav.evaluar("document.querySelectorAll('[data-dia-total]').length") or 0
+        comprobar(totales_mes >= 1, "el calendario da el total del mes")
+        comprobar(dias_con_total >= 1, f"cada día con trabajo trae su total ({dias_con_total})")
         print(f"  (captura: {captura(nav, 'calendario').relative_to(RAIZ)})")
 
     clic_en_visible(nav, "[data-destino=trabajos]")
@@ -597,6 +609,14 @@ def comprobar_ficha_calendario_trabajos_y_facturas(
     comprobar(llego_trab, "se abre la lista de trabajos con filtros")
     filtros = nav.evaluar("document.querySelectorAll('[data-filtro-tipo]').length") or 0
     comprobar(filtros >= 1, f"hay filtros por tipo de trabajo ({filtros})")
+    trazas = nav.evaluar(
+        "(() => { const q = (s) => !!document.querySelector(s);"
+        " return JSON.stringify({tierra: q('[data-filtro-tierra]'), desde: q('[data-filtro-desde]'),"
+        " hasta: q('[data-filtro-hasta]'), descargar: q('[data-descargar-trabajos]')}); })()"
+    )
+    comprobar(trazas is not None and '"tierra":true' in trazas and '"desde":true' in trazas
+              and '"hasta":true' in trazas and '"descargar":true' in trazas,
+              f"los filtros dejan acotar por tierra y fechas y descargar ({trazas})")
     if filtros:
         nav.evaluar(
             "(() => { const f = document.querySelector('[data-filtro-tipo]');"

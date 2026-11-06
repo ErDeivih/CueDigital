@@ -321,7 +321,13 @@ def test_el_calendario_agrupa_por_dia_y_respeta_el_rango(cliente, cuenta, campan
     # Cada trabajo lleva su tierra, y sin repetir la de al lado.
     primero = datos["dias"][0]["trabajos"]
     assert {trabajo["tierra_alias"] for trabajo in primero} == {"El Prado", "La Era"}
-    assert datos["totales"] == {"por_tipo": {"labor": 3}, "n": 3}
+    assert datos["totales"]["por_tipo"] == {"labor": 3}
+    assert datos["totales"]["n"] == 3
+    # **Y desde el IMP-13 el mes trae también sus hectáreas y sus cantidades por unidad**: las
+    # hectáreas son 4 + 2 + 4, y estas tres labores no apuntan cantidad, así que no hay unidades
+    # (ni se rellena con un cero que afirmaría algo).
+    assert datos["totales"]["hectareas"] == 12.0
+    assert datos["totales"]["cantidades_por_unidad"] == {}
 
 
 def test_el_calendario_sin_fechas_mira_el_mes_en_curso(cliente, cuenta):
@@ -392,7 +398,12 @@ def test_los_filtros_devuelven_solo_el_tipo_elegido_y_su_resumen(
     assert solo_arado["resumen"] == {
         "n": 2,
         "hectareas": 6.0,
-        "por_tipo": {"arado": {"n": 2, "hectareas": 6.0}},
+        # **Lo que añade el IMP-13**: las cantidades se agrupan por unidad (estas dos labores no
+        # apuntan cantidad, así que el diccionario va vacío en vez de con un cero).
+        "cantidades_por_unidad": {},
+        "por_tipo": {
+            "arado": {"n": 2, "hectareas": 6.0, "cantidades_por_unidad": {}},
+        },
     }
 
 
