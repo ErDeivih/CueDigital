@@ -364,6 +364,25 @@ class TestElContratoConElArnesDeNavegador:
         ]:
             assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
 
+    def test_el_movil_tiene_sus_reglas_sin_desbordes_ni_solapes(self):
+        css = leer("estilos.css")
+        # Ventana del SIGPAC a pantalla completa, con scroll dentro.
+        assert "@media (max-width: 700px)" in css
+        assert "height: 100dvh" in css
+        assert "position: sticky" in css
+        assert ".sigpac__resultados .mapa__lienzo" in css
+        assert "min-height: 160px" in css
+        # La barra inferior fija no tapa el último botón, y cuenta con el área segura del móvil.
+        assert "env(safe-area-inset-bottom, 0px)" in css
+        assert "padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px))" in css
+        # Las tablas anchas se desplazan dentro de su caja, con la primera columna a la vista.
+        assert "-webkit-overflow-scrolling: touch" in css
+        assert "position: sticky" in css
+        # Los filtros se reparten en una columna a 480 y el mapa no se sale por la derecha.
+        assert "@media (max-width: 480px)" in css
+        assert "grid-template-columns: minmax(0, 1fr)" in css
+        assert "min-width: 0" in css
+
     def test_se_pueden_comparar_anios_y_bajar_lo_filtrado(self):
         fuente = leer("app.js")
         modelo = leer("modelo.js")

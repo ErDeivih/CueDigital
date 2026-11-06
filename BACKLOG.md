@@ -158,6 +158,12 @@
   pueblo de la lista, mapa con los recintos resaltados, y «Usar esta parcela»: da de alta la tierra o
   **aplica contorno y datos oficiales a una tierra existente** (`POST /api/parcelas/{id}/contorno`,
   con el recinto). Evidencia: `tests/test_contorno_de_una_tierra.py` (14) y arnés de Chrome, 0 fallos.
+- **Y el 06/11, la pasada móvil primero**: a 390×844 y 360×640, ocho vistas con **0 px** de desborde
+  horizontal; la tabla de años se desplaza dentro de su caja con la primera columna fija; la ventana
+  del SIGPAC ocupa la pantalla con «Cerrar» visible y scroll interno; la barra inferior reserva
+  96 px + área segura y no tapa el último botón; el selector del mapa deja de salirse 25 px a 1024.
+  Evidencia: arnés de Chrome (0 fallos) y `tests/test_interfaz_nuevo.py` (guardián de las reglas
+  móviles).
 - **Evidencia**: `backend/scripts/comprobar_el_armazon_nuevo.py` en Chrome **0 fallos** (búsqueda →
   recinto dibujado → añadido 64→65; cuaderno subido 65→72); capturas en `docs/capturas-nuevo/`;
   `tests/test_nuevo_importar.py` (12) y `tests/test_sigpac_buscar_puntos.py` (3).

@@ -839,6 +839,123 @@ def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
             )
 
 
+def ir_a_una_vista(nav: NavegadorDeVerdad, clave: str) -> bool:
+    """Va a esa vista: en el móvil, las que no están en la barra inferior se abren desde «Más»."""
+    if clic_en_visible(nav, f"[data-destino={clave}]"):
+        return True
+    if clic_en_visible(nav, "[data-destino=mas]"):
+        nav.esperar("!!document.querySelector('[data-vista=\"mas\"]')", segundos=10)
+        return clic_en_visible(nav, f"[data-accion=ir-{clave}]")
+    return False
+
+
+def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
+    """**La pasada móvil**: se usa en el campo. Sin desbordes, sin solapamientos y al alcance del pulgar."""
+    print("\n== Móvil primero: 390 y 360 px ==")
+    for ancho, alto in ((390, 844), (360, 640)):
+        print(f"-- {ancho}×{alto} --")
+        nav.medir(ancho, alto, movil=True)
+        nav.abrir(f"{base}/nuevo/", esperar=1.0)
+        esperar_estado(nav, "listo")
+
+        def sin_desborde(nombre: str) -> None:
+            desborde = nav.evaluar("document.documentElement.scrollWidth - window.innerWidth") or 0
+            comprobar(desborde <= 1, f"{ancho} px · {nombre}: sin scroll horizontal ({desborde} px)")
+
+        sin_desborde("Hoy")
+        for clave, nombre in (
+            ("tierras", "Tierras"),
+            ("calendario", "Calendario"),
+            ("trabajos", "Trabajos"),
+            ("productos", "Productos"),
+            ("cuaderno", "Cuaderno"),
+            ("facturas", "Facturas"),
+        ):
+            if not ir_a_una_vista(nav, clave):
+                comprobar(False, f"{ancho} px · {nombre}: no se llega a la vista")
+                continue
+            nav.esperar(f"!!document.querySelector('[data-vista=\"{clave}\"]')", segundos=15)
+            sin_desborde(nombre)
+
+        # La ficha de la tierra y su tabla de años, que es la que más se puede desbordar.
+        if not ir_a_una_vista(nav, "tierras"):
+            comprobar(False, f"{ancho} px · no se llega a Tierras")
+            continue
+        nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
+        clic_en_visible(nav, "[data-tierra-id]")
+        nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
+        sin_desborde("Ficha de la tierra")
+        tabla_dentro = nav.evaluar(
+            "(() => { const t = document.querySelector('[data-historial-comparativa]');"
+            " if (!t) return true;"
+            " const caja = t.closest('[data-tabla-con-scroll], .tabla-con-scroll') || t.parentElement;"
+            " return caja.scrollWidth <= caja.clientWidth + 1"
+            " || getComputedStyle(caja).overflowX !== 'visible'; })()"
+        )
+        comprobar(bool(tabla_dentro), f"{ancho} px · la tabla de años no arrastra la página")
+        print(f"  (captura: {captura(nav, f'movil-ficha-{ancho}').relative_to(RAIZ)})")
+
+        # La ventana del SIGPAC, a pantalla completa y con su scroll interno.
+        if not ir_a_una_vista(nav, "tierras"):
+            continue
+        nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
+        clic_en_visible(nav, "[data-accion=anadir-tierras]")
+        nav.esperar("!!document.querySelector('[data-vista=\"alta\"]')", segundos=15)
+        abrio = clic_en_visible(nav, "[data-abrir-ventana-sigpac]") and nav.esperar(
+            "!!document.querySelector('[data-ventana-sigpac]')", segundos=15
+        )
+        comprobar(abrio, f"{ancho} px · la ventana del SIGPAC se abre")
+        if abrio:
+            caja = nav.evaluar(
+                "(() => { const v = document.querySelector('[data-ventana-sigpac]');"
+                " if (!v) return null; const r = v.getBoundingClientRect();"
+                " return JSON.stringify({izq: Math.round(r.left), arriba: Math.round(r.top),"
+                " ancho: Math.round(r.width), alto: Math.round(r.height),"
+                " ventanaAncho: window.innerWidth, ventanaAlto: window.innerHeight,"
+                " scroll: v.scrollHeight > v.clientHeight}); })()"
+            ) or "{}"
+            datos = json.loads(caja)
+            dentro = (
+                datos.get("izq", -1) >= 0
+                and datos.get("arriba", -1) >= 0
+                and datos.get("ancho", 0) <= datos.get("ventanaAncho", 0) + 1
+                and datos.get("alto", 0) <= datos.get("ventanaAlto", 0) + 1
+            )
+            comprobar(dentro, f"{ancho} px · la ventana del SIGPAC cabe en la pantalla")
+            cerrar = nav.evaluar(
+                "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
+                " if (!b) return false; const r = b.getBoundingClientRect();"
+                " return r.top >= 0 && r.bottom <= window.innerHeight && r.width > 0; })()"
+            )
+            comprobar(bool(cerrar), f"{ancho} px · el botón de cerrar está al alcance")
+            print(f"  (captura: {captura(nav, f'movil-sigpac-{ancho}').relative_to(RAIZ)})")
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
+                " if (!b) return false; b.click(); return true; })()"
+            )
+            nav.esperar("!document.querySelector('[data-ventana-sigpac]')", segundos=10)
+
+        # Que la barra inferior no tape el último contenido: el contenido reserva su hueco.
+        tapado = nav.evaluar(
+            "(() => {"
+            " const barra = Array.from(document.querySelectorAll('[data-nav-inferior]'))"
+            "   .find(e => e.getBoundingClientRect().width > 0);"
+            " if (!barra) return true;"
+            " const altoBarra = barra.getBoundingClientRect().height;"
+            " const main = document.querySelector('.contenido') || document.body;"
+            " const relleno = parseFloat(getComputedStyle(main).paddingBottom) || 0;"
+            " if (relleno >= altoBarra - 2) return true;"
+            " main.scrollTop = main.scrollHeight; window.scrollTo(0, document.body.scrollHeight);"
+            " const arriba = barra.getBoundingClientRect().top;"
+            " const ultimo = Array.from(document.querySelectorAll('.contenido button, .contenido .boton'))"
+            "   .filter(e => e.getBoundingClientRect().width > 0)"
+            "   .map(e => e.getBoundingClientRect().bottom)"
+            "   .reduce((a, b) => Math.max(a, b), 0);"
+            " return ultimo <= arriba + 2; })()"
+        )
+        comprobar(bool(tapado), f"{ancho} px · la barra inferior no tapa el último botón")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -929,6 +1046,7 @@ def main() -> int:
         comprobar_ficha_calendario_trabajos_y_facturas(nav, base, token)
         comprobar_cuaderno_y_productos(nav, base)
         comprobar_la_ventana_del_sigpac(nav, base)
+        comprobar_movil(nav, base)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

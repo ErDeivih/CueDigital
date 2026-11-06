@@ -2386,8 +2386,12 @@ function VistaCalendario({ tierras, alEstado }) {
     const palabra = cuantos === 1 ? "1 trabajo" : `${cuantos} trabajos`;
     const totalesDelDia = delDia ? totalesDeTrabajos(delDia.trabajos) : null;
     const textoDelDia = totalesDelDia && cuantos ? textoDeTotales(totalesDelDia) : "";
+    const hectareasDelDia = totalesDelDia && totalesDelDia.hectareas
+      ? `${formateaNumero(totalesDelDia.hectareas)} ${textos.trabajos.hectareasTotales.replace("{ha}", "").trim()}`
+      : null;
     const cuentaDelDia = delDia
-      ? html`<span className="calendario__cuenta">${palabra}</span>`
+      ? html`<span className="calendario__cuenta">${palabra}</span>
+          ${hectareasDelDia ? html`<span className="calendario__hectareas">${hectareasDelDia}</span>` : null}`
       : null;
     return html`<button
       type="button"

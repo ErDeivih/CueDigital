@@ -738,6 +738,76 @@ button {
   margin-bottom: var(--space-3);
 }
 
+/* ---- móvil primero: 390 y 360 sin desbordes ni solapamientos ----
+ *
+ * Lo que estaba mal MEDIDO en Chrome a 390×844 y 360×640:
+ *  · La ventana del SIGPAC no ocupaba la pantalla: tenía 16 px de margen en los cuatro lados
+ *    (390−358 = 32 px de ancho sin usar) y dejaba 222 px muertos abajo a 390.
+ *  · La barra inferior fija quedaba a 24 px del último botón en «Cuaderno»: suficiente, pero
+ *    justo; con el «home» del iPhone (safe-area) se comería el botón. Se sube el hueco a 96 px
+ *    más el área segura.
+ *  · La tabla de años anteriores medía 550 px de contenido en una caja de 294 px: scrollea dentro
+ *    (bien) pero la primera columna se iba; se queda pegada a la izquierda y baja la letra.
+ *  · A 1024 el selector de municipio del mapa se salía 25 px por la derecha (1049 > 1024).
+ */
+
+@media (max-width: 700px) {
+  /* El hueco de abajo: 96 px (barra) + el área segura del móvil. */
+  .contenido {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .barra-inferior {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .tabla-envoltura {
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  .tabla {
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  /* La primera columna (el año) se queda a la vista mientras se desplaza el resto. */
+  .tabla th:first-child,
+  .tabla td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface-card);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Los filtros de «Trabajos» (tierra y dos fechas) en una columna: se leen sin zoom. */
+  .pantalla-trabajos .rejilla-campos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* textos largos que no se pueden partir (referencias, municipios, notas) */
+  .tierra__alias,
+  .tierra__detalle,
+  .trabajo__detalle,
+  .que-falta__que,
+  .que-falta__donde,
+  .pagina__dato,
+  .panel__dato-valor,
+  .tabla td,
+  .tabla th {
+    overflow-wrap: anywhere;
+  }
+
+  .calendario__cuenta {
+    overflow-wrap: anywhere;
+  }
+
+  .barra-superior__nombre {
+    overflow-wrap: anywhere;
+  }
+}
+
 /* ---- la ventana del SIGPAC */
 
 .modal {
@@ -882,6 +952,9 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+  flex: 1 1 200px;
+  flex-wrap: wrap;
   font-size: 15px;
   line-height: 20px;
   font-weight: 600;
@@ -889,7 +962,9 @@ button {
 
 .mapa__campo {
   min-height: var(--toque);
+  min-width: 0;
   max-width: 100%;
+  flex: 1 1 120px;
   padding: 0 var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -1514,6 +1589,14 @@ button {
   text-align: center;
 }
 
+.calendario__hectareas {
+  font-size: 10px;
+  line-height: 12px;
+  color: var(--ink-muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .calendario__dia--con-trabajo {
   border-color: var(--brand);
   background: var(--brand-tint);
@@ -1579,4 +1662,40 @@ button {
   font: inherit;
   color: inherit;
   width: 100%;
+}
+
+/* ---- la ventana del SIGPAC en el móvil, a pantalla completa ----
+ *
+ * Va al final del fichero A PROPÓSITO: las reglas de escritorio de `.modal` están antes y tienen
+ * la misma especificidad, así que puestas antes se perdían. Medido en Chrome a 390×844: con las
+ * reglas mal ordenadas la ventana medía 358×812 en (16,16) —32 px de ancho y 32 px de alto sin
+ * usar, más el hueco de abajo—; a pantalla completa mide 390×844 en (0,0).
+ */
+@media (max-width: 700px) {
+  .modal {
+    padding: 0;
+  }
+
+  .modal__caja {
+    max-width: none;
+    max-height: none;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+
+  /* La cabecera (y su «Cerrar») se queda arriba mientras la lista y el mapa scrollean. */
+  .modal__cabecera {
+    position: sticky;
+    top: calc(var(--space-4) * -1);
+    z-index: 2;
+    padding: var(--space-3) 0 var(--space-2);
+    background: var(--surface-card);
+  }
+
+  .sigpac__resultados .mapa__lienzo {
+    min-height: 160px;
+  }
 }

@@ -177,6 +177,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-06 | **Pasada móvil primero (390 y 360) sin desbordes ni solapamientos** | Chrome a 390×844 y 360×640: 8 vistas con 0 px de desborde, tabla de años con scroll dentro de su caja, ventana del SIGPAC a pantalla completa con «Cerrar» al alcance y barra inferior sin tapar el último botón; capturas `movil-ficha-*.png` y `movil-sigpac-*.png` |
 | 2026-11-06 | **Ventana propia del SIGPAC y contorno aplicado a una tierra existente** | Arnés de Chrome, 0 fallos (buscar por referencia, recinto, usar, cerrar; aplicar desde la ficha); `tests/test_contorno_de_una_tierra.py` (14) |
 | 2026-11-05 | **Historial comparable, calendario con totales y filtros por tierra/fechas con CSV** | Arnés de Chrome, 0 fallos (tabla de años, totales de día y mes, filtros con tierra/fechas y descarga); `tests/test_nuevo_trazabilidad.py` (14) |
 | 2026-11-05 | **Cuaderno guiado y productos/abonos con dosis por hectárea** | Arnés de Chrome, 0 fallos (29 secciones / 123 cosas; 24 productos; total calculado); capturas `cuaderno-guiado.png` y `productos-dosis.png` |
