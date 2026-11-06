@@ -148,6 +148,15 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     `geometria`/`dibujo` de las parcelas de la finca que casan por su referencia SIGPAC, de forma
     idempotente. 21 pruebas con un gpkg sintético. **Queda por probar con un gpkg real de 600 MB**
     (streaming/índice) y solo admite Polygon/MultiPolygon (rechaza Z/M con su código, no los lee mal).
+  - **Y tiene ventana propia de selección de parcela** (06/11): un modal (`data-ventana-sigpac`) que
+    se abre desde el alta y desde la ficha de una tierra, con **dos formas de buscar** —la referencia
+    del papel o el **pueblo elegido de la lista oficial** + agregado/zona/polígono/parcela—, lista de
+    recintos con sus datos y **mapa con la ortofoto y todos los recintos resaltados**. «Usar esta
+    parcela» da de alta la tierra si se abrió desde el alta, o **aplica el contorno y los datos
+    oficiales a la tierra existente** (`POST /api/parcelas/{id}/contorno`, con el recinto para no
+    coger el trozo equivocado). Sin forma no se aplica nada y se dice. **Verificado en Chrome**: la
+    ventana busca, trae el recinto, se elige, se cierra sin cambios, y desde la ficha el contorno se
+    aplica con su aviso; 14 pruebas del servidor con el SIGPAC simulado.
 - **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
   filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
   (`tierra-historial.png`, `calendario.png`, `trabajos-filtrados.png`, `factura-leida.png`).
@@ -168,6 +177,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-06 | **Ventana propia del SIGPAC y contorno aplicado a una tierra existente** | Arnés de Chrome, 0 fallos (buscar por referencia, recinto, usar, cerrar; aplicar desde la ficha); `tests/test_contorno_de_una_tierra.py` (14) |
 | 2026-11-05 | **Historial comparable, calendario con totales y filtros por tierra/fechas con CSV** | Arnés de Chrome, 0 fallos (tabla de años, totales de día y mes, filtros con tierra/fechas y descarga); `tests/test_nuevo_trazabilidad.py` (14) |
 | 2026-11-05 | **Cuaderno guiado y productos/abonos con dosis por hectárea** | Arnés de Chrome, 0 fallos (29 secciones / 123 cosas; 24 productos; total calculado); capturas `cuaderno-guiado.png` y `productos-dosis.png` |
 | 2026-11-05 | **GeoPackage del SIGPAC abierto: contornos de las parcelas** | `POST /api/sigpac/cache/{provincia}/contornos`; 21 pruebas con gpkg sintético (sin internet); lee Polygon/MultiPolygon, rechaza Z/M y tipos raros |

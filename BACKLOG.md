@@ -154,6 +154,10 @@
   por mes sin mezclar unidades, y **filtros por tipo + tierra + fechas** con cantidades por unidad y
   **descarga CSV** para la trazabilidad. Evidencia: `tests/test_nuevo_trazabilidad.py` (14) y arnés de
   Chrome, 0 fallos.
+- **Hecho también el 06/11**: **ventana propia del SIGPAC** (modal) con búsqueda por referencia o por
+  pueblo de la lista, mapa con los recintos resaltados, y «Usar esta parcela»: da de alta la tierra o
+  **aplica contorno y datos oficiales a una tierra existente** (`POST /api/parcelas/{id}/contorno`,
+  con el recinto). Evidencia: `tests/test_contorno_de_una_tierra.py` (14) y arnés de Chrome, 0 fallos.
 - **Evidencia**: `backend/scripts/comprobar_el_armazon_nuevo.py` en Chrome **0 fallos** (búsqueda →
   recinto dibujado → añadido 64→65; cuaderno subido 65→72); capturas en `docs/capturas-nuevo/`;
   `tests/test_nuevo_importar.py` (12) y `tests/test_sigpac_buscar_puntos.py` (3).

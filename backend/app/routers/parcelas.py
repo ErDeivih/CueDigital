@@ -1318,6 +1318,219 @@ def rellenar_los_contornos_del_sigpac(
     }
 
 
+class ContornoDesdeSigpacEntrada(BuscarRecintosEntrada):
+    """La parcela del SIGPAC que se quiere **aplicar a una tierra que ya existe** (IMP-15).
+
+    Se puede decir de las dos maneras que tiene el agricultor delante, igual que al buscar:
+
+      1. **`referencia`**: la del visor (`37:70:0:0:503:51`), los siete números del papel o la
+         referencia catastral.
+      2. **Los campos sueltos**: municipio y provincia **elegidos de la lista**, más polígono y
+         parcela (y agregado y zona si los sabe).
+
+    Y además, opcionalmente, **`recinto`**: si no se dice, se pide al SIGPAC la lista de trozos de
+    esa parcela; si hay uno, se usa; si hay varios, se pide que se elija uno en vez de coger el
+    primero (coger «el que salga» sería ponerle a la tierra la forma de otro trozo).
+    """
+
+    recinto: int | None = None
+
+
+def _el_recinto_que_se_quiere_aplicar(
+    busqueda: sigpac.Busqueda, datos: ContornoDesdeSigpacEntrada
+) -> sigpac.Recinto:
+    """Pide al SIGPAC **el recinto concreto** que se va a aplicar a la tierra.
+
+    Dos caminos, y el resultado es el mismo recinto: con `recinto` dicho en la petición se pide
+    directamente; sin él se pide la lista de trozos de la parcela y, si solo hay uno, ese. Si hay
+    varios, **se para y se pide que se elija**: aplicar el primero que conteste le pondría a la tierra
+    la forma de un trozo que no es el suyo.
+
+    Los errores salen con su código, porque son cosas distintas: no hay red (503), ese recinto no
+    está (404) o faltan datos para preguntar (422).
+    """
+    if datos.recinto is not None:
+        if int(datos.recinto) <= 0:
+            raise HTTPException(
+                status_code=422,
+                detail="El número de recinto tiene que ser mayor que cero.",
+            )
+        numero = int(datos.recinto)
+    else:
+        try:
+            encontrados = sigpac.pedir_recintos(busqueda)
+        except sigpac.SigpacNoContesta:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=textos.SIGPAC["sin_permiso_red"],
+            ) from None
+        if not encontrados:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=textos.SIGPAC["no_encontrado"]
+            )
+        if len(encontrados) > 1:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Esa parcela del SIGPAC tiene varios trozos. Elige cuál es el tuyo y "
+                    "vuelve a pedir el contorno diciendo su número de recinto."
+                ),
+            )
+        numero = encontrados[0].recinto
+        if numero is None:
+            raise HTTPException(
+                status_code=422,
+                detail="El SIGPAC no ha dicho el número de recinto de ese trozo.",
+            )
+
+    try:
+        detalle = sigpac.pedir_recinto(busqueda.con_recinto(numero))
+    except sigpac.SigpacNoContesta:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=textos.SIGPAC["sin_permiso_red"],
+        ) from None
+    if detalle is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=textos.SIGPAC["no_encontrado"]
+        )
+    return detalle
+
+
+@router.post("/parcelas/{parcela_id}/contorno")
+def aplicar_el_contorno_de_una_parcela_del_sigpac(
+    parcela_id: int,
+    datos: ContornoDesdeSigpacEntrada,
+    explotacion: ExplotacionActual,
+    db: Db,
+    usuario: UsuarioActual,
+    poder: PuedeModificar,
+) -> dict:
+    """**«Esta tierra es esta parcela del SIGPAC: ponme su forma y sus datos oficiales»** (IMP-15).
+
+    Es la mitad que faltaba de la ventana del SIGPAC: elegir una parcela y **aplicarla a una tierra
+    que ya está dada de alta**. Lo que había era dar de alta una tierra nueva desde el SIGPAC
+    (`/parcelas/desde-sigpac`) o rellenar los contornos de golpe desde el GeoPackage
+    (`/sigpac/cache/{provincia}/contornos`); no había forma de decir «la tierra que ya tengo es esta».
+
+    **Qué escribe, y qué no**:
+
+      · **La forma** (`geometria`, el WKT que manda el SIGPAC). El **dibujo no se guarda**: es una
+        propiedad que se calcula del WKT (`Parcela.dibujo`), así que rellenar la geometría lo rellena
+        solo y no puede quedarse viejo.
+      · **Los datos oficiales del recinto**: superficie SIGPAC, uso, coeficiente de regadío, región y
+        admisibilidad (el CSP). **Se copian tal cual**: donde el SIGPAC manda `null` se queda `null`,
+        que es «no consta o no aplica», no un cero inventado. *(La `admisibilidad` de un pasto que no
+        se cobra no es un 0: es un nulo, y por eso se guarda como vino.)*
+      · **La referencia y sus números sólo si estaban vacíos**: si el agricultor ya había escrito su
+        polígono, su parcela o su referencia, **manda lo suyo** (la regla de la casa: lo que ya está
+        escrito no se pisa). Esto es lo que hace que la tierra quede con su referencia completa y que
+        el cuaderno pueda escribirla.
+      · **Nada más.** No se toca el alias, ni la superficie cultivada, ni el sistema, ni la zona de
+        nitratos: este endpoint pone el contorno y los datos del recinto, no cambia lo que el
+        agricultor ha declarado de su tierra.
+
+    **El permiso va antes de salir a la red**: `PuedeModificar` se comprueba antes de llamar al
+    SIGPAC, así que quien solo mira no provoca ni una petición al servicio del FEGA (hay prueba).
+    Una tierra de otra finca contesta **404** y no 403, como en todo el programa.
+
+    **Idempotente**: repetir la llamada deja la tierra igual y `cambios` sale vacío (y no se apunta
+    una segunda fila en el rastro).
+    """
+    parcela = obtener_de_la_explotacion(db, models.Parcela, parcela_id, explotacion.id)
+
+    try:
+        busqueda = _busqueda_de_lo_que_ha_dicho(datos)
+    except sigpac.ReferenciaInvalida as error:
+        # 422: ni referencia ni municipio/polígono/parcela, o la referencia no tiene forma de tal.
+        raise HTTPException(status_code=422, detail=str(error)) from None
+
+    detalle = _el_recinto_que_se_quiere_aplicar(busqueda, datos)
+    if not detalle.wkt:
+        # 409: el recinto existe pero no trae dibujo. No se le pone un cuadro a la tierra.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "El SIGPAC tiene ese recinto, pero no trae su dibujo: no hay forma que ponerle a la "
+                "tierra. Prueba con otro recinto del mismo trozo."
+            ),
+        )
+
+    cambios: list[str] = []
+
+    def _poner(campo: str, valor) -> None:
+        """Escribe el campo si el valor es distinto, y lo apunta en la lista de cambios."""
+        if getattr(parcela, campo) != valor:
+            setattr(parcela, campo, valor)
+            cambios.append(campo)
+
+    # La forma y los datos oficiales del recinto: el SIGPAC manda, y lo que manda nulo se queda nulo.
+    _poner("geometria", detalle.wkt)
+    _poner("superficie_sigpac_ha", detalle.superficie)
+    _poner("uso_sigpac", detalle.uso_sigpac)
+    _poner("coef_regadio", detalle.coef_regadio)
+    _poner("region", detalle.region)
+    _poner("admisibilidad", detalle.admisibilidad)
+
+    # **La referencia, sólo si estaba vacía.** Lo que el agricultor ya había escrito no se pisa.
+    if not (parcela.ref_sigpac or "").strip() and detalle.ref_sigpac:
+        _poner("ref_sigpac", detalle.ref_sigpac)
+    if parcela.poligono is None and detalle.poligono is not None:
+        _poner("poligono", detalle.poligono)
+    if parcela.numero_parcela is None and detalle.parcela is not None:
+        _poner("numero_parcela", detalle.parcela)
+    if parcela.numero_recinto is None and detalle.recinto is not None:
+        _poner("numero_recinto", detalle.recinto)
+    # `agregado` y `zona` nacen en 0, que es «no hay»: si el recinto trae otro, se completa. Un
+    # valor distinto de 0 ya lo había puesto alguien y no se toca.
+    if not parcela.agregado and detalle.agregado:
+        _poner("agregado", detalle.agregado)
+    if not parcela.zona and detalle.zona:
+        _poner("zona", detalle.zona)
+
+    # Y el pueblo y la provincia, por los códigos del recinto, **solo si estaban vacíos**: es lo que
+    # hace que una tierra apuntada a mano con su referencia acabe teniendo su municipio oficial.
+    if detalle.provincia is not None and detalle.municipio is not None:
+        codigo_ine = f"{detalle.provincia:02d}{detalle.municipio:03d}"
+        if not (parcela.codigo_ine or "").strip():
+            _poner("codigo_ine", codigo_ine)
+        if not (parcela.municipio or "").strip() or not (parcela.provincia or "").strip():
+            del_catalogo = catalogos.municipio_por_codigo_ine(codigo_ine)
+            if del_catalogo is not None:
+                if not (parcela.municipio or "").strip():
+                    _poner("municipio", del_catalogo.nombre)
+                if not (parcela.provincia or "").strip():
+                    _poner("provincia", del_catalogo.provincia)
+
+    if cambios:
+        db.add(
+            models.Auditoria(
+                explotacion_id=explotacion.id,
+                usuario_id=usuario.id,
+                entidad="parcela",
+                entidad_id=parcela.id,
+                accion="aplicar_el_contorno_del_sigpac",
+                datos={
+                    "recinto": detalle.ref_sigpac,
+                    # Lo que se ha escrito, campo por campo: dentro de un año, la pregunta «¿por qué
+                    # esta tierra tiene esta forma?» se contesta con esta fila.
+                    "cambios": cambios,
+                },
+            )
+        )
+        db.commit()
+
+    return {
+        "actualizada": True,
+        "tierra": ParcelaSalida.model_validate(parcela),
+        "recinto": {
+            "referencia": detalle.ref_sigpac,
+            "puntos": [[x, y] for x, y in geo.puntos_del_wkt(detalle.wkt)],
+        },
+        "cambios": cambios,
+    }
+
+
 @router.post("/sigpac/consultar")
 def consultar_un_recinto(datos: ReferenciaSigpacEntrada, _: UsuarioActual) -> dict:
     """Pregunta al SIGPAC por un recinto **sin dar de alta nada**.

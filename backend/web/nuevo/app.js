@@ -34,6 +34,7 @@ import {
   agruparPorMunicipio,
   ajustarBbox,
   avisoDeLaNota,
+  avisoSinForma,
   bboxDeMunicipio,
   bboxDelConjunto,
   cajaDeLosRecintos,
@@ -42,9 +43,12 @@ import {
   colorDeTierra,
   colorDeUso,
   comparativaDeAnios,
+  cuerpoDeBusquedaPorMunicipio,
+  cuerpoDeBusquedaPorReferencia,
   cuerpoDeLaFactura,
   cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
+  cuerpoDelContorno,
   cuerpoDelTratamiento,
   csvDeTrabajos,
   datosDelPanel,
@@ -67,6 +71,7 @@ import {
   normalizaAperos,
   normalizaCalendario,
   normalizaImportacion,
+  normalizaMunicipios,
   normalizaProductos,
   normalizaPropuestaDeFactura,
   normalizaQueFalta,
@@ -79,6 +84,7 @@ import {
   proyeccionDePunto,
   puntoDelMapa,
   queryDeTrabajos,
+  recintoElegido,
   recintosConPuntos,
   referenciasDeTexto,
   rejillaDelMes,
@@ -129,6 +135,8 @@ const RUTA_PRODUCTOS = "/api/productos";
 const RUTA_FERTILIZANTES = "/api/fertilizantes";
 const RUTA_TRATAMIENTOS = "/api/tratamientos";
 const RUTA_FERTILIZACIONES = "/api/fertilizaciones";
+const RUTA_MUNICIPIOS = "/api/municipios";
+const RUTA_CONTORNO = (id) => `/api/parcelas/${id}/contorno`;
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
 const LADO_MINIMO = 0.0008;
@@ -1514,6 +1522,7 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
   const [alta, setAlta] = useState({ estado: "quieto", texto: null });
   const [importacion, setImportacion] = useState({ estado: "inicial", resultado: null });
   const [numeroDeVeces, setNumeroDeVeces] = useState(0);
+  const [ventana, setVentana] = useState(false);
   const [vecesBuscado, setVecesBuscado] = useState(0);
   const entradaDeFichero = useRef(null);
 
@@ -1701,6 +1710,9 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
           <button type="button" className="boton" onClick=${buscar} disabled=${!referenciasDeTexto(pegadas).length}>
             ${textos.alta.traerPegadas}
           </button>
+          <button type="button" className="boton" data-abrir-ventana-sigpac onClick=${() => setVentana(true)}>
+            ${textos.ventana.titulo}
+          </button>
         </div>
         ${avisoDeAlta}
         <${ListaDeRecintos}
@@ -1743,6 +1755,18 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
         />
       </section>
     </div>
+
+    <${VentanaDelSigpac}
+      abierta=${ventana}
+      modo="alta"
+      alCerrar=${() => setVentana(false)}
+      alUsada=${() => {
+        setVentana(false);
+        setAlta({ estado: "hecho", texto: textos.ventana.anadida });
+        setNumeroDeVeces((n) => n + 1);
+        alReintentar();
+      }}
+    />
   </div>`;
 }
 
@@ -2166,6 +2190,8 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
   const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
   const ficha = usarPantalla(RUTA_TIERRA(tierraId), Boolean(tierraId));
   const [usaElServidor, setUsaElServidor] = useState(true);
+  const [ventana, setVentana] = useState(false);
+  const [avisoContorno, setAvisoContorno] = useState(null);
   const datos = normalizaTierra(ficha.estado === "listo" ? ficha.datos : null, tierras);
 
   useEffect(() => {
@@ -2243,7 +2269,11 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
           <${Icono} nombre="apuntar" tamano=${20} />
           ${textos.apuntar.titulo}
         </button>
+        <button type="button" className="boton" data-abrir-ventana-sigpac-tierra onClick=${() => setVentana(true)}>
+          ${textos.ventana.elegirEnLaTierra}
+        </button>
       </div>
+      ${avisoContorno ? html`<p className="panel__aviso panel__aviso--bien" data-contorno-aplicado>${avisoContorno}</p>` : null}
     </section>
 
     <${Panel} tierra=${tierra} alCerrar=${alVolver} alGuardar=${alReintentar} />
@@ -2257,6 +2287,19 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
 
     <${BloqueDeHoy} estado=${ficha.estado} trabajos=${datos.trabajoDeHoy} alReintentar=${ficha.reintentar} />
     <${BloqueDeHistorial} estado=${ficha.estado} anios=${datos.historial} alReintentar=${ficha.reintentar} />
+
+    <${VentanaDelSigpac}
+      abierta=${ventana}
+      modo="tierra"
+      tierra=${tierra}
+      alCerrar=${() => setVentana(false)}
+      alUsada=${() => {
+        setVentana(false);
+        setAvisoContorno(textos.ventana.aplicada);
+        ficha.reintentar();
+        if (alReintentar) alReintentar();
+      }}
+    />
   </div>`;
 }
 
@@ -3180,6 +3223,274 @@ function VistaProductos({ tierras, campana, alEstado, alIr, alVerTierra }) {
         </div>`}
     ${aplicador}
     ${guardado}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- ventana del SIGPAC
+
+function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada }) {
+  const [referencia, setReferencia] = useState("");
+  const [textoMunicipio, setTextoMunicipio] = useState("");
+  const [opcionesMunicipio, setOpcionesMunicipio] = useState([]);
+  const [elegido, setElegido] = useState(null);
+  const [agregado, setAgregado] = useState("0");
+  const [zona, setZona] = useState("0");
+  const [poligono, setPoligono] = useState("");
+  const [parcela, setParcela] = useState("");
+  const [estado, setEstado] = useState("inicial");
+  const [recintos, setRecintos] = useState([]);
+  const [caja, setCaja] = useState(null);
+  const [elegidoRecintoId, setElegidoRecintoId] = useState(null);
+  const [aviso, setAviso] = useState(null);
+  const [resultado, setResultado] = useState(null);
+  const [usando, setUsando] = useState(false);
+  const dialogo = useRef(null);
+  const temporizador = useRef(null);
+
+  const recinto = recintoElegido(recintos, elegidoRecintoId);
+
+  // Al abrir: el foco dentro de la ventana, para poder cerrarla con el teclado.
+  useEffect(() => {
+    if (!abierta) return undefined;
+    const foco = setTimeout(() => {
+      if (dialogo.current) dialogo.current.focus();
+    }, 0);
+    const alPulsar = (evento) => {
+      if (evento.key === "Escape") {
+        evento.stopPropagation();
+        alCerrar();
+      }
+    };
+    document.addEventListener("keydown", alPulsar);
+    return () => {
+      clearTimeout(foco);
+      document.removeEventListener("keydown", alPulsar);
+    };
+  }, [abierta, alCerrar]);
+
+  // El pueblo se busca en la lista oficial: escribirlo a mano no sirve.
+  useEffect(() => {
+    if (!abierta) return undefined;
+    clearTimeout(temporizador.current);
+    const texto = textoMunicipio.trim();
+    if (texto.length < 2) {
+      setOpcionesMunicipio([]);
+      return undefined;
+    }
+    temporizador.current = setTimeout(async () => {
+      const respuesta = await pedir(`${RUTA_MUNICIPIOS}?buscar=${encodeURIComponent(texto)}`);
+      if (respuesta.estado === "ok") setOpcionesMunicipio(normalizaMunicipios(respuesta.datos));
+    }, 250);
+    return () => clearTimeout(temporizador.current);
+  }, [abierta, textoMunicipio]);
+
+  useEffect(() => {
+    if (!abierta) {
+      setEstado("inicial");
+      setRecintos([]);
+      setCaja(null);
+      setElegidoRecintoId(null);
+      setAviso(null);
+      setResultado(null);
+      setReferencia("");
+      setTextoMunicipio("");
+      setOpcionesMunicipio([]);
+      setElegido(null);
+      setPoligono("");
+      setParcela("");
+    }
+  }, [abierta]);
+
+  const buscar = async () => {
+    const cuerpo = referencia.trim()
+      ? cuerpoDeBusquedaPorReferencia(referencia)
+      : cuerpoDeBusquedaPorMunicipio({ elegido, agregado, zona, poligono, parcela });
+    if (!cuerpo) {
+      setAviso(referencia.trim() ? textos.ventana.sinBusqueda : textos.ventana.sinMunicipioElegido);
+      return;
+    }
+    setEstado("buscando");
+    setAviso(null);
+    setResultado(null);
+    const respuesta = await pedir(RUTA_BUSCAR, conCuerpoJson(cuerpo));
+    if (respuesta.estado !== "ok") {
+      setEstado(respuesta.estado === "sin-permiso" ? "sin-permiso" : "error");
+      return;
+    }
+    const encontrados = (respuesta.datos && respuesta.datos.recintos) || [];
+    setRecintos(encontrados);
+    const conDibujo = recintosConPuntos(encontrados);
+    setCaja(cajaDeLosRecintos(conDibujo));
+    const primeroConForma = encontrados.find((uno) => puedeUsarseElRecinto(uno));
+    setElegidoRecintoId(primeroConForma ? primeroConForma.recinto : encontrados[0] ? encontrados[0].recinto : null);
+    setEstado(encontrados.length ? "listo" : "vacio");
+  };
+
+  const usar = async () => {
+    if (!recinto) return;
+    const avisoDeForma = avisoSinForma(recinto);
+    if (avisoDeForma) {
+      setAviso(avisoDeForma);
+      return;
+    }
+    setUsando(true);
+    setAviso(null);
+    let respuesta = null;
+    if (modo === "tierra" && tierra) {
+      respuesta = await pedir(RUTA_CONTORNO(tierra.id), conCuerpoJson(cuerpoDelContorno(recinto)));
+      if (respuesta.estado === "no-disponible") {
+        setUsando(false);
+        setAviso(textos.ventana.contornoNoDisponible);
+        return;
+      }
+    } else {
+      respuesta = await pedir(
+        RUTA_PARCELA_UNA,
+        conCuerpoJson({
+          ref_sigpac: recinto.referencia,
+          provincia: (recinto.municipio && recinto.municipio.provincia) || null,
+          municipio: (recinto.municipio && recinto.municipio.nombre) || null,
+        }),
+      );
+    }
+    setUsando(false);
+    if (respuesta.estado === "ok") {
+      setResultado(modo === "tierra" ? textos.ventana.aplicada : textos.ventana.anadida);
+      if (alUsada) alUsada(modo);
+      alCerrar();
+      return;
+    }
+    if (respuesta.estado === "sin-permiso") {
+      setEstado("sin-permiso");
+      return;
+    }
+    setAviso(textos.ventana.noSePudo);
+  };
+
+  if (!abierta) return null;
+
+  const dibujos = [];
+  if (caja) {
+    for (const uno of recintosConPuntos(recintos)) {
+      const camino = rutaDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
+      if (!camino) continue;
+      dibujos.push(html`<path key=${`ventana-${uno.recinto}`} className="mapa__anillo mapa__anillo--recinto" d=${camino} style=${{ stroke: uno.color }}>
+        <title>${`${textos.ventana.recinto} ${uno.recinto} · ${uno.uso || ""}`}</title>
+      </path>`);
+      const proyectado = proyeccionDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
+      const punto = proyectado && proyectado.length ? proyectado[0] : null;
+      if (punto) {
+        dibujos.push(html`<text key=${`etiqueta-${uno.recinto}`} x=${punto[0] + 6} y=${punto[1] - 6} style=${{ fill: "var(--ink)", fontSize: "15px", fontWeight: "600", paintOrder: "stroke", stroke: "var(--surface-card)", strokeWidth: "3" }}>${uno.recinto}</text>`);
+      }
+    }
+  }
+
+  const mapa = caja
+    ? html`<div className="mapa__lienzo">
+        <img className="mapa__foto" data-mapa-imagen src=${urlDelMapa(caja, ANCHO_MAPA, ALTO_MAPA)} alt=${textos.ventana.titulo} />
+        <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" aria-hidden="true">${dibujos}</svg>
+      </div>`
+    : html`<p className="estado__texto">${textos.ventana.sinMapa}</p>`;
+
+  const opciones = opcionesMunicipio.map((municipio) => html`<li key=${`municipio-${municipio.etiqueta}`}>
+    <button type="button" className="opcion" data-sigpac-municipio-opcion=${municipio.etiqueta} onClick=${() => { setElegido(municipio); setTextoMunicipio(municipio.etiqueta); setOpcionesMunicipio([]); }}>
+      ${municipio.etiqueta}
+    </button>
+  </li>`);
+
+  const filasRecintos = recintos.map((uno) => {
+    const activo = String(uno.recinto) === String(elegidoRecintoId);
+    const detalles = [
+      `${textos.ventana.superficie}: ${uno.superficie_ha === null || uno.superficie_ha === undefined ? textos.tierras.panel.noConsta : `${formateaNumero(uno.superficie_ha)} ${textos.tierras.panel.hectareas}`}`,
+      `${textos.ventana.uso}: ${uno.uso || uno.uso_sigpac || textos.tierras.panel.noConsta}`,
+      `${textos.ventana.pendiente}: ${uno.pendiente_pct === null || uno.pendiente_pct === undefined ? textos.tierras.panel.noConsta : `${formateaNumero(uno.pendiente_pct, 1)} %`}`,
+      `${textos.ventana.coeficiente}: ${uno.coeficiente_regadio === null || uno.coeficiente_regadio === undefined ? textos.tierras.panel.noConsta : formateaNumero(uno.coeficiente_regadio)}`,
+      `${textos.ventana.region}: ${uno.region || textos.tierras.panel.noConsta}`,
+      `${textos.ventana.admisibilidad}: ${uno.admisibilidad === null || uno.admisibilidad === undefined ? textos.tierras.panel.noConsta : uno.admisibilidad}`,
+    ];
+    return html`<li key=${`recinto-${uno.recinto}`}>
+      <button
+        type="button"
+        className=${activo ? "tierra tierra--elegida" : "tierra"}
+        data-sigpac-recinto-id=${uno.recinto}
+        aria-pressed=${activo}
+        onClick=${() => setElegidoRecintoId(uno.recinto)}
+      >
+        <span className="tierra__alias">${textos.ventana.recinto} ${uno.recinto}</span>
+        <span className="tierra__detalle">${detalles.join(" · ")}</span>
+      </button>
+    </li>`;
+  });
+
+  const avisoDeForma = recinto ? avisoSinForma(recinto) : null;
+
+  return html`<div className="modal" data-ventana-sigpac role="dialog" aria-modal="true" aria-labelledby="ventana-titulo">
+    <div className="modal__fondo" aria-hidden="true"></div>
+    <div className="modal__caja" tabIndex="-1" ref=${dialogo}>
+      <div className="modal__cabecera">
+        <h2 className="tarjeta__titulo" id="ventana-titulo">${textos.ventana.titulo}</h2>
+        <button type="button" className="boton boton--icono" data-ventana-cerrar aria-label=${textos.ventana.cerrar} onClick=${alCerrar}>
+          <${Icono} nombre="cerrar" tamano=${20} />
+        </button>
+      </div>
+      <p className="pagina__dato">${textos.ventana.intro}</p>
+
+      <div className="sigpac__formas">
+        <label className="campo">
+          <span>${textos.ventana.porReferencia}</span>
+          <input className="campo__control" type="text" data-sigpac-buscar-referencia placeholder=${textos.ventana.pistaReferencia} value=${referencia} onChange=${(evento) => setReferencia(evento.target.value)} />
+        </label>
+        <label className="campo">
+          <span>${textos.ventana.porMunicipio}</span>
+          <input className="campo__control" type="search" data-sigpac-buscar-municipio placeholder=${textos.ventana.pistaMunicipio} value=${textoMunicipio} onChange=${(evento) => { setTextoMunicipio(evento.target.value); setElegido(null); }} />
+        </label>
+        ${opciones.length ? html`<ul className="opciones">${opciones}</ul>` : null}
+        <div className="rejilla-campos">
+          <label className="campo"><span>${textos.ventana.agregado}</span>
+            <input className="campo__control" type="number" min="0" data-sigpac-agregado value=${agregado} onChange=${(evento) => setAgregado(evento.target.value)} />
+          </label>
+          <label className="campo"><span>${textos.ventana.zona}</span>
+            <input className="campo__control" type="number" min="0" data-sigpac-zona value=${zona} onChange=${(evento) => setZona(evento.target.value)} />
+          </label>
+          <label className="campo"><span>${textos.ventana.poligono}</span>
+            <input className="campo__control" type="number" min="0" data-sigpac-poligono value=${poligono} onChange=${(evento) => setPoligono(evento.target.value)} />
+          </label>
+          <label className="campo"><span>${textos.ventana.parcela}</span>
+            <input className="campo__control" type="number" min="0" data-sigpac-parcela value=${parcela} onChange=${(evento) => setParcela(evento.target.value)} />
+          </label>
+        </div>
+        <div className="estado__acciones">
+          <button type="button" className="boton boton--principal" data-sigpac-buscar onClick=${buscar} disabled=${estado === "buscando"}>
+            ${estado === "buscando" ? textos.ventana.buscando : textos.ventana.buscar}
+          </button>
+        </div>
+      </div>
+
+      ${estado === "sin-permiso"
+        ? html`<p className="estado__texto">${textos.comun.sinPermiso}</p>`
+        : null}
+      ${estado === "error" ? html`<p className="estado__texto">${textos.ventana.noSePudo}</p>` : null}
+      ${aviso ? html`<p className="panel__aviso" data-sigpac-resultado=${aviso}>${aviso}</p>` : null}
+
+      ${estado === "vacio" ? html`<p className="estado__texto">${textos.ventana.sinRecintos}</p>` : null}
+
+      ${recintos.length
+        ? html`<div className="sigpac__resultados">
+            <h3 className="panel__subtitulo">${textos.ventana.resultados}</h3>
+            ${mapa}
+            <ul className="lista-recintos">${filasRecintos}</ul>
+            ${avisoDeForma ? html`<p className="panel__aviso">${avisoDeForma}</p>` : null}
+            <div className="estado__acciones">
+              <button type="button" className="boton boton--principal" data-sigpac-usar onClick=${usar} disabled=${usando || Boolean(avisoDeForma)}>
+                ${usando ? textos.ventana.usando : textos.ventana.usar}
+              </button>
+              <button type="button" className="boton" onClick=${alCerrar}>${textos.ventana.cerrar}</button>
+            </div>
+          </div>`
+        : html`<p className="estado__texto">${textos.ventana.sinBusqueda}</p>`}
+
+      ${resultado ? html`<p className="panel__aviso panel__aviso--bien" data-sigpac-resultado=${resultado}>${resultado}</p>` : null}
+    </div>
   </div>`;
 }
 

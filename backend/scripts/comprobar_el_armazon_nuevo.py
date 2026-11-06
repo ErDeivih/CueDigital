@@ -734,6 +734,111 @@ def comprobar_cuaderno_y_productos(nav: NavegadorDeVerdad, base: str) -> None:
     comprobar(pasos >= 1, f"la ficha propone el siguiente paso del flujo ({pasos})")
 
 
+def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
+    """La ventana propia del SIGPAC: abrir, buscar por referencia, elegir y usar (alta y ficha)."""
+    print("\n== Ventana del SIGPAC: elegir una parcela ==")
+    nav.medir(1440, 1000)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
+    clic_en_visible(nav, "[data-accion=anadir-tierras]")
+    nav.esperar("!!document.querySelector('[data-vista=\"alta\"]')", segundos=15)
+
+    abrio = clic_en_visible(nav, "[data-abrir-ventana-sigpac]") and nav.esperar(
+        "!!document.querySelector('[data-ventana-sigpac]')", segundos=15
+    )
+    comprobar(abrio, "se abre la ventana del SIGPAC desde el alta")
+    if abrio:
+        nav.evaluar(
+            "(() => { const el = document.querySelector('[data-sigpac-buscar-referencia]');"
+            " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+            "window.HTMLInputElement.prototype, 'value').set;"
+            " setter.call(el, '37:70:0:0:503:51');"
+            " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-sigpac-buscar]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        hay = nav.esperar("document.querySelectorAll('[data-sigpac-recinto-id]').length > 0",
+                          segundos=45)
+        cuantos = nav.evaluar("document.querySelectorAll('[data-sigpac-recinto-id]').length") or 0
+        comprobar(hay, f"la ventana busca por la referencia y trae el recinto ({cuantos})")
+        if hay:
+            nav.evaluar(
+                "(() => { const r = document.querySelector('[data-sigpac-recinto-id]');"
+                " if (!r) return false; r.click(); return true; })()"
+            )
+            usar = nav.esperar(
+                "(() => { const b = document.querySelector('[data-sigpac-usar]');"
+                " return !!b && !b.disabled; })()",
+                segundos=10,
+            )
+            comprobar(usar, "al elegir el recinto se puede usar la parcela")
+            print(f"  (captura: {captura(nav, 'ventana-sigpac').relative_to(RAIZ)})")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        cerrada = nav.esperar("!document.querySelector('[data-ventana-sigpac]')", segundos=10)
+        comprobar(cerrada, "la ventana se cierra sin cambiar nada")
+
+    # Y desde la ficha de una tierra: elegir la parcela en el SIGPAC y aplicarle su contorno.
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
+    clic_en_visible(nav, "[data-tierra-id]")
+    nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
+    abrio = clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]") and nav.esperar(
+        "!!document.querySelector('[data-ventana-sigpac]')", segundos=15
+    )
+    comprobar(abrio, "se abre la ventana del SIGPAC desde la ficha de la tierra")
+    if abrio:
+        nav.evaluar(
+            "(() => { const el = document.querySelector('[data-sigpac-buscar-referencia]');"
+            " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+            "window.HTMLInputElement.prototype, 'value').set;"
+            " setter.call(el, '37:70:0:0:503:51');"
+            " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-sigpac-buscar]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        hay = nav.esperar("document.querySelectorAll('[data-sigpac-recinto-id]').length > 0",
+                          segundos=45)
+        if hay:
+            nav.evaluar(
+                "(() => { const r = document.querySelector('[data-sigpac-recinto-id]');"
+                " if (!r) return false; r.click(); return true; })()"
+            )
+            nav.esperar(
+                "(() => { const b = document.querySelector('[data-sigpac-usar]');"
+                " return !!b && !b.disabled; })()",
+                segundos=10,
+            )
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-sigpac-usar]');"
+                " if (!b || b.disabled) return false; b.click(); return true; })()"
+            )
+            aplicado = nav.esperar(
+                "(() => { const r = document.querySelector('[data-sigpac-resultado]');"
+                " const f = document.querySelector('[data-contorno-aplicado]');"
+                " return (!!r && r.innerText.trim().length > 0)"
+                " || (!!f && f.innerText.trim().length > 0); })()",
+                segundos=45,
+            )
+            comprobar(aplicado, "el contorno de la parcela se aplica a la tierra y se avisa")
+        else:
+            comprobar(False, "desde la ficha, la búsqueda no trajo el recinto")
+        if nav.evaluar("!!document.querySelector('[data-ventana-sigpac]')"):
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
+                " if (!b) return false; b.click(); return true; })()"
+            )
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -823,6 +928,7 @@ def main() -> int:
         comprobar_alta_e_importacion(nav, base)
         comprobar_ficha_calendario_trabajos_y_facturas(nav, base, token)
         comprobar_cuaderno_y_productos(nav, base)
+        comprobar_la_ventana_del_sigpac(nav, base)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

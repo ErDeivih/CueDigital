@@ -258,6 +258,45 @@ export const textos = {
     verHoy: "Ver el trabajo de hoy",
     verDelDia: "Ver el trabajo del día",
   },
+  ventana: {
+    titulo: "Buscar en el SIGPAC",
+    cerrar: "Cerrar",
+    intro: "Busca la parcela por su referencia o por el pueblo, y elige el trozo que es tuyo.",
+    porReferencia: "Por su referencia",
+    referencia: "Referencia",
+    pistaReferencia: "37:70:0:0:503:51",
+    porMunicipio: "Por el pueblo",
+    municipio: "Pueblo",
+    pistaMunicipio: "Escribe el pueblo",
+    sinMunicipioElegido: "Elige el pueblo de la lista.",
+    agregado: "Agregado",
+    zona: "Zona",
+    poligono: "Polígono",
+    parcela: "Parcela",
+    buscar: "Buscar",
+    buscando: "Buscando en el SIGPAC…",
+    recintos: "Recintos",
+    recinto: "Recinto",
+    sinRecintos: "No salen recintos con esos datos. Repasa los números del papel.",
+    sinForma: "Ese recinto no trae forma en el SIGPAC: no se puede usar.",
+    usar: "Usar esta parcela",
+    elegirEnLaTierra: "Elegir en el SIGPAC",
+    usando: "Aplicando…",
+    anadida: "Tierra añadida. Ya está en tus tierras.",
+    aplicada: "Contorno aplicado a la tierra.",
+    noSePudo: "No se ha podido. Prueba otra vez.",
+    contornoNoDisponible: "Aplicar el contorno a una tierra todavía no está aquí. Prueba más tarde.",
+    sinMapa: "sin mapa",
+    superficie: "Superficie",
+    uso: "Uso",
+    pendiente: "Pendiente",
+    coeficiente: "Coeficiente",
+    region: "Región",
+    admisibilidad: "Admisibilidad",
+    ficha: "Datos del recinto",
+    sinBusqueda: "Busca por referencia o por el pueblo.",
+    resultados: "Resultados del SIGPAC",
+  },
   apuntar: {
     titulo: "Apuntar un trabajo",
     intro: "Elige la tierra y di qué has hecho. Queda en su historial.",
@@ -1765,4 +1804,89 @@ export function csvDeTrabajos(trabajos) {
     ].map(escapar),
   );
   return [columnas.join(";"), ...filas.map((fila) => fila.join(";"))].join("\n") + "\n";
+}
+
+// ---------------------------------------------------------------------------
+// La ventana del SIGPAC: buscar por referencia o por el pueblo de la lista
+// ---------------------------------------------------------------------------
+
+/** Los municipios que sirve el INE, listos para el autocompletado. */
+export function normalizaMunicipios(datos) {
+  const lista = datos && Array.isArray(datos.municipios) ? datos.municipios : [];
+  return lista
+    .filter((municipio) => municipio && municipio.nombre)
+    .map((municipio) => ({
+      nombre: municipio.nombre,
+      provincia: municipio.provincia || "",
+      codigoMunicipio: municipio.codigo_municipio ?? null,
+      codigoProvincia: municipio.codigo_provincia ?? null,
+      etiqueta: [municipio.nombre, municipio.provincia].filter(Boolean).join(" · "),
+    }));
+}
+
+/** La búsqueda por la referencia que se pega del visor del SIGPAC. */
+export function cuerpoDeBusquedaPorReferencia(texto) {
+  const referencias = referenciasDeTexto(texto);
+  if (!referencias.length) return null;
+  return { referencia: referencias[0] };
+}
+
+/**
+ * La búsqueda por el pueblo **elegido de la lista** (con su provincia oficial) y los números
+ * del papel. Si no hay pueblo elegido no se manda nada: escribirlo a mano no vale.
+ */
+export function cuerpoDeBusquedaPorMunicipio({ elegido, agregado, zona, poligono, parcela } = {}) {
+  if (!elegido || !elegido.nombre || !elegido.provincia) return null;
+  const numeroPoligono = numeroDe(poligono);
+  const numeroParcela = numeroDe(parcela);
+  if (numeroPoligono === null || numeroParcela === null) return null;
+  return {
+    municipio: elegido.nombre,
+    provincia: elegido.provincia,
+    agregado: numeroDe(agregado) ?? 0,
+    zona: numeroDe(zona) ?? 0,
+    poligono: numeroPoligono,
+    parcela: numeroParcela,
+  };
+}
+
+/** El recinto elegido en la lista, o `null`. */
+export function recintoElegido(recintos, id) {
+  if (id === null || id === undefined) return null;
+  return (Array.isArray(recintos) ? recintos : []).find((recinto) => String(recinto.recinto) === String(id)) || null;
+}
+
+/** Si el recinto trae forma se puede usar; si no, se dice y no se aplica nada. */
+export function puedeUsarseElRecinto(recinto) {
+  if (!recinto) return false;
+  if (Array.isArray(recinto.puntos) && recinto.puntos.length >= 3) return true;
+  return recinto.tiene_dibujo === true;
+}
+
+/** El aviso cuando el recinto no trae forma, o `null` si se puede usar. */
+export function avisoSinForma(recinto) {
+  if (!recinto) return null;
+  return puedeUsarseElRecinto(recinto) ? null : textos.ventana.sinForma;
+}
+
+/** Lo que se manda para aplicar un contorno a una tierra que ya existe. */
+export function cuerpoDelContorno(recinto) {
+  if (!recinto) return null;
+  const numero = recinto.recinto === null || recinto.recinto === undefined ? null : recinto.recinto;
+  if (recinto.referencia) {
+    // Con el número del recinto se aplica **ese** trozo y no «el que salga» de la parcela.
+    return numero === null ? { referencia: recinto.referencia } : { referencia: recinto.referencia, recinto: numero };
+  }
+  const cuerpo = cuerpoDeBusquedaPorMunicipio({
+    elegido: recinto.municipio && {
+      nombre: recinto.municipio.nombre,
+      provincia: recinto.municipio.provincia,
+    },
+    agregado: recinto.agregado,
+    zona: recinto.zona,
+    poligono: recinto.poligono,
+    parcela: recinto.parcela,
+  });
+  if (!cuerpo) return null;
+  return numero === null ? cuerpo : { ...cuerpo, recinto: numero };
 }

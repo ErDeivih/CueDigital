@@ -71,6 +71,19 @@ ENGANCHES = [
     "data-filtro-hasta",
     "data-resumen-tipo",
     "data-descargar-trabajos",
+    "data-ventana-sigpac",
+    "data-ventana-cerrar",
+    "data-abrir-ventana-sigpac",
+    "data-abrir-ventana-sigpac-tierra",
+    "data-sigpac-buscar-referencia",
+    "data-sigpac-buscar-municipio",
+    "data-sigpac-municipio-opcion",
+    "data-sigpac-poligono",
+    "data-sigpac-parcela",
+    "data-sigpac-buscar",
+    "data-sigpac-recinto-id",
+    "data-sigpac-usar",
+    "data-sigpac-resultado",
     "data-trabajo-de-hoy",
     "data-historial",
     "data-historial-anio",
@@ -141,6 +154,8 @@ PUERTAS = [
     "/api/fertilizantes",
     "/api/tratamientos",
     "/api/fertilizaciones",
+    "/api/municipios",
+    "/contorno",
     "/api/sigpac/buscar",
     "/api/parcelas/desde-sigpac",
     "/api/parcelas/desde-sigpac/varias",
@@ -315,6 +330,39 @@ class TestElContratoConElArnesDeNavegador:
         # El flujo encadenado: siempre hay un siguiente paso a la vista.
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
+
+    def test_la_ventana_del_sigpac_se_abre_desde_el_alta_y_desde_la_tierra(self):
+        fuente = leer("app.js")
+        assert "VentanaDelSigpac" in fuente
+        assert "data-ventana-sigpac" in fuente
+        # Las dos formas de buscar y los dos sitios desde los que se abre.
+        assert "cuerpoDeBusquedaPorReferencia" in fuente
+        assert "cuerpoDeBusquedaPorMunicipio" in fuente
+        assert "normalizaMunicipios" in fuente
+        assert "data-abrir-ventana-sigpac" in fuente
+        assert "data-abrir-ventana-sigpac-tierra" in fuente
+        # «Usar esta parcela» en el alta y el contorno en una tierra que ya existe.
+        assert "data-sigpac-usar" in fuente
+        assert "cuerpoDelContorno" in fuente
+        assert "/api/parcelas/desde-sigpac" in fuente
+        # Sin forma no se aplica nada: se dice.
+        assert "avisoSinForma" in fuente
+        # Y se puede cerrar con Escape y con el botón.
+        assert 'evento.key === "Escape"' in fuente
+        assert "data-ventana-cerrar" in fuente
+
+    def test_las_funciones_de_la_ventana_estan_en_el_modelo(self):
+        modelo = leer("modelo.js")
+        for funcion in [
+            "normalizaMunicipios",
+            "cuerpoDeBusquedaPorReferencia",
+            "cuerpoDeBusquedaPorMunicipio",
+            "recintoElegido",
+            "puedeUsarseElRecinto",
+            "avisoSinForma",
+            "cuerpoDelContorno",
+        ]:
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
 
     def test_se_pueden_comparar_anios_y_bajar_lo_filtrado(self):
         fuente = leer("app.js")

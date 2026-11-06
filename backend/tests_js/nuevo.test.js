@@ -25,6 +25,7 @@ import {
   agruparPorMunicipio,
   ajustarBbox,
   avisoDeLaNota,
+  avisoSinForma,
   bboxDelConjunto,
   bboxDeMunicipio,
   cajaDeLosRecintos,
@@ -33,9 +34,12 @@ import {
   colorDeTierra,
   colorDeUso,
   comparativaDeAnios,
+  cuerpoDeBusquedaPorMunicipio,
+  cuerpoDeBusquedaPorReferencia,
   cuerpoDeLaFactura,
   cuerpoDeLaFertilizacion,
   cuerpoDelApunte,
+  cuerpoDelContorno,
   cuerpoDelTratamiento,
   csvDeTrabajos,
   decidirEstado,
@@ -58,6 +62,7 @@ import {
   normalizaCalendario,
   normalizaHistorial,
   normalizaImportacion,
+  normalizaMunicipios,
   normalizaProductos,
   normalizaPropuestaDeFactura,
   normalizaQueFalta,
@@ -67,10 +72,12 @@ import {
   normalizaTrabajos,
   numeroDe,
   paletaDeUso,
+  puedeUsarseElRecinto,
   proyeccionDeAnillo,
   proyeccionDePunto,
   puntoDelMapa,
   queryDeTrabajos,
+  recintoElegido,
   recintosConPuntos,
   referenciasDeTexto,
   rejillaDelMes,
@@ -1193,4 +1200,68 @@ test("el CSV de lo filtrado lleva sus columnas y escapa lo que molesta", () => {
   assert.equal(lineas[1], "2026-11-05;laboreo;Grada;Las Eras;Cantalapiedra;12,5;220;kg/ha;sí");
   assert.equal(lineas[2], '2026-11-06;siembra;"Siembra; trigo";"El ""Molino""";;;;;');
   assert.ok(csv.endsWith("\n"));
+});
+
+
+// ---------------------------------------------------------------------------
+// La ventana del SIGPAC: buscar y usar la parcela
+// ---------------------------------------------------------------------------
+
+test("los municipios del INE se leen para el autocompletado, con su provincia", () => {
+  const municipios = normalizaMunicipios({
+    municipios: [
+      { nombre: "Peñaranda de Bracamonte", provincia: "Salamanca", codigo_municipio: "70", codigo_provincia: "37" },
+      { nombre: "" },
+    ],
+  });
+  assert.equal(municipios.length, 1);
+  assert.equal(municipios[0].nombre, "Peñaranda de Bracamonte");
+  assert.equal(municipios[0].codigoMunicipio, "70");
+  assert.equal(municipios[0].etiqueta, "Peñaranda de Bracamonte · Salamanca");
+  assert.deepEqual(normalizaMunicipios(null), []);
+});
+
+test("se busca por la referencia pegada o por el pueblo elegido de la lista", () => {
+  assert.deepEqual(cuerpoDeBusquedaPorReferencia("37:70:0:0:503:51"), { referencia: "37:70:0:0:503:51" });
+  assert.deepEqual(cuerpoDeBusquedaPorReferencia("  37:70:0:0:503:51\n37:70:0:0:503:52 "), {
+    referencia: "37:70:0:0:503:51",
+  });
+  assert.equal(cuerpoDeBusquedaPorReferencia("   "), null);
+
+  const elegido = { nombre: "Peñaranda de Bracamonte", provincia: "Salamanca" };
+  assert.deepEqual(
+    cuerpoDeBusquedaPorMunicipio({ elegido, agregado: "0", zona: "", poligono: "5", parcela: "12" }),
+    { municipio: "Peñaranda de Bracamonte", provincia: "Salamanca", agregado: 0, zona: 0, poligono: 5, parcela: 12 },
+  );
+  // Escribir el pueblo a mano no vale: hace falta el de la lista.
+  assert.equal(cuerpoDeBusquedaPorMunicipio({ elegido: null, poligono: "5", parcela: "12" }), null);
+  assert.equal(cuerpoDeBusquedaPorMunicipio({ elegido, poligono: "", parcela: "12" }), null);
+});
+
+test("el recinto elegido y su forma deciden si se puede usar", () => {
+  const recintos = [
+    { recinto: 2, referencia: "37:70:0:0:503:51", puntos: [[-5, 41], [-5, 41.1], [-5.1, 41.1]] },
+    { recinto: 3, referencia: "37:70:0:0:503:52", tiene_dibujo: true },
+    { recinto: 4, referencia: "37:70:0:0:503:53", tiene_dibujo: false },
+  ];
+  assert.equal(recintoElegido(recintos, 2).referencia, "37:70:0:0:503:51");
+  assert.equal(recintoElegido(recintos, "3").recinto, 3);
+  assert.equal(recintoElegido(recintos, 9), null);
+
+  assert.equal(puedeUsarseElRecinto(recintos[0]), true);
+  assert.equal(puedeUsarseElRecinto(recintos[1]), true);
+  assert.equal(puedeUsarseElRecinto(recintos[2]), false);
+  assert.equal(puedeUsarseElRecinto(null), false);
+  assert.equal(avisoSinForma(recintos[2]), textos.ventana.sinForma);
+  assert.equal(avisoSinForma(recintos[0]), null);
+
+  // Para aplicar a una tierra va la referencia y **el número del recinto**, para no coger «el que salga».
+  assert.deepEqual(cuerpoDelContorno(recintos[0]), { referencia: "37:70:0:0:503:51", recinto: 2 });
+  assert.equal(cuerpoDelContorno(null), null);
+});
+
+test("la ventana del SIGPAC tiene sus textos", () => {
+  for (const clave of ["titulo", "cerrar", "porReferencia", "porMunicipio", "municipio", "poligono", "parcela", "buscar", "usar", "sinForma", "anadida", "aplicada", "noSePudo"]) {
+    assert.ok(textos.ventana[clave], `falta el texto «${clave}» de la ventana`);
+  }
 });
