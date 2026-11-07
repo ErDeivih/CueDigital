@@ -22,9 +22,9 @@ Si algo no cuadra, lo dice con el número y sale con 1; si no se puede ni descar
 
 ## Lo que se ha aprendido midiendo (para que no se pierda)
 
-- **La descarga carga el ZIP ENTERO en memoria** (`sigpac_cache.fetch_http` devuelve `bytes`). Con
-  Salamanca son 628 MB de RAM en un tirón: en una máquina con poca memoria libre esto puede fallar, y
-  el script lo dice y se pasa a una provincia más pequeña en vez de morir.
+- **La descarga ya no carga el ZIP entero en memoria**: `sigpac_cache.stream_http` lo escribe por
+  trozos en un temporal (1 MB por iteración) y solo después se renombra. Con Salamanca ya no hay
+  628 MB de RAM en un tirón; el script mide el pico de memoria de todas formas.
 - **El ZIP se extrae a una carpeta temporal** cada vez que se abre (`abrir_recintos`), así que hay
   **628 MB de ZIP en la caché + otros ~1 GB de `.gpkg` en el temporal** mientras dura la prueba, y
   **cada** `contornos_de_las_parcelas` vuelve a extraerlo. Se mide y se dice; cambiarlo (guardar el

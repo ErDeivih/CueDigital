@@ -806,6 +806,27 @@ def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
                 segundos=10,
             )
             comprobar(usar, "al elegir el recinto se puede usar la parcela")
+            # El contorno del mapa también elige: tocar el recinto, no solo la lista.
+            dibujos = nav.evaluar("document.querySelectorAll('[data-sigpac-dibujo-recinto]').length") or 0
+            comprobar(dibujos > 0, f"los recintos se pueden tocar en el mapa ({dibujos})")
+            if dibujos:
+                nav.evaluar(
+                    "(() => { const p = document.querySelector('[data-sigpac-dibujo-recinto]');"
+                    " if (!p) return false;"
+                    " p.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));"
+                    " return true; })()"
+                )
+                elegido_mapa = nav.esperar(
+                    "(() => { const p = document.querySelector('[data-sigpac-dibujo-recinto]');"
+                    " return !!p && p.getAttribute('aria-pressed') === 'true'; })()",
+                    segundos=10,
+                )
+                comprobar(elegido_mapa, "tocar el recinto en el mapa lo deja elegido")
+                nav.esperar(
+                    "(() => { const b = document.querySelector('[data-sigpac-usar]');"
+                    " return !!b && !b.disabled; })()",
+                    segundos=10,
+                )
             # La puerta al GeoPackage real: los contornos de toda la finca desde el mapa guardado.
             cache = nav.esperar("!!document.querySelector('[data-sigpac-cache]')", segundos=15)
             comprobar(cache, "la ventana enseña los contornos del mapa guardado")
@@ -936,6 +957,11 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                 continue
             nav.esperar(f"!!document.querySelector('[data-vista=\"{clave}\"]')", segundos=15)
             sin_desborde(nombre)
+            auditar_los_controles(nav, ancho, nombre)
+            if clave == "cuaderno":
+                nav.esperar("!!document.querySelector('[data-cuaderno-resumen]')", segundos=20)
+                tiene_empezar = nav.evaluar("!!document.querySelector('[data-cuaderno-empezar]')")
+                comprobar(bool(tiene_empezar), f"{ancho} px · Cuaderno: «Empezar por lo primero»")
             if clave == "apuntar":
                 # Las cuatro pestañas del apunte, también a 360: ninguna puede desbordar.
                 for pestana in ("tratamiento", "abono", "siembra", "labor"):
@@ -1036,6 +1062,38 @@ def escribir_en_un_campo(nav: NavegadorDeVerdad, selector: str, valor: str) -> b
             " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
         )
     )
+
+
+def auditar_los_controles(nav: NavegadorDeVerdad, ancho: int, nombre: str) -> None:
+    """Cada botón visible: alto de dedo y centro sin tapar. Es la pasada de «sin solapamientos»."""
+    crudo = nav.evaluar(
+        "(() => {"
+        " const vivos = Array.from(document.querySelectorAll('.contenido button, .contenido a.boton, .contenido [role=\"button\"]'))"
+        "   .filter((e) => { const r = e.getBoundingClientRect();"
+        "     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight; });"
+        " const problemas = [];"
+        " for (const e of vivos) {"
+        "   const r = e.getBoundingClientRect();"
+        "   const texto = (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 42);"
+        "   if (e.disabled) continue;"
+        "   if (r.height < 43.5) problemas.push({ tipo: 'alto', texto: texto, alto: Math.round(r.height) });"
+        "   const x = r.left + r.width / 2;"
+        "   const y = r.top + r.height / 2;"
+        "   if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;"
+        "   const encima = document.elementFromPoint(x, y);"
+        "   if (encima && !(e === encima || e.contains(encima))) {"
+        "     const barra = encima.closest ? encima.closest('[data-nav-inferior]') : null;"
+        "     if (!barra) problemas.push({ tipo: 'tapado', texto: texto, por: encima.tagName + '.' + String(encima.className || '').slice(0, 40) });"
+        "   }"
+        " }"
+        " return JSON.stringify(problemas);"
+        "})()"
+    )
+    problemas = json.loads(crudo) if crudo else []
+    if problemas:
+        for uno in problemas[:5]:
+            print(f"    · {uno.get('tipo')}: {uno.get('texto')!r} {uno}")
+    comprobar(not problemas, f"{ancho} px · {nombre}: {len(problemas)} controles pequeños o tapados")
 
 
 def comprobar_apuntar_completo(nav: NavegadorDeVerdad, base: str, token: str) -> None:

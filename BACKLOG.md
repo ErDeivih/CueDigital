@@ -139,9 +139,10 @@
   y resultado en palabras; **verificado en Chrome aplicando el mapa real de Salamanca** desde la
   ventana (1 contorno puesto, 21 tierras sin códigos), sin desbordar a 390/360. Si no hay mapa
   guardado no se dispara ninguna descarga.
-- **Falta**: **streaming de la descarga** (hoy 638 MB en RAM, en `sigpac_cache.py`) y **limpieza de
-  caché** (1,67 GB por provincia entre ZIP y `.gpkg`; decidir si se borra el ZIP tras extraer y cómo se
-  purga al cambiar de campaña).
+- **Falta**: **limpieza de caché** (1,67 GB por provincia entre ZIP y `.gpkg`; decidir si se borra el
+  ZIP tras extraer y cómo se purga al cambiar de campaña). El **streaming de la descarga** ya está
+  hecho (07/11/2026): `stream_http` escribe por trozos de 1 MB a un temporal y el ZIP no se carga
+  entero en memoria.
 
 ### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC) — **EN CURSO (2026-11-05)**
 
@@ -221,7 +222,8 @@
   provincia, 404; lo que no es un mapa, 502.
 - **Evidencia**: `tests/test_sigpac_atributos.py` (+11) y `tests/test_sigpac_cache.py` (+22), y la
   regresión del SIGPAC y de parcelas (203 pruebas en verde).
-- **Falta**: abrir el GeoPackage e importar (AGR-15), streaming, purga y límite de tamaño.
+- **Falta**: purga y límite de tamaño de la caché (el GeoPackage ya se abre, streaming ya hecho y los
+  contornos se pueden traer desde la ventana del SIGPAC).
 
 ### AGR-17 · Histórico de la PAC y evolución de una tierra
 

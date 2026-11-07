@@ -55,11 +55,15 @@ import {
   cuerpoDelTratamiento,
   csvDeTrabajos,
   datosDelPanel,
+  cuentaDeUnaSeccion,
   decidirEstado,
+  destinoDeLaSeccion,
   dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
   etiquetaCampana,
+  empezarPorLoPrimero,
   etiquetaDeProvinciaCache,
+  etiquetaDelRecintoEnElMapa,
   etiquetaDeTrabajo,
   fechaDeHoyISO,
   fechaValidezEnTexto,
@@ -97,6 +101,7 @@ import {
   referenciasDeTexto,
   rejillaDelMes,
   relacionDeTipos,
+  resumenDeLoQueFalta,
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
@@ -2651,20 +2656,21 @@ function BotonSiguiente({ texto, alPulsar }) {
   return html`<button type="button" className="boton boton--principal" data-siguiente-paso=${texto} onClick=${alPulsar}>${texto}</button>`;
 }
 
-function destinoDeLaSeccion(donde) {
-  const texto = String(donde || "");
-  if (/parcela|tierra|cultivo/i.test(texto)) return "tierras";
-  if (/producto|abono|m[aá]quina|maquinaria|almac[eé]n/i.test(texto)) return "productos";
-  if (/trabajo|calendario/i.test(texto)) return "calendario";
-  return null;
-}
-
 function VistaCuaderno({ alEstado, alIr }) {
   const pantalla = usarPantalla(RUTA_QUE_FALTA, true);
   const items = normalizaQueFalta(pantalla.estado === "listo" ? pantalla.datos : null);
   const secciones = agruparLoQueFalta(items);
+  const resumen = resumenDeLoQueFalta(items);
   const delServidor = pantalla.estado === "listo" && pantalla.datos ? pantalla.datos.faltan : null;
-  const cuantas = typeof delServidor === "number" ? delServidor : items.length;
+  const cuantas = typeof delServidor === "number" ? delServidor : resumen.faltan;
+  const primero = empezarPorLoPrimero(items);
+  // Si el servidor dice que faltan cosas pero no las lista con su pantalla, se ofrece al menos la
+  // primera sección que sí sepa dónde se arregla: nunca se deja al agricultor sin salida.
+  const destinoDelPrimero = primero
+    ? primero.destino
+    : (secciones.find((seccion) => destinoDeLaSeccion(seccion.donde)) || null)
+      ? destinoDeLaSeccion((secciones.find((seccion) => destinoDeLaSeccion(seccion.donde)) || {}).donde)
+      : null;
 
   useEffect(() => {
     if (!alEstado) return;
@@ -2708,8 +2714,31 @@ function VistaCuaderno({ alEstado, alIr }) {
     </div>`;
   }
 
+  const textoDelResumen = cuantas === 1
+    ? textos.cuaderno.resumenUna
+    : textoRelleno(textos.cuaderno.resumenVarias, { n: cuantas });
+  const textoDeBloqueo = resumen.bloquean === 0
+    ? textos.cuaderno.bloqueanNinguna
+    : resumen.bloquean === 1
+      ? textos.cuaderno.bloqueanUna
+      : textoRelleno(textos.cuaderno.bloqueanVarias, { k: resumen.bloquean });
+
+  const resumenDelCuaderno = html`<section className="tarjeta cuaderno__resumen" data-cuaderno-resumen aria-labelledby="cuaderno-resumen-titulo">
+    <h2 className="tarjeta__titulo" id="cuaderno-resumen-titulo">${textos.cuaderno.titulo}</h2>
+    <p className="cuaderno__resumen-texto" data-cuaderno-resumen-texto>${textoDelResumen}</p>
+    <p className="cuaderno__resumen-bloqueo">
+      <span className=${resumen.bloquean ? "chip chip--aviso" : "chip"} data-cuaderno-bloquean>${textoDeBloqueo}</span>
+    </p>
+    ${destinoDelPrimero
+      ? html`<div className="estado__acciones">
+          <button type="button" className="boton boton--principal" data-cuaderno-empezar onClick=${() => alIr(destinoDelPrimero)}>${textos.cuaderno.empezar}</button>
+        </div>`
+      : null}
+  </section>`;
+
   const bloques = secciones.map((seccion) => {
     const destino = destinoDeLaSeccion(seccion.donde);
+    const cuenta = cuentaDeUnaSeccion(seccion.items.length);
     const filas = seccion.items.map((item, indice) => html`<li className="que-falta__fila" key=${`falta-${indice}`} data-que-falta-item=${item.que}>
       <span className="que-falta__que">${item.que}</span>
       ${item.bloquea ? html`<span className="chip chip--aviso">${textos.cuaderno.bloquea}</span>` : null}
@@ -2719,13 +2748,17 @@ function VistaCuaderno({ alEstado, alIr }) {
         : html`<a className="boton" href="/">${textos.cuaderno.arreglar}</a>`}
     </li>`);
     return html`<section className="tarjeta" key=${`seccion-${seccion.donde}`} data-que-falta-seccion=${seccion.donde} aria-labelledby=${`seccion-${seccion.donde}`}>
-      <h2 className="tarjeta__titulo" id=${`seccion-${seccion.donde}`}>${seccion.donde}</h2>
+      <div className="cuaderno__cabecera">
+        <h2 className="tarjeta__titulo" id=${`seccion-${seccion.donde}`}>${seccion.donde}</h2>
+        <span className="chip" data-que-falta-seccion-cuenta=${cuenta}>${cuenta}</span>
+      </div>
       <ul className="que-falta">${filas}</ul>
     </section>`;
   });
 
   return html`<div className="pantalla-cuaderno">
     ${cabecera}
+    ${resumenDelCuaderno}
     ${bloques}
     <p><a className="boton" href="/">${textos.cuaderno.abrirJv}</a></p>
   </div>`;
@@ -3753,17 +3786,53 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
   if (!abierta) return null;
 
   const dibujos = [];
+  const elegirRecintoDelMapa = (uno) => setElegidoRecintoId(uno.recinto);
+  const teclaDelRecinto = (evento, uno) => {
+    if (evento.key === "Enter" || evento.key === " ") {
+      evento.preventDefault();
+      elegirRecintoDelMapa(uno);
+    }
+  };
   if (caja) {
+    // Primero las zonas de toque (detrás) y después el trazo visible y la etiqueta: así el dedo
+    // acierta en un recinto pequeño y las etiquetas no se comen el toque.
+    for (const uno of recintosConPuntos(recintos)) {
+      const caminoParaTocar = rutaDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
+      if (!caminoParaTocar) continue;
+      dibujos.push(html`<path
+        key=${`toque-${uno.recinto}`}
+        className="mapa__anillo mapa__anillo--toque"
+        d=${caminoParaTocar}
+        aria-hidden="true"
+        onClick=${() => elegirRecintoDelMapa(uno)}
+      />`);
+    }
     for (const uno of recintosConPuntos(recintos)) {
       const camino = rutaDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
       if (!camino) continue;
-      dibujos.push(html`<path key=${`ventana-${uno.recinto}`} className="mapa__anillo mapa__anillo--recinto" d=${camino} style=${{ stroke: uno.color }}>
+      const elegidoAqui = String(uno.recinto) === String(elegidoRecintoId);
+      const estilo = elegidoAqui
+        ? { stroke: uno.color, strokeWidth: 6, fill: "var(--brand-tint)" }
+        : { stroke: uno.color };
+      dibujos.push(html`<path
+        key=${`ventana-${uno.recinto}`}
+        className=${elegidoAqui ? "mapa__anillo mapa__anillo--recinto mapa__anillo--elegido" : "mapa__anillo mapa__anillo--recinto"}
+        d=${camino}
+        style=${estilo}
+        data-sigpac-dibujo-recinto=${uno.recinto}
+        role="button"
+        tabIndex="0"
+        aria-label=${etiquetaDelRecintoEnElMapa(uno)}
+        aria-pressed=${elegidoAqui}
+        onClick=${() => elegirRecintoDelMapa(uno)}
+        onKeyDown=${(evento) => teclaDelRecinto(evento, uno)}
+      >
         <title>${`${textos.ventana.recinto} ${uno.recinto} · ${uno.uso || ""}`}</title>
       </path>`);
       const proyectado = proyeccionDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
       const punto = proyectado && proyectado.length ? proyectado[0] : null;
       if (punto) {
-        dibujos.push(html`<text key=${`etiqueta-${uno.recinto}`} x=${punto[0] + 6} y=${punto[1] - 6} style=${{ fill: "var(--ink)", fontSize: "15px", fontWeight: "600", paintOrder: "stroke", stroke: "var(--surface-card)", strokeWidth: "3" }}>${uno.recinto}</text>`);
+        dibujos.push(html`<text key=${`etiqueta-${uno.recinto}`} x=${punto[0] + 6} y=${punto[1] - 6} aria-hidden="true" style=${{ fill: "var(--ink)", fontSize: "15px", fontWeight: "600", paintOrder: "stroke", stroke: "var(--surface-card)", strokeWidth: "3", pointerEvents: "none" }}>${uno.recinto}</text>`);
       }
     }
   }
@@ -3771,7 +3840,7 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
   const mapa = caja
     ? html`<div className="mapa__lienzo">
         <img className="mapa__foto" data-mapa-imagen src=${urlDelMapa(caja, ANCHO_MAPA, ALTO_MAPA)} alt=${textos.ventana.titulo} />
-        <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" aria-hidden="true">${dibujos}</svg>
+        <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" role="group" aria-label=${textos.ventana.resultados}>${dibujos}</svg>
       </div>`
     : html`<p className="estado__texto">${textos.ventana.sinMapa}</p>`;
 

@@ -251,6 +251,14 @@ export const textos = {
     seccion: "Sección",
     dondeSeArregla: "Se arregla en",
     sinItems: "No hay nada que arreglar aquí.",
+    resumenVarias: "Faltan {n} cosas para tener el cuaderno completo.",
+    resumenUna: "Falta 1 cosa para tener el cuaderno completo.",
+    bloqueanVarias: "{k} de ellas bloquean el envío.",
+    bloqueanUna: "1 de ellas bloquea el envío.",
+    bloqueanNinguna: "Ninguna bloquea el envío.",
+    cosaUno: "1 cosa",
+    cosaVarias: "{n} cosas",
+    empezar: "Empezar por lo primero",
   },
   siguiente: {
     eligeTierra: "Elige la tierra",
@@ -1809,6 +1817,55 @@ export function agruparLoQueFalta(items) {
     items: suyos,
     bloquea: suyos.some((item) => Boolean(item.bloquea)),
   }));
+}
+
+/** A qué pantalla de `/nuevo/` se va a arreglar algo, por el nombre de dónde se arregla. */
+export function destinoDeLaSeccion(donde) {
+  const texto = String(donde || "");
+  if (/parcela|tierra|cultivo/i.test(texto)) return "tierras";
+  if (/producto|abono|m[aá]quina|maquinaria|almac[eé]n/i.test(texto)) return "productos";
+  if (/trabajo|calendario/i.test(texto)) return "calendario";
+  return null;
+}
+
+/** «Faltan N cosas» y «K bloquean el envío», sin inventar ninguna de las dos cifras. */
+export function resumenDeLoQueFalta(items) {
+  const lista = Array.isArray(items) ? items : [];
+  return {
+    faltan: lista.length,
+    bloquean: lista.filter((item) => item && item.bloquea).length,
+  };
+}
+
+/**
+ * Por dónde empezar: primero lo que **bloquea el envío** y, si no hay nada bloqueante, lo primero
+ * que tenga una pantalla donde arreglarse. Si nada tiene destino, no se inventa uno.
+ */
+export function empezarPorLoPrimero(items) {
+  const conDestino = (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.que)
+    .map((item) => ({ item, destino: destinoDeLaSeccion(item.donde) }))
+    .filter((paso) => Boolean(paso.destino));
+  return conDestino.find((paso) => paso.item.bloquea) || conDestino[0] || null;
+}
+
+/** «1 cosa» o «3 cosas», para la cuenta de cada sección. */
+export function cuentaDeUnaSeccion(cantidad) {
+  const n = Number(cantidad) || 0;
+  if (n === 1) return textos.cuaderno.cosaUno;
+  return textoRelleno(textos.cuaderno.cosaVarias, { n });
+}
+
+/** El nombre que se lee de un recinto del mapa: «Recinto 51 · Cereal · 1,2 ha». */
+export function etiquetaDelRecintoEnElMapa(recinto) {
+  const r = recinto || {};
+  const numero = r.recinto === null || r.recinto === undefined ? textos.tierras.panel.noConsta : r.recinto;
+  const uso = r.uso || r.uso_sigpac || textos.tierras.panel.noConsta;
+  const superficie = numeroDe(r.superficie_ha);
+  const hectareas = superficie === null
+    ? textos.tierras.panel.noConsta
+    : `${formateaNumero(superficie)} ${textos.tierras.panel.hectareas}`;
+  return `${textos.ventana.recinto} ${numero} · ${uso} · ${hectareas}`;
 }
 
 /**

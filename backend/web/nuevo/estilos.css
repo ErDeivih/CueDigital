@@ -672,6 +672,43 @@ button {
   margin-top: var(--space-4);
 }
 
+/* El resumen del cuaderno: lo primero que se lee y el botón de empezar, sin empujarlo fuera de
+ * la pantalla a 360 (el botón ocupa su fila entera y el texto no se mete debajo del chip). */
+.cuaderno__resumen-texto {
+  margin: var(--space-2) 0;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.cuaderno__resumen-bloqueo {
+  margin: 0 0 var(--space-3);
+}
+
+.cuaderno__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cuaderno__cabecera .tarjeta__titulo {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .cuaderno__resumen .estado__acciones {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .cuaderno__resumen .estado__acciones .boton {
+    width: 100%;
+  }
+}
+
 .pantalla-productos .trabajo .boton {
   align-self: flex-start;
   margin-top: var(--space-2);
@@ -1504,6 +1541,37 @@ button {
 
 .mapa__anillo--recinto {
   stroke-width: 3;
+  cursor: pointer;
+}
+
+/* El recinto elegido se ve en el mapa: trazo más grueso y relleno del color de marca. Sin
+ * transparencias (doctrina §5), por eso es un relleno plano del token, no un `rgba`. */
+.mapa__anillo--elegido {
+  stroke-width: 6;
+}
+
+/* El foco del teclado tiene que verse: el trazo cambia de color y engorda. */
+.mapa__anillo--recinto:focus,
+.mapa__anillo--recinto:focus-visible {
+  stroke: var(--focus);
+  stroke-width: 6;
+  outline: none;
+}
+
+/* El dedo no acierta en un trazo de 3 px: detrás va el mismo camino con un trazo de 60 px
+ * invisible. `vector-effect: non-scaling-stroke` mantiene esos 60 px aunque el mapa se encoja,
+ * así que a 360 sigue habiendo una zona de toque de más de 44 px. Va detrás del trazo visible,
+ * así que no tapa las etiquetas. */
+.mapa__anillo--toque {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 60;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.mapa__dibujo text {
+  pointer-events: none;
 }
 
 .lista-recintos {

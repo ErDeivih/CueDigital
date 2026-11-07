@@ -44,12 +44,16 @@ import {
   cuerpoDelApunte,
   cuerpoDelContorno,
   cuerpoDelTratamiento,
+  cuentaDeUnaSeccion,
   csvDeTrabajos,
   decidirEstado,
+  destinoDeLaSeccion,
   dosisMaximaEnTexto,
+  empezarPorLoPrimero,
   elAperoSeGuardaEnLabores,
   etiquetaDeProvinciaCache,
   etiquetaDeTrabajo,
+  etiquetaDelRecintoEnElMapa,
   fechaDeHoyISO,
   fechaValidezEnTexto,
   filtrarPorTipo,
@@ -90,6 +94,7 @@ import {
   referenciasDeTexto,
   rejillaDelMes,
   relacionDeTipos,
+  resumenDeLoQueFalta,
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
@@ -1450,4 +1455,53 @@ test("el resultado de los contornos se cuenta en singular y en plural", () => {
     ["2 contornos puestos", "1 tierra que no está en ese mapa", "2 tierras sin códigos del SIGPAC", "1 tierra sin forma"],
   );
   assert.deepEqual(lineasDeLosContornos({}), [textos.ventana.cache.nadaQueCasar]);
+});
+
+// ---------------------------------------------------------------------------
+// El cuaderno guiado y el recinto tocado en el mapa
+// ---------------------------------------------------------------------------
+
+test("el resumen del cuaderno cuenta lo que falta y lo que bloquea, sin inventar", () => {
+  assert.deepEqual(resumenDeLoQueFalta(null), { faltan: 0, bloquean: 0 });
+  const items = [
+    { que: "a", donde: "Mis datos", bloquea: false },
+    { que: "b", donde: "Tierras", bloquea: true },
+    { que: "c", donde: "Trabajos", bloquea: true },
+  ];
+  assert.deepEqual(resumenDeLoQueFalta(items), { faltan: 3, bloquean: 2 });
+});
+
+test("cada sección del cuaderno dice «1 cosa» o «3 cosas»", () => {
+  assert.equal(cuentaDeUnaSeccion(1), "1 cosa");
+  assert.equal(cuentaDeUnaSeccion(3), "3 cosas");
+  assert.equal(cuentaDeUnaSeccion(0), "0 cosas");
+});
+
+test("«Empezar por lo primero» va a lo que bloquea y, si no, al primer destino", () => {
+  const paso = empezarPorLoPrimero([
+    { que: "a", donde: "Mis datos → tu finca", bloquea: false },
+    { que: "b", donde: "Tierras", bloquea: true },
+  ]);
+  assert.equal(paso.destino, "tierras");
+  assert.equal(paso.item.que, "b");
+
+  assert.equal(empezarPorLoPrimero([{ que: "x", donde: "Sin sitio" }, { que: "y", donde: "Trabajos" }]).destino, "calendario");
+  assert.equal(empezarPorLoPrimero([{ que: "x", donde: "Sin sitio" }]), null);
+  assert.equal(empezarPorLoPrimero([]), null);
+
+  // El destino se decide por el nombre de la sección, y lo que no se sabe no se inventa.
+  assert.equal(destinoDeLaSeccion("Mis tierras"), "tierras");
+  assert.equal(destinoDeLaSeccion("Productos y abonos"), "productos");
+  assert.equal(destinoDeLaSeccion("Lo que no se sabe"), null);
+});
+
+test("el recinto del mapa se nombra con lo que se sabe y lo que no consta se dice", () => {
+  assert.equal(
+    etiquetaDelRecintoEnElMapa({ recinto: 51, uso: "Cereal", superficie_ha: 1.2 }),
+    "Recinto 51 · Cereal · 1,2 ha",
+  );
+  assert.equal(
+    etiquetaDelRecintoEnElMapa({ recinto: 7 }),
+    `Recinto 7 · ${textos.tierras.panel.noConsta} · ${textos.tierras.panel.noConsta}`,
+  );
 });

@@ -154,6 +154,16 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     coger el trozo equivocado). Sin forma no se aplica nada y se dice. **Verificado en Chrome**: la
     ventana busca, trae el recinto, se elige, se cierra sin cambios, y desde la ficha el contorno se
     aplica con su aviso; 14 pruebas del servidor con el SIGPAC simulado.
+  - **Y los contornos del mapa se tocan para elegir el recinto** (07/11/2026): cada recinto del SVG es
+    un botón (`data-sigpac-dibujo-recinto`, `role="button"`, `tabindex`, `aria-label` y `aria-pressed`),
+    con Enter y Espacio, una **zona de toque invisible de 60 px** detrás del trazo para el dedo y el
+    recinto elegido resaltado (sin transparencias). Al tocarlo en el mapa, la lista marca el mismo y
+    «Usar esta parcela» queda habilitado. Verificado en Chrome: toque real por CDP y teclado eligen el
+    recinto, con el más pequeño de 90×54 px (390) y 82×49 px (360).
+  - **Y el cuaderno guiado dice, de un vistazo, qué falta para el registro completo** (07/11/2026):
+    tarjeta de resumen «Faltan N cosas · K bloquean el envío», cuenta por sección («3 cosas») y botón
+    **«Empezar por lo primero»** que lleva a lo que bloquea (si no, al primer destino disponible); la N
+    sale del servidor, no se inventa.
   - **Y trae los contornos del mapa guardado, sin salir de la ventana** (07/11/2026): tarjeta «Los
     contornos de toda la finca» que pide `GET /api/sigpac/cache`, deja elegir la provincia cacheada
     (con campaña y validez), avisa de que **solo rellena la forma** (no toca superficie ni uso) y trae
@@ -168,9 +178,10 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     (**17/17 puntos, centro a 0,001 m, superficie 4,9016 ha = 4,9016 ha**). `contornos_de_las_parcelas`
     tarda **18 ms**. La prueba real destapó y corrigió tres cosas que el sintético no veía: `srs_id = 0`
     en el blob (manda el del fichero), columnas reales `csp`/`dn_surface`, y **`dn_surface` en m²**
-    (se convierte a ha, antes salía 10.000× más grande). **Queda por hacer**: bajar el ZIP carga
-    **638 MB en RAM** (streaming pendiente en `sigpac_cache.py`), y la limpieza del `.gpkg` (1,67 GB por
-    provincia).
+    (se convierte a ha, antes salía 10.000× más grande). **La descarga ya baja por trozos a un fichero
+    temporal** (`stream_http`), así que una provincia de 628 MB **no pide 628 MB de RAM**; lo probado
+    en las pruebas de la caché. **Queda por hacer**: la limpieza del `.gpkg` (1,67 GB por provincia) y
+    decidir si se borra el ZIP tras extraer.
   - **Y el GeoPackage ya se abre, y probado con el fichero REAL** (07/11/2026): Salamanca 37, campaña
 - **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
   filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
@@ -192,6 +203,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-07 | **Mapa del SIGPAC tocable y cuaderno guiado con resumen** | Chrome: recinto elegido tocando el SVG y con Enter (lista y «Usar» sincronizados), zona de toque 60 px; resumen «35 cosas · 8 bloquean» y «Empezar por lo primero»; 10 vistas a 390/360 con **0 botones <44 px y 0 centros tapados**; 77/77 JS y 29 pytest |
 | 2026-11-07 | **Contornos del GeoPackage real desde la ventana del SIGPAC** | Chrome: bloque «Los contornos de toda la finca» con la provincia cacheada real (Salamanca), aplicado de verdad (**1 contorno puesto**, 21 tierras sin códigos), móvil 390/360 sin desbordar; 73/73 JS y 28 pytest de pantalla |
 | 2026-11-07 | **Apuntar del día a día completo, guardado de verdad y móvil** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde en cada una, y guardado real con 201 de tratamiento, abono y siembra (ficha refrescada); captura `apuntar-completo-390.png` |
 | 2026-11-07 | **GeoPackage REAL de Salamanca probado y cacheado** | ZIP 599,7 MB / 1.011.578 recintos: abre en 1–2 ms, busca en 2,7 ms, contornos en 18 ms, WKT coincide (17/17 puntos, 0,001 m); 33 pruebas sin red |

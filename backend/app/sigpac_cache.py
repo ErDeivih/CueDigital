@@ -36,9 +36,9 @@ hay que citar además a la **Dirección General del Catastro**. Ver `docs/INVEST
 1. **No abre el GeoPackage**: no lee los recintos de dentro ni los cruza con las parcelas del
    agricultor. Eso es lo siguiente (AGR-3, segunda mitad) y necesita `sqlite3`/GDAL sobre el
    `.gpkg`; hoy lo que se entrega es la descarga fiable, verificada y cacheada.
-2. **La descarga se trae el fichero a memoria** antes de escribirlo (`fetch` devuelve `bytes`).
-   Con 628 MB por provincia eso pide un servidor con holgura; lo correcto es bajarlo por trozos a
-   un fichero temporal. Se deja dicho para no fingir que está resuelto.
+2. **La descarga real se baja por trozos a un fichero temporal** (`stream_http`): así una
+   provincia de 628 MB no pide 628 MB de RAM. El `fetch` inyectable de los tests sigue devolviendo
+   `bytes` para no cambiar la suite; el camino de red de verdad es el que hace streaming.
 3. **No hay purga ni límite de tamaño**: se guarda una provincia por campaña y se queda ahí. La
    carpeta está en el `.gitignore` y se cambia de sitio con `CUEDIGITAL_SIGPAC_CACHE`.
 """
@@ -143,7 +143,8 @@ def carpeta_de_cache() -> Path:
 
 
 def fetch_http(url: str) -> bytes:
-    """La descarga de verdad. **Es lo único que sale a internet en este módulo.**
+    """La descarga de verdad de un **listado** (unos kilobytes). **Es lo único que sale a internet
+    en este módulo** además de `stream_http`.
 
     Es una función aparte y no un `httpx.get` suelto dentro de `descargar_provincia` porque los
     tests la sustituyen: un test que depende de que el FEGA esté disponible es una lotería, y una
@@ -168,6 +169,48 @@ def fetch_http(url: str) -> bytes:
     if not cuerpo:
         raise SinRed("El servidor del SIGPAC ha contestado vacío. No se ha descargado nada.")
     return cuerpo
+
+
+def stream_http(url: str, destino: Path) -> tuple[int, str]:
+    """Descarga un GeoPackage **por trozos a `destino`**, sin cargarlo entero en memoria.
+
+    Devuelve `(bytes, sha256)`. Escribe en un fichero temporal que el llamante renombra al final:
+    si la conexión se corta a mitad, no queda un ZIP a medias que después parezca bueno. Es
+    inyectable como `fetch_http`; los tests de la puerta le pasan un servidor de mentira.
+    """
+    import httpx
+
+    sha = hashlib.sha256()
+    total = 0
+    try:
+        with httpx.stream(
+            "GET",
+            url,
+            timeout=ESPERA_DESCARGA_SEGUNDOS,
+            follow_redirects=True,
+        ) as respuesta:
+            if respuesta.status_code != 200:
+                raise SinRed(
+                    f"El servidor del SIGPAC ha contestado HTTP {respuesta.status_code}. "
+                    "No se ha descargado nada."
+                )
+            with destino.open("wb") as salida:
+                for trozo in respuesta.iter_bytes(chunk_size=1024 * 1024):
+                    if not trozo:
+                        continue
+                    salida.write(trozo)
+                    sha.update(trozo)
+                    total += len(trozo)
+    except SigpacCacheError:
+        raise
+    except Exception as error:  # noqa: BLE001 — cualquier fallo de red es el mismo caso
+        raise SinRed(
+            "No se ha podido llegar al servidor del SIGPAC "
+            f"({type(error).__name__}). Comprueba la conexión y vuelve a intentarlo."
+        ) from None
+    if total == 0:
+        raise SinRed("El servidor del SIGPAC ha contestado vacío. No se ha descargado nada.")
+    return total, sha.hexdigest()
 
 
 # --------------------------------------------------------------------------
@@ -273,6 +316,19 @@ def busca_el_de_la_provincia(entradas: list[dict], provincia: int) -> dict | Non
 # --------------------------------------------------------------------------
 
 
+def _revisa_paquete(paquete: zipfile.ZipFile, fichero: str) -> None:
+    """Comprueba que el ZIP abierto lleva dentro un `.gpkg` que se puede empezar a leer."""
+    nombres = paquete.namelist()
+    mapas = [nombre for nombre in nombres if nombre.lower().endswith(".gpkg")]
+    if not mapas:
+        raise FicheroNoValido(
+            f"El fichero «{fichero}» que ha publicado el SIGPAC no lleva dentro ningún "
+            "mapa (.gpkg). No se ha guardado nada."
+        )
+    with paquete.open(mapas[0]) as mapa:
+        mapa.read(1024)
+
+
 def comprueba_que_es_un_mapa(contenido: bytes, fichero: str) -> None:
     """Comprueba que lo descargado es un ZIP **con un GeoPackage dentro**. Si no, no se guarda.
 
@@ -280,18 +336,32 @@ def comprueba_que_es_un_mapa(contenido: bytes, fichero: str) -> None:
     con un 200, y guardarlo como si fuera el mapa daría un fichero que después no se puede abrir y
     nadie sabría por qué. Y se descomprime un trozo del `.gpkg` (no solo se mira que el nombre esté
     en el índice) porque un ZIP con la cabecera bien y el contenido roto pasaría la primera prueba.
+
+    Esta variante trabaja con `bytes` (los tests y el camino con `fetch` inyectable); la descarga
+    real por trozos usa `comprueba_que_es_un_mapa_en_fichero` para no volver a cargarla en memoria.
     """
     try:
         with zipfile.ZipFile(io.BytesIO(contenido)) as paquete:
-            nombres = paquete.namelist()
-            mapas = [nombre for nombre in nombres if nombre.lower().endswith(".gpkg")]
-            if not mapas:
-                raise FicheroNoValido(
-                    f"El fichero «{fichero}» que ha publicado el SIGPAC no lleva dentro ningún "
-                    "mapa (.gpkg). No se ha guardado nada."
-                )
-            with paquete.open(mapas[0]) as mapa:
-                mapa.read(1024)
+            _revisa_paquete(paquete, fichero)
+    except FicheroNoValido:
+        raise
+    except zipfile.BadZipFile:
+        raise FicheroNoValido(
+            f"Lo que ha contestado el SIGPAC para «{fichero}» no es un ZIP válido. "
+            "No se ha guardado nada."
+        ) from None
+    except Exception:  # noqa: BLE001 — un ZIP roto puede fallar de varias maneras
+        raise FicheroNoValido(
+            f"El fichero «{fichero}» del SIGPAC está dañado y no se puede leer. "
+            "No se ha guardado nada."
+        ) from None
+
+
+def comprueba_que_es_un_mapa_en_fichero(ruta: Path, fichero: str) -> None:
+    """La misma comprobación que `comprueba_que_es_un_mapa`, leyendo el ZIP del disco."""
+    try:
+        with zipfile.ZipFile(ruta) as paquete:
+            _revisa_paquete(paquete, fichero)
     except FicheroNoValido:
         raise
     except zipfile.BadZipFile:
@@ -336,11 +406,30 @@ def ficha_guardada(provincia: int, campana: int) -> dict | None:
     return ficha
 
 
+def _descargar_por_trozos(descarga, url: str, temporal: Path) -> tuple[int, str]:
+    """Ejecuta la descarga inyectable y comprueba que ha dejado algo en el temporal."""
+    try:
+        total, sha256 = descarga(url, temporal)
+    except SigpacCacheError:
+        raise
+    except Exception as error:  # noqa: BLE001 — cualquier fallo de red es el mismo caso
+        raise SinRed(
+            "No se ha podido llegar al servidor del SIGPAC "
+            f"({type(error).__name__}). Comprueba la conexión y vuelve a intentarlo."
+        ) from None
+    if not isinstance(total, int) or total <= 0 or not temporal.is_file():
+        raise SinRed("La descarga del SIGPAC ha llegado vacía. No se ha guardado nada.")
+    if temporal.stat().st_size <= 0:
+        raise SinRed("La descarga del SIGPAC ha llegado vacía. No se ha guardado nada.")
+    return total, sha256
+
+
 def descargar_provincia(
     provincia: int,
     campana: int,
     *,
     fetch=None,
+    stream=None,
     url_base: str | None = None,
 ) -> dict:
     """Deja en la caché el mapa de una provincia y devuelve su ficha.
@@ -350,11 +439,14 @@ def descargar_provincia(
     1. Si ya está descargado (y el fichero sigue con su tamaño), se devuelve la ficha y **no se
        llama a nadie**: `{"descargado": False}`.
     2. Se lee el **listado de la campaña** y se busca el enlace de esa provincia.
-    3. Se descarga, se comprueba que es un ZIP con un `.gpkg` y se calcula su sha256.
+    3. Se descarga **por trozos a un temporal** (camino de red de verdad), se comprueba que es un
+       ZIP con un `.gpkg` y se calcula su sha256. Con `fetch` inyectable se mantiene el camino de
+       bytes de siempre para los tests.
     4. Se guarda con su nombre oficial y una ficha JSON al lado.
 
-    `fetch` es la descarga inyectable (`fetch(url) -> bytes`): los tests le pasan un servidor de
-    mentira y así no se baja nada de internet. Si no se pasa, se usa `fetch_http`.
+    `stream` es la descarga inyectable por trozos (`stream(url, destino) -> (bytes, sha256)`); si no
+    se pasa y tampoco hay `fetch`, se usa `stream_http` (el de verdad, con `httpx.stream`). `fetch`
+    es la variante de bytes que usan los tests de la caché.
 
     Lanza `SinRed`, `SinFichero` o `FicheroNoValido` (todas `SigpacCacheError`) y en los tres casos
     **no deja nada a medias en la carpeta**.
@@ -385,20 +477,27 @@ def descargar_provincia(
         )
 
     url = urljoin(url_del_listado(campana, url_base), elegido["href"])
-    contenido = _pedir(fetch, url)
-    if not isinstance(contenido, (bytes, bytearray)) or not contenido:
-        raise SinRed("La descarga del SIGPAC ha llegado vacía. No se ha guardado nada.")
-    contenido = bytes(contenido)
-    comprueba_que_es_un_mapa(contenido, elegido["fichero"])
-
-    sha256 = hashlib.sha256(contenido).hexdigest()
-    destino = carpeta / elegido["fichero"]
     # Se escribe primero a un temporal y se renombra: si el proceso se corta a mitad, en la carpeta
     # no queda un ZIP a medias que después parezca bueno.
-    temporal = carpeta / f"{elegido['fichero']}.descargando"
+    temporal = carpeta / f".{elegido['fichero']}.descargando"
     try:
-        temporal.write_bytes(contenido)
-        os.replace(temporal, destino)
+        if stream is not None or fetch is None:
+            _total, sha256 = _descargar_por_trozos(
+                stream if stream is not None else stream_http, url, temporal
+            )
+            comprueba_que_es_un_mapa_en_fichero(temporal, elegido["fichero"])
+            # El tamaño real del fichero manda sobre lo que diga la descarga inyectable.
+            bytes_ = temporal.stat().st_size
+        else:
+            contenido = _pedir(fetch, url)
+            if not isinstance(contenido, (bytes, bytearray)) or not contenido:
+                raise SinRed("La descarga del SIGPAC ha llegado vacía. No se ha guardado nada.")
+            contenido = bytes(contenido)
+            comprueba_que_es_un_mapa(contenido, elegido["fichero"])
+            sha256 = hashlib.sha256(contenido).hexdigest()
+            bytes_ = len(contenido)
+            temporal.write_bytes(contenido)
+        os.replace(temporal, carpeta / elegido["fichero"])
     finally:
         temporal.unlink(missing_ok=True)
 
@@ -408,7 +507,7 @@ def descargar_provincia(
         "campana": campana,
         "fecha_validez": elegido["fecha_validez"],
         "fichero": elegido["fichero"],
-        "bytes": len(contenido),
+        "bytes": bytes_,
         "sha256": sha256,
         "url": url,
         "licencia": LICENCIA,

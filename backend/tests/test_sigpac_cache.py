@@ -183,6 +183,69 @@ class TestLaDescarga:
         assert list(cache_en_una_carpeta_temporal.glob("*")) == []
 
 
+class TestLaDescargaPorTrozos:
+    """El camino de red de verdad escribe por trozos a un temporal (no carga 628 MB en RAM)."""
+
+    def _stream_que_escribe(self, contenido: bytes, visto: list | None = None):
+        def stream(url, destino):
+            if visto is not None:
+                visto.append((url, destino))
+            destino.write_bytes(contenido)
+            return len(contenido), hashlib.sha256(contenido).hexdigest()
+
+        return stream
+
+    def test_la_descarga_por_trozos_guarda_el_zip_y_su_ficha(
+        self, cache_en_una_carpeta_temporal
+    ):
+        fichero = un_zip_con_un_gpkg()
+        visto: list = []
+        ficha = sigpac_cache.descargar_provincia(
+            37,
+            2026,
+            fetch=ServidorDeMentira(),
+            stream=self._stream_que_escribe(fichero, visto),
+        )
+
+        assert ficha["bytes"] == len(fichero)
+        assert ficha["sha256"] == hashlib.sha256(fichero).hexdigest()
+        assert (cache_en_una_carpeta_temporal / NOMBRE_SALAMANCA).read_bytes() == fichero
+        # Al callback se le da un temporal, nunca el nombre final: si se corta, no parece bueno.
+        _url, destino = visto[0]
+        assert destino.name != NOMBRE_SALAMANCA
+        assert destino.name.endswith(".descargando")
+        assert list(cache_en_una_carpeta_temporal.glob("*.descargando")) == []
+
+    def test_si_el_stream_falla_no_queda_nada(self, cache_en_una_carpeta_temporal):
+        def sin_red(url, destino):
+            raise ConnectionError("se ha cortado la conexión")
+
+        with pytest.raises(sigpac_cache.SinRed):
+            sigpac_cache.descargar_provincia(
+                37, 2026, fetch=ServidorDeMentira(), stream=sin_red
+            )
+        assert list(cache_en_una_carpeta_temporal.glob("*")) == []
+
+    def test_si_el_stream_no_trae_un_zip_no_se_guarda(
+        self, cache_en_una_carpeta_temporal
+    ):
+        with pytest.raises(sigpac_cache.FicheroNoValido):
+            sigpac_cache.descargar_provincia(
+                37,
+                2026,
+                fetch=ServidorDeMentira(),
+                stream=self._stream_que_escribe(b"<html>mantenimiento</html>"),
+            )
+        assert list(cache_en_una_carpeta_temporal.glob("*")) == []
+
+    def test_si_el_stream_llega_vacio_no_se_guarda(self, cache_en_una_carpeta_temporal):
+        with pytest.raises(sigpac_cache.SinRed):
+            sigpac_cache.descargar_provincia(
+                37, 2026, fetch=ServidorDeMentira(), stream=self._stream_que_escribe(b"")
+            )
+        assert list(cache_en_una_carpeta_temporal.glob("*")) == []
+
+
 class TestElEstado:
     def test_el_estado_lista_lo_descargado(self, cache_en_una_carpeta_temporal):
         sigpac_cache.descargar_provincia(37, 2026, fetch=ServidorDeMentira())
@@ -250,10 +313,19 @@ class TestLaApi:
         assert cliente.post("/api/sigpac/cache/37").status_code == 401
 
     def test_la_descarga_se_pide_con_sesion(self, cliente, cuenta, monkeypatch):
-        """El endpoint usa la descarga de verdad con su `fetch` por defecto, así que aquí se
-        sustituye el de red: lo que se prueba es la puerta, no el servidor del FEGA."""
+        """La puerta usa el camino real: listado por `fetch_http` y ZIP por `stream_http`.
+
+        Se sustituyen las dos funciones de red (la suite no sale a internet): lo que se prueba es
+        la puerta y que el ZIP llega a la caché por el camino de streaming.
+        """
         servidor = ServidorDeMentira()
         monkeypatch.setattr(sigpac_cache, "fetch_http", servidor)
+
+        def stream_local(url, destino):
+            destino.write_bytes(servidor.fichero)
+            return len(servidor.fichero), hashlib.sha256(servidor.fichero).hexdigest()
+
+        monkeypatch.setattr(sigpac_cache, "stream_http", stream_local)
         respuesta = cliente.post(
             "/api/sigpac/cache/37?campana=2026", headers=cuenta["cabeceras"]
         )
