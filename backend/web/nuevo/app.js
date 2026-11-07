@@ -59,19 +59,23 @@ import {
   dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
   etiquetaCampana,
+  etiquetaDeProvinciaCache,
   etiquetaDeTrabajo,
   fechaDeHoyISO,
+  fechaValidezEnTexto,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  lineasDeLosContornos,
   mensajesDeLaRespuesta,
   mesEnPalabras,
   municipioDeTierra,
   nombreDeMes,
   normalizaAbonos,
   normalizaAperos,
+  normalizaCacheSigpac,
   normalizaCalendario,
   normalizaImportacion,
   normalizaMunicipios,
@@ -96,6 +100,7 @@ import {
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
+  rutaDeLosContornos,
   sinMapa,
   sumaDeHectareas,
   textos,
@@ -142,6 +147,7 @@ const RUTA_FERTILIZANTES = "/api/fertilizantes";
 const RUTA_TRATAMIENTOS = "/api/tratamientos";
 const RUTA_FERTILIZACIONES = "/api/fertilizaciones";
 const RUTA_MUNICIPIOS = "/api/municipios";
+const RUTA_CACHE_SIGPAC = "/api/sigpac/cache";
 const RUTA_CONTORNO = (id) => `/api/parcelas/${id}/contorno`;
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
@@ -254,6 +260,30 @@ async function pedir(ruta, opciones = {}) {
   } catch (fallo) {
     return { estado: "error" };
   }
+}
+
+/**
+ * Como `pedir`, pero **también lee el aviso de un 404, 409 o 422**. Esta pantalla los necesita:
+ * el 404 de los contornos no es «no está en la pantalla nueva», es «el mapa de esa provincia no
+ * está descargado», y eso hay que decírselo al agricultor, no callarlo.
+ */
+async function pedirConDetalle(ruta, opciones = {}) {
+  const token = leerToken();
+  if (!token) return { estado: "sin-permiso" };
+  const cabeceras = { ...(opciones.headers || {}), Authorization: `Bearer ${token}` };
+  let respuesta;
+  try {
+    respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+  } catch (fallo) {
+    return { estado: "error" };
+  }
+  if (respuesta.status === 401 || respuesta.status === 403) {
+    borrarToken();
+    return { estado: "sin-permiso" };
+  }
+  const cuerpo = await respuesta.json().catch(() => null);
+  if (!respuesta.ok) return { estado: "error", codigo: respuesta.status, detalle: cuerpo };
+  return { estado: "ok", datos: cuerpo };
 }
 
 function conCuerpoJson(cuerpo) {
@@ -1766,6 +1796,8 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
       abierta=${ventana}
       modo="alta"
       alCerrar=${() => setVentana(false)}
+      alRefrescar=${alReintentar}
+      alVerTierras=${alIrATierras}
       alUsada=${() => {
         setVentana(false);
         setAlta({ estado: "hecho", texto: textos.ventana.anadida });
@@ -3025,6 +3057,8 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
       modo="tierra"
       tierra=${tierra}
       alCerrar=${() => setVentana(false)}
+      alRefrescar=${ficha.reintentar}
+      alVerTierras=${alVolver}
       alUsada=${() => {
         setVentana(false);
         setAvisoContorno(textos.ventana.aplicada);
@@ -3512,7 +3546,7 @@ function VistaMas({ ir }) {
   </div>`;
 }
 
-function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada }) {
+function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefrescar = null, alVerTierras = null }) {
   const [referencia, setReferencia] = useState("");
   const [textoMunicipio, setTextoMunicipio] = useState("");
   const [opcionesMunicipio, setOpcionesMunicipio] = useState([]);
@@ -3532,6 +3566,71 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada }) {
   const temporizador = useRef(null);
 
   const recinto = recintoElegido(recintos, elegidoRecintoId);
+
+  // Los mapas de provincia que ya están guardados en este ordenador. Se pregunta al abrir la
+  // ventana; si no hay ninguno se dice y **no se dispara ninguna descarga grande**.
+  const cache = usarPantalla(RUTA_CACHE_SIGPAC, abierta);
+  const estadoDeLaCache = normalizaCacheSigpac(cache.estado === "listo" ? cache.datos : null);
+  const provinciasDelMapa = estadoDeLaCache.provincias;
+  const [provinciaCache, setProvinciaCache] = useState(null);
+  const [faseCache, setFaseCache] = useState("inicial");
+  const [avisoCache, setAvisoCache] = useState(null);
+  const [resultadoCache, setResultadoCache] = useState(null);
+  // Refrescar las tierras al cerrar: si se hace en el momento, la pantalla de debajo se pone a
+  // cargar, la ventana se desmonta y el resultado que acaba de salir desaparece de la vista.
+  const refrescarAlCerrar = useRef(false);
+  const refrescarDeVerdad = useRef(alRefrescar);
+
+  useEffect(() => {
+    refrescarDeVerdad.current = alRefrescar;
+  }, [alRefrescar]);
+
+  useEffect(() => () => {
+    if (refrescarAlCerrar.current && refrescarDeVerdad.current) refrescarDeVerdad.current();
+  }, []);
+
+  useEffect(() => {
+    if (!provinciasDelMapa.length) {
+      setProvinciaCache(null);
+      return;
+    }
+    if (!provinciasDelMapa.some((ficha) => ficha.provincia === provinciaCache)) {
+      setProvinciaCache(provinciasDelMapa[0].provincia);
+    }
+  }, [provinciasDelMapa.length]);
+
+  useEffect(() => {
+    if (!abierta) {
+      setFaseCache("inicial");
+      setAvisoCache(null);
+      setResultadoCache(null);
+    }
+  }, [abierta]);
+
+  const traerLosContornos = async () => {
+    const ficha = provinciasDelMapa.find((una) => una.provincia === provinciaCache) || null;
+    if (!ficha) return;
+    const ruta = rutaDeLosContornos(ficha.provincia, ficha.campana);
+    if (!ruta) {
+      setAvisoCache(textos.ventana.cache.noSePudo);
+      return;
+    }
+    setFaseCache("trayendo");
+    setAvisoCache(null);
+    setResultadoCache(null);
+    const respuesta = await pedirConDetalle(ruta, { method: "POST" });
+    if (respuesta.estado === "ok") {
+      setFaseCache("listo");
+      setResultadoCache(lineasDeLosContornos(respuesta.datos));
+      refrescarAlCerrar.current = true;
+      return;
+    }
+    setFaseCache("error");
+    if (respuesta.estado === "sin-permiso") setAvisoCache(textos.comun.sinPermiso);
+    else if (respuesta.codigo === 404) setAvisoCache(textos.ventana.cache.noHayMapa);
+    else if (respuesta.codigo === 409) setAvisoCache(textos.ventana.cache.faltaElFichero);
+    else setAvisoCache(textos.ventana.cache.noSePudo);
+  };
 
   // Al abrir: el foco dentro de la ventana, para poder cerrarla con el teclado.
   useEffect(() => {
@@ -3774,6 +3873,83 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada }) {
         : html`<p className="estado__texto">${textos.ventana.sinBusqueda}</p>`}
 
       ${resultado ? html`<p className="panel__aviso panel__aviso--bien" data-sigpac-resultado=${resultado}>${resultado}</p>` : null}
+
+      <section className="sigpac__cache" data-sigpac-cache aria-labelledby="sigpac-cache-titulo">
+        <h3 className="panel__subtitulo" id="sigpac-cache-titulo">${textos.ventana.cache.titulo}</h3>
+        <p className="pagina__dato">${textos.ventana.cache.intro}</p>
+
+        ${cache.estado === "cargando" || cache.estado === "inicial"
+          ? html`<p className="estado__texto">${textos.comun.cargando}</p>`
+          : null}
+        ${cache.estado === "sin-permiso" ? html`<p className="estado__texto">${textos.comun.sinPermiso}</p>` : null}
+        ${cache.estado === "error" || cache.estado === "no-disponible"
+          ? html`<div>
+              <p className="estado__texto">${textos.ventana.cache.noSePudo}</p>
+              <button type="button" className="boton" data-reintentar onClick=${cache.reintentar}>${textos.comun.reintentar}</button>
+            </div>`
+          : null}
+
+        ${cache.estado === "listo" && !provinciasDelMapa.length
+          ? html`<div>
+              <p className="estado__texto">${textos.ventana.cache.sinMapas}</p>
+              <p className="pagina__dato">${textos.ventana.cache.sinMapasAyuda}</p>
+            </div>`
+          : null}
+
+        ${provinciasDelMapa.length
+          ? html`<div className="sigpac__cache-forma">
+              <label className="campo">
+                <span>${textos.ventana.cache.provincia}</span>
+                <select
+                  className="campo__control"
+                  data-sigpac-cache-provincia
+                  value=${provinciaCache ?? ""}
+                  onChange=${(evento) => setProvinciaCache(Number(evento.target.value))}
+                >
+                  ${provinciasDelMapa.map((ficha) => html`<option key=${`provincia-${ficha.provincia}`} value=${ficha.provincia}>${etiquetaDeProvinciaCache(ficha)}</option>`)}
+                </select>
+              </label>
+              <p className="pagina__dato">${textos.ventana.cache.provinciaAyuda}</p>
+              <p className="pagina__dato">${textos.ventana.cache.nota}</p>
+              <div className="estado__acciones">
+                <button
+                  type="button"
+                  className="boton boton--principal boton--grande"
+                  data-sigpac-cache-aplicar
+                  onClick=${traerLosContornos}
+                  disabled=${faseCache === "trayendo"}
+                >
+                  ${faseCache === "trayendo" ? textos.ventana.cache.trayendo : textos.ventana.cache.aplicar}
+                </button>
+              </div>
+            </div>`
+          : null}
+
+        ${resultadoCache
+          ? html`<div className="panel__aviso panel__aviso--bien" data-sigpac-cache-resultado=${resultadoCache.join(" · ")}>
+              <ul className="sigpac__cache-lineas">
+                ${resultadoCache.map((linea, indice) => html`<li key=${`linea-cache-${indice}`}>${linea}</li>`)}
+              </ul>
+              ${resultadoCache.length === 1 && resultadoCache[0] === textos.ventana.cache.nadaQueCasar
+                ? html`<p className="pagina__dato">${textos.ventana.cache.sigueSirviendo}</p>`
+                : null}
+              <div className="estado__acciones">
+                ${alVerTierras
+                  ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierras onClick=${alVerTierras}>${textos.ventana.cache.verTierras}</button>`
+                  : null}
+                <button type="button" className="boton" onClick=${alCerrar}>${textos.ventana.cache.cerrar}</button>
+              </div>
+            </div>`
+          : null}
+
+        ${avisoCache ? html`<p className="panel__aviso" data-sigpac-cache-aviso>${avisoCache}</p>` : null}
+
+        ${estadoDeLaCache.atribucion || estadoDeLaCache.licencia
+          ? html`<p className="sigpac__cache-atribucion" data-sigpac-cache-atribucion>
+              ${[textos.ventana.cache.atribucion, estadoDeLaCache.atribucion, estadoDeLaCache.licencia].filter(Boolean).join(" · ")}
+            </p>`
+          : null}
+      </section>
     </div>
   </div>`;
 }

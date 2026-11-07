@@ -134,6 +134,11 @@
   WKT coincide al milímetro (17/17 puntos, 0,001 m, 4,9016 ha = 4,9016 ha). **Evidencia**:
   `tests/test_geopackage_sigpac.py` (33, sin red), `scripts/probar_geopackage_real.py` y la puerta
   `POST /api/sigpac/cache/{provincia}/contornos`.
+- **Y tiene puerta en la ventana del SIGPAC (07/11/2026)**: tarjeta «Los contornos de toda la finca»
+  con `GET /api/sigpac/cache` (provincias guardadas, campaña y validez), botón «Traer los contornos»
+  y resultado en palabras; **verificado en Chrome aplicando el mapa real de Salamanca** desde la
+  ventana (1 contorno puesto, 21 tierras sin códigos), sin desbordar a 390/360. Si no hay mapa
+  guardado no se dispara ninguna descarga.
 - **Falta**: **streaming de la descarga** (hoy 638 MB en RAM, en `sigpac_cache.py`) y **limpieza de
   caché** (1,67 GB por provincia entre ZIP y `.gpkg`; decidir si se borra el ZIP tras extraer y cómo se
   purga al cambiar de campaña).

@@ -297,6 +297,35 @@ export const textos = {
     ficha: "Datos del recinto",
     sinBusqueda: "Busca por referencia o por el pueblo.",
     resultados: "Resultados del SIGPAC",
+    cache: {
+      titulo: "Los contornos de toda la finca",
+      intro: "Rellena la forma de tus tierras con el mapa del SIGPAC. Solo la forma: la superficie que declaraste no cambia.",
+      sinMapas: "En este ordenador no hay ningún mapa de provincia guardado.",
+      sinMapasAyuda: "Se baja una vez y sirve para todas las tierras. Se prepara desde el ordenador de la oficina; aquí no se baja nada solo.",
+      provincia: "Provincia del mapa",
+      provinciaAyuda: "Elige una de las provincias que ya están guardadas.",
+      validoHasta: "válido hasta",
+      aplicar: "Traer los contornos",
+      trayendo: "Trayendo los contornos…",
+      nota: "Se rellena la forma de las tierras que ya tienes. No se toca la superficie, ni el uso, ni el pueblo.",
+      atribucion: "Datos del SIGPAC",
+      puestosUno: "1 contorno puesto",
+      puestosVarios: "{n} contornos puestos",
+      noEncontradasUno: "1 tierra que no está en ese mapa",
+      noEncontradasVarias: "{n} tierras que no están en ese mapa",
+      sinCodigosUno: "1 tierra sin códigos del SIGPAC",
+      sinCodigosVarias: "{n} tierras sin códigos del SIGPAC",
+      sinFormaUno: "1 tierra sin forma",
+      sinFormaVarias: "{n} tierras sin forma",
+      nadaQueCasar: "Ninguna de tus tierras está en ese mapa.",
+      sigueSirviendo: "Esta ventana sigue sirviendo para elegir un recinto de una tierra concreta.",
+      verTierras: "Ver las tierras",
+      cerrar: "Cerrar",
+      noSePudo: "No se han podido traer los contornos. Prueba otra vez.",
+      noHayMapa: "El mapa de esa provincia no está guardado en este ordenador. Se prepara desde el ordenador de la oficina; aquí no se baja nada solo.",
+      faltaElFichero: "El mapa estaba apuntado, pero el fichero ya no está. Vuelve a prepararlo en el ordenador de la oficina.",
+      sinMapasBoton: "Ver cómo se prepara",
+    },
   },
   apuntar: {
     titulo: "Apuntar un trabajo",
@@ -2045,4 +2074,71 @@ export function cuerpoDelContorno(recinto) {
   });
   if (!cuerpo) return null;
   return numero === null ? cuerpo : { ...cuerpo, recinto: numero };
+}
+
+/** El estado de la caché de mapas del SIGPAC, tal y como lo cuenta el servidor. */
+export function normalizaCacheSigpac(datos) {
+  const fuente = datos || {};
+  const provincias = laLista(fuente, "provincias")
+    .filter((ficha) => ficha && numeroDe(ficha.provincia) !== null)
+    .map((ficha) => ({
+      provincia: numeroDe(ficha.provincia),
+      nombre: ficha.nombre_provincia || "",
+      campana: numeroDe(ficha.campana),
+      fechaValidez: ficha.fecha_validez || null,
+      licencia: ficha.licencia || fuente.licencia || "",
+      atribucion: ficha.atribucion || fuente.atribucion || "",
+    }));
+  return {
+    cuantas: typeof fuente.cuantas === "number" ? fuente.cuantas : provincias.length,
+    provincias,
+    atribucion: fuente.atribucion || "",
+    licencia: fuente.licencia || "",
+  };
+}
+
+/** «2025-09-01» → «01/09/2025»; lo que no sea una fecha se queda en blanco. */
+export function fechaValidezEnTexto(valor) {
+  const texto = String(valor || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}/.test(texto)) return "";
+  const [anio, mes, dia] = texto.slice(0, 10).split("-");
+  return `${dia}/${mes}/${anio}`;
+}
+
+/** «Salamanca · 2025 · válido hasta 01/09/2025», con lo que haya de verdad. */
+export function etiquetaDeProvinciaCache(ficha) {
+  const guardada = ficha || {};
+  const partes = [];
+  if (guardada.nombre) partes.push(guardada.nombre);
+  else if (guardada.provincia !== null && guardada.provincia !== undefined) partes.push(`Provincia ${guardada.provincia}`);
+  if (guardada.campana !== null && guardada.campana !== undefined) partes.push(String(guardada.campana));
+  const validez = fechaValidezEnTexto(guardada.fechaValidez);
+  if (validez) partes.push(`${textos.ventana.cache.validoHasta} ${validez}`);
+  return partes.join(" · ");
+}
+
+/** La dirección de «traer los contornos» de una provincia guardada. */
+export function rutaDeLosContornos(provincia, campana) {
+  const codigo = numeroDe(provincia);
+  if (codigo === null || codigo < 1 || codigo > 52) return null;
+  const anio = numeroDe(campana);
+  return `/api/sigpac/cache/${codigo}/contornos${anio ? `?campana=${anio}` : ""}`;
+}
+
+/** El resultado en palabras: puestos, no encontradas, sin códigos y sin forma (singular y plural). */
+export function lineasDeLosContornos(resultado) {
+  const r = resultado || {};
+  const cuantos = (clave) => (Array.isArray(r[clave]) ? r[clave].length : 0);
+  const palabras = textos.ventana.cache;
+  const lineas = [];
+  const puestos = cuantos("actualizadas");
+  if (puestos) lineas.push(puestos === 1 ? palabras.puestosUno : textoRelleno(palabras.puestosVarios, { n: puestos }));
+  const noEncontradas = cuantos("no_encontradas");
+  if (noEncontradas) lineas.push(noEncontradas === 1 ? palabras.noEncontradasUno : textoRelleno(palabras.noEncontradasVarias, { n: noEncontradas }));
+  const sinCodigos = cuantos("sin_codigos");
+  if (sinCodigos) lineas.push(sinCodigos === 1 ? palabras.sinCodigosUno : textoRelleno(palabras.sinCodigosVarias, { n: sinCodigos }));
+  const sinForma = cuantos("sin_forma");
+  if (sinForma) lineas.push(sinForma === 1 ? palabras.sinFormaUno : textoRelleno(palabras.sinFormaVarias, { n: sinForma }));
+  if (!lineas.length) lineas.push(palabras.nadaQueCasar);
+  return lineas;
 }

@@ -145,16 +145,6 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       contorno dibujado** (relleno suave y línea blanca con borde oscuro), centrada y con margen; la
       ficha la enseña. Si la tierra no tiene forma, la ficha **lo dice** («no tiene forma en el
       SIGPAC») en vez de dibujar un cuadro inventado. 800×600 en unos 2 s en caliente.
-  - **Y el GeoPackage ya se abre, y probado con el fichero REAL** (07/11/2026): Salamanca 37, campaña
-    2026, **599,7 MB de ZIP → 1.070 MB de `.gpkg` con 1.011.578 recintos**. El lector abre en
-    **1–2 ms** (el `.gpkg` queda guardado al lado del ZIP, validado por tamaño/sha y recuperado si está
-    cortado) y busca el recinto `37-70-0-0-503-51-1` en **2,7 ms**; el WKT coincide con el del SIGPAC
-    (**17/17 puntos, centro a 0,001 m, superficie 4,9016 ha = 4,9016 ha**). `contornos_de_las_parcelas`
-    tarda **18 ms**. La prueba real destapó y corrigió tres cosas que el sintético no veía: `srs_id = 0`
-    en el blob (manda el del fichero), columnas reales `csp`/`dn_surface`, y **`dn_surface` en m²**
-    (se convierte a ha, antes salía 10.000× más grande). **Queda por hacer**: bajar el ZIP carga
-    **638 MB en RAM** (streaming pendiente en `sigpac_cache.py`), y la limpieza del `.gpkg` (1,67 GB por
-    provincia).
   - **Y tiene ventana propia de selección de parcela** (06/11): un modal (`data-ventana-sigpac`) que
     se abre desde el alta y desde la ficha de una tierra, con **dos formas de buscar** —la referencia
     del papel o el **pueblo elegido de la lista oficial** + agregado/zona/polígono/parcela—, lista de
@@ -164,6 +154,24 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     coger el trozo equivocado). Sin forma no se aplica nada y se dice. **Verificado en Chrome**: la
     ventana busca, trae el recinto, se elige, se cierra sin cambios, y desde la ficha el contorno se
     aplica con su aviso; 14 pruebas del servidor con el SIGPAC simulado.
+  - **Y trae los contornos del mapa guardado, sin salir de la ventana** (07/11/2026): tarjeta «Los
+    contornos de toda la finca» que pide `GET /api/sigpac/cache`, deja elegir la provincia cacheada
+    (con campaña y validez), avisa de que **solo rellena la forma** (no toca superficie ni uso) y trae
+    los contornos con `POST /api/sigpac/cache/{provincia}/contornos`. Resultado en palabras («1 contorno
+    puesto · 21 tierras sin códigos del SIGPAC» con la finca de ejemplo) y atribución FEGA. Si no hay
+    mapa guardado lo dice y **no dispara ninguna descarga de 600 MB**. Verificado en Chrome aplicando
+    de verdad el GeoPackage de Salamanca (1 tierra actualizada) y con el bloque sin desbordar a
+    390×844 y 360×640.
+    2026, **599,7 MB de ZIP → 1.070 MB de `.gpkg` con 1.011.578 recintos**. El lector abre en
+    **1–2 ms** (el `.gpkg` queda guardado al lado del ZIP, validado por tamaño/sha y recuperado si está
+    cortado) y busca el recinto `37-70-0-0-503-51-1` en **2,7 ms**; el WKT coincide con el del SIGPAC
+    (**17/17 puntos, centro a 0,001 m, superficie 4,9016 ha = 4,9016 ha**). `contornos_de_las_parcelas`
+    tarda **18 ms**. La prueba real destapó y corrigió tres cosas que el sintético no veía: `srs_id = 0`
+    en el blob (manda el del fichero), columnas reales `csp`/`dn_surface`, y **`dn_surface` en m²**
+    (se convierte a ha, antes salía 10.000× más grande). **Queda por hacer**: bajar el ZIP carga
+    **638 MB en RAM** (streaming pendiente en `sigpac_cache.py`), y la limpieza del `.gpkg` (1,67 GB por
+    provincia).
+  - **Y el GeoPackage ya se abre, y probado con el fichero REAL** (07/11/2026): Salamanca 37, campaña
 - **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
   filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
   (`tierra-historial.png`, `calendario.png`, `trabajos-filtrados.png`, `factura-leida.png`).
@@ -175,15 +183,16 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
   las tres puertas. **Ya se puede apuntar el apero desde la app nueva**: `POST /api/labores` acepta
   `subtipo` y lo valida (un apero inventado contesta 422 con la lista de los que valen); el dato se
   guarda en su columna y `GET /api/labores` ya lo devuelve.
-- **El apuntar de todos los días está a medias en la app nueva**: el trabajo de suelo (arado,
-  cultivador, grada, rodillo, fresadora, otro) ya se apunta desde la tierra; **tratamientos, abonos,
-  siembra y cosecha siguen en la app vieja**, y la cola sin cobertura también. Es lo siguiente.
+- **El apuntar del día a día ya está completo en la app nueva**: labor, tratamiento, abono y siembra
+  se apuntan desde `/nuevo/` y se verificó guardando de verdad en Chrome a 390 y 360. Lo que queda es
+  la **cola sin cobertura** y la cosecha comercializada, que sigue en la app vieja.
 - Las pantallas de **PAC** y **gastos/facturas detalladas** siguen enlazando a la app vieja.
 
 ## Lo que se ha cerrado y cómo se comprueba
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-07 | **Contornos del GeoPackage real desde la ventana del SIGPAC** | Chrome: bloque «Los contornos de toda la finca» con la provincia cacheada real (Salamanca), aplicado de verdad (**1 contorno puesto**, 21 tierras sin códigos), móvil 390/360 sin desbordar; 73/73 JS y 28 pytest de pantalla |
 | 2026-11-07 | **Apuntar del día a día completo, guardado de verdad y móvil** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde en cada una, y guardado real con 201 de tratamiento, abono y siembra (ficha refrescada); captura `apuntar-completo-390.png` |
 | 2026-11-07 | **GeoPackage REAL de Salamanca probado y cacheado** | ZIP 599,7 MB / 1.011.578 recintos: abre en 1–2 ms, busca en 2,7 ms, contornos en 18 ms, WKT coincide (17/17 puntos, 0,001 m); 33 pruebas sin red |
 | 2026-11-07 | **Apuntar del día a día completo (labor, tratamiento, abono y siembra)** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde, guardado real 201 de las cuatro; 69/69 JS y 27 pytest de la pantalla |

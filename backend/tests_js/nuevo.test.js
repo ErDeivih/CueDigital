@@ -48,13 +48,16 @@ import {
   decidirEstado,
   dosisMaximaEnTexto,
   elAperoSeGuardaEnLabores,
+  etiquetaDeProvinciaCache,
   etiquetaDeTrabajo,
   fechaDeHoyISO,
+  fechaValidezEnTexto,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
   importeEnTexto,
   leyendaDe,
+  lineasDeLosContornos,
   mensajesDeLaRespuesta,
   mesDeNumero,
   mesEnPalabras,
@@ -62,6 +65,7 @@ import {
   nombreDeMes,
   normalizaAbonos,
   normalizaAperos,
+  normalizaCacheSigpac,
   normalizaCalendario,
   normalizaHistorial,
   normalizaImportacion,
@@ -89,6 +93,7 @@ import {
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
+  rutaDeLosContornos,
   sinMapa,
   sumaDeHectareas,
   textos,
@@ -1388,4 +1393,61 @@ test("la vista de apuntar tiene sus cuatro pestañas y sus textos", () => {
   assert.ok(textos.apuntar.abono.kilosTotales);
   assert.ok(textos.apuntar.siembra.sinSemillas);
   assert.ok(textos.apuntar.siembra.delCuaderno);
+});
+
+// ---------------------------------------------------------------------------
+// Los contornos de toda la finca desde la ventana del SIGPAC
+// ---------------------------------------------------------------------------
+
+test("la caché de mapas del SIGPAC se lee sin inventar provincias", () => {
+  assert.deepEqual(normalizaCacheSigpac(null), { cuantas: 0, provincias: [], atribucion: "", licencia: "" });
+  const estado = normalizaCacheSigpac({
+    cuantas: 1,
+    atribucion: "FEGA",
+    licencia: "CC BY 4.0 — FEGA",
+    provincias: [
+      { provincia: 37, nombre_provincia: "Salamanca", campana: 2025, fecha_validez: "2025-09-01", licencia: "CC BY 4.0 — FEGA" },
+      { nombre_provincia: "Sin código" },
+    ],
+  });
+  assert.equal(estado.cuantas, 1);
+  assert.equal(estado.provincias.length, 1);
+  assert.equal(estado.provincias[0].nombre, "Salamanca");
+  assert.equal(estado.provincias[0].campana, 2025);
+  assert.equal(estado.provincias[0].fechaValidez, "2025-09-01");
+  assert.equal(estado.atribucion, "FEGA");
+});
+
+test("la provincia del mapa se enseña con su campaña y su validez", () => {
+  assert.equal(fechaValidezEnTexto("2025-09-01"), "01/09/2025");
+  assert.equal(fechaValidezEnTexto(""), "");
+  assert.equal(fechaValidezEnTexto("no es una fecha"), "");
+  assert.equal(
+    etiquetaDeProvinciaCache({ provincia: 37, nombre: "Salamanca", campana: 2025, fechaValidez: "2025-09-01" }),
+    "Salamanca · 2025 · válido hasta 01/09/2025",
+  );
+  assert.equal(etiquetaDeProvinciaCache({ provincia: 37 }), "Provincia 37");
+  assert.equal(etiquetaDeProvinciaCache(null), "");
+});
+
+test("la dirección de los contornos es la del contrato y no se inventa", () => {
+  assert.equal(rutaDeLosContornos(37, 2025), "/api/sigpac/cache/37/contornos?campana=2025");
+  assert.equal(rutaDeLosContornos("37", null), "/api/sigpac/cache/37/contornos");
+  assert.equal(rutaDeLosContornos(0, 2025), null);
+  assert.equal(rutaDeLosContornos(53, 2025), null);
+  assert.equal(rutaDeLosContornos("", 2025), null);
+});
+
+test("el resultado de los contornos se cuenta en singular y en plural", () => {
+  assert.deepEqual(lineasDeLosContornos({ actualizadas: [{ id: 1 }], no_encontradas: [], sin_codigos: [], sin_forma: [] }), ["1 contorno puesto"]);
+  assert.deepEqual(
+    lineasDeLosContornos({
+      actualizadas: [{ id: 1 }, { id: 2 }],
+      no_encontradas: [{ id: 3 }],
+      sin_codigos: [{ id: 4 }, { id: 5 }],
+      sin_forma: [{ id: 6 }],
+    }),
+    ["2 contornos puestos", "1 tierra que no está en ese mapa", "2 tierras sin códigos del SIGPAC", "1 tierra sin forma"],
+  );
+  assert.deepEqual(lineasDeLosContornos({}), [textos.ventana.cache.nadaQueCasar]);
 });

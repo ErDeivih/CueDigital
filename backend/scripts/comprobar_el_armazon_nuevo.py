@@ -806,6 +806,34 @@ def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
                 segundos=10,
             )
             comprobar(usar, "al elegir el recinto se puede usar la parcela")
+            # La puerta al GeoPackage real: los contornos de toda la finca desde el mapa guardado.
+            cache = nav.esperar("!!document.querySelector('[data-sigpac-cache]')", segundos=15)
+            comprobar(cache, "la ventana enseña los contornos del mapa guardado")
+            if cache:
+                opciones = nav.evaluar(
+                    "document.querySelectorAll('[data-sigpac-cache-provincia] option').length"
+                ) or 0
+                comprobar(opciones > 0, f"hay provincias del mapa para elegir ({opciones})")
+                if opciones:
+                    nav.evaluar(
+                        "(() => { const s = document.querySelector('[data-sigpac-cache-provincia]');"
+                        " if (!s) return false; s.selectedIndex = 0;"
+                        " s.dispatchEvent(new Event('change', { bubbles: true })); return true; })()"
+                    )
+                    nav.evaluar(
+                        "(() => { const b = document.querySelector('[data-sigpac-cache-aplicar]');"
+                        " if (!b || b.disabled) return false; b.click(); return true; })()"
+                    )
+                    traidos = nav.esperar(
+                        "(() => { const r = document.querySelector('[data-sigpac-cache-resultado]');"
+                        " return !!r && r.innerText.trim().length > 0; })()",
+                        segundos=90,
+                    )
+                    comprobar(traidos, "los contornos de la provincia se traen del mapa guardado")
+                    if traidos:
+                        print("  resultado:", nav.evaluar(
+                            "(document.querySelector('[data-sigpac-cache-resultado]')||{}).innerText"
+                        ))
             print(f"  (captura: {captura(nav, 'ventana-sigpac').relative_to(RAIZ)})")
         nav.evaluar(
             "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
@@ -819,6 +847,8 @@ def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
     nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=20)
     clic_en_visible(nav, "[data-tierra-id]")
     nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
+    # La ficha termina de pintarse después: el botón del SIGPAC no está en el primer frame.
+    nav.esperar("!!document.querySelector('[data-abrir-ventana-sigpac-tierra]')", segundos=25)
     abrio = clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]") and nav.esperar(
         "!!document.querySelector('[data-ventana-sigpac]')", segundos=15
     )

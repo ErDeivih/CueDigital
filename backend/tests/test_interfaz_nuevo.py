@@ -78,6 +78,11 @@ ENGANCHES = [
     "data-filtro-hasta",
     "data-resumen-tipo",
     "data-descargar-trabajos",
+    "data-sigpac-cache",
+    "data-sigpac-cache-provincia",
+    "data-sigpac-cache-aplicar",
+    "data-sigpac-cache-resultado",
+    "data-sigpac-cache-atribucion",
     "data-ventana-sigpac",
     "data-ventana-cerrar",
     "data-abrir-ventana-sigpac",
@@ -166,6 +171,7 @@ PUERTAS = [
     "/api/municipios",
     "/contorno",
     "/api/sigpac/buscar",
+    "/api/sigpac/cache",
     "/api/parcelas/desde-sigpac",
     "/api/parcelas/desde-sigpac/varias",
     "/api/mapa/punto",
@@ -360,6 +366,41 @@ class TestElContratoConElArnesDeNavegador:
         # El flujo encadenado: siempre hay un siguiente paso a la vista.
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
+
+    def test_la_ventana_tiene_los_contornos_de_toda_la_finca(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        # El bloque y sus cinco enganches.
+        for enganche in (
+            "data-sigpac-cache",
+            "data-sigpac-cache-provincia",
+            "data-sigpac-cache-aplicar",
+            "data-sigpac-cache-resultado",
+            "data-sigpac-cache-atribucion",
+        ):
+            assert enganche in fuente, f"falta el enganche «{enganche}»"
+        # Las dos puertas que ya tenía el servidor y que ahora tienen pantalla.
+        assert "RUTA_CACHE_SIGPAC" in fuente
+        assert "/api/sigpac/cache" in fuente
+        assert "pedirConDetalle" in fuente
+        # Los cálculos, en el modelo: la caché, la provincia con su validez, la dirección y el
+        # resultado en palabras (singular y plural).
+        for funcion in (
+            "normalizaCacheSigpac",
+            "rutaDeLosContornos",
+            "lineasDeLosContornos",
+            "etiquetaDeProvinciaCache",
+            "fechaValidezEnTexto",
+        ):
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
+        for clave in ("actualizadas", "no_encontradas", "sin_codigos", "sin_forma"):
+            assert clave in modelo
+        # Sin mapas guardados se dice, y no hay botón que dispare una descarga de golpe.
+        assert "textos.ventana.cache.sinMapas" in fuente
+        assert "textos.ventana.cache.sinMapasAyuda" in fuente
+        # Los errores se cuentan en palabras de agricultor (404/409), sin el código.
+        assert "textos.ventana.cache.noHayMapa" in fuente
+        assert "textos.ventana.cache.faltaElFichero" in fuente
 
     def test_la_ventana_del_sigpac_se_abre_desde_el_alta_y_desde_la_tierra(self):
         fuente = leer("app.js")
