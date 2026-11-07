@@ -48,6 +48,7 @@ import json
 import pathlib
 import sys
 import tempfile
+import time
 import uuid
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -905,6 +906,15 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                 continue
             nav.esperar(f"!!document.querySelector('[data-vista=\"{clave}\"]')", segundos=15)
             sin_desborde(nombre)
+            if clave == "apuntar":
+                # Las cuatro pestañas del apunte, también a 360: ninguna puede desbordar.
+                for pestana in ("tratamiento", "abono", "siembra", "labor"):
+                    nav.evaluar(
+                        "(() => { const t = document.querySelector('[data-apuntar-tab=\""
+                        + pestana + "\"]'); if (!t) return false; t.click(); return true; })()"
+                    )
+                    time.sleep(0.8)
+                    sin_desborde(f"{nombre} · pestaña {pestana}")
 
         # La ficha de la tierra y su tabla de años, que es la que más se puede desbordar.
         if not ir_a_una_vista(nav, "tierras"):
@@ -983,6 +993,215 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
             " return ultimo <= arriba + 2; })()"
         )
         comprobar(bool(tapado), f"{ancho} px · la barra inferior no tapa el último botón")
+
+
+def escribir_en_un_campo(nav: NavegadorDeVerdad, selector: str, valor: str) -> bool:
+    """Escribe en un campo concreto como lo haría una persona (para los formularios del apunte)."""
+    return bool(
+        nav.evaluar(
+            "(() => { const el = document.querySelector(" + json.dumps(selector) + ");"
+            " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+            "window.HTMLInputElement.prototype, 'value').set;"
+            " setter.call(el, " + json.dumps(valor) + ");"
+            " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+        )
+    )
+
+
+def comprobar_apuntar_completo(nav: NavegadorDeVerdad, base: str, token: str) -> None:
+    """**El apunte del día a día, guardando de verdad** en el móvil: tratamiento, abono y siembra."""
+    print("\n== Apuntar completo: tratamiento, abono y siembra (390 px) ==")
+    nav.medir(390, 844, movil=True)
+
+    # El abono hace falta en el catálogo para poder apuntarlo (la finca de prueba no trae ninguno).
+    with httpx.Client(base_url=base, timeout=30.0) as cliente:
+        cliente.post(
+            "/api/fertilizantes",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"nombre": "Abono de prueba", "tipo": "mineral", "riqueza_n": 33.5},
+        )
+        creado = cliente.post(
+            "/api/productos",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "nombre_comercial": "Producto de prueba",
+                "tipo_producto": "insecticida",
+                "numero_registro": "12345",
+                "materia_activa": "Tebuconazol",
+                "dosis_maxima": 2,
+                "unidad_dosis": "L/ha",
+                "autorizado": True,
+                "plazo_seguridad_dias": 0,
+            },
+        )
+        producto_de_prueba = (creado.json() or {}).get("id") if creado.status_code < 300 else None
+        antes_tratamientos = len(
+            cliente.get("/api/tratamientos", headers={"Authorization": f"Bearer {token}"}).json()
+            or []
+        )
+        antes_fertilizaciones = len(
+            cliente.get("/api/fertilizaciones", headers={"Authorization": f"Bearer {token}"}).json()
+            or []
+        )
+
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+    if not ir_a_una_vista(nav, "apuntar"):
+        comprobar(False, "no se llega a «Apuntar» desde el móvil")
+        return
+    nav.esperar("document.querySelectorAll('[data-apuntar-tab]').length > 0", segundos=20)
+    nav.esperar("document.querySelectorAll('[data-apuntar-tierra]').length > 0", segundos=20)
+    nav.evaluar(
+        "(() => { const t = document.querySelector('[data-apuntar-tierra]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    nav.esperar(
+        "!!document.querySelector('[data-apuntar-tierra][aria-pressed=\"true\"]')", segundos=10
+    )
+
+    def sin_desborde_apuntar(nombre: str) -> None:
+        desborde = nav.evaluar("document.documentElement.scrollWidth - window.innerWidth") or 0
+        comprobar(desborde <= 1, f"apuntar · {nombre}: sin scroll horizontal ({desborde} px)")
+
+    # --- tratamiento
+    nav.evaluar(
+        "(() => { const t = document.querySelector('[data-apuntar-tab=\"tratamiento\"]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    hay_productos = nav.esperar(
+        "document.querySelectorAll('[data-apuntar-producto]').length > 0", segundos=25
+    )
+    if hay_productos:
+        sin_desborde_apuntar("tratamiento")
+        selector_producto = (
+            f'[data-apuntar-producto="{producto_de_prueba}"]'
+            if producto_de_prueba
+            else "[data-apuntar-producto]"
+        )
+        nav.evaluar(
+            "(() => { const p = document.querySelector(" + json.dumps(selector_producto) + ");"
+            " if (!p) return false; p.click(); return true; })()"
+        )
+        nav.esperar("!!document.querySelector('[data-apuntar-justificacion]')", segundos=10)
+        escribir_en_un_campo(nav, "[data-apuntar-justificacion]", "Vi pulgón")
+        nav.esperar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " return !!b && !b.disabled; })()",
+            segundos=10,
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " if (!b || b.disabled) return false; b.click(); return true; })()"
+        )
+        ok = nav.esperar(
+            "(() => { const r = document.querySelector('[data-apuntar-resultado]');"
+            " return !!r && r.innerText.trim().length > 0; })()",
+            segundos=40,
+        )
+        comprobar(ok, "el tratamiento se guarda desde el móvil")
+        if not ok:
+            print("  aviso:", nav.evaluar(
+                "(document.querySelector('[data-apuntar-aviso]')||{}).innerText || ''"
+            ))
+        with httpx.Client(base_url=base, timeout=30.0) as cliente:
+            despues = len(
+                cliente.get(
+                    "/api/tratamientos", headers={"Authorization": f"Bearer {token}"}
+                ).json()
+                or []
+            )
+        comprobar(despues > antes_tratamientos, f"el tratamiento queda en la base ({despues})")
+    else:
+        comprobar(False, "no hay productos para apuntar el tratamiento")
+
+    # --- abono
+    nav.evaluar(
+        "(() => { const t = document.querySelector('[data-apuntar-tab=\"abono\"]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    hay_abonos = nav.esperar(
+        "document.querySelectorAll('[data-apuntar-fertilizante]').length > 0", segundos=25
+    )
+    if hay_abonos:
+        sin_desborde_apuntar("abono")
+        nav.evaluar(
+            "(() => { const a = document.querySelector('[data-apuntar-fertilizante]');"
+            " if (!a) return false; a.click(); return true; })()"
+        )
+        nav.esperar("!!document.querySelector('[data-apuntar-dosis]')", segundos=10)
+        escribir_en_un_campo(nav, "[data-apuntar-dosis]", "220")
+        nav.esperar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " return !!b && !b.disabled; })()",
+            segundos=10,
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+            " if (!b || b.disabled) return false; b.click(); return true; })()"
+        )
+        ok = nav.esperar(
+            "(() => { const r = document.querySelector('[data-apuntar-resultado]');"
+            " return !!r && r.innerText.trim().length > 0; })()",
+            segundos=40,
+        )
+        comprobar(ok, "el abono se guarda desde el móvil")
+        with httpx.Client(base_url=base, timeout=30.0) as cliente:
+            despues = len(
+                cliente.get(
+                    "/api/fertilizaciones", headers={"Authorization": f"Bearer {token}"}
+                ).json()
+                or []
+            )
+        comprobar(despues > antes_fertilizaciones, f"el abono queda en la base ({despues})")
+    else:
+        comprobar(False, "no hay abonos para apuntar")
+
+    # --- siembra: con semilla si la hay; si no, la del cuaderno (sin inventar semillas).
+    nav.evaluar(
+        "(() => { const t = document.querySelector('[data-apuntar-tab=\"siembra\"]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    # La lista de semillas se pide al servidor: hay que esperar a que la pestaña termine de pintarse.
+    nav.esperar(
+        "!!document.querySelector('[data-apuntar-cultivo]')"
+        " || document.querySelectorAll('[data-apuntar-semilla]').length > 0",
+        segundos=30,
+    )
+    sin_desborde_apuntar("siembra")
+    sin_semilla = not bool(
+        nav.evaluar("document.querySelectorAll('[data-apuntar-semilla]').length > 0")
+    )
+    if sin_semilla:
+        escribir_en_un_campo(nav, "[data-apuntar-cultivo]", "Trigo")
+    escribir_en_un_campo(nav, "[data-apuntar-dosis]", "210")
+    nav.esperar(
+        "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+        " return !!b && !b.disabled; })()",
+        segundos=10,
+    )
+    nav.evaluar(
+        "(() => { const b = document.querySelector('[data-apuntar-guardar]');"
+        " if (!b || b.disabled) return false; b.click(); return true; })()"
+    )
+    ok = nav.esperar(
+        "(() => { const r = document.querySelector('[data-apuntar-resultado]');"
+        " return !!r && r.innerText.trim().length > 0; })()",
+        segundos=40,
+    )
+    if not ok:
+        print("  aviso:", nav.evaluar(
+            "(document.querySelector('[data-apuntar-aviso]')||{}).innerText || ''"
+        ))
+        print("  estado siembra:", nav.evaluar(
+            "(() => { const c = document.querySelector('[data-apuntar-cultivo]');"
+            " const d = document.querySelector('[data-apuntar-dosis]');"
+            " const g = document.querySelector('[data-apuntar-guardar]');"
+            " return JSON.stringify({cultivo: c && c.value, dosis: d && d.value,"
+            " guardar: !!g, deshabilitado: g ? g.disabled : null,"
+            " semilla: document.querySelectorAll('[data-apuntar-semilla]').length}); })()"
+        ))
+    comprobar(ok, "la siembra se guarda desde el móvil")
+    print(f"  (captura: {captura(nav, 'apuntar-completo-390').relative_to(RAIZ)})")
 
 
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
@@ -1076,6 +1295,7 @@ def main() -> int:
         comprobar_cuaderno_y_productos(nav, base)
         comprobar_la_ventana_del_sigpac(nav, base)
         comprobar_movil(nav, base)
+        comprobar_apuntar_completo(nav, base, token)
         comprobar_estados(nav, base, token_vacio, token)
     print(f"\nFallos: {FALLOS}")
     return 1 if FALLOS else 0

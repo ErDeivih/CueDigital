@@ -118,7 +118,8 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     kg totales (nunca los dos) con el total calculado; siembra con la semilla y su dosis kg/ha, y si no
     hay semillas dadas de alta se ofrece **apuntarla como siembra del cuaderno** sin inventar semillas.
     Al guardar: aviso, ficha refrescada y siguiente paso. **Verificado guardando de verdad en Chrome**
-    (390 y 360): labor, tratamiento, abono por ha, abono en total y siembra, todos 201.
+    (390 y 360): labor, tratamiento, abono por ha, abono en total y siembra, todos 201; y las cuatro
+    pestañas con **0 px de desborde** en cada ancho.
 - [x] **Historial de la tierra**: por campañas, con **siembra** (cultivo, variedad, dosis de semilla
       kg/ha), **labores** (vertedera —en el programa se llama **arado**—, cultivador, grada, siembra…),
       **tratamientos** (producto y dosis), **abonos con kg/ha y el mes** y **cosecha en kg/ha**. Los
@@ -183,6 +184,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-07 | **Apuntar del día a día completo, guardado de verdad y móvil** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde en cada una, y guardado real con 201 de tratamiento, abono y siembra (ficha refrescada); captura `apuntar-completo-390.png` |
 | 2026-11-07 | **GeoPackage REAL de Salamanca probado y cacheado** | ZIP 599,7 MB / 1.011.578 recintos: abre en 1–2 ms, busca en 2,7 ms, contornos en 18 ms, WKT coincide (17/17 puntos, 0,001 m); 33 pruebas sin red |
 | 2026-11-07 | **Apuntar del día a día completo (labor, tratamiento, abono y siembra)** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde, guardado real 201 de las cuatro; 69/69 JS y 27 pytest de la pantalla |
 | 2026-11-06 | **Pasada móvil primero (390 y 360) sin desbordes ni solapamientos** | Chrome a 390×844 y 360×640: 8 vistas con 0 px de desborde, tabla de años con scroll dentro de su caja, ventana del SIGPAC a pantalla completa con «Cerrar» al alcance y barra inferior sin tapar el último botón; capturas `movil-ficha-*.png` y `movil-sigpac-*.png` |

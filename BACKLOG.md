@@ -181,8 +181,9 @@
   los válidos, columna y `LaborSalida`) y **la vista «Apuntar» tiene cuatro pestañas**: labor,
   **tratamiento** (producto, dosis/ha, total, plaga y justificación; avisos 422 del servidor tal cual),
   **abono** (kg/ha o kg totales, nunca los dos) y **siembra** (semilla y dosis kg/ha; sin semillas, se
-  ofrece la siembra del cuaderno). Ficha refrescada y siguiente paso. Verificado guardando de verdad en
-  Chrome a 390 y 360 (4/4 apuntes, 201).
+  ofrece la siembra del cuaderno). Ficha refrescada y siguiente paso. Verificado **guardando de verdad
+  en Chrome a 390 y 360**: tratamiento, abono y siembra con **201** y sus apuntes en la base, con
+  **0 px de desborde en las cuatro pestañas** a los dos anchos.
 - **Falta**: la **cola sin cobertura** (guardar en el móvil y que llegue solo al recuperar la red) y el
   pulido de los 30 segundos/8 campos. El alta de semillas sigue en la app vieja.
 - **Decisión para David**: el vocabulario del programa llama **«arado»** a lo que él llama

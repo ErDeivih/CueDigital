@@ -33,8 +33,10 @@ fecha: 2026-11-07
    - **Siembra**: semilla con su variedad y **dosis kg/ha**; si la finca no tiene semillas dadas de alta,
      se ofrece **apuntarla como siembra del cuaderno** (`/api/labores`), sin inventar semillas.
    - Al guardar: aviso, ficha refrescada y siguiente paso («Ver el trabajo de hoy», «Ver el calendario»).
-   - **Verificado guardando de verdad en Chrome a 390 y 360**: 4 de 4 apuntes con HTTP 201; 0 px de
-     desborde, pestañas 2×2 y «Guardar» nunca tapado por la barra.
+   - **Verificado guardando de verdad en Chrome a 390 y 360**: tratamiento (producto con registro,
+     dosis, justificación; 201 y el apunte en la base), abono (kg/ha, 201) y siembra del cuaderno
+     (Trigo, 210 kg/ha; 201), con **0 px de desborde en las cuatro pestañas** a los dos anchos y
+     «Guardar» siempre al alcance del pulgar. La ficha se refresca y propone el siguiente paso.
 3. **Limpieza**: el único servidor que se levanta es el de las verificaciones (uvicorn temporal) y se
    apaga al terminar; no queda ningún proceso de CueDigital escuchando.
 
@@ -45,7 +47,7 @@ fecha: 2026-11-07
     armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar (4 pestañas), calendario,
     filtros, facturas, cuaderno, productos y ventana del SIGPAC                        0 fallos
     GeoPackage real (Salamanca)                                                     OK, 22 s en caliente
-    capturas                                            18 en docs/capturas-nuevo/
+    capturas                                            19 en docs/capturas-nuevo/
 
 ## Lo que sigue abierto
 
