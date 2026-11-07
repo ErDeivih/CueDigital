@@ -38,6 +38,9 @@ import {
   cuerpoDeBusquedaPorReferencia,
   cuerpoDeLaFactura,
   cuerpoDeLaFertilizacion,
+  cuerpoDeLaSiembra,
+  cuerpoDeLaSiembraDelCuaderno,
+  cuerpoDelAbono,
   cuerpoDelApunte,
   cuerpoDelContorno,
   cuerpoDelTratamiento,
@@ -65,6 +68,7 @@ import {
   normalizaMunicipios,
   normalizaProductos,
   normalizaPropuestaDeFactura,
+  normalizaSemillas,
   normalizaQueFalta,
   normalizaResumen,
   normalizaTierra,
@@ -1007,6 +1011,9 @@ test("los cuerpos del tratamiento y del abono son los que espera el servidor", (
     dosis: 1.5,
     unidad_dosis: "L/ha",
     superficie_tratada_ha: 12.5,
+    plaga: null,
+    justificacion: null,
+    observaciones: null,
   });
 
   const abono = cuerpoDeLaFertilizacion({
@@ -1264,4 +1271,121 @@ test("la ventana del SIGPAC tiene sus textos", () => {
   for (const clave of ["titulo", "cerrar", "porReferencia", "porMunicipio", "municipio", "poligono", "parcela", "buscar", "usar", "sinForma", "anadida", "aplicada", "noSePudo"]) {
     assert.ok(textos.ventana[clave], `falta el texto «${clave}» de la ventana`);
   }
+});
+
+
+// ---------------------------------------------------------------------------
+// Apuntar del día a día: labor, tratamiento, abono y siembra
+// ---------------------------------------------------------------------------
+
+test("las semillas del servidor se leen con su variedad y su dosis", () => {
+  const semillas = normalizaSemillas({
+    semillas: [
+      { id: 5, nombre: "Trigo", variedad: "Adelanto", especie: "Trigo", dosis_recomendada_por_ha: 210, unidad_dosis: "kg/ha" },
+      { id: 6, nombre: "" },
+    ],
+  });
+  assert.equal(semillas.length, 1);
+  assert.equal(semillas[0].variedad, "Adelanto");
+  assert.equal(semillas[0].dosisRecomendada, 210);
+  assert.deepEqual(normalizaSemillas(null), []);
+});
+
+test("el cuerpo de la siembra con semilla es el que espera el servidor", () => {
+  const cuerpo = cuerpoDeLaSiembra({
+    tierraId: 7,
+    fecha: "2026-11-07",
+    semillaId: 5,
+    dosisPorHa: 210,
+    hectareas: 12.5,
+    nota: "  ",
+  });
+  assert.deepEqual(cuerpo, {
+    semilla_id: 5,
+    parcela_id: 7,
+    fecha: "2026-11-07",
+    superficie_ha: 12.5,
+    dosis_por_ha: 210,
+    unidad_dosis: "kg/ha",
+    notas: null,
+  });
+  assert.equal(cuerpoDeLaSiembra({}).fecha, fechaDeHoyISO());
+});
+
+test("sin semillas se apunta la siembra del cuaderno, sin inventar ninguna", () => {
+  const cuerpo = cuerpoDeLaSiembraDelCuaderno({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-07",
+    cultivo: "Trigo",
+    variedad: "Adelanto",
+    dosisKgHa: 210,
+    hectareas: 12.5,
+    nota: "Sembrado con la sembradora del vecino",
+  });
+  assert.equal(cuerpo.tipo, "siembra");
+  assert.equal(cuerpo.cultivo, "Trigo");
+  assert.equal(cuerpo.variedad, "Adelanto");
+  assert.equal(cuerpo.dosis_siembra_kg_ha, 210);
+  assert.equal(cuerpo.cantidad_semilla_kg, 2625);
+  assert.equal(cuerpo.superficie_ha, 12.5);
+  assert.ok(cuerpo.observaciones);
+  // Si no hay cultivo se queda en blanco, no se rellena con nada.
+  assert.equal(cuerpoDeLaSiembraDelCuaderno({}).cultivo, null);
+});
+
+test("el abono se apunta por hectárea o en kilos totales, nunca las dos cosas", () => {
+  const porHectarea = cuerpoDelAbono({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-07",
+    fertilizanteId: 9,
+    modo: "por_hectarea",
+    dosisPorHa: 200,
+    hectareas: 12.5,
+  });
+  assert.equal(porHectarea.kg_ha_producto, 200);
+  assert.equal(porHectarea.cantidad_total_kg, 2500);
+  assert.equal(porHectarea.unidad_del_producto, "kg");
+
+  const total = cuerpoDelAbono({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-07",
+    fertilizanteId: 9,
+    modo: "total",
+    kilosTotales: 2500,
+    hectareas: 12.5,
+  });
+  assert.equal(total.cantidad_total_kg, 2500);
+  assert.equal("kg_ha_producto" in total, false, "en modo total no se manda la dosis por hectárea");
+});
+
+test("el tratamiento lleva su plaga y su nota, y la siembra su total", () => {
+  const cuerpo = cuerpoDelTratamiento({
+    campanaId: 4,
+    tierraId: 7,
+    fecha: "2026-11-07",
+    productoId: 1,
+    dosis: 1.5,
+    unidadDosis: "L/ha",
+    hectareas: 12.5,
+    plaga: "Avena loca",
+    justificacion: "Vi pulgón",
+    nota: "Con la cuba llena",
+  });
+  assert.equal(cuerpo.plaga, "Avena loca");
+  assert.equal(cuerpo.justificacion, "Vi pulgón");
+  assert.equal(cuerpo.observaciones, "Con la cuba llena");
+  assert.equal(totalDeLaAplicacion(1.5, 12.5, "L/ha").cantidad, 18.75);
+});
+
+test("la vista de apuntar tiene sus cuatro pestañas y sus textos", () => {
+  for (const pestana of ["pestanaLabor", "pestanaTratamiento", "pestanaAbono", "pestanaSiembra"]) {
+    assert.ok(textos.apuntar[pestana], `falta la pestaña «${pestana}»`);
+  }
+  assert.ok(textos.apuntar.producto.guardar);
+  assert.ok(textos.apuntar.abono.kilosTotales);
+  assert.ok(textos.apuntar.siembra.sinSemillas);
+  assert.ok(textos.apuntar.siembra.delCuaderno);
 });

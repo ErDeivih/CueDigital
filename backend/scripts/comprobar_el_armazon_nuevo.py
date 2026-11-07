@@ -545,7 +545,35 @@ def comprobar_ficha_calendario_trabajos_y_facturas(
     nav.esperar("document.querySelectorAll('[data-apuntar-apero]').length > 0", segundos=25)
     aperos = nav.evaluar("document.querySelectorAll('[data-apuntar-apero]').length") or 0
     comprobar(aperos >= 6, f"el apero sale del vocabulario del servidor ({aperos})")
+    tabs = nav.evaluar("document.querySelectorAll('[data-apuntar-tab]').length") or 0
+    comprobar(tabs >= 4, f"se puede apuntar labor, tratamiento, abono y siembra ({tabs} pestañas)")
+    for clave, nombre, marcador in (
+        ("tratamiento", "tratamiento", "[data-apuntar-producto]"),
+        ("abono", "abono", "[data-apuntar-fertilizante]"),
+        ("siembra", "siembra", "[data-apuntar-semilla]"),
+    ):
+        if not tabs:
+            break
+        nav.evaluar(
+            "(() => { const t = document.querySelector('[data-apuntar-tab=\"" + clave + "\"]');"
+            " if (!t) return false; t.click(); return true; })()"
+        )
+        visible = nav.esperar(
+            "document.querySelectorAll('" + marcador + "').length > 0"
+            " || document.body.innerText.toLowerCase().includes('no hay')"
+            " || document.body.innerText.toLowerCase().includes('todavía no')",
+            segundos=20,
+        )
+        cuantos = nav.evaluar("document.querySelectorAll('" + marcador + "').length") or 0
+        comprobar(visible, f"la pestaña de {nombre} responde ({cuantos} para elegir)")
     if llego_apuntar and aperos:
+        # Las pestañas de antes han podido dejar activa la de siembra: se vuelve a labor para
+        # guardar el apero, que es lo que se comprueba aquí.
+        nav.evaluar(
+            "(() => { const t = document.querySelector('[data-apuntar-tab=\"labor\"]');"
+            " if (!t) return false; t.click(); return true; })()"
+        )
+        nav.esperar("document.querySelectorAll('[data-apuntar-apero]').length > 0", segundos=15)
         nav.evaluar(
             "(() => { const a = document.querySelector('[data-apuntar-apero]');"
             " if (!a) return false; a.click(); return true; })()"
@@ -866,6 +894,7 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
         for clave, nombre in (
             ("tierras", "Tierras"),
             ("calendario", "Calendario"),
+            ("apuntar", "Apuntar"),
             ("trabajos", "Trabajos"),
             ("productos", "Productos"),
             ("cuaderno", "Cuaderno"),

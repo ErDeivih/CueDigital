@@ -109,14 +109,16 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       fecha, base, IVA, total, líneas); «Guardar». Si el lector no está o no entiende la foto, **lo
       dice y deja escribirla a mano**, nunca inventa. **Verificado**: una foto sintética se lee y
       sale la propuesta; las fotos de más se guardan como documentos.
-- [x] **Tierra primero**: al pinchar una tierra (en la lista o en el mapa) se abre su ficha con el
-      **«Hoy en esta tierra»**: los trabajos de hoy sobre ella o «hoy no hay nada apuntado».
-  - **Y desde la propia tierra se apunta el trabajo del día** (nuevo, 05/11 tarde): botón «Apuntar un
-    trabajo» en la ficha y destino «Apuntar» en la barra del móvil y en la lateral. Se elige el
-    **apero del vocabulario del servidor** (rodillo, cultivador, arado, grada, fresadora, otro), la
-    fecha de hoy y las hectáreas de la tierra; se guarda y la ficha se refresca con el trabajo en
-    «Hoy en esta tierra» y en el historial. **Verificado en Chrome**: el apunte queda en la base con su
-    apero y la pantalla lo dice (0 fallos).
+- [x] **Apuntar el trabajo del día desde la tierra (con apero)**: botón «Apuntar un trabajo» en la ficha
+      y destino «Apuntar» en las barras. Se elige el **apero del vocabulario del servidor**, la fecha de
+      hoy y las hectáreas de la tierra; se guarda y la ficha se refresca.
+  - **Y el apunte del día a día completo** (07/11/2026): la vista «Apuntar» tiene **cuatro pestañas**
+    —labor, tratamiento, abono y siembra—. Tratamiento con producto, dosis por hectárea, total
+    calculado, plaga y justificación (los avisos del servidor se enseñan tal cual); abono en kg/ha o
+    kg totales (nunca los dos) con el total calculado; siembra con la semilla y su dosis kg/ha, y si no
+    hay semillas dadas de alta se ofrece **apuntarla como siembra del cuaderno** sin inventar semillas.
+    Al guardar: aviso, ficha refrescada y siguiente paso. **Verificado guardando de verdad en Chrome**
+    (390 y 360): labor, tratamiento, abono por ha, abono en total y siembra, todos 201.
 - [x] **Historial de la tierra**: por campañas, con **siembra** (cultivo, variedad, dosis de semilla
       kg/ha), **labores** (vertedera —en el programa se llama **arado**—, cultivador, grada, siembra…),
       **tratamientos** (producto y dosis), **abonos con kg/ha y el mes** y **cosecha en kg/ha**. Los
@@ -142,12 +144,16 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
       contorno dibujado** (relleno suave y línea blanca con borde oscuro), centrada y con margen; la
       ficha la enseña. Si la tierra no tiene forma, la ficha **lo dice** («no tiene forma en el
       SIGPAC») en vez de dibujar un cuadro inventado. 800×600 en unos 2 s en caliente.
-  - **Y el GeoPackage ya se abre** (05/11 tarde): `app/geopackage_sigpac.py` lee el `.gpkg` de la
-    caché **sin GDAL ni shapely** (descubre tabla y columna de geometría, descubre atributos por
-    nombre, traduce el blob GPKG/WKB a WKT) y `POST /api/sigpac/cache/{provincia}/contornos` rellena
-    `geometria`/`dibujo` de las parcelas de la finca que casan por su referencia SIGPAC, de forma
-    idempotente. 21 pruebas con un gpkg sintético. **Queda por probar con un gpkg real de 600 MB**
-    (streaming/índice) y solo admite Polygon/MultiPolygon (rechaza Z/M con su código, no los lee mal).
+  - **Y el GeoPackage ya se abre, y probado con el fichero REAL** (07/11/2026): Salamanca 37, campaña
+    2026, **599,7 MB de ZIP → 1.070 MB de `.gpkg` con 1.011.578 recintos**. El lector abre en
+    **1–2 ms** (el `.gpkg` queda guardado al lado del ZIP, validado por tamaño/sha y recuperado si está
+    cortado) y busca el recinto `37-70-0-0-503-51-1` en **2,7 ms**; el WKT coincide con el del SIGPAC
+    (**17/17 puntos, centro a 0,001 m, superficie 4,9016 ha = 4,9016 ha**). `contornos_de_las_parcelas`
+    tarda **18 ms**. La prueba real destapó y corrigió tres cosas que el sintético no veía: `srs_id = 0`
+    en el blob (manda el del fichero), columnas reales `csp`/`dn_surface`, y **`dn_surface` en m²**
+    (se convierte a ha, antes salía 10.000× más grande). **Queda por hacer**: bajar el ZIP carga
+    **638 MB en RAM** (streaming pendiente en `sigpac_cache.py`), y la limpieza del `.gpkg` (1,67 GB por
+    provincia).
   - **Y tiene ventana propia de selección de parcela** (06/11): un modal (`data-ventana-sigpac`) que
     se abre desde el alta y desde la ficha de una tierra, con **dos formas de buscar** —la referencia
     del papel o el **pueblo elegido de la lista oficial** + agregado/zona/polígono/parcela—, lista de
@@ -177,6 +183,8 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-07 | **GeoPackage REAL de Salamanca probado y cacheado** | ZIP 599,7 MB / 1.011.578 recintos: abre en 1–2 ms, busca en 2,7 ms, contornos en 18 ms, WKT coincide (17/17 puntos, 0,001 m); 33 pruebas sin red |
+| 2026-11-07 | **Apuntar del día a día completo (labor, tratamiento, abono y siembra)** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde, guardado real 201 de las cuatro; 69/69 JS y 27 pytest de la pantalla |
 | 2026-11-06 | **Pasada móvil primero (390 y 360) sin desbordes ni solapamientos** | Chrome a 390×844 y 360×640: 8 vistas con 0 px de desborde, tabla de años con scroll dentro de su caja, ventana del SIGPAC a pantalla completa con «Cerrar» al alcance y barra inferior sin tapar el último botón; capturas `movil-ficha-*.png` y `movil-sigpac-*.png` |
 | 2026-11-06 | **Ventana propia del SIGPAC y contorno aplicado a una tierra existente** | Arnés de Chrome, 0 fallos (buscar por referencia, recinto, usar, cerrar; aplicar desde la ficha); `tests/test_contorno_de_una_tierra.py` (14) |
 | 2026-11-05 | **Historial comparable, calendario con totales y filtros por tierra/fechas con CSV** | Arnés de Chrome, 0 fallos (tabla de años, totales de día y mes, filtros con tierra/fechas y descarga); `tests/test_nuevo_trazabilidad.py` (14) |

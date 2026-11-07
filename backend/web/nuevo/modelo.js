@@ -48,6 +48,7 @@ export const textos = {
     sinPermiso: "Entra con tu cuenta para ver lo tuyo.",
     entrar: "Entrar",
     vacio: "Aquí todavía no hay nada.",
+    todaviaNo: "Todavía no está en la pantalla nueva.",
     reintentarCorto: "Volver a intentar",
   },
   hoy: {
@@ -300,6 +301,11 @@ export const textos = {
   apuntar: {
     titulo: "Apuntar un trabajo",
     intro: "Elige la tierra y di qué has hecho. Queda en su historial.",
+    pestanas: "Qué quieres apuntar",
+    pestanaLabor: "Labor",
+    pestanaTratamiento: "Tratamiento",
+    pestanaAbono: "Abono",
+    pestanaSiembra: "Siembra",
     tierra: "Tierra",
     eligiendo: "Elige la tierra",
     que: "Qué has hecho",
@@ -321,6 +327,69 @@ export const textos = {
     miniatura: "El contorno de la tierra",
     sinMapa: "sin mapa",
     guardarImagen: "Guardar la imagen",
+    producto: {
+      titulo: "Producto",
+      buscar: "Buscar producto",
+      pistaBuscar: "Nombre o materia activa",
+      materia: "Materia activa",
+      dosisMaxima: "Dosis máxima",
+      plazo: "Plazo de seguridad",
+      dias: "días",
+      dosis: "Dosis por hectárea",
+      total: "Total calculado",
+      plaga: "Plaga o hierba",
+      justificacion: "Por qué lo has echado",
+      pistaJustificacion: "Por ejemplo: «vi pulgón» o «me lo dijo mi técnico»",
+      sinJustificacion: "Escribe por qué lo has echado.",
+      nota: "Nota",
+      guardar: "Guardar el tratamiento",
+      guardado: "Tratamiento guardado. Ya está en la tierra.",
+      sinProductos: "No hay productos dados de alta.",
+      irAProductos: "Ver productos",
+      sinProducto: "Elige el producto.",
+      sinDosis: "Escribe la dosis por hectárea.",
+      sinSuperficie: "Escribe las hectáreas.",
+    },
+    abono: {
+      titulo: "Abono",
+      buscar: "Buscar abono",
+      riqueza: "Riqueza",
+      modo: "Cómo lo apuntas",
+      porHectarea: "Por hectárea (kg/ha)",
+      kilosTotales: "Kilos en total",
+      dosis: "Dosis por hectárea (kg)",
+      totales: "Kilos en total",
+      total: "Total calculado",
+      nota: "Nota",
+      guardar: "Guardar el abono",
+      guardado: "Abono guardado. Ya está en la tierra.",
+      sinAbonos: "No hay abonos dados de alta.",
+      irAAbonos: "Ver abonos",
+      sinAbono: "Elige el abono.",
+      sinDosis: "Escribe la dosis por hectárea.",
+      sinTotales: "Escribe los kilos en total.",
+      sinSuperficie: "Escribe las hectáreas.",
+    },
+    siembra: {
+      titulo: "Semilla",
+      buscar: "Buscar semilla",
+      variedad: "Variedad",
+      dosis: "Dosis de semilla (kg/ha)",
+      hectareas: "Hectáreas",
+      total: "Total calculado",
+      nota: "Nota",
+      guardar: "Guardar la siembra",
+      guardado: "Siembra guardada. Ya está en la tierra.",
+      sinSemillas: "No hay semillas dadas de alta en esta finca.",
+      delCuaderno: "Apuntarla como siembra del cuaderno",
+      explicacion: "Se apunta en el cuaderno sin elegir una semilla del almacén.",
+      cultivo: "Cultivo",
+      guardarCuaderno: "Guardar la siembra del cuaderno",
+      sinSemilla: "Elige la semilla.",
+      sinCultivo: "Escribe el cultivo.",
+      sinDosis: "Escribe la dosis de semilla.",
+      sinSuperficie: "Escribe las hectáreas.",
+    },
   },
   tierra: {
     volver: "Volver a las tierras",
@@ -1576,7 +1645,7 @@ export function rutaDeLaAplicacion(tipo) {
 }
 
 /** El cuerpo del tratamiento (producto) tal y como lo espera el servidor. */
-export function cuerpoDelTratamiento({ campanaId, tierraId, fecha, productoId, dosis, unidadDosis, hectareas } = {}) {
+export function cuerpoDelTratamiento({ campanaId, tierraId, fecha, productoId, dosis, unidadDosis, hectareas, plaga, justificacion, nota } = {}) {
   return {
     campana_id: campanaId ?? null,
     tipo: "parcela",
@@ -1586,6 +1655,9 @@ export function cuerpoDelTratamiento({ campanaId, tierraId, fecha, productoId, d
     dosis: numeroDe(dosis),
     unidad_dosis: unidadDosis || "L/ha",
     superficie_tratada_ha: numeroDe(hectareas),
+    plaga: String(plaga ?? "").trim() || null,
+    justificacion: String(justificacion ?? "").trim() || null,
+    observaciones: String(nota ?? "").trim() || null,
   };
 }
 
@@ -1602,6 +1674,90 @@ export function cuerpoDeLaFertilizacion({ campanaId, tierraId, fecha, fertilizan
     kg_ha_producto: dosis,
     unidad_del_producto: unidad || "kg",
     cantidad_total_kg: superficie !== null && dosis !== null ? redondea(superficie * dosis, 3) : null,
+  };
+}
+
+/**
+ * El abono cuando se apunta **de una de las dos maneras**: por hectárea o en kilos totales.
+ * Nunca se mandan las dos cifras a la vez; la que no toca se queda fuera del cuerpo.
+ */
+export function cuerpoDelAbono({
+  campanaId,
+  tierraId,
+  fecha,
+  fertilizanteId,
+  modo = "por_hectarea",
+  dosisPorHa,
+  kilosTotales,
+  hectareas,
+  nota,
+} = {}) {
+  const superficie = numeroDe(hectareas);
+  const esPorHectarea = modo !== "total";
+  const cuerpo = {
+    campana_id: campanaId ?? null,
+    fecha: fecha || fechaDeHoyISO(),
+    parcela_id: tierraId ?? null,
+    superficie_ha: superficie,
+    fertilizante_id: fertilizanteId ?? null,
+    unidad_del_producto: "kg",
+    observaciones: String(nota ?? "").trim() || null,
+  };
+  if (esPorHectarea) {
+    const dosis = numeroDe(dosisPorHa);
+    cuerpo.kg_ha_producto = dosis;
+    cuerpo.cantidad_total_kg = superficie !== null && dosis !== null ? redondea(superficie * dosis, 3) : null;
+    return cuerpo;
+  }
+  cuerpo.cantidad_total_kg = numeroDe(kilosTotales);
+  return cuerpo;
+}
+
+/** Las semillas que sirve el servidor, con su dosis recomendada si la trae. */
+export function normalizaSemillas(datos) {
+  return laLista(datos, "semillas")
+    .filter((semilla) => semilla && (semilla.nombre || semilla.especie))
+    .map((semilla) => ({
+      id: semilla.id ?? null,
+      nombre: semilla.nombre || semilla.especie,
+      variedad: semilla.variedad || null,
+      especie: semilla.especie || null,
+      dosisRecomendada: numeroDe(semilla.dosis_recomendada_por_ha),
+      unidad: semilla.unidad_dosis || "kg/ha",
+    }));
+}
+
+/** El cuerpo de la siembra con una semilla del almacén. */
+export function cuerpoDeLaSiembra({ tierraId, fecha, semillaId, dosisPorHa, hectareas, nota } = {}) {
+  return {
+    semilla_id: semillaId ?? null,
+    parcela_id: tierraId ?? null,
+    fecha: fecha || fechaDeHoyISO(),
+    superficie_ha: numeroDe(hectareas),
+    dosis_por_ha: numeroDe(dosisPorHa),
+    unidad_dosis: "kg/ha",
+    notas: String(nota ?? "").trim() || null,
+  };
+}
+
+/**
+ * La siembra **del cuaderno**, sin semilla del almacén: va por la puerta de las labores con lo que
+ * de verdad se sabe (cultivo, variedad y dosis). No se inventa ninguna semilla.
+ */
+export function cuerpoDeLaSiembraDelCuaderno({ campanaId, tierraId, fecha, cultivo, variedad, dosisKgHa, hectareas, nota } = {}) {
+  const superficie = numeroDe(hectareas);
+  const dosis = numeroDe(dosisKgHa);
+  return {
+    campana_id: campanaId ?? null,
+    tipo: "siembra",
+    fecha: fecha || fechaDeHoyISO(),
+    parcela_id: tierraId ?? null,
+    cultivo: String(cultivo ?? "").trim() || null,
+    variedad: String(variedad ?? "").trim() || null,
+    dosis_siembra_kg_ha: dosis,
+    cantidad_semilla_kg: superficie !== null && dosis !== null ? redondea(superficie * dosis, 3) : null,
+    superficie_ha: superficie,
+    observaciones: String(nota ?? "").trim() || null,
   };
 }
 

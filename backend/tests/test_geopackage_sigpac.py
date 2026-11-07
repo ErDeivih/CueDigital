@@ -19,8 +19,10 @@ solo demostraría que es coherente consigo mismo.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import struct
+import time
 import zipfile
 from types import SimpleNamespace
 
@@ -28,6 +30,9 @@ import pytest
 
 from app import geopackage_sigpac
 from test_los_permisos_por_materia import _sin_capacidad  # noqa: E402 — el andamiaje, prestado
+
+# El nombre del mapa dentro del ZIP, con la pinta del de verdad (`0837_SALAMANCA_…gpkg`).
+MIEMBRO = "0837_SALAMANCA_rec_2026_20251215.gpkg"
 
 # La parcela de ejemplo: 37 / 70 / 0 / 0 / 503 / 51 / 1 (Salamanca, Calvarrasa de Arriba).
 PROVINCIA, MUNICIPIO = 37, 70
@@ -88,11 +93,25 @@ def _blob_multi(poligonos, *, srs=4258):
 # --------------------------------------------------------------------------- el gpkg sintético
 
 
-def _un_gpkg(ruta, filas, *, tabla="recintos", columna="geom", sin_columnas=(), una_geometria=False):
+def _un_gpkg(
+    ruta,
+    filas,
+    *,
+    tabla="recintos",
+    columna="geom",
+    sin_columnas=(),
+    una_geometria=False,
+    srs=4258,
+    nombres=None,
+    fila_superficie=None,
+):
     """Fabrica un GeoPackage con su tabla de geometrías y las filas que se le digan.
 
-    `sin_columnas` quita columnas a la tabla (para probar que un esquema desconocido se dice) y
-    `una_geometria` declara en `gpkg_geometry_columns` un tipo distinto de POLYGON.
+    `sin_columnas` quita columnas a la tabla (para probar que un esquema desconocido se dice),
+    `una_geometria` declara en `gpkg_geometry_columns` un tipo distinto de POLYGON, `srs` es el
+    sistema de coordenadas **declarado en el fichero** (el que manda) y `nombres` permite escribir
+    las columnas con el nombre de verdad del SIGPAC (`dn_surface`, `csp`…). `fila_superficie` cambia
+    el número de la superficie de todas las filas (para probar la unidad).
     """
     columnas = {
         "provincia": "INTEGER",
@@ -110,7 +129,8 @@ def _un_gpkg(ruta, filas, *, tabla="recintos", columna="geom", sin_columnas=(), 
     }
     for fuera in sin_columnas:
         columnas.pop(fuera, None)
-    definicion = ", ".join(f"{nombre} {tipo}" for nombre, tipo in columnas.items())
+    reales = {clave: (nombres or {}).get(clave, clave) for clave in columnas}
+    definicion = ", ".join(f'"{reales[clave]}" {tipo}' for clave, tipo in columnas.items())
     conexion = sqlite3.connect(ruta)
     try:
         conexion.execute(
@@ -122,15 +142,17 @@ def _un_gpkg(ruta, filas, *, tabla="recintos", columna="geom", sin_columnas=(), 
         )
         conexion.execute(
             "INSERT INTO gpkg_geometry_columns VALUES (?, ?, ?, ?, 0, 0)",
-            (tabla, columna, "POINT" if una_geometria else "POLYGON", 4258),
+            (tabla, columna, "POINT" if una_geometria else "POLYGON", srs),
         )
         for fila in filas:
-            nombres = [nombre for nombre in columnas if nombre in fila]
-            huecos = ", ".join("?" for _ in nombres)
+            if fila_superficie is not None:
+                fila = {**fila, "superficie": fila_superficie}
+            nombres_reales = [reales[clave] for clave in columnas if clave in fila]
+            huecos = ", ".join("?" for _ in nombres_reales)
             conexion.execute(
-                f'INSERT INTO "{tabla}" ({", ".join(nombres)}, "{columna}") '
+                f'INSERT INTO "{tabla}" ({", ".join(nombres_reales)}, "{columna}") '
                 f"VALUES ({huecos}, ?)",
-                [fila[nombre] for nombre in nombres] + [fila.get("geom")],
+                [fila[clave] for clave in columnas if clave in fila] + [fila.get("geom")],
             )
         conexion.commit()
     finally:
@@ -268,6 +290,212 @@ def test_otro_sistema_de_coordenadas_se_rechaza(tmp_path):
         with pytest.raises(geopackage_sigpac.GeopackageDesconocido) as problema:
             lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)
     assert "25830" in str(problema.value)
+
+
+def test_un_blob_que_no_dice_su_sistema_usa_el_que_declara_el_fichero(tmp_path):
+    """**El caso del fichero de verdad del SIGPAC**: el blob dice `srs_id` 0 y el sistema está en
+    `gpkg_geometry_columns`. Antes se rechazaba el mapa entero por eso."""
+    ruta = _un_gpkg(
+        tmp_path / "mapa.gpkg",
+        [_una_fila(geom=_blob(_wkb_de_un_poligono([ANILLO]), srs=0))],
+        srs=4258,
+    )
+    with geopackage_sigpac.abrir_recintos(ruta) as lector:
+        recinto = lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)[0]
+    assert recinto["wkt"] == WKT_ESPERADO
+
+
+def test_si_el_fichero_declara_otro_sistema_se_rechaza(tmp_path):
+    """Y si el que declara el fichero no es longitud/latitud, se dice aunque el blob calle."""
+    ruta = _un_gpkg(
+        tmp_path / "mapa.gpkg",
+        [_una_fila(geom=_blob(_wkb_de_un_poligono([ANILLO]), srs=0))],
+        srs=25830,
+    )
+    with geopackage_sigpac.abrir_recintos(ruta) as lector:
+        with pytest.raises(geopackage_sigpac.GeopackageDesconocido) as problema:
+            lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)
+    assert "25830" in str(problema.value)
+
+
+def test_si_nadie_dice_el_sistema_no_se_adivina(tmp_path):
+    """Ni el blob ni el fichero: no se puede saber si son grados. Se dice en vez de suponerlo."""
+    ruta = _un_gpkg(
+        tmp_path / "mapa.gpkg",
+        [_una_fila(geom=_blob(_wkb_de_un_poligono([ANILLO]), srs=0))],
+        srs=0,
+    )
+    with geopackage_sigpac.abrir_recintos(ruta) as lector:
+        with pytest.raises(geopackage_sigpac.GeopackageDesconocido):
+            lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)
+
+
+def test_las_columnas_del_fichero_de_verdad_se_encuentran(tmp_path):
+    """El GeoPackage del SIGPAC llama `recinto` a la tabla, `dn_geom` a la geometría, `dn_surface` a
+    la superficie y `csp` al coeficiente de subvencionabilidad. Si no se reconocen esos nombres, la
+    superficie y el CSP llegan vacíos sin que nadie se entere."""
+    ruta = _un_gpkg(
+        tmp_path / "real.gpkg",
+        [_una_fila()],
+        tabla="recinto",
+        columna="dn_geom",
+        nombres={"superficie": "dn_surface", "admisibilidad": "csp"},
+        fila_superficie=49015.5907,  # metros cuadrados, como los escribe el fichero de verdad
+    )
+    with geopackage_sigpac.abrir_recintos(ruta) as lector:
+        assert lector.tabla == "recinto" and lector.columna == "dn_geom"
+        recinto = lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)[0]
+    # **Y la superficie viene en metros cuadrados**: 49.015,59 m² son 4,9016 ha, no 49.015 ha.
+    assert recinto["superficie_ha"] == 4.9016
+    assert recinto["admisibilidad"] is None  # el ejemplo trae nulo y se queda nulo
+
+
+def test_una_superficie_ya_en_hectareas_no_se_convierte(tmp_path):
+    """Si la columna se llama `superficie` (o `superficie_ha`), el número ya viene en hectáreas.
+
+    La conversión depende del nombre de la columna **a propósito**: el fichero del SIGPAC no dice en
+    qué unidad está, y dividir por 10.000 una cifra que ya venía en hectáreas dejaría la parcela
+    10.000 veces más pequeña.
+    """
+    ruta = _un_gpkg(tmp_path / "mapa.gpkg", [_una_fila(superficie=4.9016)])
+    with geopackage_sigpac.abrir_recintos(ruta) as lector:
+        recinto = lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)[0]
+    assert recinto["superficie_ha"] == 4.9016
+
+
+# --------------------------------------------------------------------------- el ZIP y su caché
+
+
+def _un_zip_con_mapa(tmp_path, *, filas=None, nombre=None):
+    """Fabrica el ZIP **como lo deja la caché**: el `.gpkg` dentro, con su nombre oficial."""
+    filas = [_una_fila()] if filas is None else filas
+    gpkg = tmp_path / "para_el_zip.gpkg"
+    gpkg.unlink(missing_ok=True)  # se fabrica de cero cada vez (si no, las tablas ya están)
+    gpkg = _un_gpkg(gpkg, filas)
+    ruta_zip = tmp_path / (nombre or "37_SALAMANCA_rec_2026_20251215_gpkg.zip")
+    with zipfile.ZipFile(ruta_zip, "w", zipfile.ZIP_DEFLATED) as paquete:
+        paquete.write(gpkg, arcname=MIEMBRO)
+    return ruta_zip
+
+
+def _el_guardado_de(ruta_zip):
+    """Dónde tiene que quedar el `.gpkg` sacado (la misma regla que usa el lector)."""
+    return geopackage_sigpac._la_ruta_del_gpkg_guardado(ruta_zip, MIEMBRO)
+
+
+def _buscar_aqui(lector):
+    return lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)
+
+
+def test_la_primera_apertura_deja_el_mapa_sacado_junto_al_zip(tmp_path):
+    """**Antes se descomprimía 1 GB en cada llamada.** Ahora la primera vez se saca al lado del ZIP."""
+    ruta_zip = _un_zip_con_mapa(tmp_path)
+    guardado = _el_guardado_de(ruta_zip)
+    assert not guardado.exists(), "de entrada no hay nada sacado"
+
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert lector.cacheado is False, "esta primera vez se acaba de sacar"
+        assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+
+    assert guardado.is_file(), "el mapa tiene que quedar sacado para la próxima"
+    assert guardado.stat().st_size > 0
+    assert not list(tmp_path.glob(".*extrayendo")), "no puede quedar un temporal a medias"
+
+
+def test_la_segunda_apertura_no_vuelve_a_descomprimir(tmp_path, monkeypatch):
+    """La segunda vez **se abre el `.gpkg` guardado**: ni se descomprime ni se reescribe."""
+    ruta_zip = _un_zip_con_mapa(tmp_path)
+    with geopackage_sigpac.abrir_recintos(ruta_zip):
+        pass
+    guardado = _el_guardado_de(ruta_zip)
+    antes = guardado.stat().st_mtime_ns
+
+    def _no_se_debe_descomprimir(*args, **kwargs):
+        raise AssertionError("ha vuelto a descomprimir el ZIP en la segunda apertura")
+
+    monkeypatch.setattr(geopackage_sigpac, "_extraer_al_lado", _no_se_debe_descomprimir)
+    monkeypatch.setattr(geopackage_sigpac, "_sacar_al_temporal", _no_se_debe_descomprimir)
+
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert lector.cacheado is True
+        assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+    assert guardado.stat().st_mtime_ns == antes, "el guardado no se ha tocado"
+
+
+def test_si_el_zip_cambia_se_vuelve_a_sacar(tmp_path):
+    """Mapa nuevo encima del mismo nombre: el ZIP es más nuevo y el guardado deja de valer."""
+    ruta_zip = _un_zip_con_mapa(tmp_path, filas=[_una_fila()])
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert _buscar_aqui(lector)[0]["uso_sigpac"] == "TA"
+    guardado = _el_guardado_de(ruta_zip)
+    antes = guardado.stat().st_mtime_ns
+
+    # El mismo ZIP, con otro contenido y con la fecha delante (como una descarga nueva).
+    _un_zip_con_mapa(tmp_path, filas=[_una_fila(uso_sigpac="PA")])
+    futuro = time.time() + 60
+    os.utime(ruta_zip, (futuro, futuro))
+
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert _buscar_aqui(lector)[0]["uso_sigpac"] == "PA", "se ha abierto el mapa viejo"
+    assert guardado.stat().st_mtime_ns != antes, "el guardado se ha vuelto a sacar"
+
+
+def test_un_mapa_guardado_cortado_se_vuelve_a_sacar(tmp_path):
+    """Un apagón a mitad de la extracción deja un `.gpkg` cortado: se tira y se saca otra vez."""
+    ruta_zip = _un_zip_con_mapa(tmp_path)
+    with geopackage_sigpac.abrir_recintos(ruta_zip):
+        pass
+    guardado = _el_guardado_de(ruta_zip)
+    guardado.write_bytes(b"GP")  # cortado: el tamaño no cuadra con el del ZIP
+
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+    assert guardado.stat().st_size > 2, "y queda uno bueno para la próxima"
+
+
+def test_un_mapa_guardado_ilegible_se_vuelve_a_sacar(tmp_path):
+    """Con el tamaño correcto pero basura dentro, el que lo delata es sqlite: también se recupera."""
+    ruta_zip = _un_zip_con_mapa(tmp_path)
+    with geopackage_sigpac.abrir_recintos(ruta_zip):
+        pass
+    guardado = _el_guardado_de(ruta_zip)
+    guardado.write_bytes(b"\x00" * guardado.stat().st_size)
+
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        # El tamaño no lo delataba, así que se ha tenido que volver a descomprimir.
+        assert lector.cacheado is False
+        assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+
+    # Y el que ha quedado ya sí sirve: la siguiente apertura no descomprime.
+    with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+        assert lector.cacheado is True
+        assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+
+
+def test_si_la_carpeta_no_se_puede_escribir_sigue_funcionando(tmp_path, monkeypatch):
+    """**No se rompe por no poder cachear**: se saca al temporal de siempre y se dice (`cacheado`)."""
+
+    def _sin_permiso(*args, **kwargs):
+        raise PermissionError("la carpeta del mapa es de solo lectura")
+
+    ruta_zip = _un_zip_con_mapa(tmp_path)
+    monkeypatch.setattr(geopackage_sigpac, "_extraer_al_lado", _sin_permiso)
+
+    for _ in range(2):  # y la segunda tampoco falla, aunque vuelva a descomprimir
+        with geopackage_sigpac.abrir_recintos(ruta_zip) as lector:
+            assert lector.cacheado is False
+            assert _buscar_aqui(lector)[0]["wkt"] == WKT_ESPERADO
+    assert not _el_guardado_de(ruta_zip).exists(), "no se ha dejado nada escrito al lado del ZIP"
+
+
+def test_un_zip_que_no_lleva_mapa_dentro_se_dice(tmp_path):
+    ruta_zip = tmp_path / "sin_mapa.zip"
+    with zipfile.ZipFile(ruta_zip, "w") as paquete:
+        paquete.writestr("leeme.txt", "aquí no hay ningún mapa")
+    with pytest.raises(geopackage_sigpac.GeopackageDesconocido) as problema:
+        with geopackage_sigpac.abrir_recintos(ruta_zip):
+            pass
+    assert "ningún mapa" in str(problema.value)
 
 
 # --------------------------------------------------------------------------- los contornos

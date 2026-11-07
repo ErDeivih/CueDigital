@@ -38,6 +38,13 @@ ENGANCHES = [
     "data-volver",
     "data-tierra-id",
     "data-apuntar-tierra",
+    "data-apuntar-tab",
+    "data-apuntar-producto",
+    "data-apuntar-fertilizante",
+    "data-apuntar-semilla",
+    "data-apuntar-dosis",
+    "data-apuntar-justificacion",
+    "data-apuntar-total",
     "data-apuntar-apero",
     "data-apuntar-fecha",
     "data-apuntar-hectareas",
@@ -152,6 +159,8 @@ PUERTAS = [
     "/api/trabajos/que-falta",
     "/api/productos",
     "/api/fertilizantes",
+    "/api/semillas",
+    "/api/siembras",
     "/api/tratamientos",
     "/api/fertilizaciones",
     "/api/municipios",
@@ -314,6 +323,27 @@ class TestElContratoConElArnesDeNavegador:
         # La miniatura del contorno en las listas y el guardar la imagen en la ficha.
         assert "Miniatura" in fuente
         assert "urlDeMiniatura" in fuente
+
+    def test_apuntar_tiene_las_cuatro_pestanas_del_dia_a_dia(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        for pestana in ("labor", "tratamiento", "abono", "siembra"):
+            assert f'clave: "{pestana}"' in fuente, f"falta la pestaña «{pestana}» en la vista de apuntar"
+            assert f'data-apuntar-tab=${{una.clave}}' in fuente
+        # Los cuerpos de las puertas nuevas viven en el modelo, y el abono tiene sus dos modos.
+        for funcion in ("cuerpoDeLaSiembra", "cuerpoDeLaSiembraDelCuaderno", "cuerpoDelAbono", "normalizaSemillas"):
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
+        assert "modo =" in modelo
+        # El total se calcula con dosis × hectáreas y los avisos del servidor se enseñan tal cual.
+        assert "totalDeLaAplicacion" in fuente
+        assert "mensajesDeLaRespuesta" in fuente
+        # Sin semillas dadas de alta se ofrece la siembra del cuaderno, sin inventar ninguna.
+        assert "textos.apuntar.siembra.sinSemillas" in fuente
+        assert "textos.apuntar.siembra.delCuaderno" in fuente
+        assert "siembraDelCuaderno" in fuente
+        # Las cuatro pestañas llevan su texto en el modelo.
+        for clave in ("pestanas", "producto", "abono", "siembra"):
+            assert clave in modelo
 
     def test_el_cuaderno_guiado_y_los_productos_estan(self):
         fuente = leer("app.js")

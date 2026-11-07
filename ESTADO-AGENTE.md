@@ -1,57 +1,58 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital tiene ya todo el bloque 4 con la pasada de móvil hecha de verdad: historial de la tierra por años (siembras, abonos en kg/ha y labores), calendario con totales por día y mes, filtros por tipo/tierra/fechas con cantidades y CSV, ventana propia del SIGPAC para elegir parcela y aplicar su contorno, y cuaderno guiado. A 390 y 360 px ninguna vista arrastra la página, la tabla de años se desplaza dentro de su caja, la ventana del SIGPAC ocupa la pantalla con «Cerrar» al alcance y la barra inferior no tapa el último botón. No queda ningún servidor de desarrollo abierto.
+resumen: CueDigital ya apunta el día a día completo desde el móvil (labor, tratamiento, abono y siembra) con avisos del servidor y ficha refrescada, y el GeoPackage del SIGPAC se ha probado con el fichero REAL de Salamanca (599,7 MB, 1.011.578 recintos): abre en 1–2 ms, busca el recinto en 2,7 ms y el contorno coincide con el del SIGPAC al milímetro. La prueba real destapó y corrigió tres fallos que el fichero sintético no veía (sistema de coordenadas 0, columnas csp/dn_surface y superficie en m²). Queda pendiente el streaming de la descarga (638 MB en RAM) y la limpieza del GeoPackage guardado.
 estado: en-curso
-tarea: hecho el bloque 4 (historial, calendario, filtros, ventana del SIGPAC y cuaderno guiado) y la pasada móvil primero sin desbordes ni solapamientos
+tarea: probado el GeoPackage con el fichero real de una provincia y cerrado el apunte del día a día (tratamientos, abonos y siembras) en la app nueva
 nivel: 2
-siguiente: probar el GeoPackage con el fichero real de una provincia, el resto del apuntar del día a día (tratamientos, abonos, siembra, cosecha) y las pantallas de PAC y gastos
+siguiente: streaming de la descarga del GeoPackage y limpieza de caché; PAC de años anteriores y pantallas propias de PAC y gastos
 bloqueado: PSD2 (nivel 3, sin coste publicado y sin gasto aprobado); y siguen pendientes de terceros las licencias (CIT, IGN) y los formatos del expediente y del Cuecyl antiguo
-fecha: 2026-11-06
+fecha: 2026-11-07
 
 ## Lo que se ha hecho en esta ronda
 
-1. **Móvil primero (390×844 y 360×640), medido en Chrome real**:
-   - **Ventana del SIGPAC a pantalla completa**: antes se abría con 16 px de margen (358×812 y
-     328×608) porque las reglas móviles del CSS quedaban antes que las de escritorio; ahora ocupa
-     **390×844 y 360×640 desde (0,0)**, con cabecera y «Cerrar» siempre visibles, scroll dentro de
-     la ventana y mapa de **269 px** (390) y **246 px** (360). El fondo no se mueve.
-   - **Sin scroll horizontal en 8 vistas** (Hoy, Tierras, Calendario, Trabajos, Productos, Cuaderno,
-     Facturas y ficha de la tierra): **0 px** de desborde a los dos anchos.
-   - **Tabla de años**: se desplaza **dentro de su caja** (sin arrastrar la página), con la primera
-     columna fija y letra legible; 530 px de contenido en una caja de 324/294.
-   - **Barra inferior**: hueco de **96 px + `env(safe-area-inset-bottom)`**; el arnés comprueba que no
-     tapa el último botón (se reserva el hueco y queda margen para el «home» del móvil).
-   - **A 1024** se corrigió el selector del mapa, que se salía **25 px** (borde 1049 en ventana de
-     1024). A 1440 sigue igual; la barra lateral y las rejillas no cambian.
-   - **Calendario**: las celdas enseñan también las hectáreas del día (número + palabra + ha, nunca
-     solo color) y los filtros de «Trabajos» pasan a **una columna por debajo de 480 px**.
-2. **Historial de la tierra por años**: tabla **«Años anteriores»** con cultivo y variedad, superficie,
-   **abono total kg/ha**, **meses de abono en palabras**, cosecha kg/ha y n.º de labores; «no consta»
-   donde falta, y debajo el detalle del año (siembra, labores, tratamientos, abonos y cosecha).
-3. **Calendario y filtros con trazabilidad**: totales por día y del mes sin mezclar unidades; filtros
-   por tipo, tierra y fechas; cantidades por unidad; **CSV** de lo filtrado.
-4. **Ventana del SIGPAC**: modal desde el alta y desde la ficha, búsqueda por referencia o por pueblo
-   elegido de la lista, mapa con los recintos resaltados, y «Usar esta parcela» que da de alta o
-   **aplica el contorno y los datos oficiales a una tierra existente** (idempotente, con auditoría,
-   `null` donde el SIGPAC trae nulo y sin pisar lo del agricultor).
-5. **Cuaderno guiado**: cuántas cosas faltan, agrupadas por dónde se arreglan, con botón a la pantalla
-   y lo que bloquea el envío dicho con palabra.
-6. **Sin servidores abiertos**: las verificaciones se hacen con uvicorn temporal + Chrome por CDP y se
-   apagan; se mató además un `uvicorn` viejo de CueDigital (puerto 49686). No queda ningún proceso de
-   CueDigital escuchando.
+1. **GeoPackage con el fichero REAL de una provincia** (prioridad de David): Salamanca 37, campaña 2026.
+   - **599,7 MB de ZIP → 1.070 MB de `.gpkg` con 1.011.578 recintos** (descarga medida: 168 s).
+   - **Abrir: 1–2 ms** (el `.gpkg` se guarda al lado del ZIP y se abre directamente: antes eran 6,4–55,6 s
+     descomprimiendo 1 GB en cada llamada). Validado por tamaño del miembro, fecha y que abra con sqlite;
+     si está cortado o ilegible, se vuelve a extraer; si no se puede cachear, cae al temporal y lo dice.
+   - **Buscar el recinto `37-70-0-0-503-51-1`: 2,7 ms**; `contornos_de_las_parcelas`: **18 ms** (antes
+     6,4–55,6 s).
+   - **El WKT coincide con el SIGPAC**: 17/17 puntos, centro a 0,001 m, caja a 0,005 m y superficie
+     **4,9016 ha = 4,9016 ha** (0,0000 % de desvío).
+   - **Tres fallos que solo se ven con el fichero real, ya corregidos**: (a) el SIGPAC pone `srs_id = 0`
+     en cada geometría y el sistema va en `gpkg_geometry_columns` (4258): antes se rechazaba el mapa
+     entero; (b) las columnas reales son **`csp`** y **`dn_surface`**, que no estaban entre los nombres
+     aceptados (superficie y CSP salían vacíos); (c) **`dn_surface` viene en m²**, no en ha: antes cada
+     parcela salía **10.000 veces más grande**. Ahora se convierte por el nombre de la columna.
+   - **33 pruebas sin red** (21 + 7 de caché + 5 de nombres/sistema/m²) y script real
+     `backend/scripts/probar_geopackage_real.py` que repite la medida (8 s con la caché caliente).
+2. **Apuntar del día a día completo** en `/nuevo/`: la vista «Apuntar» tiene **cuatro pestañas**:
+   - **Labor**: apero del vocabulario del servidor, fecha, hectáreas y nota.
+   - **Tratamiento**: producto con materia activa, dosis máxima y plazo; dosis por hectárea, **total
+     calculado**, plaga, justificación y nota; los avisos 422 del servidor se enseñan tal cual.
+   - **Abono**: **kg/ha o kg totales** (nunca los dos), total calculado, fecha y nota.
+   - **Siembra**: semilla con su variedad y **dosis kg/ha**; si la finca no tiene semillas dadas de alta,
+     se ofrece **apuntarla como siembra del cuaderno** (`/api/labores`), sin inventar semillas.
+   - Al guardar: aviso, ficha refrescada y siguiente paso («Ver el trabajo de hoy», «Ver el calendario»).
+   - **Verificado guardando de verdad en Chrome a 390 y 360**: 4 de 4 apuntes con HTTP 201; 0 px de
+     desborde, pestañas 2×2 y «Guardar» nunca tapado por la barra.
+3. **Limpieza**: el único servidor que se levanta es el de las verificaciones (uvicorn temporal) y se
+   apaga al terminar; no queda ningún proceso de CueDigital escuchando.
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5894 recogidas · 5892 superadas, 2 omitidas, 0 fallos
-    JavaScript   1291 superadas, 0 fallos
-    armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar, calendario, filtros,
-    facturas, cuaderno, productos y ventana del SIGPAC                        0 fallos
+    Python       5909 recogidas · 5907 superadas, 2 omitidas, 0 fallos
+    JavaScript   1297 superadas, 0 fallos
+    armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar (4 pestañas), calendario,
+    filtros, facturas, cuaderno, productos y ventana del SIGPAC                        0 fallos
+    GeoPackage real (Salamanca)                                                     OK, 22 s en caliente
     capturas                                            18 en docs/capturas-nuevo/
 
 ## Lo que sigue abierto
 
-- **Probar el GeoPackage con el fichero real** de una provincia (600 MB): tiempo, memoria y si hace
-  falta índice propio o guardar el `.gpkg` extraído.
-- **Tratamientos, abonos, siembra y cosecha del día a día** en la app nueva y la **cola sin cobertura**.
+- **Streaming de la descarga del GeoPackage**: hoy bajar una provincia carga **638 MB en RAM**; toca
+  escribir a disco por trozos (en `sigpac_cache.py`).
+- **Limpieza de la caché**: conviven ZIP (600 MB) y `.gpkg` (1.070 MB) por provincia; hacen falta
+  política de limpieza y decisión de borrar el ZIP tras extraer.
 - **PAC de años anteriores** y recintos por campaña de la Junta; pantallas propias de PAC y gastos.
 - **PSD2**: dos presupuestos y decisión de gasto de David; sin código hasta contrato.
 - Límites respetados: **no se ha tocado el `.env` ni las fixtures de firma**, no se ha abierto ni

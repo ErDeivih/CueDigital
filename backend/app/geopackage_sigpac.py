@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
 import sqlite3
 import struct
 import tempfile
@@ -76,8 +77,12 @@ COLUMNAS = {
     "uso_sigpac": ("uso_sigpac", "uso"),
     "coef_regadio": ("coef_regadio", "coeficiente_regadio"),
     "region": ("region",),
-    "admisibilidad": ("admisibilidad",),
-    "superficie": ("superficie", "superficie_ha", "area"),
+    # El CSP: el GeoPackage del SIGPAC lo llama **`csp`** y el servicio REST `admisibilidad`. Son el
+    # mismo número (0–100) con dos nombres, y si no se reconoce el del fichero, el CSP llega vacío.
+    "admisibilidad": ("admisibilidad", "csp"),
+    # Y la superficie del recinto es **`dn_surface`** en el fichero de verdad (en hectáreas, aunque el
+    # nombre no lo diga): sin este nombre, `superficie_ha` salía en blanco con el mapa real.
+    "superficie": ("superficie", "superficie_ha", "dn_surface", "dn_superficie", "area"),
 }
 
 # **Sin estas columnas no hay nada que hacer.** Con ellas se puede casar un recinto con una parcela;
@@ -85,6 +90,21 @@ COLUMNAS = {
 # el recinto se devuelve igual, sin ese dato. Faltando una de estas, se para: adivinar con qué se
 # casa un recinto sería devolver el contorno de otra tierra.
 IMPRESCINDIBLES = ("provincia", "municipio", "poligono", "parcela", "recinto")
+
+# La superficie del recinto **no viene siempre en la misma unidad**, y el fichero no lo dice en
+# ningún sitio: `dn_surface`, que es como la llama el GeoPackage de verdad del SIGPAC, viene en
+# **metros cuadrados** (el recinto 37-70-0-0-503-51-1 trae 49.015,59 → 4,9016 ha), mientras que el
+# servicio del SIGPAC la da en **hectáreas**. Se descubrió con el fichero real de Salamanca: sin este
+# factor, cada parcela salía 10.000 veces más grande. La unidad se decide **por el nombre de la
+# columna** y no adivinando por el tamaño: dividir por 10.000 una cifra que ya venía en hectáreas
+# dejaría la parcela 10.000 veces más pequeña, que es el mismo error al revés.
+FACTOR_DE_SUPERFICIE = {
+    "dn_surface": 0.0001,
+    "dn_superficie": 0.0001,
+    "shape_area": 0.0001,
+    "area_m2": 0.0001,
+    "superficie_m2": 0.0001,
+}
 
 # El tope de recintos que devuelve una búsqueda. Una parcela tiene pocos recintos; este número está
 # para que una consulta mal formada no se lleve la tabla entera por delante.
@@ -234,7 +254,9 @@ def _un_anillo(anillo: list[tuple[float, float]]) -> str:
     return "(" + ",".join(f"{_un_numero(x)} {_un_numero(y)}" for x, y in anillo) + ")"
 
 
-def leer_geometria(blob: bytes | None) -> tuple[str | None, list[list[tuple[float, float]]]]:
+def leer_geometria(
+    blob: bytes | None, srs_declarado: int | None = None
+) -> tuple[str | None, list[list[tuple[float, float]]]]:
     """El blob de geometría de un GeoPackage a `(WKT, anillos)`, o `(None, [])` si viene vacío.
 
     **El formato, contado entero** (es lo único que hay que saber para leerlo sin GDAL): los bytes
@@ -242,6 +264,12 @@ def leer_geometria(blob: bytes | None) -> tuple[str | None, list[list[tuple[floa
     (1 = little endian), los bits 1-3 la **envolvente** que viene antes de la geometría (0 = ninguna,
     1 = x/y, 2 = x/y/z, 3 = x/y/m, 4 = x/y/z/m) y el bit 4 que la geometría está vacía. Después, el
     `srs_id` (entero de 32 bits) y, si hay, los dobles de la envolvente. Detrás va el **WKB**.
+
+    **El `srs_id` del blob puede ser 0**, y en el fichero de verdad del SIGPAC **lo es**: significa
+    «el sistema de coordenadas no se dice aquí», y el que vale es el que declara el fichero en
+    `gpkg_geometry_columns` (que es lo que se pasa en `srs_declarado`). Antes se rechazaba el mapa
+    entero por ese cero: se descubrió con el GeoPackage real de Salamanca. Si el blob **sí** dice un
+    sistema, manda el suyo; y si ni uno ni otro lo dicen, no se adivina.
     """
     if not blob:
         return None, []
@@ -265,7 +293,14 @@ def leer_geometria(blob: bytes | None) -> tuple[str | None, list[list[tuple[floa
     if banderas & 0x10:
         # «Geometry vacía»: no hay forma que dar. No es un error: se dice que no hay dibujo.
         return None, []
-    (srs_id,) = struct.unpack(orden_cabecera + "i", blob[4:8])
+    (srs_del_blob,) = struct.unpack(orden_cabecera + "i", blob[4:8])
+    # **El del blob manda si dice algo; si calla (0), el del fichero.**
+    srs_id = srs_del_blob or srs_declarado
+    if srs_id is None or srs_id == 0:
+        raise GeopackageDesconocido(
+            "La geometría del recinto no dice en qué sistema de coordenadas está, y el fichero "
+            "tampoco. No se puede saber si son grados, así que no se lee."
+        )
     if srs_id not in SRS_ADMITIDOS:
         raise GeopackageDesconocido(
             f"El mapa viene en un sistema de coordenadas que no es longitud/latitud "
@@ -286,52 +321,170 @@ def leer_geometria(blob: bytes | None) -> tuple[str | None, list[list[tuple[floa
 # ---------------------------------------------------------------------------
 
 
-def _el_fichero(ruta: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path | None]:
-    """El `.gpkg` que hay que abrir y, si venía en un ZIP, la carpeta temporal que hay que borrar.
+def _la_ruta_del_gpkg_guardado(ruta_zip: pathlib.Path, miembro: str) -> pathlib.Path:
+    """Dónde se guarda el `.gpkg` extraído: **al lado del ZIP y con un nombre que sale del ZIP**.
+
+    El nombre se deriva del ZIP (sin su extensión) y del miembro que lleva dentro, así que dos
+    campañas distintas del mismo año, o un ZIP con otro mapa, no comparten fichero: cambiar el ZIP
+    cambia la ruta y no hay manera de abrir el mapa viejo creyendo que es el nuevo.
+    """
+    nombre_del_miembro = pathlib.PurePosixPath(miembro).name
+    return ruta_zip.with_name(f"{ruta_zip.stem}__{nombre_del_miembro}")
+
+
+def _el_miembro_del_mapa(ruta_zip: pathlib.Path) -> tuple[str, int]:
+    """El `.gpkg` que lleva dentro el ZIP y **lo que ocupa sin comprimir**, sin sacarlo.
+
+    El tamaño se lee del índice del ZIP (el directorio central, al final del fichero): eso son unos
+    kilobytes y milisegundos, y es lo que después permite saber si el `.gpkg` guardado al lado está
+    entero sin volver a descomprimir 1 GB para comprobarlo.
+    """
+    try:
+        with zipfile.ZipFile(ruta_zip) as paquete:
+            mapas = [info for info in paquete.infolist() if info.filename.lower().endswith(".gpkg")]
+            if not mapas:
+                raise GeopackageDesconocido(
+                    f"«{ruta_zip.name}» no lleva dentro ningún mapa (.gpkg). No se puede abrir."
+                )
+            return mapas[0].filename, mapas[0].file_size
+    except zipfile.BadZipFile as error:
+        raise GeopackageDesconocido(
+            f"«{ruta_zip.name}» no es un ZIP válido: no se puede sacar el mapa de dentro."
+        ) from error
+
+
+def _el_guardado_sirve(guardado: pathlib.Path, ruta_zip: pathlib.Path, tamano: int) -> bool:
+    """¿El `.gpkg` que hay al lado es el de **este** ZIP y está entero?
+
+    Tres comprobaciones, todas baratas (ninguna descomprime nada):
+
+      1. **El tamaño**: tiene que ser exactamente el que dice el índice del ZIP. Un fichero cortado
+         por un apagón, o una extracción que se quedó a medias, no pasa de aquí.
+      2. **La fecha**: el `.gpkg` no puede ser más viejo que el ZIP. Si han vuelto a bajar el mapa
+         encima (mismo nombre, contenido nuevo), el ZIP es más nuevo y esto lo detecta.
+      3. **Que se pueda leer**: de eso se encarga `abrir_recintos`, que si el fichero guardado no se
+         abre con sqlite lo tira y lo extrae otra vez.
+    """
+    try:
+        datos = guardado.stat()
+        del_zip = ruta_zip.stat()
+    except OSError:
+        return False
+    if not guardado.is_file() or datos.st_size != tamano:
+        return False
+    return del_zip.st_mtime <= datos.st_mtime
+
+
+def _extraer_al_lado(ruta_zip: pathlib.Path, miembro: str, destino: pathlib.Path) -> None:
+    """Saca el mapa del ZIP **a un temporal en la misma carpeta** y lo mueve a su sitio.
+
+    Se escribe primero con otro nombre y se mueve con `os.replace` (que en el mismo disco es un
+    cambio de nombre, atómico): así en la carpeta de la caché **nunca** queda un `.gpkg` a medias que
+    después parezca bueno. Y se saca por trozos de 1 MB, no de golpe: el mapa de una provincia son
+    1.070 MB y no tienen por qué pasar por la memoria del programa.
+    """
+    temporal = destino.with_name(f".{destino.name}.extrayendo")
+    try:
+        with zipfile.ZipFile(ruta_zip) as paquete:
+            with paquete.open(miembro) as origen, temporal.open("wb") as salida:
+                shutil.copyfileobj(origen, salida, 1024 * 1024)
+        os.replace(temporal, destino)
+    finally:
+        temporal.unlink(missing_ok=True)
+
+
+def _sacar_al_temporal(ruta_zip: pathlib.Path, miembro: str) -> tuple[pathlib.Path, pathlib.Path]:
+    """El camino de siempre: extraer a una carpeta temporal (que se borra al cerrar)."""
+    carpeta = pathlib.Path(tempfile.mkdtemp(prefix="sigpac_gpkg_"))
+    destino = carpeta / "mapa.gpkg"
+    try:
+        with zipfile.ZipFile(ruta_zip) as paquete:
+            with paquete.open(miembro) as origen, destino.open("wb") as salida:
+                shutil.copyfileobj(origen, salida, 1024 * 1024)
+    except OSError:
+        _borrar_la_carpeta(carpeta)
+        raise
+    return destino, carpeta
+
+
+def _borrar_la_carpeta(carpeta: pathlib.Path | None) -> None:
+    """Borra la carpeta temporal de la extracción, sin protestar si ya no está."""
+    if carpeta is None:
+        return
+    for fichero in carpeta.glob("*"):
+        try:
+            fichero.unlink(missing_ok=True)
+        except OSError:
+            pass
+    try:
+        carpeta.rmdir()
+    except OSError:
+        pass
+
+
+def _el_fichero(
+    ruta: pathlib.Path, *, volver_a_extraer: bool = False
+) -> tuple[pathlib.Path, pathlib.Path | None, bool]:
+    """El `.gpkg` que hay que abrir, la carpeta temporal a borrar (o `None`) y si salió del guardado.
 
     La caché del SIGPAC guarda **el ZIP oficial** tal y como lo publica el FEGA (con el `.gpkg`
-    dentro). `sqlite3` necesita un fichero de verdad, no un miembro de un ZIP, así que cuando viene
-    comprimido se saca a una carpeta temporal y se borra al cerrar. Se saca **solo ese fichero**, no
-    el ZIP entero: lo que ocupa es el mapa, y no hay más que sacar.
+    dentro). `sqlite3` necesita un fichero de verdad, no un miembro de un ZIP, y descomprimir 1.070
+    MB en cada llamada costaba entre 6 y 56 segundos (medido con el mapa de Salamanca). Así que:
+
+      1. Si el `.gpkg` **ya está sacado al lado del ZIP** y sirve (ver `_el_guardado_sirve`), se abre
+         ese directamente. **No se descomprime nada.**
+      2. Si no está o no sirve, se saca al lado (por un temporal y con `os.replace`) y se usa. Las
+         siguientes aperturas ya no descomprimen.
+      3. **Si la carpeta del ZIP no se puede escribir** (solo lectura, sin permisos, sin sitio), se
+         saca al temporal de siempre y se borra al cerrar: se pierde la mejora, pero **nunca se
+         rompe** por no poder cachear. Eso se nota en `LectorDeRecintos.cacheado`, que sale en falso.
+
+    Dos procesos abriendo a la vez no se pisan: la extracción se hace a un temporal con otro nombre
+    y se mueve con `os.replace`; y si el sistema no deja mover el fichero porque otro lo tiene
+    abierto (en Windows, un fichero abierto no se puede reemplazar), ese caso cae en el punto 3 y se
+    abre desde el temporal. Lo peor que puede pasar es descomprimir dos veces, no leer un mapa roto.
     """
     if ruta.suffix.lower() == ".gpkg":
-        return ruta, None
+        return ruta, None, False
     if ruta.suffix.lower() != ".zip":
         raise GeopackageDesconocido(
             f"«{ruta.name}» no es un GeoPackage ni el ZIP que lo trae. No se puede abrir."
         )
+
+    miembro, tamano = _el_miembro_del_mapa(ruta)
+    guardado = _la_ruta_del_gpkg_guardado(ruta, miembro)
+    if not volver_a_extraer and _el_guardado_sirve(guardado, ruta, tamano):
+        return guardado, None, True
+
     try:
-        with zipfile.ZipFile(ruta) as paquete:
-            mapas = [nombre for nombre in paquete.namelist() if nombre.lower().endswith(".gpkg")]
-            if not mapas:
-                raise GeopackageDesconocido(
-                    f"«{ruta.name}» no lleva dentro ningún mapa (.gpkg). No se puede abrir."
-                )
-            carpeta = pathlib.Path(tempfile.mkdtemp(prefix="sigpac_gpkg_"))
-            destino = carpeta / "mapa.gpkg"
-            with paquete.open(mapas[0]) as origen, destino.open("wb") as salida:
-                while True:
-                    trozo = origen.read(1024 * 1024)
-                    if not trozo:
-                        break
-                    salida.write(trozo)
-            return destino, carpeta
+        _extraer_al_lado(ruta, miembro, guardado)
+        # `False` porque **en esta apertura sí se ha descomprimido** (la mejora es para las
+        # siguientes): el que se acaba de sacar no se está «cacheando», se está pagando.
+        return guardado, None, False
     except zipfile.BadZipFile as error:
         raise GeopackageDesconocido(
             f"«{ruta.name}» no es un ZIP válido: no se puede sacar el mapa de dentro."
         ) from error
+    except OSError:
+        # La carpeta de la caché es de solo lectura o no hay sitio: al temporal de siempre.
+        destino, carpeta = _sacar_al_temporal(ruta, miembro)
+        return destino, carpeta, False
 
 
-def _tabla_y_geometria(conexion: sqlite3.Connection) -> tuple[str, str]:
-    """La tabla de recintos y su columna de geometría, **preguntando al fichero**.
+def _tabla_y_geometria(conexion: sqlite3.Connection) -> tuple[str, str, int | None]:
+    """La tabla de recintos, su columna de geometría y el sistema de coordenadas que declara.
 
     No se da por hecho que la tabla se llame `recintos`: se miran las que el GeoPackage declara como
     geométricas y se elige la primera que tenga las columnas imprescindibles. Si no hay ninguna, se
     dice lo que hay.
+
+    El **sistema de coordenadas** sale de aquí y no del blob de cada recinto porque el fichero real
+    del SIGPAC lo deja a 0 en todas las geometrías (son 1.011.578 recintos en Salamanca, y ninguno lo
+    dice): el que vale es el que declara el fichero, y por eso se lee aquí una sola vez.
     """
     try:
         filas = conexion.execute(
-            "SELECT table_name, column_name FROM gpkg_geometry_columns"
+            "SELECT table_name, column_name, srs_id FROM gpkg_geometry_columns"
         ).fetchall()
     except sqlite3.DatabaseError as error:
         raise GeopackageDesconocido(
@@ -343,11 +496,11 @@ def _tabla_y_geometria(conexion: sqlite3.Connection) -> tuple[str, str]:
             "El GeoPackage no declara ninguna tabla con geometría: no hay recintos que leer."
         )
     revisadas: list[str] = []
-    for tabla, columna in filas:
+    for tabla, columna, srs_id in filas:
         columnas = _columnas_de(conexion, tabla)
         faltan = [clave for clave in IMPRESCINDIBLES if clave not in columnas]
         if not faltan:
-            return tabla, columna
+            return tabla, columna, srs_id
         revisadas.append(f"{tabla} (le faltan: {', '.join(faltan)})")
     raise GeopackageDesconocido(
         "Ninguna tabla del GeoPackage tiene las columnas de un recinto del SIGPAC. "
@@ -382,11 +535,26 @@ class LectorDeRecintos:
     si el mapa venía en un ZIP, la carpeta temporal que se sacó.
     """
 
-    def __init__(self, conexion: sqlite3.Connection, tabla: str, columna: str, columnas: dict[str, str]):
+    def __init__(
+        self,
+        conexion: sqlite3.Connection,
+        tabla: str,
+        columna: str,
+        columnas: dict[str, str],
+        srs: int | None = None,
+        cacheado: bool = False,
+    ):
         self.conexion = conexion
         self.tabla = tabla
         self.columna = columna
         self.columnas = columnas
+        # **El sistema de coordenadas que declara el fichero.** Hace falta porque las geometrías del
+        # SIGPAC de verdad lo dejan a 0 en su cabecera (ver `leer_geometria`).
+        self.srs = srs
+        # `True` si en esta apertura **no se ha descomprimido nada**: se ha abierto el `.gpkg` que ya
+        # estaba sacado al lado del ZIP. `False` si se ha tenido que sacar ahora, o si la carpeta no
+        # dejaba cachear y se ha ido al temporal de siempre.
+        self.cacheado = cacheado
 
     def buscar(
         self,
@@ -431,10 +599,18 @@ class LectorDeRecintos:
                 f"No se han podido leer los recintos de la tabla «{self.tabla}»."
             ) from error
         claves = [clave for clave in COLUMNAS if clave in self.columnas]
+        # **En qué unidad viene la superficie lo dice el nombre de su columna** (ver
+        # `FACTOR_DE_SUPERFICIE`): el fichero real la llama `dn_surface` y la da en metros cuadrados.
+        columna_de_superficie = _normaliza(self.columnas.get("superficie", ""))
+        factor_de_superficie = FACTOR_DE_SUPERFICIE.get(columna_de_superficie, 1.0)
         salida = []
         for fila in filas:
             recinto_crudo = dict(zip(claves, fila[: len(claves)]))
-            wkt, anillos = leer_geometria(fila[-1])
+            wkt, anillos = leer_geometria(fila[-1], self.srs)
+            superficie = recinto_crudo.get("superficie")
+            if superficie is not None:
+                # Redondeada a cuatro decimales de hectárea (un metro cuadrado): el servicio da cuatro.
+                superficie = round(float(superficie) * factor_de_superficie, 4)
             salida.append(
                 {
                     **_los_codigos(recinto_crudo),
@@ -442,7 +618,7 @@ class LectorDeRecintos:
                     "coef_regadio": recinto_crudo.get("coef_regadio"),
                     "region": recinto_crudo.get("region"),
                     "admisibilidad": recinto_crudo.get("admisibilidad"),
-                    "superficie_ha": recinto_crudo.get("superficie"),
+                    "superficie_ha": superficie,
                     "wkt": wkt,
                     "puntos": [[x, y] for x, y in anillos[0]] if anillos else None,
                     "anillos": [[[x, y] for x, y in anillo] for anillo in anillos],
@@ -472,28 +648,70 @@ def _los_codigos(fila: dict) -> dict:
     }
 
 
+def _la_conexion(
+    mapa: pathlib.Path,
+) -> tuple[sqlite3.Connection, str, str, dict[str, str], int | None]:
+    """Abre el `.gpkg` con sqlite y mira dentro: tabla, columna de geometría, columnas y sistema.
+
+    Todo junto porque es lo que hace falta para leer, y porque **abrir mal un fichero casi nunca falla
+    al abrirlo**: sqlite es perezoso y el «no es un fichero de base de datos» sale en la primera
+    consulta. Aquí se ve en un sitio y se traduce a `GeopackageDesconocido`.
+    """
+    conexion = sqlite3.connect(f"file:{mapa}?mode=ro", uri=True)
+    try:
+        tabla, columna, srs = _tabla_y_geometria(conexion)
+        columnas = _columnas_de(conexion, tabla)
+    except GeopackageDesconocido:
+        conexion.close()
+        raise
+    except sqlite3.DatabaseError as error:
+        conexion.close()
+        raise GeopackageDesconocido(
+            "El fichero del SIGPAC no se puede abrir como GeoPackage: está dañado o cortado."
+        ) from error
+    return conexion, tabla, columna, columnas, srs
+
+
 @contextmanager
 def abrir_recintos(ruta: str | os.PathLike):
-    """Abre el GeoPackage (o el ZIP que lo trae) y deja un `LectorDeRecintos` listo para buscar."""
+    """Abre el GeoPackage (o el ZIP que lo trae) y deja un `LectorDeRecintos` listo para buscar.
+
+    **Si viene en ZIP no se descomprime en cada llamada**: la primera vez se saca el `.gpkg` al lado
+    del ZIP (por un temporal y con `os.replace`) y las siguientes se abre ese directamente. Ver
+    `_el_fichero` para las tres comprobaciones que hacen que el guardado sea el de este ZIP y esté
+    entero, y para lo que pasa si la carpeta no se puede escribir.
+    """
     camino = pathlib.Path(ruta)
     if not camino.is_file():
         raise GeopackageDesconocido(
             f"No está el fichero del SIGPAC: «{camino.name}». Descárgalo antes de pedir contornos."
         )
-    mapa, temporal = _el_fichero(camino)
+    temporal: pathlib.Path | None = None
+    conexion: sqlite3.Connection | None = None
     try:
-        conexion = sqlite3.connect(f"file:{mapa}?mode=ro", uri=True)
-        try:
-            tabla, columna = _tabla_y_geometria(conexion)
-            columnas = _columnas_de(conexion, tabla)
-            yield LectorDeRecintos(conexion, tabla, columna, columnas)
-        finally:
-            conexion.close()
+        for intento in (0, 1):
+            mapa, temporal, cacheado = _el_fichero(
+                camino, volver_a_extraer=(intento == 1)
+            )
+            try:
+                conexion, tabla, columna, columnas, srs = _la_conexion(mapa)
+            except GeopackageDesconocido:
+                conexion = None
+                _borrar_la_carpeta(temporal)
+                temporal = None
+                # **Si el que fallaba era el `.gpkg` guardado, se tira y se extrae otra vez**: un
+                # fichero cortado (un apagón a mitad de la extracción) no puede dejar el mapa sin
+                # abrir para siempre. Solo se reintenta una vez, y solo si venía del guardado.
+                if intento == 0 and cacheado:
+                    continue
+                raise
+            break
+        assert conexion is not None  # el bucle o saca conexión o lanza
+        yield LectorDeRecintos(conexion, tabla, columna, columnas, srs, cacheado)
     finally:
-        if temporal is not None:
-            for fichero in temporal.glob("*"):
-                fichero.unlink(missing_ok=True)
-            temporal.rmdir()
+        if conexion is not None:
+            conexion.close()
+        _borrar_la_carpeta(temporal)
 
 
 # ---------------------------------------------------------------------------

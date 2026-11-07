@@ -122,19 +122,21 @@
 - **Lo que falta para cerrar el recorrido entero**: enlazar Cuaderno, Campaña y PAC a pantallas nuevas
   (hoy llevan a la app vieja) y retirar cada pantalla vieja cuando la nueva la cubra. Va en AGR-15.
 
-### AGR-15 · La segunda mitad de SIGPAC: abrir el GeoPackage e importar sus recintos — **HECHO EL CONTORNO (2026-11-05); FALTA PROBAR EL FICHERO REAL**
+### AGR-15 · La segunda mitad de SIGPAC: abrir el GeoPackage e importar sus recintos — **PROBADO CON EL FICHERO REAL (07/11/2026)**
 
 - **Nivel**: 2.
-- **Hecho**: `app/geopackage_sigpac.py` lee el `.gpkg` de la caché sin GDAL/shapely (descubre tabla y
-  columna de geometría, atributos por nombre normalizado, blob GPKG/WKB → WKT; Polygon y MultiPolygon,
-  rechaza Z/M y tipos raros con su código), casa los nombres de provincia/municipio de la parcela con
-  los códigos del catálogo y `POST /api/sigpac/cache/{provincia}/contornos` rellena `geometria`/`dibujo`
-  de las parcelas de la finca, idempotente, con auditoría solo si cambia y aislamiento por finca.
-  **Evidencia**: `tests/test_geopackage_sigpac.py` (21, gpkg sintético, sin internet).
-- **Falta**: probar con el **gpkg real de 600 MB** (tiempo/memoria/índice; hoy se consulta por códigos
-  con tope, sin streaming) y decidir si el ZIP se guarda extraído; no escribe `superficie_sigpac_ha`,
-  uso ni coeficiente (sería tocar datos catastrales desde un contorno: otra tarea).
-- **Criterio**: importar una provincia de prueba sin duplicar y sin tocar datos de otra finca.
+- **Hecho**: `app/geopackage_sigpac.py` lee el `.gpkg` sin GDAL/shapely (descubre tabla/columna de
+  geometría, atributos por nombre normalizado, blob GPKG/WKB → WKT; Polygon y MultiPolygon). La prueba
+  real con **Salamanca (599,7 MB de ZIP, 1.011.578 recintos)** destapó y corrigió: `srs_id = 0` en el
+  blob (manda el del fichero), columnas reales **`csp`/`dn_surface`**, y **`dn_surface` en m²** (se
+  convierte a ha). El `.gpkg` se guarda al lado del ZIP y se abre en **1–2 ms** (antes 6–56 s
+  descomprimiendo en cada llamada); buscar el recinto: **2,7 ms**; `contornos_de_las_parcelas`: **18 ms**;
+  WKT coincide al milímetro (17/17 puntos, 0,001 m, 4,9016 ha = 4,9016 ha). **Evidencia**:
+  `tests/test_geopackage_sigpac.py` (33, sin red), `scripts/probar_geopackage_real.py` y la puerta
+  `POST /api/sigpac/cache/{provincia}/contornos`.
+- **Falta**: **streaming de la descarga** (hoy 638 MB en RAM, en `sigpac_cache.py`) y **limpieza de
+  caché** (1,67 GB por provincia entre ZIP y `.gpkg`; decidir si se borra el ZIP tras extraer y cómo se
+  purga al cambiar de campaña).
 
 ### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC) — **EN CURSO (2026-11-05)**
 
@@ -172,20 +174,19 @@
   y comprobar la búsqueda del SIGPAC **eligiendo municipio de la lista** (la referencia sí está
   verificada; los nombres devolvieron 0 recintos en la prueba).
 
-### AGR-19 · El apuntar de 30 segundos en la app nueva, y la puerta del apero que falta — **EN CURSO (2026-11-05)**
+### AGR-19 · El apuntar de 30 segundos en la app nueva — **HECHO EL APUNTE DEL DÍA A DÍA (07/11/2026)**
 
 - **Nivel**: 2.
-- **Hecho en la tarde del 05/11**: **la puerta del apero está abierta** —`LaborEntrada.subtipo`, la
-  regla escrita una vez (`el_problema_del_apero`), validación en `/api/labores` y en `/api/trabajos`
-  (422 con la lista de los válidos), columna guardada, `LaborSalida` devuelve el apero— y **el trabajo
-  de suelo del día se apunta desde la ficha de la tierra en `/nuevo/`** (apero del servidor, fecha de
-  hoy, hectáreas de la tierra), con la ficha refrescada. Verificado en Chrome y en la API.
-- **Falta**: **tratamientos, abonos, siembra y cosecha** desde la app nueva (siguen en la vieja), la
-  **cola sin cobertura** y el pulido de los 30 segundos/8 campos.
+- **Hecho**: **la puerta del apero está abierta** (`LaborEntrada.subtipo`, validación con la lista de
+  los válidos, columna y `LaborSalida`) y **la vista «Apuntar» tiene cuatro pestañas**: labor,
+  **tratamiento** (producto, dosis/ha, total, plaga y justificación; avisos 422 del servidor tal cual),
+  **abono** (kg/ha o kg totales, nunca los dos) y **siembra** (semilla y dosis kg/ha; sin semillas, se
+  ofrece la siembra del cuaderno). Ficha refrescada y siguiente paso. Verificado guardando de verdad en
+  Chrome a 390 y 360 (4/4 apuntes, 201).
+- **Falta**: la **cola sin cobertura** (guardar en el móvil y que llegue solo al recuperar la red) y el
+  pulido de los 30 segundos/8 campos. El alta de semillas sigue en la app vieja.
 - **Decisión para David**: el vocabulario del programa llama **«arado»** a lo que él llama
-  «vertedera». Se renombra la etiqueta si lo quiere; no se ha traducido una cosa en la otra.
-- **Criterio**: apunte en ≤3 pantallas y ≤8 campos, guardable sin cobertura, con su apero y su
-  cantidad por hectárea; pruebas y paso en el arnés de Chrome.
+  «vertedera»; se renombra la etiqueta si lo quiere.
 
 ### AGR-18 · PSD2 solo lectura: contratar un agregador con licencia — **INVESTIGADO (2026-11-05); BLOQUEADO (nivel 3)**
 
