@@ -17,7 +17,9 @@ fecha: 2026-11-08
    programa. El contorno de las cuatro se genera en **0,046 s**. **Y dentro de la app, en móvil**: el
    mapa real aplicado a una tierra se ve en su ficha con ortofoto y contorno
    (`cliente-real-ficha-390/360.png`) y en la ventana del SIGPAC con el recinto real
-   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada.
+   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada. Y **las cuatro parcelas del
+   cliente**, dadas de alta solo con su referencia, se ven una a una con su contorno y su ortofoto
+   (`cliente-real-1..4-390.png`); el índice de capturas está en `docs/capturas-nuevo/LEEME.md`.
 2. **Fallo cerrado (hallado por esa prueba)**: una tierra creada con **solo `ref_sigpac`** guardaba los
    códigos en blanco y el GeoPackage no la reconocía. Ahora:
    - al guardar, `_completar_los_codigos_con_la_referencia` rellena `codigo_ine`, polígono, parcela y
@@ -60,7 +62,7 @@ fecha: 2026-11-08
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos
     cliente real con el GeoPackage de Salamanca                       4/4 contornos, 4 mapas
-    capturas móviles                       20 (390 y 360) + 3 del contorno real en la app + 2 del cliente
+    capturas móviles                       20 (390 y 360) + 4 del cliente en la app + 3 de ficha/SIGPAC + 2 del montaje
 
 ## Lo que sigue abierto
 

@@ -220,6 +220,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-08 | **Las cuatro parcelas reales del cliente, en la app y en móvil** | Dadas de alta solo con su referencia y mapeadas con el gpkg de Salamanca: 4/4 con ortofoto y contorno (`cliente-real-1..4-390.png`); ficha y ventana del SIGPAC con el recinto real; `docs/capturas-nuevo/LEEME.md` indexa las 27 capturas |
 | 2026-11-08 | **Contorno real del GeoPackage dentro de la app, en móvil** | Aplicado el mapa de Salamanca a una tierra del cliente: ficha con ortofoto y contorno (`cliente-real-ficha-390/360.png`) y ventana del SIGPAC con el recinto real (`cliente-real-sigpac-390.png`); imagen cargada comprobada (`naturalWidth > 0`) y 0 tapados |
 | 2026-11-08 | **Capturas móviles de toda la app, sin solapamientos** | 20 capturas a 390×844 y 360×640 (Hoy, Tierras, ficha, apuntar, calendario, trabajos, productos, cuaderno, facturas y ventana del SIGPAC) en `docs/capturas-nuevo/movil-*.png`; cada control llevado al centro y comprobado con `elementFromPoint` (0 tapados) y el scroll se reinicia al cambiar de pantalla |
 | 2026-11-08 | **Cliente real: cuatro parcelas de Salamanca pintadas con el GeoPackage** | 4/4 actualizadas, 0 sin códigos, WKT idéntico y cuatro mapas con ortofoto (`cliente-contornos.png`); arreglado el alta solo con referencia (7 pruebas nuevas) |

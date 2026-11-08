@@ -1502,6 +1502,77 @@ def comprobar_el_contorno_real_en_la_app(
     print(f"  (captura: {captura(nav, 'cliente-real-ficha-360').relative_to(RAIZ)})")
 
 
+def comprobar_los_cuatro_contornos_del_cliente(
+    nav: NavegadorDeVerdad, base: str, token: str
+) -> None:
+    """Da de alta las cuatro parcelas reales del cliente y las pinta en la app, una a una."""
+    print("\n== Los cuatro contornos reales del cliente, en la app ==")
+    referencias = [
+        ("Cliente El Prado", "37-70-0-0-503-51-1"),
+        ("Cliente El Alto", "37-70-0-0-501-84-1"),
+        ("Cliente La Vega", "37-70-0-0-501-82-2"),
+        ("Cliente Las Eras", "37-70-0-0-501-80-1"),
+    ]
+    ids: list[int] = []
+    with httpx.Client(base_url=base, timeout=60.0) as cliente:
+        for alias, referencia in referencias:
+            creada = cliente.post(
+                "/api/parcelas",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"alias": alias, "ref_sigpac": referencia},
+            )
+            if creada.status_code >= 300:
+                comprobar(False, f"se da de alta {alias} ({creada.status_code}: {creada.text[:160]})")
+                continue
+            datos = creada.json()
+            ids.append(datos["id"])
+            comprobar(
+                bool(datos.get("codigo_ine") and datos.get("poligono")),
+                f"{alias}: el alta rellena los códigos desde la referencia",
+            )
+        aplicado = cliente.post(
+            "/api/sigpac/cache/37/contornos",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"campana": 2026},
+        )
+        resultado = aplicado.json() if aplicado.status_code == 200 else {}
+        actualizadas = {uno.get("id") for uno in resultado.get("actualizadas") or []}
+        comprobar(
+            aplicado.status_code == 200 and set(ids).issubset(actualizadas),
+            f"las cuatro tierras del cliente casan con el GeoPackage real ({len(ids)} de {resultado.get('n')})",
+        )
+
+    if not ids:
+        return
+    nav.medir(390, 844, movil=True)
+    for indice, tierra_id in enumerate(ids, start=1):
+        nav.abrir(f"{base}/nuevo/", esperar=1.0)
+        esperar_estado(nav, "listo")
+        clic_en_visible(nav, "[data-destino=tierras]")
+        nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=25)
+        abierta = nav.evaluar(
+            "(() => { const t = document.querySelector('[data-tierra-id=\"" + str(tierra_id) + "\"]');"
+            " if (!t) return false; t.scrollIntoView({ block: 'center' }); t.click();"
+            " return true; })()"
+        )
+        if not abierta:
+            comprobar(False, f"se puede abrir la tierra {indice} del cliente")
+            continue
+        nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=20)
+        nav.esperar(
+            "(() => { const i = document.querySelector('[data-mapa-imagen]');"
+            " return !!i && i.complete && i.naturalWidth > 0; })()",
+            segundos=45,
+        )
+        cargada = nav.evaluar(
+            "(() => { const i = document.querySelector('[data-mapa-imagen]');"
+            " return !!i && i.complete && i.naturalWidth > 0; })()"
+        )
+        comprobar(bool(cargada), f"la tierra {indice} del cliente pinta su contorno real")
+        apartar_la_barra_para_la_captura(nav)
+        print(f"  (captura: {captura(nav, f'cliente-real-{indice}-390').relative_to(RAIZ)})")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -1593,6 +1664,7 @@ def main() -> int:
         comprobar_cuaderno_y_productos(nav, base)
         comprobar_la_ventana_del_sigpac(nav, base)
         comprobar_el_contorno_real_en_la_app(nav, base, token)
+        comprobar_los_cuatro_contornos_del_cliente(nav, base, token)
         comprobar_movil(nav, base)
         comprobar_apuntar_completo(nav, base, token)
         comprobar_estados(nav, base, token_vacio, token)
