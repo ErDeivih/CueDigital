@@ -87,9 +87,11 @@ ENGANCHES = [
     "data-sigpac-cache-actualizada",
     "data-cuaderno-aviso-cuenta",
     "data-que-falta-item-bloquea",
+    "data-cuaderno-rellenables",
     "data-cuaderno-resumen",
     "data-que-falta-seccion-cuenta",
     "data-cuaderno-empezar",
+    "data-sigpac-autobusqueda",
     "data-sigpac-cache",
     "data-sigpac-cache-provincia",
     "data-sigpac-cache-aplicar",
@@ -378,6 +380,25 @@ class TestElContratoConElArnesDeNavegador:
         # El flujo encadenado: siempre hay un siguiente paso a la vista.
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
+
+    def test_la_ventana_aprovecha_la_tierra_y_el_cuaderno_cuenta_las_rellenables(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        # Desde la ficha, la ventana pregunta por la parcela para tener sus códigos y busca sola una vez.
+        assert "RUTA_PARCELA" in fuente
+        assert "/api/parcelas/" in fuente
+        assert "data-sigpac-autobusqueda" in fuente
+        assert "claveBuscada" in fuente
+        assert "claveDeApertura" in fuente
+        for funcion in ("camposInicialesDelSigpac", "faltasRellenables", "textoDeLasRellenables"):
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
+        # La línea nueva del cuaderno usa la misma función de destinos.
+        assert "data-cuaderno-rellenables" in fuente
+        assert "faltasRellenables(items)" in fuente
+        assert "textos.cuaderno.rellenablesVarias" in modelo
+        # Los inputs de la ventana siguen.
+        for enganche in ("data-sigpac-buscar-referencia", "data-sigpac-poligono", "data-sigpac-parcela"):
+            assert enganche in fuente
 
     def test_el_cuaderno_dice_lo_primero_y_el_sigpac_lista_las_tierras(self):
         fuente = leer("app.js")

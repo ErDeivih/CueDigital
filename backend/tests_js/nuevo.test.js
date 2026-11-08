@@ -30,6 +30,7 @@ import {
   bboxDeMunicipio,
   cajaDeLosRecintos,
   calcularTotales,
+  camposInicialesDelSigpac,
   claveDeTipo,
   colorDeTierra,
   colorDeUso,
@@ -59,6 +60,7 @@ import {
   etiquetaDelRecintoEnElMapa,
   fechaDeHoyISO,
   fechaValidezEnTexto,
+  faltasRellenables,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
@@ -110,6 +112,7 @@ import {
   textoRelleno,
   totalDeLaAplicacion,
   textoDeFaltasSinListar,
+  textoDeLasRellenables,
   textoDelAvisoDeBloqueo,
   totalesDeTrabajos,
   urlDeMiniatura,
@@ -1618,4 +1621,71 @@ test("las tierras actualizadas se leen con lo que viene y sin inventar", () => {
   assert.deepEqual(tierras[1], { id: 8, alias: "El Molino", detalle: "" });
   assert.equal(tierras[2].alias, textos.ventana.cache.tierraSinNombre);
   assert.equal(tierras[2].detalle, "");
+});
+
+// ---------------------------------------------------------------------------
+// La tierra que ya sabe la ventana del SIGPAC y las faltas que se rellenan aquí
+// ---------------------------------------------------------------------------
+
+test("la ventana del SIGPAC aprovecha lo que la tierra ya tiene, sin inventar", () => {
+  const soloReferencia = camposInicialesDelSigpac({ id: 1, alias: "Las Eras", ref_sigpac: "37:70:0:0:503:51" });
+  assert.equal(soloReferencia.referencia, "37:70:0:0:503:51");
+  assert.equal(soloReferencia.municipio, "");
+  assert.equal(soloReferencia.poligono, "");
+  assert.equal(soloReferencia.recinto, "");
+
+  const conCodigos = camposInicialesDelSigpac({
+    id: 2,
+    municipio: "Penaranda de Bracamonte",
+    provincia: "Salamanca",
+    agregado: 0,
+    zona: 0,
+    poligono: 12,
+    numero_parcela: 34,
+    numero_recinto: 7,
+  });
+  assert.equal(conCodigos.referencia, "");
+  assert.equal(conCodigos.poligono, "12");
+  assert.equal(conCodigos.parcela, "34");
+  assert.equal(conCodigos.municipio, "Penaranda de Bracamonte");
+  assert.equal(conCodigos.provincia, "Salamanca");
+  assert.equal(conCodigos.recinto, "7");
+  assert.equal(conCodigos.agregado, "0");
+
+  // Los datos del servidor (la ficha de la parcela) mandan sobre la lista.
+  const delServidor = camposInicialesDelSigpac(
+    { id: 3, municipio: "Viejo" },
+    { ref_sigpac: "37:70:0:0:1:2", municipio: "Nuevo", provincia: "Salamanca", numero_recinto: 9 },
+  );
+  assert.equal(delServidor.referencia, "37:70:0:0:1:2");
+  assert.equal(delServidor.municipio, "Nuevo");
+  assert.equal(delServidor.recinto, "9");
+
+  assert.deepEqual(camposInicialesDelSigpac(null), {
+    referencia: "",
+    agregado: "",
+    zona: "",
+    poligono: "",
+    parcela: "",
+    municipio: "",
+    provincia: "",
+    recinto: "",
+  });
+});
+
+test("el cuaderno cuenta las faltas que se pueden rellenar aquí, con la misma función de destinos", () => {
+  const items = [
+    { que: "a", donde: "Tierras", bloquea: true },
+    { que: "b", donde: "Trabajos", bloquea: false },
+    { que: "c", donde: "Productos y abonos", bloquea: false },
+    { que: "d", donde: "Quien desarrolla la aplicación", bloquea: true },
+    { que: "", donde: "Tierras" },
+  ];
+  assert.equal(faltasRellenables(items), 3);
+  assert.equal(faltasRellenables([]), 0);
+  assert.equal(faltasRellenables(null), 0);
+
+  assert.equal(textoDeLasRellenables(3), "Puedes rellenar 3 de ellas aquí.");
+  assert.equal(textoDeLasRellenables(1), "Puedes rellenar 1 de ellas aquí.");
+  assert.equal(textoDeLasRellenables(0), "Ninguna de ellas se rellena desde aquí.");
 });

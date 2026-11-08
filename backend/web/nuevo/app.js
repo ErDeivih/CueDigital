@@ -39,6 +39,7 @@ import {
   bboxDelConjunto,
   cajaDeLosRecintos,
   calcularTotales,
+  camposInicialesDelSigpac,
   claveDeTipo,
   colorDeTierra,
   colorDeUso,
@@ -70,6 +71,7 @@ import {
   etiquetaDeTrabajo,
   fechaDeHoyISO,
   fechaValidezEnTexto,
+  faltasRellenables,
   filtrarPorTipo,
   filtrarTierras,
   formateaNumero,
@@ -117,6 +119,7 @@ import {
   totalDeLaAplicacion,
   totalesDeTrabajos,
   textoDeFaltasSinListar,
+  textoDeLasRellenables,
   textoDelAvisoDeBloqueo,
   urlDeMiniatura,
   urlDelMapa,
@@ -158,6 +161,7 @@ const RUTA_TRATAMIENTOS = "/api/tratamientos";
 const RUTA_FERTILIZACIONES = "/api/fertilizaciones";
 const RUTA_MUNICIPIOS = "/api/municipios";
 const RUTA_CACHE_SIGPAC = "/api/sigpac/cache";
+const RUTA_PARCELA = (id) => `/api/parcelas/${id}`;
 const RUTA_CONTORNO = (id) => `/api/parcelas/${id}/contorno`;
 
 /** Los límites del servidor para una zona del mapa (grados). Él los vuelve a mirar. */
@@ -2728,6 +2732,7 @@ function VistaCuaderno({ alEstado, alIr }) {
       ? textos.cuaderno.bloqueanUna
       : textoRelleno(textos.cuaderno.bloqueanVarias, { k: resumen.bloquean });
   const textoDeSinListar = textoDeFaltasSinListar(items.length, cuantas);
+  const rellenables = faltasRellenables(items);
   const primerBloqueo = primerBloqueoDeLoQueFalta(items);
   const primerRellenable = empezarPorLoPrimero(items);
   const destinoParaEmpezar = primerRellenable ? primerRellenable.destino : null;
@@ -2758,6 +2763,7 @@ function VistaCuaderno({ alEstado, alIr }) {
   const resumenDelCuaderno = html`<section className="tarjeta cuaderno__resumen" data-cuaderno-resumen aria-labelledby="cuaderno-resumen-titulo">
     <h2 className="tarjeta__titulo" id="cuaderno-resumen-titulo">${textos.cuaderno.titulo}</h2>
     <p className="cuaderno__resumen-texto" data-cuaderno-resumen-texto>${textoDelResumen}</p>
+    <p className="pagina__dato cuaderno__rellenables" data-cuaderno-rellenables=${rellenables}>${textoDeLasRellenables(rellenables)}</p>
     <p className="cuaderno__resumen-bloqueo">
       <span className=${resumen.bloquean ? "chip chip--aviso" : "chip"} data-cuaderno-bloquean>${textoDeBloqueo}</span>
     </p>
@@ -3631,6 +3637,14 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
   const [usando, setUsando] = useState(false);
   const dialogo = useRef(null);
   const temporizador = useRef(null);
+  // Lo que la tierra ya tiene (referencia o códigos), del servidor: la lista no trae esos códigos.
+  const parcelaGuardada = usarPantalla(
+    RUTA_PARCELA(tierra && tierra.id ? tierra.id : 0),
+    abierta && modo === "tierra" && Boolean(tierra && tierra.id),
+  );
+  const [autoBusqueda, setAutoBusqueda] = useState(false);
+  const claveDeApertura = useRef(null);
+  const claveBuscada = useRef(null);
 
   const recinto = recintoElegido(recintos, elegidoRecintoId);
 
@@ -3752,13 +3766,62 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       setElegido(null);
       setPoligono("");
       setParcela("");
+      setAgregado("0");
+      setZona("0");
+      setAutoBusqueda(false);
+      claveDeApertura.current = null;
+      claveBuscada.current = null;
     }
   }, [abierta]);
 
-  const buscar = async () => {
-    const cuerpo = referencia.trim()
+  /** El cuerpo de la búsqueda a partir de unos campos ya calculados (sin leer estados). */
+  const cuerpoDeLosCampos = (campos) => {
+    if (campos.referencia) return { cuerpo: cuerpoDeBusquedaPorReferencia(campos.referencia), recinto: campos.recinto };
+    const cuerpo = cuerpoDeBusquedaPorMunicipio({
+      elegido: campos.municipio && campos.provincia ? { nombre: campos.municipio, provincia: campos.provincia } : null,
+      agregado: campos.agregado,
+      zona: campos.zona,
+      poligono: campos.poligono,
+      parcela: campos.parcela,
+    });
+    return cuerpo ? { cuerpo, recinto: campos.recinto } : null;
+  };
+
+  useEffect(() => {
+    const clave = `${abierta ? "abierta" : "cerrada"}|${modo}|${tierra && tierra.id ? tierra.id : ""}`;
+    const esDeTierra = abierta && modo === "tierra" && Boolean(tierra && tierra.id);
+    if (!esDeTierra) {
+      if (claveDeApertura.current !== clave) {
+        claveDeApertura.current = clave;
+        claveBuscada.current = null;
+        setAutoBusqueda(false);
+      }
+      return;
+    }
+    if (claveDeApertura.current === clave) return;
+    // Se espera a los datos del servidor para no precargar con la lista, que no trae los códigos.
+    if (parcelaGuardada.estado === "cargando" || parcelaGuardada.estado === "inicial") return;
+    claveDeApertura.current = clave;
+    const campos = camposInicialesDelSigpac(tierra, parcelaGuardada.estado === "listo" ? parcelaGuardada.datos : null);
+    setReferencia(campos.referencia);
+    setTextoMunicipio(campos.municipio);
+    setElegido(campos.municipio && campos.provincia ? { nombre: campos.municipio, provincia: campos.provincia } : null);
+    setAgregado(campos.agregado);
+    setZona(campos.zona);
+    setPoligono(campos.poligono);
+    setParcela(campos.parcela);
+    const previsto = cuerpoDeLosCampos(campos);
+    if (previsto && claveBuscada.current !== clave) {
+      claveBuscada.current = clave;
+      setAutoBusqueda(true);
+      buscar(previsto.recinto, previsto.cuerpo);
+    }
+  }, [abierta, modo, tierra && tierra.id, parcelaGuardada.estado, parcelaGuardada.datos]);
+
+  const buscar = async (recintoPreferido = null, cuerpoDeLaVez = null) => {
+    const cuerpo = cuerpoDeLaVez || (referencia.trim()
       ? cuerpoDeBusquedaPorReferencia(referencia)
-      : cuerpoDeBusquedaPorMunicipio({ elegido, agregado, zona, poligono, parcela });
+      : cuerpoDeBusquedaPorMunicipio({ elegido, agregado, zona, poligono, parcela }));
     if (!cuerpo) {
       setAviso(referencia.trim() ? textos.ventana.sinBusqueda : textos.ventana.sinMunicipioElegido);
       return;
@@ -3776,7 +3839,11 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     const conDibujo = recintosConPuntos(encontrados);
     setCaja(cajaDeLosRecintos(conDibujo));
     const primeroConForma = encontrados.find((uno) => puedeUsarseElRecinto(uno));
-    setElegidoRecintoId(primeroConForma ? primeroConForma.recinto : encontrados[0] ? encontrados[0].recinto : null);
+    const preferido = recintoPreferido !== null && encontrados.some((uno) => String(uno.recinto) === String(recintoPreferido))
+      ? recintoPreferido
+      : null;
+    window.__depuracion = { recintoPreferido, preferido, primeroConForma: primeroConForma ? primeroConForma.recinto : null, encontrados: encontrados.map((uno) => uno.recinto) };
+    setElegidoRecintoId(preferido !== null ? preferido : (primeroConForma ? primeroConForma.recinto : encontrados[0] ? encontrados[0].recinto : null));
     setEstado(encontrados.length ? "listo" : "vacio");
   };
 
@@ -3914,7 +3981,7 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
 
   const avisoDeForma = recinto ? avisoSinForma(recinto) : null;
 
-  return html`<div className="modal" data-ventana-sigpac role="dialog" aria-modal="true" aria-labelledby="ventana-titulo">
+  return html`<div className="modal" data-ventana-sigpac data-sigpac-autobusqueda=${autoBusqueda ? "true" : undefined} data-depuracion-elegido=${String(elegidoRecintoId ?? "ninguno")} role="dialog" aria-modal="true" aria-labelledby="ventana-titulo">
     <div className="modal__fondo" aria-hidden="true"></div>
     <div className="modal__caja" tabIndex="-1" ref=${dialogo}>
       <div className="modal__cabecera">

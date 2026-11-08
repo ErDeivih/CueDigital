@@ -270,6 +270,9 @@ export const textos = {
     seArreglaFuera: "Se arregla fuera de esta pantalla.",
     arreglarEnLaApp: "Arreglarlo en la app de siempre",
     noSeVenTodas: "Faltan {n} cosas y aquí se ven {m}. Las demás no se han podido mirar; vuelve a intentarlo.",
+    rellenablesUna: "Puedes rellenar 1 de ellas aquí.",
+    rellenablesVarias: "Puedes rellenar {n} de ellas aquí.",
+    rellenablesNinguna: "Ninguna de ellas se rellena desde aquí.",
   },
   siguiente: {
     eligeTierra: "Elige la tierra",
@@ -1865,6 +1868,21 @@ export function resumenDeLoQueFalta(items) {
   };
 }
 
+/** Cuántas de las faltas se pueden rellenar en una pantalla de `/nuevo/` (misma función de destinos). */
+export function faltasRellenables(items) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.que)
+    .filter((item) => Boolean(destinoDeLaSeccion(item.donde))).length;
+}
+
+/** «Puedes rellenar N de ellas aquí», en singular y plural; cuando ninguna, también se dice. */
+export function textoDeLasRellenables(cantidad) {
+  const n = Number(cantidad) || 0;
+  if (n === 0) return textos.cuaderno.rellenablesNinguna;
+  if (n === 1) return textos.cuaderno.rellenablesUna;
+  return textoRelleno(textos.cuaderno.rellenablesVarias, { n });
+}
+
 /**
  * Por dónde empezar: primero lo que **bloquea el envío** y, si no hay nada bloqueante, lo primero
  * que tenga una pantalla donde arreglarse. Si nada tiene destino, no se inventa uno.
@@ -2172,6 +2190,29 @@ export function cuerpoDeBusquedaPorMunicipio({ elegido, agregado, zona, poligono
     zona: numeroDe(zona) ?? 0,
     poligono: numeroPoligono,
     parcela: numeroParcela,
+  };
+}
+
+/**
+ * Lo que la ventana del SIGPAC puede poner ya cuando se abre desde una tierra: su referencia o sus
+ * códigos. Lo que la tierra no tiene se queda vacío y los datos del servidor mandan sobre la lista.
+ */
+export function camposInicialesDelSigpac(tierra, parcela = null) {
+  const fuente = { ...(tierra || {}), ...(parcela || {}) };
+  const texto = (valor) => (valor === null || valor === undefined ? "" : String(valor).trim());
+  const codigo = (valor) => {
+    const numero = numeroDe(valor);
+    return numero === null ? "" : String(numero);
+  };
+  return {
+    referencia: texto(fuente.ref_sigpac),
+    agregado: codigo(fuente.agregado),
+    zona: codigo(fuente.zona),
+    poligono: codigo(fuente.poligono),
+    parcela: codigo(fuente.numero_parcela),
+    municipio: texto(fuente.municipio),
+    provincia: texto(fuente.provincia),
+    recinto: codigo(fuente.numero_recinto),
   };
 }
 
