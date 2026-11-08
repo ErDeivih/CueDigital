@@ -883,7 +883,13 @@ def comprobar_la_ventana_del_sigpac(nav: NavegadorDeVerdad, base: str) -> None:
     nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=15)
     # La ficha termina de pintarse después: el botón del SIGPAC no está en el primer frame.
     nav.esperar("!!document.querySelector('[data-abrir-ventana-sigpac-tierra]')", segundos=25)
-    abrio = clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]") and nav.esperar(
+    abrio = bool(
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-abrir-ventana-sigpac-tierra]');"
+            " if (!b) return false; b.scrollIntoView({ block: 'center', behavior: 'instant' });"
+            " b.click(); return true; })()"
+        )
+    ) and nav.esperar(
         "!!document.querySelector('[data-ventana-sigpac]')", segundos=15
     )
     comprobar(abrio, "se abre la ventana del SIGPAC desde la ficha de la tierra")
