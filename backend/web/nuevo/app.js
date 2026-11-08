@@ -4073,6 +4073,14 @@ function App() {
     };
   }, []);
 
+  // Al cambiar de pantalla se empieza arriba: si no, una vista hereda el scroll de la anterior y
+  // los primeros botones quedan debajo de la cabecera o de la barra (medido en el móvil).
+  useEffect(() => {
+    const main = document.querySelector(".contenido");
+    if (main) main.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, [vista, tierraId]);
+
   const ir = (nueva) => {
     setVista(nueva);
     if (nueva !== "tierra") setTierraId(null);

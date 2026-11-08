@@ -27,8 +27,12 @@ fecha: 2026-11-08
    (8 reales, singular/plural), botón **«Empezar por lo que bloquea»**, los bloqueantes **primero en
    cada sección** (orden estable) y «Faltan N y aquí se ven M» si el servidor cuenta más de las que
    lista. Medido en Chrome: 358/328 px, 0 desborde, botón 56 px y centro alcanzable.
-4. **Móvil auditado**: 10 vistas a 390×844 y 360×640, **0 px de desborde, 0 botones <44 px y 0 centros
-   tapados**; la ventana del SIGPAC sigue a pantalla completa y el cuaderno no se solapa.
+4. **Móvil auditado y con capturas limpias**: 10 vistas a 390×844 y 360×640, **0 px de desborde, 0
+   botones <44 px y 0 centros tapados** (cada control se lleva al centro y se comprueba con
+   `elementFromPoint`); **20 capturas** nuevas en `docs/capturas-nuevo/movil-*.png` de Hoy, Tierras,
+   ficha, apuntar, calendario, trabajos, productos, cuaderno, facturas y la ventana del SIGPAC. Al
+   cambiar de pantalla el scroll vuelve arriba (antes una vista heredaba el scroll de la anterior y
+   los primeros botones quedaban bajo la cabecera fija).
 5. **PSD2 documentado para decidir, sin contratar nada** (`docs/PSD2-AGREGADORES.md`, revisión
    08/11/2026):
    - **Ningún agregador grande publica precio de producción** (Enable Banking, Powens, Tink,
@@ -52,7 +56,7 @@ fecha: 2026-11-08
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos
     cliente real con el GeoPackage de Salamanca                       4/4 contornos, 4 mapas
-    capturas                        21 en docs/capturas-nuevo/ (incluidas las del cliente)
+    capturas móviles                       20 (390 y 360) + 2 del cliente real
 
 ## Lo que sigue abierto
 

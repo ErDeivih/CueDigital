@@ -943,6 +943,8 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
             comprobar(desborde <= 1, f"{ancho} px · {nombre}: sin scroll horizontal ({desborde} px)")
 
         sin_desborde("Hoy")
+        apartar_la_barra_para_la_captura(nav)
+        print(f"  (captura: {captura(nav, f'movil-hoy-{ancho}').relative_to(RAIZ)})")
         for clave, nombre in (
             ("tierras", "Tierras"),
             ("calendario", "Calendario"),
@@ -956,8 +958,27 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                 comprobar(False, f"{ancho} px · {nombre}: no se llega a la vista")
                 continue
             nav.esperar(f"!!document.querySelector('[data-vista=\"{clave}\"]')", segundos=15)
+            esperar_lo_pintado(nav, clave)
+            # Se coloca la vista arriba ANTES de auditar: al cargar datos puede restaurarse el
+            # scroll anterior y dejar un botón debajo de una barra.
+            en_el_borde = apartar_la_barra_para_la_captura(nav)
+            time.sleep(0.4)
             sin_desborde(nombre)
             auditar_los_controles(nav, ancho, nombre)
+            # La foto se hace desde arriba y sin que el navegador «recuerde» el scroll.
+            nav.evaluar(
+                "(() => { document.documentElement.style.overflowAnchor = 'none';"
+                " document.body.style.overflowAnchor = 'none';"
+                " window.scrollTo({ top: 0, left: 0, behavior: 'instant' });"
+                " const m = document.querySelector('.contenido');"
+                " if (m) m.scrollTo({ top: 0, left: 0, behavior: 'instant' });"
+                " return true; })()"
+            )
+            time.sleep(0.2)
+            # La captura se hace con la vista ya colocada y con la barra sin cortar nada que
+            # se haya podido apartar; en listas largas puede quedar algo en el borde (scroll normal).
+            print(f"    (controles en el borde de la barra, normal: {en_el_borde})")
+            print(f"  (captura: {captura(nav, f'movil-{clave}-{ancho}').relative_to(RAIZ)})")
             if clave == "cuaderno":
                 nav.esperar("!!document.querySelector('[data-cuaderno-resumen]')", segundos=20)
                 tiene_empezar = nav.evaluar("!!document.querySelector('[data-cuaderno-empezar]')")
@@ -1024,6 +1045,8 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
             " || getComputedStyle(caja).overflowX !== 'visible'; })()"
         )
         comprobar(bool(tabla_dentro), f"{ancho} px · la tabla de años no arrastra la página")
+        nav.esperar("!!document.querySelector('[data-mapa-imagen]')", segundos=20)
+        apartar_la_barra_para_la_captura(nav)
         print(f"  (captura: {captura(nav, f'movil-ficha-{ancho}').relative_to(RAIZ)})")
 
         # La ventana del SIGPAC, a pantalla completa y con su scroll interno.
@@ -1105,22 +1128,20 @@ def auditar_los_controles(nav: NavegadorDeVerdad, ancho: int, nombre: str) -> No
     crudo = nav.evaluar(
         "(() => {"
         " const vivos = Array.from(document.querySelectorAll('.contenido button, .contenido a.boton, .contenido [role=\"button\"]'))"
-        "   .filter((e) => { const r = e.getBoundingClientRect();"
-        "     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight; });"
+        "   .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });"
         " const problemas = [];"
         " for (const e of vivos) {"
+        "   if (e.disabled) continue;"
+        "   e.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });"
         "   const r = e.getBoundingClientRect();"
         "   const texto = (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 42);"
-        "   if (e.disabled) continue;"
         "   if (r.height < 43.5) problemas.push({ tipo: 'alto', texto: texto, alto: Math.round(r.height) });"
         "   const x = r.left + r.width / 2;"
         "   const y = r.top + r.height / 2;"
         "   if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;"
         "   const encima = document.elementFromPoint(x, y);"
-        "   if (encima && !(e === encima || e.contains(encima))) {"
-        "     const barra = encima.closest ? encima.closest('[data-nav-inferior]') : null;"
-        "     if (!barra) problemas.push({ tipo: 'tapado', texto: texto, por: encima.tagName + '.' + String(encima.className || '').slice(0, 40) });"
-        "   }"
+        "   if (encima && !(e === encima || e.contains(encima)))"
+        "     problemas.push({ tipo: 'tapado', texto: texto, por: encima.tagName + '.' + String(encima.className || '').slice(0, 40) });"
         " }"
         " return JSON.stringify(problemas);"
         "})()"
@@ -1326,6 +1347,62 @@ def comprobar_apuntar_completo(nav: NavegadorDeVerdad, base: str, token: str) ->
         ))
     comprobar(ok, "la siembra se guarda desde el móvil")
     print(f"  (captura: {captura(nav, 'apuntar-completo-390').relative_to(RAIZ)})")
+
+
+def esperar_lo_pintado(nav: NavegadorDeVerdad, clave: str) -> None:
+    """Espera a que la vista tenga sus datos, no solo el marco: una foto de «cargando» no vale."""
+    selectores = {
+        "hoy": "[data-que-falta], [data-trabajo-de-hoy]",
+        "tierras": "[data-tierra-id]",
+        "calendario": "[data-dia-calendario]",
+        "apuntar": "[data-apuntar-tab]",
+        "trabajos": "[data-trabajo-fila], [data-trabajos-resumen]",
+        "productos": "[data-producto-id], [data-producto-buscar]",
+        "cuaderno": "[data-cuaderno-resumen]",
+        "facturas": "[data-factura-archivo], [data-factura-leer]",
+    }
+    selector = selectores.get(clave)
+    if selector:
+        nav.esperar(f"!!document.querySelector('{selector}')", segundos=30)
+
+
+def apartar_la_barra_para_la_captura(nav: NavegadorDeVerdad) -> int:
+    """Deja el contenido de forma que la barra inferior no corte ningún botón en la foto.
+
+    La barra es fija y, al hacer scroll, tapa lo que pilla debajo; eso es normal al usar la app.
+    Para una captura limpia se sube el contenido lo justo hasta que no queda ningún control
+    intersecado por ella. Devuelve cuántos controles seguían cortados (0 = foto limpia).
+    """
+    cortados = nav.evaluar(
+        "(() => {"
+        " const barra = Array.from(document.querySelectorAll('[data-nav-inferior]'))"
+        "   .find((e) => e.getBoundingClientRect().width > 0);"
+        " const main = document.querySelector('.contenido');"
+        " if (main && main.scrollHeight > main.clientHeight + 1)"
+        "   main.scrollTo({ top: 0, left: 0, behavior: 'instant' });"
+        " window.scrollTo({ top: 0, left: 0, behavior: 'instant' });"
+        " if (!barra) return 0;"
+        " const controles = () => Array.from(document.querySelectorAll("
+        "   '.contenido button, .contenido a.boton, .contenido [role=\"button\"]'))"
+        "   .filter((e) => { const r = e.getBoundingClientRect();"
+        "     return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });"
+        " for (let intento = 0; intento < 6; intento += 1) {"
+        "   const arriba = barra.getBoundingClientRect().top;"
+        "   const partidos = controles().filter((e) => { const r = e.getBoundingClientRect();"
+        "     return r.top < arriba && r.bottom > arriba; });"
+        "   if (!partidos.length) break;"
+        "   const abajo = Math.max.apply(null, partidos.map((e) => e.getBoundingClientRect().bottom));"
+        "   const salto = Math.min(360, Math.max(24, abajo - arriba + 24));"
+        "   if (main && main.scrollHeight > main.clientHeight + 1)"
+        "     main.scrollTo({ top: main.scrollTop + salto, left: 0, behavior: 'instant' });"
+        "   else window.scrollTo({ top: window.scrollY + salto, left: 0, behavior: 'instant' });"
+        " }"
+        " const arriba = barra.getBoundingClientRect().top;"
+        " return controles().filter((e) => { const r = e.getBoundingClientRect();"
+        "   return r.top < arriba && r.bottom > arriba; }).length;"
+        "})()"
+    )
+    return int(cortados or 0)
 
 
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
