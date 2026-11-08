@@ -1014,38 +1014,51 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                     primero = nav.evaluar(
                         "(() => { const p = document.querySelector('[data-cuaderno-primero]');"
                         " const d = document.querySelector('[data-cuaderno-primero-donde]');"
+                        " const t = document.querySelector('[data-cuaderno-bloqueo-tecnico]');"
                         " return JSON.stringify({texto: p ? p.innerText.trim().slice(0, 60) : '',"
-                        " donde: d ? (d.getAttribute('data-cuaderno-primero-donde') || d.innerText).trim().slice(0, 60) : ''}); })()"
+                        " donde: d ? (d.getAttribute('data-cuaderno-primero-donde') || d.innerText).trim().slice(0, 60) : '',"
+                        " tecnico: t ? t.innerText.trim().slice(0, 80) : ''}); })()"
                     ) or "{}"
                     datos_primero = json.loads(primero)
                     comprobar(
                         bool(datos_primero.get("texto")) and bool(datos_primero.get("donde")),
-                        f"{ancho} px · Cuaderno: dice cuál es el primero y dónde se arregla",
+                        f"{ancho} px · Cuaderno: dice lo primero que puede rellenar y dónde",
+                    )
+                    comprobar(
+                        "no depende de ti" in (datos_primero.get("tecnico") or ""),
+                        f"{ancho} px · Cuaderno: dice que lo técnico no depende del agricultor",
+                    )
+                    no_hay_enlace_falso = nav.evaluar(
+                        "!Array.from(document.querySelectorAll('a[data-cuaderno-empezar]'))"
+                        ".some((a) => a.getAttribute('href') === '/')"
+                    )
+                    comprobar(
+                        bool(no_hay_enlace_falso),
+                        f"{ancho} px · Cuaderno: no manda a la app vieja a arreglar lo que no puede",
                     )
                     orden = nav.evaluar(
                         "(() => {"
                         " let malas = 0;"
-                        " let bloqueantes = 0;"
+                        " let conPantalla = 0;"
                         " let vistoNo = false;"
                         " for (const s of document.querySelectorAll('[data-que-falta-seccion]')) {"
-                        "   const b = s.getAttribute('data-que-falta-seccion-bloquea') === 'true';"
-                        "   if (b) { bloqueantes += 1; if (vistoNo) malas += 1; } else { vistoNo = true; }"
+                        "   const d = (s.getAttribute('data-que-falta-seccion-destino') || '').trim();"
+                        "   if (d) { conPantalla += 1; if (vistoNo) malas += 1; } else { vistoNo = true; }"
+                        "   let vistosNo = false;"
                         "   for (const f of s.querySelectorAll('[data-que-falta-item]')) {"
-                        "     const fb = f.getAttribute('data-que-falta-item-bloquea') === 'true';"
-                        "     if (fb && f.previousElementSibling) {"
-                        "       const prev = f.previousElementSibling;"
-                        "       if (prev.getAttribute('data-que-falta-item-bloquea') !== 'true') malas += 1;"
-                        "     }"
+                        "     const b = f.getAttribute('data-que-falta-item-bloquea') === 'true';"
+                        "     if (b && vistosNo) malas += 1;"
+                        "     if (!b) vistosNo = true;"
                         "   }"
                         " }"
-                        " return JSON.stringify({malas: malas, bloqueantes: bloqueantes}); })()"
+                        " return JSON.stringify({malas: malas, conPantalla: conPantalla}); })()"
                     ) or "{}"
                     datos_orden = json.loads(orden)
                     comprobar(
-                        int(datos_orden.get("bloqueantes") or 0) > 0
+                        int(datos_orden.get("conPantalla") or 0) > 0
                         and int(datos_orden.get("malas") or 0) == 0,
-                        f"{ancho} px · Cuaderno: secciones con bloqueo primero y urgente dentro"
-                        f" ({datos_orden.get('bloqueantes')} con bloqueo)",
+                        f"{ancho} px · Cuaderno: primero lo que puede rellenar y urgente dentro"
+                        f" ({datos_orden.get('conPantalla')} secciones con pantalla)",
                     )
             if clave == "apuntar":
                 # Las cuatro pestañas del apunte, también a 360: ninguna puede desbordar.

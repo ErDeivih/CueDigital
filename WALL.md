@@ -167,11 +167,13 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     tarjeta de resumen «Faltan N cosas · K bloquean el envío», cuenta por sección («3 cosas») y botón
     **«Empezar por lo primero»** que lleva a lo que bloquea (si no, al primer destino disponible); la N
     sale del servidor, no se inventa.
-  - **Y el cuaderno guiado avisa de lo que bloquea** (08/11/2026): tarjeta arriba «Hay K cosas que
-    impiden presentar el cuaderno» (singular/plural) con «Empezar por lo que bloquea», los items que
-    bloquean **primero dentro de cada sección** (orden estable) y, si el servidor cuenta más faltas de
-    las que lista, se dice «Faltan N y aquí se ven M» sin inventar filas. Medido en Chrome: aviso de
-    358/328 px, 0 desborde, botón 56 px y centro alcanzable; 8 bloqueantes reales.
+  - **Y el aviso dice lo primero que el agricultor PUEDE rellenar** (08/11/2026): el cuaderno
+    distingue lo que bloquea el envío (lo resuelve la aplicación, la Junta o FEGA) de lo que el
+    agricultor puede rellenar. Arriba dice «Lo primero que puedes rellenar: …» con la pantalla donde
+    se arregla, avisa de que lo técnico «no depende de ti» y **no manda a la app vieja a arreglar lo
+    que no puede**; las secciones con pantalla van antes y, dentro, lo bloqueante primero. Verificado
+    en Chrome a 390 y 360 (0 desbordes, botón 48 px y centro alcanzable, 16 secciones con pantalla
+    antes de las técnicas).
   - **Y una tierra dada de alta solo con la referencia ya casa con el GeoPackage** (08/11/2026):
     `_completar_los_codigos_con_la_referencia` rellena `codigo_ine/poligono/numero_parcela/numero_recinto`
     al guardar (sin pisar lo informado) y `codigos_de_una_parcela` lee la referencia **también para las
@@ -220,6 +222,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-08 | **Cuaderno: «lo primero que puedes rellenar» y tierras actualizadas del SIGPAC** | Chrome 390/360: aviso claro (lo técnico no depende del agricultor, sin enlace falso a la app vieja), 16 secciones con pantalla antes, botón 48 px alcanzable; lista de tierras pintadas por el GeoPackage; 84/84 JS y 31 pytest |
 | 2026-11-08 | **Las cuatro parcelas reales del cliente, en la app y en móvil** | Dadas de alta solo con su referencia y mapeadas con el gpkg de Salamanca: 4/4 con ortofoto y contorno (`cliente-real-1..4-390.png`); ficha y ventana del SIGPAC con el recinto real; `docs/capturas-nuevo/LEEME.md` indexa las 27 capturas |
 | 2026-11-08 | **Contorno real del GeoPackage dentro de la app, en móvil** | Aplicado el mapa de Salamanca a una tierra del cliente: ficha con ortofoto y contorno (`cliente-real-ficha-390/360.png`) y ventana del SIGPAC con el recinto real (`cliente-real-sigpac-390.png`); imagen cargada comprobada (`naturalWidth > 0`) y 0 tapados |
 | 2026-11-08 | **Capturas móviles de toda la app, sin solapamientos** | 20 capturas a 390×844 y 360×640 (Hoy, Tierras, ficha, apuntar, calendario, trabajos, productos, cuaderno, facturas y ventana del SIGPAC) en `docs/capturas-nuevo/movil-*.png`; cada control llevado al centro y comprobado con `elementFromPoint` (0 tapados) y el scroll se reinicia al cambiar de pantalla |

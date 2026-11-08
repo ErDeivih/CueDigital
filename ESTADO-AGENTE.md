@@ -28,10 +28,13 @@ fecha: 2026-11-08
      migración.
    Antes: `sin_codigos`; ahora: `actualizadas` y WKT idéntico. **7 pruebas nuevas** del alta por
    referencia y 3 del geopackage.
-3. **Cuaderno guiado con avisos claros**: tarjeta «Hay K cosas que impiden presentar el cuaderno»
-   (8 reales, singular/plural), botón **«Empezar por lo que bloquea»**, los bloqueantes **primero en
-   cada sección** (orden estable) y «Faltan N y aquí se ven M» si el servidor cuenta más de las que
-   lista. Medido en Chrome: 358/328 px, 0 desborde, botón 56 px y centro alcanzable.
+3. **Cuaderno guiado con avisos claros**: el aviso distingue **lo que bloquea el envío** (lo resuelve
+   la aplicación, la Junta o FEGA) de **lo que el agricultor puede rellenar**. Arriba dice «Lo primero
+   que puedes rellenar: …» con la pantalla donde se arregla, avisa de que lo técnico «no depende de
+   ti» y **no manda a la app vieja a arreglar lo que no puede**; las secciones con pantalla van antes
+   y, dentro, lo bloqueante primero. Medido en Chrome: 16 secciones con pantalla antes de las
+   técnicas, 0 desbordes y botón alcanzable. En el SIGPAC, la lista de tierras pintadas dice cuáles
+   son, no solo cuántas.
 4. **Móvil auditado y con capturas limpias**: 10 vistas a 390×844 y 360×640, **0 px de desborde, 0
    botones <44 px y 0 centros tapados** (cada control se lleva al centro y se comprueba con
    `elementFromPoint`); **20 capturas** de todas las vistas y **3 más** del contorno real dentro de la
