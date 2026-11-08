@@ -1017,6 +1017,15 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                         and int(datos_aviso.get("cuenta") or 0) > 0,
                         f"{ancho} px · Cuaderno: el aviso cuenta lo que bloquea",
                     )
+                    rellenables = nav.evaluar(
+                        "(() => { const e = document.querySelector('[data-cuaderno-rellenables]');"
+                        " return e ? (e.getAttribute('data-cuaderno-rellenables') || '') : ''; })()"
+                    )
+                    comprobar(
+                        str(rellenables).isdigit() and int(rellenables) > 0,
+                        f"{ancho} px · Cuaderno: dice cuántas puede rellenar el agricultor"
+                        f" ({rellenables})",
+                    )
                     primero = nav.evaluar(
                         "(() => { const p = document.querySelector('[data-cuaderno-primero]');"
                         " const d = document.querySelector('[data-cuaderno-primero-donde]');"
@@ -1507,26 +1516,29 @@ def comprobar_el_contorno_real_en_la_app(
     apartar_la_barra_para_la_captura(nav)
     print(f"  (captura: {captura(nav, 'cliente-real-ficha-390').relative_to(RAIZ)})")
 
-    # Y la ventana del SIGPAC de esa misma tierra, buscando su recinto real.
+    # Y la ventana del SIGPAC de esa misma tierra: se abre con lo que la tierra ya tiene y busca sola.
     if clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]") and nav.esperar(
         "!!document.querySelector('[data-ventana-sigpac]')", segundos=20
     ):
-        nav.evaluar(
-            "(() => { const el = document.querySelector('[data-sigpac-buscar-referencia]');"
-            " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
-            "window.HTMLInputElement.prototype, 'value').set;"
-            " setter.call(el, '37:70:0:0:503:51');"
-            " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+        auto = nav.esperar(
+            "!!document.querySelector('[data-ventana-sigpac][data-sigpac-autobusqueda=\"true\"]')",
+            segundos=30,
         )
-        nav.evaluar(
-            "(() => { const b = document.querySelector('[data-sigpac-buscar]');"
-            " if (!b) return false; b.click(); return true; })()"
+        comprobar(auto, "la ventana del SIGPAC busca sola al abrirse desde la ficha")
+        referencia_puesta = nav.evaluar(
+            "(() => { const el = document.querySelector('[data-sigpac-buscar-referencia]');"
+            " return el ? String(el.value || '').trim() : ''; })()"
+        )
+        comprobar(
+            bool(referencia_puesta),
+            f"la referencia de la tierra viene puesta ({referencia_puesta!r})",
         )
         if nav.esperar("document.querySelectorAll('[data-sigpac-recinto-id]').length > 0", segundos=45):
-            nav.evaluar(
-                "(() => { const r = document.querySelector('[data-sigpac-recinto-id]');"
-                " if (!r) return false; r.click(); return true; })()"
+            elegido = nav.evaluar(
+                "(() => { const r = document.querySelector('[data-sigpac-recinto-id][aria-pressed=\"true\"]');"
+                " return !!r; })()"
             )
+            comprobar(bool(elegido), "la ventana deja elegido el recinto de la tierra")
         print(f"  (captura: {captura(nav, 'cliente-real-sigpac-390').relative_to(RAIZ)})")
         nav.evaluar(
             "(() => { const b = document.querySelector('[data-ventana-cerrar]');"

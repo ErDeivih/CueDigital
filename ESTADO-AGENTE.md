@@ -16,8 +16,10 @@ fecha: 2026-11-08
    `docs/capturas-nuevo/cliente-contornos.png`; variante sin red con el contorno dibujado por el
    programa. El contorno de las cuatro se genera en **0,046 s**. **Y dentro de la app, en móvil**: el
    mapa real aplicado a una tierra se ve en su ficha con ortofoto y contorno
-   (`cliente-real-ficha-390/360.png`) y en la ventana del SIGPAC con el recinto real
-   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada. Y **las cinco parcelas del
+   **el GeoPackage real**: la ventana abierta desde la ficha de una tierra **ya viene rellena con su
+   referencia, pueblo y códigos, busca sola una vez y deja elegido el recinto de la tierra**; desde
+   el alta sigue vacía. La ficha del mapa real se ve en `cliente-real-ficha-390/360.png` y la ventana
+   con el recinto en `cliente-real-sigpac-390.png`, con la imagen cargada comprobada. Y **las cinco parcelas del
    cliente** (cuatro con el recinto en la referencia y **una con la referencia del visor, seis
    números**), dadas de alta solo con su referencia, se ven una a una con su contorno y su ortofoto
    (`cliente-real-1..5-390.png`); el índice de capturas está en `docs/capturas-nuevo/LEEME.md`.
@@ -36,7 +38,8 @@ fecha: 2026-11-08
    que puedes rellenar: …» con la pantalla donde se arregla, avisa de que lo técnico «no depende de
    ti» y **no manda a la app vieja a arreglar lo que no puede**; las secciones con pantalla van antes
    y, dentro, lo bloqueante primero. Medido en Chrome: 16 secciones con pantalla antes de las
-   técnicas, 0 desbordes y botón alcanzable. En el SIGPAC, la lista de tierras pintadas dice cuáles
+   técnicas, 0 desbordes y botón alcanzable. El resumen dice además **cuántas faltas son suyas**
+   («Puedes rellenar N de ellas aquí»). En el SIGPAC, la lista de tierras pintadas dice cuáles
    son, no solo cuántas.
 4. **Móvil auditado y con capturas limpias**: 10 vistas a 390×844 y 360×640, **0 px de desborde, 0
    botones <44 px y 0 centros tapados** (cada control se lleva al centro y se comprueba con
@@ -62,8 +65,8 @@ fecha: 2026-11-08
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5936 recogidas · 5934 superadas, 2 omitidas, 0 fallos
-    JavaScript   1312 superadas, 0 fallos
+    Python       5937 recogidas · 5935 superadas, 2 omitidas, 0 fallos
+    JavaScript   1314 superadas, 0 fallos
     armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar (4 pestañas guardando),
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos

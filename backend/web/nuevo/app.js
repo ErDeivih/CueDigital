@@ -99,6 +99,7 @@ import {
   numeroDe,
   proyeccionDeAnillo,
   proyeccionDePunto,
+  puedeUsarseElRecinto,
   puntoDelMapa,
   queryDeTrabajos,
   recintoElegido,
@@ -3842,7 +3843,6 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     const preferido = recintoPreferido !== null && encontrados.some((uno) => String(uno.recinto) === String(recintoPreferido))
       ? recintoPreferido
       : null;
-    window.__depuracion = { recintoPreferido, preferido, primeroConForma: primeroConForma ? primeroConForma.recinto : null, encontrados: encontrados.map((uno) => uno.recinto) };
     setElegidoRecintoId(preferido !== null ? preferido : (primeroConForma ? primeroConForma.recinto : encontrados[0] ? encontrados[0].recinto : null));
     setEstado(encontrados.length ? "listo" : "vacio");
   };
@@ -3981,7 +3981,7 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
 
   const avisoDeForma = recinto ? avisoSinForma(recinto) : null;
 
-  return html`<div className="modal" data-ventana-sigpac data-sigpac-autobusqueda=${autoBusqueda ? "true" : undefined} data-depuracion-elegido=${String(elegidoRecintoId ?? "ninguno")} role="dialog" aria-modal="true" aria-labelledby="ventana-titulo">
+  return html`<div className="modal" data-ventana-sigpac data-sigpac-autobusqueda=${autoBusqueda ? "true" : undefined} role="dialog" aria-modal="true" aria-labelledby="ventana-titulo">
     <div className="modal__fondo" aria-hidden="true"></div>
     <div className="modal__caja" tabIndex="-1" ref=${dialogo}>
       <div className="modal__cabecera">
