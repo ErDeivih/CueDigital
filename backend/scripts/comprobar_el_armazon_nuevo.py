@@ -1445,6 +1445,11 @@ def comprobar_el_contorno_real_en_la_app(
         return
     nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=20)
     nav.esperar("!!document.querySelector('[data-mapa-imagen]')", segundos=30)
+    nav.esperar(
+        "(() => { const i = document.querySelector('[data-mapa-imagen]');"
+        " return !!i && i.complete && i.naturalWidth > 0; })()",
+        segundos=45,
+    )
     imagen = nav.evaluar(
         "(() => { const i = document.querySelector('[data-mapa-imagen]');"
         " return i ? JSON.stringify({cargada: i.complete && i.naturalWidth > 0,"
@@ -1455,9 +1460,26 @@ def comprobar_el_contorno_real_en_la_app(
     apartar_la_barra_para_la_captura(nav)
     print(f"  (captura: {captura(nav, 'cliente-real-ficha-390').relative_to(RAIZ)})")
 
-    # Y la ventana del SIGPAC de esa misma tierra, con su recinto.
-    clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]")
-    if nav.esperar("!!document.querySelector('[data-ventana-sigpac]')", segundos=20):
+    # Y la ventana del SIGPAC de esa misma tierra, buscando su recinto real.
+    if clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]") and nav.esperar(
+        "!!document.querySelector('[data-ventana-sigpac]')", segundos=20
+    ):
+        nav.evaluar(
+            "(() => { const el = document.querySelector('[data-sigpac-buscar-referencia]');"
+            " if (!el) return false; const setter = Object.getOwnPropertyDescriptor("
+            "window.HTMLInputElement.prototype, 'value').set;"
+            " setter.call(el, '37:70:0:0:503:51');"
+            " el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()"
+        )
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-sigpac-buscar]');"
+            " if (!b) return false; b.click(); return true; })()"
+        )
+        if nav.esperar("document.querySelectorAll('[data-sigpac-recinto-id]').length > 0", segundos=45):
+            nav.evaluar(
+                "(() => { const r = document.querySelector('[data-sigpac-recinto-id]');"
+                " if (!r) return false; r.click(); return true; })()"
+            )
         print(f"  (captura: {captura(nav, 'cliente-real-sigpac-390').relative_to(RAIZ)})")
         nav.evaluar(
             "(() => { const b = document.querySelector('[data-ventana-cerrar]');"

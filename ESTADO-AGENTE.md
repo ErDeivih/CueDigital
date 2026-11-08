@@ -14,7 +14,10 @@ fecha: 2026-11-08
    referencia**). `POST /api/sigpac/cache/37/contornos` → **4/4 actualizadas, 0 sin códigos**, geometría
    **idéntica** al WKT del lector, y **cuatro mapas** con ortofoto del IGN (0,6–1,3 s por mapa) en
    `docs/capturas-nuevo/cliente-contornos.png`; variante sin red con el contorno dibujado por el
-   programa. El contorno de las cuatro se genera en **0,046 s**.
+   programa. El contorno de las cuatro se genera en **0,046 s**. **Y dentro de la app, en móvil**: el
+   mapa real aplicado a una tierra se ve en su ficha con ortofoto y contorno
+   (`cliente-real-ficha-390/360.png`) y en la ventana del SIGPAC con el recinto real
+   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada.
 2. **Fallo cerrado (hallado por esa prueba)**: una tierra creada con **solo `ref_sigpac`** guardaba los
    códigos en blanco y el GeoPackage no la reconocía. Ahora:
    - al guardar, `_completar_los_codigos_con_la_referencia` rellena `codigo_ine`, polígono, parcela y
@@ -29,10 +32,11 @@ fecha: 2026-11-08
    lista. Medido en Chrome: 358/328 px, 0 desborde, botón 56 px y centro alcanzable.
 4. **Móvil auditado y con capturas limpias**: 10 vistas a 390×844 y 360×640, **0 px de desborde, 0
    botones <44 px y 0 centros tapados** (cada control se lleva al centro y se comprueba con
-   `elementFromPoint`); **20 capturas** nuevas en `docs/capturas-nuevo/movil-*.png` de Hoy, Tierras,
-   ficha, apuntar, calendario, trabajos, productos, cuaderno, facturas y la ventana del SIGPAC. Al
-   cambiar de pantalla el scroll vuelve arriba (antes una vista heredaba el scroll de la anterior y
-   los primeros botones quedaban bajo la cabecera fija).
+   `elementFromPoint`); **20 capturas** de todas las vistas y **3 más** del contorno real dentro de la
+   app en `docs/capturas-nuevo/` (`movil-*.png` y `cliente-real-*.png`), con Hoy, Tierras, ficha,
+   apuntar, calendario, trabajos, productos, cuaderno, facturas y la ventana del SIGPAC. Al cambiar de
+   pantalla el scroll vuelve arriba (antes una vista heredaba el scroll de la anterior y los primeros
+   botones quedaban bajo la cabecera fija).
 5. **PSD2 documentado para decidir, sin contratar nada** (`docs/PSD2-AGREGADORES.md`, revisión
    08/11/2026):
    - **Ningún agregador grande publica precio de producción** (Enable Banking, Powens, Tink,
@@ -56,7 +60,7 @@ fecha: 2026-11-08
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos
     cliente real con el GeoPackage de Salamanca                       4/4 contornos, 4 mapas
-    capturas móviles                       20 (390 y 360) + 2 del cliente real
+    capturas móviles                       20 (390 y 360) + 3 del contorno real en la app + 2 del cliente
 
 ## Lo que sigue abierto
 
