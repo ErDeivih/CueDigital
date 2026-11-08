@@ -201,6 +201,11 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     temporal** (`stream_http`), así que una provincia de 628 MB **no pide 628 MB de RAM**; lo probado
     en las pruebas de la caché. **Queda por hacer**: la limpieza del `.gpkg` (1,67 GB por provincia) y
     decidir si se borra el ZIP tras extraer.
+  - **Y la referencia del visor (seis números) ya no se queda sin contorno** (08/11/2026): si esa
+    parcela tiene **un solo recinto**, se coge sin preguntar; si tiene **varios**, se dice
+    («la referencia no dice el recinto y esa parcela tiene N recintos; elige uno») y **no se adivina**;
+    si no está en el mapa, va a «no encontradas» con su motivo. Probado con el GeoPackage real: una
+    tierra dada de alta solo con `37-70-0-0-503-51` recibe su contorno; 3 pruebas nuevas.
   - **Y el GeoPackage ya se abre, y probado con el fichero REAL** (07/11/2026): Salamanca 37, campaña
 - **Verificado en Chrome**: ficha (trabajo de hoy, historial, imagen del contorno), calendario,
   filtros y factura leída, con **0 fallos**; capturas nuevas en `docs/capturas-nuevo/`
@@ -223,6 +228,7 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 | Fecha | Qué | Evidencia |
 |---|---|---|
 | 2026-11-08 | **Cuaderno: «lo primero que puedes rellenar» y tierras actualizadas del SIGPAC** | Chrome 390/360: aviso claro (lo técnico no depende del agricultor, sin enlace falso a la app vieja), 16 secciones con pantalla antes, botón 48 px alcanzable; lista de tierras pintadas por el GeoPackage; 84/84 JS y 31 pytest |
+| 2026-11-08 | **La referencia del visor (6 números) ya casa con el GeoPackage si hay un solo recinto** | Prueba real: tierra dada de alta solo con `37-70-0-0-503-51` recibe su contorno; con varios recintos se pide elegir y no se adivina; 3 pruebas nuevas y captura `cliente-real-5-390.png` |
 | 2026-11-08 | **Las cuatro parcelas reales del cliente, en la app y en móvil** | Dadas de alta solo con su referencia y mapeadas con el gpkg de Salamanca: 4/4 con ortofoto y contorno (`cliente-real-1..4-390.png`); ficha y ventana del SIGPAC con el recinto real; `docs/capturas-nuevo/LEEME.md` indexa las 27 capturas |
 | 2026-11-08 | **Contorno real del GeoPackage dentro de la app, en móvil** | Aplicado el mapa de Salamanca a una tierra del cliente: ficha con ortofoto y contorno (`cliente-real-ficha-390/360.png`) y ventana del SIGPAC con el recinto real (`cliente-real-sigpac-390.png`); imagen cargada comprobada (`naturalWidth > 0`) y 0 tapados |
 | 2026-11-08 | **Capturas móviles de toda la app, sin solapamientos** | 20 capturas a 390×844 y 360×640 (Hoy, Tierras, ficha, apuntar, calendario, trabajos, productos, cuaderno, facturas y ventana del SIGPAC) en `docs/capturas-nuevo/movil-*.png`; cada control llevado al centro y comprobado con `elementFromPoint` (0 tapados) y el scroll se reinicia al cambiar de pantalla |

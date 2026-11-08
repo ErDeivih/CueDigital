@@ -1594,7 +1594,7 @@ def comprobar_los_cuatro_contornos_del_cliente(
         actualizadas = {uno.get("id") for uno in resultado.get("actualizadas") or []}
         comprobar(
             aplicado.status_code == 200 and set(ids).issubset(actualizadas),
-            f"las cuatro tierras del cliente casan con el GeoPackage real ({len(ids)} de {resultado.get('n')})",
+            f"las tierras del cliente casan con el GeoPackage real ({len(ids)} de {resultado.get('n')})",
         )
 
     if not ids:

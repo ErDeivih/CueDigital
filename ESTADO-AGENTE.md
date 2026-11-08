@@ -17,9 +17,12 @@ fecha: 2026-11-08
    programa. El contorno de las cuatro se genera en **0,046 s**. **Y dentro de la app, en móvil**: el
    mapa real aplicado a una tierra se ve en su ficha con ortofoto y contorno
    (`cliente-real-ficha-390/360.png`) y en la ventana del SIGPAC con el recinto real
-   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada. Y **las cuatro parcelas del
-   cliente**, dadas de alta solo con su referencia, se ven una a una con su contorno y su ortofoto
-   (`cliente-real-1..4-390.png`); el índice de capturas está en `docs/capturas-nuevo/LEEME.md`.
+   (`cliente-real-sigpac-390.png`), con la imagen cargada comprobada. Y **las cinco parcelas del
+   cliente** (cuatro con el recinto en la referencia y **una con la referencia del visor, seis
+   números**), dadas de alta solo con su referencia, se ven una a una con su contorno y su ortofoto
+   (`cliente-real-1..5-390.png`); el índice de capturas está en `docs/capturas-nuevo/LEEME.md`.
+   Si la referencia no dice el recinto y la parcela tiene **uno solo**, se coge; si tiene **varios**,
+   se dice y se pide elegir, sin adivinar (IMP-27, 3 pruebas nuevas).
 2. **Fallo cerrado (hallado por esa prueba)**: una tierra creada con **solo `ref_sigpac`** guardaba los
    códigos en blanco y el GeoPackage no la reconocía. Ahora:
    - al guardar, `_completar_los_codigos_con_la_referencia` rellena `codigo_ine`, polígono, parcela y
@@ -59,13 +62,13 @@ fecha: 2026-11-08
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5930 recogidas · 5928 superadas, 2 omitidas, 0 fallos
-    JavaScript   1309 superadas, 0 fallos
+    Python       5936 recogidas · 5934 superadas, 2 omitidas, 0 fallos
+    JavaScript   1312 superadas, 0 fallos
     armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar (4 pestañas guardando),
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos
     cliente real con el GeoPackage de Salamanca                       4/4 contornos, 4 mapas
-    capturas móviles                       20 (390 y 360) + 4 del cliente en la app + 3 de ficha/SIGPAC + 2 del montaje
+    capturas móviles                       20 (390 y 360) + 5 del cliente en la app + 3 de ficha/SIGPAC + 2 del montaje
 
 ## Lo que sigue abierto
 

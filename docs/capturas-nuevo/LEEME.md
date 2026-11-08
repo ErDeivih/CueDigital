@@ -32,7 +32,7 @@ vista no desborda, que cada botón mide al menos 44 px y que su centro no está 
 |---|---|
 | `cliente-real-ficha-390.png` / `cliente-real-ficha-360.png` | Una tierra que casó con el mapa real, con la ortofoto y su contorno |
 | `cliente-real-sigpac-390.png` | La ventana del SIGPAC de esa tierra, buscando su referencia real y con el recinto dibujado |
-| `cliente-real-1-390.png` … `cliente-real-4-390.png` | Las **cuatro parcelas del cliente** (El Prado, El Alto, La Vega y Las Eras), cada una con su contorno real |
+| `cliente-real-1-390.png` … `cliente-real-5-390.png` | Las **cinco parcelas del cliente** (El Prado, El Alto, La Vega, Las Eras y El Visor), cada una con su contorno real. La quinta se dio de alta con la **referencia del visor (seis números)**; el programa cogió el recinto porque esa parcela tiene uno solo |
 | `cliente-contornos.png` | Montaje de los cuatro mapas con ortofoto que genera `pintar_las_parcelas_del_cliente.py` |
 | `cliente-contornos-sin-red.png` | Lo mismo sin red: el contorno dibujado por el programa y el mapa con su 503 declarado |
 
