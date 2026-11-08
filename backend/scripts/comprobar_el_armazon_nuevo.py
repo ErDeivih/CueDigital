@@ -1405,6 +1405,81 @@ def apartar_la_barra_para_la_captura(nav: NavegadorDeVerdad) -> int:
     return int(cortados or 0)
 
 
+def comprobar_el_contorno_real_en_la_app(
+    nav: NavegadorDeVerdad, base: str, token: str
+) -> None:
+    """Aplica el GeoPackage REAL de Salamanca a una tierra y la enseña en la app, en el móvil."""
+    print("\n== Contorno real del GeoPackage dentro de la app ==")
+    with httpx.Client(base_url=base, timeout=60.0) as cliente:
+        aplicado = cliente.post(
+            "/api/sigpac/cache/37/contornos",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"campana": 2026},
+        )
+        comprobar(
+            aplicado.status_code == 200,
+            f"el GeoPackage real de Salamanca contesta ({aplicado.status_code})",
+        )
+        datos = aplicado.json() if aplicado.status_code == 200 else {}
+        actualizadas = datos.get("actualizadas") or []
+        comprobar(
+            len(actualizadas) > 0,
+            f"alguna tierra de la finca casa con el mapa real ({len(actualizadas)} de {datos.get('n')})",
+        )
+    if not actualizadas:
+        return
+    tierra = actualizadas[0]
+    tierra_id = tierra.get("id")
+
+    nav.medir(390, 844, movil=True)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=25)
+    abierta = nav.evaluar(
+        "(() => { const t = document.querySelector('[data-tierra-id=\"" + str(tierra_id) + "\"]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    comprobar(bool(abierta), f"se abre la tierra que casó con el mapa real ({tierra_id})")
+    if not abierta:
+        return
+    nav.esperar("!!document.querySelector('[data-vista=\"tierra\"]')", segundos=20)
+    nav.esperar("!!document.querySelector('[data-mapa-imagen]')", segundos=30)
+    imagen = nav.evaluar(
+        "(() => { const i = document.querySelector('[data-mapa-imagen]');"
+        " return i ? JSON.stringify({cargada: i.complete && i.naturalWidth > 0,"
+        " ancho: i.naturalWidth, alto: i.naturalHeight}) : null; })()"
+    )
+    datos_imagen = json.loads(imagen) if imagen else {}
+    comprobar(bool(datos_imagen.get("cargada")), "el mapa de la tierra real se pinta en la app")
+    apartar_la_barra_para_la_captura(nav)
+    print(f"  (captura: {captura(nav, 'cliente-real-ficha-390').relative_to(RAIZ)})")
+
+    # Y la ventana del SIGPAC de esa misma tierra, con su recinto.
+    clic_en_visible(nav, "[data-abrir-ventana-sigpac-tierra]")
+    if nav.esperar("!!document.querySelector('[data-ventana-sigpac]')", segundos=20):
+        print(f"  (captura: {captura(nav, 'cliente-real-sigpac-390').relative_to(RAIZ)})")
+        nav.evaluar(
+            "(() => { const b = document.querySelector('[data-ventana-cerrar]');"
+            " if (b) b.click(); return true; })()"
+        )
+        nav.esperar("!document.querySelector('[data-ventana-sigpac]')", segundos=10)
+
+    # A 360, la misma ficha, para la captura pequeña.
+    nav.medir(360, 640, movil=True)
+    nav.abrir(f"{base}/nuevo/", esperar=1.0)
+    esperar_estado(nav, "listo")
+    clic_en_visible(nav, "[data-destino=tierras]")
+    nav.esperar("document.querySelectorAll('[data-tierra-id]').length > 0", segundos=25)
+    nav.evaluar(
+        "(() => { const t = document.querySelector('[data-tierra-id=\"" + str(tierra_id) + "\"]');"
+        " if (!t) return false; t.click(); return true; })()"
+    )
+    nav.esperar("!!document.querySelector('[data-mapa-imagen]')", segundos=30)
+    apartar_la_barra_para_la_captura(nav)
+    print(f"  (captura: {captura(nav, 'cliente-real-ficha-360').relative_to(RAIZ)})")
+
+
 def comprobar_estados(nav: NavegadorDeVerdad, base: str, token_vacio: str, token: str) -> None:
     print("\n== Los cuatro estados ==")
     registrados: list[dict] = []
@@ -1495,6 +1570,7 @@ def main() -> int:
         comprobar_ficha_calendario_trabajos_y_facturas(nav, base, token)
         comprobar_cuaderno_y_productos(nav, base)
         comprobar_la_ventana_del_sigpac(nav, base)
+        comprobar_el_contorno_real_en_la_app(nav, base, token)
         comprobar_movil(nav, base)
         comprobar_apuntar_completo(nav, base, token)
         comprobar_estados(nav, base, token_vacio, token)
