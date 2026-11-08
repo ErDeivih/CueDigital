@@ -1553,6 +1553,9 @@ def comprobar_los_cuatro_contornos_del_cliente(
         ("Cliente El Alto", "37-70-0-0-501-84-1"),
         ("Cliente La Vega", "37-70-0-0-501-82-2"),
         ("Cliente Las Eras", "37-70-0-0-501-80-1"),
+        # La referencia del visor: seis números, sin recinto. Si esa parcela tiene un solo
+        # recinto, el programa lo coge; si tuviera varios, pediría elegir (IMP-27).
+        ("Cliente El Visor", "37-70-0-0-503-51"),
     ]
     ids: list[int] = []
     with httpx.Client(base_url=base, timeout=60.0) as cliente:
@@ -1571,6 +1574,11 @@ def comprobar_los_cuatro_contornos_del_cliente(
                 bool(datos.get("codigo_ine") and datos.get("poligono")),
                 f"{alias}: el alta rellena los códigos desde la referencia",
             )
+            if referencia.count("-") == 5:
+                comprobar(
+                    datos.get("numero_recinto") is None,
+                    f"{alias}: la referencia del visor no inventa el recinto",
+                )
         aplicado = cliente.post(
             "/api/sigpac/cache/37/contornos",
             headers={"Authorization": f"Bearer {token}"},

@@ -634,6 +634,66 @@ def test_una_referencia_que_no_se_entiende_sigue_sin_codigos(tmp_path):
     assert geopackage_sigpac.codigos_de_una_parcela(tierra) is None
 
 
+# ------------------------------------------------- IMP-27: la referencia del visor (6 números)
+
+
+def _una_parcela_sin_recinto(**cambios):
+    """La referencia del visor trae seis números: **no dice el recinto**."""
+    datos = {
+        "ref_sigpac": f"{PROVINCIA}-{MUNICIPIO}-0-0-{POLIGONO}-{PARCELA}",
+        "codigo_ine": None,
+        "provincia": "",
+        "municipio": "",
+        "poligono": None,
+        "numero_parcela": None,
+        "numero_recinto": None,
+    }
+    datos.update(cambios)
+    return _una_parcela_de_mentira(**datos)
+
+
+def test_si_la_referencia_no_dice_el_recinto_y_solo_hay_uno_se_coge(tmp_path):
+    """El visor da seis números; si esa parcela tiene **un solo** recinto, no hay nada que elegir."""
+    tierra = _una_parcela_sin_recinto(id=11, alias="La parcela entera")
+    ruta = _un_gpkg(tmp_path / "mapa.gpkg", [_una_fila()])
+
+    resultado = geopackage_sigpac.contornos_de_las_parcelas([tierra], ruta)
+
+    assert resultado["sin_codigos"] == []
+    assert [una["id"] for una in resultado["actualizadas"]] == [11]
+    assert resultado["actualizadas"][0]["wkt"] == WKT_ESPERADO
+
+
+def test_si_la_referencia_no_dice_el_recinto_y_hay_varios_se_pide_elegir(tmp_path):
+    """Con dos recintos en la misma parcela **no se adivina**: se dice y se pide elegir uno."""
+    tierra = _una_parcela_sin_recinto(id=12, alias="La parcela con dos trozos")
+    ruta = _un_gpkg(
+        tmp_path / "mapa.gpkg",
+        [_una_fila(), _una_fila(recinto=2, geom=_blob(_wkb_de_un_poligono([ANILLO])))],
+    )
+
+    resultado = geopackage_sigpac.contornos_de_las_parcelas([tierra], ruta)
+
+    assert resultado["actualizadas"] == []
+    assert [una["id"] for una in resultado["sin_codigos"]] == [12]
+    assert "2 recintos" in resultado["sin_codigos"][0]["motivo"]
+    assert "elige uno" in resultado["sin_codigos"][0]["motivo"]
+
+
+def test_si_la_referencia_no_dice_el_recinto_y_no_esta_se_dice(tmp_path):
+    """Si la parcela no está en el mapa, se cuenta como no encontrada, no como sin códigos."""
+    tierra = _una_parcela_sin_recinto(
+        id=13, alias="La parcela que no está", ref_sigpac=f"{PROVINCIA}-{MUNICIPIO}-0-0-999-999"
+    )
+    ruta = _un_gpkg(tmp_path / "mapa.gpkg", [_una_fila()])
+
+    resultado = geopackage_sigpac.contornos_de_las_parcelas([tierra], ruta)
+
+    assert resultado["actualizadas"] == []
+    assert [una["id"] for una in resultado["no_encontradas"]] == [13]
+    assert "no está en el mapa" in resultado["no_encontradas"][0]["motivo"]
+
+
 # --------------------------------------------------------------------------- la puerta
 
 

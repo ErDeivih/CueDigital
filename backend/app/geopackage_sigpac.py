@@ -784,19 +784,21 @@ def codigos_de_una_parcela(parcela) -> tuple[int, int] | None:
         return None
 
 
-def _los_numeros_del_recinto(parcela) -> tuple[int, int, int, int, int] | None:
-    """`(provincia, municipio, polígono, parcela, recinto)` para buscar en el mapa, o `None`.
+def _los_numeros_de_la_parcela(parcela) -> tuple[int, int, int, int, int | None] | None:
+    """`(provincia, municipio, polígono, parcela, recinto o None)` para buscar en el mapa.
 
     Los códigos de municipio salen de `codigos_de_una_parcela` (INE, catálogo o referencia) y los
-    tres números del recinto, de sus columnas; **si alguna columna está en blanco se toma de la
-    referencia** (IMP-25), que es lo que arregla las tierras guardadas antes sin migrar nada. Si al
-    final falta alguno, `None` y la parcela se cuenta con su motivo.
+    números del polígono y de la parcela, de sus columnas; **si alguna columna está en blanco se
+    toma de la referencia** (IMP-25), que es lo que arregla las tierras guardadas antes sin migrar.
+    El **recinto puede faltar**: la referencia del visor trae seis números y no dice cuál de los
+    recintos de esa parcela es. Se devuelve `None` en esa posición y el que llama decide con el
+    mapa: si solo hay un recinto, se coge; si hay varios, se pide elegir. **No se adivina.**
     """
     codigos = codigos_de_una_parcela(parcela)
     poligono = getattr(parcela, "poligono", None)
     numero_parcela = getattr(parcela, "numero_parcela", None)
     numero_recinto = getattr(parcela, "numero_recinto", None)
-    if codigos is None or None in (poligono, numero_parcela, numero_recinto):
+    if codigos is None or None in (poligono, numero_parcela):
         guardada = _la_busqueda_guardada(parcela)
         if guardada is not None:
             if codigos is None:
@@ -807,9 +809,15 @@ def _los_numeros_del_recinto(parcela) -> tuple[int, int, int, int, int] | None:
                 numero_parcela = guardada.parcela
             if numero_recinto is None:
                 numero_recinto = guardada.recinto
-    if codigos is None or poligono is None or numero_parcela is None or numero_recinto is None:
+    if codigos is None or poligono is None or numero_parcela is None:
         return None
-    return int(codigos[0]), int(codigos[1]), int(poligono), int(numero_parcela), int(numero_recinto)
+    return (
+        int(codigos[0]),
+        int(codigos[1]),
+        int(poligono),
+        int(numero_parcela),
+        int(numero_recinto) if numero_recinto is not None else None,
+    )
 
 
 def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
@@ -838,7 +846,7 @@ def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
     with abrir_recintos(ruta) as lector:
         for parcela in parcelas:
             ficha = {"id": parcela.id, "alias": parcela.alias, "ref_sigpac": parcela.ref_sigpac}
-            numeros = _los_numeros_del_recinto(parcela)
+            numeros = _los_numeros_de_la_parcela(parcela)
             if numeros is None:
                 motivo = (
                     "le falta el polígono, la parcela o el recinto"
@@ -849,6 +857,32 @@ def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
                 sin_codigos.append({**ficha, "motivo": motivo})
                 continue
             provincia, municipio, poligono, numero_parcela, numero_recinto = numeros
+            if numero_recinto is None:
+                # La referencia del visor no dice el recinto. Si esa parcela tiene **uno solo**,
+                # no hay nada que elegir; si tiene varios, se dice y no se adivina (IMP-27).
+                candidatos = lector.buscar(
+                    provincia,
+                    municipio,
+                    poligono,
+                    numero_parcela,
+                    None,
+                    limite=MAXIMO_POR_BUSQUEDA,
+                )
+                if len(candidatos) > 1:
+                    sin_codigos.append(
+                        {
+                            **ficha,
+                            "motivo": (
+                                "la referencia no dice el recinto y esa parcela tiene "
+                                f"{len(candidatos)} recintos; elige uno"
+                            ),
+                        }
+                    )
+                    continue
+                if not candidatos:
+                    no_encontradas.append({**ficha, "motivo": "esa parcela no está en el mapa"})
+                    continue
+                numero_recinto = candidatos[0]["recinto"]
             encontrados = lector.buscar(
                 provincia,
                 municipio,
