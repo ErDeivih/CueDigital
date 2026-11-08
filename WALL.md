@@ -71,14 +71,17 @@
   - **Investigación hecha** (`docs/PSD2-AGREGADORES.md`): la vía es **contratar un AISP autorizado**,
     no sacar licencia propia; 5+ candidatos con API de solo lectura y sandbox; para solo lectura no
     hace falta licencia de iniciación de pagos; consentimiento en el banco, sin ver credenciales.
-  - **El coste, en claro (05/11 tarde)**: **ningún proveedor publica precio de producción**. Solo hay
-    una cifra: **sandbox de BBVA = 0 €**; Tink publica «por usuario/mes» sin importe y GoCardless la
-    unidad «requisición activa al mes» sin precio; los demás, presupuesto por correo. El coste anual
-    del escenario (2 cuentas, ≈30 consultas/mes) **no es calculable** sin presupuesto: no se inventa.
-  - **Parado a propósito (nivel 3)**: sin coste publicado **no se propone contratar**; hay que pedir
-    **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y **David decide el gasto**, que aún
-    no ha aprobado. Criterio de parada: si supera el coste de seguir con el extracto por fichero
-    (0 €, ya existe), no se contrata. **Nada de código de PSD2** hasta contrato.
+  - **El coste, en claro (05/11 tarde; revisado 08/11/2026)**: los agregadores grandes **siguen sin
+    publicar precio de producción** (Enable Banking, Powens, Tink, GoCardless, TrueLayer, Salt Edge:
+    presupuesto). Cifras públicas: **sandbox de BBVA = 0 €** y **openbanking.io = 3 €/mes con 1
+    cuenta + 1 €/mes por cuenta** (precio publicado, pero **licencia y cobertura española sin
+    verificar**; 2 cuentas = 48 €/año antes de IVA, como ancla, no como oferta). La **licencia propia
+    (AISP)** exige **50.000 € de capital inicial** más certificados y auditoría: descartada.
+  - **Parado a propósito (nivel 3)**: sin presupuesto no se contrata; hay que pedir **dos
+    presupuestos escritos** (Enable Banking y Powens/Unnax) y, si se quiere, **una tercera referencia
+    barata a openbanking.io con su licencia y DPA por escrito**. **David decide el gasto**, que aún no
+    ha aprobado. Criterio de parada: si supera el coste de seguir con el extracto por fichero (0 €, ya
+    existe), no se contrata. **Nada de código de PSD2** hasta contrato.
 - [x] **Cuaderno guiado**: decir qué falta para que esté completo.
   - Hecho en `/nuevo/`: la entrada «Cuaderno» abre una vista propia con **cuántas cosas faltan**, la
     lista **agrupada por dónde se arregla**, cada cosa con su «dónde» y un botón que lleva a la
@@ -164,6 +167,20 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
     tarjeta de resumen «Faltan N cosas · K bloquean el envío», cuenta por sección («3 cosas») y botón
     **«Empezar por lo primero»** que lleva a lo que bloquea (si no, al primer destino disponible); la N
     sale del servidor, no se inventa.
+  - **Y el cuaderno guiado avisa de lo que bloquea** (08/11/2026): tarjeta arriba «Hay K cosas que
+    impiden presentar el cuaderno» (singular/plural) con «Empezar por lo que bloquea», los items que
+    bloquean **primero dentro de cada sección** (orden estable) y, si el servidor cuenta más faltas de
+    las que lista, se dice «Faltan N y aquí se ven M» sin inventar filas. Medido en Chrome: aviso de
+    358/328 px, 0 desborde, botón 56 px y centro alcanzable; 8 bloqueantes reales.
+  - **Y una tierra dada de alta solo con la referencia ya casa con el GeoPackage** (08/11/2026):
+    `_completar_los_codigos_con_la_referencia` rellena `codigo_ine/poligono/numero_parcela/numero_recinto`
+    al guardar (sin pisar lo informado) y `codigos_de_una_parcela` lee la referencia **también para las
+    tierras ya guardadas**, sin migración. Antes: `sin_codigos`; ahora: `actualizadas` y WKT idéntico.
+  - **Y probado con un cliente de verdad** (08/11/2026): 4 parcelas de Salamanca con referencias
+    sacadas del GeoPackage real (El Prado, El Alto, La Vega y Las Eras —esta última dada de alta
+    **solo con la referencia**), `contornos` → **4/4 actualizadas, 0 sin códigos**, WKT **idéntico** al
+    lector y **cuatro mapas** con ortofoto del IGN en `docs/capturas-nuevo/cliente-contornos.png`
+    (y variante sin red). `43/43` pruebas del geopackage y del alta por referencia.
   - **Y trae los contornos del mapa guardado, sin salir de la ventana** (07/11/2026): tarjeta «Los
     contornos de toda la finca» que pide `GET /api/sigpac/cache`, deja elegir la provincia cacheada
     (con campaña y validez), avisa de que **solo rellena la forma** (no toca superficie ni uso) y trae
@@ -203,6 +220,9 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-08 | **Cliente real: cuatro parcelas de Salamanca pintadas con el GeoPackage** | 4/4 actualizadas, 0 sin códigos, WKT idéntico y cuatro mapas con ortofoto (`cliente-contornos.png`); arreglado el alta solo con referencia (7 pruebas nuevas) |
+| 2026-11-08 | **Cuaderno guiado: aviso de lo que bloquea y bloqueantes primero** | Chrome: aviso «8 cosas impiden presentar el cuaderno», botón 56 px, orden bloqueante primero, móvil 390/360 sin desborde; 81/81 JS y 30 pytest |
+| 2026-11-08 | **PSD2: opciones, coste y límites revisados para decidir (sin contratar)** | `docs/PSD2-AGREGADORES.md` §2 ter: precios publicados/desconocidos, openbanking.io 3 €/mes, AISP propio 50.000 € de capital, tres caminos y criterio de parada; ninguna contratación |
 | 2026-11-07 | **Mapa del SIGPAC tocable y cuaderno guiado con resumen** | Chrome: recinto elegido tocando el SVG y con Enter (lista y «Usar» sincronizados), zona de toque 60 px; resumen «35 cosas · 8 bloquean» y «Empezar por lo primero»; 10 vistas a 390/360 con **0 botones <44 px y 0 centros tapados**; 77/77 JS y 29 pytest |
 | 2026-11-07 | **Contornos del GeoPackage real desde la ventana del SIGPAC** | Chrome: bloque «Los contornos de toda la finca» con la provincia cacheada real (Salamanca), aplicado de verdad (**1 contorno puesto**, 21 tierras sin códigos), móvil 390/360 sin desbordar; 73/73 JS y 28 pytest de pantalla |
 | 2026-11-07 | **Apuntar del día a día completo, guardado de verdad y móvil** | Chrome a 390 y 360: 4 pestañas, 0 px de desborde en cada una, y guardado real con 201 de tratamiento, abono y siembra (ficha refrescada); captura `apuntar-completo-390.png` |

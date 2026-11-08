@@ -962,6 +962,42 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                 nav.esperar("!!document.querySelector('[data-cuaderno-resumen]')", segundos=20)
                 tiene_empezar = nav.evaluar("!!document.querySelector('[data-cuaderno-empezar]')")
                 comprobar(bool(tiene_empezar), f"{ancho} px · Cuaderno: «Empezar por lo primero»")
+                aviso = nav.evaluar(
+                    "(() => { const a = document.querySelector('[data-cuaderno-aviso]');"
+                    " if (!a) return null;"
+                    " const c = document.querySelector('[data-cuaderno-aviso-cuenta]');"
+                    " const primera = document.querySelector('[data-que-falta-item]');"
+                    " return JSON.stringify({cuenta: c ? c.getAttribute('data-cuaderno-aviso-cuenta') : null,"
+                    " primeraBloquea: primera ? primera.getAttribute('data-que-falta-item-bloquea') : null}); })()"
+                )
+                if aviso:
+                    datos_aviso = json.loads(aviso)
+                    comprobar(
+                        (datos_aviso.get("cuenta") or "0").isdigit()
+                        and int(datos_aviso.get("cuenta") or 0) > 0,
+                        f"{ancho} px · Cuaderno: el aviso cuenta lo que bloquea",
+                    )
+                    orden = nav.evaluar(
+                        "(() => {"
+                        " let malas = 0;"
+                        " let bloqueantes = 0;"
+                        " for (const s of document.querySelectorAll('[data-que-falta-seccion]')) {"
+                        "   let vistosNo = false;"
+                        "   for (const f of s.querySelectorAll('[data-que-falta-item]')) {"
+                        "     const b = f.getAttribute('data-que-falta-item-bloquea') === 'true';"
+                        "     if (b) { bloqueantes += 1; if (vistosNo) malas += 1; }"
+                        "     else { vistosNo = true; }"
+                        "   }"
+                        " }"
+                        " return JSON.stringify({malas: malas, bloqueantes: bloqueantes}); })()"
+                    ) or "{}"
+                    datos_orden = json.loads(orden)
+                    comprobar(
+                        int(datos_orden.get("bloqueantes") or 0) > 0
+                        and int(datos_orden.get("malas") or 0) == 0,
+                        f"{ancho} px · Cuaderno: en cada sección, lo que bloquea sale primero"
+                        f" ({datos_orden.get('bloqueantes')} bloqueantes)",
+                    )
             if clave == "apuntar":
                 # Las cuatro pestañas del apunte, también a 360: ninguna puede desbordar.
                 for pestana in ("tratamiento", "abono", "siembra", "labor"):

@@ -79,6 +79,9 @@ ENGANCHES = [
     "data-resumen-tipo",
     "data-descargar-trabajos",
     "data-sigpac-dibujo-recinto",
+    "data-cuaderno-aviso",
+    "data-cuaderno-aviso-cuenta",
+    "data-que-falta-item-bloquea",
     "data-cuaderno-resumen",
     "data-que-falta-seccion-cuenta",
     "data-cuaderno-empezar",
@@ -370,6 +373,31 @@ class TestElContratoConElArnesDeNavegador:
         # El flujo encadenado: siempre hay un siguiente paso a la vista.
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
+
+    def test_el_cuaderno_avisa_de_lo_que_bloquea(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        # El aviso va arriba, dice cuántas bloquean y lleva a lo que bloquea.
+        assert "data-cuaderno-aviso" in fuente
+        assert "data-cuaderno-aviso-cuenta" in fuente
+        assert "data-cuaderno-empezar" in fuente
+        assert "textos.cuaderno.empezarPorLoQueBloquea" in fuente
+        # Cada fila dice si bloquea, para que el arnés lo pueda mirar.
+        assert "data-que-falta-item-bloquea" in fuente
+        # Lo que bloquea va primero y el aviso se cuenta en singular y plural.
+        for funcion in (
+            "ordenaLoQueFalta",
+            "textoDelAvisoDeBloqueo",
+            "textoDeFaltasSinListar",
+            "empezarPorLoQueBloquea",
+        ):
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
+        # Si el servidor cuenta más de las que se ven, se dice sin inventar.
+        assert "textos.cuaderno.noSeVenTodas" in modelo
+        # Y el CSS del aviso no usa colores sueltos ni transparencias.
+        css = leer("estilos.css")
+        assert ".cuaderno__aviso" in css
+        assert "var(--warning-tint)" in css
 
     def test_el_mapa_del_sigpac_se_toca_y_el_cuaderno_guia(self):
         fuente = leer("app.js")

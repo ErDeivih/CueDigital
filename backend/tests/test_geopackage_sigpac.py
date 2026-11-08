@@ -28,7 +28,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app import geopackage_sigpac
+from app import geopackage_sigpac, models
 from test_los_permisos_por_materia import _sin_capacidad  # noqa: E402 — el andamiaje, prestado
 
 # El nombre del mapa dentro del ZIP, con la pinta del de verdad (`0837_SALAMANCA_…gpkg`).
@@ -241,6 +241,40 @@ def test_un_recinto_sin_forma_no_se_inventa(tmp_path):
         recinto = lector.buscar(PROVINCIA, MUNICIPIO, POLIGONO, PARCELA, RECINTO)[0]
     assert recinto["wkt"] is None
     assert recinto["puntos"] is None
+
+
+def test_una_parcela_guardada_a_mano_con_solo_la_referencia_se_actualiza(
+    cliente, cuenta, db_sesion, cache_con_mapa
+):
+    """**Las tierras que ya estaban guardadas sin códigos también casan, sin migrar nada** (IMP-25).
+
+    Se crea a mano en la base, como quedó la tierra del cliente que apuntó solo la referencia del
+    papel: `ref_sigpac` puesta y `codigo_ine`/`poligono`/`numero_parcela`/`numero_recinto` en blanco.
+    """
+    from sqlalchemy import select
+
+    explotacion = db_sesion.scalar(select(models.Explotacion).limit(1))
+    antigua = models.Parcela(
+        explotacion_id=explotacion.id,
+        alias="La de antes",
+        provincia="",
+        municipio="",
+        ref_sigpac=f"{PROVINCIA}-{MUNICIPIO}-0-0-{POLIGONO}-{PARCELA}-{RECINTO}",
+        poligono=None,
+        numero_parcela=None,
+        numero_recinto=None,
+    )
+    db_sesion.add(antigua)
+    db_sesion.commit()
+
+    respuesta = _los_contornos(cliente, cuenta["cabeceras"])
+    assert respuesta.status_code == 200, respuesta.text
+    datos = respuesta.json()
+
+    assert datos["sin_codigos"] == [], "la referencia de la tierra ya dice el municipio y el recinto"
+    assert [una["id"] for una in datos["actualizadas"]] == [antigua.id]
+    db_sesion.expire_all()
+    assert db_sesion.get(models.Parcela, antigua.id).geometria == WKT_ESPERADO
 
 
 # --------------------------------------------------------------------------- lo que no se sabe
@@ -523,7 +557,12 @@ def test_contornos_de_las_parcelas_casa_la_que_esta_y_dice_la_que_no(tmp_path):
         [
             _una_parcela_de_mentira(),
             _una_parcela_de_mentira(id=2, alias="La Era", numero_recinto=2),
-            _una_parcela_de_mentira(id=3, alias="Sin pueblo", municipio="PUEBLO QUE NO EXISTE", codigo_ine=None),
+            # **Sin pueblo y sin referencia legible**: es la única manera de no tener códigos desde
+            # el IMP-25, porque una referencia válida ya los da (ver la prueba de más abajo).
+            _una_parcela_de_mentira(
+                id=3, alias="Sin pueblo", municipio="PUEBLO QUE NO EXISTE", codigo_ine=None,
+                ref_sigpac="sin numeros",
+            ),
         ],
         ruta,
     )
@@ -543,6 +582,56 @@ def test_el_nombre_del_municipio_se_casa_con_su_codigo():
         _una_parcela_de_mentira(codigo_ine=None)
     )
     assert codigos == (PROVINCIA, MUNICIPIO)
+
+
+# --------------------------------------------------------------------------- IMP-25: la referencia
+
+
+def test_una_parcela_guardada_solo_con_la_referencia_casa(tmp_path):
+    """**El fallo que se vio con el GeoPackage real**: la tierra apuntada solo con la referencia del
+    papel tenía los códigos en blanco y se quedaba sin contorno. La referencia los lleva dentro."""
+    tierra = _una_parcela_de_mentira(
+        id=7,
+        alias="Solo referencia",
+        codigo_ine=None,
+        provincia="",
+        municipio="",
+        poligono=None,
+        numero_parcela=None,
+        numero_recinto=None,
+    )
+    ruta = _un_gpkg(tmp_path / "mapa.gpkg", [_una_fila()])
+
+    resultado = geopackage_sigpac.contornos_de_las_parcelas([tierra], ruta)
+
+    assert resultado["sin_codigos"] == [], "la referencia ya dice el municipio y el recinto"
+    assert [una["id"] for una in resultado["actualizadas"]] == [7]
+    assert resultado["actualizadas"][0]["wkt"] == WKT_ESPERADO
+    # Y los códigos salen de la referencia, sin tocar el catálogo de municipios por el nombre.
+    assert geopackage_sigpac.codigos_de_una_parcela(tierra) == (PROVINCIA, MUNICIPIO)
+
+
+def test_una_referencia_que_no_se_entiende_sigue_sin_codigos(tmp_path):
+    """Con basura en la referencia no se adivina nada: se cuenta aparte y con su motivo."""
+    tierra = _una_parcela_de_mentira(
+        id=8,
+        alias="Referencia rota",
+        codigo_ine=None,
+        provincia="",
+        municipio="",
+        poligono=None,
+        numero_parcela=None,
+        numero_recinto=None,
+        ref_sigpac="no tiene numeros",
+    )
+    ruta = _un_gpkg(tmp_path / "mapa.gpkg", [_una_fila()])
+
+    resultado = geopackage_sigpac.contornos_de_las_parcelas([tierra], ruta)
+
+    assert resultado["actualizadas"] == []
+    assert [una["id"] for una in resultado["sin_codigos"]] == [8]
+    assert "municipio" in resultado["sin_codigos"][0]["motivo"]
+    assert geopackage_sigpac.codigos_de_una_parcela(tierra) is None
 
 
 # --------------------------------------------------------------------------- la puerta

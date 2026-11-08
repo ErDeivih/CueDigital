@@ -740,23 +740,76 @@ def _el_municipio(provincia: str | None, municipio: str | None):
     return None
 
 
+def _la_busqueda_guardada(parcela) -> "sigpac.Busqueda | None":
+    """La referencia del SIGPAC de la parcela, leída, o `None` si no la tiene o no se entiende.
+
+    Sirve para las tierras **que ya estaban guardadas** antes de que el alta rellenara los códigos
+    (IMP-25): su referencia lleva dentro los siete números aunque las columnas estén en blanco. Se
+    lee aquí y no se escribe nada: mirar no cambia el dato del agricultor.
+    """
+    from . import sigpac
+
+    try:
+        return sigpac.lee_busqueda(str(getattr(parcela, "ref_sigpac", None) or "").strip())
+    except sigpac.ReferenciaInvalida:
+        return None
+
+
 def codigos_de_una_parcela(parcela) -> tuple[int, int] | None:
     """Los códigos `(provincia, municipio)` con los que buscar su recinto, o `None`.
 
     **Primero el código INE que la parcela ya trae** (cinco cifras: dos de provincia y tres de
     municipio), que es el dato bueno y no hay que deducirlo. Si no lo tiene, se casa su
-    provincia/municipio con el catálogo oficial. Si tampoco, `None`: la parcela se cuenta aparte.
+    provincia/municipio con el catálogo oficial. Y si tampoco hay manera por ahí, **se mira su
+    referencia del SIGPAC** (IMP-25), que lleva los códigos dentro: es lo que hace que una tierra
+    apuntada solo con la referencia del papel también reciba su contorno. Si nada de eso vale,
+    `None`: la parcela se cuenta aparte.
     """
     ine = str(getattr(parcela, "codigo_ine", None) or "").strip()
     if len(ine) == 5 and ine.isdigit():
         return int(ine[:2]), int(ine[2:])
     municipio = _el_municipio(getattr(parcela, "provincia", None), getattr(parcela, "municipio", None))
-    if municipio is None:
+    if municipio is not None:
+        try:
+            return int(municipio.codigo_provincia), int(municipio.codigo_municipio)
+        except (TypeError, ValueError):
+            pass
+    # **Y la referencia, que es el último sitio donde están los códigos** (IMP-25).
+    guardada = _la_busqueda_guardada(parcela)
+    if guardada is None:
         return None
     try:
-        return int(municipio.codigo_provincia), int(municipio.codigo_municipio)
+        return int(guardada.provincia), int(guardada.municipio)
     except (TypeError, ValueError):
         return None
+
+
+def _los_numeros_del_recinto(parcela) -> tuple[int, int, int, int, int] | None:
+    """`(provincia, municipio, polígono, parcela, recinto)` para buscar en el mapa, o `None`.
+
+    Los códigos de municipio salen de `codigos_de_una_parcela` (INE, catálogo o referencia) y los
+    tres números del recinto, de sus columnas; **si alguna columna está en blanco se toma de la
+    referencia** (IMP-25), que es lo que arregla las tierras guardadas antes sin migrar nada. Si al
+    final falta alguno, `None` y la parcela se cuenta con su motivo.
+    """
+    codigos = codigos_de_una_parcela(parcela)
+    poligono = getattr(parcela, "poligono", None)
+    numero_parcela = getattr(parcela, "numero_parcela", None)
+    numero_recinto = getattr(parcela, "numero_recinto", None)
+    if codigos is None or None in (poligono, numero_parcela, numero_recinto):
+        guardada = _la_busqueda_guardada(parcela)
+        if guardada is not None:
+            if codigos is None:
+                codigos = (int(guardada.provincia), int(guardada.municipio))
+            if poligono is None:
+                poligono = guardada.poligono
+            if numero_parcela is None:
+                numero_parcela = guardada.parcela
+            if numero_recinto is None:
+                numero_recinto = guardada.recinto
+    if codigos is None or poligono is None or numero_parcela is None or numero_recinto is None:
+        return None
+    return int(codigos[0]), int(codigos[1]), int(poligono), int(numero_parcela), int(numero_recinto)
 
 
 def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
@@ -770,7 +823,9 @@ def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
       · `no_encontradas`: las que tienen códigos pero ese recinto **no está en el mapa**. Puede ser
         que el mapa sea de otra campaña o que la referencia esté mal copiada.
       · `sin_codigos`: las que no se pueden casar con ningún municipio del catálogo (o les falta el
-        polígono, la parcela o el recinto). **Nunca se adivina un código.**
+        polígono, la parcela o el recinto). **Nunca se adivina un código.** Los que falten se buscan
+        antes en la referencia del SIGPAC de la propia tierra (IMP-25), así que una tierra apuntada
+        solo con la referencia también casa.
 
     El orden de las listas es el de las parcelas que se pasan, para que la respuesta sea la misma
     entre dos llamadas.
@@ -783,24 +838,23 @@ def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
     with abrir_recintos(ruta) as lector:
         for parcela in parcelas:
             ficha = {"id": parcela.id, "alias": parcela.alias, "ref_sigpac": parcela.ref_sigpac}
-            if parcela.poligono is None or parcela.numero_parcela is None or parcela.numero_recinto is None:
-                sin_codigos.append(
-                    {**ficha, "motivo": "le falta el polígono, la parcela o el recinto"}
+            numeros = _los_numeros_del_recinto(parcela)
+            if numeros is None:
+                motivo = (
+                    "le falta el polígono, la parcela o el recinto"
+                    if codigos_de_una_parcela(parcela) is not None
+                    or _la_busqueda_guardada(parcela) is not None
+                    else "su municipio no está en el catálogo oficial"
                 )
+                sin_codigos.append({**ficha, "motivo": motivo})
                 continue
-            codigos = codigos_de_una_parcela(parcela)
-            if codigos is None:
-                sin_codigos.append(
-                    {**ficha, "motivo": "su municipio no está en el catálogo oficial"}
-                )
-                continue
-            provincia, municipio = codigos
+            provincia, municipio, poligono, numero_parcela, numero_recinto = numeros
             encontrados = lector.buscar(
                 provincia,
                 municipio,
-                parcela.poligono,
-                parcela.numero_parcela,
-                parcela.numero_recinto,
+                poligono,
+                numero_parcela,
+                numero_recinto,
                 limite=1,
             )
             if not encontrados:
@@ -819,7 +873,7 @@ def contornos_de_las_parcelas(parcelas, ruta: str | os.PathLike) -> dict:
                 }
             )
     return {
-        "n": len(list(parcelas)),
+        "n": len(parcelas),
         "actualizadas": actualizadas,
         "sin_forma": sin_forma,
         "no_encontradas": no_encontradas,

@@ -139,10 +139,14 @@
   y resultado en palabras; **verificado en Chrome aplicando el mapa real de Salamanca** desde la
   ventana (1 contorno puesto, 21 tierras sin códigos), sin desbordar a 390/360. Si no hay mapa
   guardado no se dispara ninguna descarga.
-- **Falta**: **limpieza de caché** (1,67 GB por provincia entre ZIP y `.gpkg`; decidir si se borra el
-  ZIP tras extraer y cómo se purga al cambiar de campaña). El **streaming de la descarga** ya está
-  hecho (07/11/2026): `stream_http` escribe por trozos de 1 MB a un temporal y el ZIP no se carga
-  entero en memoria.
+- **Y probado con un cliente real (08/11/2026)**: cuatro parcelas de Salamanca con referencias sacadas
+  del GeoPackage real; 4/4 contornos, 0 sin códigos, WKT idéntico y mapas con ortofoto en
+  `docs/capturas-nuevo/cliente-contornos.png`. Destapó y cerró que una tierra dada de alta **solo con la
+  referencia** se quedaba sin códigos: ahora el alta los rellena y las tierras ya guardadas casan sin
+  migración (`tests/test_codigos_desde_la_referencia.py`, 7 pruebas).
+- **Falta**: la **referencia del visor (6 números)** no trae recinto; decidir si se elige el único trozo
+  (hoy se declara `sin_codigos` con su motivo), y la **limpieza de caché** (1,67 GB por provincia entre
+  ZIP y `.gpkg`; el streaming de descarga ya está hecho).
 
 ### AGR-16 · Las pantallas que faltan en `/nuevo/` (cuaderno guiado, productos/dosis, facturas, PAC) — **EN CURSO (2026-11-05)**
 
@@ -195,20 +199,21 @@
 - **Decisión para David**: el vocabulario del programa llama **«arado»** a lo que él llama
   «vertedera»; se renombra la etiqueta si lo quiere.
 
-### AGR-18 · PSD2 solo lectura: contratar un agregador con licencia — **INVESTIGADO (2026-11-05); BLOQUEADO (nivel 3)**
+### AGR-18 · PSD2 solo lectura: contratar un agregador con licencia — **REVISADO (2026-11-08); BLOQUEADO (nivel 3)**
 
 - **Nivel**: 3 (contratar y aprobar gasto).
 - **Qué hay**: `docs/PSD2-AGREGADORES.md` con el marco (AISP, consentimiento, 90 días, 4 accesos/24 h),
-  cinco candidatos con API de solo lectura y sandbox (Arcopay/ex-Afterbanks, Powens/Unnax, Tink,
-  Enable Banking, Salt Edge/GoCardless), las dos opciones medidas (Enable Banking y Powens/Unnax) y
-  el límite duro: **nunca operar, nunca iniciar pagos, nunca guardar credenciales**.
-- **Por qué está parado**: **ningún proveedor publica precio de producción** (05/11 tarde, sección «El
-  coste, en claro» de `docs/PSD2-AGREGADORES.md`): solo hay una cifra (sandbox de BBVA, 0 €); Tink
-  publica «por usuario/mes» sin importe y GoCardless la unidad «requisición activa al mes» sin precio;
-  los demás piden presupuesto por correo. Así que la regla «la más barata que cumpla» no se puede
-  aplicar con datos: hay que pedir **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y que
-  **David apruebe el gasto** (que aún no ha aprobado). **No se escribe código de PSD2 hasta que haya
-  contrato firmado.**
+  ocho candidatos con AIS y sandbox, las dos opciones medidas (Enable Banking y Powens/Unnax) y el
+  límite duro: **nunca operar, nunca iniciar pagos, nunca guardar credenciales**.
+- **Revisión del 08/11/2026** (sección **2 ter**): sigue sin haber precio de producción en los grandes
+  (Enable Banking, Powens, Tink, GoCardless, TrueLayer, Salt Edge); lo único publicado es el sandbox de
+  BBVA (0 €) y **openbanking.io (3 €/mes + 1 €/cuenta)**, cuya **licencia y cobertura española no están
+  verificadas**. La **licencia propia (AISP)** exige **50.000 € de capital inicial** (art. 7 PSD2) más
+  certificados y auditoría: descartada. Tres caminos: seguir con el extracto por fichero (0 €),
+  agregador con presupuesto, o licencia propia (descartada).
+- **Por qué está parado**: hay que pedir **dos presupuestos escritos** (Enable Banking y Powens/Unnax) y,
+  si se quiere, una tercera referencia barata a openbanking.io con licencia, cobertura y DPA por escrito;
+  **David aprueba el gasto** (aún no lo ha hecho). **No se escribe código de PSD2 hasta contrato firmado.**
 - **Criterio de parada segundo**: si el coste anual supera lo que cuesta seguir con la importación de
   extracto por fichero (ya existe y es gratis), no se contrata.
 

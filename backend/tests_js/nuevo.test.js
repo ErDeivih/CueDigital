@@ -50,6 +50,7 @@ import {
   destinoDeLaSeccion,
   dosisMaximaEnTexto,
   empezarPorLoPrimero,
+  empezarPorLoQueBloquea,
   elAperoSeGuardaEnLabores,
   etiquetaDeProvinciaCache,
   etiquetaDeTrabajo,
@@ -83,6 +84,7 @@ import {
   normalizaTrabajo,
   normalizaTrabajos,
   numeroDe,
+  ordenaLoQueFalta,
   paletaDeUso,
   puedeUsarseElRecinto,
   proyeccionDeAnillo,
@@ -105,6 +107,8 @@ import {
   textoDeTotales,
   textoRelleno,
   totalDeLaAplicacion,
+  textoDeFaltasSinListar,
+  textoDelAvisoDeBloqueo,
   totalesDeTrabajos,
   urlDeMiniatura,
   urlDelMapa,
@@ -1504,4 +1508,54 @@ test("el recinto del mapa se nombra con lo que se sabe y lo que no consta se dic
     etiquetaDelRecintoEnElMapa({ recinto: 7 }),
     `Recinto 7 · ${textos.tierras.panel.noConsta} · ${textos.tierras.panel.noConsta}`,
   );
+});
+
+// ---------------------------------------------------------------------------
+// El aviso de lo que bloquea el cuaderno
+// ---------------------------------------------------------------------------
+
+test("lo que bloquea va delante sin revolver el orden de lo demás", () => {
+  const items = [
+    { que: "a", donde: "Uno", bloquea: false },
+    { que: "b", donde: "Uno", bloquea: true },
+    { que: "c", donde: "Dos", bloquea: false },
+    { que: "d", donde: "Dos", bloquea: true },
+    { que: "e", donde: "Tres" },
+  ];
+  assert.deepEqual(ordenaLoQueFalta(items).map((item) => item.que), ["b", "d", "a", "c", "e"]);
+  assert.deepEqual(ordenaLoQueFalta(null), []);
+  assert.deepEqual(ordenaLoQueFalta([{ que: "" }]), []);
+
+  // Y dentro de cada sección, igual: primero lo que bloquea.
+  const secciones = agruparLoQueFalta(items);
+  assert.deepEqual(secciones[0].items.map((item) => item.que), ["b", "a"]);
+  assert.deepEqual(secciones[1].items.map((item) => item.que), ["d", "c"]);
+});
+
+test("el aviso de lo que bloquea se cuenta en singular y en plural", () => {
+  assert.equal(textoDelAvisoDeBloqueo(1), "Hay 1 cosa que impide presentar el cuaderno.");
+  assert.equal(textoDelAvisoDeBloqueo(3), "Hay 3 cosas que impiden presentar el cuaderno.");
+  assert.equal(textoDelAvisoDeBloqueo(0), "Hay 0 cosas que impiden presentar el cuaderno.");
+});
+
+test("si el servidor cuenta más faltas de las que se ven, se dice", () => {
+  assert.equal(textoDeFaltasSinListar(2, 40), "Faltan 40 cosas y aquí se ven 2. Las demás no se han podido mirar; vuelve a intentarlo.");
+  assert.equal(textoDeFaltasSinListar(40, 40), null);
+  assert.equal(textoDeFaltasSinListar(41, 40), null);
+  assert.equal(textoDeFaltasSinListar(null, 40), null);
+  assert.equal(textoDeFaltasSinListar(2, null), null);
+});
+
+test("«Empezar por lo que bloquea» solo va a lo que bloquea y tiene pantalla", () => {
+  const items = [
+    { que: "a", donde: "Sin sitio", bloquea: true },
+    { que: "b", donde: "Trabajos", bloquea: false },
+    { que: "c", donde: "Tierras", bloquea: true },
+  ];
+  const paso = empezarPorLoQueBloquea(items);
+  assert.equal(paso.destino, "tierras");
+  assert.equal(paso.item.que, "c");
+  assert.equal(empezarPorLoQueBloquea([{ que: "b", donde: "Trabajos", bloquea: false }]), null);
+  assert.equal(empezarPorLoQueBloquea([{ que: "a", donde: "Sin sitio", bloquea: true }]), null);
+  assert.equal(empezarPorLoQueBloquea([]), null);
 });

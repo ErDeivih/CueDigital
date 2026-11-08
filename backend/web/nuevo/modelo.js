@@ -259,6 +259,11 @@ export const textos = {
     cosaUno: "1 cosa",
     cosaVarias: "{n} cosas",
     empezar: "Empezar por lo primero",
+    avisoTitulo: "Lo que impide presentar el cuaderno",
+    avisoUna: "Hay 1 cosa que impide presentar el cuaderno.",
+    avisoVarias: "Hay {k} cosas que impiden presentar el cuaderno.",
+    empezarPorLoQueBloquea: "Empezar por lo que bloquea",
+    noSeVenTodas: "Faltan {n} cosas y aquí se ven {m}. Las demás no se han podido mirar; vuelve a intentarlo.",
   },
   siguiente: {
     eligeTierra: "Elige la tierra",
@@ -1803,6 +1808,15 @@ export function cuerpoDeLaSiembraDelCuaderno({ campanaId, tierraId, fecha, culti
 // ---------------------------------------------------------------------------
 
 /** Lo que falta, **agrupado por dónde se arregla**, sin reordenar lo que manda el servidor. */
+/**
+ * Lo que bloquea va delante y lo demás detrás, **manteniendo el orden original dentro de cada
+ * grupo**: lo urgente se ve antes sin revolver lo que ya estaba ordenado por el servidor.
+ */
+export function ordenaLoQueFalta(items) {
+  const lista = (Array.isArray(items) ? items : []).filter((item) => item && item.que);
+  return [...lista.filter((item) => Boolean(item.bloquea)), ...lista.filter((item) => !item.bloquea)];
+}
+
 export function agruparLoQueFalta(items) {
   const secciones = new Map();
   for (const item of Array.isArray(items) ? items : []) {
@@ -1814,7 +1828,7 @@ export function agruparLoQueFalta(items) {
   return [...secciones.entries()].map(([donde, suyos]) => ({
     donde,
     n: suyos.length,
-    items: suyos,
+    items: ordenaLoQueFalta(suyos),
     bloquea: suyos.some((item) => Boolean(item.bloquea)),
   }));
 }
@@ -1847,6 +1861,34 @@ export function empezarPorLoPrimero(items) {
     .map((item) => ({ item, destino: destinoDeLaSeccion(item.donde) }))
     .filter((paso) => Boolean(paso.destino));
   return conDestino.find((paso) => paso.item.bloquea) || conDestino[0] || null;
+}
+
+/** El aviso de lo que impide presentar el cuaderno, en singular o en plural. */
+export function textoDelAvisoDeBloqueo(cantidad) {
+  const n = Number(cantidad) || 0;
+  if (n === 1) return textos.cuaderno.avisoUna;
+  return textoRelleno(textos.cuaderno.avisoVarias, { k: n });
+}
+
+/**
+ * Cuando el servidor cuenta más faltas de las que la lista trae, se dice tal cual: ni se calla ni
+ * se rellenan las que no se han podido mirar.
+ */
+export function textoDeFaltasSinListar(listados, delServidor) {
+  if (listados === null || listados === undefined || delServidor === null || delServidor === undefined) return null;
+  const n = Number(delServidor);
+  const m = Number(listados);
+  if (!Number.isFinite(n) || !Number.isFinite(m) || n <= m) return null;
+  return textoRelleno(textos.cuaderno.noSeVenTodas, { n, m });
+}
+
+/** Por dónde empezar cuando hay cosas que bloquean: el primer bloqueante que sepa dónde se arregla. */
+export function empezarPorLoQueBloquea(items) {
+  const conDestino = (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.que && item.bloquea)
+    .map((item) => ({ item, destino: destinoDeLaSeccion(item.donde) }))
+    .filter((paso) => Boolean(paso.destino));
+  return conDestino[0] || null;
 }
 
 /** «1 cosa» o «3 cosas», para la cuenta de cada sección. */

@@ -774,6 +774,54 @@ def _columnas_que_una_correccion_no_toca(modelo, entrada, salida) -> list[str]:
     ]
 
 
+def _completar_los_codigos_con_la_referencia(valores: dict) -> list[str]:
+    """**La referencia del SIGPAC lleva dentro los códigos**: si faltan, se rellenan al guardar (IMP-25).
+
+    El fallo que esto cierra se vio con el GeoPackage real de Salamanca: un cliente apuntaba su
+    tierra **solo con la referencia** (`37-70-0-0-503-51-1`, la del papel del SIGPAC), la tierra se
+    guardaba con `codigo_ine`, `poligono`, `numero_parcela` y `numero_recinto` en blanco, y después
+    el mapa no le podía poner el contorno porque no sabía qué recinto buscar. **El dato estaba y no
+    tenía puerta**, que es el fallo que más se repite en esta casa.
+
+    Las reglas, y las tres importan:
+
+      1. **Solo se rellena lo que falta.** Lo que haya informado el agricultor (o el navegador) no se
+         toca: si él escribió un polígono distinto del de la referencia, manda el suyo y el programa
+         no se pone a corregirle por detrás.
+      2. **Una referencia que no se entiende no bloquea nada.** Se deja todo como estaba (en blanco,
+         que es «no lo sé») y el alta sigue: una tierra sin códigos se puede apuntar igual, y esto
+         no puede ser el motivo de que alguien no pueda guardar su trabajo.
+      3. **No se rellena el nombre del pueblo** desde los códigos: eso es otra cosa (y el catálogo
+         del INE ya sabe hacerlo cuando hace falta). Aquí solo van los números.
+
+    Devuelve la lista de campos completados, que es lo que se puede comprobar en una prueba.
+    """
+    referencia = str(valores.get("ref_sigpac") or "").strip()
+    if not referencia:
+        return []
+    try:
+        busqueda = sigpac.lee_busqueda(referencia)
+    except sigpac.ReferenciaInvalida:
+        # Ni se dice nada ni se para el alta: se queda como estaba.
+        return []
+
+    completados: list[str] = []
+    if not (valores.get("codigo_ine") or "").strip():
+        valores["codigo_ine"] = f"{int(busqueda.provincia):02d}{int(busqueda.municipio):03d}"
+        completados.append("codigo_ine")
+    for campo, numero in (
+        ("poligono", busqueda.poligono),
+        ("numero_parcela", busqueda.parcela),
+        ("numero_recinto", busqueda.recinto),
+    ):
+        # `None` en la columna es «no lo sé»; y una referencia del visor (seis números) o una
+        # catastral no traen el recinto, así que ese campo se queda en blanco: no se inventa.
+        if valores.get(campo) is None and numero is not None:
+            valores[campo] = int(numero)
+            completados.append(campo)
+    return completados
+
+
 def _preparar_parcela_guardable(
     datos: ParcelaEntrada, explotacion, *, actual: models.Parcela | None = None
 ) -> models.Parcela:
@@ -803,6 +851,10 @@ def _preparar_parcela_guardable(
         )
 
     valores = datos.model_dump()
+    # **Antes de mirar la zona de nitratos y antes de guardar**: si la tierra llega solo con su
+    # referencia del SIGPAC, los códigos salen de ella (IMP-25). Va aquí y no después porque la zona
+    # vulnerable se resuelve por el código INE, y sin él la lista oficial no puede decir nada.
+    _completar_los_codigos_con_la_referencia(valores)
     # Zona vulnerable a nitratos. Tres casos, y el orden importa:
     #
     #   1. Si la lista oficial dice que SÍ, es que sí. No es una opinión del

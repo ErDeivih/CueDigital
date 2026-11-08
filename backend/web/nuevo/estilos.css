@@ -672,6 +672,34 @@ button {
   margin-top: var(--space-4);
 }
 
+/* El aviso de lo que impide presentar el cuaderno: se ve antes que ninguna sección, con el color
+ * de aviso del sistema y una palabra que lo dice (nunca solo el color). */
+.cuaderno__aviso {
+  margin-top: var(--space-4);
+  border-left: 4px solid var(--warning);
+  background: var(--warning-tint);
+}
+
+.cuaderno__aviso-texto {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .cuaderno__aviso .estado__acciones {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .cuaderno__aviso .estado__acciones .boton {
+    width: 100%;
+  }
+}
+
 /* El resumen del cuaderno: lo primero que se lee y el botón de empezar, sin empujarlo fuera de
  * la pantalla a 360 (el botón ocupa su fila entera y el texto no se mete debajo del chip). */
 .cuaderno__resumen-texto {

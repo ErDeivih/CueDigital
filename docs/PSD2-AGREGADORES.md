@@ -4,6 +4,11 @@
 > estado (VERIFICADO / PENDIENTE). Lo que no está publicado se escribe **«no publicado»**; no se
 > estima. Este documento **no es asesoramiento jurídico**: las obligaciones se confirman con el
 > proveedor y, si hace falta, con un abogado.
+>
+> **Revisión del 2026-11-08** (para la decisión de David): se han vuelto a abrir las páginas de
+> precios y límites, se añade un candidato de bajo coste con precio publicado y se pone en números
+> **por qué no se hace la licencia propia**. Las filas nuevas llevan su fecha; las del 05/11 se
+> mantienen porque no han cambiado. **No se ha contratado nada ni se ha escrito código de PSD2.**
 
 **Qué se busca:** conectar las cuentas del agricultor para **leer saldos y movimientos** y
 conciliarlos con los gastos y cobros que la aplicación ya tiene. **Nunca** operar: no se inicia
@@ -48,9 +53,11 @@ público y hay que pedir presupuesto.
 | **Salt Edge** | Ofrece soluciones AIS/PSD2; **autoridad que concede su licencia: PENDIENTE de verificar** (no se ha localizado una página de precios: `/pricing` devuelve 404) | API de información de cuentas y sandbox para clientes | **No publicado** | Cobertura europea amplia; cifras concretas de España **PENDIENTE** | Contrato | <https://www.saltedge.com/> |
 | **GoCardless (Bank Account Data, ex-Nordigen)** | Proveedor de acceso a datos bancarios; **autoridad y continuidad del producto: PENDIENTE** (la página de precios de GoCardless no menciona el producto de datos; hay referencias de terceros al fin del plan gratuito que **no se usan aquí**) | API AIS documentada históricamente; sandbox | **No publicado** (no verificado) | **PENDIENTE** | Contrato | <https://gocardless.com/> |
 
-**Conclusión de la tabla:** hay al menos **cinco candidatos reales** con AIS y sandbox y dos con
-autoridad española verificada (Arcopay y Unnax/Powens). **Ninguno publica precio**: los cinco
-remiten a contacto comercial. Cualquier cifra que se escriba sin presupuesto sería inventada.
+**Conclusión de la tabla:** hay al menos **ocho candidatos reales** con AIS y sandbox y dos con
+autoridad española verificada (Arcopay y Unnax/Powens). **Ninguno de los grandes publica precio**:
+remiten a contacto comercial. La excepción es **openbanking.io**, que publica **3 €/mes** pero cuya
+licencia y cobertura no están verificadas (ver **2 ter**). Cualquier cifra que se escriba sin
+presupuesto o sin leer la letra pequeña sería inventada.
 
 ---
 
@@ -127,6 +134,73 @@ Destinatarios:
    fichero** —que ya existe y cuesta **0 €**—, **no se contrata**. La conexión PSD2 ahorra teclear,
    no aporta un dato que hoy falte.
 4. **Nada de código de PSD2** hasta que haya contrato firmado y aprobación de David.
+
+---
+
+## 2 ter. Revisión del 2026-11-08: lo que se puede decidir hoy
+
+> **Para David, en una frase:** hoy **no hay ningún precio de producción publicado** por los
+> agregadores grandes; hay **sandbox gratis** para probar y **un candidato pequeño que publica
+> 3 €/mes por cuenta** pero cuya licencia y cobertura española **no están verificadas**. La licencia
+> propia (ser AISP) exige **50.000 € de capital inicial** y certificados: está descartada. La
+> decisión de gastar sigue siendo de David y **no se contrata nada en este documento**.
+
+### 2 ter.1 Precio publicado, precio desconocido y prueba gratis
+
+| Proveedor | Qué se puede leer hoy | Cifra publicada | Qué falta para decidir | Fuente (2026-11-08) |
+|---|---|---|---|---|
+| **Enable Banking** | Precio **por volumen** (cuentas y pagos/mes) y **factura mínima mensual**; se puede crear cuenta, usar sandbox y **enlazar cuentas propias en producción antes de firmar** (aplicación restringida) | **No publicado** (presupuesto a `info@enablebanking.com`) | Cuánto es el mínimo mensual y el €/cuenta; cobertura de bancos españoles por banco | <https://enablebanking.com/docs/faq/> (preguntas «How much does it cost…» y «Can I test… before signing…», abiertas 2026-11-08) |
+| **Powens / Unnax** | Sin página de precios (`/pricing/` sigue devolviendo **404**); consola con registro gratuito; entidades ACPR (CIB 16948) y Banco de España (código 6719) en el pie legal | **No publicado** | Presupuesto y DPA | <https://www.powens.com/pricing/> (404, 2026-11-08) · <https://www.powens.com/> (pie legal, 2026-11-08) |
+| **Tink** (Visa) | Plan **Standard**: «precio base **por usuario y mes**», sin importe; Enterprise: «personalizado». Licencia de la FSA sueca (la propia o la del cliente) | **No publicado** | €/usuario/mes del plan Standard | <https://tink.com/de/preisgestaltung/> (abierta 2026-11-08) |
+| **GoCardless Bank Account Data** (ex-Nordigen) | Unidad de facturación publicada: **requisición activa/mes** (una autorización = una requisición; 90 o 180 días; sandbox no cuenta) | **No publicado** | Precio por requisición y si aceptan altas nuevas | <https://bankaccountdata.zendesk.com/hc/en-gb/articles/11528933493916-Bank-Account-Data-API-Usage-how-is-your-usage-number-calculated> (2026-11-08) |
+| **openbanking.io** (candidato nuevo, pequeño) | Precio **público**: **3 €/mes con 1 cuenta incluida**, **+1 €/mes por cuenta adicional**; sin tarjeta para empezar; dice **350+ bancos PSD2 / 2.611 bancos** y España en la lista; clave privada en el dispositivo, el servidor solo guarda cifrado | **3 €/mes (1 cuenta) · 1 €/mes por cuenta adicional** | **Licencia**: no publica si actúa con licencia propia o como técnico de un AISP; **cobertura real de los bancos de los agricultores**; DPA; y si su API sirve para una aplicación de terceros (no solo para su app) | <https://open-banking.io/en> · <https://open-banking.io/en/banks> · <https://open-banking.io/en/security> (2026-11-08) |
+| **BBVA API Market** | Sandbox y área privada gratis con registro; producción según uso | **0 € (sandbox)** · producción **no publicado** | Qué API de AIS ofrece a terceros y a qué precio | <https://www.bbvaapimarket.com/es/> (2026-11-05) |
+| **TrueLayer** | No hay página de precios (`/pricing/` devuelve **404**) | **No publicado** | Presupuesto | <https://truelayer.com/pricing/> (404, 2026-11-08) |
+| **Salt Edge** | Sin página de precios (`/pricing`, `/plans` → 404) | **No publicado** | Presupuesto | <https://www.saltedge.com/pricing> (404, 2026-11-05) |
+
+**Aritmética del único precio publicado, como referencia y no como oferta:** con openbanking.io,
+**2 cuentas = 3 € + 1 € = 4 €/mes = 48 €/año**, y **3 cuentas = 60 €/año**, antes de IVA y de
+cualquier alta. Es **el único ancla pública** que existe hoy; **no es una oferta para nuestro caso**
+porque su licencia y su cobertura española no están verificadas, y un precio bajo no compensa un
+proveedor que no pueda leer los bancos de los agricultores o que no tenga DPA.
+
+**Lo que sigue sin poder calcularse:** coste de los grandes (Enable Banking, Powens, Tink,
+Arcopay, TrueLayer, Salt Edge, GoCardless) y coste de alta/integración. Sin presupuesto escrito no
+hay cifra; no se estima.
+
+### 2 ter.2 Por qué no se hace la licencia propia (ser AISP), en números
+
+| Concepto | Cifra | Fuente (2026-11-08) |
+|---|---|---|
+| **Capital inicial** para un AISP (servicio del anexo I, punto 7) | **50.000 €** | Directiva (UE) 2015/2366, art. 7.1.b: <https://paymentslaw.eu/psd-2/art-7/> (texto del artículo abierto 2026-11-08) |
+| Certificados **eIDAS QWAC + QSealC** | **2.000–10.000 €/año**, según el prestador — **estimación de un tercero, no tarifa oficial** | Guía de terceros: <https://dev.to/johnfrandsen/migrating-off-nordigen-a-field-guide-for-indie-builders-2026-4o3j> (2026-11-08; se usa **solo** como orden de magnitud, marcado como no oficial) |
+| Autorización, auditoría, seguro de responsabilidad, DORA, pruebas de penetración, equipo | **No publicado** | Banco de España, registro y guía de AIS: <https://sedeelectronica.bde.es/sede/es/tramites/registro-prestadores-informacion-cuentas-p222.html> |
+| **Conclusión** | **Descartado**: 50.000 € de capital más certificados, auditoría y meses de tramitación para leer dos cuentas. La vía es **un AISP ya autorizado** | — |
+
+### 2 ter.3 Límites que no cambian con el proveedor
+
+| Límite | Qué significa para la pantalla | Fuente |
+|---|---|---|
+| **4 accesos/24 h** si el agricultor no está pidiendo la información activamente | Con **una consulta al día** no se llega al límite; si se sincroniza al abrir la pantalla, se cuenta | EBA Q&A 2018_4210: <https://www.eba.europa.eu/single-rule-book-qa/qna/view/publicId/2018_4210> |
+| **Saldo y movimientos de los últimos 90 días** | La primera conexión **no trae años de historial**; lo anterior sigue viniendo del extracto por fichero | RTS 2018/389, art. 10: <https://www.legislation.gov.uk/eur/2018/389/chapter/III/adopted> |
+| **Reautenticación a los 90 días**; consentimiento máximo típico **180 días** | Hay que avisar antes de que caduque y pedir reconexión; si no, la pantalla se queda sin datos | RTS art. 10.2 · Enable Banking FAQ (validez máxima 180 días, 2026-11-08) |
+| **Solo lectura** | Sin PIS, sin transferencias, sin cambiar nada en el banco; sin guardar credenciales | PSD2 anexo I y RDL 19/2018 |
+| **Revocación** | El agricultor puede cortar el acceso; el histórico ya importado **no se borra** | Enable Banking FAQ (portal de consentimientos) |
+
+### 2 ter.4 La decisión, con tres caminos y un criterio de parada
+
+| Camino | Coste | Qué se gana | Qué se arriesga | Cuándo elegirlo |
+|---|---|---|---|---|
+| **A. Seguir como hoy**: extracto por fichero | **0 €** | Ya funciona; el agricultor sube el extracto y se concilia | Teclado manual y menos fresco | **Por defecto**, hasta que haya presupuesto y aprobación |
+| **B. Agregador AISP** (Enable Banking, Powens/Unnax; opcional openbanking.io si verifica licencia) | **Desconocido** en los grandes; **48 €/año** de ancla en openbanking.io (2 cuentas, sin IVA) | Saldos y movimientos solos, sin teclear | Coste recurrente + dependencia + DPA + cobertura | Solo si el presupuesto anual es **menor que el coste de seguir a mano** y David lo aprueba |
+| **C. Licencia propia (AISP)** | **50.000 € de capital** + certificados + auditoría | Control total | Inviable para este producto | **Descartado** |
+
+**Recomendación honesta:** pedir **dos presupuestos escritos** (Enable Banking y Powens/Unnax) con el
+texto de **2 bis.3**; y, **solo si se quiere una tercera referencia barata**, pedir a **openbanking.io**
+por escrito: licencia con la que opera, cobertura de los bancos españoles que usan los agricultores,
+DPA, y si su API admite aplicaciones de terceros con las claves del cliente. **No se contrata nada**
+hasta que David vea las cifras y lo apruebe. Si el anual supera lo que cuesta seguir subiendo el
+extracto (0 €), **no se contrata**.
 
 ---
 
@@ -277,6 +351,7 @@ aprobación de David, PSD2 no entra en el código**.
 | # | Qué | De quién | Estado |
 |---|---|---|---|
 | 1 | **Dos presupuestos escritos** con el escenario de uso (2 cuentas, ≈30 consultas/mes, 12 meses; texto listo en **2 bis.3**) | Enable Banking y Powens/Unnax | **PENDIENTE (nivel 3)** |
+| 1 bis | **Tercera referencia barata**: presupuesto, licencia y cobertura de openbanking.io (3 €/mes por cuenta publicados, sin verificar licencia ni bancos) | openbanking.io | **PENDIENTE (nivel 3); no se usa sin verificar licencia y DPA** |
 | 2 | Contrato de servicios AIS y **DPA** | Proveedor elegido | PENDIENTE |
 | 3 | Alta de la aplicación (KYB, verificación de dominio) | Proveedor | PENDIENTE |
 | 4 | Confirmar cobertura de los bancos que usan los agricultores | Proveedor | PENDIENTE |
@@ -300,12 +375,22 @@ aprobación de David, PSD2 no entra en el código**.
 | Salt Edge: sin página de precios (`/pricing`, `/plans`, `/pricing_plans` → 404) | <https://www.saltedge.com/pricing> | 2026-11-05 | **NO PUBLICADO** |
 | GoCardless Bank Account Data: unidad de facturación «requisición activa al mes»; GoCardless Ltd autorizada por la **FCA** (PSR 2017, nº 597190) | <https://bankaccountdata.zendesk.com/hc/en-gb/articles/11528933493916-Bank-Account-Data-API-Usage-how-is-your-usage-number-calculated> · <https://bankaccountdata.zendesk.com/hc/en-gb/categories/17222350058268-FAQ> | 2026-11-05 | Unidad y licencia VERIFICADAS; precio **NO PUBLICADO** |
 | BBVA API Market: sandbox y área privada gratis con registro; producción según uso | <https://www.bbvaapimarket.com/es/> | 2026-11-05 | VERIFICADO (sandbox 0 €); producción **NO PUBLICADO** |
+| Enable Banking: volumen + factura mínima; sandbox y cuentas propias antes de firmar; consentimiento máximo típico 180 días | <https://enablebanking.com/docs/faq/> | 2026-11-08 | VERIFICADO; precio **NO PUBLICADO** |
+| Tink: plan Standard «por usuario y mes» sin importe; Enterprise personalizado; licencia FSA sueca | <https://tink.com/de/preisgestaltung/> | 2026-11-08 | VERIFICADO lo publicado; cifra **NO PUBLICADA** |
+| Powens: `/pricing/` sigue devolviendo 404 | <https://www.powens.com/pricing/> | 2026-11-08 | **NO PUBLICADO** |
+| TrueLayer: `/pricing/` devuelve 404 | <https://truelayer.com/pricing/> | 2026-11-08 | **NO PUBLICADO** |
+| GoCardless: requisición activa/mes como unidad; sandbox no cuenta | <https://bankaccountdata.zendesk.com/hc/en-gb/articles/11528933493916-Bank-Account-Data-API-Usage-how-is-your-usage-number-calculated> | 2026-11-08 | Unidad VERIFICADA; precio **NO PUBLICADO** |
+| openbanking.io: 3 €/mes con 1 cuenta y 1 €/mes por adicional; dice 350+ bancos PSD2 y España en la lista; cifra el dato en el dispositivo | <https://open-banking.io/en> · <https://open-banking.io/en/banks> · <https://open-banking.io/en/security> | 2026-11-08 | Precio y lista VERIFICADOS en su web; **licencia y DPA NO VERIFICADOS** |
+| Capital inicial de un AISP: **50.000 €** | <https://paymentslaw.eu/psd-2/art-7/> (art. 7.1.b) | 2026-11-08 | VERIFICADO |
+| eIDAS QWAC+QSealC: 2.000–10.000 €/año | <https://dev.to/johnfrandsen/migrating-off-nordigen-a-field-guide-for-indie-builders-2026-4o3j> | 2026-11-08 | **ESTIMACIÓN DE UN TERCERO**, no tarifa oficial |
 | APIs propias de Santander/CaixaBank para AIS | — | 2026-11-05 | **PENDIENTE** |
 
-**No verificado (no se rellena):** **ningún precio de producción** de ningún proveedor; cobertura
-exacta de bancos españoles de Tink, Salt Edge y Enable Banking; límites numéricos de peticiones;
-condiciones de las APIs propias de Santander y CaixaBank; autoridad supervisora de Salt Edge y Enable
-Banking; qué API concreta de AIS ofrece BBVA a terceros. **Lo que sí queda cerrado:** quien concede la
-licencia a Arcopay (Banco de España), Powens/Unnax (ACPR y Banco de España), Tink (FSA sueca) y
-GoCardless (FCA); la unidad de facturación de Tink y de GoCardless; y que el sandbox de BBVA API
-Market es gratis.
+**No verificado (no se rellena):** **ningún precio de producción** de los agregadores grandes;
+cobertura exacta de bancos españoles de Tink, Salt Edge y Enable Banking; **licencia con la que
+opera openbanking.io** (no dice si es AISP propio o técnico de uno) y su DPA; límites numéricos de
+peticiones; condiciones de las APIs propias de Santander y CaixaBank; autoridad supervisora de Salt
+Edge y Enable Banking; qué API concreta de AIS ofrece BBVA a terceros. **Lo que sí queda cerrado:**
+quien concede la licencia a Arcopay (Banco de España), Powens/Unnax (ACPR y Banco de España), Tink
+(FSA sueca) y GoCardless (FCA); la unidad de facturación de Tink y de GoCardless; que el sandbox de
+BBVA API Market es gratis; el precio publicado de openbanking.io (3 €/mes + 1 €/cuenta); y que un
+AISP propio exige **50.000 € de capital inicial**.

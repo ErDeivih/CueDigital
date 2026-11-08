@@ -62,6 +62,7 @@ import {
   elAperoSeGuardaEnLabores,
   etiquetaCampana,
   empezarPorLoPrimero,
+  empezarPorLoQueBloquea,
   etiquetaDeProvinciaCache,
   etiquetaDelRecintoEnElMapa,
   etiquetaDeTrabajo,
@@ -113,6 +114,8 @@ import {
   textoRelleno,
   totalDeLaAplicacion,
   totalesDeTrabajos,
+  textoDeFaltasSinListar,
+  textoDelAvisoDeBloqueo,
   urlDeMiniatura,
   urlDelMapa,
 } from "./modelo.js";
@@ -2722,6 +2725,21 @@ function VistaCuaderno({ alEstado, alIr }) {
     : resumen.bloquean === 1
       ? textos.cuaderno.bloqueanUna
       : textoRelleno(textos.cuaderno.bloqueanVarias, { k: resumen.bloquean });
+  const textoDeSinListar = textoDeFaltasSinListar(items.length, cuantas);
+  const bloqueante = empezarPorLoQueBloquea(items);
+  const destinoParaEmpezar = bloqueante ? bloqueante.destino : destinoDelPrimero;
+
+  const avisoDeLoQueBloquea = resumen.bloquean > 0
+    ? html`<section className="tarjeta cuaderno__aviso" data-cuaderno-aviso aria-labelledby="cuaderno-aviso-titulo">
+        <h2 className="tarjeta__titulo" id="cuaderno-aviso-titulo">${textos.cuaderno.avisoTitulo}</h2>
+        <p className="cuaderno__aviso-texto" data-cuaderno-aviso-cuenta=${resumen.bloquean}>${textoDelAvisoDeBloqueo(resumen.bloquean)}</p>
+        ${destinoParaEmpezar
+          ? html`<div className="estado__acciones">
+              <button type="button" className="boton boton--principal boton--grande" data-cuaderno-empezar onClick=${() => alIr(destinoParaEmpezar)}>${textos.cuaderno.empezarPorLoQueBloquea}</button>
+            </div>`
+          : null}
+      </section>`
+    : null;
 
   const resumenDelCuaderno = html`<section className="tarjeta cuaderno__resumen" data-cuaderno-resumen aria-labelledby="cuaderno-resumen-titulo">
     <h2 className="tarjeta__titulo" id="cuaderno-resumen-titulo">${textos.cuaderno.titulo}</h2>
@@ -2729,7 +2747,8 @@ function VistaCuaderno({ alEstado, alIr }) {
     <p className="cuaderno__resumen-bloqueo">
       <span className=${resumen.bloquean ? "chip chip--aviso" : "chip"} data-cuaderno-bloquean>${textoDeBloqueo}</span>
     </p>
-    ${destinoDelPrimero
+    ${textoDeSinListar ? html`<p className="pagina__dato" data-cuaderno-faltas-sin-listar>${textoDeSinListar}</p>` : null}
+    ${resumen.bloquean === 0 && destinoDelPrimero
       ? html`<div className="estado__acciones">
           <button type="button" className="boton boton--principal" data-cuaderno-empezar onClick=${() => alIr(destinoDelPrimero)}>${textos.cuaderno.empezar}</button>
         </div>`
@@ -2739,7 +2758,7 @@ function VistaCuaderno({ alEstado, alIr }) {
   const bloques = secciones.map((seccion) => {
     const destino = destinoDeLaSeccion(seccion.donde);
     const cuenta = cuentaDeUnaSeccion(seccion.items.length);
-    const filas = seccion.items.map((item, indice) => html`<li className="que-falta__fila" key=${`falta-${indice}`} data-que-falta-item=${item.que}>
+    const filas = seccion.items.map((item, indice) => html`<li className="que-falta__fila" key=${`falta-${indice}`} data-que-falta-item=${item.que} data-que-falta-item-bloquea=${item.bloquea ? "true" : "false"}>
       <span className="que-falta__que">${item.que}</span>
       ${item.bloquea ? html`<span className="chip chip--aviso">${textos.cuaderno.bloquea}</span>` : null}
       <span className="que-falta__donde">${textos.cuaderno.dondeSeArregla}: ${item.donde || textos.cuaderno.seccion}</span>
@@ -2758,6 +2777,7 @@ function VistaCuaderno({ alEstado, alIr }) {
 
   return html`<div className="pantalla-cuaderno">
     ${cabecera}
+    ${avisoDeLoQueBloquea}
     ${resumenDelCuaderno}
     ${bloques}
     <p><a className="boton" href="/">${textos.cuaderno.abrirJv}</a></p>
