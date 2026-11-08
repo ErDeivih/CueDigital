@@ -63,6 +63,8 @@ import {
   etiquetaCampana,
   empezarPorLoPrimero,
   empezarPorLoQueBloquea,
+  primerBloqueoDeLoQueFalta,
+  actualizadasDeLosContornos,
   etiquetaDeProvinciaCache,
   etiquetaDelRecintoEnElMapa,
   etiquetaDeTrabajo,
@@ -2726,16 +2728,28 @@ function VistaCuaderno({ alEstado, alIr }) {
       ? textos.cuaderno.bloqueanUna
       : textoRelleno(textos.cuaderno.bloqueanVarias, { k: resumen.bloquean });
   const textoDeSinListar = textoDeFaltasSinListar(items.length, cuantas);
-  const bloqueante = empezarPorLoQueBloquea(items);
-  const destinoParaEmpezar = bloqueante ? bloqueante.destino : destinoDelPrimero;
+  const primerBloqueo = primerBloqueoDeLoQueFalta(items);
+  const primerRellenable = empezarPorLoPrimero(items);
+  const destinoParaEmpezar = primerRellenable ? primerRellenable.destino : null;
 
   const avisoDeLoQueBloquea = resumen.bloquean > 0
     ? html`<section className="tarjeta cuaderno__aviso" data-cuaderno-aviso aria-labelledby="cuaderno-aviso-titulo">
         <h2 className="tarjeta__titulo" id="cuaderno-aviso-titulo">${textos.cuaderno.avisoTitulo}</h2>
         <p className="cuaderno__aviso-texto" data-cuaderno-aviso-cuenta=${resumen.bloquean}>${textoDelAvisoDeBloqueo(resumen.bloquean)}</p>
+        ${primerBloqueo
+          ? html`<p className="pagina__dato" data-cuaderno-bloqueo-tecnico>
+              ${textos.cuaderno.bloqueoTecnico} ${primerBloqueo.item.donde || textos.cuaderno.seArreglaFuera}
+            </p>`
+          : null}
+        ${primerRellenable
+          ? html`<p className="cuaderno__aviso-primero" data-cuaderno-primero>${textos.cuaderno.loPrimeroRellenable} «${primerRellenable.item.que}».</p>
+              <p className="pagina__dato" data-cuaderno-primero-donde=${primerRellenable.item.donde || textos.cuaderno.seArreglaFuera}>
+                ${textos.cuaderno.dondeSeArregla}: ${primerRellenable.item.donde || textos.cuaderno.seccion}
+              </p>`
+          : null}
         ${destinoParaEmpezar
           ? html`<div className="estado__acciones">
-              <button type="button" className="boton boton--principal boton--grande" data-cuaderno-empezar onClick=${() => alIr(destinoParaEmpezar)}>${textos.cuaderno.empezarPorLoQueBloquea}</button>
+              <button type="button" className="boton boton--principal boton--grande" data-cuaderno-empezar onClick=${() => alIr(destinoParaEmpezar)}>${textos.cuaderno.empezarPorElCuaderno}</button>
             </div>`
           : null}
       </section>`
@@ -2766,7 +2780,7 @@ function VistaCuaderno({ alEstado, alIr }) {
         ? html`<button type="button" className="boton" onClick=${() => alIr(destino)}>${textos.cuaderno.arreglar}</button>`
         : html`<a className="boton" href="/">${textos.cuaderno.arreglar}</a>`}
     </li>`);
-    return html`<section className="tarjeta" key=${`seccion-${seccion.donde}`} data-que-falta-seccion=${seccion.donde} aria-labelledby=${`seccion-${seccion.donde}`}>
+    return html`<section className="tarjeta" key=${`seccion-${seccion.donde}`} data-que-falta-seccion=${seccion.donde} data-que-falta-seccion-bloquea=${seccion.bloquea ? "true" : "false"} data-que-falta-seccion-destino=${destino || ""} aria-labelledby=${`seccion-${seccion.donde}`}>
       <div className="cuaderno__cabecera">
         <h2 className="tarjeta__titulo" id=${`seccion-${seccion.donde}`}>${seccion.donde}</h2>
         <span className="chip" data-que-falta-seccion-cuenta=${cuenta}>${cuenta}</span>
@@ -3673,8 +3687,12 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     setResultadoCache(null);
     const respuesta = await pedirConDetalle(ruta, { method: "POST" });
     if (respuesta.estado === "ok") {
+      const datosDeLosContornos = respuesta.datos || {};
       setFaseCache("listo");
-      setResultadoCache(lineasDeLosContornos(respuesta.datos));
+      setResultadoCache({
+        lineas: lineasDeLosContornos(datosDeLosContornos),
+        actualizadas: actualizadasDeLosContornos(datosDeLosContornos),
+      });
       refrescarAlCerrar.current = true;
       return;
     }
@@ -4015,11 +4033,22 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
           : null}
 
         ${resultadoCache
-          ? html`<div className="panel__aviso panel__aviso--bien" data-sigpac-cache-resultado=${resultadoCache.join(" · ")}>
+          ? html`<div className="panel__aviso panel__aviso--bien" data-sigpac-cache-resultado=${resultadoCache.lineas.join(" · ")}>
               <ul className="sigpac__cache-lineas">
-                ${resultadoCache.map((linea, indice) => html`<li key=${`linea-cache-${indice}`}>${linea}</li>`)}
+                ${resultadoCache.lineas.map((linea, indice) => html`<li key=${`linea-cache-${indice}`}>${linea}</li>`)}
               </ul>
-              ${resultadoCache.length === 1 && resultadoCache[0] === textos.ventana.cache.nadaQueCasar
+              ${resultadoCache.actualizadas.length
+                ? html`<div className="sigpac__cache-tierras" data-sigpac-cache-actualizadas>
+                    <h4 className="panel__subtitulo">${textos.ventana.cache.tierrasActualizadas}</h4>
+                    <ul className="sigpac__cache-lista">
+                      ${resultadoCache.actualizadas.map((tierra) => html`<li className="sigpac__cache-tierra" key=${`actualizada-${tierra.id}`} data-sigpac-cache-actualizada=${tierra.alias}>
+                        <span className="tierra__alias">${tierra.alias}</span>
+                        ${tierra.detalle ? html`<span className="tierra__detalle">${tierra.detalle}</span>` : null}
+                      </li>`)}
+                    </ul>
+                  </div>`
+                : null}
+              ${resultadoCache.lineas.length === 1 && resultadoCache.lineas[0] === textos.ventana.cache.nadaQueCasar
                 ? html`<p className="pagina__dato">${textos.ventana.cache.sigueSirviendo}</p>`
                 : null}
               <div className="estado__acciones">

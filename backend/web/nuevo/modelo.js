@@ -259,10 +259,16 @@ export const textos = {
     cosaUno: "1 cosa",
     cosaVarias: "{n} cosas",
     empezar: "Empezar por lo primero",
+    empezarPorElCuaderno: "Empezar por el cuaderno",
+    loPrimeroRellenable: "Lo primero que puedes rellenar:",
+    bloqueoTecnico: "Lo que impide presentarlo no depende de ti: lo resuelve",
     avisoTitulo: "Lo que impide presentar el cuaderno",
     avisoUna: "Hay 1 cosa que impide presentar el cuaderno.",
     avisoVarias: "Hay {k} cosas que impiden presentar el cuaderno.",
     empezarPorLoQueBloquea: "Empezar por lo que bloquea",
+    loPrimero: "Lo primero:",
+    seArreglaFuera: "Se arregla fuera de esta pantalla.",
+    arreglarEnLaApp: "Arreglarlo en la app de siempre",
     noSeVenTodas: "Faltan {n} cosas y aquí se ven {m}. Las demás no se han podido mirar; vuelve a intentarlo.",
   },
   siguiente: {
@@ -322,6 +328,8 @@ export const textos = {
       trayendo: "Trayendo los contornos…",
       nota: "Se rellena la forma de las tierras que ya tienes. No se toca la superficie, ni el uso, ni el pueblo.",
       atribucion: "Datos del SIGPAC",
+      tierrasActualizadas: "Tierras actualizadas",
+      tierraSinNombre: "Tierra sin nombre",
       puestosUno: "1 contorno puesto",
       puestosVarios: "{n} contornos puestos",
       noEncontradasUno: "1 tierra que no está en ese mapa",
@@ -1825,12 +1833,18 @@ export function agruparLoQueFalta(items) {
     if (!secciones.has(donde)) secciones.set(donde, []);
     secciones.get(donde).push(item);
   }
-  return [...secciones.entries()].map(([donde, suyos]) => ({
+  const agrupadas = [...secciones.entries()].map(([donde, suyos]) => ({
     donde,
     n: suyos.length,
     items: ordenaLoQueFalta(suyos),
     bloquea: suyos.some((item) => Boolean(item.bloquea)),
   }));
+  // Primero lo que el agricultor puede rellenar (tiene pantalla en `/nuevo/`); lo que depende
+  // de la aplicación o de la Junta va después, y se avisa arriba. Antes se colaban delante
+  // bloqueos técnicos y el agricultor acababa en la app vieja sin poder hacer nada.
+  const conPantalla = agrupadas.filter((seccion) => Boolean(destinoDeLaSeccion(seccion.donde)));
+  const sinPantalla = agrupadas.filter((seccion) => !destinoDeLaSeccion(seccion.donde));
+  return [...conPantalla, ...sinPantalla];
 }
 
 /** A qué pantalla de `/nuevo/` se va a arreglar algo, por el nombre de dónde se arregla. */
@@ -1889,6 +1903,33 @@ export function empezarPorLoQueBloquea(items) {
     .map((item) => ({ item, destino: destinoDeLaSeccion(item.donde) }))
     .filter((paso) => Boolean(paso.destino));
   return conDestino[0] || null;
+}
+
+/**
+ * El **primero** de los bloqueantes, aunque no tenga pantalla en `/nuevo/`: hace falta para poder
+ * decir cuál es y dónde se arregla (o avisar de que se arregla fuera).
+ */
+export function primerBloqueoDeLoQueFalta(items) {
+  const bloqueante = (Array.isArray(items) ? items : []).find((item) => item && item.que && item.bloquea);
+  if (!bloqueante) return null;
+  return { item: bloqueante, destino: destinoDeLaSeccion(bloqueante.donde) };
+}
+
+/** Las tierras que el servidor dice que ha actualizado, sin inventarse nombres ni medidas. */
+export function actualizadasDeLosContornos(datos) {
+  const lista = datos && Array.isArray(datos.actualizadas) ? datos.actualizadas : [];
+  return lista
+    .filter((tierra) => tierra && typeof tierra === "object")
+    .map((tierra, indice) => {
+      const id = tierra.id ?? tierra.parcela_id ?? tierra.tierra_id ?? indice;
+      const alias = String(tierra.alias || "").trim() || textos.ventana.cache.tierraSinNombre;
+      const superficie = numeroDe(tierra.superficie_ha ?? tierra.superficie ?? tierra.hectareas);
+      const municipio = String(tierra.municipio || "").trim();
+      const detalles = [];
+      if (superficie !== null) detalles.push(`${formateaNumero(superficie)} ${textos.tierras.panel.hectareas}`);
+      if (municipio) detalles.push(municipio);
+      return { id, alias, detalle: detalles.join(" · ") };
+    });
 }
 
 /** «1 cosa» o «3 cosas», para la cuenta de cada sección. */

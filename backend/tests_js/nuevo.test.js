@@ -51,6 +51,8 @@ import {
   dosisMaximaEnTexto,
   empezarPorLoPrimero,
   empezarPorLoQueBloquea,
+  actualizadasDeLosContornos,
+  primerBloqueoDeLoQueFalta,
   elAperoSeGuardaEnLabores,
   etiquetaDeProvinciaCache,
   etiquetaDeTrabajo,
@@ -1053,11 +1055,14 @@ test("lo que falta del cuaderno se agrupa por dónde se arregla y se dice si blo
   ]);
 
   assert.equal(secciones.length, 2);
-  assert.equal(secciones[0].donde, "Mis datos");
-  assert.equal(secciones[0].n, 2);
-  assert.equal(secciones[0].bloquea, true);
-  assert.equal(secciones[1].donde, "Mis parcelas");
-  assert.equal(secciones[1].bloquea, false);
+  // Primero la sección que el agricultor puede rellenar en `/nuevo/`; «Mis datos» no tiene
+  // pantalla nueva y se queda detrás, aunque bloquee.
+  assert.equal(secciones[0].donde, "Mis parcelas");
+  assert.equal(secciones[0].n, 1);
+  assert.equal(secciones[0].bloquea, false);
+  assert.equal(secciones[1].donde, "Mis datos");
+  assert.equal(secciones[1].n, 2);
+  assert.equal(secciones[1].bloquea, true);
 
   assert.deepEqual(agruparLoQueFalta(null), []);
   assert.deepEqual(agruparLoQueFalta([{ que: "" }]), []);
@@ -1558,4 +1563,59 @@ test("«Empezar por lo que bloquea» solo va a lo que bloquea y tiene pantalla",
   assert.equal(empezarPorLoQueBloquea([{ que: "b", donde: "Trabajos", bloquea: false }]), null);
   assert.equal(empezarPorLoQueBloquea([{ que: "a", donde: "Sin sitio", bloquea: true }]), null);
   assert.equal(empezarPorLoQueBloquea([]), null);
+});
+
+// ---------------------------------------------------------------------------
+// «Lo primero» del cuaderno y las tierras que actualiza el SIGPAC
+// ---------------------------------------------------------------------------
+
+test("las secciones que se pueden rellenar salen antes que las técnicas, sin revolver el orden", () => {
+  const secciones = agruparLoQueFalta([
+    { que: "a", donde: "Sin sitio", bloquea: true },
+    { que: "b", donde: "Mis parcelas", bloquea: false },
+    { que: "c", donde: "Quien desarrolla", bloquea: true },
+    { que: "d", donde: "Trabajos", bloquea: false },
+  ]);
+  assert.deepEqual(secciones.map((seccion) => seccion.donde), [
+    "Mis parcelas",
+    "Trabajos",
+    "Sin sitio",
+    "Quien desarrolla",
+  ]);
+});
+
+test("«lo primero» se sabe aunque no tenga pantalla en la app nueva", () => {
+  const conPantalla = primerBloqueoDeLoQueFalta([
+    { que: "Falta el libro", donde: "Tierras", bloquea: false },
+    { que: "Falta el número de registro", donde: "Tierras", bloquea: true },
+  ]);
+  assert.equal(conPantalla.item.que, "Falta el número de registro");
+  assert.equal(conPantalla.destino, "tierras");
+
+  const sinPantalla = primerBloqueoDeLoQueFalta([{ que: "Falta el certificado", donde: "Quien desarrolla", bloquea: true }]);
+  assert.equal(sinPantalla.item.que, "Falta el certificado");
+  assert.equal(sinPantalla.destino, null);
+
+  assert.equal(primerBloqueoDeLoQueFalta([{ que: "Otra cosa", donde: "Tierras", bloquea: false }]), null);
+  assert.equal(primerBloqueoDeLoQueFalta(null), null);
+});
+
+test("las tierras actualizadas se leen con lo que viene y sin inventar", () => {
+  assert.deepEqual(actualizadasDeLosContornos(null), []);
+  assert.deepEqual(actualizadasDeLosContornos({ actualizadas: [] }), []);
+  assert.deepEqual(actualizadasDeLosContornos({ actualizadas: "no es una lista" }), []);
+
+  const tierras = actualizadasDeLosContornos({
+    actualizadas: [
+      { id: 7, alias: "Las Eras", superficie_ha: 1.2, municipio: "Salamanca" },
+      { parcela_id: 8, alias: "El Molino" },
+      { id: 9, alias: "" },
+      "no es una tierra",
+    ],
+  });
+  assert.equal(tierras.length, 3);
+  assert.deepEqual(tierras[0], { id: 7, alias: "Las Eras", detalle: "1,2 ha · Salamanca" });
+  assert.deepEqual(tierras[1], { id: 8, alias: "El Molino", detalle: "" });
+  assert.equal(tierras[2].alias, textos.ventana.cache.tierraSinNombre);
+  assert.equal(tierras[2].detalle, "");
 });

@@ -688,6 +688,16 @@ button {
   overflow-wrap: anywhere;
 }
 
+/* «Lo primero: «…»» y dónde se arregla: se lee antes que la lista de secciones y no se sale de
+ * la pantalla a 360 (las palabras largas del servidor se parten). */
+.cuaderno__aviso-primero {
+  margin: 0 0 var(--space-1);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 480px) {
   .cuaderno__aviso .estado__acciones {
     display: grid;
@@ -959,6 +969,29 @@ button {
 .sigpac__cache-lineas {
   margin: 0 0 var(--space-2);
   padding-left: var(--space-4);
+}
+
+/* La lista de tierras actualizadas: alias y, si viene, superficie y pueblo. Las palabras largas
+ * se parten (a 360 el alias de una tierra puede ser largo) y la lista no empuja los botones. */
+.sigpac__cache-tierras {
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.sigpac__cache-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sigpac__cache-tierra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  align-items: baseline;
+  overflow-wrap: anywhere;
 }
 
 .sigpac__cache .estado__acciones {

@@ -80,6 +80,11 @@ ENGANCHES = [
     "data-descargar-trabajos",
     "data-sigpac-dibujo-recinto",
     "data-cuaderno-aviso",
+    "data-cuaderno-primero",
+    "data-cuaderno-primero-donde",
+    "data-que-falta-seccion-bloquea",
+    "data-sigpac-cache-actualizadas",
+    "data-sigpac-cache-actualizada",
     "data-cuaderno-aviso-cuenta",
     "data-que-falta-item-bloquea",
     "data-cuaderno-resumen",
@@ -374,22 +379,46 @@ class TestElContratoConElArnesDeNavegador:
         assert "BotonSiguiente" in fuente
         assert "data-siguiente-paso" in fuente
 
+    def test_el_cuaderno_dice_lo_primero_y_el_sigpac_lista_las_tierras(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        # El aviso dice lo primero que el agricultor PUEDE rellenar y dónde; lo que depende de
+        # la aplicación o de la Junta se dice aparte, sin mandarlo a la app vieja a arreglarlo.
+        assert "data-cuaderno-primero" in fuente
+        assert "data-cuaderno-primero-donde" in fuente
+        assert "data-cuaderno-bloqueo-tecnico" in fuente
+        assert "data-que-falta-seccion-bloquea" in fuente
+        assert "data-que-falta-seccion-destino" in fuente
+        for funcion in ("primerBloqueoDeLoQueFalta", "actualizadasDeLosContornos"):
+            assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
+        # Las secciones que se pueden rellenar van antes (orden estable) y dentro sigue lo bloqueante.
+        assert "ordenaLoQueFalta" in modelo
+        # La lista de tierras actualizadas solo se pinta si el servidor trae alguna.
+        assert "data-sigpac-cache-actualizadas" in fuente
+        assert "data-sigpac-cache-actualizada" in fuente
+        assert "textos.ventana.cache.tierrasActualizadas" in fuente
+        assert "textos.ventana.cache.tierraSinNombre" in modelo
+
     def test_el_cuaderno_avisa_de_lo_que_bloquea(self):
         fuente = leer("app.js")
         modelo = leer("modelo.js")
-        # El aviso va arriba, dice cuántas bloquean y lleva a lo que bloquea.
+        # El aviso va arriba, cuenta los bloqueos y ofrece seguir con lo que el agricultor puede
+        # rellenar; lo técnico se dice con su responsable, no con un botón que no arregla nada.
         assert "data-cuaderno-aviso" in fuente
         assert "data-cuaderno-aviso-cuenta" in fuente
         assert "data-cuaderno-empezar" in fuente
-        assert "textos.cuaderno.empezarPorLoQueBloquea" in fuente
+        assert "textos.cuaderno.empezarPorElCuaderno" in fuente
+        assert "textos.cuaderno.loPrimeroRellenable" in fuente
+        assert "textos.cuaderno.bloqueoTecnico" in fuente
         # Cada fila dice si bloquea, para que el arnés lo pueda mirar.
         assert "data-que-falta-item-bloquea" in fuente
-        # Lo que bloquea va primero y el aviso se cuenta en singular y plural.
+        # Lo que bloquea va primero dentro de su sección y el aviso se cuenta en singular y plural.
         for funcion in (
             "ordenaLoQueFalta",
             "textoDelAvisoDeBloqueo",
             "textoDeFaltasSinListar",
-            "empezarPorLoQueBloquea",
+            "primerBloqueoDeLoQueFalta",
+            "empezarPorLoPrimero",
         ):
             assert f"export function {funcion}" in modelo, f"falta la función «{funcion}» en el modelo"
         # Si el servidor cuenta más de las que se ven, se dice sin inventar.
