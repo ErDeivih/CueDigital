@@ -38,3 +38,22 @@ vista no desborda, que cada botón mide al menos 44 px y que su centro no está 
 
 Las cuatro tierras se dieron de alta **solo con su referencia del SIGPAC** y el programa rellenó los
 códigos; el mapa se aplicó con `POST /api/sigpac/cache/37/contornos` sobre el `.gpkg` real.
+
+## El bloque de contornos: el motivo y la elección del recinto (09/11/2026)
+
+Las capturas de esta sección son de la comprobación en Chrome del **09/11/2026**, con el mismo
+GeoPackage real de Salamanca. Lo que se miró, además de que se viera: **0 px de desborde** en la
+caja de la ventana a 390, 360, 1024 y 1440, y que cada botón siga midiendo al menos 44 px con su
+centro alcanzable.
+
+| Fichero | Qué enseña |
+|---|---|
+| `ventana-sigpac-contornos.png` | «Los contornos de toda la finca» con el mapa real aplicado |
+| `ventana-sigpac-sin-codigos-390.png` / `-360` / `-1024` / `-1440` | Las tierras que **no** se han podido casar, cada una con **el motivo que manda el servidor** («la referencia no dice el recinto y esa parcela tiene 2 recintos; elige uno») y su botón **«Elegir el recinto en el SIGPAC»**, a los cuatro anchos |
+| `ventana-sigpac-resultado-390.png` / `-360` / `-1024` / `-1440` | El bloque del resultado, con el scroll puesto encima, a los cuatro anchos |
+| `ventana-sigpac-sin-codigos.png` | La comprobación dirigida: dos tierras sin códigos con **sus dos motivos distintos** |
+| `ventana-sigpac-sin-codigos-elegida.png` | Lo que pasa al pulsar el botón de la segunda: la ventana se rellena con **esa** tierra (`37-2-0-0-502-1`, no la anterior), busca sola y trae sus **2 recintos** |
+
+El botón no abre otra ventana: cambia a qué tierra apunta la misma y la rellena por el camino que ya
+existía al abrirla desde la ficha. Y el motivo no lo escribe la pantalla: lo manda el servidor en
+`sin_codigos[].motivo` y aquí se enseña tal cual (si no viene, no se rellena con nada).

@@ -1,0 +1,111 @@
+# Despliegue de CUE Digital en UNA sola máquina pequeña.
+#
+# Qué levanta (está explicado entero en `docs/DESPLIEGUE.md`):
+#
+#   caddy  →  el único que mira a internet. Pone HTTPS (Let's Encrypt/ZeroSSL) y
+#             pasa todo a la aplicación. Es también la puerta del tamaño de subida.
+#   app    →  la aplicación (uvicorn + FastAPI). No publica puertos: solo la ve Caddy.
+#   db     →  PostgreSQL 16 en el mismo servidor. Tampoco publica puertos.
+#
+# Dos decisiones que parecen detalles y no lo son:
+#
+# 1. **Una sola instancia de `app`.** `crear_tablas()` corre al arrancar y toca el
+#    esquema: dos instancias arrancando a la vez podrían pisarse.
+# 2. **Los datos del agricultor NO están en volúmenes de Docker con nombre**, sino en
+#    carpetas del servidor (`CARPETA_DATOS`). Así una copia de seguridad es un `tar` y
+#    un `pg_dump`, sin pelearse con el almacenamiento de Docker, y sobreviven a
+#    `docker compose down -v`. El estado de Caddy (certificados) sí es volumen con
+#    nombre, porque se puede volver a pedir solo.
+#
+# Uso (desde la raíz del repositorio):
+#
+#     cp deploy/.env.example deploy/.env      # y se edita con valores de verdad
+#     docker compose -f deploy/docker-compose.yml config --quiet
+#     docker compose -f deploy/docker-compose.yml up -d --build
+#
+# `docker compose` lee `deploy/.env` automáticamente porque está al lado de este
+# fichero. No hace falta `--env-file`.
+
+name: cuedigital
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB en deploy/.env}
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en deploy/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en deploy/.env}
+      TZ: Europe/Madrid
+    volumes:
+      - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # Sin `ports:` a propósito: la base solo se habla desde la red de Docker.
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # La dirección lleva el nombre del servicio (`db`), que es lo que resuelve Docker.
+      # OJO: si la clave lleva @ : / ? # & hay que escribirla codificada para URL.
+      CUEDIGITAL_DATABASE_URL: ${CUEDIGITAL_DATABASE_URL:?falta CUEDIGITAL_DATABASE_URL en deploy/.env}
+      CUEDIGITAL_SECRETO: ${CUEDIGITAL_SECRETO:?falta CUEDIGITAL_SECRETO en deploy/.env}
+      # Vacío = NO es un entorno de pruebas. Es lo que se quiere en producción: si aquí
+      # pusiera `pruebas`, se podrían bajar las iteraciones de la clave (ver
+      # backend/app/security.py). El valor por defecto de la aplicación es el bueno.
+      CUEDIGITAL_ENTORNO: ${CUEDIGITAL_ENTORNO:-}
+      CUEDIGITAL_ITERACIONES_PBKDF2: ${CUEDIGITAL_ITERACIONES_PBKDF2:-240000}
+      # Las rutas de dentro del contenedor: no se cambian desde fuera.
+      CUEDIGITAL_ADJUNTOS: /datos/adjuntos
+      CUEDIGITAL_SIGPAC_CACHE: /datos/sigpac_cache
+      # Entrar con certificado: SOLO cuando haya un proxy delante que lo valide (ver
+      # docs/DESPLIEGUE.md). Apagado por defecto a propósito: si se enciende sin eso,
+      # cualquiera puede mandar la cabecera y entrar como otro agricultor.
+      CUEDIGITAL_CONFIAR_EN_CABECERAS: ${CUEDIGITAL_CONFIAR_EN_CABECERAS:-}
+      # IUWS (el volcado a la Junta). Vacío = no configurado; el programa lo dice.
+      CUEDIGITAL_IUWS_CERTIFICADO: ${CUEDIGITAL_IUWS_CERTIFICADO:-}
+      CUEDIGITAL_IUWS_CLAVE: ${CUEDIGITAL_IUWS_CLAVE:-}
+      TZ: Europe/Madrid
+    volumes:
+      - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/adjuntos:/datos/adjuntos
+      - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/sigpac_cache:/datos/sigpac_cache
+    expose:
+      - "8000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Sin `ports:`: a la aplicación se llega por Caddy, no directamente.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO:?falta DOMINIO en deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  # Los certificados y la configuración de Caddy. Se pueden volver a pedir, pero
+  # pedirlos cada vez gasta intentos de emisión: mejor conservarlos.
+  caddy_data:
+  caddy_config:

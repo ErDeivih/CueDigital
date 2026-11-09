@@ -1,0 +1,95 @@
+# Caddyfile — TLS automático y proxy inverso para CUE Digital.
+#
+# Caddy es el único proceso que mira a internet. Pide el certificado él solo (Let's
+# Encrypt o ZeroSSL, gratis), lo renueva y redirige HTTP a HTTPS sin configuración
+# extra. La aplicación se sirve ENTERA por aquí, incluida la pantalla: los ficheros estáticos
+# los sirve ella misma desde `backend/web/` (ver `app/main.py`). Por eso no hay
+# `file_server` en este fichero.
+#
+# Documentación de lo que se usa aquí (consultada el 09/11/2026):
+#   · HTTPS automático: https://caddyserver.com/docs/automatic-https
+#   · directiva `tls` (incluido `client_auth`): https://caddyserver.com/docs/caddyfile/directives/tls
+#   · directiva `request_body`: https://caddyserver.com/docs/caddyfile/directives/request_body
+#   · marcadores (`{tls_client_subject}`): https://caddyserver.com/docs/caddyfile/concepts#placeholders
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Opciones globales
+# ─────────────────────────────────────────────────────────────────────────────
+{
+	# Si quieres que la autoridad de certificados te avise por correo, descomenta
+	# ESTA línea y pon tu dirección (Caddy no la necesita para nada más):
+	# email tu-correo@example.com
+
+	# PRUEBAS: si estás montando el servidor y no quieres gastar intentos de emisión
+	# del dominio de verdad, descomenta la siguiente línea (entorno de pruebas de
+	# Let's Encrypt). EL NAVEGADOR DIRÁ QUE EL CERTIFICADO NO ES DE FIAR: es lo normal
+	# con el entorno de pruebas. Se vuelve a comentar cuando el dominio esté listo.
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# El dominio sale de `deploy/.env` (`DOMINIO=`). Sin él, `docker compose` ni siquiera
+# arranca: se comprueba antes en `docker-compose.yml`.
+{$DOMINIO} {
+	# Compresión. La pantalla son 2,7 MB de ficheros de texto (JS, CSS, HTML): en un
+	# móvil con mala cobertura en el campo, esto se nota.
+	encode zstd gzip
+
+	# SEGUNDA PUERTA DEL TAMAÑO DE SUBIDA. La primera está en el programa: corta en
+	# 12 MiB (`backend/app/adjuntos.py`, `MAXIMO_BYTES`) y lo dice en castellano. Esto
+	# es para no dejar que un fichero enorme llegue ni a entrar. Se deja un margen sobre
+	# los 12 MiB por las cabeceras del formulario, que también cuentan.
+	request_body {
+		max_size 15MB
+	}
+
+	# Cabeceras de seguridad. NO se pone Content-Security-Policy a propósito: la
+	# pantalla usa React con `htm` y estilos propios, y una CSP mal puesta deja la
+	# aplicación en blanco en el campo. Hacerlo bien exige probarlo en un navegador
+	# (está apuntado en docs/DESPLIEGUE.md).
+	header {
+		# Sin `includeSubDomains`: si algún día hay otro subdominio en HTTP, no se rompe.
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		# La aplicación no se diseña para ir dentro de otra página.
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# Todo a la aplicación.
+	reverse_proxy app:8000 {
+		# Caddy ya añade X-Forwarded-For y X-Forwarded-Proto, y la aplicación arranca
+		# con `--proxy-headers` (ver deploy/Dockerfile).
+
+		# ─────────────────────────────────────────────────────────────────────
+		# ENTRAR CON EL CERTIFICADO DIGITAL — BLOQUE PREPARADO, NO PROBADO
+		#
+		# El programa NO valida certificados: se cree lo que le diga el servidor de
+		# delante (`backend/app/certificados.py`). Para que eso sea seguro hacen falta
+		# las tres cosas juntas, y por eso están aquí apuntadas y comentadas:
+		#
+		#   1) Que Caddy pida y VERIFIQUE el certificado del cliente.
+		#   2) Que Caddy ponga la cabecera con el titular del certificado.
+		#   3) Que la aplicación sepa que puede creerse esa cabecera
+		#      (`CUEDIGITAL_CONFIAR_EN_CABECERAS=1` en `deploy/.env`).
+		#
+		# El problema de fondo: si se exige certificado en TODO el sitio, se rompe
+		# entrar con correo y clave (que tiene que seguir funcionando siempre). Lo
+		# correcto es hacerlo en un sitio aparte y probarlo; mientras tanto se queda
+		# apagado. NO se ha probado en esta máquina.
+		#
+		# header_up X-SSL-Client-Subject {tls_client_subject}
+		#
+		# (La cabecera de verificación tiene que valer «SUCCESS»: el programa rechaza
+		# cualquier otro valor. Ver `certificados.certificado_de_peticion`.)
+		# header_up X-SSL-Client-Verify "SUCCESS"
+	}
+
+	# Registro de accesos. Va a la salida del contenedor (`docker compose logs caddy`),
+	# así que lo rota Docker y no se llena el disco. Aparecen también los latidos de
+	# `/health`; si algún día molestan, `skip_log` (Caddy 2.9 o posterior) los quita.
+	log {
+		output stdout
+		format json
+	}
+}

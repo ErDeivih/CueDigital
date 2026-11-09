@@ -116,6 +116,7 @@ import {
   rutaDeAnillo,
   rutaDeLaAplicacion,
   rutaDeLosContornos,
+  sinCodigosDeLosContornos,
   sinMapa,
   sumaDeHectareas,
   textos,
@@ -1817,9 +1818,15 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
       alCerrar=${() => setVentana(false)}
       alRefrescar=${alReintentar}
       alVerTierras=${alIrATierras}
-      alUsada=${() => {
+      alUsada=${(modoUsado) => {
         setVentana(false);
-        setAlta({ estado: "hecho", texto: textos.ventana.anadida });
+        // La ventana puede acabar aplicando el contorno a una tierra que ya existía (si se elige en
+        // la lista de las que se quedaron sin códigos), no siempre añadiendo una nueva: se dice lo
+        // que ha pasado de verdad.
+        setAlta({
+          estado: "hecho",
+          texto: modoUsado === "tierra" ? textos.ventana.aplicada : textos.ventana.anadida,
+        });
         setNumeroDeVeces((n) => n + 1);
         alReintentar();
       }}
@@ -3658,10 +3665,18 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
   const [usando, setUsando] = useState(false);
   const dialogo = useRef(null);
   const temporizador = useRef(null);
+  // La tierra que se ha elegido en la lista de las que no se han podido poner: la ventana se
+  // rellena con ella y busca sola, **por el mismo camino que al abrirla desde la ficha**
+  // (`modo = "tierra"`). `vecesQueSeElige` fuerza a repetir la búsqueda si se pulsa dos veces
+  // la misma tierra, que si no la clave de apertura no cambiaría.
+  const [tierraParaElegir, setTierraParaElegir] = useState(null);
+  const [vecesQueSeElige, setVecesQueSeElige] = useState(0);
+  const tierraDeLaVentana = tierraParaElegir || tierra;
+  const modoDeLaVentana = tierraParaElegir ? "tierra" : modo;
   // Lo que la tierra ya tiene (referencia o códigos), del servidor: la lista no trae esos códigos.
   const parcelaGuardada = usarPantalla(
-    RUTA_PARCELA(tierra && tierra.id ? tierra.id : 0),
-    abierta && modo === "tierra" && Boolean(tierra && tierra.id),
+    RUTA_PARCELA(tierraDeLaVentana && tierraDeLaVentana.id ? tierraDeLaVentana.id : 0),
+    abierta && modoDeLaVentana === "tierra" && Boolean(tierraDeLaVentana && tierraDeLaVentana.id),
   );
   const [autoBusqueda, setAutoBusqueda] = useState(false);
   const claveDeApertura = useRef(null);
@@ -3727,6 +3742,8 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       setResultadoCache({
         lineas: lineasDeLosContornos(datosDeLosContornos),
         actualizadas: actualizadasDeLosContornos(datosDeLosContornos),
+        // Las que no se han podido poner, con su motivo tal cual: la ventana ya no lo tira.
+        sinCodigos: sinCodigosDeLosContornos(datosDeLosContornos),
       });
       refrescarAlCerrar.current = true;
       return;
@@ -3790,6 +3807,8 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       setAgregado("0");
       setZona("0");
       setAutoBusqueda(false);
+      setTierraParaElegir(null);
+      setVecesQueSeElige(0);
       claveDeApertura.current = null;
       claveBuscada.current = null;
     }
@@ -3809,8 +3828,8 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
   };
 
   useEffect(() => {
-    const clave = `${abierta ? "abierta" : "cerrada"}|${modo}|${tierra && tierra.id ? tierra.id : ""}`;
-    const esDeTierra = abierta && modo === "tierra" && Boolean(tierra && tierra.id);
+    const clave = `${abierta ? "abierta" : "cerrada"}|${modoDeLaVentana}|${tierraDeLaVentana && tierraDeLaVentana.id ? tierraDeLaVentana.id : ""}|${vecesQueSeElige}`;
+    const esDeTierra = abierta && modoDeLaVentana === "tierra" && Boolean(tierraDeLaVentana && tierraDeLaVentana.id);
     if (!esDeTierra) {
       if (claveDeApertura.current !== clave) {
         claveDeApertura.current = clave;
@@ -3822,8 +3841,18 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     if (claveDeApertura.current === clave) return;
     // Se espera a los datos del servidor para no precargar con la lista, que no trae los códigos.
     if (parcelaGuardada.estado === "cargando" || parcelaGuardada.estado === "inicial") return;
+    // **Y se espera a que los datos sean de ESTA tierra.** Al elegir otra desde la lista de las que
+    // se quedaron sin códigos, el estado puede seguir un instante en «listo» con los datos de la
+    // tierra anterior; rellenar con esos buscaría la parcela equivocada. Solo se espera cuando el
+    // objetivo ha cambiado así: la apertura desde la ficha ya nace en «cargando».
+    if (tierraParaElegir && parcelaGuardada.estado === "listo") {
+      const deQuienSon = parcelaGuardada.datos && parcelaGuardada.datos.id;
+      // Si la respuesta no trae su identificador (no debería), no se espera: antes se rellena con
+      // lo que hay que quedarse mirando la ventana vacía para siempre.
+      if (deQuienSon !== null && deQuienSon !== undefined && String(deQuienSon) !== String(tierraDeLaVentana && tierraDeLaVentana.id)) return;
+    }
     claveDeApertura.current = clave;
-    const campos = camposInicialesDelSigpac(tierra, parcelaGuardada.estado === "listo" ? parcelaGuardada.datos : null);
+    const campos = camposInicialesDelSigpac(tierraDeLaVentana, parcelaGuardada.estado === "listo" ? parcelaGuardada.datos : null);
     setReferencia(campos.referencia);
     setTextoMunicipio(campos.municipio);
     setElegido(campos.municipio && campos.provincia ? { nombre: campos.municipio, provincia: campos.provincia } : null);
@@ -3837,7 +3866,7 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       setAutoBusqueda(true);
       buscar(previsto.recinto, previsto.cuerpo);
     }
-  }, [abierta, modo, tierra && tierra.id, parcelaGuardada.estado, parcelaGuardada.datos]);
+  }, [abierta, modoDeLaVentana, tierraDeLaVentana && tierraDeLaVentana.id, vecesQueSeElige, parcelaGuardada.estado, parcelaGuardada.datos]);
 
   const buscar = async (recintoPreferido = null, cuerpoDeLaVez = null) => {
     const cuerpo = cuerpoDeLaVez || (referencia.trim()
@@ -3877,8 +3906,8 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     setUsando(true);
     setAviso(null);
     let respuesta = null;
-    if (modo === "tierra" && tierra) {
-      respuesta = await pedir(RUTA_CONTORNO(tierra.id), conCuerpoJson(cuerpoDelContorno(recinto)));
+    if (modoDeLaVentana === "tierra" && tierraDeLaVentana) {
+      respuesta = await pedir(RUTA_CONTORNO(tierraDeLaVentana.id), conCuerpoJson(cuerpoDelContorno(recinto)));
       if (respuesta.estado === "no-disponible") {
         setUsando(false);
         setAviso(textos.ventana.contornoNoDisponible);
@@ -3896,8 +3925,8 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     }
     setUsando(false);
     if (respuesta.estado === "ok") {
-      setResultado(modo === "tierra" ? textos.ventana.aplicada : textos.ventana.anadida);
-      if (alUsada) alUsada(modo);
+      setResultado(modoDeLaVentana === "tierra" ? textos.ventana.aplicada : textos.ventana.anadida);
+      if (alUsada) alUsada(modoDeLaVentana);
       alCerrar();
       return;
     }
@@ -3906,6 +3935,27 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       return;
     }
     setAviso(textos.ventana.noSePudo);
+  };
+
+  /**
+   * **Abre esta misma ventana rellena con una tierra que se ha quedado sin códigos.**
+   *
+   * Es el camino que ya existe al abrirla desde la ficha (`modo = "tierra"`): la ventana pide los
+   * datos de la tierra al servidor, rellena la referencia y los códigos y busca una vez. No hay
+   * otra ventana ni otra búsqueda: se cambia a qué tierra apunta esta.
+   */
+  const elegirElRecintoDeLaTierra = (tierra) => {
+    if (!tierra || tierra.id === null || tierra.id === undefined) return;
+    setTierraParaElegir({ id: tierra.id, alias: tierra.alias });
+    setVecesQueSeElige((veces) => veces + 1);
+    // Lo de la búsqueda anterior se tira: lo que salga tiene que ser de esta tierra.
+    setRecintos([]);
+    setCaja(null);
+    setElegidoRecintoId(null);
+    setEstado("inicial");
+    setAviso(null);
+    setResultado(null);
+    if (dialogo.current) dialogo.current.scrollTop = 0;
   };
 
   if (!abierta) return null;
@@ -4121,31 +4171,57 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
 
         ${resultadoCache
           ? html`<div className="panel__aviso panel__aviso--bien" data-sigpac-cache-resultado=${resultadoCache.lineas.join(" · ")}>
-              <ul className="sigpac__cache-lineas">
-                ${resultadoCache.lineas.map((linea, indice) => html`<li key=${`linea-cache-${indice}`}>${linea}</li>`)}
-              </ul>
-              ${resultadoCache.actualizadas.length
-                ? html`<div className="sigpac__cache-tierras" data-sigpac-cache-actualizadas>
-                    <h4 className="panel__subtitulo">${textos.ventana.cache.tierrasActualizadas}</h4>
-                    <ul className="sigpac__cache-lista">
-                      ${resultadoCache.actualizadas.map((tierra) => html`<li className="sigpac__cache-tierra" key=${`actualizada-${tierra.id}`} data-sigpac-cache-actualizada=${tierra.alias}>
-                        <span className="tierra__alias">${tierra.alias}</span>
-                        ${tierra.detalle ? html`<span className="tierra__detalle">${tierra.detalle}</span>` : null}
-                        ${puedeAbrirLaTierraActualizada(tierra, alVerTierra)
-                          ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierra=${tierra.id} onClick=${() => { alCerrar(); alVerTierra(tierra.id); }}>${textos.cuaderno.verTecnicas === null ? "" : textos.ventana.cache.verTierra}</button>`
-                          : null}
-                      </li>`)}
-                    </ul>
-                  </div>`
-                : null}
-              ${resultadoCache.lineas.length === 1 && resultadoCache.lineas[0] === textos.ventana.cache.nadaQueCasar
-                ? html`<p className="pagina__dato">${textos.ventana.cache.sigueSirviendo}</p>`
-                : null}
-              <div className="estado__acciones">
-                ${alVerTierras
-                  ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierras onClick=${alVerTierras}>${textos.ventana.cache.verTierras}</button>`
+              ${/*
+                * **Un solo hijo, y a propósito** (09/11/2026). Este panel es `.panel__aviso`, que es
+                * `display: flex` en fila: con varios hijos directos, las líneas, «Tierras
+                * actualizadas», las que no se han podido poner y los botones se ponían **en columnas
+                * al lado** y comprimidos (a 390 px el bloque nuevo quedaba en 92 px de ancho y los
+                * botones se salían 10 px de la caja). Metiéndolos en un único `<div>` vuelven al flujo
+                * normal de bloque y el panel se queda con el ancho que le toca. No se toca el CSS.
+                */ ""}
+              <div>
+                <ul className="sigpac__cache-lineas">
+                  ${resultadoCache.lineas.map((linea, indice) => html`<li key=${`linea-cache-${indice}`}>${linea}</li>`)}
+                </ul>
+                ${resultadoCache.actualizadas.length
+                  ? html`<div className="sigpac__cache-tierras" data-sigpac-cache-actualizadas>
+                      <h4 className="panel__subtitulo">${textos.ventana.cache.tierrasActualizadas}</h4>
+                      <ul className="sigpac__cache-lista">
+                        ${resultadoCache.actualizadas.map((tierra) => html`<li className="sigpac__cache-tierra" key=${`actualizada-${tierra.id}`} data-sigpac-cache-actualizada=${tierra.alias}>
+                          <span className="tierra__alias">${tierra.alias}</span>
+                          ${tierra.detalle ? html`<span className="tierra__detalle">${tierra.detalle}</span>` : null}
+                          ${puedeAbrirLaTierraActualizada(tierra, alVerTierra)
+                            ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierra=${tierra.id} onClick=${() => { alCerrar(); alVerTierra(tierra.id); }}>${textos.cuaderno.verTecnicas === null ? "" : textos.ventana.cache.verTierra}</button>`
+                            : null}
+                        </li>`)}
+                      </ul>
+                    </div>`
                   : null}
-                <button type="button" className="boton" onClick=${alCerrar}>${textos.ventana.cache.cerrar}</button>
+                ${resultadoCache.sinCodigos && resultadoCache.sinCodigos.length
+                  ? html`<div className="sigpac__cache-tierras" data-sigpac-cache-sin-codigos>
+                      <h4 className="panel__subtitulo">${textos.ventana.cache.sinCodigosTitulo}</h4>
+                      <ul className="sigpac__cache-lista">
+                        ${resultadoCache.sinCodigos.map((tierra) => html`<li className="sigpac__cache-tierra" key=${`sin-codigos-${tierra.id ?? tierra.alias}`} data-sigpac-cache-sin-codigo=${tierra.alias}>
+                          <span className="tierra__alias">${tierra.alias}</span>
+                          ${tierra.motivo
+                            ? html`<span className="tierra__detalle" data-sigpac-cache-sin-codigo-motivo=${tierra.motivo}>${tierra.motivo}</span>`
+                            : null}
+                          ${tierra.id === null || tierra.id === undefined
+                            ? null
+                            : html`<button type="button" className="boton" data-sigpac-cache-elegir-recinto=${tierra.id} onClick=${() => elegirElRecintoDeLaTierra(tierra)}>${textos.ventana.cache.elegirRecinto}</button>`}
+                        </li>`)}
+                      </ul>
+                    </div>`
+                  : null}
+                ${resultadoCache.lineas.length === 1 && resultadoCache.lineas[0] === textos.ventana.cache.nadaQueCasar
+                  ? html`<p className="pagina__dato">${textos.ventana.cache.sigueSirviendo}</p>`
+                  : null}
+                <div className="estado__acciones">
+                  ${alVerTierras
+                    ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierras onClick=${alVerTierras}>${textos.ventana.cache.verTierras}</button>`
+                    : null}
+                  <button type="button" className="boton" onClick=${alCerrar}>${textos.ventana.cache.cerrar}</button>
+                </div>
               </div>
             </div>`
           : null}
@@ -4166,6 +4242,49 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
 
 function textoDeHoy(fecha) {
   return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Avisa de qué pantalla se ha abierto (`POST /api/observabilidad/pantalla`).
+ *
+ * POR QUÉ ASÍ, Y NO DE OTRA MANERA
+ *
+ *  1. **No puede romper nada.** Sin cobertura, en un navegador sin `sendBeacon`, o con un
+ *     servidor que no conteste: el fallo se queda en nada. No se espera la respuesta, no se
+ *     mira el estado y no se pinta nada. El agricultor ni se entera de que esto existe.
+ *  2. **No bloquea la pantalla.** `sendBeacon` está pensado justo para esto; si no está, se
+ *     usa `fetch` con `keepalive`, que deja la petición en marcha sin atar el cambio de
+ *     pantalla a ella. Y con su `.catch(() => {})`, que es lo que impide que un fallo de red
+ *     se convierta en un error sin recoger.
+ *  3. **No lleva nada de nadie.** Solo el nombre de la vista. Ni la finca, ni el vale, ni un
+ *     dato del cuaderno: la observabilidad cuenta cosas, no copia datos.
+ */
+function avisarDeLaPantalla(pantalla) {
+  try {
+    const cuerpo = JSON.stringify({ pantalla: String(pantalla || "") });
+    const direccion = "/api/observabilidad/pantalla";
+    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+      try {
+        const enviado = navigator.sendBeacon(
+          direccion,
+          new Blob([cuerpo], { type: "application/json" })
+        );
+        if (enviado) return;
+      } catch (fallo) {
+        /* Sin `Blob` o sin permiso: se prueba por el otro camino. */
+      }
+    }
+    if (typeof fetch === "function") {
+      fetch(direccion, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: cuerpo,
+      }).catch(() => {});
+    }
+  } catch (fallo) {
+    /* Un aviso que falla no puede romper la pantalla. */
+  }
 }
 
 function App() {
@@ -4200,19 +4319,35 @@ function App() {
     window.scrollTo(0, 0);
   }, [vista, tierraId]);
 
-  const ir = (nueva) => {
+  // La primera pantalla también se avisa: es la que se abre al arrancar y, sin esto, «Hoy» solo
+  // se contaría cuando alguien volviera a ella desde otra vista. Como los cambios de pantalla los
+  // avisa `abrirLaPantalla`, esto se hace una sola vez y no se repite.
+  useEffect(() => {
+    avisarDeLaPantalla(vista);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // **El único sitio que cambia de pantalla** (09/11/2026): así el aviso de qué pantalla se ha
+  // abierto sale de un solo sitio y no hay que acordarse de ponerlo en cada botón. No bloquea y
+  // no puede fallar: ver `avisarDeLaPantalla`.
+  const abrirLaPantalla = (nueva) => {
     setVista(nueva);
+    avisarDeLaPantalla(nueva);
+  };
+
+  const ir = (nueva) => {
+    abrirLaPantalla(nueva);
     if (nueva !== "tierra") setTierraId(null);
   };
 
   const abrirTierra = (id) => {
     setTierraId(id);
-    setVista("tierra");
+    abrirLaPantalla("tierra");
   };
 
   const abrirApuntar = (id) => {
     setTierraId(id);
-    setVista("apuntar");
+    abrirLaPantalla("apuntar");
   };
 
   const necesitaTierras = ["tierras", "alta", "tierra", "apuntar", "calendario", "trabajos", "productos"].includes(vista);
@@ -4282,7 +4417,7 @@ function App() {
       alIr=${ir}
       alVerLaTierra=${(id) => {
         setTierraId(id);
-        setVista("tierra");
+        abrirLaPantalla("tierra");
       }}
     />`;
   } else if (vista === "cuaderno") {

@@ -10,7 +10,7 @@
 > **Terminado cuando**: el agricultor sube su cuaderno y su PAC, ve sus tierras en el mapa y puede
 > rellenar el cuaderno digital sin ayuda.
 >
-> Actualizado: **2026-11-05** (segunda entrega del día).
+> Actualizado: **2026-11-09** (despliegue preparado, observabilidad, carga medida y ventana del SIGPAC).
 
 ## Las casillas de David
 
@@ -227,6 +227,10 @@ Todo está construido en `/nuevo/` y verificado en Chrome a 390/1024/1440 (0 fal
 
 | Fecha | Qué | Evidencia |
 |---|---|---|
+| 2026-11-09 | **SIGPAC: la ventana dice el motivo y deja elegir el recinto de una tierra sin códigos** | Chrome con el GeoPackage real: 11 tierras con su motivo y 11 botones, «Elegir el recinto en el SIGPAC» rellena la MISMA ventana con la tierra de la fila (`37-2-0-0-502-1`, 2 recintos), 0 px de desborde a 390/360/1024/1440 y botones 48 px alcanzables; 1319 JS y 147 pytest; capturas `ventana-sigpac-sin-codigos*` |
+| 2026-11-09 | **La carga, medida: cuántos agricultores aguanta** | `docs/PRUEBAS_DE_CARGA.md`: 10 concurrentes con holgura (p95 286 ms, 0 errores), rodilla a 25 (630–895 ms), 50 lento sin errores, 100 atascado; con PBKDF2 de producción entrar cuesta 2,9×; 35 pruebas del guion |
+| 2026-11-09 | **Observabilidad del propio programa: errores, pantallas y embudo** | `docs/OBSERVABILIDAD.md` + 46 pruebas: sin escribir en disco sin `CUEDIGITAL_OBSERVABILIDAD`, resumen 404 sin token / 403 con cabecera mala, beacon siempre 204, embudo por SQL (null si no se sabe, nunca 0) |
+| 2026-11-09 | **Despliegue preparado para agricultores reales (no desplegado)** | `docs/DESPLIEGUE.md` + `deploy/` (Dockerfile, compose con Caddy + PostgreSQL, Caddyfile, copia y restauración, .env.example) + `requirements-produccion.txt` (`psycopg`); ≈ 7,25 €/mes, 150–200 de alta y 10 a la vez, 10–12 h; precios con URL y fecha; `docker compose config` válido; **no se ha construido la imagen ni hay servidor** |
 | 2026-11-08 | **Cuaderno: «lo primero que puedes rellenar» y tierras actualizadas del SIGPAC** | Chrome 390/360: aviso claro (lo técnico no depende del agricultor, sin enlace falso a la app vieja), 16 secciones con pantalla antes, botón 48 px alcanzable; lista de tierras pintadas por el GeoPackage; 84/84 JS y 31 pytest |
 | 2026-11-08 | **Cuaderno: filtro «Solo lo que puedo rellenar» y SIGPAC: abrir la tierra pintada** | Chrome 390/360: filtro marcado por defecto, secciones técnicas ocultas y «Ver también esas» las muestra; el aviso dice cuántas quedan fuera; cada tierra actualizada abre su ficha y cierra la ventana; 0 desbordes; 88/88 JS y 33 pytest |
 | 2026-11-08 | **La ventana del SIGPAC se abre desde la ficha ya rellena y busca sola** | Chrome: referencia `37-70-0-0-503-51-1`, pueblo, polígono y parcela puestos; recinto de la tierra ya elegido (`aria-pressed`); 1 sola búsqueda por apertura; móvil 390/360 a pantalla completa sin desbordes |

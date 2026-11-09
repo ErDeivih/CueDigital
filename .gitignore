@@ -92,6 +92,11 @@ adjuntos/
 # Entorno
 .env
 .env.*
+# **La excepción es el ejemplo, no la configuración** (09/11/2026). Sin esta línea, la regla de
+# arriba se lleva por delante `deploy/.env.example`, que **sí** tiene que viajar con el código: es
+# el sitio donde se ve qué variables hacen falta para desplegar, y solo lleva valores de relleno.
+# La regla sigue tapando cualquier `.env` de verdad, también el de `deploy/`.
+!deploy/.env.example
 # Ni claves privadas de verdad: las de `tests/fixtures/firma_cades/*.pem` son **certificados de
 # prueba** (se comprobó que ninguna contiene `PRIVATE KEY`) y hacen falta para probar la firma, así
 # que esas sí van. Lo que no va es una clave privada.

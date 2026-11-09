@@ -3631,6 +3631,22 @@ SIGPAC: dict[str, str] = {
     ),
 }
 
+# Los contornos de toda la finca desde la ventana del SIGPAC: lo que se dice de una tierra que
+# **no se ha podido casar con el mapa guardado**. El motivo lo manda el servidor y aquí no se
+# inventa (ver `app/geopackage_sigpac.py`, `sin_codigos`): lo que se añade es la cuenta que lo
+# acompaña y el botón para elegir el trozo en esa misma tierra.
+#
+# La pantalla nueva lleva su copia en `web/nuevo/modelo.js`, porque es un fichero estático que
+# tiene que funcionar sin cobertura, y `tests/test_interfaz_nuevo.py` comprueba que las dos
+# digan lo mismo, palabra por palabra.
+CONTORNOS_DEL_SIGPAC: dict[str, str] = {
+    "sin_codigos_titulo": "Estas no se han podido poner",
+    # La frase del resumen: la cuenta de siempre y, detrás, el motivo tal cual lo manda el
+    # servidor. Si el motivo no viene, no se rellena con nada: se dice solo la cuenta.
+    "sin_codigos_con_motivo": "{cuantas} · {motivo}",
+    "elegir_recinto": "Elegir el recinto en el SIGPAC",
+}
+
 # Textos del certificado digital. La idea es que el agricultor no teclee nada: ya tiene
 # el certificado, se lo dio la FNMT, y es lo que usa para hablar con la administración.
 CERTIFICADO: dict[str, str] = {
@@ -5878,6 +5894,10 @@ def textos_visibles() -> list[str]:
     # llegarían al test de jerga como diccionarios en vez de como frases.
     textos.extend(_recoger(VENTA))
     textos.extend(SIGPAC.values())
+    # Los contornos de toda la finca (09/11/2026): el motivo de las tierras que no se han podido
+    # casar con el mapa guardado lo manda el servidor, y lo que se le pone delante lo lee el
+    # agricultor igual que cualquier otro texto de pantalla.
+    textos.extend(CONTORNOS_DEL_SIGPAC.values())
     textos.extend(DOCUMENTOS.values())
     textos.extend(CESTA.values())
     # El libro del almacén (T09, 03/10/2026): las palabras de los albaranes, los lotes y los

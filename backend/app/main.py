@@ -8,6 +8,7 @@ para los tests) y se documenta que en producción esto lo hará una migración.
 from __future__ import annotations
 
 import mimetypes
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import catalogos
+from . import catalogos, observabilidad
 from .database import TextoQueNoCabe, crear_tablas
 from .routers import (
     almacen_api,
@@ -49,6 +50,9 @@ from .routers import (
     mapa,
     maquinaria_api,
     medidas_api,
+    # **La observabilidad** (09/11/2026): el aviso de pantalla y el resumen de lo medido. Va
+    # detrás de `medidas_api` por orden alfabético, y antes de montar `/` como todos.
+    observabilidad_api,
     parcelas,
     planes_api,
     registros,
@@ -174,6 +178,70 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# **La observabilidad mide cada petición y no cambia ninguna** (09/11/2026).
+#
+# Es un middleware ASGI y no un `@app.middleware("http")` a propósito: así se ve **el mensaje**
+# de la respuesta (`http.response.start`), que trae el código de estado de verdad, y no hay que
+# envolver la respuesta en nada. No se toca el cuerpo, no se tocan las cabeceras y no se cambia
+# el código: solo se lee lo que ya pasa.
+#
+# Dos reglas que se cumplen aquí y no son un detalle:
+#
+#  1. **Nunca lanza hacia la aplicación.** La llamada a la observabilidad va en un `try/except`
+#     propio dentro del `finally`: si el registro revienta, la petición termina igual.
+#  2. **Nunca se pierde un error.** Si la petición se va con una excepción (un 500 de verdad), se
+#     apunta con su tipo y su mensaje corto antes de dejarla subir. **La excepción se vuelve a
+#     lanzar**: aquí no se tapa nada; solo se mira.
+class _MedirLaPeticion:
+    """Mide una petición: duración, código de estado y, si es un 5xx, su error.
+
+    Se mide por la **plantilla** de la ruta (sin identificadores), que es lo que hace que
+    `/api/parcelas/17` y `/api/parcelas/2031` cuenten en la misma fila. Lo que se guarda es
+    solo eso: método, plantilla, código y milisegundos. Ni el cuerpo, ni el vale, ni la IP.
+    """
+
+    def __init__(self, aplicacion) -> None:
+        self.aplicacion = aplicacion
+
+    async def __call__(self, alcance, recibir, enviar) -> None:
+        if alcance.get("type") != "http":
+            # Las conexiones de WebSocket y el ciclo de vida no son peticiones: no se miden.
+            await self.aplicacion(alcance, recibir, enviar)
+            return
+
+        comienzo = time.perf_counter()
+        codigo = 500
+        fallo: BaseException | None = None
+
+        async def enviar_midiendo(mensaje) -> None:
+            nonlocal codigo
+            if mensaje.get("type") == "http.response.start":
+                codigo = int(mensaje.get("status", 500))
+            # Se manda el mensaje **tal cual**: ni se copia ni se envuelve.
+            await enviar(mensaje)
+
+        try:
+            await self.aplicacion(alcance, recibir, enviar_midiendo)
+        except BaseException as error:  # noqa: BLE001 — se apunta y se deja subir
+            fallo = error
+            raise
+        finally:
+            try:
+                observabilidad.registrar_peticion(
+                    alcance.get("method", ""),
+                    alcance.get("path", "/"),
+                    codigo,
+                    (time.perf_counter() - comienzo) * 1000.0,
+                    tipo=type(fallo).__name__ if fallo is not None else None,
+                    mensaje=str(fallo) if fallo is not None else None,
+                )
+            except Exception:  # noqa: BLE001 — una métrica rota no puede tumbar la petición
+                pass
+
+
+app.add_middleware(_MedirLaPeticion)
+
 app.include_router(cuenta.router)
 # **Las próximas acciones** (Entrega 3, 13/10/2026): lo que hay que hacer, cruzando fichas.
 app.include_router(tareas_api.router)
@@ -263,6 +331,11 @@ app.include_router(pac_api.router)
 # la pantalla vieja y pide sus datos aquí. Va antes del montaje de `/` porque un montaje en la raíz se
 # come cualquier ruta registrada después (ver el aviso del final del fichero).
 app.include_router(nuevo_api.router)
+
+# **La observabilidad** (09/11/2026): el aviso de pantalla del móvil y el resumen de lo medido.
+# Va aquí, antes del montaje de `/` y como todos los demás: un montaje en la raíz se come
+# cualquier ruta registrada después.
+app.include_router(observabilidad_api.router)
 
 
 @app.get("/health", tags=["sistema"])

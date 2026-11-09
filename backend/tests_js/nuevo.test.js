@@ -109,6 +109,7 @@ import {
   rutaDeAnillo,
   rutaDeLaAplicacion,
   rutaDeLosContornos,
+  sinCodigosDeLosContornos,
   sinMapa,
   sumaDeHectareas,
   textos,
@@ -1471,6 +1472,65 @@ test("el resultado de los contornos se cuenta en singular y en plural", () => {
     ["2 contornos puestos", "1 tierra que no está en ese mapa", "2 tierras sin códigos del SIGPAC", "1 tierra sin forma"],
   );
   assert.deepEqual(lineasDeLosContornos({}), [textos.ventana.cache.nadaQueCasar]);
+});
+
+test("las tierras sin códigos del SIGPAC salen con su nombre y su motivo, sin inventarlo", () => {
+  assert.deepEqual(sinCodigosDeLosContornos(null), []);
+  assert.deepEqual(sinCodigosDeLosContornos({}), []);
+  assert.deepEqual(sinCodigosDeLosContornos({ sin_codigos: "no es una lista" }), []);
+
+  const tierras = sinCodigosDeLosContornos({
+    sin_codigos: [
+      {
+        id: 3,
+        alias: "La de dos trozos",
+        motivo: "la referencia no dice el recinto y esa parcela tiene 2 recintos; elige uno",
+      },
+      { id: 4, alias: "A mano" },
+      { id: 5 },
+      "no es una tierra",
+    ],
+  });
+  assert.deepEqual(tierras, [
+    {
+      id: 3,
+      alias: "La de dos trozos",
+      motivo: "la referencia no dice el recinto y esa parcela tiene 2 recintos; elige uno",
+    },
+    { id: 4, alias: "A mano", motivo: null },
+    { id: 5, alias: textos.ventana.cache.tierraSinNombre, motivo: null },
+  ]);
+});
+
+test("el resumen de los contornos lleva el motivo y no repite la frase", () => {
+  const elMismo = "la referencia no dice el recinto y esa parcela tiene 2 recintos; elige uno";
+  assert.deepEqual(
+    lineasDeLosContornos({
+      actualizadas: [],
+      no_encontradas: [],
+      sin_forma: [],
+      sin_codigos: [
+        { id: 1, motivo: elMismo },
+        { id: 2, motivo: elMismo },
+        { id: 3, motivo: "su municipio no está en el catálogo oficial" },
+      ],
+    }),
+    [
+      `2 tierras sin códigos del SIGPAC · ${elMismo}`,
+      "1 tierra sin códigos del SIGPAC · su municipio no está en el catálogo oficial",
+    ],
+  );
+  // El motivo ausente no se rellena con nada: se dice solo la cuenta, como siempre.
+  assert.deepEqual(
+    lineasDeLosContornos({ sin_codigos: [{ id: 1 }, { id: 2 }] }),
+    ["2 tierras sin códigos del SIGPAC"],
+  );
+});
+
+test("la ventana del SIGPAC tiene las palabras para elegir el recinto", () => {
+  assert.equal(textos.ventana.cache.elegirRecinto, "Elegir el recinto en el SIGPAC");
+  assert.ok(textos.ventana.cache.sinCodigosTitulo, "falta el título de la lista de las que no se pudieron poner");
+  assert.equal(textos.ventana.cache.sinCodigosConMotivo, "{cuantas} · {motivo}");
 });
 
 // ---------------------------------------------------------------------------

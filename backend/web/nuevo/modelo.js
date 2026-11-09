@@ -343,6 +343,9 @@ export const textos = {
       noEncontradasVarias: "{n} tierras que no están en ese mapa",
       sinCodigosUno: "1 tierra sin códigos del SIGPAC",
       sinCodigosVarias: "{n} tierras sin códigos del SIGPAC",
+      sinCodigosTitulo: "Estas no se han podido poner",
+      sinCodigosConMotivo: "{cuantas} · {motivo}",
+      elegirRecinto: "Elegir el recinto en el SIGPAC",
       sinFormaUno: "1 tierra sin forma",
       sinFormaVarias: "{n} tierras sin forma",
       nadaQueCasar: "Ninguna de tus tierras está en ese mapa.",
@@ -1981,6 +1984,31 @@ export function actualizadasDeLosContornos(datos) {
     });
 }
 
+/**
+ * Las tierras que el mapa **no ha podido poner**, con su motivo **tal cual lo manda el servidor**.
+ *
+ * Es la otra mitad de `actualizadasDeLosContornos`: hasta ahora la ventana tiraba el motivo que
+ * viene en `sin_codigos` y solo contaba cuántas eran, y el agricultor no podía leer por qué ni
+ * abrir el SIGPAC en esa tierra. Aquí no se inventa nada:
+ *
+ *   · el nombre cae a «Tierra sin nombre» si no viene, como en las actualizadas;
+ *   · **el motivo no se rellena**: si el servidor no lo manda, sale `null` y la pantalla no se
+ *     escribe una frase que el servidor no ha dicho;
+ *   · el `id` tampoco se inventa con el índice de la lista: sin identificador no se puede abrir
+ *     esa tierra, así que se queda en `null` y la pantalla no ofrece un botón que llevaría a otra.
+ */
+export function sinCodigosDeLosContornos(datos) {
+  const lista = datos && Array.isArray(datos.sin_codigos) ? datos.sin_codigos : [];
+  return lista
+    .filter((una) => una && typeof una === "object")
+    .map((una) => {
+      const id = una.id ?? una.parcela_id ?? una.tierra_id ?? null;
+      const alias = String(una.alias || "").trim() || textos.ventana.cache.tierraSinNombre;
+      const crudo = typeof una.motivo === "string" ? una.motivo.trim() : "";
+      return { id, alias, motivo: crudo || null };
+    });
+}
+
 /** «1 cosa» o «3 cosas», para la cuenta de cada sección. */
 export function cuentaDeUnaSeccion(cantidad) {
   const n = Number(cantidad) || 0;
@@ -2337,7 +2365,14 @@ export function rutaDeLosContornos(provincia, campana) {
   return `/api/sigpac/cache/${codigo}/contornos${anio ? `?campana=${anio}` : ""}`;
 }
 
-/** El resultado en palabras: puestos, no encontradas, sin códigos y sin forma (singular y plural). */
+/**
+ * El resultado en palabras: puestos, no encontradas, sin códigos **con su motivo** y sin forma
+ * (singular y plural).
+ *
+ * Las que no se han podido casar se agrupan **por su motivo**: dos tierras con el mismo motivo dan
+ * una línea («2 tierras sin códigos del SIGPAC · …») y no la misma frase dos veces. El motivo va
+ * tal cual lo manda el servidor; si no viene, no se rellena y se dice solo la cuenta, como antes.
+ */
 export function lineasDeLosContornos(resultado) {
   const r = resultado || {};
   const cuantos = (clave) => (Array.isArray(r[clave]) ? r[clave].length : 0);
@@ -2347,8 +2382,18 @@ export function lineasDeLosContornos(resultado) {
   if (puestos) lineas.push(puestos === 1 ? palabras.puestosUno : textoRelleno(palabras.puestosVarios, { n: puestos }));
   const noEncontradas = cuantos("no_encontradas");
   if (noEncontradas) lineas.push(noEncontradas === 1 ? palabras.noEncontradasUno : textoRelleno(palabras.noEncontradasVarias, { n: noEncontradas }));
-  const sinCodigos = cuantos("sin_codigos");
-  if (sinCodigos) lineas.push(sinCodigos === 1 ? palabras.sinCodigosUno : textoRelleno(palabras.sinCodigosVarias, { n: sinCodigos }));
+  const sinCodigos = sinCodigosDeLosContornos(r);
+  if (sinCodigos.length) {
+    const porMotivo = new Map();
+    for (const tierra of sinCodigos) {
+      const motivo = tierra.motivo || "";
+      porMotivo.set(motivo, (porMotivo.get(motivo) || 0) + 1);
+    }
+    for (const [motivo, cuantas] of porMotivo) {
+      const laCuenta = cuantas === 1 ? palabras.sinCodigosUno : textoRelleno(palabras.sinCodigosVarias, { n: cuantas });
+      lineas.push(motivo ? textoRelleno(palabras.sinCodigosConMotivo, { cuantas: laCuenta, motivo }) : laCuenta);
+    }
+  }
   const sinForma = cuantos("sin_forma");
   if (sinForma) lineas.push(sinForma === 1 ? palabras.sinFormaUno : textoRelleno(palabras.sinFormaVarias, { n: sinForma }));
   if (!lineas.length) lineas.push(palabras.nadaQueCasar);

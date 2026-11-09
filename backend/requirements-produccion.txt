@@ -1,0 +1,35 @@
+# Dependencias que SOLO hacen falta en el servidor de verdad.
+#
+# POR QUÉ ESTE FICHERO Y NO TOCAR `requirements.txt`
+#
+# `backend/requirements.txt` es el fichero de desarrollo: lo instala todo el mundo
+# (incluidos los tests) y está pensado para que la suite corra en cualquier sitio. La
+# aplicación, por defecto, usa SQLite (ver `app/database.py`, `URL_POR_DEFECTO`), así
+# que el driver de PostgreSQL no hace falta para desarrollar ni para pasar los tests.
+#
+# Pero en producción la base es PostgreSQL, y sin el driver el programa **no arranca**:
+# SQLAlchemy no encuentra el módulo `psycopg`, y el README lo dice en voz alta. Hasta
+# hoy eso se resolvía con un `pip install` a mano (ver `scripts/sonda_postgresql.py`),
+# que es justo lo que se olvida al preparar un servidor.
+#
+# Se instala ENCIMA de `requirements.txt`:
+#
+#     python -m pip install -r backend/requirements.txt -r backend/requirements-produccion.txt
+#
+# LO QUE NO SE ARREGLA AQUÍ, Y CONVIENE SABER
+#
+# `requirements.txt` mezcla dependencias de la aplicación con dependencias de los
+# tests. La aplicación **sí** importa, en tiempo de ejecución, `httpx` (SIGPAC, IUWS),
+# `openpyxl` (cuaderno de la Junta) y `pdfplumber` (facturas), aunque en
+# `requirements.txt` están bajo el comentario «Solo para desarrollo y tests». Por eso
+# la imagen de producción instala el fichero entero: quitarlas rompería funcionalidad.
+# Separar de verdad las dos listas queda como trabajo pendiente (está en
+# `docs/DESPLIEGUE.md`); este fichero solo añade el driver que falta.
+#
+# `psycopg` es la versión 3 (la que pide la dirección `postgresql+psycopg://` que
+# documentan el README y los guiones del proyecto; la 2 se usaría con
+# `postgresql+psycopg2://`). La versión de abajo se comprobó en PyPI el 09/11/2026:
+# <https://pypi.org/project/psycopg/> (3.3.8, publicada el 04/11/2026).
+# `[binary]` trae las librerías de libpq dentro del paquete, así que no hace falta
+# instalar `libpq-dev` ni compilar nada en el servidor.
+psycopg[binary]==3.3.8

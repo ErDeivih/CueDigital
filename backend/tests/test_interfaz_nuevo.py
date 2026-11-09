@@ -89,6 +89,10 @@ ENGANCHES = [
     "data-que-falta-seccion-bloquea",
     "data-sigpac-cache-actualizadas",
     "data-sigpac-cache-actualizada",
+    "data-sigpac-cache-sin-codigos",
+    "data-sigpac-cache-sin-codigo",
+    "data-sigpac-cache-sin-codigo-motivo",
+    "data-sigpac-cache-elegir-recinto",
     "data-cuaderno-aviso-cuenta",
     "data-que-falta-item-bloquea",
     "data-cuaderno-rellenables",
@@ -300,6 +304,63 @@ class TestLoQueLeeElAgricultor:
         for nombre in ["app.js", "modelo.js"]:
             fuente = leer(nombre)
             assert "console." not in fuente, f"{nombre} escribe en la consola"
+
+
+class TestLosTextosDeLaVentanaDelSigpac:
+    """Las palabras nuevas de los contornos están en los dos sitios y dicen lo mismo.
+
+    La pantalla nueva lleva su copia en `modelo.js` (es el fichero que se sirve en
+    `/nuevo/modelo.js` y tiene que funcionar sin cobertura) y la casa guarda el texto en
+    `textos.py`. Si las dos copias se separan, el test de la jerga revisa una frase que el
+    agricultor no lee: por eso se comparan palabra por palabra, como las demás copias del
+    proyecto.
+    """
+
+    def test_los_textos_nuevos_estan_en_el_modelo_que_se_sirve(self):
+        copia = bloque_de_textos()
+        faltan = [
+            texto for texto in textos.CONTORNOS_DEL_SIGPAC.values() if f'"{texto}"' not in copia
+        ]
+        assert faltan == [], f"la copia de modelo.js no lleva estos textos: {faltan}"
+
+    def test_los_textos_nuevos_se_revisan_en_el_test_de_jerga(self):
+        visibles = textos.textos_visibles()
+        faltan = [texto for texto in textos.CONTORNOS_DEL_SIGPAC.values() if texto not in visibles]
+        assert faltan == [], f"estos textos no están en textos_visibles(): {faltan}"
+
+    def test_los_textos_nuevos_no_llevan_jerga(self):
+        for texto in textos.CONTORNOS_DEL_SIGPAC.values():
+            bajo = sin_tildes(texto)
+            for palabra in textos.PALABRAS_PROHIBIDAS:
+                assert sin_tildes(palabra) not in bajo, f"«{texto}» lleva jerga: «{palabra}»"
+
+
+class TestLaVentanaDiceElMotivoYDejaElegir:
+    """El hueco del 09/11: el servidor mandaba el motivo y la pantalla lo tiraba.
+
+    Se comprueba que la ventana de verdad pinta la lista (no solo que la función exista en el
+    modelo) y que el botón reutiliza el camino que ya abre la ventana rellena con una tierra, en
+    vez de inventarse otra ventana o otra búsqueda.
+    """
+
+    def test_la_ventana_pinta_el_motivo_de_cada_tierra_sin_codigos(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        assert "export function sinCodigosDeLosContornos" in modelo
+        assert "sinCodigosDeLosContornos(datosDeLosContornos)" in fuente
+        assert "resultadoCache.sinCodigos" in fuente
+        assert "data-sigpac-cache-sin-codigo-motivo" in fuente
+        assert "textos.ventana.cache.sinCodigosTitulo" in fuente
+
+    def test_el_boton_elige_el_recinto_por_el_camino_de_la_ficha(self):
+        fuente = leer("app.js")
+        assert "textos.ventana.cache.elegirRecinto" in fuente
+        assert "elegirElRecintoDeLaTierra" in fuente
+        # Se cambia a qué tierra apunta ESTA ventana (modo «tierra») y se busca sola: el mismo
+        # camino que al abrirla desde la ficha.
+        assert "setTierraParaElegir" in fuente
+        assert 'modoDeLaVentana = tierraParaElegir ? "tierra" : modo' in fuente
+        assert "RUTA_PARCELA(tierraDeLaVentana" in fuente
 
 
 class TestElContratoConElArnesDeNavegador:

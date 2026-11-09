@@ -176,6 +176,21 @@ RUTAS_PUBLICAS_DECLARADAS: dict[tuple[str, str], str] = {
     ("GET", "/api/iuws/mensajes"): (
         "El catálogo de mensajes de error de la Junta, con su significado: es documentación."
     ),
+    ("POST", "/api/observabilidad/pantalla"): (
+        "**El aviso de qué pantalla se ha abierto** (09/11/2026), que manda la pantalla nueva al "
+        "cambiar de vista. **No puede pedir sesión**: se manda con `sendBeacon`, que no permite "
+        "cabeceras, y puede llegar desde la pantalla de entrar, antes de tener vale. Tampoco "
+        "lleva ni un dato del agricultor: solo el nombre de la vista, y lo que no vale se "
+        "descarta. Un aviso roto contesta siempre 204, nunca un 5xx."
+    ),
+    ("GET", "/api/observabilidad/resumen"): (
+        "**El resumen de lo medido** (09/11/2026), para quien mantiene el programa. No se protege "
+        "con sesión sino con la cabecera `X-Observabilidad`, comparada en tiempo constante con "
+        "`CUEDIGITAL_OBSERVABILIDAD_TOKEN`: **sin token configurado contesta 404** (la herramienta "
+        "no existe para nadie) y con el token mal, 403. No lleva datos de ninguna finca ni de "
+        "ninguna cuenta: contadores por pantalla, plantillas de ruta y el embudo con fincas "
+        "distintas por etapa."
+    ),
 }
 
 
@@ -535,20 +550,25 @@ class TestElEstadoDelSigpacYaNoDiceDondeEstaLaCarpeta:
 
 
 def test_las_publicas_que_quedan_son_las_que_estan_escritas():
-    """El recuento, medido: **24 rutas sin sesión**, todas declaradas.
+    """El recuento, medido: **26 rutas sin sesión**, todas declaradas.
 
-    Estaba en **26** cuando se hizo el inventario de T01. Las cinco que faltan son las cuatro que
+    Estaba en **24** cuando se hizo el inventario de T01. Las cinco que faltan son las cuatro que
     «deberían pedir sesión» y la búsqueda del SIGPAC; más otras dos que se han cerrado por el
     mismo motivo (el toque en el mapa), y a cambio han entrado tres nuevas que sí lo dicen
     (`GET /api/maquinaria/que-falta`, del ticket de maquinaria, y `GET /api/gastos/que-falta` y
     `GET /api/trabajos/que-falta`, de las cuentas del T13 y de los trabajos del T15: las tres son la
-    misma lista de «lo que el programa todavía no calcula» para todo el mundo). El número no es el
-    objetivo —una ruta pública con motivo es tan buena como una cerrada—; lo que importa es que
-    **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
+    misma lista de «lo que el programa todavía no calcula» para todo el mundo).
+
+    **Y dos más desde el 09/11/2026**, las de la observabilidad: el aviso de pantalla (que se manda
+    con `sendBeacon` y no puede llevar cabeceras) y el resumen de lo medido, que se protege con
+    **su token**, no con la sesión del agricultor. Las dos llevan su motivo escrito arriba.
+
+    El número no es el objetivo —una ruta pública con motivo es tan buena como una cerrada—; lo
+    que importa es que **esté escrito y que cuadre**, y eso es lo que se comprueba aquí.
     """
     _, sin_sesion = _pares_con_sesion()
-    assert len(sin_sesion) == 24, (
-        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 24: "
+    assert len(sin_sesion) == 26, (
+        f"hay {len(sin_sesion)} rutas sin sesión y estaban contadas 26: "
         f"{sorted(sin_sesion)}"
     )
     assert sin_sesion == set(RUTAS_PUBLICAS_DECLARADAS)

@@ -14,6 +14,41 @@
   que toque, y `commit` + `push`. Sin push no está terminado.
 - Lo que no esté claro de alcance = **Nivel 3**: se marca aquí y se sigue con otra tarea.
 
+## Tareas listas que salen de la ronda del 09/11/2026
+
+> Salen del despliegue preparado, la observabilidad y la prueba de carga. Los documentos son
+> [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md), [`docs/OBSERVABILIDAD.md`](docs/OBSERVABILIDAD.md) y
+> [`docs/PRUEBAS_DE_CARGA.md`](docs/PRUEBAS_DE_CARGA.md).
+
+- **OPS-1 · Probar el despliegue de verdad** (nivel 2). Construir la imagen (`docker build`),
+  levantarla en una máquina pequeña, hacer el alta del primer agricultor, subir una foto, **restaurar
+  una copia con fecha apuntada** y anotar los tiempos reales del plan de 14 pasos. Criterio: el
+  documento deja de decir «no se ha construido la imagen» porque hay una salida real pegada.
+- **SEG-1 · Límite de intentos y bloqueo de cuenta** (nivel 2). Hoy no hay ninguno (decisión 6 del
+  despliegue). Criterio: N intentos fallidos por cuenta e IP producen un aviso en palabras de
+  agricultor y un bloqueo temporal; prueba que falla antes y pasa después; sin jerga.
+- **SEG-2 · Revocación de vales y rotación de la clave de firma** (nivel 2). Hoy un vale vale 30 días
+  y no se puede echar a nadie sin tirar a todos (decisión 7). Criterio: un vale revocado deja de valer
+  en la siguiente petición, con prueba; la rotación no saca a quien no toca.
+- **CAR-1 · Re-medir la carga con PostgreSQL y 2–3 procesos** (nivel 2). La medición actual es SQLite
+  y un proceso: 10 concurrentes y rodilla a 25. Criterio: misma tabla en
+  `docs/PRUEBAS_DE_CARGA.md`, contra PostgreSQL de verdad, y el número de concurrentes sostenidos
+  actualizado en `docs/DESPLIEGUE.md`.
+- **SIG-1 · Política de limpieza de la caché del GeoPackage** (nivel 2). 1,67 GB por provincia y nada
+  se borra; `ficha_guardada` necesita el ZIP, así que la política no puede ser «borrar el ZIP».
+  Criterio: se puede elegir qué se conserva, se dice cuánto ocupa y se libera sin romper la lectura de
+  los contornos, con prueba.
+- **DEP-1 · Separar las dependencias de producción de las de test** (nivel 1). La imagen instala
+  `pytest` y `ruff` y el comentario de `requirements.txt` miente. Criterio: dos ficheros que dicen la
+  verdad y la suite sigue verde.
+- **MIG-1 · Migraciones de verdad antes del primer cambio de esquema en PostgreSQL** (nivel 2).
+  `crear_tablas` sirve para SQLite y para esta fase; en PostgreSQL reconstruir una tabla no es
+  aceptable (está dicho en `database.py`). Criterio: un cambio de columna se aplica sin parar el
+  servicio y hay vuelta atrás.
+- **RGPD-1 · Aviso de privacidad, registro de actividades y conservación de adjuntos** (nivel 2).
+  Obligación legal antes del primer agricultor (apartado 5 del despliegue). Criterio: los textos viven
+  en `textos.py` con su test, y hay una política de conservación escrita y aplicada.
+
 ## Alcance nuevo (2026-11-04): el producto agrícola
 
 > David cambió el rumbo: **la interfaz anterior no le gustaba y el producto se rehace** como la
