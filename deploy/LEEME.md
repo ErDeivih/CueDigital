@@ -87,7 +87,7 @@ nada (si faltara una variable obligatoria, se queja aquí y no al arrancar).
 ## 3. Las carpetas de datos (permisos)
 
 ```bash
-sudo mkdir -p /srv/cuedigital/datos/{adjuntos,sigpac_cache,postgresql}
+sudo mkdir -p /srv/cuedigital/datos/{adjuntos,sigpac_cache,postgresql,observabilidad}
 sudo chown -R 10001:10001 /srv/cuedigital/datos
 sudo chmod 700 /srv/cuedigital/datos
 ```
@@ -96,7 +96,10 @@ El usuario `10001` es el de dentro del contenedor (`deploy/Dockerfile`). Si esta
 no es suya, la primera foto que suba un agricultor fallará con un error de permisos que
 no dice nada útil.
 
-**Comprobación:** `ls -ln /srv/cuedigital/datos` enseña `10001 10001` en las tres.
+**Comprobación:** `ls -ln /srv/cuedigital/datos` enseña `10001 10001` en las cuatro. La de
+`observabilidad` es opcional: si `CUEDIGITAL_OBSERVABILIDAD` va vacía no se usa, y si no es
+del usuario 10001, el programa sigue funcionando pero **no apunta nada en disco** (se lo traga
+a propósito: la observabilidad no puede romper la aplicación).
 
 ## 4. El DNS antes que el certificado
 
@@ -157,8 +160,11 @@ docker compose -f deploy/docker-compose.yml exec -T db \
     "select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE';"
 ```
 
-Tiene que contestar **66** (las tablas que declara `backend/app/models.py`). Si contesta
-0, la aplicación arrancó pero no habló con PostgreSQL: mira `logs app`.
+Tiene que contestar **67**: las **66** que declara `backend/app/models.py` con
+`__tablename__`, más `grupo_parcela`, que es la tabla de unión de los grupos de parcelas y no
+tiene modelo (se declara como `Table`). Comprobado en una base PostgreSQL 16 nueva el
+09/11/2026. Si contesta 0, la aplicación arrancó pero no habló con PostgreSQL: mira
+`logs app`.
 
 ## 6. El primer agricultor
 
@@ -270,6 +276,20 @@ docker compose -f deploy/docker-compose.yml exec -T db pg_isready -U cuedigital
 Y desde fuera, un vigilante gratuito que avise si el servidor se cae: UptimeRobot (plan
 gratuito, 50 monitores cada 5 minutos) apuntando a `https://<dominio>/health`. Está en
 `docs/DESPLIEGUE.md` con su límite y su precio.
+
+La **observabilidad propia** (0 €) se lee con el token de `deploy/.env`:
+
+```bash
+curl -fsS -H "X-Observabilidad: <CUEDIGITAL_OBSERVABILIDAD_TOKEN>" \
+    https://<dominio>/api/observabilidad/resumen
+```
+
+Y el recorrido de comprobación completo (salud, cuenta, tierras, foto del mapa y
+observabilidad), que vale también contra la URL pública y devuelve 0 o 1:
+
+```bash
+cd backend && python3 scripts/comprobar_despliegue.py https://<dominio>
+```
 
 ## 11. Parar, y lo que NO hay que hacer
 

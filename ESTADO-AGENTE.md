@@ -1,13 +1,50 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital queda preparado para desplegarse a agricultores reales: un VPS europeo de ≈ 7,25 €/mes con Caddy, PostgreSQL y copia diaria fuera, con el plan de puesta en marcha paso a paso y el RGPD en docs/DESPLIEGUE.md. La carga está medida de verdad —10 agricultores a la vez con holgura y la rodilla entre 10 y 25— y el programa ya mide por sí mismo errores, uso por pantalla y embudo. En el SIGPAC, la ventana ya dice por qué una tierra no ha casado con el mapa y deja elegir su recinto en esa misma tierra, verificado en Chrome a 390/360/1024/1440 con 0 px de desborde.
+resumen: CueDigital ya arranca contra PostgreSQL de verdad. La imagen se construye (669 MB), el stack se ha levantado en local con PostgreSQL 16 y el recorrido sale entero: cuenta, tierras por referencia de 6 números y con recinto, contorno pintado (PNG 800×600 con el GeoPackage real de Salamanca) y observabilidad (errores, pantallas y embudo) leyéndose contra la base. La prueba destapó y cerró DOS bloqueos de producción: booleanos con DEFAULT 1 que impedían crear una base nueva y que una columna nueva se añadiera en silencio. **Falta la URL pública**: depende de una cuenta de proveedor y un dominio de David, con el paso exacto en docs/CUENTAS-Y-ACCESOS.md (recomendación: una VM gratuita, Oracle Always Free, con el docker-compose tal cual). Además, revisión de interfaz con 14 pantallas inventariadas y 10 problemas medidos.
 estado: en-curso
-tarea: despliegue preparado para agricultores reales, observabilidad dentro del programa, prueba de carga medida y el hueco de la ventana del SIGPAC cerrado
+tarea: despliegue real probado en local (imagen + PostgreSQL + contornos + observabilidad) e inventario de interfaz con 10 problemas; la URL pública espera cuenta y dominio
 nivel: 2
-siguiente: límite de intentos y revocación de vales; re-medir la carga con PostgreSQL y 2–3 procesos; política de limpieza de la caché del GeoPackage (1,67 GB por provincia); separar dependencias de producción de las de test; primer ensayo con un agricultor real
-bloqueado: PSD2 (nivel 3, sin presupuesto y sin gasto aprobado); el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA; y las licencias (CIT, IGN) de terceros
+siguiente: crear la cuenta y el dominio (docs/CUENTAS-Y-ACCESOS.md), desplegar y correr `backend/scripts/comprobar_despliegue.py` contra la URL; después, los 10 problemas de interfaz por gravedad (contraste del seleccionado 2,48:1, texto por debajo de 18 px, apuntar entre 64 tierras)
+bloqueado: la URL pública depende de una cuenta de proveedor y un dominio que tiene que crear David (nivel 3: tarjeta y decisión); PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-09
 
-## Lo que se ha hecho en esta ronda (09/11/2026)
+## Lo que se ha hecho en esta ronda (09/11/2026, segunda: despliegue real)
+
+1. **Estado del repo, comprobado**: árbol limpio en `4ca5107`, **85 ficheros** en el último commit y
+   **0/0** con `origin`. **No había 18 ficheros sin comitear**: se revisó y no había ninguno pendiente.
+2. **La imagen se construye y el stack arranca contra PostgreSQL 16 de verdad**
+   (`cuedigital:prueba`, 669 MB). El recorrido de `backend/scripts/comprobar_despliegue.py` contra
+   `127.0.0.1:8090` sale **todo en verde**: `/health`, estáticos con su tipo MIME, alta de cuenta,
+   **tierra por referencia de seis números** (`37-70-0-0-503-51` → códigos 37070/503/51 y recinto en
+   «no lo sé»), **tierra con recinto**, **contornos desde el GeoPackage real** (2 con forma, PNG de
+   800×600) y la observabilidad. La base se crea con **67 tablas** (66 del modelo + `grupo_parcela`).
+   - **Bloqueo de producción nº 1 (cerrado)**: `acciones_a_fincas.puede_modificar` y
+     `puede_ver_lo_economico` tenían `server_default=text("1")`. En PostgreSQL un `boolean` no admite
+     `DEFAULT 1`: **la base nueva no se creaba y la app moría al arrancar**. Ahora `text("true")`.
+   - **Bloqueo nº 2 (cerrado)**: `database._valor_por_defecto` devolvía `1`/`0` para booleanos al
+     añadir una columna a una tabla existente; en PostgreSQL el `ALTER` fallaba **en silencio** (la
+     columna quedaba en «imposibles» y habría reventado después). Ahora `TRUE`/`FALSE`.
+   - **Prueba que impide que vuelva**: `backend/tests/test_booleans_en_postgresql.py` (6 pruebas) compila
+     el DDL con el dialecto de PostgreSQL **sin servidor** y recorre todas las tablas del modelo.
+3. **No hay URL pública, y es un bloqueo de cuenta, no de código**: `docs/CUENTAS-Y-ACCESOS.md` deja
+   el paso exacto. Recomendación: **VM gratuita (Oracle Cloud Always Free)** con el `deploy/docker-compose.yml`
+   tal cual — disco que no se borra, PostgreSQL al lado y HTTPS con dominio. Alternativa sin tarjeta:
+   Render + Neon, pero **con disco efímero se pierden las fotos** (exigiría S3 antes de abrirla a nadie).
+   Hace falta: cuenta de proveedor, un dominio con DNS y (recomendado) Cloudflare R2 para la copia fuera.
+4. **Observabilidad verificada en vivo** (no solo escrita): 7 avisos de pantalla contados por vista y día,
+   rutas medidas por **plantilla** (`/api/parcelas/{id}`, sin ids), códigos por ruta, **embudo de 5 etapas
+   medido contra PostgreSQL** (cuentas 1 · fincas 1 · con tierra 1 · con apunte 0 · con cuaderno 0) y la
+   puerta del resumen con su token: **200 con cabecera buena, 403 sin cabecera, 403 con cabecera mala,
+   404 sin token configurado**. En el compose se añaden `CUEDIGITAL_OBSERVABILIDAD` y su token.
+5. **Revisión de interfaz** (`docs/revision-interfaz.md`, 33 capturas en `docs/capturas-revision/`):
+   inventario de **14 entradas** (13 pantallas + estado vacío) a 390 y 1024, y **10 problemas concretos
+   con medición**: contraste **2,48:1** del elemento seleccionado en modo oscuro (mínimo 4,5:1), 35–68 %
+   del texto por debajo de 16 px cuando `DESIGN.md` fija 18 px y solo permite bajar en la «pista»,
+   apuntar empieza por una caja con **64 tierras y 9.426 px de scroll propio** (pestañas y «Guardar» fuera
+   de pantalla), textos de programador en pantalla, 66 × «sin mapa» con un recuadro que el contrato
+   prohíbe, «Arreglar» que no lleva a donde se arregla, y el resumen de trabajos sumando dosis/ha como
+   si fuera un total. A favor, medido: 0 desborde horizontal y 0 controles por debajo de 44 px.
+
+## Lo que se ha hecho en esta ronda (09/11/2026, primera: despliegue preparado)
 
 1. **El despliegue está preparado, no hecho** (`docs/DESPLIEGUE.md`, 879 líneas, + `deploy/`):
    diagnóstico punto por punto con fichero y línea (SQLite por defecto, el driver de PostgreSQL
@@ -136,14 +173,16 @@ fecha: 2026-11-09
 
 ## La última pasada, sobre este mismo HEAD (09/11/2026)
 
-    Python       6042 recogidas · 0 fallos (código de salida 0)
-    JavaScript   1319 superadas, 0 fallos (85 s)
-    prueba de humo contra un uvicorn de verdad, con base y adjuntos temporales
-                                                                   RESULTADO: todo correcto
+    Python       6060 recogidas · 0 fallos (código de salida 0)
+    JavaScript   1319 superadas, 0 fallos
+    imagen de producción construida (669 MB) y stack levantado con PostgreSQL 16 en local
+    comprobar_despliegue.py contra 127.0.0.1:8090                     todo lo comprobado bien
+    base nueva en PostgreSQL                                     67 tablas, arranque sin error
+    contornos con el GeoPackage real                        2 con forma, PNG 800×600
+    observabilidad en vivo                     pantallas por día, rutas por plantilla, embudo entero
+    prueba de humo contra un uvicorn de verdad                    RESULTADO: todo correcto
     armazón nuevo en Chrome con el GeoPackage real de Salamanca            Fallos: 0
-    ventana del SIGPAC con motivo y botón, a 390/360/1024/1440             0 px de desborde
-    cargas medidas (docs/PRUEBAS_DE_CARGA.md)         10 concurrentes con holgura, rodilla a 25
-    capturas nuevas del bloque de contornos                10 (índice en docs/capturas-nuevo/LEEME.md)
+    carga (docs/PRUEBAS_DE_CARGA.md)                  10 concurrentes con holgura, rodilla a 25
 
 **Y la puerta encontró un fallo que no era del código:** al añadir 104 pruebas de Python y 3 de JS,
 el guardián `test_lista_de_la_junta` se puso rojo porque `README.md`, `AGENTS.md` y
@@ -152,6 +191,12 @@ medido (6042 y 1319) y la suite volvió a verde. Es exactamente para lo que exis
 
 ## Lo que sigue abierto
 
+- **La URL pública (lo primero)**: crear la cuenta y el dominio con el paso exacto de
+  `docs/CUENTAS-Y-ACCESOS.md`, desplegar y correr `backend/scripts/comprobar_despliegue.py <url>`.
+  Hasta entonces, el despliegue está **probado en local**, no publicado.
+- **Los 10 problemas de interfaz** de `docs/revision-interfaz.md`, por gravedad: primero el contraste
+  del elemento seleccionado (2,48:1), el tamaño del texto (18 px de contrato frente a 13 px reales)
+  y «apuntar» entre 64 tierras.
 - **Límite de intentos y revocación de vales**: hoy un vale robado vale 30 días y no se puede echar
   a nadie sin cambiar la clave a todos (decisión 6 y 7 de `docs/DESPLIEGUE.md`; 1–2 días cada una).
 - **Re-medir la carga con PostgreSQL y 2–3 procesos**: la prueba actual es con SQLite y un proceso

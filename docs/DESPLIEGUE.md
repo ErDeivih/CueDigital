@@ -5,21 +5,27 @@ servidor de verdad, las opciones que existen y lo que cuestan, la arquitectura q
 recomienda y por qué, el plan de puesta en marcha paso a paso, lo que obliga el RGPD y las
 decisiones que tiene que tomar David.
 
-**Qué NO es.** No es un despliegue hecho. **No se ha construido la imagen Docker ni se ha
-levantado el servidor**: en la máquina donde se escribe esto hay Docker 27.4, pero no hay
-servidor ni dominio. Lo único que se ha ejecutado del despliegue es
-`docker compose config` (valida el fichero). Todo lo demás que se afirma aquí está
-comprobado **leyendo el repositorio**, con fichero y línea, o **consultando una fuente**,
-con su dirección y su fecha. Lo que no se ha podido comprobar se dice: **«no verificado»**.
+**Qué NO es.** No es un despliegue hecho: **no hay servidor ni dominio**, así que no hay URL
+pública. Lo que **sí** se ha hecho el 09/11/2026: **la imagen se construye** (`docker build`,
+669 MB) y **el stack entero se ha levantado en local contra PostgreSQL 16 de verdad**
+(app + base), con el recorrido de `backend/scripts/comprobar_despliegue.py`: alta de cuenta,
+dos tierras (referencia de seis números y con recinto), **contorno pintado** (PNG 800×600 con
+el GeoPackage real de Salamanca) y la observabilidad (204/200/403), todo en verde. Eso destapó
+y cerró **un bloqueo de producción**: una base PostgreSQL nueva **no se podía crear** por dos
+columnas booleanas con `DEFAULT 1` (§1.16). Lo que falta para tener URL pública es **una cuenta**
+y un dominio: el paso exacto está en [`CUENTAS-Y-ACCESOS.md`](CUENTAS-Y-ACCESOS.md). Todo lo
+que se afirma aquí está comprobado **ejecutándolo**, **leyendo el repositorio** (con fichero y
+línea) o **consultando una fuente** (con dirección y fecha). Lo que no se ha podido comprobar
+se dice: **«no verificado»**.
 
 | Dato | Valor |
 |---|---|
 | Fecha del documento | 09/11/2026 |
 | Rama | `integracion/cloud-estabilizacion-2026-10-21` |
-| Último commit | `ed5157b` (2026-11-09) |
+| Último commit | `4ca5107` (2026-11-09) más los cambios de la ronda de despliegue |
 | Python del entorno de desarrollo | **3.12.10** (`..\.venv\Scripts\python.exe --version`) |
-| Pruebas declaradas por el proyecto | 5.938 recogidas · 5.936 superadas · 2 omitidas (Python) y 1.316 (JavaScript), según `ESTADO-AGENTE.md` |
-| Tablas de la base | **66** (`backend/app/models.py`, contadas por `__tablename__`) |
+| Pruebas declaradas por el proyecto | **6042** de Python (0 fallos) y **1319** de JavaScript (0 fallos), medido el 09/11/2026 |
+| Tablas de la base | **67** en la base (66 declaradas con `__tablename__` en `backend/app/models.py` + `grupo_parcela`, la tabla de unión de los grupos de parcelas, que no tiene modelo). Comprobado al crear una base PostgreSQL 16 nueva el 09/11/2026 |
 | Tamaño de `data/` (datos oficiales que lee el programa) | 12,5 MB |
 | Tamaño de `backend/web/` (la pantalla, sin compilar) | 2,7 MB |
 | Precios | consultados el **09/11/2026**, cada uno con su URL |
@@ -162,7 +168,7 @@ origen.
 
 **No consulta la base de datos.** Sirve para saber que el proceso atiende, no que
 PostgreSQL esté bien. Por eso el plan de puesta en marcha comprueba la base **aparte**
-(contar las 66 tablas). Si algún día se usa como sonda de un vigilante externo, conviene
+(contar las 67 tablas; ver el paso 5). Si algún día se usa como sonda de un vigilante externo, conviene
 que también mire la base, o que el vigilante compruebe algo que la use.
 
 ### 1.8. La pantalla la sirve la propia aplicación, y hay una caché que se queda pegada
@@ -279,6 +285,33 @@ que también mire la base, o que el vigilante compruebe algo que la use.
   hecha (`scripts/sonda_postgresql.py`).
 
 ---
+
+### 1.16. El bloqueo que destapó la prueba del despliegue: booleanos con `DEFAULT 1` (cerrado)
+
+La imagen se construyó y se levantó contra un **PostgreSQL 16 nuevo**, y la aplicación **no
+arrancó**:
+
+```
+sqlalchemy.exc.ProgrammingError: (psycopg.errors.DatatypeMismatch)
+column "puede_modificar" is of type boolean but default expression is of type integer
+ERROR: Application startup failed. Exiting.
+```
+
+En SQLite una columna booleana es un entero y `DEFAULT 1` vale; en PostgreSQL es un `boolean`
+de verdad y el `CREATE TABLE` aborta. Es un **bloqueo duro de producción**: con una base nueva
+no se puede arrancar. Se cerró el 09/11/2026 con dos cambios y sus pruebas:
+
+1. `backend/app/models.py:168-169` — las dos únicas columnas booleanas con
+   `server_default=text("1")` pasan a `server_default=text("true")`, que vale en los dos motores.
+2. `backend/app/database.py:202-206` (**`_valor_por_defecto`**) — al añadir una columna booleana
+   a una tabla que ya existe, el `ALTER TABLE ... ADD COLUMN ... DEFAULT` decía `1`/`0` y en
+   PostgreSQL fallaba **en silencio**: el error se apuntaba en «imposibles» y la columna no
+   existía, así que reventaría después, al consultarla. Ahora dice `TRUE`/`FALSE`.
+
+La prueba que impide que vuelva es `backend/tests/test_booleans_en_postgresql.py`: compila el
+DDL con el dialecto de PostgreSQL **sin servidor** y recorre **todas** las tablas del modelo, así
+que caza la próxima columna booleana que se añada mal. Con el arreglo, el stack arranca contra
+PostgreSQL 16 y crea las **67 tablas** (66 del modelo + `grupo_parcela`).
 
 ## 2. Opciones gratuitas o baratas (precios consultados el 09/11/2026)
 
@@ -575,7 +608,7 @@ Y `grep -c . deploy/.env` ≥ 6. **`deploy/.env` no se copia a ningún sitio.**
 ### Paso 4. Carpetas de datos y permisos
 
 ```bash
-sudo mkdir -p /srv/cuedigital/datos/{adjuntos,sigpac_cache,postgresql}
+sudo mkdir -p /srv/cuedigital/datos/{adjuntos,sigpac_cache,postgresql,observabilidad}
 sudo chown -R 10001:10001 /srv/cuedigital/datos
 sudo chmod 700 /srv/cuedigital/datos
 ```
@@ -592,7 +625,8 @@ docker compose -f deploy/docker-compose.yml logs --tail=100 app
 
 **Comprobación:**
 1. `ps` enseña `db`, `app` y `caddy` en marcha.
-2. La base tiene **66 tablas**:
+2. La base tiene **67 tablas** (66 del modelo + `grupo_parcela`, la tabla de unión de los
+   grupos de parcelas, que no tiene modelo):
    `docker compose -f deploy/docker-compose.yml exec -T db psql -U cuedigital -d cuedigital -tAc "select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE';"`
 3. En `logs app` no hay ningún error de base de datos.
 
@@ -833,14 +867,13 @@ con su test de jerga y su revisión.
 
 **Del repositorio**
 
-- **No se ha construido la imagen Docker** (`docker build`) ni se ha levantado el compose.
-  Solo se ha pasado `docker compose config` (valida el fichero, con el `.env.example`).
-- **No se ha ejecutado la suite completa** en esta tarea (otro compañero la está corriendo):
-  5.936 / 1.316 es lo que declara `ESTADO-AGENTE.md`.
-- **No se ha probado PostgreSQL en esta máquina**: el propio proyecto avisa de que su día a
-  día es SQLite. Lo que se afirma del arranque en PostgreSQL sale de leer
-  `database.py`/`main.py`, no de verlo arrancar hoy.
-- **No se ha ejecutado `deploy/copia.sh` ni `deploy/restaurar.sh`**: no hay servidor.
+- **La imagen se construye y el stack se ha probado en local** contra PostgreSQL 16, pero **no
+  hay servidor público, ni dominio, ni Caddy con certificado real**: no hay URL que enseñar. Lo
+  que falta es una cuenta y un dominio ([`CUENTAS-Y-ACCESOS.md`](CUENTAS-Y-ACCESOS.md)).
+- **La suite completa sí se ha ejecutado** (09/11/2026): **6042** pruebas de Python, 0 fallos, y
+  **1319** de JavaScript, 0 fallos.
+- **`deploy/copia.sh` y `deploy/restaurar.sh` no se han ejecutado**: sin servidor no hay a dónde
+  copiar. El procedimiento está escrito y probado a mano de sintaxis (`bash -n`), nada más.
 - **No se ha probado Caddy con un dominio real** ni el bloque de certificado de cliente
   (está comentado a propósito).
 

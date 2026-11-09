@@ -68,6 +68,11 @@ services:
       # Las rutas de dentro del contenedor: no se cambian desde fuera.
       CUEDIGITAL_ADJUNTOS: /datos/adjuntos
       CUEDIGITAL_SIGPAC_CACHE: /datos/sigpac_cache
+      # La observabilidad del propio programa (0 €, sin servicio de fuera): un JSONL con los
+      # errores y los avisos de pantalla, y la llave para leer el resumen. Sin token, la ruta
+      # del resumen no existe (404), que es lo correcto por defecto.
+      CUEDIGITAL_OBSERVABILIDAD: ${CUEDIGITAL_OBSERVABILIDAD:-}
+      CUEDIGITAL_OBSERVABILIDAD_TOKEN: ${CUEDIGITAL_OBSERVABILIDAD_TOKEN:-}
       # Entrar con certificado: SOLO cuando haya un proxy delante que lo valide (ver
       # docs/DESPLIEGUE.md). Apagado por defecto a propósito: si se enciende sin eso,
       # cualquiera puede mandar la cabecera y entrar como otro agricultor.
@@ -79,6 +84,8 @@ services:
     volumes:
       - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/adjuntos:/datos/adjuntos
       - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/sigpac_cache:/datos/sigpac_cache
+      # Si CUEDIGITAL_OBSERVABILIDAD está vacía, esta carpeta se monta y no se usa: no estorba.
+      - ${CARPETA_DATOS:?falta CARPETA_DATOS en deploy/.env}/observabilidad:/datos/observabilidad
     expose:
       - "8000"
     security_opt:

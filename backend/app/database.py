@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 
-from sqlalchemy import String, create_engine, event
+from sqlalchemy import Boolean, String, create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -203,6 +203,16 @@ def _valor_por_defecto(columna) -> str | None:
     if por_defecto is not None and not por_defecto.is_callable and not por_defecto.is_sequence:
         valor = por_defecto.arg
         if isinstance(valor, bool):
+            if isinstance(columna.type, Boolean):
+                # **Un booleano se dice con palabra, no con 1/0.** En SQLite una columna booleana
+                # es un entero y `DEFAULT 1` vale; en PostgreSQL es un `boolean` de verdad y
+                # `DEFAULT 1` aborta el `ALTER TABLE ... ADD COLUMN` con `DatatypeMismatch`. Y ese
+                # error **no se ve**: `asegurar_columnas` lo apunta en «imposibles» y sigue, así que
+                # la aplicación arranca y la columna no existe; revienta después, al consultarla
+                # (la misma familia que el `server_default=text("1")` del modelo, encontrado en la
+                # prueba del despliegue el 09/11/2026). `TRUE`/`FALSE` vale en los dos motores
+                # (SQLite los entiende desde la 3.23). Lo cubre `tests/test_booleans_en_postgresql.py`.
+                return "TRUE" if valor else "FALSE"
             return "1" if valor else "0"
         if isinstance(valor, (int, float)):
             return str(valor)

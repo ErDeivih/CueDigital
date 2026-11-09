@@ -165,8 +165,14 @@ class AccesoAFinca(Base):
     # autorizadas mientras solo exista aislamiento entre fincas»*. Es decir: estas dos capacidades **son** la
     # Entrega 4, y mientras las puertas no las comprueben **una por una**, no se puede decir que el módulo esté
     # autorizado. Están aquí para poder comprobarlas, no como adorno.
-    puede_modificar: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("1"))
-    puede_ver_lo_economico: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("1"))
+    # OJO con el valor por defecto en SQL: en SQLite `DEFAULT 1` vale para un booleano (allí es
+    # un entero), pero **en PostgreSQL un `boolean` solo admite `true`/`false`**: con `1` el
+    # `CREATE TABLE` falla con `DatatypeMismatch` y la aplicación **no arranca** contra una base
+    # nueva (encontrado en la prueba del despliegue, 09/11/2026). `DEFAULT true` vale en los dos
+    # motores (SQLite lo entiende desde la 3.23, y el entorno usa 3.37). Hay un test que compila
+    # el DDL con el dialecto de PostgreSQL y caza la próxima: `tests/test_booleans_en_postgresql.py`.
+    puede_modificar: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    puede_ver_lo_economico: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     # «titular» (quien la creó) o «ayudante» (a quien le han dado acceso).
     papel: Mapped[str] = mapped_column(String(20), default="ayudante")
     creado_en: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
