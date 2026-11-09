@@ -53,6 +53,9 @@
   --control: 44px;
   --contenido-max: 1180px;
   --barra-inferior: 64px;
+  /* La rejilla del calendario tiene su propio hueco porque es la única que tiene que dar
+   * 44 px de ancho por celda a 360: (360 − 2 − 6×8) / 7 = 44,3 px. */
+  --calendario-hueco: 8px;
 }
 
 /* Noche */
@@ -178,7 +181,7 @@ button {
 }
 
 .barra-superior__campana {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -223,7 +226,7 @@ button {
 }
 
 .barra-lateral__titulo {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -233,7 +236,7 @@ button {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .nav__enlace {
@@ -257,9 +260,9 @@ button {
 }
 
 .nav__enlace--activo {
-  background: var(--brand-tint);
+  background: var(--brand);
   border-color: var(--brand);
-  color: var(--brand);
+  color: var(--on-brand);
   font-weight: 600;
 }
 
@@ -299,7 +302,7 @@ button {
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   text-decoration: none;
 }
@@ -320,7 +323,7 @@ button {
   border-radius: var(--radius-pill);
   background: var(--brand);
   color: var(--on-brand);
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
   text-decoration: none;
@@ -423,7 +426,7 @@ button {
   border-radius: var(--radius-pill);
   background: var(--surface-card);
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
 }
@@ -490,8 +493,18 @@ button {
   font-weight: 700;
 }
 
+/* El título de pantalla, al tamaño del contrato en el móvil (1,5 rem = 24 px). Medido el
+ * 09/11/2026: a 32 px, el nombre de una tierra largo se comía cuatro renglones de la primera
+ * pantalla antes de enseñar el mapa y los botones. */
+@media (max-width: 700px) {
+  .pagina__titulo {
+    font-size: 1.5rem;
+    line-height: 1.45;
+  }
+}
+
 .pagina__dato {
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -531,7 +544,7 @@ button {
 }
 
 .lista-ultimos__fecha {
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -542,7 +555,7 @@ button {
 
 .lista-ultimos__tierra {
   display: block;
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -566,7 +579,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
 }
@@ -600,7 +613,7 @@ button {
   background: var(--surface-sunk);
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
 }
 
@@ -642,27 +655,24 @@ button {
   flex: 0 0 96px;
 }
 
-.miniatura--sin-mapa {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 96px;
-  height: 72px;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--ink-muted);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  text-align: center;
+/* Si la tierra no tiene forma en el SIGPAC **no se dibuja un cuadro**: `DESIGN.md` dice que
+ * un cuadrado inventado parecería la parcela. La fila se alinea sin el hueco de la miniatura
+ * y la falta se dice **una vez**, en el detalle. */
+.tierra--sin-miniatura {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .pantalla-apuntar > .tarjeta {
   margin-top: var(--space-4);
 }
 
+/* **Aquí NO hay caja con scroll propio** (medido el 09/11/2026): la lista de tierras de
+ * «Apuntar» metía 64 tierras en una caja de 320 px con 9.426 px de scroll dentro, y el
+ * formulario y «Guardar» quedaban fuera de la primera pantalla. Con 64 tierras se desplaza
+ * la página, que es una sola cosa que mover, y arriba hay un buscador que acorta la lista. */
 .pantalla-apuntar .lista-tierras {
-  max-height: 320px;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .pantalla-cuaderno > .tarjeta,
@@ -762,7 +772,7 @@ button {
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
 }
 
@@ -783,7 +793,7 @@ button {
 }
 
 .tabla thead th {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -798,9 +808,11 @@ button {
   outline-offset: -2px;
 }
 
+/* La marca «Hoy» y la cuenta del día llevan información: iban a **10 px** y no se leían.
+ * Ahora van como la pista (0,95 rem) y en verde que contrasta con la tarjeta. */
 .calendario__hoy {
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 0.95rem;
+  line-height: 20px;
   font-weight: 700;
   color: var(--brand);
 }
@@ -842,8 +854,8 @@ button {
   }
 
   .tabla {
-    font-size: 14px;
-    line-height: 19px;
+    font-size: 1rem;
+    line-height: 22px;
   }
 
   /* La primera columna (el año) se queda a la vista mientras se desplaza el resto. */
@@ -960,7 +972,7 @@ button {
 
 .sigpac__cache-atribucion {
   margin: var(--space-2) 0 0;
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
   overflow-wrap: anywhere;
@@ -1060,7 +1072,7 @@ button {
 
 .tierra__detalle {
   grid-column: 1 / -1;
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1103,7 +1115,7 @@ button {
   min-width: 0;
   flex: 1 1 200px;
   flex-wrap: wrap;
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
 }
@@ -1118,7 +1130,7 @@ button {
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--ink);
-  font-size: 15px;
+  font-size: inherit;
   line-height: 20px;
   font-weight: 400;
 }
@@ -1187,7 +1199,7 @@ button {
 .mapa__pie {
   padding: var(--space-2) var(--space-4) var(--space-3);
   border-top: 1px solid var(--border-subtle);
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1224,7 +1236,7 @@ button {
 }
 
 .panel__dato-etiqueta {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -1251,7 +1263,7 @@ button {
 
 .panel__tabla caption {
   text-align: left;
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
   padding-bottom: var(--space-1);
@@ -1266,7 +1278,7 @@ button {
 }
 
 .panel__tabla th {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -1286,7 +1298,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
   white-space: nowrap;
@@ -1307,7 +1319,7 @@ button {
   border-radius: var(--radius-pill);
   background: var(--brand-tint);
   color: var(--brand);
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 700;
   text-decoration: none;
@@ -1342,7 +1354,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
 }
@@ -1406,7 +1418,7 @@ button {
 }
 
 .tarjeta-dato__titulo {
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -1420,7 +1432,7 @@ button {
 }
 
 .tarjeta-dato__nota {
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1448,7 +1460,7 @@ button {
 }
 
 .que-falta__donde {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1458,7 +1470,7 @@ button {
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
 }
@@ -1470,15 +1482,15 @@ button {
   border-radius: var(--radius-pill);
   background: var(--surface-card);
   color: var(--ink);
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   font-weight: 600;
 }
 
 .pastilla--activa {
-  border-color: var(--brand);
-  background: var(--brand-tint);
-  color: var(--brand);
+  border: 3px solid var(--brand);
+  background: var(--brand);
+  color: var(--on-brand);
 }
 
 /* Las cuatro pestañas de «Apuntar»: en el móvil van en dos filas de dos para que
@@ -1516,7 +1528,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 15px;
+  font-size: inherit;
   line-height: 20px;
 }
 
@@ -1534,7 +1546,7 @@ button {
 
 .leyenda__cuenta {
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 0.95rem;
 }
 
 .tierra__color {
@@ -1557,7 +1569,7 @@ button {
 }
 
 .panel__nota {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1631,6 +1643,15 @@ button {
   cursor: pointer;
 }
 
+/* Lo mismo para la tierra que solo tiene centro (no tiene dibujo): un círculo de 30 px de
+ * radio, transparente, detrás del punto visible. */
+.mapa__punto--toque {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+
 .mapa__dibujo text {
   pointer-events: none;
 }
@@ -1678,13 +1699,13 @@ button {
 }
 
 .recinto__detalle {
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
 
 .recinto__sin-dibujo {
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   color: var(--warning);
   font-weight: 600;
@@ -1718,7 +1739,7 @@ button {
 }
 
 .trabajo__fecha {
-  font-size: 13px;
+  font-size: inherit;
   line-height: 18px;
   color: var(--ink-muted);
 }
@@ -1730,7 +1751,7 @@ button {
 }
 
 .trabajo__detalle {
-  font-size: 15px;
+  font-size: inherit;
   line-height: 20px;
   color: var(--ink-muted);
 }
@@ -1747,12 +1768,12 @@ button {
 .calendario__rejilla {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--space-1);
+  gap: var(--calendario-hueco);
 }
 
 .calendario__nombre-dia {
   text-align: center;
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 18px;
   font-weight: 600;
   color: var(--ink-muted);
@@ -1784,16 +1805,17 @@ button {
 }
 
 .calendario__cuenta {
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 0.95rem;
+  line-height: 20px;
   color: var(--brand);
   font-weight: 600;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .calendario__hectareas {
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 0.95rem;
+  line-height: 20px;
   color: var(--ink-muted);
   text-align: center;
   overflow-wrap: anywhere;
@@ -1910,7 +1932,7 @@ button {
   gap: var(--space-2);
   min-height: var(--toque);
   margin: var(--space-2) 0;
-  font-size: 15px;
+  font-size: 1rem;
   line-height: 20px;
   overflow-wrap: anywhere;
 }
@@ -1928,3 +1950,54 @@ button {
   gap: var(--space-2);
   overflow-wrap: anywhere;
 }
+
+/* ---------------------------------------------------------------- el móvil, medido */
+
+/* La rejilla del calendario en el móvil (09/11/2026). Con los 16 px de margen del contenido
+ * y 4 px de hueco, cada día medía **42,9 px de ancho a 390 y 38,6 a 360**: menos que un dedo.
+ * A 8 px de hueco y esos márgenes no caben siete celdas de 44. La tarjeta del calendario se
+ * sale a sangre **solo en el móvil** —siete columnas son una rejilla, no una tarjeta— y así
+ * el hueco son los 8 px del sistema: (360 − 2 − 6×8) / 7 = **44,3 px** de celda, con un solo
+ * scroll, el de la página. */
+@media (max-width: 480px) {
+  .pantalla-calendario .tarjeta--calendario {
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Las hectáreas del día ya salen en el detalle del día elegido: en una celda de 44 px no
+   * caben sin partir la palabra. */
+  .calendario__hectareas {
+    display: none;
+  }
+}
+
+/* La primera columna de la tabla de «otros años» se queda a la vista mientras se desplaza el
+ * resto; la tabla se desplaza dentro de su caja, nunca la página. */
+@media (max-width: 700px) {
+  .panel__tabla th:first-child,
+  .panel__tabla td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface-card);
+  }
+}
+
+/* ---- modo oscuro: los estados que se leen ------------------------------------------------------------------
+ * La opción elegida pasa a fondo de marca con texto blanco (5,05:1 en oscuro y 8:1 en
+ * claro): es el `boton-elegido` del contrato, y no el texto de marca sobre su propio tinte,
+ * que se quedaba en **2,48:1**. La marca «Hoy» y la cuenta del día se pintan con el verde
+ * claro, porque `--brand` sobre la tarjeta de noche da 3,29:1. */
+@media (prefers-color-scheme: dark) {
+  .calendario__hoy,
+  .calendario__cuenta {
+    color: var(--brand-bright);
+  }
+
+  .tierra--elegida {
+    outline-color: var(--brand-bright);
+  }
+}
+

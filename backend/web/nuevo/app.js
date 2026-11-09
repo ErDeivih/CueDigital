@@ -820,6 +820,42 @@ function Mapa({ municipios, tierras, municipio, caja, elegida, alCambiarMunicipi
     setNoLlega(false);
   }, [urlConIntento]);
 
+  // **Las zonas de toque van ANTES que los trazos visibles**: en SVG gana el último que se
+  // pinta, así que el trazo de color y las etiquetas quedan por encima y el dedo acierta los
+  // 60 px del anillo. Medido el 09/11/2026: los anillos del mapa tenían 2 px de trazo y el
+  // mapa no se podía tocar; la ventana del SIGPAC ya lo hacía así.
+  const toques = [];
+  if (caja) {
+    for (const tierra of tierras) {
+      const rutaParaTocar = rutaDeAnillo(tierra.anillo, caja, ANCHO_MAPA, ALTO_MAPA);
+      const alTocar = alElegir ? () => alElegir(tierra) : undefined;
+      if (rutaParaTocar) {
+        toques.push(html`<path
+          key=${`toque-anillo-${tierra.id}`}
+          className="mapa__anillo mapa__anillo--toque"
+          d=${rutaParaTocar}
+          data-mapa-toque=${tierra.id}
+          aria-hidden="true"
+          onClick=${alTocar}
+        />`);
+        continue;
+      }
+      const puntoParaTocar = proyeccionDePunto(tierra.centro, caja, ANCHO_MAPA, ALTO_MAPA);
+      if (puntoParaTocar) {
+        toques.push(html`<circle
+          key=${`toque-punto-${tierra.id}`}
+          className="mapa__punto mapa__punto--toque"
+          cx=${puntoParaTocar[0]}
+          cy=${puntoParaTocar[1]}
+          r="30"
+          data-mapa-toque=${tierra.id}
+          aria-hidden="true"
+          onClick=${alTocar}
+        />`);
+      }
+    }
+  }
+
   const dibujos = [];
   if (caja) {
     for (const tierra of tierras) {
@@ -857,7 +893,7 @@ function Mapa({ municipios, tierras, municipio, caja, elegida, alCambiarMunicipi
 
   const fotografía = html`<div className="mapa__lienzo">
     <img className="mapa__foto" data-mapa-imagen src=${urlConIntento} alt=${etiquetaDeLaFoto} onError=${() => setNoLlega(true)} />
-    <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" aria-hidden="true">${dibujos}</svg>
+    <svg className="mapa__dibujo" viewBox=${`0 0 ${ANCHO_MAPA} ${ALTO_MAPA}`} preserveAspectRatio="none" aria-hidden="true">${toques}${dibujos}</svg>
   </div>`;
 
   const sinCaja = html`<div className="mapa__aviso">
@@ -960,7 +996,7 @@ function Panel({ tierra, alCerrar, alGuardar }) {
       </label>
       <label className="campo">
         <span>${textos.tierras.panel.superficieEditable}</span>
-        <input className="campo__control" type="text" inputMode="decimal" data-editar-superficie value=${superficie} onChange=${(evento) => setSuperficie(evento.target.value)} />
+        <input className="campo__control" type="tel" inputMode="decimal" data-editar-superficie value=${superficie} onChange=${(evento) => setSuperficie(evento.target.value)} />
       </label>
       <p className="panel__nota">${textos.tierras.panel.soloEsto}</p>
       <div className="estado__acciones">
@@ -984,17 +1020,19 @@ function Panel({ tierra, alCerrar, alGuardar }) {
     <dl className="panel__datos" data-panel-datos>${filas}</dl>
     <div>
       <h3 className="panel__subtitulo">${textos.tierras.panel.otrosAnios}</h3>
-      <table className="panel__tabla" data-panel-otros-anios=${otros.length}>
-        <thead>
-          <tr>
-            <th scope="col">${textos.tierras.panel.anio}</th>
-            <th scope="col">${textos.tierras.panel.cultivo}</th>
-            <th scope="col">${textos.tierras.panel.hectareas}</th>
-            <th scope="col">${textos.tierras.panel.variedad}</th>
-          </tr>
-        </thead>
-        <tbody>${cuerpoDeAnios}</tbody>
-      </table>
+      <div className="tabla-envoltura">
+        <table className="panel__tabla" data-panel-otros-anios=${otros.length}>
+          <thead>
+            <tr>
+              <th scope="col">${textos.tierras.panel.anio}</th>
+              <th scope="col">${textos.tierras.panel.cultivo}</th>
+              <th scope="col">${textos.tierras.panel.hectareas}</th>
+              <th scope="col">${textos.tierras.panel.variedad}</th>
+            </tr>
+          </thead>
+          <tbody>${cuerpoDeAnios}</tbody>
+        </table>
+      </div>
     </div>
   </aside>`;
 }
@@ -1086,6 +1124,7 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras, alAbr
       <input
         className="buscador__campo"
         type="search"
+        enterKeyHint="search"
         data-buscador
         value=${busqueda}
         placeholder=${textos.tierras.buscadorPista}
@@ -1134,14 +1173,20 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras, alAbr
     const cuenta = `${grupo.n === 1 ? `${grupo.n} tierra` : `${grupo.n} tierras`} · ${superficie}`;
     const filas = grupo.tierras.map((tierra) => {
       const esElegida = Boolean(elegida && elegida.id === tierra.id);
-      const clase = esElegida ? "tierra tierra--elegida" : "tierra";
+      const sinForma = sinMapa(tierra);
+      const clase = [
+        esElegida ? "tierra tierra--elegida" : "tierra",
+        sinForma ? "tierra--sin-miniatura" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
       const hectareas = tierra.superficie_ha === null || tierra.superficie_ha === undefined
         ? textos.tierras.panel.noConsta
         : `${formateaNumero(tierra.superficie_ha)} ${textos.tierras.panel.hectareas}`;
       const detalles = [
         tierra.uso_sigpac,
         tierra.cultivo && tierra.cultivo.nombre,
-        sinMapa(tierra) ? textos.tierras.sinMapa : null,
+        sinForma ? textos.tierras.sinMapa : null,
       ].filter(Boolean);
       const detalle = detalles.length
         ? html`<span className="tierra__detalle">${detalles.join(" · ")}</span>`
@@ -1156,7 +1201,7 @@ function VistaTierras({ estadoVista, datos, alReintentar, alAnadirTierras, alAbr
         data-seleccionada=${esElegida ? "si" : "no"}
         onClick=${() => alElegir(tierra)}
       >
-        <${Miniatura} tierra=${tierra} />
+        <${Miniatura} tierra=${tierra} sinForma=${sinForma} />
         <span className="tierra__alias"><span className="tierra__color" style=${{ background: color }} aria-hidden="true"></span>${tierra.alias}</span>
         <span className="tierra__hectareas">${hectareas}</span>
         ${detalle}
@@ -2062,12 +2107,17 @@ function usarOpcionesDeTrabajo() {
   return { estado, aperos, reintentar: () => setIntento((n) => n + 1) };
 }
 
-/** La miniatura del contorno; si no llega no se pinta un cuadro, se dice «sin mapa». */
-function Miniatura({ tierra }) {
+/**
+ * La miniatura del contorno.
+ *
+ * **Si la tierra no tiene forma, no se pinta nada** (09/11/2026): `DESIGN.md` dice que un
+ * cuadro inventado sería peor que no dibujar, porque parecería la parcela. Antes se pintaba un
+ * recuadro discontinuo con «sin mapa» en cada fila —66 veces en una lista de 64 tierras— y la
+ * misma idea se repetía otra vez en el detalle. La falta se dice una sola vez, en el detalle.
+ */
+function Miniatura({ tierra, sinForma = false }) {
   const [fallo, setFallo] = useState(false);
-  if (fallo) {
-    return html`<span className="miniatura miniatura--sin-mapa">${textos.apuntar.sinMapa}</span>`;
-  }
+  if (sinForma || fallo) return null;
   return html`<img
     className="miniatura"
     data-miniatura-tierra=${tierra.id}
@@ -2093,6 +2143,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
 
   const [pestana, setPestana] = useState("labor");
   const [tierraId, setTierraId] = useState(tierraInicial || (tierras[0] ? tierras[0].id : null));
+  const [busquedaTierra, setBusquedaTierra] = useState("");
   const [fecha, setFecha] = useState(() => fechaDeHoyISO());
   const [hectareas, setHectareas] = useState("");
   const [fase, setFase] = useState("inicial");
@@ -2389,17 +2440,34 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
     // y el estado vacío de la labor se dice dentro de su pestaña.
   }
 
-  const opcionesDeTierra = (tierras || []).map((una) => {
+  // **La tierra se busca, no se recorre** (medido el 09/11/2026): con 64 tierras, la lista
+  // era una caja con 9.426 px de scroll dentro de la página y el formulario quedaba fuera de
+  // la primera pantalla. Aquí se filtra por nombre o municipio, la tierra ya elegida sigue
+  // arriba (aunque no case con la búsqueda) y la lista se desplaza con la página.
+  const textoBuscado = busquedaTierra.trim().toLowerCase();
+  const casan = tierras.filter((una) => !textoBuscado
+    || String(una.alias || "").toLowerCase().includes(textoBuscado)
+    || String(una.municipio || "").toLowerCase().includes(textoBuscado));
+  if (tierra && !casan.some((una) => una.id === tierra.id)) casan.unshift(tierra);
+
+  const opcionesDeTierra = casan.map((una) => {
     const activa = una.id === tierraId;
+    const sinForma = sinMapa(una);
+    const clase = [
+      activa ? "tierra tierra--elegida" : "tierra",
+      sinForma ? "tierra--sin-miniatura" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     return html`<button
       type="button"
       key=${`apuntar-tierra-${una.id}`}
-      className=${activa ? "tierra tierra--elegida" : "tierra"}
+      className=${clase}
       data-apuntar-tierra=${una.id}
       aria-pressed=${activa}
       onClick=${() => setTierraId(una.id)}
     >
-      <${Miniatura} tierra=${una} />
+      <${Miniatura} tierra=${una} sinForma=${sinForma} />
       <span className="tierra__alias">${una.alias}</span>
       <span className="tierra__detalle">${una.municipio || textos.tierras.sinMunicipio}</span>
     </button>`;
@@ -2498,7 +2566,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
       ? html`<${React.Fragment}>
           <label className="campo">
             <span>${textos.apuntar.producto.buscar}</span>
-            <input className="campo__control" type="search" value=${busquedaProducto} placeholder=${textos.apuntar.producto.pistaBuscar} onChange=${(evento) => setBusquedaProducto(evento.target.value)} />
+            <input className="campo__control" type="search" enterKeyHint="search" value=${busquedaProducto} placeholder=${textos.apuntar.producto.pistaBuscar} onChange=${(evento) => setBusquedaProducto(evento.target.value)} />
           </label>
           <ul className="lista-tierras">${filasDeProductos}</ul>
           ${producto
@@ -2506,7 +2574,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
                 <div className="rejilla-campos">
                   <label className="campo">
                     <span>${textos.apuntar.producto.dosis}</span>
-                    <input className="campo__control" type="text" inputMode="decimal" data-apuntar-dosis value=${dosisTratamiento} onChange=${(evento) => setDosisTratamiento(evento.target.value)} />
+                    <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-dosis value=${dosisTratamiento} onChange=${(evento) => setDosisTratamiento(evento.target.value)} />
                   </label>
                   <label className="campo">
                     <span>${textos.apuntar.producto.plaga}</span>
@@ -2537,7 +2605,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
       ? html`<${React.Fragment}>
           <label className="campo">
             <span>${textos.apuntar.abono.buscar}</span>
-            <input className="campo__control" type="search" value=${busquedaAbono} onChange=${(evento) => setBusquedaAbono(evento.target.value)} />
+            <input className="campo__control" type="search" enterKeyHint="search" value=${busquedaAbono} onChange=${(evento) => setBusquedaAbono(evento.target.value)} />
           </label>
           <ul className="lista-tierras">${filasDeAbonos}</ul>
           ${fertilizante
@@ -2549,11 +2617,11 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
                 ${modoAbono === "total"
                   ? html`<label className="campo">
                       <span>${textos.apuntar.abono.totales}</span>
-                      <input className="campo__control" type="text" inputMode="decimal" data-apuntar-dosis value=${kilosAbono} onChange=${(evento) => setKilosAbono(evento.target.value)} />
+                      <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-dosis value=${kilosAbono} onChange=${(evento) => setKilosAbono(evento.target.value)} />
                     </label>`
                   : html`<label className="campo">
                       <span>${textos.apuntar.abono.dosis}</span>
-                      <input className="campo__control" type="text" inputMode="decimal" data-apuntar-dosis value=${dosisAbono} onChange=${(evento) => setDosisAbono(evento.target.value)} />
+                      <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-dosis value=${dosisAbono} onChange=${(evento) => setDosisAbono(evento.target.value)} />
                     </label>`}
                 <p className="pagina__dato" data-apuntar-total=${textoDeTotal(totalAbono)}>${textos.apuntar.abono.total}: ${textoDeTotal(totalAbono)}</p>
                 <label className="campo">
@@ -2587,7 +2655,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
               </label>
               <label className="campo">
                 <span>${textos.apuntar.siembra.dosis}</span>
-                <input className="campo__control" type="text" inputMode="decimal" data-apuntar-dosis value=${dosisSiembra} onChange=${(evento) => setDosisSiembra(evento.target.value)} />
+                <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-dosis value=${dosisSiembra} onChange=${(evento) => setDosisSiembra(evento.target.value)} />
               </label>
             </div>
             <p className="pagina__dato" data-apuntar-total=${textoDeTotal(totalSiembra)}>${textos.apuntar.siembra.total}: ${textoDeTotal(totalSiembra)}</p>
@@ -2602,7 +2670,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
         : html`<${React.Fragment}>
             <label className="campo">
               <span>${textos.apuntar.siembra.buscar}</span>
-              <input className="campo__control" type="search" value=${busquedaSemilla} onChange=${(evento) => setBusquedaSemilla(evento.target.value)} />
+              <input className="campo__control" type="search" enterKeyHint="search" value=${busquedaSemilla} onChange=${(evento) => setBusquedaSemilla(evento.target.value)} />
             </label>
             <ul className="lista-tierras">${filasDeSemillas}</ul>
             ${semilla
@@ -2610,7 +2678,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
                   <div className="rejilla-campos">
                     <label className="campo">
                       <span>${textos.apuntar.siembra.dosis}</span>
-                      <input className="campo__control" type="text" inputMode="decimal" data-apuntar-dosis value=${dosisSiembra} onChange=${(evento) => setDosisSiembra(evento.target.value)} />
+                      <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-dosis value=${dosisSiembra} onChange=${(evento) => setDosisSiembra(evento.target.value)} />
                     </label>
                   </div>
                   <p className="pagina__dato" data-apuntar-total=${textoDeTotal(totalSiembra)}>${textos.apuntar.siembra.total}: ${textoDeTotal(totalSiembra)}</p>
@@ -2644,6 +2712,20 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
 
     <section className="tarjeta" aria-labelledby="apuntar-tierra-titulo">
       <h2 className="tarjeta__titulo" id="apuntar-tierra-titulo">${textos.apuntar.tierra}</h2>
+      ${tierras.length > 8
+        ? html`<label className="buscador">
+            <span>${textos.tierras.buscador}</span>
+            <input
+              className="buscador__campo"
+              type="search"
+              data-apuntar-buscar-tierra
+              enterKeyHint="search"
+              value=${busquedaTierra}
+              placeholder=${textos.tierras.buscadorPista}
+              onChange=${(evento) => setBusquedaTierra(evento.target.value)}
+            />
+          </label>`
+        : null}
       ${tierras.length
         ? html`<div className="lista-tierras">${opcionesDeTierra}</div>`
         : html`<p className="estado__texto">${textos.apuntar.sinTierra}</p>`}
@@ -2659,7 +2741,7 @@ function VistaApuntar({ tierras, campana, tierraInicial, alEstado, alGuardado, a
         </label>
         <label className="campo">
           <span>${textos.apuntar.hectareas}</span>
-          <input className="campo__control" type="text" inputMode="decimal" data-apuntar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
+          <input className="campo__control" type="tel" inputMode="decimal" data-apuntar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
         </label>
       </div>
       ${aviso ? html`<p className="panel__aviso" data-apuntar-aviso>${aviso}</p>` : null}
@@ -3014,11 +3096,11 @@ function VistaProductos({ tierras, campana, alEstado, alIr, alVerTierra }) {
           </label>
           <label className="campo">
             <span>${textos.productos.hectareas}</span>
-            <input className="campo__control" type="text" inputMode="decimal" data-aplicar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
+            <input className="campo__control" type="tel" inputMode="decimal" data-aplicar-hectareas value=${hectareas} onChange=${(evento) => setHectareas(evento.target.value)} />
           </label>
           <label className="campo">
             <span>${textos.productos.dosis}</span>
-            <input className="campo__control" type="text" inputMode="decimal" data-aplicar-dosis value=${dosis} onChange=${(evento) => setDosis(evento.target.value)} />
+            <input className="campo__control" type="tel" inputMode="decimal" data-aplicar-dosis value=${dosis} onChange=${(evento) => setDosis(evento.target.value)} />
           </label>
         </div>
         <p className="pagina__dato" data-aplicar-total=${textoDelTotal}>${textos.productos.total}: ${textoDelTotal}</p>
@@ -3052,7 +3134,7 @@ function VistaProductos({ tierras, campana, alEstado, alIr, alVerTierra }) {
     </div>
     <label className="buscador">
       <span>${textos.productos.buscar}</span>
-      <input className="buscador__campo" type="search" data-producto-buscar value=${busqueda} placeholder=${textos.productos.buscarPista} onChange=${(evento) => setBusqueda(evento.target.value)} />
+      <input className="buscador__campo" type="search" enterKeyHint="search" data-producto-buscar value=${busqueda} placeholder=${textos.productos.buscarPista} onChange=${(evento) => setBusqueda(evento.target.value)} />
     </label>
     ${lista.length
       ? html`<ul className="trabajos-lista">${filas}</ul>`
@@ -3238,10 +3320,10 @@ function VistaCalendario({ tierras, alEstado }) {
     const totalesDelDia = delDia ? totalesDeTrabajos(delDia.trabajos) : null;
     const textoDelDia = totalesDelDia && cuantos ? textoDeTotales(totalesDelDia) : "";
     const hectareasDelDia = totalesDelDia && totalesDelDia.hectareas ? `${formateaNumero(totalesDelDia.hectareas)} ha` : null;
-    return html`<button type="button" key=${`dia-${celda.fecha}`} className=${clase} data-dia-calendario=${celda.fecha} data-dia-total=${textoDelDia} aria-pressed=${elegido === celda.fecha} onClick=${() => setElegido(celda.fecha)}>
+    return html`<button type="button" key=${`dia-${celda.fecha}`} className=${clase} data-dia-calendario=${celda.fecha} data-dia-total=${textoDelDia} aria-pressed=${elegido === celda.fecha} aria-label=${`${celda.dia} · ${palabra}${hectareasDelDia ? ` · ${hectareasDelDia}` : ""}`} onClick=${() => setElegido(celda.fecha)}>
       <span className="calendario__numero">${celda.dia}</span>
       ${esHoy ? html`<span className="calendario__hoy">${textos.historial.hoy}</span>` : null}
-      ${delDia ? html`<span className="calendario__cuenta">${palabra}</span>${hectareasDelDia ? html`<span className="calendario__hectareas">${hectareasDelDia}</span>` : null}` : null}
+      ${delDia ? html`<span className="calendario__cuenta">${cuantos}</span>${hectareasDelDia ? html`<span className="calendario__hectareas">${hectareasDelDia}</span>` : null}` : null}
     </button>`;
   });
 
@@ -3251,7 +3333,7 @@ function VistaCalendario({ tierras, alEstado }) {
 
   return html`<div className="pantalla-calendario">
     ${cabecera}
-    <section className="tarjeta" aria-label=${textos.calendario.titulo}>
+    <section className="tarjeta tarjeta--calendario" aria-label=${textos.calendario.titulo}>
       <div className="calendario__semana">${nombresDeDias.map((nombre) => html`<span className="calendario__nombre-dia" key=${nombre}>${nombre}</span>`)}</div>
       <div className="calendario__rejilla">${celdasPintadas}</div>
       ${datos.dias.length ? null : html`<p className="estado__texto">${textos.calendario.sinNada}</p>`}
@@ -3974,13 +4056,14 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
     for (const uno of recintosConPuntos(recintos)) {
       const caminoParaTocar = rutaDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
       if (!caminoParaTocar) continue;
-      dibujos.push(html`<path
-        key=${`toque-${uno.recinto}`}
-        className="mapa__anillo mapa__anillo--toque"
-        d=${caminoParaTocar}
-        aria-hidden="true"
-        onClick=${() => elegirRecintoDelMapa(uno)}
-      />`);
+        dibujos.push(html`<path
+          key=${`toque-${uno.recinto}`}
+          className="mapa__anillo mapa__anillo--toque"
+          d=${caminoParaTocar}
+          data-mapa-toque=${uno.recinto}
+          aria-hidden="true"
+          onClick=${() => elegirRecintoDelMapa(uno)}
+        />`);
     }
     for (const uno of recintosConPuntos(recintos)) {
       const camino = rutaDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
@@ -4007,7 +4090,7 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       const proyectado = proyeccionDeAnillo(uno.puntos, caja, ANCHO_MAPA, ALTO_MAPA);
       const punto = proyectado && proyectado.length ? proyectado[0] : null;
       if (punto) {
-        dibujos.push(html`<text key=${`etiqueta-${uno.recinto}`} x=${punto[0] + 6} y=${punto[1] - 6} aria-hidden="true" style=${{ fill: "var(--ink)", fontSize: "15px", fontWeight: "600", paintOrder: "stroke", stroke: "var(--surface-card)", strokeWidth: "3", pointerEvents: "none" }}>${uno.recinto}</text>`);
+        dibujos.push(html`<text key=${`etiqueta-${uno.recinto}`} x=${punto[0] + 6} y=${punto[1] - 6} aria-hidden="true" style=${{ fill: "var(--ink)", fontSize: "16px", fontWeight: "600", paintOrder: "stroke", stroke: "var(--surface-card)", strokeWidth: "3", pointerEvents: "none" }}>${uno.recinto}</text>`);
       }
     }
   }
@@ -4065,25 +4148,25 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
       <div className="sigpac__formas">
         <label className="campo">
           <span>${textos.ventana.porReferencia}</span>
-          <input className="campo__control" type="text" data-sigpac-buscar-referencia placeholder=${textos.ventana.pistaReferencia} value=${referencia} onChange=${(evento) => setReferencia(evento.target.value)} />
+          <input className="campo__control" type="tel" inputMode="decimal" enterKeyHint="search" data-sigpac-buscar-referencia placeholder=${textos.ventana.pistaReferencia} value=${referencia} onChange=${(evento) => setReferencia(evento.target.value)} />
         </label>
         <label className="campo">
           <span>${textos.ventana.porMunicipio}</span>
-          <input className="campo__control" type="search" data-sigpac-buscar-municipio placeholder=${textos.ventana.pistaMunicipio} value=${textoMunicipio} onChange=${(evento) => { setTextoMunicipio(evento.target.value); setElegido(null); }} />
+          <input className="campo__control" type="search" enterKeyHint="search" data-sigpac-buscar-municipio placeholder=${textos.ventana.pistaMunicipio} value=${textoMunicipio} onChange=${(evento) => { setTextoMunicipio(evento.target.value); setElegido(null); }} />
         </label>
         ${opciones.length ? html`<ul className="opciones">${opciones}</ul>` : null}
         <div className="rejilla-campos">
           <label className="campo"><span>${textos.ventana.agregado}</span>
-            <input className="campo__control" type="number" min="0" data-sigpac-agregado value=${agregado} onChange=${(evento) => setAgregado(evento.target.value)} />
+            <input className="campo__control" type="number" min="0" inputMode="numeric" data-sigpac-agregado value=${agregado} onChange=${(evento) => setAgregado(evento.target.value)} />
           </label>
           <label className="campo"><span>${textos.ventana.zona}</span>
-            <input className="campo__control" type="number" min="0" data-sigpac-zona value=${zona} onChange=${(evento) => setZona(evento.target.value)} />
+            <input className="campo__control" type="number" min="0" inputMode="numeric" data-sigpac-zona value=${zona} onChange=${(evento) => setZona(evento.target.value)} />
           </label>
           <label className="campo"><span>${textos.ventana.poligono}</span>
-            <input className="campo__control" type="number" min="0" data-sigpac-poligono value=${poligono} onChange=${(evento) => setPoligono(evento.target.value)} />
+            <input className="campo__control" type="number" min="0" inputMode="numeric" data-sigpac-poligono value=${poligono} onChange=${(evento) => setPoligono(evento.target.value)} />
           </label>
           <label className="campo"><span>${textos.ventana.parcela}</span>
-            <input className="campo__control" type="number" min="0" data-sigpac-parcela value=${parcela} onChange=${(evento) => setParcela(evento.target.value)} />
+            <input className="campo__control" type="number" min="0" inputMode="numeric" data-sigpac-parcela value=${parcela} onChange=${(evento) => setParcela(evento.target.value)} />
           </label>
         </div>
         <div className="estado__acciones">

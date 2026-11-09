@@ -1,11 +1,51 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital ya arranca contra PostgreSQL de verdad. La imagen se construye (669 MB), el stack se ha levantado en local con PostgreSQL 16 y el recorrido sale entero: cuenta, tierras por referencia de 6 números y con recinto, contorno pintado (PNG 800×600 con el GeoPackage real de Salamanca) y observabilidad (errores, pantallas y embudo) leyéndose contra la base. La prueba destapó y cerró DOS bloqueos de producción: booleanos con DEFAULT 1 que impedían crear una base nueva y que una columna nueva se añadiera en silencio. **Falta la URL pública**: depende de una cuenta de proveedor y un dominio de David, con el paso exacto en docs/CUENTAS-Y-ACCESOS.md (recomendación: una VM gratuita, Oracle Always Free, con el docker-compose tal cual). Además, revisión de interfaz con 14 pantallas inventariadas y 10 problemas medidos.
+resumen: CueDigital se ha revisado y arreglado para móvil y tableta a 360, 390, 768 y 1024 px, con 112 capturas antes/después: los 30 controles por debajo de 44 px y los 135 huecos por debajo de 8 px quedan en 0, el calendario y el menú se pueden pulsar, el mapa de «Mis tierras» ya recibe el toque, los campos de números abren teclado numérico y la opción elegida pasa de 2,48:1 a contraste de contrato. **La URL pública sigue bloqueada y ahora se sabe exactamente por qué**: el token de Cloudflare está activo pero no deja leer la cuenta (401/403: falta el Account ID) y, aun con él, Pages/Workers no ejecutan FastAPI + PostgreSQL; hace falta una cuenta de Render (2 minutos) o una VM. Todo lo demás está listo: imagen probada contra PostgreSQL, `deploy/render.yaml` y `comprobar_despliegue.py` en verde en local.
 estado: en-curso
-tarea: despliegue real probado en local (imagen + PostgreSQL + contornos + observabilidad) e inventario de interfaz con 10 problemas; la URL pública espera cuenta y dominio
+tarea: revisión y arreglo de los layouts de móvil y tableta (360/390/768/1024) y despliegue preparado; la URL pública espera una cuenta de proveedor
 nivel: 2
-siguiente: crear la cuenta y el dominio (docs/CUENTAS-Y-ACCESOS.md), desplegar y correr `backend/scripts/comprobar_despliegue.py` contra la URL; después, los 10 problemas de interfaz por gravedad (contraste del seleccionado 2,48:1, texto por debajo de 18 px, apuntar entre 64 tierras)
-bloqueado: la URL pública depende de una cuenta de proveedor y un dominio que tiene que crear David (nivel 3: tarjeta y decisión); PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+siguiente: crear la cuenta de Render y aplicar `deploy/render.yaml` (o la VM), correr `comprobar_despliegue.py` contra la URL; y seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
+bloqueado: la URL pública depende de una cuenta de proveedor que tiene que crear David; el token de Cloudflare del 09/11 no sirve (no autoriza a leer la cuenta y Pages no ejecuta Python); PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-09
+
+## Lo que se ha hecho en esta ronda (09/11/2026, tercera: móvil, tableta y despliegue)
+
+1. **Layouts revisados y arreglados a 360, 390, 768 y 1024 px** (14 pantallas × 4 anchos, 112
+   capturas en `docs/capturas-revision/despues-*` y `antes-*`, más `mediciones-antes.json` y
+   `mediciones-despues.json`). Antes → después, medido en el DOM:
+   - **controles por debajo de 44 px: 30 → 0** en 360 y 390 (eran las celdas del calendario,
+     38,6 px de ancho) y **huecos por debajo de 8 px: 135 → 0** en 768 y 1024 (eran los
+     renglones del menú lateral y el calendario);
+   - **mapas sin zona de toque: 1 → 0** (el mapa de «Mis tierras» tenía anillos de 2 px de trazo
+     y no había detrás los 60 px del SIGPAC: ahora cada recinto es tocable);
+   - **letra mínima: 10 → 15,2 px** (el suelo del contrato, la pista de 0,95 rem; los datos
+     heredan el cuerpo) y **la opción elegida pasa de 2,48:1 a fondo de marca con texto blanco**,
+     como el `boton-elegido` del contrato;
+   - **0 desbordes horizontales** antes y después en los cuatro anchos, **0 acciones principales
+     por debajo de 48 px** y **0 ventanas que no caben** (las dos del SIGPAC ya cabían).
+   - Además: buscador de tierras en «Apuntar» (se acaba la caja de 64 tierras con scroll propio),
+     tabla de «otros años» que se desplaza dentro de su caja, calendario a sangre en el móvil
+     (44,3 px por celda a 360), y **teclado numérico** (`type="tel"` + `inputmode="numeric"`/
+     `"decimal"` + `enterkeyhint`) en hectáreas, dosis, cantidades, superficie y referencia.
+   - **Guardianes nuevos**: `backend/tests/test_revision_movil.py` (29 pruebas: leen el CSS, el
+     JS y `mediciones-despues.json` y exigen 0 desbordes y 0 controles < 44 px) y el guion
+     `backend/scripts/capturar_la_revision_movil.py`. **No se ha tocado `DESIGN.md`**: todo lo
+     usado ya estaba en el contrato.
+2. **Despliegue: todo listo, publicación bloqueada por cuentas** (probado con las credenciales
+   del 09/11, sin copiar ningún secreto a ningún sitio):
+   - **Cloudflare no sirve**: el token está activo, pero `GET /accounts` da **403** y
+     `GET /memberships` da **401** (no deja leer la cuenta: falta el Account ID). Y aunque se
+     añadiera, **Pages/Functions corren JavaScript/TypeScript**, no un backend Python con
+     PostgreSQL.
+   - **Supabase** (el token funciona) da base y fotos, pero **no ejecuta Python**; el proyecto
+     que hay es de otro trabajo y no se ha tocado.
+   - **Lo que queda es una cuenta**: Render (2 minutos con GitHub) aplicando
+     `deploy/render.yaml`, que ya está escrito y validado (Docker + PostgreSQL gratis, variables
+     generadas, `/health`), o la VM gratuita del apartado 3 de `docs/CUENTAS-Y-ACCESOS.md`.
+   - **Arreglo de código que hacía falta para cualquier proveedor**: `app/database.py` pone el
+     driver a las direcciones `postgres://`/`postgresql://` que dan Render, Neon y Supabase
+     (SQLAlchemy 2 no las acepta tal cual). Probado con la **imagen real** levantada contra
+     PostgreSQL 16 usando `postgres://` sin driver: arranca y `comprobar_despliegue.py` pasa
+     entero (contornos incluidos). 9 pruebas nuevas en `tests/test_url_de_la_base.py`.
 
 ## Lo que se ha hecho en esta ronda (09/11/2026, segunda: despliegue real)
 
@@ -173,13 +213,15 @@ fecha: 2026-11-09
 
 ## La última pasada, sobre este mismo HEAD (09/11/2026)
 
-    Python       6060 recogidas · 0 fallos (código de salida 0)
+    Python       6108 recogidas · 0 fallos (RESULTADO=PASA, código de salida 0)
     JavaScript   1319 superadas, 0 fallos
-    imagen de producción construida (669 MB) y stack levantado con PostgreSQL 16 en local
-    comprobar_despliegue.py contra 127.0.0.1:8090                     todo lo comprobado bien
+    móvil y tableta, 14 pantallas × 4 anchos  0 desbordes · 0 controles < 44 px · 0 huecos < 8 px
+    letra mínima                          10 px → 15,2 px (el suelo del contrato)
+    opción elegida en oscuro              2,48:1 → fondo de marca con texto blanco
+    mapa de «Mis tierras»                 1 sin zona de toque → 0
+    imagen de producción + PostgreSQL 16 con dirección `postgres://` sin driver
+                                                   comprobar_despliegue.py: todo lo comprobado bien
     base nueva en PostgreSQL                                     67 tablas, arranque sin error
-    contornos con el GeoPackage real                        2 con forma, PNG 800×600
-    observabilidad en vivo                     pantallas por día, rutas por plantilla, embudo entero
     prueba de humo contra un uvicorn de verdad                    RESULTADO: todo correcto
     armazón nuevo en Chrome con el GeoPackage real de Salamanca            Fallos: 0
     carga (docs/PRUEBAS_DE_CARGA.md)                  10 concurrentes con holgura, rodilla a 25

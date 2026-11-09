@@ -11,13 +11,24 @@
 > 24 tratamientos, 36 trabajos, 40 gastos, 10 ventas, 36 movimientos de banco y 30 papeles.
 > El servidor se ha apagado al terminar (ver §5).
 >
-> **Dónde están las pruebas.** Las capturas y las medidas en `docs/capturas-revision/`:
-> 32 PNG a 390 y 1024 px, 4 de ellas en modo claro, más `mediciones.json` (30 pantallas
-> medidas: desbordes, tamaños de letra, contrastes calculados, controles, enlaces y texto
-> visible de cada una).
+> **Y los arreglos, el 10/11/2026.** La revisión decía lo que estaba mal; esta segunda pasada
+> **lo arregla**. Las pantallas se han vuelto a mirar y a medir a **360, 390, 768 y 1024 px**
+> con `backend/scripts/capturar_la_revision_movil.py`, contra un servidor temporal en
+> `http://127.0.0.1:8094` y la misma explotación de 64 tierras. El resultado está en §6, con
+> la tabla de los cuatro anchos, las **capturas antes/después** de cada pantalla y el coste
+> de cada arreglo. **La tabla del después da 0 desbordes, 0 controles por debajo de 44 px y
+> 0 ventanas que no caben en los cuatro anchos.**
 >
-> **Lo que no es.** No se ha cambiado ni una línea de la aplicación. Esto es una revisión:
-> lo que se propone se propone, no se ha implementado.
+> **Dónde están las pruebas.** En `docs/capturas-revision/`:
+> · 32 PNG de la revisión (`<pantalla>-390.png`, `<pantalla>-1024.png`…) y `mediciones.json`
+>   (30 pantallas medidas: desbordes, tamaños de letra, contrastes, controles y textos);
+> · 56 PNG del **antes** (`antes-<pantalla>-<ancho>.png`) y 56 del **después**
+>   (`despues-<pantalla>-<ancho>.png`) a los cuatro anchos, más los dos estados vacíos;
+> · `mediciones-antes.json` y `mediciones-despues.json`, con lo medido en el DOM pantalla por
+>   pantalla y su resumen por ancho.
+>
+> **Lo que no es.** La revisión de §1–§5 no cambió ni una línea. **Los arreglos de §6 sí**, y
+> son los que describen los ficheros y las pruebas de §6.5.
 
 ---
 
@@ -721,6 +732,205 @@ atan las dos); y cada arreglo se comprueba con una medida en el arnés de navega
 
 ---
 
+## 6. Los arreglos de la revisión móvil (10/11/2026)
+
+La revisión de arriba decía lo que estaba mal. Esto es lo que se ha arreglado, con las
+mismas medidas antes y después, y lo que sigue pendiente. Se ha hecho **sin compilación**
+(React UMD + htm, como manda `docs/REACT.md`), **sin dependencias nuevas** y **sin tocar**
+`backend/app/main.py`, `deploy/` ni los documentos de despliegue.
+
+### 6.1. Cómo se ha medido (y cómo se repite)
+
+Servidor temporal en **8094** (base y adjuntos en `%TEMP%`, `CUEDIGITAL_SECRETO` de pruebas,
+`CUEDIGITAL_ENTORNO=pruebas`, `CUEDIGITAL_ITERACIONES_PBKDF2=100000`) con la misma explotación
+de volumen de `datos_representativos.py` (64 tierras en 5 municipios, 12 productos…), y el
+guion **`backend/scripts/capturar_la_revision_movil.py`** (nuevo; solo abre, pulsa, mide y
+guarda: no cambia nada de la aplicación):
+
+```powershell
+cd backend
+..\.venv\Scripts\python.exe scripts\capturar_la_revision_movil.py http://127.0.0.1:8094 --momento antes
+..\.venv\Scripts\python.exe scripts\capturar_la_revision_movil.py http://127.0.0.1:8094 --momento despues
+```
+
+Por cada pantalla y por cada ancho (**360×640, 390×844, 768×1024 y 1024×900**) hace tres
+cosas, y las tres se guardan en `mediciones-antes.json` / `mediciones-despues.json`:
+
+1. **Llega pulsando** (destinos de la barra, pestañas, filtros) y espera a que la pantalla
+   tenga sus datos: una foto de «cargando» no vale. En la ventana del SIGPAC **busca de
+   verdad** por la referencia `37:70:0:0:503:51`, así que las capturas enseñan el recinto
+   dibujado sobre la ortofoto (si no hubiera cobertura, el documento y el JSON lo dirían).
+2. **Mide en el DOM**: desborde horizontal de la página; alto y ancho de **cada** control con
+   `getBoundingClientRect` (incluidos los que se tocan por su etiqueta: casillas y campos de
+   fichero); huecos entre acciones del mismo grupo; la caja de un modal contra la ventana, su
+   scroll interno y su «Cerrar»; tablas (¿se desplazan en su caja o estiran la página?);
+   `type`/`inputmode`/`enterkeyhint` de cada campo; y el tamaño de letra de cada hoja visible.
+3. **Toca el mapa de verdad**: busca un punto del trazo, pregunta al navegador **quién recibe
+   el dedo** (`elementFromPoint`), y en «Mis tierras» lanza el clic y comprueba que **abre la
+   ficha de esa tierra**; en la ventana del SIGPAC, que el recinto queda elegido.
+
+Las pantallas medidas son 14 (15 en el móvil, con el estado vacío): Hoy, Mis tierras y el
+mapa, ficha de una tierra, Apuntar (labor), Apuntar tratamiento **con el formulario abierto**,
+Añadir tierras por referencia, **ventana del SIGPAC con el recinto buscado**, Cuaderno
+guiado, Productos y abonos, Calendario, Trabajos, **lista de tratamientos** (el filtro de
+Trabajos), Facturas, Más y el estado vacío de tierras.
+
+### 6.2. La tabla de los cuatro anchos
+
+**Antes → después.** En los cuatro anchos: **0 desbordes** (el −15 px del ordenador es la
+barra de scroll del navegador, que no es desborde: el guion lo cuenta como 0), **0 controles
+por debajo de 44 px**, **0 acciones principales por debajo de 48 px**, **0 ventanas que no
+caben** y **0 mapas sin zona de toque**.
+
+| ancho | pantallas | desborde (px) | controles < 44 px | acciones < 48 px | huecos < 8 px | ventanas que no caben | mapas sin zona de toque | letra mínima |
+|---|---|---|---|---|---|---|---|---|
+| **360** | 14 | 0 → 0 | **30 → 0** | 0 → 0 | **5 → 0** | 0 → 0 | **1 → 0** | **10 → 15,2 px** |
+| **390** | 14 | 0 → 0 | **30 → 0** | 0 → 0 | **5 → 0** | 0 → 0 | **1 → 0** | **10 → 15,2 px** |
+| **768** | 13 | 0 → 0 | 0 → 0 | 0 → 0 | **135 → 0** | 0 → 0 | **1 → 0** | **10 → 15,2 px** |
+| **1024** | 13 | 0 → 0 | 0 → 0 | 0 → 0 | **135 → 0** | 0 → 0 | **1 → 0** | **10 → 15,2 px** |
+
+Los 30 controles pequeños de 360/390 eran **las celdas del calendario** (38,6 px de ancho a
+360 y 42,9 a 390: menos que un dedo). Los 135 huecos de 768/1024 eran **los renglones del
+menú lateral** (4 px) más las celdas del calendario. Y el mapa sin zona de toque es el de
+«Mis tierras»: sus anillos tenían 2 px de trazo y no había detrás los 60 px del SIGPAC.
+
+Comprobaciones de la misma medida que sí se pueden citar como «ya estaban bien»: el desborde
+horizontal era 0 en las 56 capturas del antes y sigue siendo 0 en las 56 del después; no hay
+ninguna acción principal por debajo de 48 px antes ni después; y las dos ventanas del SIGPAC
+(alta y ficha) ya cabían con su scroll interno y su «Cerrar» de 48 px.
+
+### 6.3. Los diez problemas, uno por uno
+
+**P3. La mitad del texto, por debajo del mínimo legible — ARREGLADO (maquetación).**
+Había **25 reglas a 13 px**, tres a 10 px y trece a 15. Ahora el suelo es la **pista del
+contrato (0,95 rem = 15,2 px)** y lo que lleva datos —fechas, hectáreas, producto, tierra,
+municipio y la cuenta de cada grupo— **hereda el cuerpo** (19 px en el móvil, 17 en el
+ordenador). La marca «Hoy» y la cuenta del día pasan de 10 a 15,2 px, y el título de pantalla
+baja de 32 a **24 px (1,5 rem)** en el móvil, que es el tamaño del contrato: con 32, el nombre
+largo de una tierra se comía cuatro renglones antes del mapa. Las tablas suben de 14 a 16 px.
+*Evidencia*: `antes-hoy-390.png` / `despues-hoy-390.png`, `antes-calendario-360.png` /
+`despues-calendario-360.png`, `antes-cuaderno-390.png` / `despues-cuaderno-390.png` y la
+columna «letra mínima» de la tabla. **Coste: 3 h.**
+
+**P4. La opción elegida, ilegible en modo oscuro — ARREGLADO (maquetación).**
+El estado elegido (pestaña de «Apuntar», filtros de «Trabajos» y «Productos», renglón del
+menú) se pinta como el `boton-elegido` del contrato: **fondo verde de marca y texto blanco**
+(5,05:1 en oscuro y 8:1 en claro) con **borde de 3 px**, así que el color no va solo. La marca
+«Hoy» y la cuenta del día usan el verde claro en oscuro (de 3,29:1 a 8,0:1). No se ha cambiado
+ningún token de `DESIGN.md`: se usan los que ya existen (`primary`/`on-primary`, el par del
+botón elegido) y un `--brand-bright` que ya estaba en la paleta de la app nueva.
+*Evidencia*: `antes-apuntar-360.png` / `despues-apuntar-360.png`,
+`antes-trabajos-360.png` / `despues-trabajos-360.png`, `antes-calendario-360.png` /
+`despues-calendario-360.png`; el contraste se calcula en `mediciones-*.json`.
+**Coste: 1,5 h.**
+
+**P5. «Apuntar» empieza por una caja de 64 tierras con scroll propio — PARCIAL.**
+Hecho: **un buscador de tierra** (nombre o municipio, arriba, con la tierra ya elegida siempre
+a la vista) y **fuera el scroll anidado**: con 64 tierras se desplaza la página, una sola cosa
+que mover, en vez de una caja dentro de otra. Pendiente: las **3 últimas tierras usadas**, el
+**mapa como selector** y la **barra de acciones fija abajo** (necesitan datos del servidor y
+textos nuevos). *Evidencia*: `antes-apuntar-390.png` / `despues-apuntar-390.png`;
+`antes-apuntar-tratamiento-390.png` / `despues-apuntar-tratamiento-390.png`.
+**Coste: 2 h (hecho) + 3 h (pendiente).**
+
+**P7. El cuadro «sin mapa» repetido 66 veces — PARCIAL.**
+Hecho: **el recuadro discontinuo ya no se pinta** —`DESIGN.md` prohíbe el cuadro inventado— y
+la falta se dice **una sola vez**, en el detalle de la fila: la lista de 64 tierras deja de
+tener 66 «sin mapa» y la fila se alinea sin el hueco. Pendiente: que la cabecera del grupo
+diga **qué** no consta («11 tierras · superficie sin constar») en vez de «· no consta»; es
+texto y toca `textos.py`. *Evidencia*: `antes-tierras-360.png` / `despues-tierras-360.png`
+(el recuadro discontinuo de la primera fila ya no está).
+**Coste: 1 h (hecho) + 1 h (pendiente).**
+
+**P8. Códigos y fecha del mapa — PARCIAL (la parte de teclado y maquetación).**
+Hecho: la referencia del SIGPAC se escribe con **teclado de números con separador**
+(`type="tel"` + `inputmode="decimal"`: sin el `inputmode`, en un iPhone no se puede escribir
+`37.70.0.0.503.51`), los códigos del alta y de la ventana piden **teclado numérico**, y los
+buscadores dicen **qué hace la tecla de enviar** (`enterkeyhint`). La ventana del SIGPAC
+entra entera a 360 y a 390 (ocupa 360×640 y 390×844 exactos, con scroll dentro y «Cerrar» de
+48 px). Pendiente: la **ayuda de «Agregado» y «Zona»** y la **fecha del mapa que se corta y se
+contradice** (2026 / válido hasta 15/12/2025): son texto y un dato del servidor, no
+maquetación. *Evidencia*: `antes-sigpac-360.png` / `despues-sigpac-360.png` y los `campos`
+de `mediciones-despues.json`. **Coste: 1 h (hecho) + 2 h (pendiente).**
+
+**Mapas que dejan interactuar (encargo 5) — ARREGLADO (maquetación).**
+El mapa de «Mis tierras» tenía **2 anillos visibles y 0 zonas de toque**: el trazo mide 2 px y
+el dedo no acierta. Ahora cada tierra lleva detrás el mismo camino con **60 px de trazo
+invisible** (`data-mapa-toque`), y las que solo tienen centro llevan un círculo de 30 px de
+radio; el trazo visible y las etiquetas se pintan encima. En la ventana del SIGPAC las zonas
+ya estaban; se les ha puesto el mismo enganche para medirlas. **Medido tocando de verdad**: el
+punto del trazo recibe el `path`, y el clic **abre la ficha de esa tierra** en 360, 390, 768 y
+1024; en la ventana del SIGPAC, el clic deja el recinto elegido. Nada tapa el lienzo
+(`tapados: 0`). *Evidencia*: `antes-tierras-390.png` / `despues-tierras-390.png`,
+`antes-sigpac-390.png` / `despues-sigpac-390.png` y el bloque `mapa.toque` del JSON.
+**Coste: 2 h.**
+
+**Tablas que se rompen (encargo 3) — ARREGLADO (maquetación).**
+Las dos tablas de la ficha (otros años y comparativa) se desplazan **dentro de su caja** y la
+primera columna se queda fija; ninguna estira la página (`estira_la_pagina: false` en los
+cuatro anchos). La de «otros años», que era la única sin caja, ya la tiene.
+*Evidencia*: `antes-tierra-360.png` / `despues-tierra-360.png` y `tablas` del JSON.
+**Coste: 1 h.**
+
+**P1, P2, P6, P9 y P10 — NO se han arreglado en esta pasada.**
+No son de maquetación y tienen su propio frente: P1 (destinos y botones que salen de la app),
+P2 (textos de programador), P6 (el «Arreglar» del cuaderno y la jerga), P9 (tarjetas de «Hoy»
+con «no consta» duplicado) y P10 (sumar dosis «por hectárea»). En las capturas del después
+se ven tal cual: el botón «Empieza por el cuaderno» y el aviso ámbar del Cuaderno
+(`despues-cuaderno-390.png`), y el resumen de «Trabajos» con «325,35 kg/ha»
+(`despues-trabajos-360.png`). **Coste estimado de lo que queda: 2 h, 2 h, 3 h, 2 h y 2 h.**
+
+### 6.4. Lo que sigue pendiente, en una lista
+
+1. P5: las 3 últimas tierras, el mapa como selector y la barra de acciones fija al pulsar.
+2. P7: la cabecera del grupo diciendo qué no consta (texto en `textos.py`).
+3. P8: la ayuda de «Agregado» y «Zona» y la fecha del mapa (texto y dato del servidor).
+4. P1, P2, P6, P9 y P10, cada uno con su arreglo de texto, destino o cálculo.
+5. **La app sigue sin direcciones por pantalla** (§1.2): no se puede compartir un enlace a una
+   tierra ni volver a la misma pantalla al recargar. No es de esta pasada, pero sigue ahí.
+
+### 6.5. Ficheros, pruebas y limpieza
+
+**Ficheros tocados en esta pasada**
+
+- `backend/web/nuevo/estilos.css`: suelo de letra (0,95 rem; los datos heredan el cuerpo),
+  estado elegido con fondo de marca y texto blanco, huecos de 8 px en el menú y en la rejilla
+  del calendario, tarjeta del calendario a sangre en el móvil (44,3 px por celda a 360),
+  zonas de toque de 60 px en el mapa, caja que desplaza la tabla de «otros años», lista de
+  tierras de «Apuntar» sin scroll anidado, y sin el recuadro «sin mapa».
+- `backend/web/nuevo/app.js`: buscador de tierras en «Apuntar»; miniatura que no se pinta
+  cuando la tierra no tiene forma; zonas de toque en el mapa de «Mis tierras» (con
+  `data-mapa-toque`); tabla de «otros años» dentro de su caja; celdas del calendario con la
+  cuenta del día y el nombre completo en `aria-label`; `type="tel"` +
+  `inputmode="decimal"`/`"numeric"` y `enterkeyhint` en los campos que lo piden.
+- `backend/scripts/capturar_la_revision_movil.py`: **nuevo**. El guion de capturas y medidas
+  del antes y del después (14 pantallas × 4 anchos, con la ventana del SIGPAC buscando de
+  verdad y el mapa tocado de verdad).
+- `backend/tests/test_revision_movil.py`: **nuevo**. 29 pruebas que atan los arreglos a los
+  números (no a las intenciones) y que leen `mediciones-despues.json` para exigir 0
+  desbordes y 0 controles < 44 px.
+- `docs/revision-interfaz.md` y `docs/capturas-revision/*.png` + `mediciones-*.json`.
+- `README.md`, `AGENTS.md` y `docs/LO_QUE_PIDE_LA_JUNTA.md`: el recuento de pruebas de Python,
+  que pasa de 6060 a 6108 porque esta pasada añade 29 (lo exige
+  `test_el_numero_de_pruebas_de_python_es_el_de_verdad`, que cuenta lo que recoge `pytest`).
+  **No se ha tocado `DESIGN.md`**: los tamaños y colores que se usan ya estaban en el contrato.
+
+**Pruebas** (todas en local, sin red):
+
+- `node --test "tests_js/*.test.js"` — **1319 pruebas, 1319 en verde**.
+- `pytest tests/test_revision_movil.py` — **29 pruebas, 29 en verde**.
+- `pytest` completo — **6108 pruebas en verde** (las 6060 que había más las 29 de esta
+  revisión, más las de los frentes que se entregan el mismo día).
+- `pytest tests/test_design_md.py tests/test_interfaz_nuevo.py tests/test_interfaz.py
+  tests/test_la_migracion_a_react.py tests/test_sin_jerga.py` — en verde.
+
+**Limpieza**: el uvicorn de 8094 se ha apagado al terminar y el puerto queda libre (se ha
+comprobado); no se ha dejado ningún Chrome vivo (el guion cierra por perfil); la base y los
+adjuntos estaban en `%TEMP%` y se han borrado; no se ha tocado ningún puerto de otro proyecto
+(8080/5432/5433).
+
+---
+
 ### Anexo: ficheros de esta revisión
 
 - `docs/revision-interfaz.md` — este documento.
@@ -729,3 +939,9 @@ atan las dos); y cada arreglo se comprueba con una medida en el arnés de navega
 - `docs/capturas-revision/mediciones.json` — todo lo medido en el DOM, por pantalla y ancho.
 - `backend/scripts/capturar_pantallas_para_la_revision.py` — el guion que las hace (solo
   lectura: navega, pulsa, mide y guarda; no cambia la aplicación).
+- `docs/capturas-revision/antes-<pantalla>-<ancho>.png` y `despues-<pantalla>-<ancho>.png` —
+  56 capturas de cada momento a 360, 390, 768 y 1024 px (§6).
+- `docs/capturas-revision/mediciones-antes.json` y `mediciones-despues.json` — lo medido en el
+  DOM en cada momento, pantalla por pantalla y con su resumen por ancho (§6).
+- `backend/scripts/capturar_la_revision_movil.py` — el guion del antes y del después (§6.1).
+- `backend/tests/test_revision_movil.py` — las pruebas que atan los arreglos a sus números.

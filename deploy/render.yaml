@@ -1,0 +1,85 @@
+# Blueprint de Render para CUE Digital: **un clic** después de crear la cuenta.
+#
+# QUÉ ES ESTO
+#
+# Render lee este fichero si se elige «New → Blueprint» y se apunta al repositorio. Crea
+# de una vez la aplicación (desde nuestra imagen de Docker) y una base PostgreSQL
+# gratuita, y las enlaza. No hay que tocar nada a mano más que crear la cuenta.
+#
+# LO QUE HAY QUE SABER ANTES DE USARLO (está explicado en docs/CUENTAS-Y-ACCESOS.md)
+#
+#  * El plan gratuito de Render **no tiene disco que dure**: cada reinicio, despliegue o
+#    pausa por inactividad borra el sistema de ficheros. Sirve para enseñar la aplicación
+#    y para probar el recorrido, **no para guardar los papeles de un agricultor**. Para
+#    eso, la recomendación sigue siendo una VM (Oracle Cloud Always Free) con el
+#    `deploy/docker-compose.yml`.
+#  * La base PostgreSQL gratuita de Render **caduca a los 30 días**. Para algo que dure,
+#    se cambia `CUEDIGITAL_DATABASE_URL` por la de un Supabase/Neon gratuitos (la
+#    dirección se copia tal cual: `app/database.py` le pone el driver que falta).
+#  * El plan gratuito **se duerme a los 15 minutos** sin visitas y tarda ~1 minuto en
+#    despertar. El primer agricultor que entre después del café espera ese minuto.
+#  * El **contorno** de una tierra se pinta desde la forma guardada en la tierra. En un
+#    servidor nuevo no está el GeoPackage cacheado de la provincia (1,7 GB): para verlo
+#    en la demo hay que traerlo desde la **ventana del SIGPAC** (consulta online, sin
+#    caché) o montar la caché, que en el plan gratuito no cabe.
+#
+# CÓMO SE USA
+#
+#  1. Crear cuenta en https://dashboard.render.com/register con GitHub.
+#  2. New → Blueprint → elegir el repositorio `ErDeivih/CueDigital` y la rama
+#     `integracion/cloud-estabilizacion-2026-10-21`.
+#  3. Aplicar. Render pide confirmación de los dos recursos (web + base).
+#  4. Cuando termine, la URL es `https://cuedigital.onrender.com` (o el nombre que se
+#     elija) y se comprueba con:
+#         python backend/scripts/comprobar_despliegue.py https://<la-url>
+#
+# El «por qué» de cada cosa está en docs/DESPLIEGUE.md y docs/CUENTAS-Y-ACCESOS.md.
+
+services:
+  - type: web
+    name: cuedigital
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    # `/health` dice que el proceso atiende. No consulta la base a propósito (ver
+    # docs/DESPLIEGUE.md, apartado 1.7): si algún día se quiere una sonda que mire la
+    # base, se cambia por una ruta que la use.
+    healthCheckPath: /health
+    # `autoDeploy` está obsoleto en la especificación de Render: se usa este, que es el
+    # que manda. Apagado porque aquí se despliega a mano, no en cada `git push`.
+    autoDeployTrigger: 'off'
+    envVars:
+      # La dirección que da Render es `postgres://…`; `app/database.py` le pone el
+      # driver que SQLAlchemy necesita. No hay que editarla.
+      - key: CUEDIGITAL_DATABASE_URL
+        fromDatabase:
+          name: cuedigital-db
+          property: connectionString
+      # La clave que firma los vales: la genera Render y no se escribe en el repositorio.
+      - key: CUEDIGITAL_SECRETO
+        generateValue: true
+      # 240.000 iteraciones: el valor de producción de verdad (ver app/security.py).
+      - key: CUEDIGITAL_ITERACIONES_PBKDF2
+        value: 240000
+      # Vacío a propósito: NO es un entorno de pruebas.
+      - key: CUEDIGITAL_ENTORNO
+        value: ""
+      # Rutas de dentro del contenedor (las crea la imagen).
+      - key: CUEDIGITAL_ADJUNTOS
+        value: /datos/adjuntos
+      - key: CUEDIGITAL_SIGPAC_CACHE
+        value: /datos/sigpac_cache
+      - key: CUEDIGITAL_OBSERVABILIDAD
+        value: /datos/observabilidad
+      # Sin este token, la ruta del resumen no existe (404). Render lo genera.
+      - key: CUEDIGITAL_OBSERVABILIDAD_TOKEN
+        generateValue: true
+
+databases:
+  - name: cuedigital-db
+    plan: free
+    region: frankfurt
+    databaseName: cuedigital
+    user: cuedigital

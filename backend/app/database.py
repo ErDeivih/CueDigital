@@ -24,8 +24,29 @@ from sqlalchemy.pool import StaticPool
 URL_POR_DEFECTO = "sqlite:///./cuedigital.db"
 
 
+def _normalizar_url(url: str) -> str:
+    """**La dirección que da el proveedor, en la forma que entiende SQLAlchemy.**
+
+    Render, Neon, Supabase y casi cualquier proveedor de PostgreSQL entregan la dirección
+    como `postgres://…` o `postgresql://…`. SQLAlchemy 2 **no acepta esos nombres de
+    esquema**: necesita el driver explícito. Con la dirección tal cual, el programa **no
+    arranca** en el servidor de verdad y el error habla de un dialecto que no existe, no de
+    la dirección; y quien lo lee está copiando y pegando lo que le dio el panel.
+
+    Se cambia **solo el esquema**: el resto de la dirección (usuario, clave, host, base y
+    parámetros como `?sslmode=require`) se queda exactamente igual. Lo que ya trae driver
+    (`+psycopg`, `+asyncpg`) y SQLite se quedan como están. Lo comprueba
+    `tests/test_url_de_la_base.py`.
+    """
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
+
+
 def url_base_datos() -> str:
-    return os.environ.get("CUEDIGITAL_DATABASE_URL", URL_POR_DEFECTO)
+    return _normalizar_url(os.environ.get("CUEDIGITAL_DATABASE_URL", URL_POR_DEFECTO))
 
 
 def _es_sqlite(url: str) -> bool:

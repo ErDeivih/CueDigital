@@ -307,3 +307,80 @@ teniendo el problema del disco efímero para las fotos.
 Sentry; los precios de Backblaze B2; las horas exactas del PostgreSQL «Free» de Koyeb; el
 listado de regiones europeas de Neon; si Oracle deja de reclamar instancias ociosas al pasar a
 Pay As You Go; y el coste de un dominio.
+
+---
+
+## 9. El intento del 09/11/2026 con las credenciales de David (y el bloqueo exacto)
+
+> **Resumen: no se ha podido publicar. No es un problema del programa —la imagen arranca y el
+> recorrido pasa en local contra PostgreSQL— sino de las cuentas.** Lo que sigue es lo que se
+> probó, con la respuesta real de cada servicio, y el paso que falta.
+
+### 9.1. Cloudflare: el token vale, pero no autoriza, y además no puede ejecutar esta app
+
+Se probó el `CLOUDFLARE_API_TOKEN` de `F:\EspacioCodigo\_flujo-dsh\credenciales.env` (sin
+copiar su valor a ningún sitio):
+
+| Llamada | Respuesta |
+|---|---|
+| `GET /client/v4/user/tokens/verify` | **200 · status `active`** (el token es válido y no ha caducado) |
+| `GET /client/v4/accounts` | **403 Forbidden** |
+| `GET /client/v4/memberships` | **401 Unauthorized** |
+
+Las dos llamadas que dan el **Account ID** están cerradas: el token está limitado a unos
+recursos concretos y no puede leer la cuenta. **Sin Account ID no se puede usar la API de
+Cloudflare** (todas sus rutas de proyecto van colgadas de `/accounts/{id}`). Es el bloqueo que
+sospechabas.
+
+**Y aunque se añadiera el Account ID, Cloudflare no sirve para esta aplicación.** No es una
+opinión: [Pages](https://developers.cloudflare.com/pages/) sirve **ficheros estáticos** y sus
+[Functions](https://developers.cloudflare.com/pages/functions/) se ejecutan en el runtime de
+**Workers** (JavaScript/TypeScript). CueDigital es un backend **FastAPI + SQLAlchemy +
+PostgreSQL**; eso no corre en Workers. `d1` (su base de datos) no es PostgreSQL. Se podría
+publicar ahí **solo la pantalla**, pero sería una pantalla sin datos: la primera llamada a
+`/api/...` no tendría a quién preguntar.
+
+### 9.2. Supabase: sirve para la base y las fotos, no para la aplicación
+
+El token de gestión **sí funciona**: hay un proyecto activo (`EntrenoLab-Comercial`, región
+`eu-west-1`), que **es de otro proyecto de David y no se ha tocado**. Supabase da **PostgreSQL,
+almacenamiento y Edge Functions (Deno)**, pero **no ejecuta un backend Python**. Sirve para dos
+de las tres piezas (base de datos y fotos), no para la aplicación.
+
+### 9.3. Lo que falta, exacto, y lo que ya está hecho
+
+| Pieza | Estado | Qué falta |
+|---|---|---|
+| Imagen de Docker | **hecha y probada** (669 MB, arranca contra PostgreSQL 16) | nada |
+| Recorrido completo (cuenta, tierras, contornos, observabilidad) | **verde en local** | ejecutarlo contra la URL |
+| Blueprint de Render | **`deploy/render.yaml`**, YAML validado | que exista la cuenta |
+| Cuenta de proveedor | **no hay** | **David**: 2 minutos (ver abajo) |
+| Dominio | no hay | opcional para la demo (Render da un subdominio) |
+| Base de datos | 0 € en Render (caduca a los 30 días) o Supabase/Neon | elegir |
+
+**El paso que falta, en dos minutos y sin tarjeta:** entrar en
+<https://dashboard.render.com/register>, registrarse **con GitHub**, y luego
+**New → Blueprint → repositorio `ErDeivih/CueDigital`, rama
+`integracion/cloud-estabilizacion-2026-10-21` → Apply**. Render lee `deploy/render.yaml`, crea
+la aplicación y su PostgreSQL gratuito, y devuelve una URL
+`https://cuedigital.onrender.com`. Después se comprueba con:
+
+```bash
+python backend/scripts/comprobar_despliegue.py https://cuedigital.onrender.com
+```
+
+**Tres avisos de esa opción, para no llevarse sorpresas** (los dice la propia documentación de
+Render, consultada el 09/11/2026):
+
+1. El plan gratuito **no tiene disco duradero**: cada reinicio o pausa borra los ficheros. Sirve
+   para enseñar la aplicación; **no** para guardar los papeles de un agricultor. Para eso, la
+   recomendación sigue siendo la **VM gratuita** del apartado 3.
+2. La base PostgreSQL gratuita de Render **caduca a los 30 días**. Para algo permanente, se
+   cambia `CUEDIGITAL_DATABASE_URL` por la de Supabase/Neon (basta copiarla: el programa le pone
+   el driver que falta, ver `backend/app/database.py`).
+3. El web gratuito **se duerme a los 15 minutos** y tarda ~1 minuto en despertar.
+4. **El contorno** de una tierra se pinta desde su forma guardada. En un servidor nuevo **no está
+   el GeoPackage cacheado** de la provincia (1,7 GB): en la demo se trae desde **la ventana del
+   SIGPAC** (consulta online, sin caché) o se monta la caché, que en el plan gratuito no cabe.
+   En la VM de la opción A sí hay sitio.
+
