@@ -1,11 +1,40 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: CueDigital se ha revisado y arreglado para móvil y tableta a 360, 390, 768 y 1024 px, con 112 capturas antes/después: los 30 controles por debajo de 44 px y los 135 huecos por debajo de 8 px quedan en 0, el calendario y el menú se pueden pulsar, el mapa de «Mis tierras» ya recibe el toque, los campos de números abren teclado numérico y la opción elegida pasa de 2,48:1 a contraste de contrato. **La URL pública sigue bloqueada y ahora se sabe exactamente por qué**: el Account ID de Cloudflare ya está puesto, pero el token no tiene permisos de despliegue (403 en la cuenta y 401 en Pages, Workers, R2, D1 y zonas), y aun teniéndolos Pages/Workers no ejecutan FastAPI + PostgreSQL; GitHub Pages tampoco vale para la aplicación (solo para el front, sin datos). Hace falta una cuenta de Render (2 minutos) o una VM. Todo lo demás está listo: imagen probada contra PostgreSQL, `deploy/render.yaml` y `comprobar_despliegue.py` en verde en local.
+resumen: **CueDigital está EN PIE en una URL pública**: https://attract-leeds-integer-asp.trycloudflare.com (pantalla en /nuevo/, cuenta de ejemplo demo@cuedigital.local / cuaderno-demo-2026) con el backend completo —FastAPI + PostgreSQL 16— en el servidor propio de David y el túnel de Cloudflare delante. Se ven las **cinco parcelas del cliente de Salamanca con su contorno** (GeoPackage real) y el **alta por referencia de seis números** funciona; comprobado con Chrome de verdad y capturas a 360 y 1024 en docs/capturas-despliegue/. El front se publica aparte con `deploy/paginas_github/preparar.py` y su `config.js` (API + CORS por variable). **Lo que falta de la cola**: GitHub Pages está **bloqueado por el plan** (repo privado + cuenta gratuita → 422 de la API), aunque la rama `gh-pages` ya está subida; y la URL del túnel es **efímera** (cambia al recrear el contenedor) hasta que haya dominio o túnel con nombre.
 estado: en-curso
-tarea: revisión y arreglo de los layouts de móvil y tableta (360/390/768/1024) y despliegue preparado; la URL pública espera una cuenta de proveedor
+tarea: despliegue real con URL pública (servidor propio + túnel) y front preparado para Pages; layouts de móvil y tableta ya cerrados en la ronda anterior
 nivel: 2
-siguiente: crear la cuenta de Render y aplicar `deploy/render.yaml` (o la VM), correr `comprobar_despliegue.py` contra la URL; y seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
-bloqueado: la URL pública depende de una cuenta de proveedor que tiene que crear David; el token de Cloudflare del 09/11 no tiene permisos de despliegue (403/401 en todas las superficies) y Pages no ejecuta Python; PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+siguiente: activar GitHub Pages (hacer público el repositorio o pasar a Pro, decisión de David), dar una URL estable (dominio o túnel con nombre) y seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
+bloqueado: GitHub Pages exige repositorio público o plan Pro (el repo es privado y la cuenta es gratuita); la URL del túnel cambia al recrear el contenedor; PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-09
+
+## Lo que se ha hecho en esta ronda (09/11/2026, cuarta: URL pública de verdad)
+
+1. **Backend completo en el servidor propio** (`192.168.1.139`, Docker): contenedores
+   `cuedigital-db` (PostgreSQL 16) y `cuedigital-app` (la imagen `cuedigital:servidor`, construida
+   aquí y cargada con `docker load`, puerto `127.0.0.1:8090`), datos en
+   `/srv/cuedigital/datos`. Arranca en PostgreSQL con las 67 tablas y `/health` contesta 200.
+   La base y los secretos viven en `/srv/cuedigital/env` (600, fuera del repositorio).
+2. **URL pública por túnel de Cloudflare** (`cloudflared` en un contenedor con `--restart`):
+   **https://attract-leeds-integer-asp.trycloudflare.com**. Es un *quick tunnel*: HTTPS de verdad,
+   sin cuenta, pero **la dirección cambia** si se recrea. Estable requiere dominio o túnel con nombre.
+3. **Finca de ejemplo con las cinco parcelas del cliente**, dadas de alta **solo con su referencia**
+   (cuatro con recinto y «El Visor» con seis números) y con la forma traída del **GeoPackage real de
+   Salamanca** que se copió a la caché del servidor: **5 de 5 con contorno**, PNG 800×600. Cuenta:
+   `demo@cuedigital.local` / `cuaderno-demo-2026`.
+4. **Comprobado en la URL pública** (`deploy/comprobar_publica.py`, Chrome de verdad): entra la
+   cuenta, la pantalla carga, se ven las cinco parcelas y **el mapa con su contorno**
+   (`naturalWidth > 0`), y la ficha enseña la ortofoto con el contorno. Capturas a **360 y 1024** en
+   `docs/capturas-despliegue/` (`tierras-360/1024`, `ficha-360/1024`).
+5. **El front para publicarlo aparte**: `deploy/paginas_github/preparar.py` genera el paquete
+   estático (rutas relativas, `config.js` con `window.CUEDIGITAL_API`, `.nojekyll` y entrada
+   automática en la cuenta de ejemplo) y `urlDeLaApi()` (`web/nuevo/modelo.js`) es lo que hace que
+   las llamadas lleven el dominio del servidor solo cuando se publica aparte. En el backend, los
+   orígenes de fuera se autorizan con **`CUEDIGITAL_CORS_ORIGENES`** (con su prueba), y `*` se
+   ignora a propósito. La rama **`gh-pages` está subida**, pero **Pages no se puede activar**:
+   `422 · Your current plan does not support GitHub Pages for this repository` (repo privado,
+   cuenta gratuita). Se activa en dos clics si el repo se hace público o la cuenta pasa a Pro.
+6. **`docs/DESPLIEGUE.md` §9**: la URL, la cuenta, cómo se levanta y se apaga, cómo se conecta la
+   pantalla con el backend (variables, CORS), el bloqueo de Pages y la comprobación que se repite.
 
 ## Lo que se ha hecho en esta ronda (09/11/2026, tercera: móvil, tableta y despliegue)
 

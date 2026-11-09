@@ -122,6 +122,7 @@ import {
   totalesDeTrabajos,
   urlDeMiniatura,
   urlDelMapa,
+  urlDeLaApi,
 } from "../web/nuevo/modelo.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
@@ -1780,4 +1781,33 @@ test("cada tierra pintada se abre solo si el padre deja abrirla", () => {
   assert.equal(puedeAbrirLaTierraActualizada({}, () => {}), false);
   assert.equal(puedeAbrirLaTierraActualizada(null, () => {}), false);
   assert.equal(puedeAbrirLaTierraActualizada({ parcela_id: 9 }, () => {}), true);
+});
+
+
+/**
+ * El front puede publicarse aparte del servidor (GitHub Pages llamando al servidor de casa).
+ * `urlDeLaApi` es lo que decide si una ruta lleva delante el dominio de la API o no.
+ */
+test("sin dominio configurado, la ruta se queda como esta (lo normal)", () => {
+  delete globalThis.CUEDIGITAL_API;
+  assert.equal(urlDeLaApi("/api/nuevo/hoy"), "/api/nuevo/hoy");
+  assert.equal(urlDeLaApi(""), "");
+});
+
+test("con el servidor apuntado, las rutas de la API llevan su dominio", () => {
+  globalThis.CUEDIGITAL_API = "https://servidor.example/";
+  assert.equal(urlDeLaApi("/api/nuevo/hoy"), "https://servidor.example/api/nuevo/hoy");
+  assert.equal(urlDeLaApi("api/nuevo/tierras"), "https://servidor.example/api/nuevo/tierras");
+  // Una direccion que ya trae dominio no se toca dos veces.
+  assert.equal(urlDeLaApi("https://otro.example/x"), "https://otro.example/x");
+  delete globalThis.CUEDIGITAL_API;
+});
+
+test("la barra final del servidor no duplica la barra de la ruta", () => {
+  globalThis.CUEDIGITAL_API = "https://servidor.example///";
+  assert.equal(
+    urlDeLaApi("/api/mapa/tierra/1.png"),
+    "https://servidor.example/api/mapa/tierra/1.png"
+  );
+  delete globalThis.CUEDIGITAL_API;
 });

@@ -8,6 +8,7 @@ para los tests) y se documenta que en producción esto lo hará una migración.
 from __future__ import annotations
 
 import mimetypes
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -168,11 +169,38 @@ app = FastAPI(
 async def _texto_que_no_cabe(_peticion: Request, fallo: TextoQueNoCabe) -> JSONResponse:
     return JSONResponse(status_code=422, content={"detail": str(fallo)})
 
-# En desarrollo, la interfaz corre en otro puerto. En producción va detrás del mismo
-# dominio, así que esto se puede quitar sin más.
+# **Qué orígenes pueden llamar a la API desde otro sitio** (09/11/2026).
+#
+# La pantalla y la API pueden vivir en sitios distintos: el front estático en GitHub Pages
+# llamando al servidor propio. Entonces el navegador manda el `Origin` del front y la API tiene
+# que autorizarlo, o la pantalla se queda sin datos aunque el servidor esté bien.
+#
+# Los de desarrollo siguen valiendo. Los de fuera **se piden por variable** y no se abren a
+# cualquiera: es una API con datos de agricultores. `*` se ignora a propósito (con `*` y
+# credenciales, cualquier página podría leer un vale abierto). Lo comprueba
+# `tests/test_origenes_de_la_pantalla.py`.
+ORIGENES_DE_DESARROLLO = ("http://localhost:5173", "http://127.0.0.1:5173")
+
+
+def origenes_permitidos() -> list[str]:
+    """Los orígenes de desarrollo más los que se pidan en `CUEDIGITAL_CORS_ORIGENES`."""
+    crudo = os.environ.get("CUEDIGITAL_CORS_ORIGENES", "")
+    extra = [
+        origen.strip()
+        for origen in crudo.split(",")
+        if origen.strip() and origen.strip() != "*"
+    ]
+    # Sin repetir y en orden: la lista se enseña en los registros y así se lee limpia.
+    vistos: list[str] = []
+    for origen in [*ORIGENES_DE_DESARROLLO, *extra]:
+        if origen not in vistos:
+            vistos.append(origen)
+    return vistos
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=origenes_permitidos(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -127,6 +127,7 @@ import {
   textoDeFaltasSinListar,
   textoDeLasRellenables,
   textoDelAvisoDeBloqueo,
+  urlDeLaApi,
   urlDeMiniatura,
   urlDelMapa,
 } from "./modelo.js";
@@ -261,7 +262,7 @@ async function pedir(ruta, opciones = {}) {
   const cabeceras = { ...(opciones.headers || {}), Authorization: `Bearer ${token}` };
   let respuesta;
   try {
-    respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+    respuesta = await fetch(urlDeLaApi(ruta), { ...opciones, headers: cabeceras });
   } catch (fallo) {
     return { estado: "error" };
   }
@@ -293,7 +294,7 @@ async function pedirConDetalle(ruta, opciones = {}) {
   const cabeceras = { ...(opciones.headers || {}), Authorization: `Bearer ${token}` };
   let respuesta;
   try {
-    respuesta = await fetch(ruta, { ...opciones, headers: cabeceras });
+    respuesta = await fetch(urlDeLaApi(ruta), { ...opciones, headers: cabeceras });
   } catch (fallo) {
     return { estado: "error" };
   }
@@ -362,7 +363,7 @@ async function subirCuaderno(fichero) {
 
   let respuesta;
   try {
-    respuesta = await fetch(RUTA_IMPORTAR, {
+    respuesta = await fetch(urlDeLaApi(RUTA_IMPORTAR), {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formulario,
@@ -381,7 +382,7 @@ async function subirCuaderno(fichero) {
   // La puerta de un paso todavía no está: se lee y se importa, que es lo mismo en dos pasos.
   const leer = new FormData();
   leer.append("fichero", fichero);
-  const leidoRespuesta = await fetch(RUTA_CUADERNO_LEER, {
+  const leidoRespuesta = await fetch(urlDeLaApi(RUTA_CUADERNO_LEER), {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: leer,
@@ -393,7 +394,7 @@ async function subirCuaderno(fichero) {
 
   const importar = new FormData();
   importar.append("fichero", fichero);
-  const importadoRespuesta = await fetch(RUTA_CUADERNO_IMPORTAR, {
+  const importadoRespuesta = await fetch(urlDeLaApi(RUTA_CUADERNO_IMPORTAR), {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: importar,
@@ -433,7 +434,7 @@ function usarPantalla(ruta, activa) {
     const control = new AbortController();
     setEstado("cargando");
 
-    fetch(ruta, { headers: { Authorization: `Bearer ${token}` }, signal: control.signal })
+    fetch(urlDeLaApi(ruta), { headers: { Authorization: `Bearer ${token}` }, signal: control.signal })
       .then(async (respuesta) => {
         if (!vivo) return;
         if (respuesta.status === 401 || respuesta.status === 403) {
@@ -1884,7 +1885,7 @@ function VistaAlta({ estadoVista, datos, alReintentar, alAnadirTierras, alIrATie
 function pedirFormulario(ruta, formulario) {
   const token = leerToken();
   if (!token) return Promise.resolve({ estado: "sin-permiso" });
-  return fetch(ruta, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formulario })
+  return fetch(urlDeLaApi(ruta), { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formulario })
     .then(async (respuesta) => {
       if (respuesta.status === 401 || respuesta.status === 403) {
         borrarToken();
@@ -2080,7 +2081,7 @@ function usarOpcionesDeTrabajo() {
     setEstado("cargando");
 
     const peticion = (ruta) =>
-      fetch(ruta, { headers: { Authorization: `Bearer ${token}` }, signal: control.signal })
+      fetch(urlDeLaApi(ruta), { headers: { Authorization: `Bearer ${token}` }, signal: control.signal })
         .then(async (respuesta) => (respuesta.ok ? respuesta.json().catch(() => null) : null))
         .catch(() => null);
 
@@ -3186,7 +3187,7 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
 
   const mapa = usaElServidor && caja
     ? html`<div className="mapa__lienzo">
-        <img className="mapa__foto" data-mapa-imagen src=${RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA)} alt=${textos.tierra.mapa} onError=${() => setUsaElServidor(false)} />
+        <img className="mapa__foto" data-mapa-imagen src=${urlDeLaApi(RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA))} alt=${textos.tierra.mapa} onError=${() => setUsaElServidor(false)} />
       </div>`
     : mapaDelCliente;
 
@@ -3209,7 +3210,7 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
       ${mapa}
       ${usaElServidor && caja
         ? html`<p className="estado__acciones">
-            <a className="boton" data-guardar-imagen-tierra href=${RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA)} download=${`tierra-${tierra.id}.png`}>${textos.apuntar.guardarImagen}</a>
+            <a className="boton" data-guardar-imagen-tierra href=${urlDeLaApi(RUTA_MAPA_TIERRA(tierra.id, ANCHO_MAPA, ALTO_MAPA))} download=${`tierra-${tierra.id}.png`}>${textos.apuntar.guardarImagen}</a>
           </p>`
         : null}
       <div className="estado__acciones">
@@ -4358,7 +4359,7 @@ function avisarDeLaPantalla(pantalla) {
       }
     }
     if (typeof fetch === "function") {
-      fetch(direccion, {
+      fetch(urlDeLaApi(direccion), {
         method: "POST",
         keepalive: true,
         headers: { "Content-Type": "application/json" },

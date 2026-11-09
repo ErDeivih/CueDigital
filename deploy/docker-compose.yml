@@ -73,6 +73,12 @@ services:
       # del resumen no existe (404), que es lo correcto por defecto.
       CUEDIGITAL_OBSERVABILIDAD: ${CUEDIGITAL_OBSERVABILIDAD:-}
       CUEDIGITAL_OBSERVABILIDAD_TOKEN: ${CUEDIGITAL_OBSERVABILIDAD_TOKEN:-}
+      # **Quién puede llamar a la API desde otro sitio** (09/11/2026). Si la pantalla se publica
+      # aparte (GitHub Pages), su origen va aquí separado por comas:
+      #   CUEDIGITAL_CORS_ORIGENES=https://erdeivih.github.io
+      # Sin esto, el navegador manda el `Origin` del front y la API no lo autoriza: la pantalla
+      # se queda sin datos aunque el servidor esté bien. `*` se ignora a propósito.
+      CUEDIGITAL_CORS_ORIGENES: ${CUEDIGITAL_CORS_ORIGENES:-}
       # Entrar con certificado: SOLO cuando haya un proxy delante que lo valide (ver
       # docs/DESPLIEGUE.md). Apagado por defecto a propósito: si se enciende sin eso,
       # cualquiera puede mandar la cabecera y entrar como otro agricultor.

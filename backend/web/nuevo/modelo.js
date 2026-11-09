@@ -20,6 +20,27 @@ export const CLAVE_TOKEN = "cuedigital.token";
 export const ANCHO_MAPA = 800;
 export const ALTO_MAPA = 600;
 
+/**
+ * **Dónde está la API.** Vacío es lo normal: la pantalla la sirve el mismo programa que la API,
+ * así que las direcciones van sin dominio (`/api/...`).
+ *
+ * Cuando la pantalla se publica **aparte** del servidor (por ejemplo, el front estático en
+ * GitHub Pages llamando al servidor de casa), `config.js` pone `window.CUEDIGITAL_API` con la
+ * dirección del servidor y **solo entonces** las llamadas llevan delante ese dominio. Sin la
+ * variable, nada cambia.
+ *
+ * Lo que NO se toca aquí: una ruta que ya trae dominio (`https://...`) se devuelve tal cual.
+ */
+export function urlDeLaApi(ruta) {
+  const base =
+    typeof globalThis !== "undefined" && typeof globalThis.CUEDIGITAL_API === "string"
+      ? globalThis.CUEDIGITAL_API.trim().replace(/\/+$/, "")
+      : "";
+  const camino = String(ruta == null ? "" : ruta);
+  if (!base || /^[a-z][a-z0-9+.-]*:/i.test(camino)) return camino;
+  return base + (camino.startsWith("/") ? camino : `/${camino}`);
+}
+
 export const textos = {
   app: {
     nombre: "CUE Digital",

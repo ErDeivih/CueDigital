@@ -917,3 +917,106 @@ con su test de jerga y su revisión.
    con fecha apuntada.
 5. **Lo que hay que decidir ya, y no cuesta dinero**: dominio, quién es el responsable del
    tratamiento, política de conservación, y si se pone el vigilante externo.
+
+---
+
+## 9. El despliegue que está EN PIE hoy: el servidor de casa (09/11/2026)
+
+> **Esto ya no es un plan: es lo que hay funcionando.** La aplicación completa (pantalla + API +
+> PostgreSQL) corre en el **servidor propio de David**, y sale a internet por un túnel de
+> Cloudflare. La pantalla y la API están en el **mismo origen**, así que no hace falta CORS para
+> esta forma de servirla.
+
+### 9.1. La dirección pública (y por qué es esta)
+
+| Dato | Valor |
+|---|---|
+| **URL pública** | **https://attract-leeds-integer-asp.trycloudflare.com** |
+| Pantalla nueva | `/nuevo/` (la de siempre sigue en `/`) |
+| Cuenta de ejemplo | `demo@cuedigital.local` / `cuaderno-demo-2026` |
+| Finca de ejemplo | Las **cinco parcelas del cliente de Salamanca** (El Prado, El Alto, La Vega, Las Eras y El Visor), con su forma traída del **GeoPackage real** |
+| Servidor | el de casa (`192.168.1.139`), Docker, contenedores `cuedigital-db`, `cuedigital-app`, `cuedigital-tunnel` |
+| Datos | `/srv/cuedigital/datos/{adjuntos,sigpac_cache,postgresql,observabilidad}` |
+| Imagen | `cuedigital:servidor` (se construye en el ordenador de David y se carga con `docker load`) |
+| Puerto interno | `127.0.0.1:8090` → túnel |
+
+**El túnel es efímero y esto hay que decirlo:** es un *quick tunnel* de Cloudflare, sin cuenta. Da
+HTTPS de verdad (Cloudflare termina el TLS) pero **la dirección cambia si se recrea el
+contenedor**. Para una dirección estable hacen falta dos cosas que dependen de David: un
+**túnel con nombre** en su cuenta de Cloudflare (y un token con permisos, que el del 09/11 no
+tiene) o **un dominio** apuntando a la IP pública. Mientras tanto:
+
+```bash
+docker restart cuedigital-tunnel          # si se cae
+docker logs cuedigital-tunnel | grep trycloudflare   # la dirección nueva
+```
+
+### 9.2. Cómo se levanta y cómo se apaga
+
+```bash
+# En el servidor. El guion deja la base, la app y comprueba /health.
+/tmp/arrancar-cuedigital.sh
+
+# Apagarlo todo (sin borrar los datos, que están en /srv/cuedigital/datos):
+docker stop cuedigital-app cuedigital-db cuedigital-tunnel
+```
+
+La configuración vive en **`/srv/cuedigital/env`** (permisos 600, fuera del repositorio): base,
+secreto de los vales, token de la observabilidad y orígenes del CORS.
+
+### 9.3. Cómo se conecta la pantalla con el backend
+
+Hay **dos formas**, y las dos están probadas:
+
+1. **El propio programa sirve la pantalla** (lo que hay hoy): `https://<url>/nuevo/`. La pantalla
+   pide `/api/...` y está en el mismo origen. **No hace falta CORS ni configurar nada.**
+2. **La pantalla publicada aparte** (GitHub Pages u otro sitio): entonces la API y la pantalla
+   están en orígenes distintos y hacen falta **las dos cosas**:
+
+   - **En la pantalla**, decir dónde está la API. `deploy/paginas_github/preparar.py` genera una
+     carpeta con el front y un `config.js` que pone `window.CUEDIGITAL_API = "https://<url>"`.
+     La pantalla pasa **todas** las llamadas por `urlDeLaApi()` (`web/nuevo/modelo.js`), que no
+     toca nada si esa variable está vacía.
+   - **En el servidor**, autorizar ese origen:
+     `CUEDIGITAL_CORS_ORIGENES=https://erdeivih.github.io` (separados por comas). Sin esto, el
+     navegador manda el `Origin` de Pages y la API lo rechaza: la pantalla se queda vacía. `*`
+     se ignora a propósito (es una API con datos de agricultores).
+
+   ```bash
+   # Preparar el front para publicarlo aparte:
+   python deploy/paginas_github/preparar.py --servidor https://<url> \
+       --demo-correo demo@cuedigital.local --demo-clave cuaderno-demo-2026 --salida build/pages
+   ```
+
+### 9.4. GitHub Pages: preparado y **bloqueado por el plan**
+
+La rama **`gh-pages` ya está subida** con el front (con su `config.js`, su `.nojekyll` y las rutas
+relativas). **No se ha podido activar Pages**:
+
+> `422 · Your current plan does not support GitHub Pages for this repository.`
+
+El repositorio es **privado** y la cuenta está en el **plan gratuito**, que no da Pages para
+repositorios privados. Para activarlo, David decide una de estas dos (las dos, un clic después):
+
+- **hacer público el repositorio** (Settings → General → Danger Zone → Change visibility), o
+- **pasar la cuenta a Pro** (de pago).
+
+Después: Settings → Pages → *Deploy from a branch* → `gh-pages` / `/`. La URL sería
+`https://erdeivih.github.io/CueDigital/`.
+
+**Mientras eso no se decida, la app se ve (y funciona) en la URL del túnel**, que sirve la misma
+pantalla con datos: es la que se ha comprobado.
+
+### 9.5. La comprobación que se puede repetir
+
+```bash
+python deploy/comprobar_publica.py https://attract-leeds-integer-asp.trycloudflare.com
+```
+
+Comprueba, contra la URL de verdad: `/health`, entrada con la cuenta de ejemplo, **las cinco
+parcelas visibles** en la pantalla (Chrome de verdad), **el mapa con el contorno cargado**
+(`naturalWidth > 0`) y la ficha de una tierra con su ortofoto y su contorno; y guarda las
+capturas a **360 y 1024 px** en `docs/capturas-despliegue/`. El alta por referencia de seis
+números se prueba en `deploy/paginas_github/sembrar_finca_ejemplo.py` (las cinco se dieron de alta
+así, y «El Visor» solo con `37-70-0-0-501-80`, seis números).
+
