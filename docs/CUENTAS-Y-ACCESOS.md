@@ -340,7 +340,40 @@ PostgreSQL**; eso no corre en Workers. `d1` (su base de datos) no es PostgreSQL.
 publicar ahí **solo la pantalla**, pero sería una pantalla sin datos: la primera llamada a
 `/api/...` no tendría a quién preguntar.
 
-### 9.2. Supabase: sirve para la base y las fotos, no para la aplicación
+### 9.1 bis. Actualización de la noche del 09/11: el Account ID ya está, el token sigue cerrado
+
+David añadió el **`CLOUDFLARE_ACCOUNT_ID`** (32 caracteres) a `credenciales.env`. Se volvió a
+probar la API con el token y la cuenta ya identificada:
+
+| Llamada (con Account ID) | Respuesta |
+|---|---|
+| `GET /accounts` y `GET /accounts/{id}` | **403 Forbidden** |
+| `GET /accounts/{id}/pages/projects` | **401 Unauthorized** |
+| `GET /accounts/{id}/workers/services` | **401 Unauthorized** |
+| `GET /accounts/{id}/r2/buckets` | **401 Unauthorized** |
+| `GET /accounts/{id}/containers/applications` | **401 Unauthorized** |
+| `GET /accounts/{id}/d1/database` | **401 Unauthorized** |
+| `GET /zones` | **403 Forbidden** |
+
+Es decir: **el Account ID era necesario pero no era el problema principal**. El token está
+activo pero **no tiene los permisos** de ninguna de las superficies que harían falta, ni
+siquiera los de leer la cuenta. Para publicar algo en Cloudflare habría que crear otro token en
+<https://dash.cloudflare.com/profile/api-tokens> con, al menos:
+
+- **Account → Cloudflare Pages: Edit** (o Workers Scripts: Edit), y
+- **Account → Account Settings: Read** (para las rutas de cuenta),
+
+y aun así **seguiría sin servir para la aplicación**: Pages ejecuta JavaScript/TypeScript, no
+un backend Python con PostgreSQL (§9.1). Serviría solo para la pantalla, sin datos.
+
+**GitHub Pages, la otra vía que se planteó:** el `gh` de esta máquina **sí está autenticado**
+(usuario `ErDeivih`, token de OAuth en el llavero), así que se podría publicar el front estático
+en GitHub Pages. Se ha **descartado a propósito**: en Pages las llamadas a `/api/...` darían
+404 y la aplicación saldría con sus avisos de error en todas las pantallas; una demo que no
+funciona es peor que un bloqueo explicado. **El front no necesita proveedor propio: lo sirve la
+misma aplicación** (es lo que ya hace en local y en la VM).
+
+
 
 El token de gestión **sí funciona**: hay un proyecto activo (`EntrenoLab-Comercial`, región
 `eu-west-1`), que **es de otro proyecto de David y no se ha tocado**. Supabase da **PostgreSQL,
