@@ -696,6 +696,12 @@ def comprobar_cuaderno_y_productos(nav: NavegadorDeVerdad, base: str) -> None:
     nav.medir(1440, 1000)
     nav.abrir(f"{base}/nuevo/", esperar=1.0)
     esperar_estado(nav, "listo")
+    nav.evaluar(
+        "(() => { window.__errores = [];"
+        " window.addEventListener('error', (e) => window.__errores.push(String(e.message || e)));"
+        " window.addEventListener('unhandledrejection', (e) => window.__errores.push(String(e.reason)));"
+        " return true; })()"
+    )
 
     clic_en_visible(nav, "[data-destino=cuaderno]")
     llego = nav.esperar("!!document.querySelector('[data-vista=\"cuaderno\"]')", segundos=15)
@@ -705,6 +711,11 @@ def comprobar_cuaderno_y_productos(nav: NavegadorDeVerdad, base: str) -> None:
     items = nav.evaluar("document.querySelectorAll('[data-que-falta-item]').length") or 0
     comprobar(secciones >= 1 and items >= 1,
               f"el cuaderno agrupa lo que falta por secciones ({secciones} secciones, {items} cosas)")
+    if secciones == 0:
+        print("  html:", nav.evaluar(
+            "(document.querySelector('[data-vista=\"cuaderno\"]')||{}).innerText || ''"
+        ))
+        print("  errores:", nav.evaluar("JSON.stringify(window.__errores || [])"))
     print(f"  (captura: {captura(nav, 'cuaderno-guiado').relative_to(RAIZ)})")
 
     clic_en_visible(nav, "[data-destino=productos]")
@@ -1074,6 +1085,45 @@ def comprobar_movil(nav: NavegadorDeVerdad, base: str) -> None:
                         and int(datos_orden.get("malas") or 0) == 0,
                         f"{ancho} px · Cuaderno: primero lo que puede rellenar y urgente dentro"
                         f" ({datos_orden.get('conPantalla')} secciones con pantalla)",
+                    )
+                    # El filtro «solo lo que puedo rellenar» viene puesto y oculta lo técnico.
+                    filtro = nav.evaluar(
+                        "(() => { const f = document.querySelector('[data-cuaderno-filtro]');"
+                        " return !!f && f.checked; })()"
+                    )
+                    comprobar(bool(filtro), f"{ancho} px · Cuaderno: el filtro viene puesto")
+                    solo_pantalla = nav.evaluar(
+                        "(() => { const secciones = Array.from(document.querySelectorAll('[data-que-falta-seccion]'));"
+                        " return secciones.every((s) => (s.getAttribute('data-que-falta-seccion-destino') || '').trim()); })()"
+                    )
+                    comprobar(
+                        bool(solo_pantalla),
+                        f"{ancho} px · Cuaderno: con el filtro solo salen secciones con pantalla",
+                    )
+                    tecnicas = nav.evaluar(
+                        "(() => { const l = document.querySelector('[data-cuaderno-tecnicas]');"
+                        " const b = document.querySelector('[data-cuaderno-ver-tecnicas]');"
+                        " return JSON.stringify({linea: l ? l.innerText.trim().slice(0, 90) : '',"
+                        " boton: !!b}); })()"
+                    ) or "{}"
+                    datos_tecnicas = json.loads(tecnicas)
+                    comprobar(
+                        bool(datos_tecnicas.get("linea")) and bool(datos_tecnicas.get("boton")),
+                        f"{ancho} px · Cuaderno: dice cuántas quedan fuera y ofrece verlas",
+                    )
+                    print(f"  (captura: {captura(nav, f'movil-cuaderno-filtrado-{ancho}').relative_to(RAIZ)})")
+                    nav.evaluar(
+                        "(() => { const b = document.querySelector('[data-cuaderno-ver-tecnicas]');"
+                        " if (!b) return false; b.click(); return true; })()"
+                    )
+                    time.sleep(0.4)
+                    se_ven = nav.evaluar(
+                        "(() => { const f = document.querySelector('[data-cuaderno-filtro]');"
+                        " return !!f && !f.checked; })()"
+                    )
+                    comprobar(
+                        bool(se_ven),
+                        f"{ancho} px · Cuaderno: «Ver también esas» quita el filtro y las muestra",
                     )
             if clave == "apuntar":
                 # Las cuatro pestañas del apunte, también a 360: ninguna puede desbordar.
@@ -1539,6 +1589,29 @@ def comprobar_el_contorno_real_en_la_app(
                 " return !!r; })()"
             )
             comprobar(bool(elegido), "la ventana deja elegido el recinto de la tierra")
+        # La lista de tierras pintadas lleva a su ficha (solo si el padre pasa el callback).
+        if nav.evaluar("!!document.querySelector('[data-sigpac-cache]')"):
+            nav.evaluar(
+                "(() => { const b = document.querySelector('[data-sigpac-cache-aplicar]');"
+                " if (!b || b.disabled) return false; b.click(); return true; })()"
+            )
+            nav.esperar(
+                "document.querySelectorAll('[data-sigpac-cache-ver-tierra]').length > 0",
+                segundos=90,
+            )
+            ver_tierra = nav.evaluar("document.querySelectorAll('[data-sigpac-cache-ver-tierra]').length") or 0
+            comprobar(ver_tierra > 0, f"las tierras pintadas se pueden abrir ({ver_tierra})")
+            if ver_tierra:
+                nav.evaluar(
+                    "(() => { const b = document.querySelector('[data-sigpac-cache-ver-tierra]');"
+                    " if (!b) return false; b.click(); return true; })()"
+                )
+                abierta = nav.esperar(
+                    "!document.querySelector('[data-ventana-sigpac]')"
+                    " && !!document.querySelector('[data-vista=\"tierra\"]')",
+                    segundos=20,
+                )
+                comprobar(abierta, "pulsar una tierra pintada cierra la ventana y abre su ficha")
         print(f"  (captura: {captura(nav, 'cliente-real-sigpac-390').relative_to(RAIZ)})")
         nav.evaluar(
             "(() => { const b = document.querySelector('[data-ventana-cerrar]');"

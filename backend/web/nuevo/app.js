@@ -108,6 +108,10 @@ import {
   rejillaDelMes,
   relacionDeTipos,
   resumenDeLoQueFalta,
+  seccionesRellenables,
+  tecnicasDeLoQueFalta,
+  textoDeLasTecnicas,
+  puedeAbrirLaTierraActualizada,
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
@@ -2668,6 +2672,9 @@ function BotonSiguiente({ texto, alPulsar }) {
 
 function VistaCuaderno({ alEstado, alIr }) {
   const pantalla = usarPantalla(RUTA_QUE_FALTA, true);
+  // Este hook va antes de cualquier return: si vive detrás de los estados de carga, React ve
+  // más hooks que en el render anterior y revienta (error #310).
+  const [soloRellenables, setSoloRellenables] = useState(true);
   const items = normalizaQueFalta(pantalla.estado === "listo" ? pantalla.datos : null);
   const secciones = agruparLoQueFalta(items);
   const resumen = resumenDeLoQueFalta(items);
@@ -2734,6 +2741,8 @@ function VistaCuaderno({ alEstado, alIr }) {
       : textoRelleno(textos.cuaderno.bloqueanVarias, { k: resumen.bloquean });
   const textoDeSinListar = textoDeFaltasSinListar(items.length, cuantas);
   const rellenables = faltasRellenables(items);
+  const tecnicas = tecnicasDeLoQueFalta(items);
+  const seccionesVisibles = soloRellenables ? seccionesRellenables(secciones) : secciones;
   const primerBloqueo = primerBloqueoDeLoQueFalta(items);
   const primerRellenable = empezarPorLoPrimero(items);
   const destinoParaEmpezar = primerRellenable ? primerRellenable.destino : null;
@@ -2765,6 +2774,16 @@ function VistaCuaderno({ alEstado, alIr }) {
     <h2 className="tarjeta__titulo" id="cuaderno-resumen-titulo">${textos.cuaderno.titulo}</h2>
     <p className="cuaderno__resumen-texto" data-cuaderno-resumen-texto>${textoDelResumen}</p>
     <p className="pagina__dato cuaderno__rellenables" data-cuaderno-rellenables=${rellenables}>${textoDeLasRellenables(rellenables)}</p>
+    <label className="cuaderno__filtro">
+      <input type="checkbox" data-cuaderno-filtro checked=${soloRellenables} onChange=${(evento) => setSoloRellenables(evento.target.checked)} />
+      <span>${textos.cuaderno.filtro}</span>
+    </label>
+    ${soloRellenables && tecnicas > 0
+      ? html`<p className="pagina__dato cuaderno__tecnicas" data-cuaderno-tecnicas=${tecnicas}>
+          ${textoDeLasTecnicas(tecnicas)}
+          <button type="button" className="boton" data-cuaderno-ver-tecnicas onClick=${() => setSoloRellenables(false)}>${textos.cuaderno.verTecnicas}</button>
+        </p>`
+      : null}
     <p className="cuaderno__resumen-bloqueo">
       <span className=${resumen.bloquean ? "chip chip--aviso" : "chip"} data-cuaderno-bloquean>${textoDeBloqueo}</span>
     </p>
@@ -2776,7 +2795,7 @@ function VistaCuaderno({ alEstado, alIr }) {
       : null}
   </section>`;
 
-  const bloques = secciones.map((seccion) => {
+  const bloques = seccionesVisibles.map((seccion) => {
     const destino = destinoDeLaSeccion(seccion.donde);
     const cuenta = cuentaDeUnaSeccion(seccion.items.length);
     const filas = seccion.items.map((item, indice) => html`<li className="que-falta__fila" key=${`falta-${indice}`} data-que-falta-item=${item.que} data-que-falta-item-bloquea=${item.bloquea ? "true" : "false"}>
@@ -3039,7 +3058,7 @@ function VistaProductos({ tierras, campana, alEstado, alIr, alVerTierra }) {
   </div>`;
 }
 
-function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alApuntar, alIr }) {
+function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alApuntar, alIr, alVerTierra = null }) {
   const tierra = (tierras || []).find((una) => una.id === tierraId) || null;
   const ficha = usarPantalla(RUTA_TIERRA(tierraId), Boolean(tierraId));
   const [usaElServidor, setUsaElServidor] = useState(true);
@@ -3133,6 +3152,7 @@ function VistaTierra({ tierraId, tierras, alVolver, alReintentar, alEstado, alAp
       alCerrar=${() => setVentana(false)}
       alRefrescar=${ficha.reintentar}
       alVerTierras=${alVolver}
+      alVerTierra=${(id) => { if (alVerTierra) alVerTierra(id); }}
       alUsada=${() => {
         setVentana(false);
         setAvisoContorno(textos.ventana.aplicada);
@@ -3620,7 +3640,7 @@ function VistaMas({ ir }) {
   </div>`;
 }
 
-function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefrescar = null, alVerTierras = null }) {
+function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefrescar = null, alVerTierras = null, alVerTierra = null }) {
   const [referencia, setReferencia] = useState("");
   const [textoMunicipio, setTextoMunicipio] = useState("");
   const [opcionesMunicipio, setOpcionesMunicipio] = useState([]);
@@ -4111,6 +4131,9 @@ function VentanaDelSigpac({ abierta, modo, tierra, alCerrar, alUsada, alRefresca
                       ${resultadoCache.actualizadas.map((tierra) => html`<li className="sigpac__cache-tierra" key=${`actualizada-${tierra.id}`} data-sigpac-cache-actualizada=${tierra.alias}>
                         <span className="tierra__alias">${tierra.alias}</span>
                         ${tierra.detalle ? html`<span className="tierra__detalle">${tierra.detalle}</span>` : null}
+                        ${puedeAbrirLaTierraActualizada(tierra, alVerTierra)
+                          ? html`<button type="button" className="boton" data-sigpac-cache-ver-tierra=${tierra.id} onClick=${() => { alCerrar(); alVerTierra(tierra.id); }}>${textos.cuaderno.verTecnicas === null ? "" : textos.ventana.cache.verTierra}</button>`
+                          : null}
                       </li>`)}
                     </ul>
                   </div>`
@@ -4241,6 +4264,7 @@ function App() {
   } else if (vista === "tierra") {
     pantalla = html`<${VistaTierra}
       tierraId=${tierraId}
+      alVerTierra=${abrirTierra}
       tierras=${tierras}
       alVolver=${() => ir("tierras")}
       alReintentar=${pantallaTierras.reintentar}

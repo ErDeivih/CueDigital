@@ -273,6 +273,10 @@ export const textos = {
     rellenablesUna: "Puedes rellenar 1 de ellas aquí.",
     rellenablesVarias: "Puedes rellenar {n} de ellas aquí.",
     rellenablesNinguna: "Ninguna de ellas se rellena desde aquí.",
+    filtro: "Solo lo que puedo rellenar",
+    tecnicasUna: "1 queda fuera: depende de la aplicación o de la Junta.",
+    tecnicasVarias: "{n} quedan fuera: dependen de la aplicación o de la Junta.",
+    verTecnicas: "Ver también esas",
   },
   siguiente: {
     eligeTierra: "Elige la tierra",
@@ -1881,6 +1885,33 @@ export function textoDeLasRellenables(cantidad) {
   if (n === 0) return textos.cuaderno.rellenablesNinguna;
   if (n === 1) return textos.cuaderno.rellenablesUna;
   return textoRelleno(textos.cuaderno.rellenablesVarias, { n });
+}
+
+/** Las secciones que se pueden rellenar desde `/nuevo/` (misma función de destinos). */
+export function seccionesRellenables(secciones) {
+  return (Array.isArray(secciones) ? secciones : []).filter((seccion) => seccion && destinoDeLaSeccion(seccion.donde));
+}
+
+/** Cuántas faltas quedan fuera de lo que el agricultor puede rellenar aquí. */
+export function tecnicasDeLoQueFalta(items) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.que)
+    .filter((item) => !destinoDeLaSeccion(item.donde)).length;
+}
+
+/** «N quedan fuera…», en singular y plural. */
+export function textoDeLasTecnicas(cantidad) {
+  const n = Number(cantidad) || 0;
+  if (n === 0) return "";
+  if (n === 1) return textos.cuaderno.tecnicasUna;
+  return textoRelleno(textos.cuaderno.tecnicasVarias, { n });
+}
+
+/** Solo se puede abrir la ficha de una tierra actualizada si el padre pasa el callback y hay id. */
+export function puedeAbrirLaTierraActualizada(tierra, alVerTierra) {
+  if (typeof alVerTierra !== "function" || !tierra) return false;
+  const id = tierra.id ?? tierra.parcela_id ?? tierra.tierra_id;
+  return id !== null && id !== undefined;
 }
 
 /**

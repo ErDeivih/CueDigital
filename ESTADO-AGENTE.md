@@ -65,8 +65,8 @@ fecha: 2026-11-08
 
 ## La última pasada, sobre este mismo HEAD
 
-    Python       5937 recogidas · 5935 superadas, 2 omitidas, 0 fallos
-    JavaScript   1314 superadas, 0 fallos
+    Python       5938 recogidas · 5936 superadas, 2 omitidas, 0 fallos
+    JavaScript   1316 superadas, 0 fallos
     armazón nuevo en Chrome a 390/1024/1440, móvil 390/360, ficha, apuntar (4 pestañas guardando),
     calendario, filtros, facturas, cuaderno con aviso, productos, ventana del SIGPAC con recintos
     tocables y contornos reales de Salamanca                                  0 fallos

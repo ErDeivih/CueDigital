@@ -101,6 +101,10 @@ import {
   rejillaDelMes,
   relacionDeTipos,
   resumenDeLoQueFalta,
+  seccionesRellenables,
+  tecnicasDeLoQueFalta,
+  textoDeLasTecnicas,
+  puedeAbrirLaTierraActualizada,
   riquezaEnTexto,
   rutaDeAnillo,
   rutaDeLaAplicacion,
@@ -1688,4 +1692,32 @@ test("el cuaderno cuenta las faltas que se pueden rellenar aquí, con la misma f
   assert.equal(textoDeLasRellenables(3), "Puedes rellenar 3 de ellas aquí.");
   assert.equal(textoDeLasRellenables(1), "Puedes rellenar 1 de ellas aquí.");
   assert.equal(textoDeLasRellenables(0), "Ninguna de ellas se rellena desde aquí.");
+});
+
+
+test("el filtro deja fuera solo las secciones tecnicas y no inventa el total", () => {
+  const secciones = agruparLoQueFalta([
+    { que: "a", donde: "Tierras", bloquea: true },
+    { que: "b", donde: "Quien desarrolla la aplicacion", bloquea: true },
+    { que: "c", donde: "Trabajos", bloquea: false },
+  ]);
+  const visibles = seccionesRellenables(secciones);
+  assert.deepEqual(visibles.map((s) => s.donde), ["Tierras", "Trabajos"]);
+  assert.equal(tecnicasDeLoQueFalta([
+    { que: "a", donde: "Tierras" },
+    { que: "b", donde: "Quien desarrolla la aplicacion" },
+    { que: "c", donde: "FEGA" },
+  ]), 2);
+  assert.equal(textoDeLasTecnicas(2), "2 quedan fuera: dependen de la aplicación o de la Junta.");
+  assert.equal(textoDeLasTecnicas(1), "1 queda fuera: depende de la aplicación o de la Junta.");
+  assert.equal(textoDeLasTecnicas(0), "");
+});
+
+test("cada tierra pintada se abre solo si el padre deja abrirla", () => {
+  assert.equal(puedeAbrirLaTierraActualizada({ id: 7 }, () => {}), true);
+  assert.equal(puedeAbrirLaTierraActualizada({ id: 7 }, null), false);
+  assert.equal(puedeAbrirLaTierraActualizada({ id: 7 }, undefined), false);
+  assert.equal(puedeAbrirLaTierraActualizada({}, () => {}), false);
+  assert.equal(puedeAbrirLaTierraActualizada(null, () => {}), false);
+  assert.equal(puedeAbrirLaTierraActualizada({ parcela_id: 9 }, () => {}), true);
 });

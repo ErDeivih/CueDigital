@@ -79,6 +79,10 @@ ENGANCHES = [
     "data-resumen-tipo",
     "data-descargar-trabajos",
     "data-sigpac-dibujo-recinto",
+    "data-cuaderno-filtro",
+    "data-cuaderno-tecnicas",
+    "data-cuaderno-ver-tecnicas",
+    "data-sigpac-cache-ver-tierra",
     "data-cuaderno-aviso",
     "data-cuaderno-primero",
     "data-cuaderno-primero-donde",
@@ -419,6 +423,20 @@ class TestElContratoConElArnesDeNavegador:
         assert "data-sigpac-cache-actualizada" in fuente
         assert "textos.ventana.cache.tierrasActualizadas" in fuente
         assert "textos.ventana.cache.tierraSinNombre" in modelo
+
+    def test_el_cuaderno_filtra_y_el_sigpac_abre_la_tierra(self):
+        fuente = leer("app.js")
+        modelo = leer("modelo.js")
+        assert "data-cuaderno-filtro" in fuente
+        assert "data-cuaderno-tecnicas" in fuente
+        assert "data-cuaderno-ver-tecnicas" in fuente
+        assert "data-sigpac-cache-ver-tierra" in fuente
+        assert "alVerTierra=${abrirTierra}" in fuente
+        for funcion in ("seccionesRellenables", "tecnicasDeLoQueFalta", "textoDeLasTecnicas", "puedeAbrirLaTierraActualizada"):
+            assert f"export function {funcion}" in modelo, f"falta «{funcion}»"
+        assert "textos.cuaderno.filtro" in fuente
+        assert "textos.cuaderno.verTecnicas" in fuente
+        assert "textos.ventana.cache.verTierra" in fuente
 
     def test_el_cuaderno_avisa_de_lo_que_bloquea(self):
         fuente = leer("app.js")

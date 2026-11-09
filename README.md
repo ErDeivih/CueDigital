@@ -1384,10 +1384,10 @@ BOM, para que Excel no destroce las tildes.
 cd backend
 
 # Python: cálculos, registro obligatorio, textos, interfaz, contrato de diseño y dictado
-../.venv/Scripts/python.exe -m pytest          # 5937 tests
+../.venv/Scripts/python.exe -m pytest          # 5938 tests
 
 # JavaScript: la lógica del móvil y la interfaz, pulsando botones de verdad
-node --test "tests_js/*.test.js"               # 1314 tests
+node --test "tests_js/*.test.js"               # 1316 tests
 
 # Recorrido completo contra un servidor de verdad (hace falta tenerlo levantado)
 ../.venv/Scripts/python.exe scripts/humo.py http://127.0.0.1:8000
