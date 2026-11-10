@@ -1,11 +1,38 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **CueDigital está EN PIE en una URL pública**: https://attract-leeds-integer-asp.trycloudflare.com (pantalla en /nuevo/, cuenta de ejemplo demo@cuedigital.local / cuaderno-demo-2026) con el backend completo —FastAPI + PostgreSQL 16— en el servidor propio de David y el túnel de Cloudflare delante. Se ven las **cinco parcelas del cliente de Salamanca con su contorno** (GeoPackage real) y el **alta por referencia de seis números** funciona; comprobado con Chrome de verdad y capturas a 360 y 1024 en docs/capturas-despliegue/. El front se publica aparte con `deploy/paginas_github/preparar.py` y su `config.js` (API + CORS por variable). **Lo que falta de la cola**: GitHub Pages está **bloqueado por el plan** (repo privado + cuenta gratuita → 422 de la API), aunque la rama `gh-pages` ya está subida; y la URL del túnel es **efímera** (cambia al recrear el contenedor) hasta que haya dominio o túnel con nombre.
+resumen: **David ya puede probar CueDigital solo, sin depender de nadie**: la demo pública está en **https://erdeivih.github.io/cuedigital-demo/** (GitHub Pages), con las **cinco parcelas del cliente de Salamanca y su contorno**, el **aviso de DEMO siempre visible** y el **alta por referencia de seis números** funcionando (se guarda en el navegador del que la prueba). Verificado el 10/11/2026 con una petición real (200) y con Chrome de verdad: parcelas visibles y alta hecha, capturas a 360 y 1024 en docs/capturas-despliegue/. Los datos van **dentro** del paquete (copia literal de lo que contestó el servidor), así que no depende del servidor de casa ni del túnel; el paquete lo arma `deploy/paginas_github/preparar.py --demo` y se comprueba con `deploy/comprobar_demo.py`. Sigue en pie además la app completa en el servidor propio por túnel (9.1).
 estado: en-curso
-tarea: despliegue real con URL pública (servidor propio + túnel) y front preparado para Pages; layouts de móvil y tableta ya cerrados en la ronda anterior
+tarea: demo pública sin servidor en GitHub Pages, verificada, con las parcelas del cliente y el alta por referencia; layouts de móvil y tableta cerrados en la ronda anterior
 nivel: 2
-siguiente: activar GitHub Pages (hacer público el repositorio o pasar a Pro, decisión de David), dar una URL estable (dominio o túnel con nombre) y seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
-bloqueado: GitHub Pages exige repositorio público o plan Pro (el repo es privado y la cuenta es gratuita); la URL del túnel cambia al recrear el contenedor; PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
-fecha: 2026-11-09
+siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10) y, para la app de verdad, decidir si el repositorio principal va a público o a plan Pro (así Pages también serviría el front que llama al servidor)
+bloqueado: la URL del túnel de la app completa cambia al recrear el contenedor (solución: dominio o túnel con nombre); PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+fecha: 2026-11-10
+
+## Lo que se ha hecho en esta ronda (10/11/2026: la demo que no depende de nadie)
+
+1. **Demo pública en GitHub Pages**: **https://erdeivih.github.io/cuedigital-demo/**. Es la misma
+   pantalla de `/nuevo/` con **los datos dentro** (copia literal de lo que contestó el servidor el
+   10/11/2026): las cinco parcelas del cliente de Salamanca con sus anillos, su ficha, el resumen,
+   lo que falta del cuaderno, el calendario y los trabajos. **No pide nada a ningún servidor.**
+   - **Aviso de demo siempre visible** arriba: «DEMO · Datos de ejemplo (cinco parcelas de
+     Salamanca). Lo que apuntes se queda en este navegador, no en un servidor.»
+   - **Alta por referencia de seis números funciona en la demo** (`37-2-0-0-502-1`): «Añadir
+     tierras» → «O pega las referencias» → «Traer las pegadas»; la tierra aparece en la lista y se
+     guarda en el `localStorage` del visitante.
+   - **Verificado contra la URL real**: `GET /` → **200**, y con Chrome de verdad la app pinta, se
+     ven las cinco parcelas, el aviso está y el alta se completa. Capturas a **360 y 1024** en
+     `docs/capturas-despliegue/` (`demo-tierras-360/1024`, `demo-alta-referencia-390`,
+     `demo-tierras-con-alta-390`). Se repite con `python deploy/comprobar_demo.py <url>`.
+   - **Por qué un repositorio aparte**: Pages no se puede activar en el repositorio principal
+     (privado + plan gratuito, `422`). La demo vive en el repositorio **público** `cuedigital-demo`,
+     que **solo** lleva el front y los datos de ejemplo: ni backend, ni cuaderno, ni datos de
+     ningún agricultor real.
+2. **La demo también se prueba en el ordenador**: `deploy/paginas_github/servir_demo.py` sirve el
+   paquete con los tipos de fichero declarados a mano. **`python -m http.server` no vale**: en
+   Windows sirve los `.js` como `text/plain` y el navegador rechaza el módulo (la pantalla se queda
+   en blanco sin decir por qué). Es la trampa de `AGENTS.md`, encontrada otra vez aquí.
+3. **Cómo se rehace**: `sacar_datos_demo.py` (con el servidor encendido) → `preparar.py --demo` →
+   publicar `build/pages-demo` en la rama `gh-pages` del repositorio de la demo. Todo en
+   `docs/DESPLIEGUE.md` §9.5.
 
 ## Lo que se ha hecho en esta ronda (09/11/2026, cuarta: URL pública de verdad)
 

@@ -1005,9 +1005,76 @@ Después: Settings → Pages → *Deploy from a branch* → `gh-pages` / `/`. La
 `https://erdeivih.github.io/CueDigital/`.
 
 **Mientras eso no se decida, la app se ve (y funciona) en la URL del túnel**, que sirve la misma
-pantalla con datos: es la que se ha comprobado.
+pantalla con datos: es la que se ha comprobado. Y para enseñarla **sin depender de nada** está la
+demo del apartado 9.5, publicada en un repositorio público aparte (solo el front y los datos de
+ejemplo).
 
-### 9.5. La comprobación que se puede repetir
+### 9.5. La **demo pública sin servidor** (10/11/2026): la URL que David puede enseñar
+
+> **https://erdeivih.github.io/cuedigital-demo/**
+>
+> Se abre en el móvil, en la tablet y en el ordenador, **sin servidor y sin depender de nadie**:
+> los datos van dentro de la página y no se pide nada a ningún sitio.
+
+**Qué es.** Un paquete estático con la misma pantalla de `/nuevo/` y **los datos de la finca de
+ejemplo dentro**: las cinco parcelas del cliente de Salamanca con sus anillos (el contorno se
+dibuja con ellos), su ficha, el resumen, lo que falta del cuaderno, el calendario y los trabajos.
+Es una **copia literal** de lo que contestó el servidor el 10/11/2026: no hay datos inventados.
+
+**Qué se puede hacer en ella:**
+
+- Ver la finca y las cinco parcelas, con su contorno, en móvil y en tablet.
+- **Dar de alta una tierra por referencia de seis números**: «Añadir tierras» → «O pega las
+  referencias» → `37-2-0-0-502-1` → «Traer las pegadas». La tierra nueva aparece en la lista y
+  **se queda guardada en el navegador de quien la prueba** (no viaja a ningún servidor).
+- Recorrer las pantallas con los datos de ejemplo.
+
+**El aviso de que es una demo** está siempre arriba, en una franja fija: *«DEMO · Datos de
+ejemplo (cinco parcelas de Salamanca). Lo que apuntes se queda en este navegador, no en un
+servidor.»* No se puede confundir con la aplicación de verdad.
+
+**Por qué vive en un repositorio aparte.** GitHub Pages **no se puede activar en el repositorio
+principal** (es privado y la cuenta está en el plan gratuito: `422 · Your current plan does not
+support GitHub Pages for this repository`). Así que la demo se publica desde un repositorio
+**público y aparte**, <https://github.com/ErDeivih/cuedigital-demo>, que **solo** contiene el front
+estático y los datos de ejemplo: **no lleva el backend, ni el cuaderno, ni datos de ningún
+agricultor real**.
+
+**Cómo se rehace (cuando cambie la pantalla o los datos):**
+
+```bash
+# 1) Con el servidor de ejemplo encendido, se copian sus respuestas (copia literal).
+python deploy/paginas_github/sacar_datos_demo.py https://attract-leeds-integer-asp.trycloudflare.com
+
+# 2) Se arma el paquete de la demo.
+python deploy/paginas_github/preparar.py --demo --salida build/pages-demo
+
+# 3) Se publica en el repositorio de la demo (rama gh-pages).
+#    (Desde una copia de build/pages-demo: git add -A, commit y push a ese repositorio.)
+```
+
+**Probarla en el ordenador, sin publicar nada:**
+
+```bash
+python deploy/paginas_github/servir_demo.py build/pages-demo 8100
+# y abrir http://127.0.0.1:8100/
+```
+
+> **Ojo con el servidor local:** no vale `python -m http.server`. En Windows sirve los `.js` como
+> `text/plain`, el navegador rechaza el módulo y la pantalla se queda en blanco sin decir por qué
+> (la misma trampa que está en `AGENTS.md`). Por eso `servir_demo.py` declara los tipos a mano.
+
+**La comprobación, contra la URL de verdad:**
+
+```bash
+python deploy/comprobar_demo.py https://erdeivih.github.io/cuedigital-demo/
+```
+
+Comprueba que la página pinta, que el aviso de DEMO está, que se ven las cinco parcelas, que el
+alta por referencia funciona (queda guardada en el navegador) y guarda capturas a **360 y 1024 px**
+en `docs/capturas-despliegue/` (`demo-tierras-360/1024`, `demo-alta-*`, `demo-tierras-con-alta-390`).
+
+### 9.6. La comprobación que se puede repetir
 
 ```bash
 python deploy/comprobar_publica.py https://attract-leeds-integer-asp.trycloudflare.com
