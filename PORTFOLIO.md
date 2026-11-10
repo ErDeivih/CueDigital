@@ -1,8 +1,12 @@
 # CUE Digital — cuaderno de campo y gestión de la explotación agraria
 
-**Abre desde cualquier sitio:** <https://servidor.tail4263a0.ts.net:8443> ·
-**Demo con los datos dentro (sin servidor):** <https://erdeivih.github.io/cuedigital-demo/> ·
-**Estado:** funcional y en desarrollo · **Cuenta de ejemplo:** `demo@cuedigital.local` / `cuaderno-demo-2026`
+**Abre desde cualquier sitio (demo pública, datos ficticios):** <https://erdeivih.github.io/cuedigital-demo/>
+· **Estado:** funcional y en desarrollo · **Cuenta de ejemplo de la demo:** se entra sola; la demo
+lleva cinco parcelas **inventadas** y se puede probar sin instalar nada.
+
+> **La app completa (con backend y datos reales) no es pública:** se entra solo por la red privada
+> de Tailscale, para revisión. La demo de arriba es la que se enseña y **no lleva ni un dato del
+> cliente**. Ver [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md).
 
 ---
 
@@ -45,35 +49,39 @@ con el sol de frente, el móvil en una mano y sin cobertura.
 ## 4. Cómo se comprueba
 
 ```bash
-# La app completa, desde cualquier sitio: abrir la URL y entrar con la cuenta de ejemplo.
+# La demo pública (datos ficticios), sin instalar nada:
+https://erdeivih.github.io/cuedigital-demo/
+
+# La app completa, solo en la red privada de Tailscale (no pública):
 https://servidor.tail4263a0.ts.net:8443
 
 # En el repositorio:
-python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net:8443      # parcelas y contorno
-python deploy/comprobar_alta_publica.py https://servidor.tail4263a0.ts.net:8443  # alta de 6 números y layout
-python deploy/comprobar_demo.py https://erdeivih.github.io/cuedigital-demo/ # la demo sin servidor
+python deploy/comprobar_demo.py https://erdeivih.github.io/cuedigital-demo/  # la demo sin servidor
+python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net:8443   # la app privada
 ```
 
-## 5. Prueba visual (capturas de la app publicada, 10/11/2026)
+## 5. Prueba visual (de la demo pública, con datos **ficticios**)
+
+Estas capturas son de la demo de GitHub Pages, con las cinco parcelas inventadas: no llevan ningún
+dato del cliente.
 
 | Móvil (360 px) | Escritorio (1024 px) |
 |---|---|
-| ![Tierras en móvil](docs/capturas-despliegue/final-tierras-360.png) | ![Tierras en escritorio](docs/capturas-despliegue/final-tierras-1024.png) |
-| ![Ficha con el contorno](docs/capturas-despliegue/final-ficha-360.png) | ![Ficha con el contorno](docs/capturas-despliegue/final-ficha-1024.png) |
-| ![Ventana del SIGPAC](docs/capturas-despliegue/final-modal-sigpac-360.png) | ![Ventana del SIGPAC](docs/capturas-despliegue/final-modal-sigpac-1024.png) |
+| ![Tierras en móvil](docs/capturas-despliegue/demo-tierras-360.png) | ![Tierras en escritorio](docs/capturas-despliegue/demo-medida-1024.png) |
 
-Y la parcela dada de alta con los seis números del papel, con su contorno dibujado:
-[`estable-ficha-nueva-390.png`](docs/capturas-despliegue/estable-ficha-nueva-390.png).
+Y la parcela dada de alta en la demo con los seis números del papel, con su contorno dibujado:
 
-| Alta en escritorio (1024 px) | Su ficha, con el contorno |
+| Alta con la referencia | Su ficha, con el contorno |
 |---|---|
-| ![Alta con los seis números](docs/capturas-despliegue/final-alta-1024.png) | ![Ficha de la parcela nueva](docs/capturas-despliegue/final-alta-ficha-1024.png) |
+| ![Alta por referencia](docs/capturas-despliegue/demo-alta-referencia-390.png) | ![Ficha de la parcela nueva](docs/capturas-despliegue/demo-alta-contorno-390.png) |
 
-**El cuaderno guiado** (10/11/2026), en la ficha de una tierra con tratamientos apuntados:
+**El cuaderno guiado** (10/11/2026), en la app privada: dice qué toca hacer y a partir de cuándo,
+con el aviso de plazo. Se enseña aquí solo el aspecto; los datos de esa captura son de la finca de
+ejemplo del entorno privado.
 
-| Móvil (390 px) | Escritorio (1024 px) |
-|---|---|
-| ![Qué toca hacer en móvil](docs/capturas-despliegue/guia-ficha-390.png) | ![Qué toca hacer en escritorio](docs/capturas-despliegue/guia-ficha-1024.png) |
+| Móvil (390 px) |
+|---|
+| ![Qué toca hacer](docs/capturas-despliegue/guia-ficha-390.png) |
 
 ## 6. Lo que falta (dicho sin adornos)
 

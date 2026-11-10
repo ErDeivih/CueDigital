@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import catalogos, observabilidad
+from . import catalogos, observabilidad, seguridad
 from .database import TextoQueNoCabe, crear_tablas
 from .routers import (
     almacen_api,
@@ -269,6 +269,43 @@ class _MedirLaPeticion:
 
 
 app.add_middleware(_MedirLaPeticion)
+
+
+# **Las cabeceras de seguridad** (10/11/2026): van en **todas** las respuestas, también en las que
+# no son de la API (la pantalla, los ficheros de la pantalla, las imágenes del mapa). Se ponen en un
+# middleware y no en cada router para que no exista una puerta sin ellas: una cabecera que se olvida
+# en un sitio es una cabecera que no está.
+class _CabecerasDeSeguridad:
+    """Añade las cabeceras de `app/seguridad.py` a cada respuesta HTTP.
+
+    No toca el cuerpo, no cambia el código y **no pisa** una cabecera que ya venga puesta: si una
+    respuesta trae su propio valor, se respeta.
+    """
+
+    def __init__(self, aplicacion) -> None:
+        self.aplicacion = aplicacion
+
+    async def __call__(self, alcance, recibir, enviar) -> None:
+        if alcance.get("type") != "http":
+            await self.aplicacion(alcance, recibir, enviar)
+            return
+
+        cabeceras = seguridad.cabeceras_para(https=alcance.get("scheme") == "https")
+
+        async def enviar_con_cabeceras(mensaje) -> None:
+            if mensaje.get("type") == "http.response.start":
+                puestas = list(mensaje.get("headers") or [])
+                ya_estan = {clave.lower() for clave, _ in puestas}
+                for nombre, valor in cabeceras.items():
+                    if nombre.lower().encode() not in ya_estan:
+                        puestas.append((nombre.lower().encode(), valor.encode()))
+                mensaje = {**mensaje, "headers": puestas}
+            await enviar(mensaje)
+
+        await self.aplicacion(alcance, recibir, enviar_con_cabeceras)
+
+
+app.add_middleware(_CabecerasDeSeguridad)
 
 app.include_router(cuenta.router)
 # **Las próximas acciones** (Entrega 3, 13/10/2026): lo que hay que hacer, cruzando fichas.

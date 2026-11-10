@@ -342,6 +342,13 @@ AYUDA: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------
 
 MENSAJES: dict[str, str] = {
+    # **El alta de cuentas está cerrada** (10/11/2026, aviso de seguridad de los coordinadores): la
+    # app estuvo publicada en un túnel abierto y el alta era libre. Ahora solo se entra con una
+    # cuenta que ya exista, y quien necesite una, la pide. El mensaje dice **qué pasa y qué hacer**.
+    "registro_cerrado": (
+        "El alta de cuentas nuevas está cerrada. **Entra con la cuenta que ya tengas**, o pide que "
+        "te den de alta a quien lleva la aplicación."
+    ),
     # ***La cola de una cuenta no se manda con el vale de otra*** (19/10/2026): *antes se mandaba toda la cola con
     # la sesion abierta, y un apunte de una finca acababa escrito en otra. Lo de otra cuenta **se queda** -no se
     # pierde- esperando a que su dueno entre, y se dice con estas palabras.*

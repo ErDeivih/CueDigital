@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import accesos, certificados, models, security, textos
+from .. import accesos, certificados, models, security, seguridad, textos
 from ..deps import Db, UsuarioActual
 from ..schemas import EntrarEntrada, ExplotacionSalida, RegistroEntrada, TokenSalida
 
@@ -34,6 +34,15 @@ def _con_nif_normalizado(valores: dict) -> dict:
 
 @router.post("/registro", response_model=TokenSalida, status_code=status.HTTP_201_CREATED)
 def registrar(datos: RegistroEntrada, db: Db) -> TokenSalida:
+    # **El alta de cuentas está cerrada en producción** (10/11/2026): el aviso de seguridad de los
+    # coordinadores recordó que cualquiera con la dirección podría abrirse una cuenta. En pruebas y
+    # en local sigue abierta, que es donde hacen falta cuentas para probar; en el servidor se
+    # enciende con `CUEDIGITAL_REGISTRO=abierto` si algún día hay que dar de alta a alguien.
+    if not seguridad.registro_abierto():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=textos.mensaje("registro_cerrado"),
+        )
     correo = datos.correo.strip().lower()
     if db.scalar(select(models.Usuario).where(models.Usuario.correo == correo)) is not None:
         raise HTTPException(

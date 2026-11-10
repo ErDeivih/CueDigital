@@ -111,7 +111,7 @@ def main() -> int:
         comprobar(esperar_vista(navegador, "tierras"), "la pantalla de tierras carga")
         time.sleep(1.0)
         cuerpo = texto(navegador)
-        for alias in ("El Prado", "El Alto", "La Vega", "Las Eras", "El Visor"):
+        for alias in ("El Llano", "La Fuente", "Los Olmos", "La Dehesa", "El Barbecho"):
             comprobar(alias in cuerpo, f"se ve la parcela «{alias}»")
         captura(navegador, "demo-tierras-360.png")
 
@@ -133,7 +133,7 @@ def main() -> int:
             "const proto = c.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype"
             ": window.HTMLInputElement.prototype;"
             "const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;"
-            "setter.call(c, '37-2-0-0-502-1');"
+            "setter.call(c, '47-99-0-0-903-1');"
             "c.dispatchEvent(new Event('input', {bubbles: true}));"
             "c.dispatchEvent(new Event('change', {bubbles: true})); return true; })()"
         )

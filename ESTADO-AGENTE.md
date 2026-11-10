@@ -1,10 +1,10 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **Contenido real y cuaderno guiado, en pie y verificado: https://servidor.tail4263a0.ts.net:8443**. La finca de ejemplo ya no está vacía: las **cinco parcelas del cliente** tienen sus datos del SIGPAC (El Prado 4,90 ha de tierras arables, La Vega 0,67 ha de pasto…), las cinco con su **contorno**, y **8 apuntes** de cuaderno (tratamientos con plazo de seguridad y reentrada, abonos y labores) en fechas recientes. Y la app ya **dice qué toca hacer y a partir de cuándo**: la ficha de cada tierra tiene el bloque **«Qué toca hacer»** («ya se puede volver a entrar», «podrás cosechar a partir del 22/11/2026»), que marca como **aviso de plazo** lo que termina hoy o en los próximos días. Sale de los plazos apuntados: **no inventa fechas ni da consejo agronómico**. 22 pruebas nuevas (`tests/test_guia.py`), comprobado en móvil (390) y escritorio (1024) con capturas `guia-ficha-*`.
+resumen: **Túnel público cerrado y app endurecida** (aviso de los coordinadores: la app estaba en un túnel abierto, sin cabeceras, con alta libre y con las parcelas reales del cliente). Ahora **solo se entra por la red de Tailscale** (`https://servidor.tail4263a0.ts.net:8443`): el contenedor del túnel se ha eliminado (el dominio `trycloudflare` contesta 530) y el puerto 8443 ya no tiene funnel, solo `serve`. **Cabeceras de seguridad** en todas las respuestas (nosniff, X-Frame-Options, CSP con `frame-ancestors 'none'`, Permissions-Policy y HSTS por HTTPS) y **alta de cuentas cerrada** en producción (403 con qué hacer). La **demo pública** de GitHub Pages se ha rehecho con **datos ficticios** (cinco parcelas inventadas, «Villa de Ejemplo»): cero referencias, superficies o formas del cliente. Todo en `docs/SEGURIDAD.md` y en `tests/test_seguridad_web.py` (12 pruebas). Comprobado: tailnet 200 · ingress público 000 · registro 403 · CSP y HSTS presentes.
 estado: en-curso
-tarea: contenido real en la finca de ejemplo (datos del SIGPAC y 8 apuntes) y cuaderno guiado con fechas y aviso de plazo; verificado en móvil y escritorio
+tarea: cierre del túnel público, acceso solo por Tailscale, cabeceras de seguridad, alta cerrada y demo pública con datos ficticios; documentado en SEGURIDAD.md
 nivel: 2
-siguiente: completar los apuntes de las dos tierras que aún no tienen tratamiento (El Visor y Las Eras) y seguir con los textos de P5/P7/P8 del informe de interfaz
-bloqueado: la URL estable depende del servidor de casa (si el equipo se apaga, no contesta; la demo de Pages sigue en pie); PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+siguiente: revisar el firewall del router (que 8090 y 5433/5434 no estén abiertos), plantear el cambio de la clave de la cuenta demo y seguir con los textos de P5/P7/P8 del informe de interfaz
+bloqueado: el aviso de seguridad queda atendido, pero siguen abiertos tres puntos que no son míos: la clave de la cuenta demo está en la documentación (si el repo se hace público, hay que cambiarla), el token de Cloudflare del 09/11 sigue guardado y conviene revocarlo, y el firewall del router lo tiene que mirar David; PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
 
 ## Bloqueo
@@ -30,6 +30,29 @@ tarjeta («Abre desde cualquier sitio»).
 con su prueba) y **P8** (ayuda de «Agregado» y «Zona»), volver a medir con `deploy/medir_publica.py`
 y actualizar `docs/revision-interfaz.md` §6.4.
 
+## Lo que se ha hecho en esta ronda (10/11/2026, sexta: cierre del túnel y endurecimiento)
+
+1. **Fuera el túnel público.** El contenedor `cuedigital-tunnel` se ha eliminado (no solo parado) y
+   el dominio `trycloudflare.com` contesta 530. Se ha quitado el *funnel* del puerto 8443 y se ha
+   dejado **`serve`**: la app se abre **solo desde la red de Tailscale**, en
+   `https://servidor.tail4263a0.ts.net:8443`.
+   Comprobado: por la red de Tailscale, 200; **por el ingress público de Tailscale (la IP pública),
+   000** (no conecta).
+2. **Cabeceras de seguridad** en todas las respuestas (`app/seguridad.py` + middleware en
+   `main.py`): `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`,
+   `CSP` con `frame-ancestors 'none'` y **HSTS solo por HTTPS**. Comprobadas en el servidor.
+3. **Alta de cuentas cerrada**: `registro_abierto()` la cierra en producción y la deja abierta en
+   pruebas/local; `POST /api/cuenta/registro` contesta **403** con el mensaje de qué hacer. La
+   variable `CUEDIGITAL_REGISTRO=abierto` la enciende si hace falta.
+4. **Demo pública con datos ficticios**: se ha rehecho `deploy/paginas_github/demo/datos.json` sin
+   nada del cliente (cinco tierras inventadas en «Villa de Ejemplo», referencias 47-99…, formas
+   rectangulares nuevas) y se ha vuelto a publicar. Comprobado contra la URL de Pages: el alta por
+   referencia y el contorno siguen funcionando con los datos inventados.
+5. **`docs/SEGURIDAD.md`**: qué había, qué hay, qué se expone y a quién, cómo se comprueba y lo que
+   queda por revisar (clave de la cuenta demo, token de Cloudflare, firewall del router, CSP con
+   `unsafe-inline`).
+6. **Aviso al chat del panel**: que **no enlace** la URL de la app (privada) y que use la demo
+   estática, y que no publique capturas con datos de la finca.
 ## Lo que se ha hecho en esta ronda (10/11/2026, quinta: contenido real y cuaderno guiado)
 
 1. **Contenido real en la finca de ejemplo**: las cinco parcelas del cliente **ya tienen sus datos
