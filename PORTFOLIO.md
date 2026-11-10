@@ -83,7 +83,13 @@ ejemplo del entorno privado.
 |---|
 | ![Qué toca hacer](docs/capturas-despliegue/guia-ficha-390.png) |
 
-## 6. Lo que falta (dicho sin adornos)
+## 6. El caso, en un documento
+
+El informe corto del proyecto —el problema, cómo usa el SIGPAC, el modelo de datos y qué demuestra,
+con los números medidos— está en [docs/CASO-CUEDIGITAL.md](docs/CASO-CUEDIGITAL.md). Y lo que se
+expone y lo que no, en [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
+
+## 7. Lo que falta (dicho sin adornos)
 
 - El volcado oficial a la Junta (IUWS) está implementado y probado contra el anexo, pero **no se ha
   enviado nada real**: depende de que la Junta dé de alta el acceso.
@@ -93,7 +99,7 @@ ejemplo del entorno privado.
 - La URL estable depende del servidor de casa (Tailscale Funnel). Si el equipo se apaga, no
   contesta; la demo de GitHub Pages sigue en pie.
 
-## 7. Tecnologías
+## 8. Tecnologías
 
 Python · FastAPI · SQLAlchemy 2 · PostgreSQL · SQLite · React (UMD, sin compilar) · htm ·
 Docker · Caddy · Tailscale Funnel · GitHub Pages · SIGPAC (FEGA) · Cuecyl (Junta de Castilla y León) ·

@@ -65,7 +65,22 @@ def _index_para_pages(servidor: str, demo: bool) -> str:
         ]
     if "</head>" not in html:
         raise SystemExit("el index.html no tiene </head>")
-    return html.replace("</head>", "".join(guiones) + "</head>", 1)
+    # **Cabeceras de seguridad en la demo estática** (10/11/2026). GitHub Pages no deja poner
+    # cabeceras HTTP de verdad, así que se pone lo que el navegador sí obedece en el propio HTML:
+    # la política de contenido (por `meta`) y que no se mande la dirección de procedencia. Lo que
+    # no se puede desde aquí (`X-Frame-Options`, `frame-ancestors`, HSTS) queda escrito en
+    # `docs/SEGURIDAD.md` para cuando se mude a un alojamiento que sí deje cabeceras.
+    politica = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self'" + ("" if demo else f" {servidor}") + "; "
+        "font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    )
+    seguridad = (
+        f'  <meta http-equiv="Content-Security-Policy" content="{politica}">\n'
+        '  <meta name="referrer" content="no-referrer">\n'
+    )
+    return html.replace("</head>", seguridad + "".join(guiones) + "</head>", 1)
 
 
 def _config_js(servidor: str) -> str:
@@ -107,6 +122,23 @@ def preparar(servidor: str, salida: pathlib.Path, demo: bool = False) -> pathlib
     if demo:
         (salida / "demo-datos.js").write_text(_datos_de_la_demo(), encoding="utf-8", newline="")
         shutil.copy2(AQUI / "demo.js", salida / "demo.js")
+
+        # **`_headers`**: GitHub Pages lo ignora, pero Netlify y Cloudflare Pages lo leen. Se deja
+        # escrito para que, si la demo se muda a un alojamiento que sí pone cabeceras, no haya que
+        # inventarlo: solo hay que copiar el fichero.
+        (salida / "_headers").write_text(
+            "/*\n"
+            "  X-Content-Type-Options: nosniff\n"
+            "  X-Frame-Options: DENY\n"
+            "  Referrer-Policy: no-referrer\n"
+            "  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
+            "  Cross-Origin-Opener-Policy: same-origin\n"
+            "  Content-Security-Policy: default-src 'self'; script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; "
+            "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'\n",
+            encoding="utf-8",
+            newline="",
+        )
     else:
         (salida / "config.js").write_text(_config_js(servidor), encoding="utf-8", newline="")
     # Sin esto, GitHub Pages (Jekyll) ignora lo que empieza por `_` y puede reescribir cosas.
