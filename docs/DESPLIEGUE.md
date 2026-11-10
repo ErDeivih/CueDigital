@@ -1132,6 +1132,49 @@ buena.
   disponibilidad.
 - Comprobación: `python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net`
 
+### 10.1 bis. Ya está en marcha — y **cómo se renueva** si se cae o cambia
+
+**Estado el 10/11/2026:** Funnel **en marcha**. `https://servidor.tail4263a0.ts.net` contesta
+`/health` con 200, y se ha comprobado **desde fuera** (una petición real lanzada desde otro sitio,
+no desde casa): el DNS público del nombre resuelve a las direcciones de entrada de Tailscale
+(`176.58.90.46`, `.63`, `.145`) y la petición externa devuelve el estado del servidor.
+
+**El funnel no «caduca»**, pero puede quedarse parado. Tres cosas que conviene saber:
+
+1. **La dirección no cambia sola.** Depende del nombre del equipo (`servidor`) y del sufijo de la
+   red (`tail4263a0.ts.net`). Cambiaría si se renombra el equipo, si se crea otra red de Tailscale
+   o si se sale de ella.
+2. **El certificado es de Tailscale** y se renueva solo: no hay que hacer nada.
+3. **La configuración vive en `tailscaled`** (el programa que hace de cliente), no en un fichero
+   del proyecto. Aguanta reinicios del servidor. Si algún día no contesta:
+
+```bash
+# En el servidor. ¿Sigue publicado?
+sudo tailscale funnel status
+# Si dice «No serve config», se vuelve a publicar (tarda un segundo):
+sudo tailscale funnel --bg 8090
+# Y si el cliente de Tailscale estuviera caído:
+sudo systemctl restart tailscaled
+```
+
+**Para no tener que usar `sudo` cada vez** (opcional, una vez):
+
+```bash
+sudo tailscale set --operator=david
+```
+
+Y desde el ordenador, la comprobación de siempre:
+
+```bash
+python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net
+```
+
+> **Un detalle que costó un rato:** la primera vez, `tailscale funnel` sin `sudo` contesta
+> `Access denied: serve config denied`. No es que falte el permiso en la red (eso es el clic de
+> David, que ya está dado): es que el mando del cliente lo tiene root. Por eso hay que lanzarlo con
+> `sudo`, o dar el mando una vez con `--operator`.
+
+
 ### 10.2. La de siempre: un dominio propio con Caddy (unos 10 €/año)
 
 1. Comprar el dominio (o usar uno que ya se tenga) y crear un registro **A** a la IP pública de
@@ -1158,4 +1201,4 @@ Read*. Mientras el token no se cambie, esta vía está **bloqueada por permisos*
 |---|---|---|
 | <https://erdeivih.github.io/cuedigital-demo/> | La **demo** con los datos dentro (GitHub Pages). Es la que David puede enseñar. | **Sí** |
 | `https://attract-leeds-integer-asp.trycloudflare.com` | La **app completa** con backend en el servidor de casa, por túnel efímero. | **No** |
-| `https://servidor.tail4263a0.ts.net/` | La app completa, **estable**, en cuanto David apruebe Funnel. | **Sí, cuando se apruebe** |
+| `https://servidor.tail4263a0.ts.net/` | La app completa, **estable**, publicada con Tailscale Funnel el 10/11/2026 (ver 10.1 bis). | **Sí** |

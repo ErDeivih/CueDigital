@@ -1,11 +1,33 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **La demo pública está verificada y es estable**: https://erdeivih.github.io/cuedigital-demo/ (GitHub Pages; no depende de ningún servidor). Se ha comprobado de nuevo contra la URL real: 200, las cinco parcelas del cliente, **un alta por referencia de seis números** (`37-2-0-0-502-1`) que queda en la lista y **su contorno dibujado** en la ficha (capturas a 360/1024). Los arreglos de móvil y tableta están aplicados también en la demo: **0 desbordes, 0 controles por debajo de 44 px y 0 huecos por debajo de 8 px a 360, 390, 768 y 1024** (medido con Chrome de verdad, `deploy/medir_demo.py`). **La URL estable de la app completa está preparada y solo le falta un clic de David**: Tailscale Funnel ya está instalado en el servidor y `deploy/url_estable.sh` da el enlace de aprobación; cuando se apruebe, la app completa queda en **https://servidor.tail4263a0.ts.net/** sin comprar nada. Alternativas documentadas: dominio propio con Caddy (≈10 €/año) y túnel con nombre de Cloudflare (bloqueado por permisos del token).
+resumen: **La URL estable está publicada y verificada desde fuera: https://servidor.tail4263a0.ts.net** (Tailscale Funnel, gratis, sin dominio). Comprobado el 10/11/2026: el DNS público del nombre resuelve a las direcciones de entrada de Tailscale, una petición **externa** devuelve `/health` 200 y con Chrome de verdad se ven las **cinco parcelas del cliente con su contorno**; el **alta por los seis números del SIGPAC** (Salamanca / Calvarrasa de Arriba / 0 / 0 / 502 / 1) crea la parcela, **su ficha dibuja el contorno**, y el **layout** está bien a 360, 390, 768 y 1024 px (0 desbordes, 0 controles por debajo de 44 px). Las parcelas de prueba se borraron al terminar (la finca vuelve a tener cinco). Además: `PORTFOLIO.md` nuevo en la raíz con la URL y la evidencia, y aviso enviado al chat del panel (portfolio) para que la incluya como «Abre desde cualquier sitio». Cómo renovar el funnel, en `docs/DESPLIEGUE.md` §10.1 bis. Sigue también la demo sin servidor: https://erdeivih.github.io/cuedigital-demo/
 estado: en-curso
-tarea: demo pública verificada (alta con 6 números y contorno), layouts medidos en la demo y URL estable preparada (Tailscale Funnel, pendiente de un clic de David)
+tarea: URL estable publicada con Tailscale Funnel y verificada desde fuera; alta de 6 números y layout comprobados en esa URL; cartera y aviso al panel hechos
 nivel: 2
-siguiente: aprobar Funnel en el enlace de docs/DESPLIEGUE.md §10.1 y lanzar `deploy/url_estable.sh 8090`; seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
-bloqueado: la URL estable de la app completa espera **un clic de David** en Tailscale (https://login.tailscale.com/f/funnel?node=nN87axQZiT11CNTRL); el túnel con nombre de Cloudflare sigue bloqueado por permisos del token; PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10); la demo de Pages se rehace con `sacar_datos_demo.py` cuando cambie la pantalla
+bloqueado: la URL estable depende del servidor de casa (si el equipo se apaga, no contesta; la demo de Pages sigue en pie); PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
+
+## Lo que se ha hecho en esta ronda (10/11/2026, tercera: URL estable publicada)
+
+1. **Funnel de Tailscale en marcha**: `https://servidor.tail4263a0.ts.net` → `127.0.0.1:8090`.
+   La primera llamada sin `sudo` da `Access denied: serve config denied`: el mando del cliente lo
+   tiene root, así que se publica con `sudo tailscale funnel --bg 8090` (o se da el mando una vez
+   con `sudo tailscale set --operator=david`).
+2. **Comprobado desde fuera, no desde casa**: el DNS público del nombre resuelve a las direcciones
+   de entrada de Tailscale (176.58.90.46/.63/.145) y una petición externa a `/health` devuelve el
+   estado del servidor. Con Chrome de verdad: las cinco parcelas del cliente con su contorno
+   (`deploy/comprobar_publica.py`), el alta por los seis números (`deploy/comprobar_alta_publica.py`)
+   y el layout a 360/390/768/1024 sin desbordes ni controles pequeños. Capturas `estable-*.png`.
+3. **El alta que funciona es la de las seis casillas** (provincia, municipio, agregado, zona,
+   polígono y parcela); pegar la referencia sirve para el trozo (siete números). Se apunta en el
+   guion y en la documentación, porque el mensaje del servidor ya lo dice al pegar una parcela.
+4. **La finca queda como estaba**: las parcelas de la prueba se borran por la API al terminar
+   (`DELETE /api/parcelas/{id}`) y se comprueba que vuelven a ser cinco.
+5. **`PORTFOLIO.md`** en la raíz, con la URL como «Abre desde cualquier sitio», la evidencia medida
+   y lo que falta dicho sin adornos. Y **aviso al chat del panel** (sesión del portfolio) para que
+   actualice la tarjeta de `cue-digital`, que decía que no había demo pública.
+6. **`docs/DESPLIEGUE.md` §10.1 bis**: estado del funnel, qué pasa si se cae (`tailscale funnel
+   status` → `sudo tailscale funnel --bg 8090`), por qué no caduca y qué haría cambiar la dirección.
 
 ## Lo que se ha hecho en esta ronda (10/11/2026, segunda: URL estable y comprobaciones de la demo)
 
