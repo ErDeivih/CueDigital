@@ -72,7 +72,44 @@ Dos decisiones que se notan en el modelo:
 hasta el volcado oficial a la Junta, la firma del cuaderno y la lectura del cuaderno digital de la
 Junta (Cuecyl) por las **etiquetas** de sus hojas, no por coordenadas fijas.
 
-## 4. Qué demuestra
+## 4. Validación de geometrías
+
+**De dónde sale la forma y qué se le exige.** La geometría no se dibuja a mano: viene del recinto
+del SIGPAC y se guarda como texto WKT. Sobre ella, el programa comprueba lo que puede comprobar sin
+inventar y **no la corrige nunca**: si algo no cuadra, avisa.
+
+1. **Se lee, y lo que no entiende no revienta.** `geo.puntos_de_un_wkt` entiende `POLYGON` y
+   `MULTIPOLYGON`, con varios anillos y agujeros; quita el vértice repetido del cierre; y un texto
+   que no es una geometría devuelve vacío en vez de romper la pantalla
+   (`test_texto_que_no_es_una_geometria_no_revienta`). Para dibujar hacen falta **tres puntos como
+   mínimo**; con menos, no se pinta nada.
+2. **Sin forma no hay área, y nunca es cero.** Un recinto sin dibujo devuelve `None`, que la pantalla
+   enseña como «sin el dibujo del mapa»: no se le pone un cero que parezca un dato
+   (`test_sin_forma_no_hay_area_y_nunca_es_cero`).
+3. **El área se calcula y se contrasta con la que declara el SIGPAC.** `geo.area_ha` calcula la
+   superficie con los anillos (los agujeros restan y los trozos de un multiparte suman) y hay una
+   prueba que exige que **el área del recinto de ejemplo cuadre con la que dice el propio SIGPAC**
+   (`test_el_area_del_recinto_de_ejemplo_cuadra_con_la_que_dice_el_sigpac`). Un cuadrado de 100 m
+   mide lo que tiene que medir (`test_un_cuadrado_de_unos_cien_metros_mide_lo_que_tiene_que_medir`).
+   Es la validación que de verdad importa: que la forma y la superficie oficial no se contradigan.
+4. **Dos tierras que se pisan se dicen y no se arreglan.** `geo.se_solapan` contesta `si`, `puede`,
+   `no` o `no_se`: `si` cuando un vértice de una forma cae dentro de la otra; `puede` cuando solo se
+   tocan los rectángulos que las envuelven (dos trozos que se cruzan como una cruz); `no_se` cuando a
+   alguna le falta la forma. **Primero se compara el rectángulo** que envuelve cada forma
+   (`geo.rectangulo_de_un_wkt`), que es la comprobación barata: si los rectángulos no se tocan, las
+   formas tampoco. El aviso es informativo: no se recorta ni se mueve ninguna parcela.
+5. **El toque en el mapa se resuelve con la geometría, no con la foto.** `geo.punto_dentro_del_wkt`
+   dice si el punto que tocó el agricultor cae dentro del recinto; con eso se elige el trozo sin
+   depender de que la imagen del mapa esté disponible.
+6. **La caja del mapa se limita antes de pedirla.** Si la finca es muy grande, el navegador pide una
+   parte (una caja de lado máximo) en vez de una imagen gigante que no se podría servir
+   (`cajaQueSePuedePedir` en `app.js`).
+7. **Lo que NO se hace, para no prometer de más:** no se usa PostGIS (el WKT es texto a propósito,
+   para que el mismo código funcione en SQLite y en PostgreSQL), **no se reparan** geometrías
+   auto-intersectadas ni se reproyectan, y **no se recorta** una parcela que se solape con otra: eso
+   lo decide una persona.
+
+## 5. Qué demuestra
 
 | Competencia | Evidencia |
 |---|---|
@@ -89,7 +126,7 @@ Junta (Cuecyl) por las **etiquetas** de sus hojas, no por coordenadas fijas.
 JavaScript · 5 tierras de ejemplo con su forma real en el entorno privado · 5 tierras **inventadas**
 en la demo pública.
 
-## 5. Lo que no está hecho (dicho sin adornos)
+## 6. Lo que no está hecho (dicho sin adornos)
 
 - **El volcado oficial a la Junta** está implementado y probado contra el anexo del FEGA, pero **no se
   ha enviado nada real**: depende de que la Junta dé de alta el acceso.
@@ -101,7 +138,7 @@ en la demo pública.
 - Los **textos de la interfaz** tienen una lista de mejoras pendiente (barra de acciones fija al
   apuntar, cabecera de grupo que diga qué no consta, ayuda de los códigos del SIGPAC).
 
-## 6. Dónde mirar
+## 7. Dónde mirar
 
 - **Demo pública (datos ficticios):** <https://erdeivih.github.io/cuedigital-demo/>
 - **Seguridad y qué se expone:** [`SEGURIDAD.md`](SEGURIDAD.md)
