@@ -1,0 +1,36 @@
+# Túnel **con nombre** de Cloudflare (10/11/2026) — la vía para una URL estable con dominio propio.
+#
+# NO se usa todavía: el token de Cloudflare del 09/11 no tiene permisos para crear túneles ni
+# para leer la cuenta (ver docs/CUENTAS-Y-ACCESOS.md §9.1 bis). Queda preparado para cuando David
+# decida esta vía.
+#
+# QUÉ HACE FALTA, EN ORDEN
+#
+#  1. Un dominio en la cuenta de Cloudflare (o uno comprado y movido a su DNS).
+#  2. Un token con, al menos, estos permisos:
+#       - Account → Cloudflare Tunnel: Edit
+#       - Zone → DNS: Edit
+#       - Account → Account Settings: Read
+#  3. En el servidor:  cloudflared tunnel login   (una vez, abre el navegador)
+#  4. Crear el túnel:  cloudflared tunnel create cuedigital
+#     Apunta el UUID que imprime: va en `tunnel:` aquí abajo.
+#  5. Apuntar el nombre:  cloudflared tunnel route dns cuedigital cuaderno.tu-dominio.es
+#  6. Ejecutarlo en un contenedor (igual que el túnel efímero de hoy, pero con nombre):
+#
+#       docker run -d --name cuedigital-tunnel --restart unless-stopped --network host \
+#         -v /home/david/.cloudflared:/etc/cloudflared:ro \
+#         cloudflare/cloudflared:latest tunnel --config /etc/cloudflared/config.yml run
+#
+#  7. Comprobar:  python deploy/comprobar_publica.py https://cuaderno.tu-dominio.es
+#
+# Con esto la dirección es **fija**: no cambia al recrear el contenedor, y el certificado lo pone
+# Cloudflare. Es la opción con más trabajo inicial y la más «de empresa».
+
+tunnel: CAMBIAR_POR_EL_UUID_QUE_IMPRIME_cloudflared_tunnel_create
+credentials-file: /etc/cloudflared/CAMBIAR_POR_EL_UUID.json
+
+ingress:
+  - hostname: cuaderno.tu-dominio.es
+    service: http://127.0.0.1:8090
+  # Todo lo demás se rechaza: este túnel solo existe para CueDigital.
+  - service: http_status:404

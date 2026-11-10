@@ -940,7 +940,8 @@ con su test de jerga y su revisión.
 | Imagen | `cuedigital:servidor` (se construye en el ordenador de David y se carga con `docker load`) |
 | Puerto interno | `127.0.0.1:8090` → túnel |
 
-**El túnel es efímero y esto hay que decirlo:** es un *quick tunnel* de Cloudflare, sin cuenta. Da
+**El túnel es efímero y esto hay que decirlo:** es un *quick tunnel* de Cloudflare, sin cuenta (la
+solución para tener una dirección fija, **y el clic que falta**, están en el apartado 10). Da
 HTTPS de verdad (Cloudflare termina el TLS) pero **la dirección cambia si se recrea el
 contenedor**. Para una dirección estable hacen falta dos cosas que dependen de David: un
 **túnel con nombre** en su cuenta de Cloudflare (y un token con permisos, que el del 09/11 no
@@ -1087,3 +1088,74 @@ capturas a **360 y 1024 px** en `docs/capturas-despliegue/`. El alta por referen
 números se prueba en `deploy/paginas_github/sembrar_finca_ejemplo.py` (las cinco se dieron de alta
 así, y «El Visor» solo con `37-70-0-0-501-80`, seis números).
 
+
+---
+
+## 10. Una **URL estable** para el servidor de casa (10/11/2026)
+
+> **El problema, en una frase:** el túnel que se usa hoy (`trycloudflare.com`) no necesita cuenta,
+> pero **cambia de dirección** cada vez que se recrea el contenedor. Para que David pueda mandar
+> un enlace que siga valiendo mañana hay tres caminos. **El recomendado no cuesta dinero y no
+> necesita cuentas nuevas: Tailscale Funnel**, que ya está instalado en el servidor.
+
+### 10.1. La que se recomienda: Tailscale Funnel (gratis, sin cuentas nuevas)
+
+El servidor de casa ya está en la red de Tailscale de David (`servidor`, `100.117.58.93`;
+sufijo de la red: `tail4263a0.ts.net`). Funnel publica un puerto de ese equipo en una dirección
+**fija** con HTTPS: `https://servidor.tail4263a0.ts.net/`.
+
+**Falta un solo paso, y es de David** (Tailscale no deja abrirlo sin que lo apruebe el dueño de la
+cuenta). Abrir **una vez**:
+
+> <https://login.tailscale.com/f/funnel?node=nN87axQZiT11CNTRL>
+
+Y después, en el servidor:
+
+```bash
+bash /srv/cuedigital/app/deploy/url_estable.sh 8090
+```
+
+El guion (`deploy/url_estable.sh`) hace la llamada con un tiempo máximo, **no se queda colgado**
+esperando la aprobación (eso pasó el 10/11/2026 con la llamada directa), imprime el enlace de
+aprobación si falta y, cuando ya está habilitado, deja Funnel en marcha y dice la dirección.
+También saca el sufijo de la red y el nombre del equipo, así que la dirección que enseña es la
+buena.
+
+**Lo que hay que saber de esta vía:**
+
+- Funnel es **HTTP(S) público** en los puertos 443/8443/10000; el 8090 de la aplicación se publica
+  en el 443. No hay que abrir nada en el router.
+- La dirección es fija mientras no cambien el nombre del equipo ni la red de Tailscale.
+- Tailscale es un servicio externo (los paquetes pasan por su red), aunque el TLS lo termine en el
+  equipo. Para datos de un agricultor de verdad, eso hay que decírselo a quien corresponda (RGPD).
+- Si el servidor de casa se apaga o pierde internet, la dirección no contesta: no hay alta
+  disponibilidad.
+- Comprobación: `python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net`
+
+### 10.2. La de siempre: un dominio propio con Caddy (unos 10 €/año)
+
+1. Comprar el dominio (o usar uno que ya se tenga) y crear un registro **A** a la IP pública de
+   casa (`79.117.136.11`, comprobado el 09/11/2026; puede cambiar: es una conexión doméstica).
+2. En el router, abrir **80 y 443** hacia el servidor.
+3. En `deploy/.env`, poner `DOMINIO=cuaderno.tu-dominio.es` y levantar el `caddy` del
+   `deploy/docker-compose.yml`: Caddy pide el certificado y renueva solo.
+4. Comprobación: `python deploy/comprobar_publica.py https://cuaderno.tu-dominio.es`
+
+Es la opción **sin depender de servicios de terceros** más allá del dominio, y la que deja la
+dirección más «de la casa». Lo que cuesta: el dominio y abrir puertos en el router.
+
+### 10.3. Un túnel con nombre de Cloudflare (la de empresa)
+
+Deja de ser efímero (`cloudflared tunnel create` + `route dns`) y el certificado lo pone
+Cloudflare, pero **necesita un token con permisos que el del 09/11 no tiene** y un dominio en esa
+cuenta. Está preparado en **`deploy/cloudflared/config.yml`**, con los pasos numerados dentro.
+Requiere: *Account → Cloudflare Tunnel: Edit*, *Zone → DNS: Edit* y *Account → Account Settings:
+Read*. Mientras el token no se cambie, esta vía está **bloqueada por permisos**, no por código.
+
+### 10.4. Mientras se decide: qué hay hoy
+
+| URL | Qué es | ¿Estable? |
+|---|---|---|
+| <https://erdeivih.github.io/cuedigital-demo/> | La **demo** con los datos dentro (GitHub Pages). Es la que David puede enseñar. | **Sí** |
+| `https://attract-leeds-integer-asp.trycloudflare.com` | La **app completa** con backend en el servidor de casa, por túnel efímero. | **No** |
+| `https://servidor.tail4263a0.ts.net/` | La app completa, **estable**, en cuanto David apruebe Funnel. | **Sí, cuando se apruebe** |

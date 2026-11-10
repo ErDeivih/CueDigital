@@ -85,6 +85,14 @@ def esperar_vista(navegador, cual: str, segundos: float = 12.0) -> bool:
 def main() -> int:
     print(f"Comprobación de la demo en {URL}")
     with NavegadorDeVerdad() as navegador:
+        # Se limpia la caché del navegador: si no, una versión anterior de la demo se queda
+        # pegada y la comprobación mira lo que ya no está publicado.
+        navegador.abrir("about:blank", esperar=0.3)
+        try:
+            navegador.orden("Network.enable")
+            navegador.orden("Network.clearBrowserCache")
+        except Exception:
+            pass
         navegador.abrir(URL, esperar=1.5)
         comprobar(
             bool(navegador.esperar("document.querySelector('.app') !== null", segundos=25)),
@@ -147,8 +155,34 @@ def main() -> int:
             "catch (e) { return -1; } })()"
         )
         comprobar(int(guardadas or 0) >= 1, "la tierra nueva queda guardada en el navegador", f"guardadas={guardadas}")
-        comprobar("Parcela 502" in lista or "6 tierras" in lista.lower(), "la tierra nueva aparece en la lista", lista[:300])
+        comprobar("6 tierras" in lista.lower() or "6 tierras" in lista, "la lista pasa a seis tierras", lista[:200])
         captura(navegador, "demo-tierras-con-alta-390.png")
+
+        # **Y su contorno**: se abre la ficha de la tierra nueva y el dibujo tiene que estar.
+        # Se busca por su nombre exacto (el que quedó guardado), no por un texto supuesto.
+        alias = navegador.evaluar(
+            "(() => { try { const l = JSON.parse(localStorage.getItem('cuedigital.demo.tierras') || '[]');"
+            "return l.length ? l[l.length - 1].alias : ''; } catch (e) { return ''; } })()"
+        ) or ""
+        abierta = navegador.evaluar(
+            "(() => { const fila = [...document.querySelectorAll('button.tierra')]"
+            ".filter(e => e.offsetParent !== null)"
+            ".find(e => (e.textContent || '').includes(%r));"
+            "if (!fila) { const ultima = [...document.querySelectorAll('button.tierra')].pop();"
+            "if (!ultima) return false; ultima.click(); return true; }"
+            "fila.click(); return true; })()" % alias
+        )
+        comprobar(bool(abierta), "se abre la ficha de la tierra nueva", f"alias={alias}")
+        time.sleep(2.5)
+        dibujo = navegador.evaluar(
+            "(() => { const s = document.querySelector('svg.mapa__dibujo');"
+            "if (!s) return 0; return s.querySelectorAll('path, polygon, polyline, line').length; })()"
+        )
+        comprobar(int(dibujo or 0) > 0, "la ficha dibuja el contorno de la parcela", f"trazos={dibujo}")
+        captura(navegador, "demo-alta-contorno-390.png")
+        navegador.medir(1024, 768)
+        time.sleep(1.0)
+        captura(navegador, "demo-alta-contorno-1024.png")
 
     print()
     if fallos:

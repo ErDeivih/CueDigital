@@ -1,0 +1,30 @@
+{
+  "360": {
+    "desborde": 0,
+    "controles": 19,
+    "pequenos": 0,
+    "muestra": [],
+    "huecos_pequenos": 0
+  },
+  "390": {
+    "desborde": 0,
+    "controles": 19,
+    "pequenos": 0,
+    "muestra": [],
+    "huecos_pequenos": 0
+  },
+  "768": {
+    "desborde": 0,
+    "controles": 25,
+    "pequenos": 0,
+    "muestra": [],
+    "huecos_pequenos": 0
+  },
+  "1024": {
+    "desborde": 0,
+    "controles": 25,
+    "pequenos": 0,
+    "muestra": [],
+    "huecos_pequenos": 0
+  }
+}

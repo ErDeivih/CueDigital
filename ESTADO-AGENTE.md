@@ -1,11 +1,34 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **David ya puede probar CueDigital solo, sin depender de nadie**: la demo pública está en **https://erdeivih.github.io/cuedigital-demo/** (GitHub Pages), con las **cinco parcelas del cliente de Salamanca y su contorno**, el **aviso de DEMO siempre visible** y el **alta por referencia de seis números** funcionando (se guarda en el navegador del que la prueba). Verificado el 10/11/2026 con una petición real (200) y con Chrome de verdad: parcelas visibles y alta hecha, capturas a 360 y 1024 en docs/capturas-despliegue/. Los datos van **dentro** del paquete (copia literal de lo que contestó el servidor), así que no depende del servidor de casa ni del túnel; el paquete lo arma `deploy/paginas_github/preparar.py --demo` y se comprueba con `deploy/comprobar_demo.py`. Sigue en pie además la app completa en el servidor propio por túnel (9.1).
+resumen: **La demo pública está verificada y es estable**: https://erdeivih.github.io/cuedigital-demo/ (GitHub Pages; no depende de ningún servidor). Se ha comprobado de nuevo contra la URL real: 200, las cinco parcelas del cliente, **un alta por referencia de seis números** (`37-2-0-0-502-1`) que queda en la lista y **su contorno dibujado** en la ficha (capturas a 360/1024). Los arreglos de móvil y tableta están aplicados también en la demo: **0 desbordes, 0 controles por debajo de 44 px y 0 huecos por debajo de 8 px a 360, 390, 768 y 1024** (medido con Chrome de verdad, `deploy/medir_demo.py`). **La URL estable de la app completa está preparada y solo le falta un clic de David**: Tailscale Funnel ya está instalado en el servidor y `deploy/url_estable.sh` da el enlace de aprobación; cuando se apruebe, la app completa queda en **https://servidor.tail4263a0.ts.net/** sin comprar nada. Alternativas documentadas: dominio propio con Caddy (≈10 €/año) y túnel con nombre de Cloudflare (bloqueado por permisos del token).
 estado: en-curso
-tarea: demo pública sin servidor en GitHub Pages, verificada, con las parcelas del cliente y el alta por referencia; layouts de móvil y tableta cerrados en la ronda anterior
+tarea: demo pública verificada (alta con 6 números y contorno), layouts medidos en la demo y URL estable preparada (Tailscale Funnel, pendiente de un clic de David)
 nivel: 2
-siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10) y, para la app de verdad, decidir si el repositorio principal va a público o a plan Pro (así Pages también serviría el front que llama al servidor)
-bloqueado: la URL del túnel de la app completa cambia al recrear el contenedor (solución: dominio o túnel con nombre); PSD2 sigue parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
+siguiente: aprobar Funnel en el enlace de docs/DESPLIEGUE.md §10.1 y lanzar `deploy/url_estable.sh 8090`; seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10)
+bloqueado: la URL estable de la app completa espera **un clic de David** en Tailscale (https://login.tailscale.com/f/funnel?node=nN87axQZiT11CNTRL); el túnel con nombre de Cloudflare sigue bloqueado por permisos del token; PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
+
+## Lo que se ha hecho en esta ronda (10/11/2026, segunda: URL estable y comprobaciones de la demo)
+
+1. **Demo pública, comprobada otra vez y con el alta completa** (https://erdeivih.github.io/cuedigital-demo/):
+   - **Alta por referencia de seis números**: `37-2-0-0-502-1` → «Añadir tierras» → «O pega las
+     referencias» → «Traer las pegadas». La tierra nueva entra en la lista (**6 tierras**) y queda
+     guardada en el navegador.
+   - **Y se ve su contorno**: la ficha de la tierra nueva dibuja el anillo (SVG con su trazo),
+     comprobado en el DOM y en la captura `docs/capturas-despliegue/demo-alta-contorno-390.png`.
+   - Se arregló de paso un detalle feo: la ortofoto de la demo (`/api/mapa/imagen`) devolvía 404 y
+     el navegador pintaba el **icono de imagen rota encima del contorno**. Ahora responde una
+     imagen válida y el mapa queda limpio.
+2. **Layouts de móvil y tableta medidos en la demo publicada** (`deploy/medir_demo.py`): a **360,
+   390, 768 y 1024 px**, **0 desbordes horizontales, 0 controles por debajo de 44 px y 0 huecos
+   por debajo de 8 px** (los «antes» están en `docs/revision-interfaz.md` §6.2: 30 controles y 135
+   huecos). Capturas `demo-medida-*.png` y `medidas-demo.json`.
+3. **URL estable preparada** (`docs/DESPLIEGUE.md` §10): Tailscale Funnel es la vía recomendada
+   (gratis, sin cuentas nuevas; el servidor ya está en la red de Tailscale). **Solo falta un clic de
+   David** en <https://login.tailscale.com/f/funnel?node=nN87axQZiT11CNTRL>; después,
+   `deploy/url_estable.sh 8090` deja la app completa en **https://servidor.tail4263a0.ts.net/**.
+   El guion no se queda colgado (eso pasó con la llamada directa): saca el enlace y el sufijo de la
+   red. Alternativas documentadas: dominio propio con Caddy (≈10 €/año) y túnel con nombre de
+   Cloudflare (`deploy/cloudflared/config.yml`, bloqueado por permisos del token del 09/11).
 
 ## Lo que se ha hecho en esta ronda (10/11/2026: la demo que no depende de nadie)
 
