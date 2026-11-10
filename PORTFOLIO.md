@@ -24,7 +24,8 @@ con el sol de frente, el móvil en una mano y sin cobertura.
 | **Datos oficiales de verdad** | Las tierras se dan de alta **con su referencia del SIGPAC**: el programa llama al servicio del FEGA y trae superficie, uso, pendiente y **el contorno**. La finca de ejemplo son **cinco parcelas reales de un cliente de Salamanca**, con su forma sacada del GeoPackage del SIGPAC. |
 | **Geodatos, no un mapa de adorno** | La forma se guarda como texto WKT (funciona igual en SQLite y en PostgreSQL), el mapa se pide al SIGPAC por recinto y por punto, la app **dibuja el contorno con los datos** cuando no hay ortofoto, y hay caché por provincia: la finca se ve con su forma real aunque el servicio del FEGA no conteste. |
 | **Una app de campo, no un formulario** | Se usa **de pie en la parcela**: la lista de tierras se busca y se toca (no se teclea el código), el mapa recibe el toque para elegir el recorte, los campos de números abren **teclado numérico**, los controles miden **44 px o más** y las tablas y los modales caben en un móvil de 360 px. |
-| **Calidad medida, no prometida** | **6.116 pruebas de Python y 1.322 de JavaScript**, en verde, con guardianes que impiden que los números de la documentación se queden viejos. |
+| **Cuaderno guiado, con fecha** | La ficha de cada tierra dice **qué toca hacer y a partir de cuándo**: «ya se puede volver a entrar», «podrás cosechar a partir del 22/11», y marca como **aviso** lo que termina hoy o en los próximos días. Sale de los plazos que están apuntados en cada tratamiento (los de la etiqueta, copiados el día de la aplicación): **no inventa ninguna fecha** y no da consejo agronómico. |
+| **Calidad medida, no prometida** | **6.144 pruebas de Python y 1.322 de JavaScript**, en verde, con guardianes que impiden que los números de la documentación se queden viejos. |
 | **Interfaz para el campo** | Medido con Chrome de verdad a **360, 390, 768 y 1024 px**: **0 desbordes**, **0 controles por debajo de 44 px** y **0 huecos por debajo de 8 px**. Antes de los arreglos eran 30 controles y 135 huecos. |
 | **Sin cobertura** | La pantalla va en cola cuando no hay red y la aplicación sigue funcionando; el mapa se dibuja con el contorno guardado cuando no se puede pedir la foto. |
 | **Cumplir con la Administración** | Lectura del cuaderno de la Junta (Cuecyl) por las **etiquetas** de sus hojas, no por coordenadas fijas (la plantilla cambió entre 2024 y 2025); cliente del IUWS con los métodos y mensajes del anexo del FEGA; comprobación de la firma del cuaderno y «tres finales»: bien, mal y *no lo he podido comprobar*. |
@@ -34,7 +35,7 @@ con el sol de frente, el móvil en una mano y sin cobertura.
 
 | Dato | Valor |
 |---|---:|
-| Pruebas de Python / JavaScript | **6.116 / 1.322** |
+| Pruebas de Python / JavaScript | **6.144 / 1.322** |
 | Pantallas en React | 27 |
 | Tablas en la base de datos | 67 |
 | Parcelas de ejemplo con contorno real | 5 |
@@ -67,6 +68,12 @@ Y la parcela dada de alta con los seis números del papel, con su contorno dibuj
 | Alta en escritorio (1024 px) | Su ficha, con el contorno |
 |---|---|
 | ![Alta con los seis números](docs/capturas-despliegue/final-alta-1024.png) | ![Ficha de la parcela nueva](docs/capturas-despliegue/final-alta-ficha-1024.png) |
+
+**El cuaderno guiado** (10/11/2026), en la ficha de una tierra con tratamientos apuntados:
+
+| Móvil (390 px) | Escritorio (1024 px) |
+|---|---|
+| ![Qué toca hacer en móvil](docs/capturas-despliegue/guia-ficha-390.png) | ![Qué toca hacer en escritorio](docs/capturas-despliegue/guia-ficha-1024.png) |
 
 ## 6. Lo que falta (dicho sin adornos)
 

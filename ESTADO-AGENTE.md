@@ -1,9 +1,9 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **CueDigital cerrado para el portfolio, con URL verificada: https://servidor.tail4263a0.ts.net:8443** (Tailscale Funnel; el 443 lo ocupa `lyfta`, así que va por el 8443 y no se le ha quitado a nadie). Comprobado el 10/11/2026 en móvil (360) y escritorio (1024): las **cinco parcelas del cliente con su contorno**, el **alta con los seis números del SIGPAC** (Salamanca · Calvarrasa de Arriba · 0 · 0 · 502 · 1) que crea la parcela **y su ficha dibuja el contorno**, y **0 desbordes / 0 controles por debajo de 44 px / 0 tablas rotas** en todas las pantallas medidas; la **ventana del SIGPAC cabe entera** a 360 y a 1024, con «Cerrar» de 48×48 (capturas `final-*` y `estable-*` en docs/capturas-despliegue/). Las parcelas de la prueba se borraron (la finca vuelve a cinco). `PORTFOLIO.md` actualizado con la URL, qué demuestra (SIGPAC, geodatos, app de campo) y la prueba visual, y aviso enviado al chat del panel con la URL buena. Sigue la demo sin servidor: https://erdeivih.github.io/cuedigital-demo/
+resumen: **Contenido real y cuaderno guiado, en pie y verificado: https://servidor.tail4263a0.ts.net:8443**. La finca de ejemplo ya no está vacía: las **cinco parcelas del cliente** tienen sus datos del SIGPAC (El Prado 4,90 ha de tierras arables, La Vega 0,67 ha de pasto…), las cinco con su **contorno**, y **8 apuntes** de cuaderno (tratamientos con plazo de seguridad y reentrada, abonos y labores) en fechas recientes. Y la app ya **dice qué toca hacer y a partir de cuándo**: la ficha de cada tierra tiene el bloque **«Qué toca hacer»** («ya se puede volver a entrar», «podrás cosechar a partir del 22/11/2026»), que marca como **aviso de plazo** lo que termina hoy o en los próximos días. Sale de los plazos apuntados: **no inventa fechas ni da consejo agronómico**. 22 pruebas nuevas (`tests/test_guia.py`), comprobado en móvil (390) y escritorio (1024) con capturas `guia-ficha-*`.
 estado: en-curso
-tarea: cierre para portfolio: URL verificada en móvil y escritorio, medición de toques/tablas/modales, cartera y aviso al panel
+tarea: contenido real en la finca de ejemplo (datos del SIGPAC y 8 apuntes) y cuaderno guiado con fechas y aviso de plazo; verificado en móvil y escritorio
 nivel: 2
-siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5-P10: textos y destinos, sobre todo P5 la barra fija de apuntar y P7/P8 los textos de grupo y la ayuda de los códigos)
+siguiente: completar los apuntes de las dos tierras que aún no tienen tratamiento (El Visor y Las Eras) y seguir con los textos de P5/P7/P8 del informe de interfaz
 bloqueado: la URL estable depende del servidor de casa (si el equipo se apaga, no contesta; la demo de Pages sigue en pie); PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
 
@@ -30,6 +30,24 @@ tarjeta («Abre desde cualquier sitio»).
 con su prueba) y **P8** (ayuda de «Agregado» y «Zona»), volver a medir con `deploy/medir_publica.py`
 y actualizar `docs/revision-interfaz.md` §6.4.
 
+## Lo que se ha hecho en esta ronda (10/11/2026, quinta: contenido real y cuaderno guiado)
+
+1. **Contenido real en la finca de ejemplo**: las cinco parcelas del cliente **ya tienen sus datos
+   del SIGPAC** (superficie y uso, sacados del recinto de su referencia) y sus apuntes de cuaderno
+   (8 en total: tratamientos con plazo de seguridad y reentrada, abonos y labores). Sin datos
+   personales: la finca no lleva nombre, NIF ni teléfono de nadie. Deja **3 tierras con
+   tratamientos** (El Alto, El Prado y La Vega) y **2 sin ellos** (El Visor y Las Eras): así se ve
+   la diferencia entre una tierra con plazos que mirar y una que aún no tiene nada apuntado.
+2. **Cuaderno guiado** (`backend/app/guia.py`, función pura, 22 pruebas): la ficha de cada tierra
+   dice **qué toca hacer y a partir de cuándo** — «ya se puede volver a entrar», «podrás cosechar a
+   partir del 22/11/2026», «quedan 3 días: no coseches antes del…» con la etiqueta «Corre prisa» —
+   y «di qué hay sembrado» cuando falta el cultivo, **sin fecha inventada**. Un plazo **vencido**
+   no se marca como prisa: se dice y ya está. El texto vive en la pantalla (`textos.guia`); el
+   servidor manda códigos y fechas.
+3. **Desplegado y comprobado**: imagen nueva en el servidor (contenedor recreado, `/health` 200) y
+   el bloque visto con Chrome de verdad a 390 y 1024 (`guia-ficha-390/1024.png`); las filas del
+   aviso miden entre 78 y 138 px de alto.
+4. **`PORTFOLIO.md`**: nueva fila «Cuaderno guiado, con fecha» y la prueba visual del aviso.
 ## Lo que se ha hecho en esta ronda (10/11/2026, cuarta: cierre para portfolio)
 
 1. **URL publicada y comprobada**: el 443 del equipo estaba ocupado por `lyfta` (servido en el

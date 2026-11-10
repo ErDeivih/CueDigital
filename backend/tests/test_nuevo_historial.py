@@ -143,7 +143,13 @@ def test_una_tierra_sin_apuntes_no_se_rellena(cliente, cuenta, crear_parcela):
     tierra = crear_parcela(alias="El Alto", superficie_ha=3.0)
     datos = _la_tierra(cliente, cuenta["cabeceras"], tierra["id"])
 
-    assert set(datos) == {"tierra", "trabajo_de_hoy", "historial", "resumen"}
+    # La ficha trae una cosa más desde el 10/11/2026: **el cuaderno guiado** (`guia`), que dice qué
+    # toca hacer. En una tierra sin apuntes ni cultivo solo puede decir que falta el cultivo: **sin
+    # fecha inventada**, que es la regla de la casa.
+    assert set(datos) == {"tierra", "trabajo_de_hoy", "historial", "resumen", "guia"}
+    assert datos["guia"] == [
+        {"codigo": "cultivo", "fecha": None, "estado": "sin-fecha", "dias": None}
+    ]
     assert datos["tierra"]["alias"] == "El Alto"
     assert datos["trabajo_de_hoy"] == []
     assert datos["historial"] == []

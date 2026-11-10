@@ -46,6 +46,7 @@ from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
 
+from .guia import lo_que_toca
 from . import catalogos, dinero, gastos, geo, iuws, models, superficies
 from .deps import obtener_de_la_explotacion
 
@@ -1362,12 +1363,38 @@ def la_ficha_de_la_tierra(db: Session, *, explotacion, parcela_id: int) -> dict:
 
     historial = _el_historial(filas, cultivos_por_anio)
 
+    # **El cuaderno guiado** (10/11/2026): qué toca hacer en esta tierra y a partir de cuándo. Se
+    # calcula con los plazos que están apuntados en cada tratamiento (los de la etiqueta, copiados
+    # el día de la aplicación) y con si la tierra tiene cultivo declarado en la campaña. No se
+    # inventa ninguna fecha: si no hay plazo apuntado, no hay aviso.
+    tratamientos_con_plazo = [
+        {
+            "fecha": fila.fecha,
+            "plazo_seguridad_dias": fila.plazo_seguridad_dias,
+            "plazo_reentrada_dias": fila.plazo_reentrada_dias,
+        }
+        for fila in db.execute(
+            select(models.TratamientoFitosanitario)
+            .where(
+                models.TratamientoFitosanitario.explotacion_id == explotacion.id,
+                models.TratamientoFitosanitario.parcela_id == parcela.id,
+            )
+            .order_by(models.TratamientoFitosanitario.fecha.desc())
+        ).scalars()
+    ]
+    guia = lo_que_toca(
+        hoy=hoy,
+        tratamientos=tratamientos_con_plazo,
+        tiene_cultivo=bool(cultivos.get(campana.id)) if campana is not None else False,
+    )
+
     fechas = [fila["fecha"] for fila in filas if fila["fecha"] is not None]
     ultima_cosecha = next((fila for fila in filas if fila["tipo"] == CLAVE_COSECHA), None)
     return {
         "tierra": tierra,
         "trabajo_de_hoy": trabajo_de_hoy,
         "historial": historial,
+        "guia": guia,
         "resumen": {
             "n_apuntes": len(filas),
             "primera_fecha": min(fechas).isoformat() if fechas else None,
