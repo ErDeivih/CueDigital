@@ -1,11 +1,32 @@
 titulo: CueDigital — la herramienta del agricultor de Castilla y León
-resumen: **La URL estable está publicada y verificada desde fuera: https://servidor.tail4263a0.ts.net** (Tailscale Funnel, gratis, sin dominio). Comprobado el 10/11/2026: el DNS público del nombre resuelve a las direcciones de entrada de Tailscale, una petición **externa** devuelve `/health` 200 y con Chrome de verdad se ven las **cinco parcelas del cliente con su contorno**; el **alta por los seis números del SIGPAC** (Salamanca / Calvarrasa de Arriba / 0 / 0 / 502 / 1) crea la parcela, **su ficha dibuja el contorno**, y el **layout** está bien a 360, 390, 768 y 1024 px (0 desbordes, 0 controles por debajo de 44 px). Las parcelas de prueba se borraron al terminar (la finca vuelve a tener cinco). Además: `PORTFOLIO.md` nuevo en la raíz con la URL y la evidencia, y aviso enviado al chat del panel (portfolio) para que la incluya como «Abre desde cualquier sitio». Cómo renovar el funnel, en `docs/DESPLIEGUE.md` §10.1 bis. Sigue también la demo sin servidor: https://erdeivih.github.io/cuedigital-demo/
+resumen: **CueDigital cerrado para el portfolio, con URL verificada: https://servidor.tail4263a0.ts.net:8443** (Tailscale Funnel; el 443 lo ocupa `lyfta`, así que va por el 8443 y no se le ha quitado a nadie). Comprobado el 10/11/2026 en móvil (360) y escritorio (1024): las **cinco parcelas del cliente con su contorno**, el **alta con los seis números del SIGPAC** (Salamanca · Calvarrasa de Arriba · 0 · 0 · 502 · 1) que crea la parcela **y su ficha dibuja el contorno**, y **0 desbordes / 0 controles por debajo de 44 px / 0 tablas rotas** en todas las pantallas medidas; la **ventana del SIGPAC cabe entera** a 360 y a 1024, con «Cerrar» de 48×48 (capturas `final-*` y `estable-*` en docs/capturas-despliegue/). Las parcelas de la prueba se borraron (la finca vuelve a cinco). `PORTFOLIO.md` actualizado con la URL, qué demuestra (SIGPAC, geodatos, app de campo) y la prueba visual, y aviso enviado al chat del panel con la URL buena. Sigue la demo sin servidor: https://erdeivih.github.io/cuedigital-demo/
 estado: en-curso
-tarea: URL estable publicada con Tailscale Funnel y verificada desde fuera; alta de 6 números y layout comprobados en esa URL; cartera y aviso al panel hechos
+tarea: cierre para portfolio: URL verificada en móvil y escritorio, medición de toques/tablas/modales, cartera y aviso al panel
 nivel: 2
-siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5, P6, P7, P8, P9, P10); la demo de Pages se rehace con `sacar_datos_demo.py` cuando cambie la pantalla
+siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5-P10: textos y destinos, sobre todo P5 la barra fija de apuntar y P7/P8 los textos de grupo y la ayuda de los códigos)
 bloqueado: la URL estable depende del servidor de casa (si el equipo se apaga, no contesta; la demo de Pages sigue en pie); PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
+
+## Lo que se ha hecho en esta ronda (10/11/2026, cuarta: cierre para portfolio)
+
+1. **URL publicada y comprobada**: el 443 del equipo estaba ocupado por `lyfta` (servido en el
+   8010) cuando se fue a publicar, así que CueDigital sale por **https://servidor.tail4263a0.ts.net:8443**
+   (Tailscale Funnel). La petición al **ingress público** de Tailscale (176.58.90.46, no la red
+   interna) devuelve 200; no se ha pisado el servicio del otro proyecto y queda documentado cómo
+   devolver el 443 si algún día se decide (`docs/DESPLIEGUE.md` §10.1 bis).
+2. **Comprobado en móvil y escritorio**: parcelas con contorno y alta con los seis números, con
+   capturas `final-tierras-360/1024`, `final-ficha-360/1024`, `final-modal-sigpac-360/1024` y
+   `estable-ficha-nueva-390`. La finca vuelve a sus cinco parcelas (las de prueba se borran por la
+   API al terminar).
+3. **Medido lo que pide el encargo** (`deploy/medir_publica.py`): todas las pantallas del menú a
+   360 y 1024, más la ficha y la ventana del SIGPAC. Resultado: **0 desbordes, 0 controles por
+   debajo de 44 px, 0 tablas rotas**; el modal **cabe entero** (360×844 en el móvil, 1009×768 en el
+   escritorio) con «Cerrar» de 48×48. La única «falta» que salió eran ayudantes ocultos para el
+   lector de pantalla (1 px) y la casilla de un interruptor cuyo blanco de toque es su etiqueta: se
+   afina la medida, no la aplicación.
+4. **`PORTFOLIO.md`** con la URL, qué demuestra (SIGPAC, **geodatos**, **app de campo**), los
+   números y la **prueba visual** (seis capturas). Aviso enviado al chat del panel con la URL
+   buena (la primera que mandé no llevaba el puerto).
 
 ## Lo que se ha hecho en esta ronda (10/11/2026, tercera: URL estable publicada)
 

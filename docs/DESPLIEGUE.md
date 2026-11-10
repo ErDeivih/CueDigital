@@ -1102,7 +1102,7 @@ así, y «El Visor» solo con `37-70-0-0-501-80`, seis números).
 
 El servidor de casa ya está en la red de Tailscale de David (`servidor`, `100.117.58.93`;
 sufijo de la red: `tail4263a0.ts.net`). Funnel publica un puerto de ese equipo en una dirección
-**fija** con HTTPS: `https://servidor.tail4263a0.ts.net/`.
+**fija** con HTTPS: `https://servidor.tail4263a0.ts.net:8443/`.
 
 **Falta un solo paso, y es de David** (Tailscale no deja abrirlo sin que lo apruebe el dueño de la
 cuenta). Abrir **una vez**:
@@ -1130,11 +1130,11 @@ buena.
   equipo. Para datos de un agricultor de verdad, eso hay que decírselo a quien corresponda (RGPD).
 - Si el servidor de casa se apaga o pierde internet, la dirección no contesta: no hay alta
   disponibilidad.
-- Comprobación: `python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net`
+- Comprobación: `python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net:8443`
 
 ### 10.1 bis. Ya está en marcha — y **cómo se renueva** si se cae o cambia
 
-**Estado el 10/11/2026:** Funnel **en marcha**. `https://servidor.tail4263a0.ts.net` contesta
+**Estado el 10/11/2026:** Funnel **en marcha**. `https://servidor.tail4263a0.ts.net:8443` contesta
 `/health` con 200, y se ha comprobado **desde fuera** (una petición real lanzada desde otro sitio,
 no desde casa): el DNS público del nombre resuelve a las direcciones de entrada de Tailscale
 (`176.58.90.46`, `.63`, `.145`) y la petición externa devuelve el estado del servidor.
@@ -1166,13 +1166,27 @@ sudo tailscale set --operator=david
 Y desde el ordenador, la comprobación de siempre:
 
 ```bash
-python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net
+python deploy/comprobar_publica.py https://servidor.tail4263a0.ts.net:8443
 ```
 
 > **Un detalle que costó un rato:** la primera vez, `tailscale funnel` sin `sudo` contesta
 > `Access denied: serve config denied`. No es que falte el permiso en la red (eso es el clic de
 > David, que ya está dado): es que el mando del cliente lo tiene root. Por eso hay que lanzarlo con
 > `sudo`, o dar el mando una vez con `--operator`.
+
+> **El puerto público es el 8443, y no el 443, por un motivo concreto:** al publicar CueDigital,
+> el 443 de este equipo ya estaba ocupado por **otro proyecto de David** (`lyfta`, servido en el
+> 8010) que había reescrito la configuración de Tailscale. En vez de pisarlo —dejaría sin servicio
+> al otro proyecto— CueDigital se publica en **8443**, que es uno de los tres puertos que Tailscale
+> deja abrir en Funnel (443, 8443 y 10000). Si algún día se quiere la dirección corta
+> (`https://servidor.tail4263a0.ts.net`), hay que decidir de quién es el 443:
+>
+> ```bash
+> sudo tailscale funnel status          # ver quién ocupa el 443
+> sudo tailscale funnel --bg 8090       # devolver el 443 a CueDigital (deja fuera al otro)
+> sudo tailscale funnel --https=8443 off  # o quitar CueDigital del 8443
+> ```
+
 
 
 ### 10.2. La de siempre: un dominio propio con Caddy (unos 10 €/año)
@@ -1201,4 +1215,4 @@ Read*. Mientras el token no se cambie, esta vía está **bloqueada por permisos*
 |---|---|---|
 | <https://erdeivih.github.io/cuedigital-demo/> | La **demo** con los datos dentro (GitHub Pages). Es la que David puede enseñar. | **Sí** |
 | `https://attract-leeds-integer-asp.trycloudflare.com` | La **app completa** con backend en el servidor de casa, por túnel efímero. | **No** |
-| `https://servidor.tail4263a0.ts.net/` | La app completa, **estable**, publicada con Tailscale Funnel el 10/11/2026 (ver 10.1 bis). | **Sí** |
+| `https://servidor.tail4263a0.ts.net:8443/` | La app completa, **estable**, publicada con Tailscale Funnel el 10/11/2026 (ver 10.1 bis). | **Sí** |
