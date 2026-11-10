@@ -7,6 +7,29 @@ siguiente: seguir con lo que queda del informe de interfaz (P1, P2, P5-P10: text
 bloqueado: la URL estable depende del servidor de casa (si el equipo se apaga, no contesta; la demo de Pages sigue en pie); PSD2 parado por presupuesto; el alta del dominio en el IUWS y los formatos del expediente dependen de la Junta/FEGA
 fecha: 2026-11-10
 
+## Bloqueo
+
+**(a) Dónde me quedé.** La tanda está cerrada: URL del funnel verificada en **móvil (390) y
+escritorio (1024)** —parcelas con contorno y alta por los seis números, con capturas `final-alta-1024`
+y `final-alta-ficha-1024`—, layouts medidos y `PORTFOLIO.md` con la prueba visual. Lo que queda **no es
+de esta tanda**.
+
+**(b) Qué falta revisar.** Los textos de **P5** (barra de acciones fija al apuntar), **P7** (la
+cabecera del grupo sigue diciendo «N tierras · no consta» sin decir de qué) y **P8** (ayuda de
+«Agregado» y «Zona» y la fecha del mapa); y **confirmar que el chat del panel** ha metido la URL en la
+tarjeta («Abre desde cualquier sitio»).
+
+**(c) Qué necesito de David o de otro chat.**
+- **De David**: decidir si el **443** pasa a CueDigital (hoy lo tiene `lyfta`, en el 8010). No es
+  bloqueante —el 8443 funciona y está comprobado—, pero la dirección corta no se puede tener sin
+  decidir de quién es el puerto. Los dos comandos están en `docs/DESPLIEGUE.md` §10.1 bis.
+- **Del chat del panel** (sesión del portfolio): que procese el mensaje con la URL buena
+  (`https://servidor.tail4263a0.ts.net:8443`) y confirme la tarjeta.
+
+**(d) Siguiente paso concreto.** Implementar **P7** (texto de la cabecera del grupo en `textos.py`,
+con su prueba) y **P8** (ayuda de «Agregado» y «Zona»), volver a medir con `deploy/medir_publica.py`
+y actualizar `docs/revision-interfaz.md` §6.4.
+
 ## Lo que se ha hecho en esta ronda (10/11/2026, cuarta: cierre para portfolio)
 
 1. **URL publicada y comprobada**: el 443 del equipo estaba ocupado por `lyfta` (servido en el

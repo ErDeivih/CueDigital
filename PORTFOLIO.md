@@ -64,6 +64,10 @@ python deploy/comprobar_demo.py https://erdeivih.github.io/cuedigital-demo/ # la
 Y la parcela dada de alta con los seis números del papel, con su contorno dibujado:
 [`estable-ficha-nueva-390.png`](docs/capturas-despliegue/estable-ficha-nueva-390.png).
 
+| Alta en escritorio (1024 px) | Su ficha, con el contorno |
+|---|---|
+| ![Alta con los seis números](docs/capturas-despliegue/final-alta-1024.png) | ![Ficha de la parcela nueva](docs/capturas-despliegue/final-alta-ficha-1024.png) |
+
 ## 6. Lo que falta (dicho sin adornos)
 
 - El volcado oficial a la Junta (IUWS) está implementado y probado contra el anexo, pero **no se ha
