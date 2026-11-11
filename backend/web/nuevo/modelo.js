@@ -379,6 +379,34 @@ export const textos = {
       sinMapasBoton: "Ver cómo se prepara",
     },
   },
+  // El apunte en cuatro pasos y la cola sin cobertura (11/11/2026). En pantalla se dice «pendiente
+  // de enviar»: el estado del apunte es «pendiente de enviar», sin más palabras raras.
+  enCuatroPasos: {
+    titulo: "Apunte en cuatro pasos",
+    explica:
+      "La parcela, qué apuntas, el producto con su dosis y el día. Si no hay cobertura, el apunte se guarda en el móvil y se manda cuando vuelva.",
+    parcela: "1. En qué parcela",
+    tipo: "2. Qué apuntas",
+    tipoTratamiento: "Un tratamiento",
+    producto: "3. Con qué y cuánto",
+    dosis: "Dosis por hectárea",
+    motivo: "Por qué lo has echado",
+    motivoPista: "Por ejemplo: «vi pulgón» o «aviso de la Junta»",
+    fecha: "4. Qué día",
+    plazo: "Plazo de seguridad: hasta el {fecha}",
+    sinPlazo: "Este producto no tiene plazo de seguridad apuntado",
+    guardar: "Guardar el apunte",
+    guardado: "Apunte guardado.",
+    pendiente: "Guardado en el móvil: pendiente de enviar.",
+    pendientes: "{n} apuntes pendientes de enviar.",
+    reintentar: "Mandarlos ahora",
+    siguiente: "Siguiente",
+    faltaParcela: "Elige la parcela.",
+    faltaProducto: "Elige el producto.",
+    faltaDosis: "Escribe la dosis.",
+    faltaMotivo: "Escribe por qué lo has echado.",
+  },
+
   apuntar: {
     titulo: "Apuntar un trabajo",
     intro: "Elige la tierra y di qué has hecho. Queda en su historial.",
@@ -1586,6 +1614,69 @@ export function cuerpoDeLaFactura(propuesta) {
     total: p.total,
     lineas,
   };
+}
+
+// ---------------------------------------------------------------------------
+// El apunte en cuatro pasos y la cola sin cobertura (11/11/2026)
+//
+// **El problema que resuelve:** en el campo, sin cobertura, el agricultor apunta el trabajo y se
+// queda sin poder guardarlo. Perder lo que ha escrito es la peor forma de fallar. Aquí el apunte se
+// guarda en el propio navegador con el estado «pendiente de enviar» y se manda cuando vuelve la
+// cobertura. Lo que se guarda es **el cuerpo tal y como se mandaría**, no una copia a medias.
+// ---------------------------------------------------------------------------
+
+/** La clave del almacén donde esperan los apuntes hechos sin cobertura. */
+export const CLAVE_DE_LA_COLA = "cuedigital.pendientes";
+
+/** La fecha en la que termina un plazo: la del trabajo más los días que diga la etiqueta. */
+export function fechaDePlazo(fechaISO, dias) {
+  if (!fechaISO || dias === null || dias === undefined || dias === "") return null;
+  const fecha = new Date(`${fechaISO}T00:00:00`);
+  if (Number.isNaN(fecha.getTime())) return null;
+  fecha.setDate(fecha.getDate() + Number(dias));
+  if (Number.isNaN(fecha.getTime())) return null;
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+/** Los apuntes que esperan a que vuelva la cobertura, del más viejo al más nuevo. */
+export function apuntesPendientes(almacen) {
+  try {
+    const crudo = almacen.getItem(CLAVE_DE_LA_COLA);
+    const cola = crudo ? JSON.parse(crudo) : [];
+    return Array.isArray(cola) ? cola : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function guardarLaCola(almacen, cola) {
+  try {
+    almacen.setItem(CLAVE_DE_LA_COLA, JSON.stringify(cola));
+  } catch (error) {
+    // Sin sitio en el almacén no se puede hacer nada más: no se rompe la pantalla.
+  }
+}
+
+/** Guarda un apunte para mandarlo cuando haya cobertura. Devuelve la cola entera. */
+export function encolarApunte(almacen, apunte) {
+  const cola = apuntesPendientes(almacen);
+  cola.push({
+    ...apunte,
+    estado: "pendiente de enviar",
+    guardado_en: new Date().toISOString(),
+  });
+  guardarLaCola(almacen, cola);
+  return cola;
+}
+
+/** Quita de la cola el apunte que ocupa esa posición (el que acaba de mandarse). */
+export function quitarApunteDeLaCola(almacen, posicion) {
+  const cola = apuntesPendientes(almacen);
+  cola.splice(posicion, 1);
+  guardarLaCola(almacen, cola);
+  return cola;
 }
 
 // ---------------------------------------------------------------------------

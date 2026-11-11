@@ -118,6 +118,7 @@ inventar y **no la corrige nunca**: si algo no cuadra, avisa.
 | **Geodatos** | La forma se guarda en WKT, se dibuja sin depender de imágenes de terceros, y el mapa se pide al SIGPAC por recinto y por punto. |
 | **Calidad medida** | **6.161 pruebas de Python y 1.322 de JavaScript** en verde, con guardianes que impiden que los números de la documentación se queden viejos. |
 | **Interfaz de campo** | Medido con Chrome a 360, 390, 768 y 1024 px: **0 desbordes, 0 controles por debajo de 44 px**, tablas y modales que caben. |
+| **Apunte en cuatro pasos, y sin cobertura** | La parcela, el tipo, el producto con su dosis y el día: el **plazo de seguridad se calcula** y se enseña («hasta el 26/11/2026»). Sin cobertura el apunte **no se pierde**: se guarda en el móvil como «pendiente de enviar» y se manda al volver la red (la cola vive en el navegador; 10 pruebas la atan). |
 | **Cuaderno guiado** | La ficha de cada tierra dice **qué toca hacer y a partir de cuándo** («podrás cosechar a partir del 22/11»), con aviso cuando el plazo está a punto de terminar. Sale de los plazos apuntados, no de una suposición. |
 | **Seguridad** | La app con datos reales **no es pública**: se entra solo por la red privada de Tailscale. Lo que se enseña es una **demo estática con datos ficticios**, con CSP, `referrer` y sin alta de cuentas. |
 | **Despliegue** | Imagen Docker (usuario sin privilegios, HEALTHCHECK), PostgreSQL, Caddy y Tailscale, con la demo estática aparte en GitHub Pages. |
