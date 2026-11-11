@@ -1,16 +1,56 @@
 {
   "url": "https://erdeivih.github.io/cuedigital-demo/",
   "fecha": "2026-11-11",
-  "como": "Chrome de verdad por CDP, con un instrumento instalado antes de cargar la app que apunta cada respuesta 4xx/5xx de fetch, XHR y sendBeacon, y los errores de consola.",
-  "red_4xx_5xx": [],
-  "errores_de_consola": [],
-  "sendBeacon": "sustituido por una funcion que no manda nada (la telemetria de pantalla queda apagada)",
-  "pantallas_abiertas": ["hoy", "tierras", "calendario", "hoy"],
-  "comprobado": {
-    "CU-U1": "el boton grande abre «Apuntar» (vista=apuntar, hash=#apuntar) sin salir del dominio",
-    "CU-U2": "cada pestaña cambia el contenido y el hash (#tierras, #calendario, #hoy)",
-    "CU-U3": "«Apunta lo que has hecho» 1 vez y «Falta para el cuaderno» 1 vez",
-    "CU-I1": "5 apuntes en «Lo ultimo» y Gastos 1.240,5 € (datos ficticios de 8 apuntes en total)",
-    "CU-F1": "ninguna respuesta 4xx/5xx y ningun error de consola"
-  }
+  "pestanas": [
+    {
+      "pestana": "Tierras",
+      "vista": "tierras",
+      "hash": "#tierras",
+      "contenido": "Mis tierras  5 tierras · 1"
+    },
+    {
+      "pestana": "Calendario",
+      "vista": "calendario",
+      "hash": "#calendario",
+      "contenido": "Calendario  noviembre de 2"
+    },
+    {
+      "pestana": "Apuntar",
+      "vista": "apuntar",
+      "hash": "#apuntar",
+      "contenido": "Apuntar un trabajo  Elige "
+    },
+    {
+      "pestana": "Hoy",
+      "vista": "hoy",
+      "hash": "#hoy",
+      "contenido": "Hoy  5 tierras  Apunta lo "
+    },
+    {
+      "pestana": "Trabajos",
+      "vista": "trabajos",
+      "hash": "#trabajos",
+      "contenido": "Trabajos  0 trabajos  Desc"
+    },
+    {
+      "pestana": "Productos",
+      "vista": "productos",
+      "hash": "#productos",
+      "contenido": "Productos y abonos  Lo que"
+    },
+    {
+      "pestana": "Facturas",
+      "vista": "facturas",
+      "hash": "#facturas",
+      "contenido": "Facturas  Hazle una foto a"
+    },
+    {
+      "pestana": "Cuaderno",
+      "vista": "cuaderno",
+      "hash": "#cuaderno",
+      "contenido": "Cuaderno  Lo que falta par"
+    }
+  ],
+  "entradas_de_consola": [],
+  "conclusion": "sin errores, sin promesas rechazadas y sin respuestas 4xx/5xx"
 }
