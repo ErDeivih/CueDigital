@@ -15,6 +15,7 @@ import {
   CLAVE_DE_LA_COLA,
   hashDeLaVista,
   vistaDelHash,
+  normalizaFilaDeHistorial,
   fechaDePlazo,
   apuntesPendientes,
   encolarApunte,
@@ -121,4 +122,29 @@ test("la vista se lee de la URL, con o sin la almohadilla", () => {
   assert.equal(vistaDelHash("tierras"), "tierras");
   assert.equal(vistaDelHash(""), null);
   assert.equal(vistaDelHash("#"), null);
+});
+// ------------------------------------------------------------------- el plazo en el apunte
+
+test("el apunte de un tratamiento enseña su plazo hasta la fecha", () => {
+  const fila = normalizaFilaDeHistorial(
+    {
+      tipo: "tratamiento",
+      fecha: "2026-11-11",
+      producto: "ATRAPA",
+      dosis: 1.5,
+      dosis_unidad: "L/ha",
+      plazo_hasta: "2026-11-26",
+    },
+    [],
+  );
+  assert.ok(fila.detalles.some((detalle) => detalle.includes("plazo hasta")), "dice que hay plazo");
+  assert.ok(fila.detalles.some((detalle) => detalle.includes("26/11")), "con la fecha de fin");
+});
+
+test("sin plazo apuntado no se inventa una fecha de plazo", () => {
+  const fila = normalizaFilaDeHistorial(
+    { tipo: "tratamiento", fecha: "2026-11-11", producto: "ATRAPA" },
+    [],
+  );
+  assert.ok(!fila.detalles.some((detalle) => detalle.includes("plazo")), "no se inventa");
 });

@@ -236,6 +236,9 @@ def test_el_historial_va_de_mas_nuevo_a_mas_viejo_y_no_rellena_anios_vacios(
             "kg_ha": 300.0,
         }
     ]
+    # El plazo de seguridad del tratamiento (11/11/2026) sale también en el historial: es la
+    # cuenta atrás que se ve en la fila. La fecha es la del tratamiento más los días de la
+    # etiqueta; si no hubiera plazo apuntado, vendría en `None` y no se inventaría.
     assert el_2026["tratamientos"] == [
         {
             "fecha": "2026-04-02",
@@ -243,6 +246,7 @@ def test_el_historial_va_de_mas_nuevo_a_mas_viejo_y_no_rellena_anios_vacios(
             "dosis": 0.8,
             "dosis_unidad": "L/ha",
             "materia_activa": "Tebuconazol",
+            "plazo_hasta": "2026-04-23",
         }
     ]
 

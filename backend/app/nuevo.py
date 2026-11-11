@@ -967,6 +967,15 @@ def _el_apunte_de_un_tratamiento(tratamiento: models.TratamientoFitosanitario) -
         "materia_activa": tratamiento.materia_activa,
         "dosis": tratamiento.dosis,
         "dosis_unidad": tratamiento.unidad_dosis,
+        # **Hasta cuándo dura el plazo de seguridad** (11/11/2026): la cuenta atrás del apunte. La
+        # fecha sale de la del tratamiento más los días que decía la etiqueta; si el plazo no está
+        # apuntado, se queda en `None` (no se inventa una fecha).
+        "plazo_seguridad_dias": tratamiento.plazo_seguridad_dias,
+        "plazo_hasta": (
+            (tratamiento.fecha + dt.timedelta(days=int(tratamiento.plazo_seguridad_dias))).isoformat()
+            if tratamiento.fecha is not None and tratamiento.plazo_seguridad_dias is not None
+            else None
+        ),
         "kg": None,
         "kg_ha": None,
         "mes": tratamiento.fecha.month if tratamiento.fecha else None,
@@ -1256,6 +1265,8 @@ def _el_historial(filas: list[dict], cultivos_por_anio: dict[int, dict]) -> list
                     "dosis": fila["dosis"],
                     "dosis_unidad": fila["dosis_unidad"],
                     "materia_activa": fila["materia_activa"],
+                    # La cuenta atrás del plazo de seguridad, para que se vea en el historial.
+                    "plazo_hasta": fila.get("plazo_hasta"),
                 }
             )
         elif fila["tipo"] == CLAVE_ABONO:
