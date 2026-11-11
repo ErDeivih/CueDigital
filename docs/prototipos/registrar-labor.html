@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Registrar una labor · prototipo · CUE Digital</title>
+<!--
+  PROTOTIPO DE UNA PANTALLA (11/11/2026)
+
+  * Son **cuatro campos en una sola pantalla**, no un asistente de pasos: la parcela, la labor, el
+    producto con su dosis y el día. El plazo de seguridad se calcula al elegir el día.
+  * **Todos los datos son ficticios** y se dice en la cabecera. No hay servidor, no se guarda nada y
+    no se manda ninguna petición: es un fichero HTML para enseñar la pantalla.
+  * Los colores salen de los tokens del sistema de diseño de la aplicación (`backend/web/nuevo/
+    estilos.css`): los mismos de día y de noche. Sin sombras, sin degradados, sin animaciones.
+  * Los textos son los del cuaderno de la aplicación, en castellano de agricultor: nada de jerga.
+-->
+<style>
+  :root {
+    color-scheme: light dark;
+    --surface-page: #f3f0e8;
+    --surface-card: #ffffff;
+    --surface-sunk: #e8e3d7;
+    --ink: #12211a;
+    --ink-muted: #4a5a51;
+    --brand: #175c33;
+    --brand-bright: #1e7a43;
+    --brand-tint: #ddebdf;
+    --accent: #9a5b12;
+    --accent-tint: #f6e7ce;
+    --border-subtle: #d8d2c4;
+    --border-strong: #6e6a5d;
+    --focus: #0b63ce;
+    --on-brand: #ffffff;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --toque: 48px;
+    --control: 44px;
+    --contenido-max: 560px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-page: #101713;
+      --surface-card: #17211c;
+      --surface-sunk: #1c2822;
+      --ink: #f1f3ee;
+      --ink-muted: #b9c4bc;
+      --brand: #2e7d4f;
+      --brand-bright: #5cc98b;
+      --brand-tint: #24382d;
+      --accent: #e0a458;
+      --accent-tint: #3a2c17;
+      --border-subtle: #33443a;
+      --border-strong: #8fa396;
+      --on-brand: #0f1a14;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--surface-page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.45;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    max-width: var(--contenido-max);
+    margin: 0 auto;
+  }
+
+  h1 { font-size: 24px; line-height: 1.1; margin: 0 0 2px; }
+  .subtitulo { color: var(--ink-muted); margin: 0 0 var(--space-2); font-size: 14px; }
+
+  .aviso {
+    background: var(--accent-tint);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-size: 14px;
+    margin-bottom: var(--space-3);
+  }
+  .aviso strong { color: var(--accent); }
+
+  form { display: grid; gap: var(--space-2); }
+
+  fieldset {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-card);
+    padding: var(--space-2) var(--space-3) var(--space-3);
+    margin: 0;
+  }
+  legend {
+    font-weight: 700;
+    font-size: 15px;
+    padding: 0 var(--space-1);
+  }
+  .campo { display: grid; gap: var(--space-1); }
+  .campo + .campo { margin-top: var(--space-2); }
+  label { font-size: 14px; color: var(--ink-muted); }
+  select, input {
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface-sunk);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    min-height: 40px;
+    padding: 6px var(--space-2);
+    width: 100%;
+  }
+  input[type="date"] { min-height: 40px; }
+  select:focus, input:focus, button:focus {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .fila { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-2); align-items: end; }
+  .pista { color: var(--ink-muted); font-size: 13px; margin: 4px 0 0; }
+
+  .plazo {
+    background: var(--brand-tint);
+    border-radius: var(--radius-md);
+    padding: 6px var(--space-2);
+    font-weight: 700;
+    color: var(--brand);
+    font-size: 15px;
+    margin: 0;
+  }
+  .plazo.sin-datos { background: var(--surface-sunk); color: var(--ink-muted); font-weight: 400; }
+
+  button[type="submit"] {
+    font: inherit;
+    font-weight: 700;
+    color: var(--on-brand);
+    background: var(--brand);
+    border: 0;
+    border-radius: var(--radius-md);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+  }
+  button[type="submit"]:hover { background: var(--brand-bright); }
+
+  .resultado {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-card);
+    padding: var(--space-3);
+    margin-top: var(--space-3);
+    display: none;
+  }
+  .resultado.visible { display: block; }
+  .resultado h2 { font-size: 17px; margin: 0 0 var(--space-2); }
+  .resultado p { margin: 0 0 var(--space-1); }
+  .resultado .nota { color: var(--ink-muted); font-size: 14px; margin-top: var(--space-2); }
+
+  .pie { color: var(--ink-muted); font-size: 13px; margin-top: var(--space-4); }
+</style>
+</head>
+<body>
+
+<h1>Registrar una labor</h1>
+<p class="subtitulo">Cuatro campos en una pantalla: la parcela, la labor, el producto y el día.</p>
+
+<p class="aviso">
+  <strong>Prototipo con datos ficticios.</strong> Las cinco parcelas, los productos y las dosis son
+  inventados y están aquí solo para enseñar la pantalla. No se guarda nada y no se manda ninguna
+  petición: es un fichero HTML.
+</p>
+
+<form id="la-labor" novalidate>
+  <fieldset>
+    <legend>1. En qué parcela</legend>
+    <div class="campo">
+      <label for="parcela">Parcela</label>
+      <select id="parcela">
+        <option>El Barbecho · 0,9 ha</option>
+        <option selected>El Llano · 4,2 ha</option>
+        <option>La Dehesa · 1,8 ha</option>
+        <option>La Fuente · 3,1 ha</option>
+        <option>Los Olmos · 2,5 ha</option>
+      </select>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>2. Qué labor</legend>
+    <div class="campo">
+      <label for="labor">Labor</label>
+      <select id="labor">
+        <option selected>Un tratamiento</option>
+        <option>Un abono</option>
+        <option>Una siembra</option>
+        <option>Una labor de suelo</option>
+      </select>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>3. Con qué y cuánto</legend>
+    <div class="campo">
+      <label for="producto">Producto</label>
+      <select id="producto">
+        <option data-plazo="15" selected>Herbicida de ejemplo (15 días de plazo)</option>
+        <option data-plazo="21">Insecticida de ejemplo (21 días de plazo)</option>
+        <option data-plazo="7">Fungicida de ejemplo (7 días de plazo)</option>
+        <option data-plazo="">Abono de ejemplo (sin plazo)</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="dosis">Dosis por hectárea</label>
+      <div class="fila">
+        <input id="dosis" type="number" inputmode="decimal" min="0" step="0.1" value="1.5">
+        <select id="unidad" aria-label="Unidad de la dosis">
+          <option selected>L/ha</option>
+          <option>kg/ha</option>
+        </select>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>4. Qué día</legend>
+    <div class="campo">
+      <label for="fecha">Día del trabajo</label>
+      <input id="fecha" type="date" value="2026-11-11">
+    </div>
+    <p class="plazo" id="plazo" role="status">Plazo de seguridad: hasta el 26/11/2026</p>
+    <p class="pista">El plazo lo calcula la pantalla con los días que trae la etiqueta del producto.</p>
+  </fieldset>
+
+  <button type="submit">Guardar la labor</button>
+</form>
+
+<section class="resultado" id="resultado" aria-live="polite">
+  <h2>Así queda el apunte</h2>
+  <p id="resumen"></p>
+  <p class="nota">
+    En el prototipo no se guarda en ningún sitio. En el cuaderno de verdad, este apunte se guarda en
+    el móvil aunque no haya cobertura y se manda cuando vuelve la red.
+  </p>
+</section>
+
+<p class="pie">
+  CUE Digital · prototipo de la pantalla «Registrar una labor» · 11/11/2026. Datos ficticios.
+</p>
+
+<script>
+  // La fecha de fin de plazo: el día del trabajo más los días de la etiqueta. Sin librerías.
+  function fechaDePlazo(fechaISO, dias) {
+    if (!fechaISO || dias === null || dias === undefined || dias === "") return null;
+    const fecha = new Date(fechaISO + "T00:00:00");
+    if (Number.isNaN(fecha.getTime())) return null;
+    fecha.setDate(fecha.getDate() + Number(dias));
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dia = String(fecha.getDate()).padStart(2, "0");
+    return dia + "/" + mes + "/" + fecha.getFullYear();
+  }
+
+  const parcela = document.getElementById("parcela");
+  const labor = document.getElementById("labor");
+  const producto = document.getElementById("producto");
+  const dosis = document.getElementById("dosis");
+  const unidad = document.getElementById("unidad");
+  const fecha = document.getElementById("fecha");
+  const plazo = document.getElementById("plazo");
+  const resultado = document.getElementById("resultado");
+  const resumen = document.getElementById("resumen");
+
+  function losDiasDeLaEtiqueta() {
+    const elegida = producto.options[producto.selectedIndex];
+    const dias = elegida.getAttribute("data-plazo");
+    return dias === "" ? null : Number(dias);
+  }
+
+  function pintarElPlazo() {
+    const hasta = fechaDePlazo(fecha.value, losDiasDeLaEtiqueta());
+    if (hasta) {
+      plazo.textContent = "Plazo de seguridad: hasta el " + hasta;
+      plazo.classList.remove("sin-datos");
+    } else {
+      plazo.textContent = "Este producto no tiene plazo de seguridad apuntado";
+      plazo.classList.add("sin-datos");
+    }
+  }
+
+  producto.addEventListener("change", pintarElPlazo);
+  fecha.addEventListener("change", pintarElPlazo);
+  fecha.addEventListener("input", pintarElPlazo);
+
+  document.getElementById("la-labor").addEventListener("submit", function (evento) {
+    evento.preventDefault();
+    const hasta = fechaDePlazo(fecha.value, losDiasDeLaEtiqueta());
+    resumen.textContent = parcela.value + " · " + labor.value.toLowerCase() + " · " +
+      producto.value.split(" (")[0] + " · " + dosis.value + " " + unidad.value +
+      " · " + fecha.value + (hasta ? " · plazo hasta el " + hasta : "");
+    resultado.classList.add("visible");
+    resultado.scrollIntoView({block: "nearest"});
+  });
+
+  pintarElPlazo();
+</script>
+</body>
+</html>

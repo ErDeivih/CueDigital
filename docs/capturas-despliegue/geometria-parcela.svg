@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 430" width="420" height="430" role="img" aria-label="Una parcela con un trozo que no es de labor">
+  <title>Una parcela con un trozo que no es de labor</title>
+  <rect width="420" height="430" fill="#f3f0e8"/>
+  <rect x="4" y="4" width="308" height="308" fill="#e8e3d7" stroke="#d8d2c4"/>
+  <path d="M205.2 288.0 L205.2 12.0 L94.8 12.0 L94.8 288.0 Z M170.7 205.2 L170.7 150.0 L129.3 150.0 L129.3 205.2 Z" fill="#ddebdf" fill-rule="evenodd" stroke="#175c33" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="8" y="334" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#12211a">Una parcela con un trozo que no es de labor</text>
+  <text x="8" y="356" font-family="system-ui, sans-serif" font-size="12" fill="#4a5a51">El agujero resta: el área es la de fuera</text>
+  <text x="8" y="374" font-family="system-ui, sans-serif" font-size="12" fill="#4a5a51">menos la de dentro. Área calculada: 182.12 ha.</text>
+</svg>

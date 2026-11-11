@@ -1,0 +1,16 @@
+{
+  "url": "https://servidor.tail4263a0.ts.net:8443",
+  "fecha": "2026-11-11",
+  "como": "Chrome por CDP con la red apagada (Network.emulateNetworkConditions offline)",
+  "sin_red": true,
+  "aviso_en_pantalla": "Guardado en el móvil: pendiente de enviar.",
+  "apuntes_en_la_cola_del_navegador": 1,
+  "cola_despues_de_mandar": 0,
+  "apuntes_en_hoy": {
+    "antes": 5,
+    "despues": 5,
+    "del_dia_de_la_prueba": 1
+  },
+  "se_borro_el_de_la_prueba": 1,
+  "conclusion": "sin red se guarda en el móvil y, al volver la red, sale en «Hoy» una sola vez"
+}

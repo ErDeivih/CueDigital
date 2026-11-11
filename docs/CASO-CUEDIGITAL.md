@@ -45,6 +45,12 @@ pantalla lo dice («sin el dibujo del mapa», «no consta»), en vez de rellenar
 dato inventado en un cuaderno oficial no da error al apuntarlo: da error meses después, delante de un
 inspector.
 
+![Las tierras del ejemplo, con su referencia del SIGPAC, su superficie y su uso](capturas-despliegue/pestanas-hash-390.png)
+
+*Captura de la demo pública: cinco parcelas ficticias dadas de alta con su referencia del SIGPAC, la
+superficie que declara el recinto y el uso. La captura es de la demo, con datos inventados; ninguna
+tiene datos de una finca real.*
+
 ## 3. El modelo de datos
 
 **66 tablas** en PostgreSQL 16 (SQLite en local), organizadas por lo que representan. Todas las
@@ -109,6 +115,16 @@ inventar y **no la corrige nunca**: si algo no cuadra, avisa.
    auto-intersectadas ni se reproyectan, y **no se recorta** una parcela que se solape con otra: eso
    lo decide una persona.
 
+![Una parcela con un agujero: el área de dentro resta](capturas-despliegue/geometria-parcela.svg)
+
+*El agujero resta. El área que sale es la del anillo de fuera menos la del de dentro —el mismo
+cálculo que se contrasta con la superficie que declara el SIGPAC—. Geometría ficticia.*
+
+![Dos parcelas que se pisan, y el aviso sin recortar nada](capturas-despliegue/geometria-solape.svg)
+
+*Dos parcelas que se cruzan: la comprobación contesta «se pisan» y **no mueve ni recorta** ninguna.
+El programa avisa; la decisión es de una persona. Geometría ficticia.*
+
 ## 5. Qué demuestra
 
 | Competencia | Evidencia |
@@ -135,13 +151,15 @@ en la demo pública.
   publica y el código de la DGC.
 - **PSD2** (conciliación bancaria automática) está parado por presupuesto.
 - **La app no tiene direcciones por pantalla**: no se puede compartir un enlace a una tierra ni volver
-  a la misma pantalla al recargar.
+  a la misma pantalla al recargar. (Las **pestañas** ya llevan su `#` y recargar mantiene la pantalla;
+  lo que falta es el enlace a una tierra concreta: su identificador no va en la URL.)
 - Los **textos de la interfaz** tienen una lista de mejoras pendiente (barra de acciones fija al
   apuntar, cabecera de grupo que diga qué no consta, ayuda de los códigos del SIGPAC).
 
 ## 7. Dónde mirar
 
 - **Demo pública (datos ficticios):** <https://erdeivih.github.io/cuedigital-demo/>
+- **Prototipo de «registrar labor» (cuatro campos, datos ficticios):** [`prototipos/registrar-labor.html`](prototipos/registrar-labor.html) — se abre en el navegador, sin servidor, y no guarda nada.
 - **Seguridad y qué se expone:** [`SEGURIDAD.md`](SEGURIDAD.md)
 - **Despliegue:** [`DESPLIEGUE.md`](DESPLIEGUE.md)
 - **Servicios del SIGPAC que se usan:** [`SERVICIOS_DEL_SIGPAC.md`](SERVICIOS_DEL_SIGPAC.md)

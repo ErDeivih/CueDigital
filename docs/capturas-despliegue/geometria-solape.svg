@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 430" width="420" height="430" role="img" aria-label="Dos parcelas que se pisan">
+  <title>Dos parcelas que se pisan</title>
+  <rect width="420" height="430" fill="#f3f0e8"/>
+  <rect x="4" y="4" width="308" height="308" fill="#e8e3d7" stroke="#d8d2c4"/>
+  <path d="M186.8 288.0 L186.8 104.0 L113.2 104.0 L113.2 288.0 Z M163.8 232.8 L163.8 196.0 L136.2 196.0 L136.2 232.8 Z" fill="#ddebdf" fill-rule="evenodd" stroke="#175c33" stroke-width="2.5" stroke-linejoin="round"/><path d="M177.6 196.0 L177.6 12.0 L117.8 12.0 L117.8 196.0 Z" fill="#f6e7ce" fill-rule="evenodd" stroke="#9a5b12" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="8" y="334" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#12211a">Dos parcelas que se pisan</text>
+  <text x="8" y="356" font-family="system-ui, sans-serif" font-size="12" fill="#4a5a51">La comprobación contesta «se pisan».</text>
+  <text x="8" y="374" font-family="system-ui, sans-serif" font-size="12" fill="#4a5a51">No se recorta ninguna: avisa y decide una persona.</text>
+</svg>
