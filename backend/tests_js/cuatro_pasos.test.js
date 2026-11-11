@@ -13,6 +13,8 @@ import assert from "node:assert/strict";
 
 import {
   CLAVE_DE_LA_COLA,
+  hashDeLaVista,
+  vistaDelHash,
   fechaDePlazo,
   apuntesPendientes,
   encolarApunte,
@@ -100,4 +102,23 @@ test("un almacén que no deja guardar no rompe el apunte", () => {
   };
   assert.equal(encolarApunte(roto, apunte).length, 1);
   assert.deepEqual(apuntesPendientes(roto), []);
+});
+
+// --------------------------------------------------------------------------- las pestañas y el hash
+
+test("cada pestaña deja su hash para poder compartirla", () => {
+  assert.equal(hashDeLaVista("tierras"), "#tierras");
+  assert.equal(hashDeLaVista("apuntar"), "#apuntar");
+});
+
+test("sin vista no hay hash, y la URL no se queda con una almohadilla suelta", () => {
+  assert.equal(hashDeLaVista(""), "");
+  assert.equal(hashDeLaVista(null), "");
+});
+
+test("la vista se lee de la URL, con o sin la almohadilla", () => {
+  assert.equal(vistaDelHash("#tierras"), "tierras");
+  assert.equal(vistaDelHash("tierras"), "tierras");
+  assert.equal(vistaDelHash(""), null);
+  assert.equal(vistaDelHash("#"), null);
 });

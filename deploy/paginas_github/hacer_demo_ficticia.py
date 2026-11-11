@@ -141,7 +141,18 @@ def main() -> int:
         "campana": {"id": 1, "anio": 2026},
         "cuenta": dict(CUENTA),
         "tierras": {"n": len(tierras), "ha": hectareas},
-        "ultimos": [],
+        # **Ocho apuntes ficticios** (CU-I1, 11/11/2026): la pantalla de «Hoy» no puede enseñar una
+        # finca vacía. Son inventados, con las tierras inventadas y productos de ejemplo.
+        "ultimos": [
+            {"tipo": "tratamiento", "fecha": "2026-11-08", "tierra": "El Llano", "titulo": "Herbicida de ejemplo"},
+            {"tipo": "tratamiento", "fecha": "2026-11-07", "tierra": "La Fuente", "titulo": "Insecticida de ejemplo"},
+            {"tipo": "fertilizacion", "fecha": "2026-11-05", "tierra": "Los Olmos", "titulo": "Abono de ejemplo"},
+            {"tipo": "labor", "fecha": "2026-11-04", "tierra": "La Dehesa", "titulo": "Preparación del terreno"},
+            {"tipo": "tratamiento", "fecha": "2026-11-02", "tierra": "El Barbecho", "titulo": "Fungicida de ejemplo"},
+            {"tipo": "fertilizacion", "fecha": "2026-10-29", "tierra": "El Llano", "titulo": "Abono de cobertera"},
+            {"tipo": "labor", "fecha": "2026-10-27", "tierra": "La Fuente", "titulo": "Siembra"},
+            {"tipo": "labor", "fecha": "2026-10-24", "tierra": "Los Olmos", "titulo": "Pase de grada"},
+        ],
     }
     datos["cuenta"] = {
         "usuario_id": 1,
@@ -200,11 +211,13 @@ def main() -> int:
     }
     datos["facturas"] = []
     datos["documentos"] = []
+    # **Gastos y ventas ficticios** (CU-I1): una finca de verdad no está a cero. Los importes son
+    # inventados y no vienen de ninguna cuenta de nadie.
     datos["resumen"] = {
-        "gastos": {"total": 0.0, "pendiente": 0.0},
-        "ventas": {"total": 0.0, "cobrado": 0.0, "pendiente": 0.0},
-        "cuaderno": {"faltan": 0, "ejemplos": []},
-        "facturas": {"n": 0},
+        "gastos": {"total": 1240.5, "pendiente": 320.0},
+        "ventas": {"total": 5400.0, "cobrado": 3000.0, "pendiente": 2400.0},
+        "cuaderno": {"faltan": 3, "ejemplos": ["el nº de registro de la explotación", "la dirección y la localidad", "un teléfono de contacto"]},
+        "facturas": {"n": 2},
     }
     datos["que_falta"] = {"faltan": 0, "items": []}
 

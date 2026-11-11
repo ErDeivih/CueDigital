@@ -83,6 +83,7 @@ export const textos = {
     cuaderno: "Cuaderno",
     facturas: "Facturas",
     faltaCuaderno: "Falta para el cuaderno",
+    cuadernoNota: "Lo que falta, en el cuaderno",
     queFalta: "Qué falta",
     queFaltaVacio: "No falta nada para el cuaderno.",
     verQueFalta: "Ver qué falta",
@@ -102,7 +103,7 @@ export const textos = {
     fallo: "No se ha podido cargar lo de hoy. Revisa la cobertura y vuelve a intentarlo.",
     sinPermiso: "Entra con tu cuenta para ver lo de hoy.",
     vacio: "Todavía no has apuntado nada hoy.",
-    vacioBoton: "Apunta lo que has hecho",
+    vacioBoton: "Apuntar un trabajo",
   },
   tierras: {
     titulo: "Mis tierras",
@@ -1682,6 +1683,20 @@ export function quitarApunteDeLaCola(almacen, posicion) {
 // ---------------------------------------------------------------------------
 // Apuntar el trabajo del día: los aperos del servidor y el apunte
 // ---------------------------------------------------------------------------
+
+/**
+ * **La vista y el hash de la URL** (11/11/2026): cada pestaña deja su `#` para que se pueda
+ * compartir y para que recargar no devuelva al inicio. Sin hash, la pantalla empieza en «Hoy».
+ */
+export function hashDeLaVista(vista) {
+  const limpio = String(vista || "").trim();
+  return limpio ? `#${limpio}` : "";
+}
+
+/** La vista que pide la URL. `null` si no pide ninguna. */
+export function vistaDelHash(hash) {
+  return String(hash || "").replace(/^#/, "").trim() || null;
+}
 
 /** La fecha de hoy como la escribe el servidor: 2026-11-05. */
 export function fechaDeHoyISO(fecha = new Date()) {

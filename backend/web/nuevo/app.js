@@ -71,6 +71,8 @@ import {
   etiquetaDeTrabajo,
   fechaDeHoyISO,
   fechaValidezEnTexto,
+  hashDeLaVista,
+  vistaDelHash,
   fechaDePlazo,
   apuntesPendientes,
   encolarApunte,
@@ -728,7 +730,7 @@ function BloqueQueFalta({ estado, lista, alReintentar }) {
   </section>`;
 }
 
-function VistaHoy({ estadoVista, datos, alReintentar, resumen, queFalta }) {
+function VistaHoy({ estadoVista, datos, alReintentar, resumen, queFalta, alApuntar }) {
   if (estadoVista === "cargando") return html`<${EstadoCargando} mensaje=${textos.hoy.cargando} />`;
   if (estadoVista === "error") return html`<${EstadoFallo} mensaje=${textos.hoy.fallo} alReintentar=${alReintentar} />`;
   if (estadoVista === "sin-permiso") return html`<${EstadoSinPermiso} mensaje=${textos.hoy.sinPermiso} />`;
@@ -757,7 +759,7 @@ function VistaHoy({ estadoVista, datos, alReintentar, resumen, queFalta }) {
 
   const vacio = html`<div data-ultimos>
     <p className="estado__texto">${textos.hoy.vacio}</p>
-    <p><a className="boton" href="/" data-traer-tierras>${textos.hoy.vacioBoton}</a></p>
+    <p><button type="button" className="boton" data-accion="apuntar-vacio" onClick=${alApuntar}>${textos.hoy.vacioBoton}</button></p>
   </div>`;
 
   const lista = html`<ul className="lista-ultimos" data-ultimos=${ultimos.length}>${filas}</ul>`;
@@ -771,10 +773,10 @@ function VistaHoy({ estadoVista, datos, alReintentar, resumen, queFalta }) {
       <p className="pagina__dato" data-contador-tierras=${contador}>${contador}</p>
     </header>
 
-    <a className="boton boton--principal boton--grande" href="/">
+    <button type="button" className="boton boton--principal boton--grande" data-accion="apuntar" onClick=${alApuntar}>
       <${Icono} nombre="apuntar" />
       ${textos.hoy.accion}
-    </a>
+    </button>
 
     <div className="tarjetas">
       <article className="tarjeta-dato" data-resumen-gastos=${contable.gastos.importe || textos.tierras.panel.noConsta}>
@@ -790,7 +792,7 @@ function VistaHoy({ estadoVista, datos, alReintentar, resumen, queFalta }) {
       <article className="tarjeta-dato" data-resumen-cuaderno=${contable.cuaderno.nota || textos.tierras.panel.noConsta}>
         <h2 className="tarjeta-dato__titulo">${textos.hoy.cuaderno}</h2>
         <p className="tarjeta-dato__cifra">${contable.cuaderno.nota || textos.tierras.panel.noConsta}</p>
-        <p className="tarjeta-dato__nota">${textos.hoy.faltaCuaderno}</p>
+        <p className="tarjeta-dato__nota">${textos.hoy.cuadernoNota}</p>
       </article>
     </div>
 
@@ -4706,7 +4708,11 @@ function avisarDeLaPantalla(pantalla) {
 }
 
 function App() {
-  const [vista, setVista] = useState("hoy");
+  // **La pestaña se lee de la URL** (CU-U2, 11/11/2026): recargar o compartir un enlace deja al
+  // agricultor en la misma pantalla, y cada pestaña tiene su `#`.
+  const [vista, setVista] = useState(
+    () => vistaDelHash(typeof location !== "undefined" ? location.hash : "") || "hoy",
+  );
   const [tierraId, setTierraId] = useState(null);
   const [arrancada, setArrancada] = useState(false);
   const [estadoSecundario, setEstadoSecundario] = useState("cargando");
@@ -4729,6 +4735,17 @@ function App() {
     };
   }, []);
 
+  // Si la URL cambia a mano (el agricultor toca «atrás» o pega un enlace con su `#`), la pantalla
+  // cambia con ella (CU-U2). No hay dos fuentes de la verdad: el hash manda cuando cambia.
+  useEffect(() => {
+    const alCambiarElHash = () => {
+      const pedida = vistaDelHash(window.location.hash);
+      if (pedida && pedida !== vista) setVista(pedida);
+    };
+    window.addEventListener("hashchange", alCambiarElHash);
+    return () => window.removeEventListener("hashchange", alCambiarElHash);
+  }, [vista]);
+
   // Al cambiar de pantalla se empieza arriba: si no, una vista hereda el scroll de la anterior y
   // los primeros botones quedan debajo de la cabecera o de la barra (medido en el móvil).
   useEffect(() => {
@@ -4750,6 +4767,15 @@ function App() {
   // no puede fallar: ver `avisarDeLaPantalla`.
   const abrirLaPantalla = (nueva) => {
     setVista(nueva);
+    // El `#` de la pestaña, para que la pantalla se pueda compartir y recargar (CU-U2).
+    try {
+      if (typeof history !== "undefined" && typeof location !== "undefined") {
+        const hash = hashDeLaVista(nueva);
+        if (location.hash !== hash) history.replaceState(null, "", hash || location.pathname);
+      }
+    } catch (fallo) {
+      /* Si el navegador no deja tocar la URL, la pantalla funciona igual. */
+    }
     avisarDeLaPantalla(nueva);
   };
 
@@ -4805,6 +4831,7 @@ function App() {
       alReintentar=${pantallaHoy.reintentar}
       resumen=${pantallaResumen}
       queFalta=${pantallaQueFalta}
+      alApuntar=${() => ir("apuntar")}
     />`;
   } else if (vista === "alta") {
     pantalla = html`<${VistaAlta}
